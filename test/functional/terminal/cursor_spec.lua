@@ -376,17 +376,17 @@ describe(':terminal cursor', function()
       n.nvim_set .. ' noshowmode',
     })
     screen:expect([[
-      ^                                                  |
-      ~                                                 |*4
-                                                        |
+      {126:^                                                  }|
+      {126:~                                                 }|*4
+      {126:                                                  }|
       {5:-- TERMINAL --}                                    |
     ]])
 
     feed('i<Tab>')
     screen:expect([[
-              ^                                          |
-      ~                                                 |*4
-                                                        |
+      {126:        ^                                          }|
+      {126:~                                                 }|*4
+      {126:                                                  }|
       {5:-- TERMINAL --}                                    |
     ]])
   end)

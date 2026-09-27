@@ -21,16 +21,16 @@ describe(':terminal highlight', function()
     screen = Screen.new(50, 7, { rgb = false })
     screen:set_default_attr_ids({
       [1] = { foreground = 45 },
-      [2] = { background = 46 },
-      [3] = { foreground = 45, background = 46 },
+      [2] = { background = 46, blend = 0 },
+      [3] = { foreground = 45, background = 46, blend = 0 },
       [4] = { bold = true, italic = true, underline = true, strikethrough = true },
       [5] = { bold = true },
       [6] = { foreground = 12 },
       [7] = { bold = true, reverse = true },
-      [8] = { background = 11 },
+      [8] = { background = 11, blend = 0 },
       [9] = { foreground = 130 },
       [10] = { reverse = true },
-      [11] = { background = 11 },
+      [11] = { background = 11, blend = 0 },
       [12] = { bold = true, underdouble = true },
       [13] = { italic = true, undercurl = true },
     })
@@ -136,9 +136,15 @@ it(':terminal highlight has lower precedence than editor #9964', function()
       background = tonumber('0xffff40'),
       fg_indexed = true,
       bg_indexed = true,
+      blend = 0,
     },
     -- "Search" highlight in the parent nvim process.
-    S = { background = Screen.colors.Green, italic = true, foreground = Screen.colors.Red },
+    S = {
+      background = Screen.colors.Green,
+      italic = true,
+      foreground = Screen.colors.Red,
+      blend = 0,
+    },
     -- "Question" highlight in the parent nvim process.
     -- note: bg is indexed as it comes from the (cterm) child, while fg isn't as it comes from (rgb) parent
     Q = {
@@ -146,6 +152,7 @@ it(':terminal highlight has lower precedence than editor #9964', function()
       bold = true,
       foreground = Screen.colors.SeaGreen4,
       bg_indexed = true,
+      blend = 0,
     },
   })
   -- Child nvim process in :terminal (with cterm colors).
@@ -193,7 +200,10 @@ end)
 it('CursorLine and CursorColumn work in :terminal buffer in Normal mode', function()
   clear()
   local screen = Screen.new(50, 7)
-  screen:add_extra_attr_ids({ [100] = { background = Screen.colors.Gray90, reverse = true } })
+  screen:add_extra_attr_ids({
+    [100] = { background = Screen.colors.Gray90, reverse = true },
+    [101] = { background = Screen.colors.Red, blend = 0 },
+  })
   command(("enew | call jobstart(['%s'], {'term':v:true})"):format(testprg('tty-test')))
   screen:expect([[
     ^tty ready                                         |
@@ -280,7 +290,7 @@ it('CursorLine and CursorColumn work in :terminal buffer in Normal mode', functi
     foobar foobar fooba{21:r} foobar foobar foobar foobar f|
     oobar foobar foobar{21: }foobar foobar foobar foobar fo|
     obar foobar foobar {21:f}oobar foobar foobar foobar foo|
-    bar foobar{2: foobar}{30: foobar}                          |
+    bar foobar{2: foobar}{101: foobar}                          |
                                                       |
   ]])
   feed('G$')
@@ -290,7 +300,7 @@ it('CursorLine and CursorColumn work in :terminal buffer in Normal mode', functi
     foobar foobar foobar fo{21:o}bar foobar foobar foobar f|
     oobar foobar foobar foo{21:b}ar foobar foobar foobar fo|
     obar foobar foobar foob{21:a}r foobar foobar foobar foo|
-    {21:bar foobar}{100: foobar}{30: fooba^r}{21:                          }|
+    {21:bar foobar}{100: foobar}{101: fooba^r}{21:                          }|
                                                       |
   ]])
 end)
