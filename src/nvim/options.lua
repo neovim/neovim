@@ -3848,6 +3848,20 @@ local options = {
       type = 'expr',
     },
     {
+      cb = 'did_set_follow',
+      defaults = false,
+      desc = [=[
+        Enables |multicursor| follow-mode: cursor-relative motions performed
+        by the primary cursor, cascade to all cursors |mcursor|.  Toggled by
+        |q=| (buffer-local).
+      ]=],
+      full_name = 'follow',
+      scope = { 'buf' },
+      short_desc = N_('multicursor: motions cascade to all cursors'),
+      type = 'boolean',
+      varname = 'p_follow',
+    },
+    {
       abbreviation = 'fex',
       defaults = '',
       desc = [=[
