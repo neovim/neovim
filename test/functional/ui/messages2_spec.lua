@@ -475,14 +475,14 @@ describe('messages2', function()
     feed('Vj')
     screen:expect([[
       {17:one two}                                              |
-      ^t{17:hree four}                                           |
+      {17:^three four}                                           |
       {1:~                                                    }|*11
       {5:-- VISUAL LINE --}                                    |
     ]])
     feed('g<C-G>')
     screen:expect([[
       {17:one two}                                              |
-      ^t{17:hree four}                                           |
+      {17:^three four}                                           |
       {1:~                                                    }|*11
       Selected 2 of 2 Lines; 4 of 4 Words; 19 of 19 Bytes  |
     ]])

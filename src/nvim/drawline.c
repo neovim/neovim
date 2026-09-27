@@ -1122,7 +1122,6 @@ static int get_rightmost_vcol(win_T *wp, const int *color_cols)
 int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, bool concealed,
              spellvars_T *spv, foldinfo_T foldinfo)
 {
-  colnr_T vcol_prev = -1;             // "wlv.vcol" of previous character
   GridView *grid = &wp->w_grid;       // grid specific to the window
   const int view_width = wp->w_view_width;
   const int view_height = wp->w_view_height;
@@ -1138,8 +1137,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
   int n_attr3 = 0;                      // chars with overruling special attr
   int saved_attr3 = 0;                  // char_attr saved for n_attr3
 
-  int fromcol_prev = -2;                // start of inverting after cursor
-  bool noinvcur = false;                // don't invert the cursor
   bool lnum_in_visual_area = false;
 
   int char_attr_pri = 0;                // attributes with high priority
@@ -1309,12 +1306,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
             }
           }
         }
-      }
-
-      // Check if the char under the cursor should be inverted (highlighted).
-      if (!Search.hl_match && in_curline
-          && cursor_is_block_during_visual(*p_sel == 'e')) {
-        noinvcur = true;
       }
 
       // if inverting in this line set area_highlighting
@@ -1697,23 +1688,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     extra_check = true;
   }
 
-  // Correct highlighting for cursor that can't be disabled.
-  // Avoids having to check this for each character.
-  if (wlv.fromcol >= 0) {
-    if (noinvcur) {
-      if ((colnr_T)wlv.fromcol == wp->w_virtcol) {
-        // highlighting starts at cursor, let it start just after the
-        // cursor
-        fromcol_prev = wlv.fromcol;
-        wlv.fromcol = -1;
-      } else if ((colnr_T)wlv.fromcol < wp->w_virtcol) {
-        // restart highlighting after the cursor
-        fromcol_prev = wp->w_virtcol;
-      }
-    }
-    if (wlv.fromcol >= wlv.tocol) {
-      wlv.fromcol = -1;
-    }
+  if (wlv.fromcol >= wlv.tocol) {
+    wlv.fromcol = -1;
   }
 
   if (col_rows == 0 && draw_text && !has_foldtext) {
@@ -1925,19 +1901,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         // but don't check inside p_extra here.
         if (wlv.vcol == wlv.fromcol
             || (wlv.vcol + 1 == wlv.fromcol
-                && (wlv.n_extra == 0 && utf_ptr2cells(ptr) > 1))
-            || (vcol_prev == fromcol_prev
-                && vcol_prev < wlv.vcol
-                && wlv.vcol < wlv.tocol)) {
+                && (wlv.n_extra == 0 && utf_ptr2cells(ptr) > 1))) {
           area_active = true;
-        } else if (area_active
-                   && (wlv.vcol == wlv.tocol
-                       || (noinvcur && wlv.vcol == wp->w_virtcol))) {
+        } else if (area_active && (wlv.vcol == wlv.tocol)) {
           area_active = false;
         }
 
-        bool selected = (area_active || (area_highlighting && noinvcur
-                                         && wlv.vcol == wp->w_virtcol));
+        bool selected = area_active;
         // When there may be inline virtual text, position of non-inline virtual text
         // can only be decided after drawing inline virtual text with lower priority.
         if (decor_need_recheck) {
@@ -1974,15 +1944,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           || (wlv.vcol + 1 == wlv.fromcol
               && ((wlv.n_extra == 0 && utf_ptr2cells(ptr) > 1)
                   || (wlv.n_extra > 0 && wlv.p_extra != NULL
-                      && utf_ptr2cells(wlv.p_extra) > 1)))
-          || (vcol_prev == fromcol_prev
-              && vcol_prev < wlv.vcol               // not at margin
-              && wlv.vcol < wlv.tocol)) {
+                      && utf_ptr2cells(wlv.p_extra) > 1)))) {
         *area_attr_p = vi_attr;                     // start highlighting
         area_active = true;
-      } else if (*area_attr_p != 0
-                 && (wlv.vcol == wlv.tocol
-                     || (noinvcur && wlv.vcol == wp->w_virtcol))) {
+      } else if (*area_attr_p != 0 && wlv.vcol == wlv.tocol) {
         *area_attr_p = 0;                           // stop highlighting
         area_active = false;
       }
@@ -2054,10 +2019,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       } else if (wlv.line_attr != 0
                  && ((wlv.fromcol == -10 && wlv.tocol == MAXCOL)
                      || wlv.vcol < wlv.fromcol
-                     || vcol_prev < fromcol_prev
                      || wlv.vcol >= wlv.tocol)) {
         // Use wlv.line_attr when not in the Visual or 'incsearch' area
-        // (area_attr may be 0 when "noinvcur" is set).
         char_attr_pri = wlv.line_attr;
       } else {
         char_attr_pri = 0;
@@ -2649,13 +2612,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           mb_c = schar_get_first_codepoint(mb_schar);
         } else if (mb_schar == NUL
                    && (wp->w_p_list
-                       || ((wlv.fromcol >= 0 || fromcol_prev >= 0)
+                       || (wlv.fromcol >= 0
                            && wlv.tocol > wlv.vcol
                            && Visual.mode != Ctrl_V
-                           && wlv.col < view_width
-                           && !(noinvcur
-                                && lnum == wp->w_cursor.lnum
-                                && wlv.vcol == wp->w_virtcol)))
+                           && wlv.col < view_width))
                    && lcs_eol_todo && lcs_eol != NUL) {
           // Display a '$' after the line or highlight an extra
           // character if the line break is included.
@@ -3080,10 +3040,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         }
       }
       wlv.char_attr = hl_combine_attr(low, high);
-    }
-
-    if (wlv.filler_todo <= 0) {
-      vcol_prev = wlv.vcol;
     }
 
     // Store character to be displayed.

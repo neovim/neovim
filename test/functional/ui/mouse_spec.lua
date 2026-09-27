@@ -98,7 +98,7 @@ describe('ui/mouse/input', function()
       feed('<LeftRelease><0,0>')
       screen:expect({
         any = {
-          '{17:testin}%^g',
+          '{17:testin^g}',
           'VISUAL',
         },
       })
@@ -113,7 +113,7 @@ describe('ui/mouse/input', function()
       feed('<LeftRelease><0,0>')
       screen:expect({
         any = {
-          '%^t{17:esting}',
+          '{17:^testing}',
           'VISUAL LINE',
         },
       })
@@ -130,7 +130,7 @@ describe('ui/mouse/input', function()
       feed('<LeftRelease><0,0>')
       screen:expect({
         any = {
-          '%^testing',
+          '{17:^t}esting',
           'VISUAL BLOCK',
         },
       })
@@ -636,7 +636,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           'testing',
-          'mo{17:us}%^e',
+          'mo{17:us^e}',
           'support and selection',
           'VISUAL',
         },
@@ -646,14 +646,14 @@ describe('ui/mouse/input', function()
         any = {
           'testing',
           'mo{17:use}',
-          '{17:su}%^pport and selection',
+          '{17:su^p}port and selection',
           'VISUAL',
         },
       })
       feed('<LeftDrag><0,0>')
       screen:expect({
         any = {
-          '%^t{17:esting}',
+          '{17:^testing}',
           '{17:mou}se ',
           'support and selection',
           'VISUAL',
@@ -710,7 +710,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           '{17:testing}',
-          '{17:m}%^ouse',
+          '{17:m^o}use',
           'support and selection',
           'VISUAL',
         },
@@ -721,7 +721,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           '{17:testing}',
-          '{17:m}%^ouse',
+          '{17:m^o}use',
           'support and selection',
           'VISUAL',
         },
@@ -731,7 +731,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           '{17:testing}',
-          '{17:m}%^ouse',
+          '{17:m^o}use',
           'support and selection',
           'VISUAL',
         },
@@ -741,7 +741,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           '{17:testing}',
-          '{17:m}%^ouse',
+          '{17:m^o}use',
           'support and selection',
           'VISUAL',
         },
@@ -751,7 +751,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           '{17:testing}',
-          '{17:m}%^ouse',
+          '{17:m^o}use',
           'support and selection',
           'VISUAL',
         },
@@ -795,7 +795,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
-          '{17:this}%^ is bar{1:%$}',
+          '{17:this^ }is bar{1:%$}',
           'VISUAL',
         },
       })
@@ -826,7 +826,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           '{17:foo}{100:%$}',
-          '{17:bar}{1:%^%$}',
+          '{17:bar}{100:^$}',
           'VISUAL',
         },
       })
@@ -840,7 +840,7 @@ describe('ui/mouse/input', function()
         any = {
           'testing',
           'mouse',
-          '{17:suppor}%^t and selection',
+          '{17:suppor^t} and selection',
           'VISUAL',
         },
       })
@@ -848,7 +848,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           'testing',
-          '%^m{17:ouse}',
+          '{17:^mouse}',
           '{17:support} and selection',
           'VISUAL',
         },
@@ -856,7 +856,7 @@ describe('ui/mouse/input', function()
       feed('<LeftDrag><4,0>')
       screen:expect({
         any = {
-          '%^t{17:esting}',
+          '{17:^testing}',
           '{17:mouse}',
           '{17:support} and selection',
           'VISUAL',
@@ -867,7 +867,7 @@ describe('ui/mouse/input', function()
         any = {
           'testing',
           'mouse',
-          '{17:support and selectio}%^n',
+          '{17:support and selectio^n}',
           'VISUAL',
         },
       })
@@ -883,7 +883,7 @@ describe('ui/mouse/input', function()
         any = {
           'testing',
           'mouse',
-          '{17:su}%^p{17:port and selection}',
+          '{17:su^pport and selection}',
           'VISUAL LINE',
         },
       })
@@ -891,7 +891,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           'testing',
-          '%^m{17:ouse}',
+          '{17:^mouse}',
           '{17:support and selection}',
           'VISUAL LINE',
         },
@@ -899,7 +899,7 @@ describe('ui/mouse/input', function()
       feed('<LeftDrag><4,0>')
       screen:expect({
         any = {
-          '{17:test}%^i{17:ng}',
+          '{17:test^ing}',
           '{17:mouse}',
           '{17:support and selection}',
           'VISUAL LINE',
@@ -910,7 +910,7 @@ describe('ui/mouse/input', function()
         any = {
           'testing',
           'mouse',
-          '{17:support and se}%^l{17:ection}',
+          '{17:support and se^lection}',
           'VISUAL LINE',
         },
       })
@@ -928,7 +928,7 @@ describe('ui/mouse/input', function()
         any = {
           'testing',
           'mouse',
-          'su%^pport and selection',
+          'su{17:^p}port and selection',
           'VISUAL BLOCK',
         },
       })
@@ -936,7 +936,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           'testing',
-          '%^m{17:ou}se',
+          '{17:^mou}se',
           '{17:sup}port and selection',
           'VISUAL BLOCK',
         },
@@ -944,7 +944,7 @@ describe('ui/mouse/input', function()
       feed('<LeftDrag><4,0>')
       screen:expect({
         any = {
-          'te{17:st}%^ing',
+          'te{17:st^i}ng',
           'mo{17:use}',
           'su{17:ppo}rt and selection',
           'VISUAL BLOCK',
@@ -955,7 +955,7 @@ describe('ui/mouse/input', function()
         any = {
           'testing',
           'mouse',
-          'su{17:pport and se}%^lection',
+          'su{17:pport and se^l}ection',
           'VISUAL BLOCK',
         },
       })
@@ -975,7 +975,7 @@ describe('ui/mouse/input', function()
         any = {
           '{17:testing}',
           '{17:mouse}',
-          '{17:su}^pport and selection',
+          '{17:su^p}port and selection',
           'VISUAL',
         },
       })

@@ -313,11 +313,11 @@ describe('highlight', function()
     feed('gg')
     command('vsplit')
 
-    -- Non-blinking block cursor: does NOT highlight char-at-cursor.
+    -- Visual highlighting does not depend on 'guicursor'.
     command('set guicursor=a:block-blinkon0')
     feed('V')
     screen:expect([[
-      {17:  }^l{17:ine1 foo bar}       │{17:  line1 foo bar}       |
+      {17:  ^line1 foo bar}       │{17:  line1 foo bar}       |
       abcdefghijklmnopqrs   │abcdefghijklmnopqrs   |
       ABCDEFGHIJKLMNOPQRS   │ABCDEFGHIJKLMNOPQRS   |
       {3:[No Name] [+]          }{2:[No Name] [+]         }|
@@ -326,14 +326,14 @@ describe('highlight', function()
 
     feed('<Esc>$vhhh')
     screen:expect([[
-        line1 foo^ {17:bar}       │  line1 foo{17: bar}       |
+        line1 foo{17:^ bar}       │  line1 foo{17: bar}       |
       abcdefghijklmnopqrs   │abcdefghijklmnopqrs   |
       ABCDEFGHIJKLMNOPQRS   │ABCDEFGHIJKLMNOPQRS   |
       {3:[No Name] [+]          }{2:[No Name] [+]         }|
       {5:-- VISUAL --}                                 |
     ]])
 
-    -- Vertical cursor: highlights char-at-cursor. #8983
+    -- Non-blinking block cursor with blinkon0 does not affect Visual highlighting either. #8983
     command('set guicursor=a:block-blinkon175')
     screen:expect([[
         line1 foo{17:^ bar}       │  line1 foo{17: bar}       |
@@ -433,14 +433,14 @@ describe('highlight', function()
     insert('foobar\nfoo')
     feed('0<C-V>k$')
     screen:expect([[
-      {17:foobar}^                                       |
+      {17:foobar^ }                                      |
       {17:foo    }                                      |
       {1:~                                            }|*2
       {5:-- VISUAL BLOCK --}                           |
     ]])
     feed('10l')
     screen:expect([[
-      {17:foobar          }^                             |
+      {17:foobar          ^ }                            |
       {17:foo              }                            |
       {1:~                                            }|*2
       {5:-- VISUAL BLOCK --}                           |
@@ -458,7 +458,7 @@ describe('highlight', function()
     screen:expect([[
       line 48                                 |
       line 49                                 |
-      ^l{17:ine 50}                                 |
+      {17:^line 50}                                 |
       line 51                                 |
       line 52                                 |
       line 53                                 |
@@ -475,7 +475,7 @@ describe('highlight', function()
       {17:line 51}                                 |
       {17:line 52}                                 |
       {17:line 53}                                 |
-      ^l{17:ine 54}                                 |
+      {17:^line 54}                                 |
       line 55                                 |
       line 56                                 |
       {5:-- VISUAL LINE --}                       |
@@ -488,7 +488,7 @@ describe('highlight', function()
       line 51                                 |
       line 52                                 |
       line 53                                 |
-      ^l{17:ine 54}                                 |
+      {17:^line 54}                                 |
       line 55                                 |
       line 56                                 |
       {5:-- VISUAL LINE --}                       |
@@ -497,7 +497,7 @@ describe('highlight', function()
     screen:expect([[
       line 48                                 |
       line 49                                 |
-      ^l{17:ine 50}                                 |
+      {17:^line 50}                                 |
       {17:line 51}                                 |
       {17:line 52}                                 |
       {17:line 53}                                 |
@@ -887,7 +887,7 @@ describe("'listchars' highlight", function()
     feed('lllvj')
     screen:expect([[
       {19:>-------.}a{17:bcd}{103:*}{100:¬}     |
-      {103:>-------.}{17:a}^bcd{19:.}Lorem{1:>}|
+      {103:>-------.}{17:a^b}cd{19:.}Lorem{1:>}|
       {1:¬}                   |
       {1:~                   }|
       -- VISUAL --        |
@@ -895,7 +895,7 @@ describe("'listchars' highlight", function()
     feed('<esc>V')
     screen:expect([[
       {19:>-------.}abcd{19:*}{1:¬}     |
-      {103:>-------.}{17:a}^b{17:cd}{103:.}{17:Lorem}{1:>}|
+      {103:>-------.}{17:a^bcd}{103:.}{17:Lorem}{1:>}|
       {1:¬}                   |
       {1:~                   }|
       -- VISUAL LINE --   |
@@ -1248,7 +1248,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     feed('V<C-f>zbkkjk')
     screen:expect([[
       {17:abc}                                               |
-      ^a{17:bc}                                               |
+      {17:^abc}                                               |
       abc                                               |*2
       {5:-- VISUAL LINE --}                                 |
     ]])

@@ -1630,6 +1630,42 @@ func Test_heap_buffer_overflow()
   set updatecount&
 endfunc
 
+func s:ScreenAttr(row, col)
+  redraw
+  return screenattr(a:row, a:col)
+endfunc
+
+func Test_charwise_visual_hl_inclusive_and_exclusive_selection()
+  new
+  call setline(1, '12345')
+
+  normal! V$
+  const visual_attr = s:ScreenAttr(1, 1)
+  let VisualCols = {-> range(1, strlen(getline(1)))->filter({_, c ->
+        \ s:ScreenAttr(1, c) == visual_attr})}
+
+  exe "normal! \<Esc>"
+  call assert_true(visual_attr != s:ScreenAttr(1, 1),
+        \ "sanity check: Visual displayed differently to Normal")
+
+  set selection=inclusive
+  normal! ggf2vf4
+  call assert_equal([2, 3, 4], VisualCols())
+
+  set selection=exclusive
+  exe "normal! \<Esc>ggf2vll"
+  call assert_equal([2, 3], VisualCols())  " (Character under cursor excluded.)
+  normal! o
+  call assert_equal(2, col('.'), "sanity check: cursor column after 'o'")
+  call assert_equal([2, 3], VisualCols())
+  normal! y
+  call assert_equal('23', @",
+        \ "sanity check: yanked text matches visual selection")
+
+  set selection&
+  bwipe!
+endfunc
+
 " Test Visual highlight with cursor at end of screen line and 'showbreak'
 func Test_visual_hl_with_showbreak()
   CheckScreendump

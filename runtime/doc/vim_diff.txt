@@ -527,7 +527,6 @@ TUI:
   uses one or the other, it does not attempt to merge the two.
 
 UI/Display:
-- |Visual| selection highlights the character at cursor. |visual-use|
 - messages: When showing messages longer than 'cmdheight', only
   scroll the message lines, not the entire screen. The
   separator line is decorated by |hl-MsgSeparator| and
@@ -562,6 +561,7 @@ These Nvim features were later integrated into Vim.
 - |vim-tutor-mode|
 - Lua: `require()` also searches for modules in 'runtimepath'.
 - Lua: vim.g, vim.w, vim.b, vim.t, vim.v, vim.fn, vim.call()
+- |Visual| selection highlights the character at cursor. |visual-use|
 
 ==============================================================================
 Other changes                                            *nvim-changed*

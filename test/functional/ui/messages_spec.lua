@@ -986,7 +986,7 @@ describe('ui/ext_messages', function()
     feed('<c-v>k2l')
     screen:expect({
       grid = [[
-        {17:ab}^cde                    |
+        {17:ab^c}de                    |
         {17:123}45                    |
         {1:~                        }|*3
       ]],

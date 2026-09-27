@@ -271,18 +271,6 @@ const char *parse_shape_opt(int what)
   return NULL;
 }
 
-/// Returns true if the cursor is non-blinking "block" shape during
-/// visual selection.
-///
-/// @param exclusive If 'selection' option is "exclusive".
-bool cursor_is_block_during_visual(bool exclusive)
-  FUNC_ATTR_PURE
-{
-  int mode_idx = exclusive ? SHAPE_IDX_VE : SHAPE_IDX_V;
-  return (SHAPE_BLOCK == shape_table[mode_idx].shape
-          && 0 == shape_table[mode_idx].blinkon);
-}
-
 /// Map cursor mode from string to integer
 ///
 /// @param mode Fullname of the mode whose id we are looking for

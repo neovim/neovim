@@ -37,7 +37,7 @@ describe('display', function()
     ]])
     feed('VG7kk')
     screen:expect([[
-      {7:  }^f{17:oo}                                                       |
+      {7:  }{17:^foo}                                                       |
       {7:  }foo                                                       |*6
       {5:-- VISUAL LINE --}                                           |
     ]])

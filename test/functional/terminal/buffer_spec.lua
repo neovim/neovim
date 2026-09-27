@@ -599,7 +599,7 @@ describe(':terminal buffer', function()
       api.nvim_input_mouse('right', 'release', '', 0, 1, 27)
       screen:expect([[
         rows: 6, cols: 25       │rows: 6, cols: 25        |
-        mo{108:use enabled}           │mo^u{108:se enabled}            |
+        mo{108:use enabled}           │mo{108:^use enabled}            |
         {108: }                       │{108: }                        |*3
         [Process suspended]     │[Process suspended]      |
         {5:-- VISUAL --}                                      |
