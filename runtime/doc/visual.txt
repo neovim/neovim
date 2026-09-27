@@ -88,21 +88,28 @@ blockwise Visual    Visual	   Normal		  linewise Visual
 linewise Visual     Visual	   blockwise Visual	  Normal
 
 						*gv* *v_gv* *reselect-Visual*
-gv			Start Visual mode with the same area as the previous
-			area and the same mode.
-			In Visual mode the current and the previous Visual
-			area are exchanged.
-			After using "p" or "P" in Visual mode the text that
-			was put will be selected.
+gv			Starts Visual mode with the previous Visual area and
+			mode.  In Visual mode the current and the previous
+			Visual area are exchanged. After using "p" or "P" in
+			Visual mode the text that was put will be selected.
+
+			An operator target that internally creates a temporary
+			Visual selection (|gn|, "d<C-v>j", an |omap-info| text
+			object) does not update the previous ("gv") area (nor
+			|'<| |'>|, |visualmode()|).
 
 								*gn* *v_gn*
-gn			Search forward for the last used search pattern, like
-			with `n`, and start Visual mode to select the match.
-			If the cursor is on the match, visually selects it.
-			If an operator is pending, operates on the match.
-			E.g., "dgn" deletes the text of the next match.
-			If Visual mode is active, extends the selection
-			until the end of the next match.
+gn			Searches forward for the last-used search pattern,
+			like with `n`, and starts Visual mode to select the
+			match. If the cursor is on the match, visually selects
+			it. If an operator is pending, operates on the match.
+			E.g., "dgn" deletes the text of the next match. If
+			Visual mode is active, extends the selection until the
+			end of the next match.
+
+			The Visual marks |'<| |'>| are not changed, so "cgn"
+			with a |/\%V| pattern can be repeated with |.|.
+
 			'wrapscan' applies.
 			Note: Unlike `n` the search direction does not depend
 			on the previous search command.

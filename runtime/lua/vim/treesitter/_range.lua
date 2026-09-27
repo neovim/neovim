@@ -186,6 +186,18 @@ function M.visual_select(range)
     end_col = #vim.fn.getline(end_row + 1) + 1
   end
 
+  if vim.o.selection == 'exclusive' then
+    end_col = end_col + 1
+  end
+
+  if not vim.fn.mode():find('^[vV\22]') then
+    -- Operator-pending: select directly, not via "gv", to keep the user's '< '> (|omap-info|).
+    api.nvim_win_set_cursor(0, { start_row + 1, start_col })
+    vim.cmd.normal({ 'v', bang = true })
+    api.nvim_win_set_cursor(0, { end_row + 1, end_col - 1 })
+    return
+  end
+
   if vim.fn.visualmode() ~= 'v' then
     -- Reset visualmode() to 'v'
     vim.cmd.normal({ 'v\27', bang = true })
@@ -196,10 +208,6 @@ function M.visual_select(range)
   local cursor_col, cursor_row = vim.fn.col('.'), vim.fn.line('.')
   if M.cmp_pos.gt(visual_row, visual_col, cursor_row, cursor_col) then
     cursor_other_end_of_selection = true
-  end
-
-  if vim.o.selection == 'exclusive' then
-    end_col = end_col + 1
   end
 
   vim.fn.setpos("'<", { 0, start_row + 1, start_col + 1, 0 })

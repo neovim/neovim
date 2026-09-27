@@ -690,6 +690,8 @@ Marks:
   being undone; the mark shifts with the text it was moved to, the same as a
   mark the change never touched. Vim restores its old (wrong) position. Marks
   moved by the change itself are still restored.
+- An operator on a target that creates a Visual selection ("cgn") does not
+  change |'<| |'>|. |gv|
 
 Motion:
 - The |jumplist| avoids useless/phantom jumps.

@@ -356,7 +356,8 @@ local function get_selection()
     pos1, pos2 = pos2, pos1
   end
 
-  if vim.o.selection == 'exclusive' then
+  -- selection=exclusive excludes end char, except for empty selection (op-pending, or a new "v").
+  if vim.o.selection == 'exclusive' and (pos1[2] ~= pos2[2] or pos1[3] ~= pos2[3]) then
     pos2[3] = pos2[3] - 1
   end
 

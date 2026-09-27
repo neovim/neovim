@@ -120,6 +120,8 @@ EDITOR
 • On Windows, the |trust| db now stores paths with "/" slashes. This means the
   trust store will be reset (one time).
 • `stdpath("log")` moved to `stdpath("state")/logs`.
+• An operator on a target that creates a Visual selection ("cgn") does not
+  change |'<| |'>|. |gv|
 • |cmdwin| (|q:|, |q/|, |q?|, |c_CTRL-F|):
   • Only supports one "cmdline level", not "infinite recursion".
   • Expr-register (|i_CTRL-R_=|, |c_CTRL-R_=|) no longer supports opening

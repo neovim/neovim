@@ -3477,7 +3477,9 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     atom_capture_op(oap, cap, redo_yank);
 
     if (Visual.active) {
-      if (!gui_yank) {
+      if (!gui_yank
+          // Not if the operator target made the Visual area ("cgn", "d<C-v>j"). #40949
+          && !finish_op) {
         // Save the current Visual area for '< and '> marks, and "gv"
         curbuf->b_visual = visualinfo();
         restore_visual_mode();
