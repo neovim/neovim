@@ -43,17 +43,17 @@ typedef struct {
 /// How an insert-session was entered from Visual mode.
 typedef enum {
   kVInsNone,    ///< Not entered from Visual mode.
-  kVInsKeys,    ///< Redo opens with the selection's captured keys: replayable.
-  kVInsMotion,  ///< Motion selected the region: Ex/Lua omap ("c" + Lua textobj), "gn". Replayable.
-  kVInsOther,   ///< Redo without captured keys: forced motion, "gv", or "1v"
-                ///< fixed-size fallback.
+  kVInsKeys,    ///< (Replayable) Redo opens with the selection's captured keys.
+  kVInsMotion,  ///< (Replayable) Motion selected the region: Ex/Lua omap ("c" + Lua textobj), "gn".
+  kVInsOther,   ///< Redo without captured keys: forced motion, "gv", or "1v" fixed-size fallback.
 } VisualIns;
 
 /// The insert-session delimited by atom_ins_start()/atom_ins_end().
 typedef struct {
+  CmdOrigin origin;  ///< State at start.
   bool typed;        ///< Session is user input (typed, or via mapping/macro).
   VisualIns vis;     ///< Session was entered from Visual mode.
-  CmdOrigin origin;  ///< State at start.
+  char *vsel;        ///< Visual keys ("gv…"); supplants redo's "1v" in atom+cascade. Owned.
 } InsSession;
 
 typedef struct CmdAtom CmdAtom;

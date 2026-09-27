@@ -1296,20 +1296,27 @@ InsSession atom_ins_start(int cmd, long count, VisualIns vis, bool vblock)
     // Else the CmdFrame origin, from before the entry moved the cursor (a/A/…).
     .origin = vis == kVInsKeys ? vatom.origin : cur_frame->origin,
   };
+
   if (vis != kVInsNone && !mc_replaying() && !is_child_frame()) {
-    if (vis == kVInsKeys) {
-      // Internal (non-user) keys (":norm", scheduled feedkeys) are not user-input.
+    if (vis == kVInsOther && atom_visual_replayable() && !atom_visual_redoable()) {
+      session.vsel = atom_visual_span().data;
+      session.origin = vatom.origin;
+    }
+    if (vis == kVInsKeys || session.vsel != NULL) {
+      // Internal keys (":norm", scheduled feedkeys) are not user-input.
       // But a Visual-mode operator mapping ("xnoremap c c") is user-input. #41605
       session.typed = atom_visual_replayable() && atom_visual_typed();
     }
     // The selection is consumed: already in the redo body. Also clears selection display.
     atom_visual_reset();
   }
+
   bool repl = cmd == 'R' || cmd == 'V' || cmd == 'r' || cmd == 'v';
-  bool reexec = vis == kVInsNone || vis == kVInsKeys
+  bool reexec = vis == kVInsNone || vis == kVInsKeys || session.vsel != NULL
                 || (vis == kVInsMotion && cur_frame->payload_start == SIZE_MAX);
   mc_ins_cascade_start(session.typed && count <= 1 && !repl && !vblock && reexec,
-                       session.origin, root_frame()->id);
+                       session.origin, root_frame()->id, session.vsel);
+
   return session;
 }
 
@@ -1317,33 +1324,35 @@ InsSession atom_ins_start(int cmd, long count, VisualIns vis, bool vblock)
 /// whole session (not spans), applies the entry cursor placement ("A", "o", "cw") and autocommands.
 ///
 /// @param busy  True when edit() returned early (i_CTRL-O): session incomplete.
-void atom_ins_end(const InsSession *session, bool busy)
+void atom_ins_end(InsSession *session, bool busy)
 {
-  if (mc_replaying()) {
-    return;
-  }
-
   bool visual = session->vis != kVInsNone;
   bool user_input = session->typed
                     // A session is user input, if user input occurred during it. #41516
                     || maptick != session->origin.maptick;
 
+  if (mc_replaying()) {
+    goto theend;
+  }
   if (mc_ins_commit()) {
     // Not during a mapping: there the spans are subatoms of its composite.
     if (has_event(EVENT_CMDATOM) && !atom_composite_active()) {
       atom_ins_push(session, false);
     }
-    return;
+    goto theend;
   }
   if (!user_input || busy || restart_edit != 0 || !atom_buf_has_consumers()
-      || (visual && session->vis != kVInsKeys)) {
+      || (visual && session->vis != kVInsKeys && session->vsel == NULL)) {
     if (user_input && (busy || restart_edit != 0) && atom_composite_active()) {
       // Incomplete session (i_CTRL-O): its resolution is never captured.
       composite.lossy = true;
     }
-    return;
+    goto theend;
   }
   atom_ins_push(session, mc_buf_has_cursors(curbuf));
+
+theend:
+  XFREE_CLEAR(session->vsel);
 }
 
 /// Pushes the ended insert-session as one atom. Skips a session not ending in <Esc>, except
@@ -1351,6 +1360,12 @@ void atom_ins_end(const InsSession *session, bool busy)
 static void atom_ins_push(const InsSession *session, bool cascade)
 {
   CmdAtom atom = atom_from_redo(session->vis != kVInsNone ? kAVisual : kAInsert);
+  if (session->vsel != NULL && atom.keys != NULL) {
+    assert(strncmp(atom.keys, "1v", 2) == 0);  // Supplant redo's "1v" fallback.
+    char *keys = concat_str(session->vsel, atom.keys + 2);
+    xfree(atom.keys);
+    atom.keys = keys;
+  }
   size_t size = atom.keys != NULL ? strlen(atom.keys) : 0;
   bool replace = atom.spec.cmd == 'r' || (atom.spec.cmd == 'g' && atom.spec.cmd2 == 'r');
   if (size == 0 || (!replace && (uint8_t)atom.keys[size - 1] != ESC)) {
