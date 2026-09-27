@@ -995,6 +995,12 @@ describe('lua stdlib', function()
             vim.opt.listchars = vim.opt.listchars - 'space'
             return vim.o.listchars
           end)
+
+          eq_exec_lua('tab:>-', function()
+            vim.opt.listchars = { tab = '>-', eol = '~', space = '.' }
+            vim.opt.listchars:remove { 'eol', 'space' } -- Removes by key.
+            return vim.o.listchars
+          end)
         end)
 
         it('does not allow subtracting dict style multiple times', function()
@@ -1050,18 +1056,24 @@ describe('lua stdlib', function()
       end)
 
       it('automatically sets when calling remove with a table', function()
-        eq_exec_lua('foo', function()
+        eq_exec_lua('bar', function()
           vim.opt.wildignore = 'foo,bar,baz'
-          vim.opt.wildignore:remove { 'bar', 'baz' }
+          vim.opt.wildignore:remove { 'foo', 'baz' } -- *Non-adjacent* items too.
           return vim.o.wildignore
         end)
       end)
 
       it('removes flags from a set when calling remove with a table: #41953', function()
         eq_exec_lua({ j = true, q = true, l = true }, function()
-          vim.opt.formatoptions = 'jcroql'
-          vim.opt.formatoptions:remove { 'c', 'r', 'o' }
+          vim.opt.formatoptions = 'jcqrol'
+          vim.opt.formatoptions:remove { 'c', 'r', 'o' } -- *Non-adjacent* flags too.
           return vim.opt.formatoptions:get()
+        end)
+
+        eq_exec_lua('jql', function()
+          vim.opt.formatoptions = 'jcqrol'
+          vim.opt.formatoptions:remove { c = true, r = true, o = true } -- Set style.
+          return vim.o.formatoptions
         end)
       end)
 
@@ -1391,8 +1403,8 @@ describe('lua stdlib', function()
 
       it('removes a table of flags from a flag-list option: #41953', function()
         eq_exec_lua('jql', function()
-          vim.opt_local.formatoptions = 'jcroql'
-          vim.opt_local.formatoptions:remove { 'c', 'r', 'o' }
+          vim.opt_local.formatoptions = 'jcqrol'
+          vim.opt_local.formatoptions:remove { 'c', 'r', 'o' } -- *Non-adjacent* flags too.
           return vim.bo.formatoptions
         end)
       end)

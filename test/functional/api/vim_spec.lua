@@ -1975,6 +1975,10 @@ describe('API', function()
         "Invalid 'scrolloff': expected a valid type, got String",
         pcall_err(api.nvim_set_option_value, 'scrolloff', 'wrong', {})
       )
+      eq(
+        "Conflict: 'buf' not allowed with 'win'",
+        pcall_err(api.nvim_set_option_value, 'scrolloff', 1, { buf = 0, win = 0 })
+      )
       local tab1 = api.nvim_get_current_tabpage()
       eq(
         "Conflict: 'tab' not allowed with 'win', 'buf', 'filetype' or 'scope'",

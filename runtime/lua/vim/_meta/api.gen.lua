@@ -2307,17 +2307,19 @@ function vim.api.nvim_set_option(name, value) end
 --- `:set`: for global-local options, both the global and local value are set
 --- unless otherwise specified with {scope}.
 ---
---- Note the options {win} and {buf} cannot be used together.
+--- Note that `win` and `buf` cannot be used together.
 ---
 --- @param name string Option name
---- @param value any New option value
+--- @param value any New option value. May be structured for dict/list options, e.g. 'formatoptions'
+--- accepts `{ 'c', 'r' }`, 'listchars' accepts `{ eol = '~' }`.
 --- @param opts vim.api.keyset.option? Optional parameters
 --- - buf: Buffer number. Used for setting buffer local option.
 --- - dry_run: (`boolean?`, default: false) If true, validates the
 ---   option value without setting it.
---- - operation: One of "set", "append", "prepend", or "remove".
----   Corresponds to `:set=`, `:set+=`, `:set^=`, and `:set-=`.
----   Default is "set".
+--- - operation: (`string?`, default: "set") One of "set", "append", "prepend", or
+---   "remove". Corresponds to `:set=`, `:set+=`, `:set^=`, and `:set-=`.
+---   With "remove", each item in a structured `value` is removed regardless of
+---   order/adjacency.
 --- - scope: One of "global" or "local". Analogous to
 --- `:setglobal` and `:setlocal`, respectively.
 --- - tab: `tab-ID` for tab-local options (currently only 'cmdheight'). Tabpage 0
