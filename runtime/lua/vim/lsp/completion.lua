@@ -328,23 +328,24 @@ local function get_doc(item)
   return '', default_kind
 end
 
----@param value string
----@param prefix string
----@return boolean
----@return integer?
-local function match_item_by_value(value, prefix)
-  if prefix == '' then
-    return true, nil
-  end
-  if has_completeopt('fuzzy') then
-    local score = vim.fn.matchfuzzypos({ value }, prefix)[3] ---@type table
-    return #score > 0, score[1]
-  end
+---@return fun(value: string, prefix: string): boolean, integer?
+local function item_matcher()
+  local fuzzy = has_completeopt('fuzzy')
+  local ignorecase, smartcase = vim.o.ignorecase, vim.o.smartcase
+  return function(value, prefix)
+    if prefix == '' then
+      return true, nil
+    end
+    if fuzzy then
+      local score = vim.fn.matchfuzzypos({ value }, prefix)[3] ---@type table
+      return #score > 0, score[1]
+    end
 
-  if vim.o.ignorecase and (not vim.o.smartcase or not prefix:find('%u')) then
-    return vim.startswith(value:lower(), prefix:lower()), nil
+    if ignorecase and (not smartcase or not prefix:find('%u')) then
+      return vim.startswith(value:lower(), prefix:lower()), nil
+    end
+    return vim.startswith(value, prefix), nil
   end
-  return vim.startswith(value, prefix), nil
 end
 
 --- Generate kind text for completion color items
@@ -404,10 +405,11 @@ end
 ---info is not complete, resolving the item (via completionItem/resolve) may populate the missing
 ---fields.
 ---@param item lsp.CompletionItem
+---@param popup boolean 'completeopt' has "popup"
 ---@return string
 ---@return lsp.MarkupKind
 ---@return boolean complete
-local function complete_item_info(item)
+local function complete_item_info(item, popup)
   local info, kind = get_doc(item)
 
   if item.detail and item.detail ~= '' then
@@ -419,11 +421,7 @@ local function complete_item_info(item)
     end
   end
 
-  if
-    info == ''
-    and has_completeopt('popup')
-    and item.insertTextFormat == protocol.InsertTextFormat.Snippet
-  then
+  if info == '' and popup and item.insertTextFormat == protocol.InsertTextFormat.Snippet then
     local text = item.insertText or (item.textEdit and item.textEdit.newText)
     if text then
       local snippet = parse_snippet(text)
@@ -518,6 +516,8 @@ function M._lsp_to_complete_items(
     return {}
   end
 
+  local match_item_by_value = item_matcher()
+  local popup = has_completeopt('popup')
   ---@type fun(item: lsp.CompletionItem, item_prefix: string): boolean, integer?
   local matches
   if not prefix:find('%w') then
@@ -587,7 +587,7 @@ function M._lsp_to_complete_items(
         hl_group = 'DiagnosticDeprecated'
       end
       local kind, kind_hlgroup = generate_kind(item)
-      local info, info_kind, info_complete = complete_item_info(item)
+      local info, info_kind, info_complete = complete_item_info(item, popup)
       local commit_chars --- @type string?
       if use_commit then
         if commit_support and item.commitCharacters then
@@ -921,7 +921,7 @@ function CompletionResolver:request(bufnr, param, selected_word)
         return
       end
 
-      local info, kind = complete_item_info(result)
+      local info, kind = complete_item_info(result, has_completeopt('popup'))
       if info ~= '' and info ~= cmp_info.completed.info then
         local windata = api.nvim__complete_set(cmp_info.selected, { info = info })
         update_popup_window(windata.winid, windata.bufnr, kind)
