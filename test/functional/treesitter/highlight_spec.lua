@@ -1580,3 +1580,75 @@ it('conceals lines contributed by an injected tree', function()
     end)
   )
 end)
+
+it('batches conceal queries and invalidates them on edits', function()
+  clear()
+  local heights = { 1, 0, 1, 0, 1, 1, 1, 0, 1, 0 }
+  eq(
+    {
+      { heights, 3 },
+      { heights, 3 },
+      { { 1, 1, 1, 1, 1, 1, 1, 0, 1, 0 }, 6 },
+      { heights, 9 },
+      { { 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0 }, 12 },
+      { heights, 15 },
+    },
+    exec_lua(function()
+      local api = vim.api
+      -- Isolate batching from injection discovery; injected concealment is tested above.
+      vim.treesitter.query.set('markdown', 'injections', '')
+      vim.treesitter.query.set(
+        'markdown',
+        'highlights',
+        [[
+        (fenced_code_block (fenced_code_block_delimiter) @conceal (#set! conceal_lines ""))
+      ]]
+      )
+      local buf = api.nvim_create_buf(false, true)
+      local lines = { 'top', '```', 'body', '```', 'a', 'b', 'c', '```', 'body', '```' }
+      api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+      -- Three batches, including a short EOF batch. Avoid cursor-line exceptions.
+      local win = api.nvim_open_win(buf, false, {
+        relative = 'editor',
+        row = 0,
+        col = 0,
+        width = 40,
+        height = 4,
+        style = 'minimal',
+      })
+      vim.wo[win].conceallevel = 3
+      vim.wo[win].wrap = false
+      vim.wo[win].foldenable = false
+      vim.treesitter.start(buf, 'markdown')
+      local tree = vim.treesitter.highlighter.active[buf].tree
+      local parse, parses = tree.parse, 0
+      tree.parse = function(self, range, ...)
+        assert(range[1] >= 0 and range[2] <= api.nvim_buf_line_count(buf))
+        parses = parses + 1
+        return parse(self, range, ...)
+      end
+      local results = {}
+      local function measure(first, last, step)
+        local rows = {}
+        for row = first, last, step do
+          rows[row + 1] = api.nvim_win_text_height(win, { start_row = row, end_row = row }).all
+        end
+        results[#results + 1] = { rows, parses }
+      end
+      -- One RPC: no intervening redraw may prepopulate the conceal cache.
+      -- The cold forward scan also checks that later marks do not conceal earlier text.
+      measure(0, 9, 1)
+      measure(9, 0, -1)
+      api.nvim_buf_set_lines(buf, 1, 4, false, { 'plain', 'body', 'plain' })
+      measure(9, 0, -1) -- A cold backward scan must batch too, not re-query overlapping ranges.
+      api.nvim_buf_set_lines(buf, 1, 4, false, { '```', 'body', '```' })
+      measure(0, 9, 1)
+      api.nvim_buf_set_lines(buf, 0, 0, false, { 'inserted' })
+      measure(10, 0, -1)
+      api.nvim_buf_set_lines(buf, 0, 1, false, {})
+      measure(9, 0, -1)
+      tree.parse = parse
+      return results
+    end)
+  )
+end)

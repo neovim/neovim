@@ -866,26 +866,11 @@ next_mark:
 
 static const uint32_t conceal_filter[kMTMetaCount] = {[kMTMetaConcealLines] = kMTFilterSelect };
 
-/// Called by draw, move and plines code to determine whether a line is concealed.
-/// Scans the marktree for conceal_line marks on "row" and invokes any
-/// _on_conceal_line decoration provider callbacks, if necessary.
-///
-/// @param check_cursor If true, avoid an early return for an unconcealed cursorline.
-///                     Depending on the callsite, we still want to know whether the
-///                     cursor line would be concealed if it was not the cursorline.
-///
-/// @return whether "row" is concealed
-bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
+static bool decor_find_conceal_line(win_T *wp, int row)
 {
-  if (row < 0 || wp->w_p_cole < 2
-      || (!check_cursor && wp == curwin && row + 1 == wp->w_cursor.lnum
-          && !conceal_cursor_line(wp))) {
-    return false;
-  }
-
   // No need to scan the marktree if there are no conceal_line marks.
   if (!buf_meta_total(wp->w_buffer, kMTMetaConcealLines)) {
-    return decor_providers_invoke_conceal_line(wp, row);
+    return false;
   }
 
   // Scan the marktree for any conceal_line marks on this row.
@@ -911,7 +896,33 @@ bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
     marktree_itr_next_filter(wp->w_buffer->b_marktree, itr, row + 1, 0, conceal_filter);
   }
 
-  return decor_providers_invoke_conceal_line(wp, row);
+  return false;
+}
+
+/// Called by draw, move and plines code to determine whether a line is concealed.
+/// Scans the marktree for conceal_line marks on "row" and invokes any
+/// _on_conceal_line decoration provider callbacks, if necessary.
+///
+/// @param check_cursor If true, avoid an early return for an unconcealed cursorline.
+///                     Depending on the callsite, we still want to know whether the
+///                     cursor line would be concealed if it was not the cursorline.
+///
+/// @return whether "row" is concealed
+bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
+{
+  if (row < 0 || wp->w_p_cole < 2
+      || (!check_cursor && wp == curwin && row + 1 == wp->w_cursor.lnum
+          && !conceal_cursor_line(wp))) {
+    return false;
+  }
+
+  if (decor_find_conceal_line(wp, row)) {
+    return true;
+  }
+
+  decor_providers_invoke_conceal_line(wp, row);
+  // Providers may add conceal marks for other rows, so check this row again.
+  return decor_find_conceal_line(wp, row);
 }
 
 /// @return whether a window may have folded or concealed lines
