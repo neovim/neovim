@@ -578,14 +578,10 @@ submit_pr() {
   done
 }
 
-# Gets all Vim commits since the "start" commit.
-list_vim_commits() {
-  _git -C "${VIM_SOURCE_DIR}" log --reverse v8.1.0000..HEAD "$@"
-}
-
-# Prints all (sorted) "vim-patch:xxx" tokens found in the Nvim git log.
-list_vimpatch_tokens() {
-  local patch_pat='[a-z0-9.]{7,}'
+# Prints all (sorted) "vim-patch:xxx" tokens found in the Nvim git log
+# where xxx is Git commit hash, not X.Y.Z version
+list_vimpatch_hashes() {
+  local patch_pat='[a-z0-9]{7,}'
   # Use sed…{7,7} to normalize (internal) Git hashes (for tokens caches).
   diff "${NVIM_SOURCE_DIR}/scripts/vimpatch_commit_ignore.txt" <(
     _git -C "${NVIM_SOURCE_DIR}" log --format="%H" -E --grep="vim-patch:$patch_pat" "$VIMPATCH_RANGE"
@@ -594,9 +590,10 @@ list_vimpatch_tokens() {
     sed -e 's/^> //' |
     _git -C "${NVIM_SOURCE_DIR}" log --no-walk --stdin \
     | grep -oE "vim-patch:$patch_pat" \
-    | sort \
-    | uniq \
-    | sed -nEe 's/^vim-patch:([0-9]+\.[^ ]+|[0-9a-z]{7,7}).*/\1/p'
+    | grep -v "vim-patch:partial" |
+    sed -nEe "s/^vim-patch:($patch_pat).*/\1/p" |
+    sort |
+    uniq
 }
 
 # Prints all merged patches (since current v:version) in ascending order.
@@ -620,59 +617,19 @@ list_vimpatch_numbers() {
     uniq
 }
 
-declare -A tokens
-declare -A vim_commit_tags
-
-_set_tokens_and_tags() {
-  set +u  # Avoid "unbound variable" with bash < 4.4 below.
-  if [[ -n "${tokens[*]}" ]]; then
-    return
-  fi
-  set -u
-
-  # Find all "vim-patch:xxx" tokens in the Nvim git log.
-  for token in $(list_vimpatch_tokens); do
-    tokens[$token]=1
-  done
-
-  # Create an associative array mapping Vim commits to tags.
-  eval "vim_commit_tags=(
-    $(git -C "${VIM_SOURCE_DIR}" show-ref --tags --dereference \
-      | sed -nEe 's/^([0-9a-f]+) refs\/tags\/(v[0-9.]+)(\^\{\})?$/["\1"]="\2"/p')
-  )"
-  # Exit in case of errors from the above eval (empty vim_commit_tags).
-  if ! (( "${#vim_commit_tags[@]}" )); then
-    msg_err "Could not get Vim commits/tags."
-    exit 1
-  fi
-}
-
 # Prints a newline-delimited list of Vim commits, for use by scripts.
 # "$1": use extended format? (with subject)
-# "$@" is passed to list_vim_commits, as extra arguments to git-log.
-list_missing_vimpatches() {
-  local -a missing_vim_patches=()
-  _set_missing_vimpatches "$@"
-  set +u  # Avoid "unbound variable" with bash < 4.4 below.
-  for line in "${missing_vim_patches[@]}"; do
-    printf '%s\n' "$line"
-  done
-  set -u
-}
-
-# Sets / appends to missing_vim_patches (useful to avoid a subshell when
-# used multiple times to cache tokens/vim_commit_tags).
-# "$1": use extended format? (with subject)
 # "$@": extra arguments to git-log.
-_set_missing_vimpatches() {
-  local token vim_commit vim_tag patch_number
+list_missing_vimpatches() {
+  local VIM_VERSION_0_DATE git_log_format missing_hashes missing_numbers
   declare -a git_log_args
+  VIM_VERSION_0_DATE=2018-05-17:15:00:00Z
 
   local extended_format=$1; shift
   if [[ "$extended_format" == 1 ]]; then
-    git_log_args=("--format=%H %s")
+    git_log_format="%s"
   else
-    git_log_args=("--format=%H")
+    git_log_format=""
   fi
 
   # Massage arguments for git-log.
@@ -692,44 +649,20 @@ _set_missing_vimpatches() {
     git_log_args+=("$i")
   done
 
-  _set_tokens_and_tags
-
-  # Get missing Vim commits
-  set +u  # Avoid "unbound variable" with bash < 4.4 below.
-  local vim_commit info
-  while IFS=' ' read -r line; do
-    # Check for vim-patch:<commit_hash> (usually runtime updates).
-    token="${line:0:7}"
-    if [[ "${tokens[$token]-}" ]]; then
-      continue
-    fi
-
-    # Get commit hash, and optional info from line.  This is used in
-    # extended mode, and when using e.g. '--format' manually.
-    vim_commit=${line%% *}
-    if [[ "$vim_commit" == "$line" ]]; then
-      info=
-    else
-      info=${line#* }
-      if [[ -n $info ]]; then
-        # Remove any "patch 8.1.0902: " prefixes, and prefix with ": ".
-        info=": ${info#patch*: }"
-      fi
-    fi
-
-    vim_tag="${vim_commit_tags[$vim_commit]-}"
-    if [[ -n "$vim_tag" ]]; then
-      # Check for vim-patch:<tag> (not commit hash).
-      patch_number="${vim_tag:1}" # "v7.4.0001" => "7.4.0001"
-      if [[ "${tokens[$patch_number]-}" ]]; then
-        continue
-      fi
-      missing_vim_patches+=("$vim_tag$info")
-    else
-      missing_vim_patches+=("$vim_commit$info")
-    fi
-  done < <(list_vim_commits "${git_log_args[@]}")
-  set -u
+  missing_numbers=$(_git -C "${VIM_SOURCE_DIR}" log --reverse --since="${VIM_VERSION_0_DATE}" --no-walk --tags --format='%(decorate:prefix=,suffix=,tag=)' "${git_log_args[@]}" |
+    grep -v -e 'HEAD' |
+    grep -v -F -f <(list_vimpatch_numbers) |
+    sed -E 's/,.*$//')
+  missing_hashes=$(_git -C "${VIM_SOURCE_DIR}" log --reverse --since="${VIM_VERSION_0_DATE}" --format='%H%D' "${git_log_args[@]}" |
+    grep -v -e 'tag:' -e 'HEAD' |
+    grep -v -f <(list_vimpatch_hashes | sed -E 's/(.*)/^\1/'))
+  if test -n "${git_log_format}"; then
+    echo "${missing_numbers}" | _git --no-pager -C "${VIM_SOURCE_DIR}" log --no-walk --stdin --format="%d: ${git_log_format}"
+    echo "${missing_hashes}" | _git --no-pager -C "${VIM_SOURCE_DIR}" log --no-walk --stdin --format="%H: ${git_log_format}"
+  else
+    echo "${missing_numbers}"
+    echo "${missing_hashes}"
+  fi
 }
 
 # Prints a human-formatted list of Vim commits, with instructional messages.
@@ -783,11 +716,7 @@ list_missing_previous_vimpatches_for_patch() {
     i=$(( i+1 ))
     printf '[%.*d/%d] %s: ' "${#n}" "$i" "$n" "$fname"
 
-    local -a missing_vim_patches=()
-    _set_missing_vimpatches 1 -- "${fname}"
-
-    set +u  # Avoid "unbound variable" with bash < 4.4 below.
-    for missing_vim_commit_info in "${missing_vim_patches[@]}"; do
+    list_missing_vimpatches 1 -- "${fname}" | while read -r missing_vim_commit_info; do
       if [[ -z "${missing_vim_commit_info}" ]]; then
         printf -- "-\r"
       else
@@ -801,7 +730,6 @@ list_missing_previous_vimpatches_for_patch() {
         fi
       fi
     done
-    set -u
   done
 
   set +u  # Avoid "unbound variable" with bash < 4.4 below.
