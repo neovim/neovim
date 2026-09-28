@@ -121,15 +121,19 @@ describe('API', function()
   describe('nvim_exec2', function()
     it('always returns table', function()
       -- In built version this results into `vim.empty_dict()`
-      eq({}, api.nvim_exec2('echo "Hello"', {}))
+      eq({}, api.nvim_exec2('echo "Hello"'))
       eq({}, api.nvim_exec2('echo "Hello"', { output = false }))
       eq({ output = 'Hello' }, api.nvim_exec2('echo "Hello"', { output = true }))
     end)
 
     it('default options', function()
       -- Should be equivalent to { output = false }
-      api.nvim_exec2("let x0 = 'a'", {})
+      api.nvim_exec2("let x0 = 'a'")
       eq('a', api.nvim_get_var('x0'))
+      api.nvim_exec2('let x1 = v:args')
+      eq({}, api.nvim_get_var('x1'))
+      api.nvim_exec2('let x2 = v:result')
+      eq({}, api.nvim_get_var('x2'))
     end)
 
     it('one-line input', function()
@@ -180,6 +184,14 @@ describe('API', function()
       api.nvim_exec2('call Foo()', { output = false })
       eq('xxx', api.nvim_get_current_line())
 
+      -- Arguments
+      api.nvim_exec2('let y1 = v:args', { output = false }, { 2, 1 })
+      eq({ 2, 1 }, api.nvim_eval('y1'))
+      eq({}, api.nvim_eval('v:args'))
+      api.nvim_exec2('let y2 = v:args[1] * v:args[2]', { output = false }, { 3, 2, 1 })
+      eq(2, api.nvim_eval('y2'))
+      eq({}, api.nvim_eval('v:args'))
+
       -- Autocmds
       api.nvim_exec2('autocmd BufAdd * :let x1 = "Hello"', { output = false })
       command('new foo')
@@ -224,7 +236,7 @@ describe('API', function()
           function! Avast_ye_hades(s) abort
             return a:s .. ' ' .. s:pirate
           endfunction
-          echo nvim_exec2('echo Avast_ye_hades(''ahoy!'')', {'output': v:true})
+          echo nvim_exec2('echo Avast_ye_hades(''ahoy!'')', {'output': v:true}, [])
         ]],
           { output = true }
         )
@@ -237,7 +249,7 @@ describe('API', function()
           'nvim_exec2',
           [[
           let s:pirate = 'script-scoped varrrrr'
-          call nvim_exec2('echo s:pirate', {'output': v:true})
+          call nvim_exec2('echo s:pirate', {'output': v:true}, [])
         ]],
           { output = false }
         )
@@ -297,21 +309,21 @@ describe('API', function()
     end)
 
     it('can use :finish', function()
-      api.nvim_exec2('let g:var = 123\nfinish\nlet g:var = 456', {})
+      api.nvim_exec2('let g:var = 123\nfinish\nlet g:var = 456')
       eq(123, api.nvim_get_var('var'))
     end)
 
     it('execution error', function()
       eq(
         'nvim_exec2(), line 1: Vim:E492: Not an editor command: bogus_command',
-        pcall_err(request, 'nvim_exec2', 'bogus_command', {})
+        pcall_err(request, 'nvim_exec2', 'bogus_command')
       )
       eq('', api.nvim_eval('v:errmsg')) -- v:errmsg was not updated.
       eq('', eval('v:exception'))
 
       eq(
         'nvim_exec2(), line 1: Vim(buffer):E86: Buffer 23487 does not exist',
-        pcall_err(request, 'nvim_exec2', 'buffer 23487', {})
+        pcall_err(request, 'nvim_exec2', 'buffer 23487')
       )
       eq('', eval('v:errmsg')) -- v:errmsg was not updated.
       eq('', eval('v:exception'))
@@ -326,7 +338,7 @@ describe('API', function()
       request('nvim_exec2', [[
         let x2 = substitute('foo','o','X','g')
         let x4 = 'should be overwritten'
-        call nvim_exec2("source ]] .. fname .. [[\nlet x3 = substitute('foo','foo','set by recursive nvim_exec2','g')\nlet x5='overwritten'\nlet x4=x5\n", {'output': v:false})
+        call nvim_exec2("source ]] .. fname .. [[\nlet x3 = substitute('foo','foo','set by recursive nvim_exec2','g')\nlet x5='overwritten'\nlet x4=x5\n", {'output': v:false}, [])
       ]], { output = false })
       eq('set from :source file', request('nvim_get_var', 'x1'))
       eq('fXX', request('nvim_get_var', 'x2'))
@@ -336,11 +348,32 @@ describe('API', function()
       os.remove(fname)
     end)
 
+    it('handles recursion with args and result', function()
+      local r = request(
+        'nvim_exec2',
+        [[
+        let v:result = [v:args[0], 0]
+        let a1 = nvim_exec2("let v:result = [v:args[0], v:args[1], 0]", {'output': v:false}, [3, 2]).result
+        let a2 = v:args[0]
+        let a3 = v:args[1]
+        let v:result += [a1, a2, a3]
+      ]],
+        { output = false },
+        { 'test', 'hello' }
+      )
+      eq({ 'test', 0, { 3, 2, 0 }, 'test', 'hello' }, r.result)
+      eq({}, request('nvim_eval', 'v:result'))
+      eq({}, request('nvim_eval', 'v:args'))
+    end)
+
     it('traceback', function()
       local fname = tmpname()
       write_file(fname, 'echo "hello"\n')
       local sourcing_fname = tmpname()
-      write_file(sourcing_fname, 'call nvim_exec2("source ' .. fname .. '", {"output": v:false})\n')
+      write_file(
+        sourcing_fname,
+        'call nvim_exec2("source ' .. fname .. '", {"output": v:false}, [])\n'
+      )
       api.nvim_exec2('set verbose=2', { output = false })
       local traceback_output = dedent([[
         sourcing "nvim_exec2()"
@@ -370,7 +403,7 @@ describe('API', function()
       eq(
         { output = traceback_output },
         api.nvim_exec2(
-          'call nvim_exec2("source ' .. sourcing_fname .. '", {"output": v:false})',
+          'call nvim_exec2("source ' .. sourcing_fname .. '", {"output": v:false}, [])',
           { output = true }
         )
       )
@@ -388,6 +421,31 @@ describe('API', function()
       -- Returns output in cmdline mode #35321
       feed(':')
       eq({ output = 'foo 42' }, api.nvim_exec2('echo "foo" 42', { output = true }))
+    end)
+
+    it('returns result', function()
+      eq(
+        { result = { 'hello', 1 } },
+        api.nvim_exec2('let v:result = ["hello", 1]', { output = false })
+      )
+      eq({}, api.nvim_eval('v:result'))
+      eq({ result = {} }, api.nvim_exec2('let v:result = []', { output = false }))
+    end)
+
+    it("doesn't return result", function()
+      eq({}, api.nvim_exec2('let foobar = 42', { output = false }))
+      eq({}, api.nvim_exec2('let barfoo = v:args[0]', { output = false }, { 1, 2 }))
+    end)
+
+    it('resets v:result', function()
+      api.nvim_cmd(api.nvim_parse_cmd('let v:result = [3]'))
+      eq({ 3 }, api.nvim_eval('v:result'))
+      eq({}, api.nvim_exec2('let foobar = 42', { output = false }))
+      eq({}, api.nvim_eval('v:result'))
+      api.nvim_cmd(api.nvim_parse_cmd('let v:result = [6]'))
+      eq({ 6 }, api.nvim_eval('v:result'))
+      eq({ 1, 2 }, api.nvim_exec2('let v:result = v:args', { output = false }, { 1, 2 }).result)
+      eq({}, api.nvim_eval('v:result'))
     end)
 
     it('displays messages when opts.output=false', function()
@@ -414,7 +472,7 @@ describe('API', function()
       }
       exec([[
         func Print()
-          call nvim_exec2('echo "hello"', { 'output': v:true })
+          call nvim_exec2('echo "hello"', { 'output': v:true }, [])
         endfunc
       ]])
       feed([[:echon 1 | call Print() | echon 5<CR>]])
@@ -431,7 +489,7 @@ describe('API', function()
       exec_lua([[
         _G.success = false
         vim.api.nvim_create_user_command('Test', function()
-          vim.api.nvim_exec2('Test', {})
+          vim.api.nvim_exec2('Test')
           _G.success = true
         end, {})
       ]])
@@ -451,7 +509,7 @@ describe('API', function()
     it('captures multi-chunk err nvim_echo() #36883', function()
       eq(
         'nvim_exec2(), line 1: Vim(call):abc',
-        pcall_err(request, 'nvim_exec2', 'call nvim_echo([["a"],["b"],["c"] ], 0, #{err:1})', {})
+        pcall_err(request, 'nvim_exec2', 'call nvim_echo([["a"],["b"],["c"] ], 0, #{err:1})')
       )
     end)
   end)

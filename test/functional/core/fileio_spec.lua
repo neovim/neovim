@@ -108,8 +108,7 @@ describe('fileio', function()
       edit Xtest_startup_file2
       write
       put ='fsyncd text'
-    ]],
-      {}
+    ]]
     )
     eq('Xtest_startup_swapdir', fn.rpcrequest(j, 'nvim_eval', '&directory'))
     fn.jobstop(j) -- Send deadly signal.

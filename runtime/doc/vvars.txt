@@ -569,6 +569,15 @@ v:relnum
 		Relative line number for the 'statuscolumn' expression.
 		Read-only.
 
+						*v:sarg* *sarg-variable*
+v:sarg
+		Arguments passed to Vimscript from Nvim API. Only valid during
+		the execution of |nvim_exec2()|.
+
+		See |v:sresult| for the corresponding return values.
+
+		Read-only.
+
 				*v:scrollstart* *scrollstart-variable*
 v:scrollstart
 		String describing the script or function that caused the
@@ -626,6 +635,13 @@ v:shell_error
 		    echo 'could not rename "foo" to "bar"!'
 		  endif
 <
+
+					*v:sresult* *sresult-variable*
+v:sresult
+		Values returned to Nvim API from Vimscript. Only valid during
+		the execution of |nvim_exec2()|.
+
+		See |v:sarg| for the corresponding arguments.
 
 				*v:stacktrace* *stacktrace-variable*
 v:stacktrace
