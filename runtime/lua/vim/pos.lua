@@ -330,6 +330,7 @@ function M.offset(buf, offset)
 
   local lnum = vim.list.bisect(
     setmetatable({}, {
+      --- @param idx integer
       __index = function(_, idx)
         return api.nvim_buf_get_offset(buf, idx - 1)
       end,

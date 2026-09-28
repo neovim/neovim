@@ -872,7 +872,8 @@ describe('vim.lsp.util', function()
       eq({ 1, 9 }, api.nvim_win_get_cursor(wins[2]))
     end)
 
-    it('does not change cursor of the split if not range and not focus', function()
+    it('preserves cursor positions when the handler omits selection', function()
+      exec_lua(create_server_definition)
       api.nvim_win_set_buf(0, target_bufnr)
       api.nvim_win_set_cursor(0, { 2, 3 })
 
@@ -882,7 +883,20 @@ describe('vim.lsp.util', function()
       api.nvim_win_set_buf(0, target_bufnr2)
       api.nvim_win_set_cursor(0, { 2, 3 })
 
-      show_document({ uri = 'file:///fake/uri2' }, false, true)
+      local result = exec_lua(function()
+        local server = _G._create_server()
+        local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = server.cmd }))
+        local result = vim.lsp.handlers['window/showDocument'](nil, {
+          uri = 'file:///fake/uri2',
+          takeFocus = false,
+        }, {
+          client_id = client_id,
+          method = 'window/showDocument',
+        })
+        vim.lsp.get_client_by_id(client_id):stop()
+        return result
+      end)
+      eq({ success = true }, result)
 
       local wins = api.nvim_list_wins()
       eq(2, #wins)

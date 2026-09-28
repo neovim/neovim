@@ -49,7 +49,7 @@ function M.open(opts, ...)
   end
 
   opts = opts or {}
-  bufnr = vim._resolve_bufnr(bufnr or opts.bufnr)
+  bufnr = vim._resolve_bufnr((bufnr or opts.bufnr) --[[@as integer?]])
   local global_opts --- @type vim.diagnostic.Opts
   opts, global_opts = resolve_float_opts(opts, bufnr)
 

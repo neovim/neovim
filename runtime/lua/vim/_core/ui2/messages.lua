@@ -743,9 +743,13 @@ local function enter_pager()
         in_pager = api.nvim_get_current_win() == ui.wins.pager
       end
       in_pager = in_pager and api.nvim_win_is_valid(ui.wins.pager)
+      --- @type vim.api.keyset.win_config
       local cfg = in_pager and { relative = 'laststatus', col = 0 } or { hide = true }
       if in_pager then
-        cfg.row, cfg.height, cfg.border = win_row_height_border('pager', height)
+        local has_border
+        cfg.row, cfg.height, has_border = win_row_height_border('pager', height)
+        cfg.border = has_border and { '', { mopt.msgsep, 'MsgSeparator' }, '', '', '', '', '', '' }
+          or 'none'
       else
         pcall(api.nvim_set_option_value, 'eiw', 'all', { scope = 'local', win = ui.wins.pager })
         api.nvim_del_autocmd(id)

@@ -155,8 +155,8 @@ end
 --- Dispatchers for LSP message types.
 --- @class vim.lsp.rpc.Dispatchers
 --- @inlinedoc
---- @field notification fun(method: vim.lsp.protocol.Method.ServerToClient, params: table)
---- @field server_request fun(method: vim.lsp.protocol.Method.ServerToClient, params: table): any?, lsp.ResponseError?
+--- @field notification fun(method: string, params: table)
+--- @field server_request fun(method: string, params: table): any?, lsp.ResponseError?
 --- @field on_exit fun(code: integer, signal: integer)
 --- @field on_error fun(code: integer, err: any)
 
@@ -164,7 +164,7 @@ end
 local default_dispatchers = {
   --- Default dispatcher for notifications sent to an LSP server.
   ---
-  ---@param method vim.lsp.protocol.Method.ServerToClient The invoked LSP method
+  ---@param method string The invoked LSP method
   ---@param params table Parameters for the invoked LSP method
   notification = function(method, params)
     log.debug('notification', method, params)
@@ -172,7 +172,7 @@ local default_dispatchers = {
 
   --- Default dispatcher for requests sent to an LSP server.
   ---
-  ---@param method vim.lsp.protocol.Method.ServerToClient The invoked LSP method
+  ---@param method string The invoked LSP method
   ---@param params table Parameters for the invoked LSP method
   ---@return any result (always nil for the default dispatchers)
   ---@return lsp.ResponseError error `vim.lsp.protocol.ErrorCodes.MethodNotFound`
@@ -242,7 +242,7 @@ function M.create_read_loop(handle_body, on_exit, on_error)
     format_message_with_content_length,
     function(err, chunk)
       if err then
-        on_error(err, M.client_errors.READ_ERROR)
+        on_error(err, client_errors.READ_ERROR)
       elseif chunk then
         handle_body(chunk)
       else
@@ -250,7 +250,7 @@ function M.create_read_loop(handle_body, on_exit, on_error)
       end
     end,
     function(err)
-      on_error(err, M.client_errors.INVALID_SERVER_MESSAGE)
+      on_error(err, client_errors.INVALID_SERVER_MESSAGE)
     end
   )
 
@@ -330,7 +330,7 @@ function Client.new(dispatchers, transport, decode, format)
 
   self.message_stream = net_transport.MessageStream.new(decode, format, function(err, data)
     if err then
-      self:on_error(M.client_errors.READ_ERROR, err)
+      self:on_error(client_errors.READ_ERROR, err)
     elseif data then
       self:handle_body(data)
     else
@@ -338,7 +338,7 @@ function Client.new(dispatchers, transport, decode, format)
       self.transport:terminate()
     end
   end, function(err)
-    self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, err)
+    self:on_error(client_errors.INVALID_SERVER_MESSAGE, err)
     ---@diagnostic disable-next-line: invisible
     self.transport:terminate()
   end)
@@ -353,7 +353,7 @@ end
 ---@private
 ---@param payload {
 ---  jsonrpc: '2.0',
----  id?: integer|string,
+---  id?: number|string|vim.NIL,
 ---  method?: string,
 ---  params?: table,
 ---  error?: lsp.ResponseError,
@@ -385,7 +385,7 @@ end
 
 ---@private
 --- sends an error object to the remote LSP process.
----@param request_id integer|string
+---@param request_id number|string|vim.NIL
 ---@param err lsp.ResponseError?
 ---@param result any
 function Client:send_response(request_id, err, result)
@@ -447,10 +447,10 @@ end
 function Client:handle_body(body)
   local ok, decoded = pcall(vim.json.decode, body)
   if not ok then
-    self:on_error(M.client_errors.INVALID_SERVER_JSON, decoded)
+    self:on_error(client_errors.INVALID_SERVER_JSON, decoded)
     return
   elseif type(decoded) ~= 'table' then
-    self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, decoded)
+    self:on_error(client_errors.INVALID_SERVER_MESSAGE, decoded)
     return
   end
 
@@ -466,7 +466,7 @@ function Client:handle_body(body)
         decoded.method,
         decoded.id
       )
-      self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, decoded)
+      self:on_error(client_errors.INVALID_SERVER_MESSAGE, decoded)
       return
     end
 
@@ -496,7 +496,7 @@ function Client:handle_body(body)
         end
         self:send_response(decoded.id, err, result)
       end, function(err)
-        self:on_error(M.client_errors.SERVER_REQUEST_HANDLER_ERROR, err)
+        self:on_error(client_errors.SERVER_REQUEST_HANDLER_ERROR, err)
         self:send_response(
           decoded.id,
           M.rpc_response_error(protocol.ErrorCodes.InternalError, err),
@@ -512,7 +512,7 @@ function Client:handle_body(body)
     -- (e.g. Parse error/Invalid Request), it must be Null.
     if decoded.id == vim.NIL then
       log.warn('Server sent response with null id', decoded)
-      self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, decoded)
+      self:on_error(client_errors.INVALID_SERVER_MESSAGE, decoded)
       return
     end
     -- Proceed only if exactly one of 'result' or 'error' is present,
@@ -521,7 +521,7 @@ function Client:handle_body(body)
     -- * If 'result' is nil, then 'error' must be present (and not vim.NIL).
     if (decoded.error == nil or decoded.error == vim.NIL) and decoded.result == nil then
       log.error('Server respond empty result and error', decoded)
-      self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, decoded)
+      self:on_error(client_errors.INVALID_SERVER_MESSAGE, decoded)
       return
     end
 
@@ -560,10 +560,10 @@ function Client:handle_body(body)
       xpcall(function()
         callback(decoded.error, decoded.result ~= vim.NIL and decoded.result or nil, result_id)
       end, function(err)
-        self:on_error(M.client_errors.SERVER_RESULT_CALLBACK_ERROR, err)
+        self:on_error(client_errors.SERVER_RESULT_CALLBACK_ERROR, err)
       end)
     else
-      self:on_error(M.client_errors.NO_RESULT_CALLBACK_FOUND, decoded)
+      self:on_error(client_errors.NO_RESULT_CALLBACK_FOUND, decoded)
       log.error('No callback found for server response id ' .. result_id)
     end
   elseif
@@ -576,11 +576,11 @@ function Client:handle_body(body)
         'notification handlers should not return a value'
       )
     end, function(err)
-      self:on_error(M.client_errors.NOTIFICATION_HANDLER_ERROR, err)
+      self:on_error(client_errors.NOTIFICATION_HANDLER_ERROR, err)
     end)
   else
     -- Invalid server message
-    self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, decoded)
+    self:on_error(client_errors.INVALID_SERVER_MESSAGE, decoded)
   end
 end
 

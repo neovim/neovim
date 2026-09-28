@@ -134,7 +134,7 @@ local function tokens_to_ranges(data, bufnr, client, request, ranges)
     local token_type = token_types[assert(data[i + 3]) + 1]
 
     if token_type then
-      local modifiers = modifiers_from_number(data[i + 4], token_modifiers)
+      local modifiers = modifiers_from_number(assert(data[i + 4]), token_modifiers)
       local end_char = start_char + assert(data[i + 2])
       local buf_line = lines[line + 1] or ''
       local end_line = line ---@type integer
@@ -558,10 +558,7 @@ function STHighlighter:process_response(response, client, request_id, version, i
 
   local current_result = state.current_result
   local version_changed = version ~= current_result.version
-  local highlights = {} --- @type STTokenRange[]
-  if current_result.highlights and not version_changed then
-    highlights = current_result.highlights
-  end
+  local highlights = not version_changed and current_result.highlights or {}
 
   -- convert token list to highlight ranges
   -- this could yield and run over multiple event loop iterations

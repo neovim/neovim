@@ -135,7 +135,7 @@ function M.add(lang, opts)
     if #paths == 0 then
       return nil, string.format('No parser for language "%s"', lang)
     end
-    path = paths[1]
+    path = assert(paths[1])
   end
 
   local res = loadparser(path, lang, symbol_name)

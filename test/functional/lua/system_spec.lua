@@ -14,6 +14,9 @@ describe('vim.system', function()
   for name, system in pairs { sync = n.system_sync, async = n.system_async } do
     describe('(' .. name .. ')', function()
       it('failure modes', function()
+        t.matches('cmd: expected non%-empty list of strings', t.pcall_err(system, {}))
+        t.matches('cmd: expected non%-empty list of strings', t.pcall_err(system, { 42 }))
+
         t.matches(
           "ENOENT%: no such file .* %(cmd%): 'non%-existent%-cmd'",
           t.pcall_err(system, { 'non-existent-cmd', 'arg1', 'arg2' }, { text = true })

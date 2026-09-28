@@ -168,6 +168,8 @@ function M.add_bytes(source, range)
     return range --[[@as Range6]]
   end
 
+  -- EmmyLua incorrectly makes range nullable after the table check.
+  ---@cast range -nil
   local start_row, start_col, end_row, end_col = M.unpack4(range)
   -- TODO(vigoux): proper byte computation here, and account for EOL ?
   local start_byte = get_offset(source, start_row) + start_col

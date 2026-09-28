@@ -28,9 +28,9 @@ local highlight_groups = {
 }
 
 local layout = {
-  group = nil,
-  left_win = nil,
-  right_win = nil,
+  group = nil, --- @type integer?
+  left_win = nil, --- @type integer?
+  right_win = nil, --- @type integer?
 }
 
 local util = require('vim._core.util')
@@ -95,12 +95,12 @@ end
 local function diff_files(left_file, right_file, with_qf)
   setup_layout(with_qf or false)
 
-  util.edit_in(layout.left_win, left_file)
-  util.edit_in(layout.right_win, right_file)
+  util.edit_in(assert(layout.left_win), left_file)
+  util.edit_in(assert(layout.right_win), right_file)
 
   vim.cmd('diffoff!')
-  vim.api.nvim_win_call(layout.left_win, vim.cmd.diffthis)
-  vim.api.nvim_win_call(layout.right_win, vim.cmd.diffthis)
+  vim.api.nvim_win_call(assert(layout.left_win), vim.cmd.diffthis)
+  vim.api.nvim_win_call(assert(layout.right_win), vim.cmd.diffthis)
 end
 
 --- Diff two directories using external `diff` command
@@ -176,7 +176,7 @@ local function diff_dirs_builtin(left_dir, right_dir, opt)
 
   --- @param file1 string
   --- @param file2 string
-  --- @param chunk_size number
+  --- @param chunk_size integer
   --- @param chunk_cache table<string, any>
   --- @return number similarity ratio (0 to 1)
   local function calculate_similarity(file1, file2, chunk_size, chunk_cache)

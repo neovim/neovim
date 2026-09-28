@@ -149,12 +149,13 @@ function vim.gsplit(s, sep, opts)
   local empty_start = true -- Only empty segments seen so far.
 
   --- @param i integer?
-  --- @param j integer
+  --- @param j integer?
   --- @param ... unknown
   --- @return string
   --- @return ...
   local function _pass(i, j, ...)
     if i then
+      assert(j)
       assert(j + 1 > start, 'Infinite loop detected')
       local seg = s:sub(start, i - 1)
       start = j + 1

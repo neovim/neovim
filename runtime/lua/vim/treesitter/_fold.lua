@@ -109,7 +109,7 @@ local function compute_folds_levels(bufnr, info, srow, erow, callback)
       for _, match, metadata in query:iter_matches(tree:root(), bufnr, math.max(srow - 1, 0), erow) do
         for id, nodes in pairs(match) do
           if query.captures[id] == 'fold' then
-            local range = ts.get_range(nodes[1], bufnr, metadata[id])
+            local range = ts.get_range(assert(nodes[1]), bufnr, metadata[id])
             local start, _, stop, stop_col = Range.unpack4(range)
 
             if #nodes > 1 then

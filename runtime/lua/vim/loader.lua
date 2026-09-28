@@ -259,7 +259,7 @@ end
 --- @return_overload function chunk
 --- @return_overload nil, string error_message
 local function loadfile_cached(filename, mode, env)
-  local modpath = normalize(filename)
+  local modpath = normalize(assert(filename))
   local stat = fs_stat_cached(modpath)
   local cname = cache_filename(modpath)
   if stat then
@@ -517,7 +517,7 @@ function M._inspect(opts)
     local function ms(nsec)
       return math.floor(nsec / 1e6 * 1000 + 0.5) / 1000 .. 'ms'
     end
-    local chunks = {} --- @type string[][]
+    local chunks = {} --- @type [string, string?][]
     for name, stat in vim.spairs(stats) do
       vim.list_extend(chunks, {
         { '\n' .. name .. '\n', 'Title' },

@@ -31,7 +31,6 @@
       "code-style-check",
       "incomplete-signature-doc",
       "iter-variable-reassign",
-      "param-type-mismatch",
       "unnecessary-if"
     ],
     "severity": {

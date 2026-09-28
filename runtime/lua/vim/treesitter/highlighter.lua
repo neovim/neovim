@@ -37,7 +37,7 @@ end
 ---@return integer?
 function TSHighlighterQuery:get_hl_from_capture(capture)
   if not self.hl_cache[capture] then
-    local name = assert(self._query).captures[capture]
+    local name = assert(assert(self._query).captures[capture])
     local id = 0
     if not vim.startswith(name, '_') then
       id = api.nvim_get_hl_id_by_name('@' .. name .. '.' .. self.lang)
@@ -315,7 +315,7 @@ local function get_url(match, bufnr, capture, metadata)
 
   -- Assume there is only one matching node. If there is more than one, take the URL
   -- from the first.
-  local other_node = captures[url][1]
+  local other_node = assert(captures[url][1])
 
   return vim.treesitter.get_node_text(other_node, bufnr, {
     metadata = metadata[url],
@@ -433,7 +433,7 @@ local function on_range_impl(
 
           local hl = state.highlighter_query:get_hl_from_capture(capture)
 
-          local capture_name = captures[capture]
+          local capture_name = assert(captures[capture])
 
           local spell, spell_pri_offset = get_spell(capture_name)
 

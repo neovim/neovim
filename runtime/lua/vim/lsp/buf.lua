@@ -268,7 +268,7 @@ local function get_locations(method, context, opts)
       vim.list_extend(all_items, items)
     end
 
-    local name = string.gsub(method:match('textDocument/(.*)'), '(%u)', ' %1'):lower()
+    local name = string.gsub(assert(method:match('textDocument/(.*)')), '(%u)', ' %1'):lower()
     if vim.tbl_isempty(all_items) then
       vim.notify(('No %s found'):format(name), vim.log.levels.INFO)
       return
@@ -476,7 +476,7 @@ function M.signature_help(config)
       return
     end
 
-    local ft = vim.bo[ctx.bufnr].filetype
+    local ft = vim.bo[assert(ctx.bufnr)].filetype
     local total = #signatures
     local can_cycle = total > 1 and config.focusable ~= false
     local idx = active_signature - 1
@@ -1280,7 +1280,7 @@ local function on_code_action_results(results, opts)
     end
   end
 
-  ---@param choice {action: lsp.Command|lsp.CodeAction, ctx: lsp.HandlerContext}
+  ---@param choice? {action: lsp.Command|lsp.CodeAction, ctx: lsp.HandlerContext}
   local function on_user_choice(choice)
     if not choice then
       return
@@ -1439,6 +1439,7 @@ function M.code_action(opts)
       local diagnostics = {}
 
       client:_provider_foreach('textDocument/diagnostic', function(cap)
+        --- @cast cap lsp.DiagnosticRegistrationOptions
         local ns_pull = lsp.diagnostic.get_namespace(client.id, true, cap.identifier)
         vim.list_extend(
           diagnostics,
@@ -1501,7 +1502,7 @@ function M.selection_range(direction, timeout_ms)
     local new_index = selection_ranges.index + direction
     selection_ranges.index = math.min(#selection_ranges.ranges, math.max(1, new_index))
 
-    select_range(selection_ranges.ranges[selection_ranges.index])
+    select_range(assert(selection_ranges.ranges[selection_ranges.index]))
     return
   end
 
@@ -1570,7 +1571,7 @@ function M.selection_range(direction, timeout_ms)
   if #ranges > 0 then
     local index = math.min(#ranges, math.max(1, direction))
     selection_ranges = { index = index, ranges = ranges }
-    select_range(ranges[index])
+    select_range(assert(ranges[index]))
   end
 end
 

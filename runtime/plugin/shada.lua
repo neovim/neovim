@@ -12,7 +12,7 @@ local shada_get_strings = vim.fn['shada#get_strings']
 local shada_get_binstrings = vim.fn['shada#get_binstrings']
 
 ---Ensures that pattern and augroup are set correctly.
----@param event string|string[]
+---@param event vim.api.keyset.events|vim.api.keyset.events[]
 ---@param opts vim.api.keyset.create_autocmd
 ---@param fn fun(args: vim.api.keyset.create_autocmd.callback_args): boolean?
 local function def_autocmd(event, opts, fn)

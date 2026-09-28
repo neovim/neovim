@@ -57,7 +57,9 @@ local function watcher_rules(watchers, workspace_folders)
       events = {}
       for change_type, lsp_change_type in pairs(to_lsp_change_type) do
         -- WatchKind is a bitmask, whereas FileChangeType is an enum.
-        if bit.band(w.kind, bit.lshift(1, lsp_change_type - 1)) ~= 0 then
+        if
+          bit.band(w.kind, bit.lshift(1, (lsp_change_type - 1) --[[@as integer]])) ~= 0
+        then
           table.insert(events, change_type)
         end
       end

@@ -115,7 +115,7 @@ function M.del(id)
 
     if has_ids then
       local kitty = require('vim.ui.img._kitty')
-      kitty.delete(math.huge)
+      kitty.delete(math.huge --[[@as integer]])
     end
 
     return has_ids
@@ -145,7 +145,7 @@ function M._supported(opts)
 end
 
 nvim_on('VimLeavePre', nil, function()
-  M.del(math.huge)
+  M.del(math.huge --[[@as integer]])
 end)
 
 return M

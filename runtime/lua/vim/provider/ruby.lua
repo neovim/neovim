@@ -1,6 +1,6 @@
 local M = {}
 local s_err ---@type string?
-local s_host ---@type string?
+local s_host ---@type integer?
 
 --- @param host { name: string, orig_name: string }
 --- @return integer
@@ -31,6 +31,7 @@ function M.call(method, args)
       vim.api.nvim_echo({ { result, 'WarningMsg' } }, true)
       return
     end
+    --- @cast result integer
     s_host = result
   end
 

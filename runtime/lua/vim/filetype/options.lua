@@ -16,7 +16,7 @@ local function get_ftplugin_runtime(filetype)
   local r = {} ---@type string[]
   for _, f in ipairs(files) do
     -- VIMRUNTIME should be static so shouldn't need to worry about it changing
-    if not vim.startswith(f, vim.env.VIMRUNTIME) then
+    if not vim.startswith(f, assert(vim.env.VIMRUNTIME)) then
       r[#r + 1] = f
     end
   end

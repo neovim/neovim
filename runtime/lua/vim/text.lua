@@ -205,7 +205,7 @@ function M.indent(size, text, opts)
     -- Expand tabs before replacing indentation.
     line = not tabspaces and line
       or line:gsub('^[\t ]+', function(s)
-        return s:gsub('\t', tabspaces)
+        return s:gsub('\t', assert(tabspaces))
       end)
     -- Text following the indent.
     local line_text = line:match('^' .. pat .. '(.*)') or line

@@ -52,7 +52,7 @@ function M.get_buf_by_name(name)
 end
 
 --- Edit a file in a specific window
---- @param winnr number
+--- @param winnr integer
 --- @param file string
 --- @return number buffer number of the edited buffer
 M.edit_in = function(winnr, file)
@@ -98,7 +98,7 @@ end
 
 --- Read a chunk of data from a file
 --- @param file string
---- @param size number
+--- @param size integer
 --- @return string? chunk or nil on error
 function M.read_chunk(file, size)
   local fd = io.open(file, 'rb')

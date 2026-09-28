@@ -47,7 +47,7 @@ function M.get_logical_pos(diagnostic)
     return diagnostic.lnum, diagnostic.col, diagnostic.end_lnum, diagnostic.end_col, true
   end
 
-  local ns = vim.diagnostic.get_namespace(diagnostic.namespace)
+  local ns = vim.diagnostic.get_namespace(assert(diagnostic.namespace))
   local extmark = api.nvim_buf_get_extmark_by_id(
     diagnostic.bufnr,
     ns.user_data.location_ns,

@@ -7,7 +7,7 @@
 local M = {}
 
 --- @class vim._core.cmdwin.State
---- @field type string   ':', '/', '?'
+--- @field type ':'|'/'|'?'
 --- @field win integer   cmdwin window id
 --- @field buf integer   cmdwin buffer id
 --- @field caller_win integer  Window to return-to on close
@@ -15,6 +15,7 @@ local M = {}
 --- @type vim._core.cmdwin.State?
 local state = nil
 
+--- @type table<string, boolean>
 local cmdwin_types = { [':'] = true, ['/'] = true, ['?'] = true }
 
 --- Fills the cmdwin buffer with the cmdline history.
@@ -22,8 +23,7 @@ local cmdwin_types = { [':'] = true, ['/'] = true, ['?'] = true }
 --- @param buf integer
 --- @param type ':'|'/'|'?'
 local function fill_history(buf, type)
-  local histname = type == ':' and 'cmd' or (type == '/' or type == '?') and 'search' or nil
-  assert(histname, 'cmdwin: unknown type: ' .. tostring(type))
+  local histname = type == ':' and 'cmd' or 'search'
   local n = vim.fn.histnr(histname)
   if n <= 0 then -- May be -1 if history is empty.
     return false
@@ -45,7 +45,7 @@ end
 
 --- Open the command-line window.
 ---
---- @param type? string  ':', '/', '?'. Default ':'.
+--- @param type? ':'|'/'|'?' Default ':'.
 --- @param init_line? string  Pre-fill the last line (the "live" cmdline).
 --- @param init_col? integer  1-based cursor column in the last line.
 function M.open(type, init_line, init_col)
@@ -175,7 +175,7 @@ function M.win()
 end
 
 --- Closes the cmdwin and returns its current line and type.
---- @return string line, string type
+--- @return string line, ':'|'/'|'?' type
 local function _close()
   local line = vim.api.nvim_get_current_line()
   local type = assert(state).type

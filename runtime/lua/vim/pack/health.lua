@@ -174,6 +174,7 @@ local function check_lockfile()
     return
   end
 
+  --- @cast text string
   local can_parse, data = pcall(vim.json.decode, text)
   if not can_parse then
     health.error(('Could not parse lockfile: %s\nDelete it and restart Nvim'):format(data))

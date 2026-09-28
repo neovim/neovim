@@ -134,6 +134,7 @@ local function tree_to_graph_lines(tree)
 
       table.remove(nodes, index)
       if #node == 2 then
+        --- @cast node [integer, integer]
         table.insert(nodes, index, math.min(unpack(node)))
         table.insert(nodes, index, math.max(unpack(node)))
       elseif #node > 2 then

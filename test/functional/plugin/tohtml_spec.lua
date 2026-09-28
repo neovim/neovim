@@ -407,6 +407,24 @@ describe(':TOhtml', function()
     run_tohtml_and_assert(screen)
   end)
 
+  it('warns about highlighted foldtext from a Lua callback', function()
+    insert('line1\nline2')
+    exec_lua(function()
+      _G.warnings = {}
+      vim.notify = function(msg)
+        table.insert(_G.warnings, msg)
+      end
+      vim.o.foldtext = function()
+        return { { 'folded', 'Comment' } }
+      end
+    end)
+    exec('%fold')
+    exec_lua([[require('tohtml').tohtml(0)]])
+    eq({
+      'TOhtml: foldtext returning a table with highlights is not supported, HTML may be incorrect',
+    }, exec_lua('return _G.warnings'))
+  end)
+
   it('statuscol', function()
     local function run()
       local buf = api.nvim_get_current_buf()

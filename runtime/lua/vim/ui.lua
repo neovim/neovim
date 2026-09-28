@@ -134,7 +134,10 @@ function M.input(opts, on_confirm)
   local _canceled = vim.NIL
   opts = vim.tbl_extend('keep', opts, { cancelreturn = _canceled })
 
-  local ok, input = pcall(vim.fn.input, opts)
+  -- EmmyLua workaround: a direct call resolves the table overload correctly.
+  local ok, input = pcall(function()
+    return vim.fn.input(opts)
+  end)
   if not ok or input == _canceled then
     on_confirm(nil)
   else

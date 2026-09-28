@@ -209,7 +209,7 @@ function SystemObj:is_closing()
   return handle == nil or handle:is_closing() or false
 end
 
---- @param output? fun(err: string?, data: string?)|false
+--- @param output? fun(err: string?, data: string?)|boolean
 --- @param text? boolean
 --- @return uv.uv_stream_t? pipe
 --- @return integer? child_fd
@@ -241,7 +241,7 @@ local function setup_output(output, text)
     end
   end
 
-  --- @diagnostic disable-next-line:missing-fields luvit/luv#827
+  --- @diagnostic disable-next-line:missing-fields,param-type-mismatch luvit/luv#827
   local pipe_fd = assert(uv.pipe({ nonblock = true }, {}))
   local pipe = assert(uv.new_pipe(false))
   pipe:open(pipe_fd.read)
@@ -273,7 +273,7 @@ local function setup_input(input)
     towrite = input
   end
 
-  --- @diagnostic disable-next-line:missing-fields luvit/luv#827
+  --- @diagnostic disable-next-line:missing-fields,param-type-mismatch luvit/luv#827
   local pipe_fd = assert(uv.pipe({}, { nonblock = true }))
   local pipe = assert(uv.new_pipe(false))
   pipe:open(pipe_fd.write)
@@ -432,7 +432,10 @@ end
 --- @param on_exit? fun(out: vim.SystemCompleted)
 --- @return vim.SystemObj
 local function run(cmd, opts, on_exit)
-  vim.validate('cmd', cmd, 'table')
+  vim.validate('cmd', cmd, function(v)
+    return type(v) == 'table' and type(v[1]) == 'string'
+  end, 'non-empty list of strings')
+  --- @cast cmd string[] & { [1]: string }
   vim.validate('opts', opts, 'table', true)
   vim.validate('on_exit', on_exit, 'function', true)
 
