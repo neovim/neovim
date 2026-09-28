@@ -2743,6 +2743,11 @@ static int get_char_class_bits(const uint8_t *start, const uint8_t *end, bool *n
     return -1;
   }
 
+  // U+017F and U+212A fold to ASCII 's' and 'k', missed by the class opcodes
+  if (config & (CLASS_az | CLASS_AZ)) {
+    return -1;
+  }
+
   return config;
 }
 
