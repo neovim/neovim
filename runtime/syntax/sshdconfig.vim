@@ -8,7 +8,8 @@
 " Contributor:  Karsten Hopp <karsten@redhat.com>
 " Contributor:  Fionn Fitzmaurice (github.com/fionn)
 " Originally:	2009-07-09
-" Last Change:	2026-03-11
+" Last Change:	2026 Mar 11
+" 2026 Sep 27 by Vim project: update secure keywords #21376
 " SSH Version:	10.1p1
 "
 
@@ -45,15 +46,11 @@ syn keyword sshdconfigRootLogin prohibit-password without-password forced-comman
 syn keyword sshdconfigPubkeyAuthOptions touch-required verify-required
 
 syn keyword sshdconfigCiphers 3des-cbc
-syn keyword sshdconfigCiphers blowfish-cbc
-syn keyword sshdconfigCiphers cast128-cbc
-syn keyword sshdconfigCiphers arcfour
-syn keyword sshdconfigCiphers arcfour128
-syn keyword sshdconfigCiphers arcfour256
+syn keyword sshdconfigCiphersDeprecated blowfish-cbc cast128-cbc arcfour arcfour128 arcfour256
 syn keyword sshdconfigCiphers aes128-cbc
 syn keyword sshdconfigCiphers aes192-cbc
 syn keyword sshdconfigCiphers aes256-cbc
-syn match sshdconfigCiphers "\<rijndael-cbc@lysator\.liu.se\>"
+syn match   sshdconfigCiphersDeprecated "\<rijndael-cbc@lysator\.liu\.se\>"
 syn keyword sshdconfigCiphers aes128-ctr
 syn keyword sshdconfigCiphers aes192-ctr
 syn keyword sshdconfigCiphers aes256-ctr
@@ -67,7 +64,7 @@ syn keyword sshdconfigMAC hmac-sha2-256
 syn keyword sshdconfigMAC hmac-sha2-512
 syn keyword sshdconfigMAC hmac-md5
 syn keyword sshdconfigMAC hmac-md5-96
-syn match   sshdconfigMAC "\<hmac-ripemd160\%(@openssh\.com\)\?\>"
+syn match   sshdconfigMACDeprecated "\<hmac-ripemd160\%(@openssh\.com\)\?\>"
 syn match   sshdconfigMAC "\<umac-64@openssh\.com\>"
 syn match   sshdconfigMAC "\<umac-128@openssh\.com\>"
 syn match   sshdconfigMAC "\<hmac-sha1-etm@openssh\.com\>"
@@ -76,10 +73,12 @@ syn match   sshdconfigMAC "\<hmac-sha2-256-etm@openssh\.com\>"
 syn match   sshdconfigMAC "\<hmac-sha2-512-etm@openssh\.com\>"
 syn match   sshdconfigMAC "\<hmac-md5-etm@openssh\.com\>"
 syn match   sshdconfigMAC "\<hmac-md5-96-etm@openssh\.com\>"
-syn match   sshdconfigMAC "\<hmac-ripemd160-etm@openssh\.com\>"
+syn match   sshdconfigMACDeprecated "\<hmac-ripemd160-etm@openssh\.com\>"
 syn match   sshdconfigMAC "\<umac-64-etm@openssh\.com\>"
 syn match   sshdconfigMAC "\<umac-128-etm@openssh\.com\>"
 
+syn keyword sshdconfigHostKeyAlgo ssh-mldsa44-ed25519
+syn keyword sshdconfigHostKeyAlgo ssh-mldsa44-ed25519-cert
 syn keyword sshdconfigHostKeyAlgo ssh-ed25519
 syn match sshdconfigHostKeyAlgo "\<ssh-ed25519-cert-v01@openssh\.com\>"
 syn match sshdconfigHostKeyAlgo "\<sk-ssh-ed25519@openssh\.com\>"
@@ -87,19 +86,19 @@ syn match sshdconfigHostKeyAlgo "\<sk-ssh-ed25519-cert-v01@openssh\.com\>"
 syn keyword sshdconfigHostKeyAlgo ssh-rsa
 syn keyword sshdconfigHostKeyAlgo rsa-sha2-256
 syn keyword sshdconfigHostKeyAlgo rsa-sha2-512
-syn keyword sshdconfigHostKeyAlgo ssh-dss
+syn keyword sshdconfigHostKeyAlgoDeprecated ssh-dss
 syn keyword sshdconfigHostKeyAlgo ecdsa-sha2-nistp256
 syn keyword sshdconfigHostKeyAlgo ecdsa-sha2-nistp384
 syn keyword sshdconfigHostKeyAlgo ecdsa-sha2-nistp521
 syn match sshdconfigHostKeyAlgo "\<ssh-rsa-cert-v01@openssh\.com\>"
 syn match sshdconfigHostKeyAlgo "\<rsa-sha2-256-cert-v01@openssh\.com\>"
 syn match sshdconfigHostKeyAlgo "\<rsa-sha2-512-cert-v01@openssh\.com\>"
-syn match sshdconfigHostKeyAlgo "\<ssh-dss-cert-v01@openssh\.com\>"
+syn match sshdconfigHostKeyAlgoDeprecated "\<ssh-dss-cert-v01@openssh\.com\>"
 syn match sshdconfigHostKeyAlgo "\<ecdsa-sha2-nistp256-cert-v01@openssh\.com\>"
 syn match sshdconfigHostKeyAlgo "\<ecdsa-sha2-nistp384-cert-v01@openssh\.com\>"
 syn match sshdconfigHostKeyAlgo "\<ecdsa-sha2-nistp521-cert-v01@openssh\.com\>"
-syn match sshdconfigHostKeyAlgo "\<sk-ecdsa-sha2-nistp256@openssh\.com\>"
-syn match sshdconfigHostKeyAlgo "\<sk-ecdsa-sha2-nistp256-cert-v01@openssh\.com\>"
+syn match sshdconfigHostKeyAlgo "\<\%(webauthn-\)\?sk-ecdsa-sha2-nistp256@openssh\.com\>"
+syn match sshdconfigHostKeyAlgo "\<\%(webauthn-\)\?sk-ecdsa-sha2-nistp256-cert-v01@openssh\.com\>"
 
 syn keyword sshdconfigRootLogin prohibit-password without-password forced-commands-only
 
@@ -130,8 +129,8 @@ syn keyword sshdconfigKexAlgo mlkem768nistp256-sha256
 syn keyword sshdconfigKexAlgo mlkem1024nistp384-sha384
 
 syn match sshdconfigKexAlgo "\<curve25519-sha256\%(@libssh\.org\)\?\>"
-syn match sshdconfigKexAlgo "\<sntrup4591761x25519-sha512@tinyssh\.org\>"
-syn match sshdconfigKexAlgo "\<sntrup761x25519-sha512@openssh\.com\>"
+syn match sshdconfigKexAlgoDeprecated "\<sntrup4591761x25519-sha512@tinyssh\.org\>"
+syn match sshconfigKexAlgo  "\<sntrup761x25519-sha512\%(@openssh\.com\)\?\>"
 
 syn keyword sshdconfigTunnel	point-to-point ethernet
 
@@ -174,7 +173,7 @@ syn keyword sshdconfigKeyword AuthorizedPrincipalsCommandUser
 syn keyword sshdconfigKeyword AuthorizedPrincipalsFile
 syn keyword sshdconfigKeyword Banner
 syn keyword sshdconfigKeyword CASignatureAlgorithms
-syn keyword sshdconfigKeyword ChallengeResponseAuthentication
+syn keyword sshdConfigDeprecated ChallengeResponseAuthentication
 syn keyword sshdconfigKeyword ChannelTimeout
 syn keyword sshdconfigKeyword ChrootDirectory
 syn keyword sshdconfigKeyword Ciphers
@@ -286,8 +285,11 @@ hi def link sshdconfigAddressFamily        sshdconfigEnum
 hi def link sshdconfigPrivilegeSeparation  sshdconfigEnum
 hi def link sshdconfigTcpForwarding        sshdconfigEnum
 hi def link sshdconfigCiphers              sshdconfigEnum
+hi def link sshdconfigCiphersDeprecated    sshdconfigDeprecated
 hi def link sshdconfigMAC                  sshdconfigEnum
+hi def link sshdconfigMACDeprecated        sshdconfigDeprecated
 hi def link sshdconfigHostKeyAlgo          sshdconfigEnum
+hi def link sshdconfigHostKeyAlgoDeprecated sshdconfigDeprecated
 hi def link sshdconfigRootLogin            sshdconfigEnum
 hi def link sshdconfigLogLevel             sshdconfigEnum
 hi def link sshdconfigSysLogFacility       sshdconfigEnum
@@ -296,6 +298,7 @@ hi def link sshdconfigCompression          sshdconfigEnum
 hi def link sshdconfigIPQoS                sshdconfigEnum
 hi def link sshdconfigIPQoSDeprecated      sshdconfigDeprecated
 hi def link sshdconfigKexAlgo              sshdconfigEnum
+hi def link sshdconfigKexAlgoDeprecated    sshdconfigDeprecated
 hi def link sshdconfigTunnel               sshdconfigEnum
 hi def link sshdconfigSubsystem            sshdconfigEnum
 hi def link sshdconfigPubkeyAuthOptions    sshdconfigEnum
