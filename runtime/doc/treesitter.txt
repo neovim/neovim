@@ -955,6 +955,22 @@ TSNode:type()                                                  *TSNode:type()*
 ==============================================================================
 Lua module: vim.treesitter                               *lua-treesitter-core*
 
+*vim.treesitter.CaptureInfo*
+
+    Fields: ~
+      • {capture}     (`string`) Capture name
+      • {col}         (`integer`) Start column
+      • {end_col}     (`integer`) End column (excluded)
+      • {end_row}     (`integer`) End row
+      • {id}          (`integer`) 1-based capture id in the query
+      • {lang}        (`string`) Language name
+      • {metadata}    (`vim.treesitter.query.TSMetadata`) Query metadata, e.g.
+                      `priority` or `conceal`
+      • {pattern_id}  (`integer`) 1-based id of the matched pattern in the
+                      query
+      • {row}         (`integer`) Start row
+
+
 foldexpr({lnum})                                   *vim.treesitter.foldexpr()*
     Returns the fold level for {lnum} in the current buffer. Can be set
     directly to 'foldexpr': >lua
@@ -997,18 +1013,7 @@ get_captures({buf}, {start}, {stop})           *vim.treesitter.get_captures()*
                  (excluded)
 
     Return: ~
-        (`table[]`) A list of objects with the following fields:
-        • {capture} (`string`) Capture name
-        • {col} (`integer`) Start column
-        • {end_col} (`integer`) End column (excluded)
-        • {end_row} (`integer`) End row
-        • {id} (`integer`) 1-based capture id in the query
-        • {lang} (`string`) Language name
-        • {metadata} (`vim.treesitter.query.TSMetadata`) Query metadata, e.g.
-          `priority` or `conceal`
-        • {pattern_id} (`integer`) 1-based id of the matched pattern in the
-          query
-        • {row} (`integer`) Start row
+        (`vim.treesitter.CaptureInfo[]`)
 
 get_captures_at_cursor({win})        *vim.treesitter.get_captures_at_cursor()*
     Returns a list of highlight capture names under the cursor
