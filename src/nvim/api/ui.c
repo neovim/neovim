@@ -241,7 +241,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dict opt
     }
   }
 
-  if (ui->ui_ext[kUIHlState] || ui->ui_ext[kUIMultigrid]) {
+  if (ui->ui_ext[kUIHlState] || ui->ui_ext[kUIMultigrid] || ui->ui_ext[kUIImages]) {
     ui->ui_ext[kUILinegrid] = true;
   }
 
@@ -987,6 +987,42 @@ void remote_ui_ui_send(RemoteUI *ui, String content)
   push_call(ui, "ui_send", args);
 }
 
+void remote_ui_img_data(RemoteUI *ui, Integer id, String data, Dict opts)
+{
+  if (!ui->ui_ext[kUIImages]) {
+    return;
+  }
+
+  MAXSIZE_TEMP_ARRAY(args, 3);
+  ADD_C(args, INTEGER_OBJ(id));
+  ADD_C(args, STRING_OBJ(data));
+  ADD_C(args, DICT_OBJ(opts));
+  push_call(ui, "img_data", args);
+}
+
+void remote_ui_img_set(RemoteUI *ui, Integer id, Dict opts)
+{
+  if (!ui->ui_ext[kUIImages]) {
+    return;
+  }
+
+  MAXSIZE_TEMP_ARRAY(args, 2);
+  ADD_C(args, INTEGER_OBJ(id));
+  ADD_C(args, DICT_OBJ(opts));
+  push_call(ui, "img_set", args);
+}
+
+void remote_ui_img_del(RemoteUI *ui, Integer id)
+{
+  if (!ui->ui_ext[kUIImages]) {
+    return;
+  }
+
+  MAXSIZE_TEMP_ARRAY(args, 1);
+  ADD_C(args, INTEGER_OBJ(id));
+  push_call(ui, "img_del", args);
+}
+
 void remote_ui_flush_pending_data(RemoteUI *ui)
 {
   ui_flush_buf(ui, false);
@@ -1103,4 +1139,46 @@ void nvim_ui_send(uint64_t channel_id, String content, Error *err)
   FUNC_API_SINCE(14)
 {
   ui_call_ui_send(content);
+}
+
+/// @nodoc
+/// EXPERIMENTAL: emits the "img_data" UI event, see |ui-images|. Used by |vim.ui.img|.
+///
+/// @param id Image identifier
+/// @param data Raw PNG image bytes
+/// @param opts Reserved for future use
+/// @param[out] err Error details, if any
+void nvim__ui_img_data(Integer id, String data, Dict opts, Error *err)
+  FUNC_API_SINCE(15)
+{
+  ui_call_img_data(id, data, opts);
+}
+
+/// @nodoc
+/// EXPERIMENTAL: emits the "img_set" UI event, see |ui-images|. Used by |vim.ui.img|.
+///
+/// @param id Image identifier
+/// @param opts Placement of the image:
+///        - col: (`integer?`) 0-based column on the global layout. Direct placements only.
+///        - height: (`integer?`) Height in cells. Derived from the image if omitted.
+///        - row: (`integer?`) 0-based row on the global layout. Direct placements only.
+///        - virtual: (`boolean?`) Render at placeholder cells instead of at {row}/{col}.
+///        - width: (`integer?`) Width in cells. Derived from the image if omitted.
+///        - zindex: (`integer?`) Stacking order. Direct placements only.
+/// @param[out] err Error details, if any
+void nvim__ui_img_set(Integer id, Dict opts, Error *err)
+  FUNC_API_SINCE(15)
+{
+  ui_call_img_set(id, opts);
+}
+
+/// @nodoc
+/// EXPERIMENTAL: emits the "img_del" UI event, see |ui-images|. Used by |vim.ui.img|.
+///
+/// @param id Image identifier
+/// @param[out] err Error details, if any
+void nvim__ui_img_del(Integer id, Error *err)
+  FUNC_API_SINCE(15)
+{
+  ui_call_img_del(id);
 }
