@@ -326,7 +326,8 @@ max_line_length                                 *editorconfig.max_line_length*
 root                                                       *editorconfig.root*
     If "true", then stop searching for `.editorconfig` files in parent
     directories. This property must be at the top-level of the `.editorconfig`
-    file (i.e. it must not be within a glob section).
+    file (i.e. it must not be within a glob section). It only controls the
+    search and is excluded from property callbacks and |b:editorconfig|.
 
 spelling_language                             *editorconfig.spelling_language*
     A code of the format ss or ss-TT, where ss is an ISO 639 language code and

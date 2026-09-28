@@ -136,6 +136,23 @@ describe('editorconfig', function()
     clear({ args = { '--clean' } })
   end)
 
+  it('stops at root even when a child sets root=false', function()
+    local root = testdir .. pathsep .. 'root'
+    local child = root .. pathsep .. 'child'
+    n.mkdir_p(child)
+    t.write_file(root .. pathsep .. '.editorconfig', 'root = true\n[*]\nindent_style = space\n')
+    t.write_file(child .. pathsep .. '.editorconfig', 'root = false\n[*]\ntab_width = 5\n')
+
+    command('set shiftwidth=4')
+    -- The outer .editorconfig sets indent_size=3 for this filename.
+    test_case('root' .. pathsep .. 'child' .. pathsep .. '3_space.txt', {
+      expandtab = true,
+      shiftwidth = 4,
+      tabstop = 5,
+    })
+    eq({ indent_style = 'space', tab_width = '5' }, fn.luaeval('vim.b.editorconfig'))
+  end)
+
   it('sets indent options', function()
     test_case('3_space.txt', {
       expandtab = true,
