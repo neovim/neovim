@@ -93,7 +93,7 @@ function vim.inspect_pos(buf, row, col, filter)
 
   -- treesitter
   if filter.treesitter then
-    for _, capture in pairs(vim.treesitter.get_captures_at_pos(buf, row, col)) do
+    for _, capture in pairs(vim.treesitter.get_captures(buf, { row, col })) do
       --- @diagnostic disable-next-line: inject-field
       capture.hl_group = '@' .. capture.capture .. '.' .. capture.lang
       results.treesitter[#results.treesitter + 1] = resolve_hl(capture)

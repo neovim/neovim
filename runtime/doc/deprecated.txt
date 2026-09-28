@@ -40,6 +40,11 @@ LUA
 • vim.F.npcall()			Renamed to |vim.npcall()|
 • vim.F.nil_wrap()			Use |vim.npcall()| instead
 
+TREESITTER
+
+• *vim.treesitter.get_captures_at_pos()* Use |vim.treesitter.get_captures()|
+  with `(buf, { row, col })` instead.
+
 UI
 
 • |v:echospace|		Its purpose to avoid a "Press ENTER" prompt

@@ -20,7 +20,7 @@ local function get_commentstring(ref_position)
 
   -- Get 'commentstring' from tree-sitter captures' metadata.
   -- Traverse backwards to prefer narrower captures.
-  local caps = vim.treesitter.get_captures_at_pos(0, row, col)
+  local caps = vim.treesitter.get_captures(0, { row, col })
   for i = #caps, 1, -1 do
     local id, metadata = caps[i].id, caps[i].metadata
     local md_cms = metadata['bo.commentstring'] or metadata[id] and metadata[id]['bo.commentstring']

@@ -970,6 +970,46 @@ foldexpr({lnum})                                   *vim.treesitter.foldexpr()*
     Return: ~
         (`string`)
 
+get_captures({buf}, {start}, {stop})           *vim.treesitter.get_captures()*
+    Returns highlight captures at a position, on a line, or overlapping a
+    range.
+
+    {start} and {stop} can be a row number or a `{row, col}` pair. All rows
+    and columns are 0-based; columns are byte offsets.
+
+    Without {stop}, a row number queries the whole line and a `{row, col}`
+    pair queries one position.
+
+    With {stop}, return captures that overlap the range. The stop position is
+    excluded; a row number excludes that row. Empty ranges return no captures.
+
+    Each result includes the full captured node range, which may extend
+    outside the requested range. Returns an empty list if treesitter
+    highlighting is not active in {buf}.
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {buf}    (`integer`) Buffer number (0 for current buffer)
+      • {start}  (`integer|[integer,integer]`) Start row or `{row, col}`
+      • {stop}   (`integer|[integer,integer]?`) Stop row or `{row, col}`
+                 (excluded)
+
+    Return: ~
+        (`table[]`) A list of objects with the following fields:
+        • {capture} (`string`) Capture name
+        • {col} (`integer`) Start column
+        • {end_col} (`integer`) End column (excluded)
+        • {end_row} (`integer`) End row
+        • {id} (`integer`) 1-based capture id in the query
+        • {lang} (`string`) Language name
+        • {metadata} (`vim.treesitter.query.TSMetadata`) Query metadata, e.g.
+          `priority` or `conceal`
+        • {pattern_id} (`integer`) 1-based id of the matched pattern in the
+          query
+        • {row} (`integer`) Start row
+
 get_captures_at_cursor({win})        *vim.treesitter.get_captures_at_cursor()*
     Returns a list of highlight capture names under the cursor
 
@@ -978,23 +1018,6 @@ get_captures_at_cursor({win})        *vim.treesitter.get_captures_at_cursor()*
 
     Return: ~
         (`string[]`) List of capture names
-
-                                        *vim.treesitter.get_captures_at_pos()*
-get_captures_at_pos({buf}, {row}, {col})
-    Returns a list of highlight captures at the given position
-
-    Each capture is represented by a table containing the capture name as a
-    string, the capture's language, a table of metadata (`priority`,
-    `conceal`, ...; empty if none are defined), the id of the capture, and the
-    (0-indexed) id of the matched pattern in the query.
-
-    Parameters: ~
-      • {buf}  (`integer`) Buffer number (0 for current buffer)
-      • {row}  (`integer`) Position row
-      • {col}  (`integer`) Position column
-
-    Return: ~
-        (`{capture: string, lang: string, metadata: vim.treesitter.query.TSMetadata, id: integer, pattern_id: integer}[]`)
 
 get_node({opts})                                   *vim.treesitter.get_node()*
     Returns the smallest named node at the given position

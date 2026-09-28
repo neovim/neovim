@@ -271,37 +271,86 @@ function M.node_contains(node, range)
   return M._range.contains(nrange, range)
 end
 
---- Returns a list of highlight captures at the given position
----
---- Each capture is represented by a table containing the capture name as a string, the capture's
---- language, a table of metadata (`priority`, `conceal`, ...; empty if none are defined), the id
---- of the capture, and the (0-indexed) id of the matched pattern in the query.
----
----@param buf integer Buffer number (0 for current buffer)
----@param row integer Position row
----@param col integer Position column
----
----@return {capture: string, lang: string, metadata: vim.treesitter.query.TSMetadata, id: integer, pattern_id: integer}[]
+--- @class vim.treesitter.CaptureInfo
+--- @inlinedoc
+--- @field capture string Capture name
+--- @field lang string Language name
+--- @field metadata vim.treesitter.query.TSMetadata Query metadata, e.g. `priority` or `conceal`
+--- @field id integer 1-based capture id in the query
+--- @field pattern_id integer 1-based id of the matched pattern in the query
+--- @field row integer Start row
+--- @field col integer Start column
+--- @field end_row integer End row
+--- @field end_col integer End column (excluded)
+
+---@deprecated Use vim.treesitter.get_captures() instead.
+---@param buf integer
+---@param row integer
+---@param col integer
+---@return vim.treesitter.CaptureInfo[]
 function M.get_captures_at_pos(buf, row, col)
+  vim.deprecate('vim.treesitter.get_captures_at_pos()', 'vim.treesitter.get_captures()', '0.15')
+  return M.get_captures(buf, { row, col })
+end
+
+--- Returns highlight captures at a position, on a line, or overlapping a range.
+---
+--- {start} and {stop} can be a row number or a `{row, col}` pair. All rows and
+--- columns are 0-based; columns are byte offsets.
+---
+--- Without {stop}, a row number queries the whole line and a `{row, col}` pair
+--- queries one position.
+---
+--- With {stop}, return captures that overlap the range. The stop position is
+--- excluded; a row number excludes that row. Empty ranges return no captures.
+---
+--- Each result includes the full captured node range, which may extend outside the
+--- requested range. Returns an empty list if treesitter highlighting is not active
+--- in {buf}.
+---
+---@since 15
+---@param buf integer Buffer number (0 for current buffer)
+---@param start integer|[integer,integer] Start row or `{row, col}`
+---@param stop? integer|[integer,integer] Stop row or `{row, col}` (excluded)
+---@return vim.treesitter.CaptureInfo[]
+function M.get_captures(buf, start, stop)
   buf = vim._resolve_bufnr(buf)
+
+  --- @type integer, integer, integer, integer
+  local start_row, start_col, end_row, end_col
+  if type(start) == 'number' then
+    start_row, start_col = start, 0
+  else
+    start_row, start_col = start[1], start[2]
+  end
+
+  if stop == nil then
+    end_row = type(start) == 'number' and start_row + 1 or start_row
+    end_col = type(start) == 'number' and 0 or start_col + 1
+  elseif type(stop) == 'number' then
+    end_row, end_col = stop, 0
+  else
+    end_row, end_col = stop[1], stop[2]
+  end
+
   local buf_highlighter = M.highlighter.active[buf]
 
-  if not buf_highlighter then
+  if not buf_highlighter or M._range.cmp_pos.ge(start_row, start_col, end_row, end_col) then
     return {}
   end
 
-  local matches = {}
+  local matches = {} --- @type vim.treesitter.CaptureInfo[]
+  local query_range = { start_row, start_col, end_row, end_col } --- @type Range4
 
+  -- Highlighting only parses visible ranges, so offscreen injections may be missing.
+  buf_highlighter.tree:parse(query_range)
   buf_highlighter.tree:for_each_tree(function(tstree, tree)
     if not tstree then
       return
     end
 
     local root = tstree:root()
-    local root_start_row, _, root_end_row, _ = root:range()
-
-    -- Only worry about trees within the line range
-    if root_start_row > row or root_end_row < row then
+    if not M._range.intercepts({ root:range() }, query_range) then
       return
     end
 
@@ -313,21 +362,28 @@ function M.get_captures_at_pos(buf, row, col)
       return
     end
 
-    local iter = query:iter_captures(root, buf_highlighter.bufnr, row, row + 1)
-
+    local iter = query:iter_captures(root, buf_highlighter.bufnr, start_row, end_row, {
+      start_col = start_col,
+      end_col = end_col,
+    })
     for id, node, metadata, match in iter do
-      if M.is_in_node_range(node, row, col) then
+      local nsrow, nscol, nerow, necol = node:range()
+      if M._range.intercepts({ nsrow, nscol, nerow, necol }, query_range) then
         ---@diagnostic disable-next-line: invisible
         local capture = query.captures[id] -- name of the capture in the query
         if capture ~= nil then
           local _, pattern_id = match:info()
-          table.insert(matches, {
+          matches[#matches + 1] = {
             capture = capture,
             metadata = metadata,
             lang = tree:lang(),
             id = id,
             pattern_id = pattern_id,
-          })
+            row = nsrow,
+            col = nscol,
+            end_row = nerow,
+            end_col = necol,
+          }
         end
       end
     end
@@ -345,7 +401,7 @@ function M.get_captures_at_cursor(win)
   local bufnr = api.nvim_win_get_buf(win)
   local cursor = api.nvim_win_get_cursor(win)
 
-  local data = M.get_captures_at_pos(bufnr, cursor[1] - 1, cursor[2])
+  local data = M.get_captures(bufnr, { cursor[1] - 1, cursor[2] })
 
   local captures = {}
 

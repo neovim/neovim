@@ -489,6 +489,9 @@ TERMINAL
 
 TREESITTER
 
+• |vim.treesitter.get_captures()| returns highlight captures at a given position,
+  on a whole line, or overlapping a range. It replaces
+  |vim.treesitter.get_captures_at_pos()|.
 • |v_]N| |v_[N| expand selection to sibling treesitter node.
 • |treesitter-highlight-conceal| can be removed by adding a `@noconceal`
   capture.
