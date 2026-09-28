@@ -86,9 +86,9 @@ hi SpellRare guifg=#2e8b57 guibg=NONE guisp=#2e8b57 gui=undercurl ctermfg=29 cte
 hi Statement guifg=#a52a2a guibg=NONE guisp=NONE gui=bold ctermfg=124 ctermbg=NONE cterm=bold term=NONE
 hi StatusLine guifg=#eeeeee guibg=#000000 guisp=NONE gui=bold ctermfg=255 ctermbg=16 cterm=bold term=bold,reverse
 hi StatusLineNC guifg=#bcbcbc guibg=#000000 guisp=NONE gui=NONE ctermfg=250 ctermbg=16 cterm=NONE term=bold,underline
-hi TabLine guifg=#000000 guibg=#bcbcbc guisp=NONE gui=underline ctermfg=16 ctermbg=250 cterm=underline term=bold,underline
+hi TabLine guifg=#000000 guibg=#bcbcbc guisp=NONE gui=underline,nocombine ctermfg=16 ctermbg=250 cterm=underline,nocombine term=bold,underline
 hi TabLineFill guifg=NONE guibg=NONE guisp=NONE gui=reverse ctermfg=NONE ctermbg=NONE cterm=reverse term=NONE
-hi TabLineSel guifg=#000000 guibg=#e4e4e4 guisp=NONE gui=bold ctermfg=16 ctermbg=254 cterm=bold term=bold,reverse
+hi TabLineSel guifg=#000000 guibg=#e4e4e4 guisp=NONE gui=bold,nocombine ctermfg=16 ctermbg=254 cterm=bold,nocombine term=bold,reverse
 hi Title guifg=#a52a2a guibg=NONE guisp=NONE gui=bold ctermfg=124 ctermbg=NONE cterm=bold term=NONE
 hi TitleBar guifg=#000000 guibg=#cccccc guisp=NONE gui=NONE ctermfg=16 ctermbg=250 cterm=NONE term=NONE
 hi TitleBarNC guifg=#5f5f5f guibg=#bcbcbc guisp=NONE gui=NONE ctermfg=59 ctermbg=252 cterm=NONE term=NONE
@@ -156,9 +156,9 @@ if s:t_Co >= 16
   hi Statement ctermfg=darkred ctermbg=NONE cterm=bold
   hi StatusLine ctermfg=white ctermbg=black cterm=bold
   hi StatusLineNC ctermfg=darkgrey ctermbg=black cterm=NONE
-  hi TabLine ctermfg=black ctermbg=white cterm=underline
+  hi TabLine ctermfg=black ctermbg=white cterm=underline,nocombine
   hi TabLineFill ctermfg=NONE ctermbg=NONE cterm=reverse
-  hi TabLineSel ctermfg=black ctermbg=grey cterm=bold
+  hi TabLineSel ctermfg=black ctermbg=grey cterm=bold,nocombine
   hi Title ctermfg=darkred ctermbg=NONE cterm=bold
   hi TitleBar ctermfg=black ctermbg=white cterm=NONE
   hi TitleBarNC ctermfg=darkgray ctermbg=white cterm=NONE
@@ -224,9 +224,9 @@ if s:t_Co >= 8
   hi Statement ctermfg=darkred ctermbg=NONE cterm=bold
   hi StatusLine ctermfg=black ctermbg=gray cterm=bold,reverse
   hi StatusLineNC ctermfg=black ctermbg=gray cterm=reverse
-  hi TabLine ctermfg=gray ctermbg=black cterm=NONE
+  hi TabLine ctermfg=gray ctermbg=black cterm=nocombine
   hi TabLineFill ctermfg=NONE ctermbg=NONE cterm=reverse
-  hi TabLineSel ctermfg=black ctermbg=gray cterm=NONE
+  hi TabLineSel ctermfg=black ctermbg=gray cterm=nocombine
   hi Title ctermfg=darkred ctermbg=NONE cterm=bold
   hi TitleBar ctermfg=black ctermbg=white cterm=NONE
   hi TitleBarNC ctermfg=darkgray ctermbg=white cterm=NONE
