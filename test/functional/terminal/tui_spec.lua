@@ -2020,7 +2020,7 @@ describe('TUI', function()
       [[
       tab split
       tabnew
-      highlight Tabline ctermbg=NONE ctermfg=NONE cterm=underline
+      highlight Tabline ctermbg=NONE ctermfg=NONE cterm=underline,nocombine
     ]],
       {}
     )

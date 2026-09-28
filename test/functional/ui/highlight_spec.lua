@@ -2274,20 +2274,24 @@ describe("'winhighlight' highlight", function()
   end)
 
   it('can override Tabline', function()
+    screen:add_extra_attr_ids {
+      [100] = { reverse = true, background = Screen.colors.Red, foreground = Screen.colors.Grey100 },
+      [101] = { reverse = true, background = Screen.colors.DarkBlue },
+    }
     command('tabnew')
     command('set winhl=TabLine:Background1,TabLineSel:ErrorMsg')
 
     screen:expect([[
-      {20: No Name] }{15: No Name]}{20:X}|
+      {24: No Name] }{100: No Name]}{24:X}|
       ^                    |
-      {0:~                   }|*5
+      {1:~                   }|*5
                           |
     ]])
     command('tabnext')
     screen:expect([[
-      {21: No Name] }{1: No Name]}{20:X}|
+      {5: No Name] }{101: No Name]}{24:X}|
       ^                    |
-      {0:~                   }|*5
+      {1:~                   }|*5
                           |
     ]])
   end)
