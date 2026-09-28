@@ -84,9 +84,8 @@ end
 --- @param mods string|vim.api.keyset.cmd_mods Modifier string ("vertical") or structured mods table.
 function M.wrapped_edit(file, mods)
   if type(mods) == 'string' then
-    mods = vim.api.nvim_parse_cmd(mods .. ' edit').mods --[[@as vim.api.keyset.cmd_mods]]
+    mods = vim.api.nvim_parse_cmd(mods .. ' edit').mods
   end
-  --- @cast mods vim.api.keyset.cmd_mods
   if (mods.tab or 0) > 0 or (mods.split or '') ~= '' or mods.horizontal or mods.vertical then
     local buf = M.get_buf_by_name(file)
     if buf == nil then

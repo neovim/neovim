@@ -736,7 +736,7 @@ local function ref_from_args(args)
 end
 
 --- @param count integer
---- @param smods vim.api.keyset.cmd.mods
+--- @param smods vim.api.keyset.cmd_mods
 --- @param args string[]
 --- @return string? err
 function M.open_page(count, smods, args)

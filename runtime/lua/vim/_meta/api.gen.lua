@@ -40,9 +40,9 @@ function vim.api.nvim__cmdwin_set(type, buf) end
 --- @param index integer Completion candidate index
 --- @param opts vim.api.keyset.complete_set? Optional parameters.
 --- - info: (string) info text.
---- @return table<string,number> # Dict containing these keys:
---- - winid: (number) floating window id
---- - bufnr: (number) buffer id in floating window
+--- @return table<string,integer> # Dict containing these keys:
+--- - winid: (integer) floating window id
+--- - bufnr: (integer) buffer id in floating window
 function vim.api.nvim__complete_set(index, opts) end
 
 --- WARNING: This feature is experimental/unstable.
@@ -1898,7 +1898,7 @@ function vim.api.nvim_out_write(str) end
 ---
 --- @param str string Command line string to parse. Cannot contain "\n".
 --- @param opts vim.api.keyset.empty? Optional parameters. Reserved for future use.
---- @return vim.api.keyset.cmd # Dict containing command information, with these keys:
+--- @return vim.api.keyset.cmd_ret # Dict containing command information, with these keys:
 --- - cmd: (string) Command name.
 --- - range: (array) (optional) Command range ([<line1>] [<line2>]).
 ---                  Omitted if command doesn't accept a range.

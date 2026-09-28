@@ -113,7 +113,7 @@ error('Cannot require a meta file')
 ---
 --- Command modifiers in a structured format. Has the same structure as the
 --- "mods" key of |nvim_parse_cmd()|.
---- @field smods vim.api.keyset.cmd_mods
+--- @field smods vim.api.keyset.cmd_mods_ret
 
 --- @class vim.api.keyset.command_info
 --- @field name string
@@ -214,27 +214,31 @@ error('Cannot require a meta file')
 --- @field default string|boolean|integer
 --- @field allows_duplicates boolean
 
---- @class vim.api.keyset.cmd.mods
---- @field filter? { force: boolean, pattern: string }
---- @field silent? boolean
---- @field emsg_silent? boolean
---- @field unsilent? boolean
---- @field sandbox? boolean
---- @field noautocmd? boolean
---- @field tab? integer
---- @field verbose? integer
---- @field browse? boolean
---- @field confirm? boolean
---- @field hide? boolean
---- @field keepalt? boolean
---- @field keepjumps? boolean
---- @field keepmarks? boolean
---- @field keeppatterns? boolean
---- @field lockmarks? boolean
---- @field noswapfile? boolean
---- @field vertical? boolean
---- @field horizontal? boolean
---- @field split? ''|'botright'|'topleft'|'belowright'|'aboveleft'
+--- @class vim.api.keyset.cmd_ret : vim.api.keyset.cmd
+--- @field mods vim.api.keyset.cmd_mods_ret
+
+-- Parsed commands and callback modifiers include defaults for every modifier.
+--- @class vim.api.keyset.cmd_mods_ret : vim.api.keyset.cmd_mods
+--- @field filter { force: boolean, pattern: string }
+--- @field silent boolean
+--- @field emsg_silent boolean
+--- @field unsilent boolean
+--- @field sandbox boolean
+--- @field noautocmd boolean
+--- @field tab integer
+--- @field verbose integer
+--- @field browse boolean
+--- @field confirm boolean
+--- @field hide boolean
+--- @field keepalt boolean
+--- @field keepjumps boolean
+--- @field keepmarks boolean
+--- @field keeppatterns boolean
+--- @field lockmarks boolean
+--- @field noswapfile boolean
+--- @field vertical boolean
+--- @field horizontal boolean
+--- @field split ''|'botright'|'topleft'|'belowright'|'aboveleft'
 
 --- @class vim.api.keyset.cmd.magic
 --- @field bar boolean

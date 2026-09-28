@@ -116,7 +116,7 @@ typedef struct {
     } \
   }
 
-/// Pushes cmdmod_T as a table (Lua type: `vim.api.keyset.cmd_mods`) onto the stack.
+/// Pushes cmdmod_T as a table (Lua type: `vim.api.keyset.cmd_mods_ret`) onto the stack.
 static void nlua_push_cmdmod(lua_State *lstate, const cmdmod_T *cmod)
 {
   lua_newtable(lstate);

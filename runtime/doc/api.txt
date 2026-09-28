@@ -1767,9 +1767,9 @@ nvim__complete_set({index}, {opts})                     *nvim__complete_set()*
                  • info: (string) info text.
 
     Return: ~
-        (`table<string,number>`) Dict containing these keys:
-        • winid: (number) floating window id
-        • bufnr: (number) buffer id in floating window
+        (`table<string,integer>`) Dict containing these keys:
+        • winid: (integer) floating window id
+        • bufnr: (integer) buffer id in floating window
 
 nvim__exec_lua_fast({code}, {args})                    *nvim__exec_lua_fast()*
     WARNING: This feature is experimental/unstable.

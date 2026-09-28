@@ -14,7 +14,7 @@ local M = {}
 
 --- Apply the `:filter[!] /pattern/` modifier to a single message. See also `message_filtered()`.
 ---
---- @param filter vim.api.keyset.cmd_mods_filter ":filter" mod.
+--- @param filter { pattern: string, force: boolean }? ":filter" mod.
 --- @param msg string Message to test.
 --- @return boolean # True if `msg` should be skipped (not displayed).
 function M.filter(filter, msg)

@@ -2430,9 +2430,10 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
 /// @param opts   Optional parameters.
 ///       - info: (string) info text.
 /// @return Dict containing these keys:
-///       - winid: (number) floating window id
-///       - bufnr: (number) buffer id in floating window
-DictOf(Float) nvim__complete_set(Integer index, Dict(complete_set) *opts, Arena *arena, Error *err)
+///       - winid: (integer) floating window id
+///       - bufnr: (integer) buffer id in floating window
+DictOf(Integer) nvim__complete_set(Integer index, Dict(complete_set) *opts, Arena *arena,
+                                   Error *err)
 {
   Dict rv = arena_dict(arena, 2);
   if ((get_cot_flags() & kOptCotFlagPopup) == 0) {
