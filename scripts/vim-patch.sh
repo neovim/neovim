@@ -657,8 +657,9 @@ list_missing_vimpatches() {
     grep -v -e 'tag:' -e 'HEAD' |
     grep -v -f <(list_vimpatch_hashes | sed -E 's/(.*)/^\1/'))
   if test -n "${git_log_format}"; then
-    echo "${missing_numbers}" | _git --no-pager -C "${VIM_SOURCE_DIR}" log --no-walk --stdin --format="%d: ${git_log_format}"
-    echo "${missing_hashes}" | _git --no-pager -C "${VIM_SOURCE_DIR}" log --no-walk --stdin --format="%H: ${git_log_format}"
+    (echo "${missing_numbers}"; echo "${missing_hashes}") |
+      _git --no-pager -C "${VIM_SOURCE_DIR}" log --decorate-refs='refs/tags/*' --reverse --no-walk --stdin --format="%H%x00%d%x00: ${git_log_format}" |
+      awk -F '\0' '{ print $2 ? $2$3 : $1$3 }'
   else
     echo "${missing_numbers}"
     echo "${missing_hashes}"
