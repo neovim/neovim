@@ -4001,7 +4001,7 @@ getline({lnum}, {end})
                 Return: ~
                   (`string[]`)
 
-getloclist({nr} [, {what}])                                       *getloclist()*
+getloclist({nr})                                                  *getloclist()*
 		Returns a |List| with all the entries in the location list for
 		window {nr} (|window-number| or |window-ID|).
 		When {nr} is zero the current window is used.
@@ -4010,6 +4010,13 @@ getloclist({nr} [, {what}])                                       *getloclist()*
 		returned.  For an invalid {nr}, an empty list is returned.
 		Otherwise, same as |getqflist()|.
 
+                Parameters: ~
+                  • {nr} (`integer`)
+
+                Return: ~
+                  (`vim.fn.getqflist.ret.item[]`)
+
+getloclist({nr}, {what})
 		If the optional {what} dictionary argument is supplied, then
 		returns the items listed in {what} as a dictionary.  Refer to
 		|getqflist()| for the supported items in {what}.
@@ -4035,10 +4042,10 @@ getloclist({nr} [, {what}])                                       *getloclist()*
 
                 Parameters: ~
                   • {nr} (`integer`)
-                  • {what} (`table?`)
+                  • {what} (`vim.fn.getloclist.what`)
 
                 Return: ~
-                  (`any`)
+                  (`vim.fn.getloclist.ret`)
 
 getmarklist([{buf}])                                             *getmarklist()*
 		Without the {buf} argument returns a |List| with information
