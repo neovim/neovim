@@ -240,7 +240,7 @@ function M.jump(opts)
   )
 
   -- Apply configuration options from vim.diagnostic.config()
-  local config = assert(vim.diagnostic.config()).jump or {}
+  local config = vim.diagnostic.config().jump or {}
   opts = vim.tbl_deep_extend('keep', opts, config)
   --- @cast opts vim.diagnostic._JumpOpts
 

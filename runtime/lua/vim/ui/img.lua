@@ -43,7 +43,7 @@ local M = {}
 ---@field zindex? integer stacking order (higher = on top)
 
 --- Maps user-facing ID to internal tracking info.
----@type table<integer, { img_id: integer, opts: vim.ui.img.Opts }>
+---@type table<integer, { img_id: integer, opts: vim.ui.img.Opts }?>
 local state = {}
 
 ---Display an image or update an existing one.

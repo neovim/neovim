@@ -1421,10 +1421,11 @@ function M.code_action(opts)
     local params
 
     if range then
-      assert(type(range) == 'table', 'code_action range must be a table')
-      local start = assert(range.start, 'range must have a `start` property')
-      local end_ = assert(range['end'], 'range must have a `end` property')
-      params = util.make_given_range_params(start, end_, bufnr, client.offset_encoding)
+      validate('range', range, 'table')
+      validate('range.start', range.start, 'table')
+      validate('range.end', range['end'], 'table')
+      params =
+        util.make_given_range_params(range.start, range['end'], bufnr, client.offset_encoding)
     else
       params = util.make_range_params(win, client.offset_encoding)
     end

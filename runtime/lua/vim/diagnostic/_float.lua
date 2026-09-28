@@ -27,7 +27,7 @@ local function resolve_float_opts(opts, bufnr)
   -- with its `opts` table. We create a dedicated options table (`float_opts`) that inherits
   -- missing keys from the global configuration (`global_diagnostic_options.float`), which can
   -- be a table or a function.
-  local global_opts = assert(vim.diagnostic.config())
+  local global_opts = vim.diagnostic.config()
   local float_opts = global_opts.float
   local resolved_float_opts = type(float_opts) == 'table' and float_opts
     or (type(float_opts) == 'function' and float_opts(opts.namespace, bufnr) or {})

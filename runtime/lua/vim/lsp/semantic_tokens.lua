@@ -42,7 +42,7 @@ local M = {}
 ---@class (private) STHighlighter : vim.lsp.Capability
 ---@field active table<integer, STHighlighter>
 ---@field debounce integer milliseconds to debounce requests for new tokens
----@field client_state table<integer, STClientState>
+---@field client_state table<integer, STClientState?>
 local STHighlighter = {
   name = 'semantic_tokens',
   method = 'textDocument/semanticTokens',
@@ -560,7 +560,7 @@ function STHighlighter:process_response(response, client, request_id, version, i
   local version_changed = version ~= current_result.version
   local highlights = {} --- @type STTokenRange[]
   if current_result.highlights and not version_changed then
-    highlights = assert(current_result.highlights)
+    highlights = current_result.highlights
   end
 
   -- convert token list to highlight ranges

@@ -116,10 +116,7 @@ local function queue_change(client, fullpath, change_type)
   --- @type lsp.FileEvent
   local change = {
     uri = vim.uri_from_fname(fullpath),
-    type = assert(
-      to_lsp_change_type[change_type],
-      'Must receive change type Created, Changed or Deleted'
-    ),
+    type = to_lsp_change_type[change_type],
   }
 
   local last_type = change_cache[client_id][change.uri]

@@ -153,7 +153,7 @@ local function filepath_to_healthcheck(path)
       -- */health/init.lua
       name = vim.fs.dirname(vim.fs.dirname(subpath))
     end
-    name = assert(name:gsub('/', '.')) --[[@as string]]
+    name = name:gsub('/', '.')
 
     func = 'require("' .. name .. '.health").check()'
     filetype = 'l'

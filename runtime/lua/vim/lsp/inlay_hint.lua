@@ -27,7 +27,7 @@ local M = {}
 
 ---@class (private) InlayHints : vim.lsp.Capability
 ---@field active table<integer, InlayHints>
----@field client_state table<integer, vim.lsp.inlay_hint.ClientState>
+---@field client_state table<integer, vim.lsp.inlay_hint.ClientState?>
 local InlayHint = {
   name = 'inlay_hint',
   method = 'textDocument/inlayHint',

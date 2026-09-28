@@ -147,7 +147,7 @@ local function get_node(range, top_node, parent_chain)
       return nil, {}
     end
 
-    local tree = assert(parser:parse(range))[1]
+    local tree = parser:parse(range)[1]
     top_node = create_top_node(tree, assert(tree:included_ranges(false)[1]), parser)
 
     if not Range.contains(node_range(top_node), range) then

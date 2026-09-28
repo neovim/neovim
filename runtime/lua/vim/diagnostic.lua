@@ -1119,7 +1119,7 @@ local default_status_signs = {
 function M.status(buf)
   vim.validate('buf', buf, 'number', true)
   buf = buf or 0
-  local config = assert(vim.diagnostic.config()).status or {} --- @type vim.diagnostic.Opts.Status
+  local config = vim.diagnostic.config().status or {} --- @type vim.diagnostic.Opts.Status
   vim.validate('config.format', config.format, 'function', true)
 
   local counts = M.count(buf)

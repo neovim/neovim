@@ -32,7 +32,6 @@
       "incomplete-signature-doc",
       "iter-variable-reassign",
       "param-type-mismatch",
-      "unnecessary-assert",
       "unnecessary-if"
     ],
     "severity": {
