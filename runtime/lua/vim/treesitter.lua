@@ -1,7 +1,8 @@
 local api = vim.api
 
+--- Strong references: the buffer callbacks only reference parsers weakly (see _create_parser()).
 ---@type table<integer,vim.treesitter.LanguageTree>
-local parsers = setmetatable({}, { __mode = 'v' })
+local parsers = {}
 
 local M = vim._defer_require('vim.treesitter', {
   _fold = ..., --- @module 'vim.treesitter._fold'
@@ -37,19 +38,36 @@ function M._create_parser(buf, lang, opts)
 
   local self = LanguageTree.new(buf, lang, opts)
 
+  -- The buffer callbacks must reference the parser weakly: otherwise a parser replaced by
+  -- get_parser() stays attached, receiving edits, for the lifetime of the buffer (#42122).
+  -- Once the parser has been garbage collected, the next on_bytes detaches the callbacks.
+  --- @type vim.treesitter.LanguageTree[]
+  local ref = setmetatable({ self }, { __mode = 'v' })
+
   local function bytes_cb(_, ...)
-    self:_on_bytes(...)
+    local tree = ref[1]
+    if not tree then
+      return true
+    end
+    tree:_on_bytes(...)
   end
 
   local function detach_cb(_, ...)
-    if parsers[buf] == self then
+    local tree = ref[1]
+    if not tree then
+      return
+    end
+    if parsers[buf] == tree then
       parsers[buf] = nil
     end
-    self:_on_detach(...)
+    tree:_on_detach(...)
   end
 
   local function reload_cb(_)
-    self:_on_reload()
+    local tree = ref[1]
+    if tree then
+      tree:_on_reload()
+    end
   end
 
   local source = self:source() --[[@as integer]]

@@ -381,7 +381,48 @@ local function on_bytes(bufnr, start_row, start_col, old_row, old_col, new_row, 
   end
 end
 
-local registered_cbs = {} ---@type table<integer, boolean>
+--- Parsers that already have the fold callbacks registered. Weak keys, so that parsers replaced
+--- by get_parser() (e.g. after a filetype change) can be garbage collected.
+--- @type table<vim.treesitter.LanguageTree, true>
+local registered_cbs = setmetatable({}, { __mode = 'k' })
+
+--- Registers the fold callbacks on the parser of `foldinfos[bufnr]`, if not done yet.
+---
+--- The callbacks ignore events from parsers that are no longer used for the folds of the buffer,
+--- because both the old and the new parser may be alive (and attached) at the same time.
+---@param bufnr integer
+local function register_cbs(bufnr)
+  local parser = foldinfos[bufnr].parser
+  if not parser or registered_cbs[parser] then
+    return
+  end
+
+  local function is_current()
+    return foldinfos[bufnr] ~= nil and foldinfos[bufnr].parser == parser
+  end
+
+  parser:register_cbs({
+    on_changedtree = function(tree_changes)
+      if is_current() then
+        on_changedtree(bufnr, tree_changes)
+      end
+    end,
+
+    on_bytes = function(_, _, start_row, start_col, _, old_row, old_col, _, new_row, new_col, _)
+      if is_current() then
+        on_bytes(bufnr, start_row, start_col, old_row, old_col, new_row, new_col)
+      end
+    end,
+
+    on_detach = function()
+      if is_current() then
+        foldinfos[bufnr] = nil
+      end
+    end,
+  })
+
+  registered_cbs[parser] = true
+end
 
 ---@param lnum integer|nil
 ---@return string
@@ -395,43 +436,12 @@ function M.foldexpr(lnum)
       foldinfos[bufnr] = nil
     end)
 
-    local parser = foldinfos[bufnr].parser
-    if not parser then
+    if not foldinfos[bufnr].parser then
       return '0'
     end
 
     compute_folds_levels(bufnr, foldinfos[bufnr])
-
-    if not registered_cbs[bufnr] then
-      parser:register_cbs({
-        on_changedtree = function(tree_changes)
-          on_changedtree(bufnr, tree_changes)
-        end,
-
-        on_bytes = function(
-          _,
-          _,
-          start_row,
-          start_col,
-          _,
-          old_row,
-          old_col,
-          _,
-          new_row,
-          new_col,
-          _
-        )
-          on_bytes(bufnr, start_row, start_col, old_row, old_col, new_row, new_col)
-        end,
-
-        on_detach = function()
-          foldinfos[bufnr] = nil
-          registered_cbs[bufnr] = nil
-        end,
-      })
-
-      registered_cbs[bufnr] = true
-    end
+    register_cbs(bufnr)
   end
 
   return foldinfos[bufnr].levels[lnum] or '0'
@@ -448,6 +458,7 @@ nvim_on('OptionSet', group, {
   for _, bufnr in ipairs(bufs) do
     local foldinfo = FoldInfo.new(bufnr)
     foldinfos[bufnr] = foldinfo
+    register_cbs(bufnr)
     api.nvim_buf_call(bufnr, function()
       compute_folds_levels(bufnr, foldinfo, nil, nil, function()
         -- FileType/BufUnload can clear or replace the fold state while this

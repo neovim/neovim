@@ -195,9 +195,10 @@ function LanguageTree:_set_logger()
 
   self._logfile = logfile
 
+  -- Must not reference `self`: the parser keeps the logger alive, which would keep `self` alive.
   self._logger = function(logtype, msg)
-    self._logfile:write(string.format('%s:%s:(%s) %s\n', source, lang, logtype, msg))
-    self._logfile:flush()
+    logfile:write(string.format('%s:%s:(%s) %s\n', source, lang, logtype, msg))
+    logfile:flush()
   end
 
   local log_lex = vim.g.__ts_debug >= 3

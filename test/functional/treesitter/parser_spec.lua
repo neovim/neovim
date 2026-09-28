@@ -429,6 +429,73 @@ describe('treesitter parser API', function()
     exec_lua("vim.treesitter.get_parser(0, 'c')")
   end)
 
+  describe('when get_parser() replaces the parser of a buffer', function()
+    before_each(function()
+      exec_lua(function()
+        _G.on_bytes_count = 0
+        local LanguageTree = require('vim.treesitter.languagetree')
+        local on_bytes = LanguageTree._on_bytes
+        LanguageTree._on_bytes = function(...)
+          _G.on_bytes_count = _G.on_bytes_count + 1
+          return on_bytes(...)
+        end
+      end)
+    end)
+
+    it('detaches the old parser once it is garbage collected #42122', function()
+      exec_lua(function()
+        _G.alive = setmetatable({}, { __mode = 'k' })
+        for _ = 1, 50 do
+          for _, lang in ipairs({ 'lua', 'markdown' }) do
+            local parser = assert(vim.treesitter.get_parser(0, lang))
+            _G.alive[parser] = true
+          end
+        end
+      end)
+
+      -- Collect in a separate call, so that no stack slot still references an old parser.
+      eq(
+        1,
+        exec_lua(function()
+          collectgarbage()
+          collectgarbage()
+          return vim.tbl_count(_G.alive)
+        end)
+      )
+
+      for _ = 1, 2 do
+        eq(
+          1,
+          exec_lua(function()
+            _G.on_bytes_count = 0
+            vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'foo' })
+            return _G.on_bytes_count
+          end)
+        )
+      end
+      eq('markdown', exec_lua('return vim.treesitter.get_parser(0):lang()'))
+    end)
+
+    it('keeps the old parser attached while it is still referenced', function()
+      exec_lua(function()
+        _G.old = assert(vim.treesitter.get_parser(0, 'lua'))
+        _G.old:parse()
+        assert(vim.treesitter.get_parser(0, 'markdown'))
+        collectgarbage()
+        collectgarbage()
+      end)
+
+      eq(
+        { 2, false, { 0, 0, 2, 0 } },
+        exec_lua(function()
+          vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'local x = 1', 'return x' })
+          local valid = _G.old:is_valid()
+          return { _G.on_bytes_count, valid, { _G.old:parse()[1]:root():range() } }
+        end)
+      )
+    end)
+  end)
+
   it('can get a child by field', function()
     insert(test_text)
 
