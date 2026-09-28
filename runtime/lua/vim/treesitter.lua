@@ -272,7 +272,6 @@ function M.node_contains(node, range)
 end
 
 --- @class vim.treesitter.CaptureInfo
---- @inlinedoc
 --- @field capture string Capture name
 --- @field lang string Language name
 --- @field metadata vim.treesitter.query.TSMetadata Query metadata, e.g. `priority` or `conceal`
