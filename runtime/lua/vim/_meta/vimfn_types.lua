@@ -38,6 +38,14 @@ error('Cannot require a meta file')
 --- @field filename? string
 --- @field lnum integer
 
+--- @class vim.fn.getloclist.what : vim.fn.getqflist.what
+--- @field filewinid? integer
+
+--- Same as `vim.fn.getqflist.ret`, plus `filewinid` (0 unless {nr} is a location list
+--- window). See |location-list-file-window|.
+--- @class vim.fn.getloclist.ret : vim.fn.getqflist.ret
+--- @field filewinid? integer
+
 --- @class vim.fn.getmarklist.ret.item
 --- @field mark string
 --- @field pos [integer, integer, integer, integer]

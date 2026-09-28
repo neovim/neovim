@@ -4359,7 +4359,15 @@ M.funcs = {
       For a location list window, the displayed location list is
       returned.  For an invalid {nr}, an empty list is returned.
       Otherwise, same as |getqflist()|.
-
+    ]=],
+    name = 'getloclist',
+    params = { { 'nr', 'integer' } },
+    returns = 'vim.fn.getqflist.ret.item[]',
+    signature = 'getloclist({nr})',
+  },
+  getloclist__1 = {
+    args = { 2 },
+    desc = [=[
       If the optional {what} dictionary argument is supplied, then
       returns the items listed in {what} as a dictionary.  Refer to
       |getqflist()| for the supported items in {what}.
@@ -4384,8 +4392,9 @@ M.funcs = {
       <
     ]=],
     name = 'getloclist',
-    params = { { 'nr', 'integer' }, { 'what', 'table' } },
-    signature = 'getloclist({nr} [, {what}])',
+    params = { { 'nr', 'integer' }, { 'what', 'vim.fn.getloclist.what' } },
+    returns = 'vim.fn.getloclist.ret',
+    signature = 'getloclist({nr}, {what})',
   },
   getmarklist = {
     args = { 0, 1 },

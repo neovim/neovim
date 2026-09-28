@@ -3530,10 +3530,10 @@ function vim.fn.getline(lnum) end
 ---   echo getloclist(5, {'filewinid': 0})
 --- <
 ---
+--- @overload fun(nr: integer, what: vim.fn.getloclist.what): (vim.fn.getloclist.ret)
 --- @param nr integer
---- @param what? table
---- @return any
-function vim.fn.getloclist(nr, what) end
+--- @return vim.fn.getqflist.ret.item[]
+function vim.fn.getloclist(nr) end
 
 --- Without the {buf} argument returns a |List| with information
 --- about all the global marks. |mark|
