@@ -391,7 +391,7 @@ end, false)
 --- handling the "any" vs "all" semantics. They are called from the
 --- predicate_handlers table with the appropriate arguments for each predicate.
 local impl = {
-  --- @param match table<integer,TSNode[]>
+  --- @param match table<integer,TSNode[]?>
   --- @param source integer|string
   --- @param predicate any[]
   --- @param any boolean

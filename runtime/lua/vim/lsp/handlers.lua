@@ -539,7 +539,7 @@ local function make_call_hierarchy_handler(direction)
       local filename = nil
       local bufnr = nil
       if direction == 'from' then
-        filename = assert(vim.uri_to_fname(call_hierarchy_item.uri))
+        filename = vim.uri_to_fname(call_hierarchy_item.uri)
       else
         bufnr = ctx.bufnr
       end
@@ -588,7 +588,7 @@ local function make_type_hierarchy_handler()
     for _, type_hierarchy_item in pairs(result) do
       local pos = vim.pos.lsp(ctx.bufnr, type_hierarchy_item.range.start, client.offset_encoding)
       table.insert(items, {
-        filename = assert(vim.uri_to_fname(type_hierarchy_item.uri)),
+        filename = vim.uri_to_fname(type_hierarchy_item.uri),
         text = format_item(type_hierarchy_item),
         lnum = pos.row + 1,
         col = pos.col + 1,

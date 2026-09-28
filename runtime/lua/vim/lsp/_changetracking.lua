@@ -130,7 +130,6 @@ end
 ---@param client vim.lsp.Client
 ---@param bufnr integer
 function M.init(client, bufnr)
-  assert(client.offset_encoding, 'lsp client must have an offset_encoding')
   local group = get_group(client)
   local state = state_by_group[group]
   if state then
@@ -250,7 +249,6 @@ function M.reset_buf(client, bufnr)
   if not state then
     return
   end
-  assert(state.buffers, 'CTGroupState must have buffers')
   local buf_state = state.buffers[bufnr]
   if not buf_state then
     return

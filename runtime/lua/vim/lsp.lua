@@ -343,8 +343,8 @@ lsp.config = setmetatable({ _configs = {} }, {
       -- Calls to vim.lsp.config in lsp/* have a lower precedence than calls from other sites.
       local rtp_config --- @type vim.lsp.Config?
       for _, v in ipairs(api.nvim_get_runtime_file(('lsp/%s.lua'):format(name), true)) do
-        --- @diagnostic disable-next-line: need-check-nil EmmyLuaLs/emmylua-analyzer-rust#1259
-        local config = assert(loadfile(v))() ---@type any?
+        local chunk, err = loadfile(v)
+        local config = assert(chunk, err)() ---@type any?
         if type(config) == 'table' then
           --- @type vim.lsp.Config?
           rtp_config = vim.tbl_deep_extend('force', rtp_config or {}, config)
@@ -493,7 +493,6 @@ end
 --- @param config vim.lsp.Config
 --- @param logging boolean
 local function can_start(bufnr, config, logging)
-  assert(config)
   if
     type(config.filetypes) == 'table'
     and not vim.tbl_contains(config.filetypes, vim.bo[bufnr].filetype)
@@ -1533,7 +1532,7 @@ end
 ---@return boolean stopped true if client is stopped, false otherwise.
 function lsp.client_is_stopped(client_id)
   vim.deprecate('vim.lsp.client_is_stopped()', 'vim.lsp.get_client_by_id()', '0.14')
-  assert(client_id, 'missing client_id param')
+  validate('client_id', client_id, 'number')
   return not lsp.get_client_by_id(client_id)
 end
 

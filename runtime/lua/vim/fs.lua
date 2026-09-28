@@ -633,8 +633,8 @@ end
 --- @return string? # Directory path containing one of the given markers, or nil if no directory was
 ---                   found.
 function M.root(source, marker)
-  assert(source, 'missing required argument: source')
-  assert(marker, 'missing required argument: marker')
+  vim.validate('source', source, { 'number', 'string' })
+  vim.validate('marker', marker, { 'string', 'table', 'function' })
 
   local path ---@type string
   if type(source) == 'string' then

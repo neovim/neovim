@@ -514,8 +514,6 @@ for header_number, options in ipairs(options_list) do
       table.insert(lines, '\t' .. local_to_window)
     elseif info.scope == 'tab' then
       table.insert(lines, '\t' .. local_to_tabpage)
-    else
-      assert(info.scope == 'global')
     end
 
     local shortname = info.shortname or name

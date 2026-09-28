@@ -77,7 +77,6 @@ local function tree_to_graph_lines(tree)
   --- @type vim.undotree.graph_line[]
   local graph_lines = {}
 
-  assert(tree[0], "tree doesn't have 0-th node")
   --- @type (integer[]|integer)[]
   local nodes = { 0 }
 

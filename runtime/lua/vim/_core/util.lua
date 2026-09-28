@@ -83,7 +83,6 @@ end
 --- @param file string
 --- @param mods string|vim.api.keyset.cmd_mods Modifier string ("vertical") or structured mods table.
 function M.wrapped_edit(file, mods)
-  assert(mods)
   if type(mods) == 'string' then
     mods = vim.api.nvim_parse_cmd(mods .. ' edit').mods --[[@as vim.api.keyset.cmd_mods]]
   end

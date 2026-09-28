@@ -731,7 +731,7 @@ local function check_head_hash(commit)
     return
   end
 
-  local refs = {} ---@type table<string, string>
+  local refs = {} ---@type table<string, string?>
   for line in output:gmatch('[^\n]+') do
     local sha, ref = line:match('^(%x+)%s+(%S+)$')
     if sha and ref then

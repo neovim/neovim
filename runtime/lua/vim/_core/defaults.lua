@@ -59,7 +59,6 @@ do
   do
     --- @param forward 0|1
     local function _visual_search(forward)
-      assert(forward == 0 or forward == 1)
       local pos = vim.fn.getpos('.')
       local vpos = vim.fn.getpos('v')
       local mode = vim.fn.mode()
@@ -1055,7 +1054,7 @@ do
         end
 
         -- The returned SGR sequence should begin with 48:2
-        local sgr = assert(attrs[#attrs]):match('^48:2:([%d:]+)$')
+        local sgr = attrs[#attrs]:match('^48:2:([%d:]+)$')
         if not sgr then
           return
         end
