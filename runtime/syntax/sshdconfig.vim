@@ -11,6 +11,7 @@
 " Last Change:	2026 Mar 11
 " 2026 Sep 27 by Vim project: update secure keywords #21376
 " 2026 Sep 27 by Vim project: fix typo #21390
+" 2026 Sep 28 by Vim project: update syntax file #21387
 " SSH Version:	10.1p1
 "
 
@@ -20,7 +21,7 @@ if exists("b:current_syntax")
   finish
 endif
 
-setlocal iskeyword=_,-,a-z,A-Z,48-57
+syn iskeyword _,-,a-z,A-Z,48-57
 
 
 " case on
