@@ -1402,6 +1402,20 @@ describe('CmdAtom', function()
       { type = 'motion', keys = k('/gamma<NL>') },
       { type = 'excmd', keys = k(':nohlsearch<NL>') },
     }, atoms_tail(4, 'type', 'keys'))
+
+    -- Cursor-local marks ('< '[ '. '^) are classified as type=motion. Other marks are type=jump.
+    feed('ma')
+    feed('`.')
+    feed("'[")
+    feed('`a')
+    feed('G')
+    eq({
+      { type = 'motion', keys = '`.' },
+      { type = 'motion', keys = "'[" },
+      { type = 'jump', keys = '`a' },
+      { type = 'jump', keys = 'G' },
+    }, atoms_tail(4, 'type', 'keys'))
+
     -- ":" embeds its count as the range prefill, never as composed digits;
     -- the count field carries it.
     feed('gg')

@@ -24,6 +24,7 @@
 #include "nvim/cursor.h"
 #include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/extmark.h"
@@ -116,8 +117,8 @@ static struct {
 /// Editor state when the mc session started, which every cursor replays against.
 static struct {
   Timestamp time;  ///< When the session started (nanoseconds).
-  Context regs;    ///< Registers. Perf: per-cursor registers are "sparse", merged later.
-} mc_start = { .regs = CONTEXT_INIT };
+  Context ctx;     ///< Registers, marks. Perf: per-cursor registers are "sparse".
+} mc_start = { .ctx = CONTEXT_INIT };
 
 /// Registers that can carry per-cursor values (skips the read-only/special ones).
 static const char MC_REGS[] = "abcdefghijklmnopqrstuvwxyz0123456789\"-";
@@ -232,8 +233,8 @@ static void mc_sandbox_enter(McSandbox *sb, bool save_regs)
   mc_replay = true;  // Capture hooks will ignore keys fed during the sandbox.
   sb->primary = (Context)CONTEXT_INIT;
   // Change/Visual marks belong to the primary cursor's (already executed) operation.
-  // (jumplist/changelist are protected per replay, via CMOD_KEEPJUMPS.)
-  ctx_save(&sb->primary, kCtxCursor | kCtxMarks | (save_regs ? kCtxRegs : 0));
+  // (jumplist/changelist are owned by the primary.)
+  ctx_save(&sb->primary, kCtxCursor | kCtxVisual | kCtxMarks | (save_regs ? kCtxRegs : 0));
   sb->cursor_mark = 0;
   mc_track_upd(curbuf, &sb->cursor_mark, sb->primary.pos);
   save_viewstate(curwin, &sb->view);
@@ -268,8 +269,8 @@ static void mc_sandbox_leave(McSandbox *sb)
     extmark_del_id(buf, mc_session_ns(), sb->topline_mark);
   }
   if (buf == curbuf) {
-    restore_viewstate(curwin, &sb->view);
-    ctx_load(&sb->primary, kCtxCursor | kCtxMarks, 0);  // After the view: its curswant wins.
+    restore_viewstate(curwin, &sb->view);  // Before ctx_load, which decides curswant.
+    ctx_load(&sb->primary, kCtxCursor | kCtxVisual | kCtxMarks, 0);
     check_cursor(curwin);
     if (topline_valid) {
       set_topline(curwin, MIN(topline.lnum, curbuf->b_ml.ml_line_count));
@@ -302,13 +303,13 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
     return;
   }
 
-  // Perf: skip per-cursor state swap (esp. registers) for motions, so "l" in follow-mode is fast.
-  const bool swap_state = atom.type != kAMotion;
+  // Perf: skip per-cursor registers-swap for motions, so "l" in follow-mode is fast.
+  const bool swap_regs = atom.type != kAMotion;
   Timestamp regs_ts = 0;
-  if (swap_state) {
+  if (swap_regs) {
     if (reg_max_ts(false) >= mc_start.time) {
       // Registers written globally are the previous cursor's; reset to baseline.
-      ctx_load(&mc_start.regs, kCtxRegs, 0);
+      ctx_load(&mc_start.ctx, kCtxRegs, 0);
     }
     if (ctx.regs.data != NULL) {
       ctx_load(&ctx, kCtxRegs, kCtxMergeReg);  // This cursor's own writes; merge w/ baseline.
@@ -316,7 +317,7 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
     regs_ts = reg_max_ts(false);
   }
 
-  ctx_load(&ctx, kCtxCursor | (swap_state ? kCtxMarks : 0), 0);
+  ctx_load(&ctx, kCtxCursor | kCtxVisual | kCtxMarks, 0);
 
   // Edits by other cursors may have invalidated this cursor's position.
   if (atom.type == kAInsertSpan) {
@@ -333,15 +334,10 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
     Visual.select = false;
   }
 
-  const int save_cmod_flags = cmdmod.cmod_flags;
   if (atom.type == kAInsertSpan) {
     // exec_normal() clamps a past-EOL cursor via check_cursor() unless Insert-mode; a previous span
     // replay may have left MODE_NORMAL, making later cursors insert one char left of their anchor.
     State = MODE_INSERT;
-  } else {
-    // Navigation state belongs to the primary, replays must not touch it. Not for insert-span
-    // replays: their anchor needs '^, and the primary insert-session (re)sets these anyway.
-    cmdmod.cmod_flags |= CMOD_KEEPJUMPS;
   }
 
   // Replay the atom using wholesome, tasty feedkeys. Usually noremap ("nix"), but `atom.remap=true`
@@ -349,7 +345,6 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
   const uint64_t beeps = did_beep;
   const varnumber_T tick = buf_get_changedtick(curbuf);
   nvim_feedkeys(cstr_as_string(atom.keys), cstr_as_string(atom.remap ? "ix" : "nix"), false);
-  cmdmod.cmod_flags = save_cmod_flags;
 
   if (atom.type == kAInsertSpan && mc_ins_span.first && did_beep != beeps
       && buf_get_changedtick(curbuf) == tick) {
@@ -370,7 +365,7 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
     Visual.select = false;
   }
 
-  const bool wrote_regs = swap_state && reg_max_ts(false) != regs_ts;
+  const bool wrote_regs = swap_regs && reg_max_ts(false) != regs_ts;
 
   if (cursoridx >= kv_size(mc_cursors)) {
     // Cursors were removed while replaying (e.g. gQ via autocmd); already freed.
@@ -378,11 +373,11 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
   }
 
   if (wrote_regs) {
-    // Re-encode this cursor's registers, as a delta vs mc_start.regs (for performance).
+    // Re-encode this cursor's registers, as a delta vs mc_start.ctx (for performance).
     api_free_string(ctx.regs);
     ctx.regs = shada_encode_regs(false, mc_start.time);
   }
-  ctx_save(&ctx, kCtxCursor | (swap_state ? kCtxMarks : 0));
+  ctx_save(&ctx, kCtxCursor | kCtxVisual | kCtxMarks);
 
   if (atom.type == kAInsertSpan && curbuf->b_last_insert.mark.lnum > 0) {
     // Anchor at the insertion point ('^ mark): this is where the primary cursor, still in Insert
@@ -498,7 +493,7 @@ void mc_clock_edge(bool map_edit, bool map_moved, bool follow)
   }
 }
 
-/// Prunes dead cursors and ends empty sessions. Optionally dedupes.
+/// Prunes dead cursors, ends empty sessions, restores marks. Optionally dedupes.
 ///
 /// @param dedupe  Also removes overlapping cursors at cascade boundaries.
 /// @param primary  Primary cursor pos, for `dedupe`. NULL: dedupe cursors only among themselves.
@@ -533,7 +528,8 @@ static void mc_cleanup(bool dedupe, const pos_T *primary, uint32_t keep_mark)
   }
   kv_size(mc_cursors) = n;
   if (n == 0 && had_cursors) {
-    ctx_free(&mc_start.regs);
+    ctx_load(&mc_start.ctx, kCtxVisual, 0);  // Restore primary '< '> marks.
+    ctx_free(&mc_start.ctx);
     mc_start.time = 0;
     mc_lua_enable(false);
   }
@@ -747,6 +743,8 @@ static void mc_ins_preview_set(const String *new)
   // Track the primary cursor across the preview edits.
   uint32_t primary = 0;
   mc_track_upd(curbuf, &primary, curwin->w_cursor);
+  const int save_cmod_flags = cmdmod.cmod_flags;
+  cmdmod.cmod_flags |= CMOD_KEEPJUMPS;  // Not a change of the user: keeps '. and the changelist.
   for (size_t i = 0; i < kv_size(mc_ins_span.regions); i++) {
     pos_T rs, re;
     // Re-resolve each region, previous loop iterations may have shifted it.
@@ -756,6 +754,7 @@ static void mc_ins_preview_set(const String *new)
     // Cursor display mark (right-gravity) is pushed by the replacement to the new preview end.
     mc_ins_preview_replace(rs, re, new);
   }
+  cmdmod.cmod_flags = save_cmod_flags;
   pos_T pos = curwin->w_cursor;
   if (extmark_get_pos(curbuf, mc_session_ns(), primary, &pos)) {
     curwin->w_cursor = pos;
@@ -1075,16 +1074,13 @@ void mc_vsel_refresh(void)
   mc_sandbox_enter(&sb, false);
   block_autocmds();
   emsg_silent++;
-  // Dry-run motions must not touch the jumplist/changelist ("%", "(", …).
-  const int save_cmod_flags = cmdmod.cmod_flags;
-  cmdmod.cmod_flags |= CMOD_KEEPJUMPS;
 
   for (size_t i = 0; i < kv_size(mc_cursors); i++) {
     Context *ctx = &kv_A(mc_cursors, i);
     if (!mc_ctx_resolve(ctx, &ctx->pos)) {
       continue;
     }
-    ctx_load(ctx, kCtxCursor | kCtxMarks, 0);
+    ctx_load(ctx, kCtxCursor | kCtxVisual | kCtxMarks, 0);
     check_cursor(curwin);
     Visual.active = false;
     Visual.select = false;
@@ -1125,7 +1121,6 @@ void mc_vsel_refresh(void)
     Visual.active = false;
   }
 
-  cmdmod.cmod_flags = save_cmod_flags;
   emsg_silent--;
   unblock_autocmds();
   mc_sandbox_leave(&sb);
@@ -1249,6 +1244,241 @@ uint32_t mc_mark_at(buf_T *buf, pos_T pos)
   return 0;
 }
 
+/// For "zq{motion}": runs motion `keys` at `pos`.
+///
+/// @return  Where the motion moved the cursor.
+static pos_T mc_zq_step(const char *keys, pos_T pos)
+{
+  curwin->w_cursor = pos;
+  curwin->w_set_curswant = false;  // Keep the primary's curswant.
+  // Searches must not "hit BOTTOM" or wrap noisily, and failed motions must not beep.
+  msg_silent++;
+  emsg_silent++;
+  const int save_cmod_flags = cmdmod.cmod_flags;
+  cmdmod.cmod_flags |= CMOD_KEEPJUMPS;
+  // Internal steps, not user actions. Not captured/cascaded, no autocmds.
+  // Like ":normal": not fed the mapping's pending keys ("xmap I Q0i"), keeps `finish_op`.
+  atom_suppress(true);
+  block_autocmds();
+  save_state_T sst;
+  save_current_state(&sst);
+  exec_normal_cmd((char *)keys, REMAP_NONE, true);
+  restore_current_state(&sst);
+  unblock_autocmds();
+  atom_suppress(false);
+  cmdmod.cmod_flags = save_cmod_flags;
+  emsg_silent--;
+  msg_silent--;
+  return curwin->w_cursor;
+}
+
+/// Visual area ('< '>) of the target at `step`: its search match, else the char (or line).
+///
+/// @param ctx  Saves the target into it (kCtxVisual), or NULL.
+static visualinfo_T mc_zq_target(pos_T step, bool search, MotionType motion_type, Context *ctx)
+{
+  const visualinfo_T save = curbuf->b_visual;
+  const int save_mode_eval = curbuf->b_visual_mode_eval;
+  curbuf->b_visual = (visualinfo_T){ .vi_start = step, .vi_end = step, .vi_curswant = step.col,
+                                     .vi_mode = motion_type == kMTLineWise ? 'V' : 'v' };
+  curbuf->b_visual_mode_eval = curbuf->b_visual.vi_mode;
+  if (search) {
+    mc_zq_step("gn\033", step);  // Selects the match at `step`; <Esc> stores it as '< '>.
+  }
+  if (ctx != NULL) {
+    curwin->w_cursor = step;
+    ctx_save(ctx, kCtxVisual);  // Tracks the marks by extmark.
+  }
+  const visualinfo_T target = curbuf->b_visual;
+  curbuf->b_visual = save;
+  curbuf->b_visual_mode_eval = save_mode_eval;
+  return target;
+}
+
+/// First step of motion `keys` in `bounds`: where it lands from just before the start ("w", "l"),
+/// or on the start's line at its kept column ("j"), else where it lands from the start itself.
+///
+/// Given "  aa bb":
+/// - "w" => "aa"
+/// - "^" => "aa"
+/// - "0" => col 0
+///
+/// @return  false: no step in `bounds`.
+static bool mc_zq_first(const char *keys, bool search, MotionType motion_type, const pos_T *bounds,
+                        pos_T *step)
+{
+  const pos_T start = bounds[0];
+  pos_T before = start;
+  const bool bof = dec(&before) == -1;  // Beginning of file.
+  step->lnum = 0;
+  if (!bof) {
+    // Just before a start at column 0 is the line above: "l" (<Space>, <Right>) crosses the
+    // linebreak to land on the start ('whichwrap').
+    char *const save_ww = p_ww;
+    p_ww = "s,l,>";  // 'whichwrap'
+    const pos_T s = mc_zq_step(keys, before);
+    p_ww = save_ww;
+    if (ltoreq(start, s) && ltoreq(s, bounds[1])) {
+      *step = s;
+    }
+  }
+  curwin->w_cursor = start;
+  check_cursor_col(curwin);  // Not past a short line's end.
+  const pos_T from = curwin->w_cursor;
+  const pos_T s = mc_zq_step(keys, from);
+  if (s.lnum > from.lnum && !curwin->w_set_curswant) {
+    // A motion keeping its column ("j", "2$") has a step on the start's line too, at that column.
+    pos_T c = from;
+    getvpos(curwin, &c, curwin->w_curswant);
+    if (ltoreq(start, c) && ltoreq(c, bounds[1]) && (step->lnum == 0 || lt(c, *step))) {
+      *step = c;
+    }
+  }
+  if (step->lnum != 0) {
+    return true;
+  }
+  if (bof
+      && (!search || equalpos(mc_zq_target(start, true, motion_type, NULL).vi_start, start))) {
+    *step = start;  // Buffer start, nothing before it: a step (search: if a match starts there).
+    return true;
+  }
+  if (equalpos(s, from)) {
+    *step = start;  // Stays: the start is a step ("0").
+    return true;
+  }
+  *step = s;
+  return ltoreq(start, s) && ltoreq(s, bounds[1]);
+}
+
+/// Runs the "zq" steps: places a cursor at `first`, then at repeated `keys` motion, until `end`.
+///
+/// @param end  Last position for a step. `end.lnum == MAXLNUM`: the buffer, wrapping around once.
+/// @return  Number of cursors placed.
+static int mc_zq_run(const char *keys, bool search, MotionType motion_type, pos_T end, pos_T first)
+{
+  const bool wrap = end.lnum == MAXLNUM;
+  bool wrapped = false;
+  int placed = 0;
+  pos_T step = first;
+  while (!got_int) {
+    mc_zq_target(step, search, motion_type, mc_add(curbuf, step));
+    placed++;
+    const pos_T prev = step;
+    step = mc_zq_step(keys, prev);
+    if (equalpos(step, prev)) {
+      break;  // Failed, or does not advance.
+    }
+    if (lt(step, prev)) {  // Wrapped around the end of the buffer ('wrapscan'), or backward.
+      if (!wrap || wrapped) {
+        break;
+      }
+      wrapped = true;
+    }
+    if (wrapped ? ltoreq(first, step) : lt(end, step)) {
+      break;  // Back at the first step, or out of bounds.
+    }
+  }
+  return placed;
+}
+
+/// Starts "zq", before its motion. Ends Visual mode.
+void mc_zq_start(cmdarg_T *cap)
+{
+  cap->oap->from_visual = Visual.active;
+  cap->oap->motion_type = kMTUnknown;  // Set by a motion, else the cmd was non-motion ("zqx").
+  if (Visual.active) {
+    atom_visual_reset();  // "zq" consumes the selection, its keys ("Vj") must not cascade.
+    end_visual_mode();
+    check_cursor_col(curwin);  // Past-EOL ("vj" onto a shorter line) is Visual-only.
+  }
+}
+
+/// "zq{motion}": places a cursor at repeated {motion} ("zqw": each word). A search motion ("*",
+/// "gn", "?pat<CR>", …) steps through its matches like "/<CR>".
+///
+/// Sets per-cursor Visual area ('< '>, "gv", mc_zq_target), so "zq*" + "gv" selects every match.
+///
+/// Forward motions: stops when the motion fails, does not advance, or passes the first step again
+/// after wrapping ('wrapscan'). "{Visual}zq": steps begin at selection start and stop at its end.
+/// Blockwise: each line of the block, from its left col (or end of a short line, like "v_b_A").
+///
+/// The motion decides the steps; not cancelled by failure at the cursor ("j" on the last line).
+///
+/// @param origin  Where the operator started: the cursor.
+void mc_zq(oparg_T *oap, cmdarg_T *cap, pos_T origin)
+{
+  atom_did_global_op();
+  if (mc_replaying() || oap->motion_type == kMTUnknown || cap->cmdchar == 'i'
+      || cap->cmdchar == 'a' || cap->cmdchar == K_LUA || cap->cmdchar == K_COMMAND
+      || cap->cmdchar == ':') {
+    beep_flush();  // Not a motion, or not supported.
+    curwin->w_cursor = origin;
+    return;
+  }
+  pos_T primary = origin;
+  // "{Visual}zq": the selection ('< '>). Linewise, blockwise: whole lines (blockwise: `vcols`).
+  visualinfo_T v = curbuf->b_visual;
+  pos_T bounds[2] = { mark_get_visual(curbuf, '<')->mark, mark_get_visual(curbuf, '>')->mark };
+  colnr_T vcols[2] = { 0, MAXCOL };
+  if (v.vi_mode == Ctrl_V) {
+    getvcols(curwin, &v.vi_start, &v.vi_end, &vcols[0], &vcols[1], 0);
+    vcols[1] = v.vi_curswant == MAXCOL ? MAXCOL : vcols[1];  // "$": to the end of every line.
+  }
+  // The steps use the primary's column, not the column they start from.
+  curwin->w_cursor = primary;
+  update_curswant();
+
+  const bool search = (cap->cmdchar != NUL && strchr("*#/?nN", cap->cmdchar) != NULL)
+                      || (cap->cmdchar == 'g' && cap->nchar != NUL
+                          && strchr("*#nN", cap->nchar) != NULL);
+  int placed = 0;
+  pos_T first = { 0 };
+  // The search motion already set the pattern. Each step is "/<CR>".
+  String keys = search ? cstr_to_string("/\n")
+                       : redo_keys(&(CmdSpec){ .count = cap->count0, .cmd = cap->cmdchar,
+                                               .cmd2 = cap->nchar });
+  if (!oap->from_visual) {
+    // The primary is a step (search: if on a match, else its next match is, like the motion).
+    first = (!search || equalpos(mc_zq_target(primary, true, oap->motion_type, NULL).vi_start,
+                                 primary))
+            ? primary : mc_zq_step(keys.data, primary);
+    placed = mc_zq_run(keys.data, search, oap->motion_type, (pos_T){ .lnum = MAXLNUM }, first);
+  } else if (v.vi_mode != Ctrl_V) {
+    if (mc_zq_first(keys.data, search, oap->motion_type, bounds, &first)) {
+      placed = mc_zq_run(keys.data, search, oap->motion_type, bounds[1], first);
+    }
+  } else {
+    // Blockwise: each line's part of the block is its own charwise selection.
+    for (linenr_T lnum = bounds[0].lnum; lnum <= bounds[1].lnum; lnum++) {
+      pos_T line[2] = { { .lnum = lnum }, { .lnum = lnum, .col = MAXCOL } };
+      if (getvpos(curwin, &line[0], vcols[0]) == FAIL) {
+        line[0].col = ml_get_len(lnum);  // Short line: its end, like "v_b_A".
+      } else if (vcols[1] != MAXCOL) {
+        getvpos(curwin, &line[1], vcols[1]);
+      }
+      pos_T step;
+      if (mc_zq_first(keys.data, search, oap->motion_type, line, &step)) {
+        first = first.lnum == 0 ? step : first;
+        placed += mc_zq_run(keys.data, search, oap->motion_type, line[1], step);
+      }
+    }
+  }
+  api_free_string(keys);
+
+  if (placed > 0) {
+    if (mc_mark_at(curbuf, primary) == 0) {
+      primary = first;  // Not on a step; move the primary to the first placement.
+      curwin->w_set_curswant = true;
+    }
+    curbuf->b_visual = mc_zq_target(primary, search, oap->motion_type, NULL);  // Its own target.
+    curbuf->b_visual_mode_eval = curbuf->b_visual.vi_mode;
+    // Do ":nohlsearch" so cursors are visible. #41629
+    set_no_hlsearch(true);
+    redraw_all_later(UPD_SOME_VALID);
+  }
+  curwin->w_cursor = primary;
+}
+
 /// "g CTRL-A": insert an ascending number at each cursor.
 void mc_counter(long count1)
 {
@@ -1275,7 +1505,9 @@ void mc_follow_set(TriState on)
 }
 
 /// Places an mcursor, or removes the cursor already at the given position.
-void mc_toggle(buf_T *buf, pos_T pos, bool end_follow)
+///
+/// @param on  kNone: toggle. kTrue: add only ("1Q"). kFalse: remove only ("2Q").
+void mc_toggle(buf_T *buf, pos_T pos, bool end_follow, TriState on)
 {
   if (mc_replaying()) {
     // Replayed input ("Q" in a mapping's atom) must not manage cursors; see mc_add().
@@ -1285,31 +1517,33 @@ void mc_toggle(buf_T *buf, pos_T pos, bool end_follow)
     mc_follow_set(kFalse);
   }
   uint32_t mark = mc_mark_at(buf, pos);
-  if (mark != 0) {
+  if (mark != 0 && on != kTrue) {
     extmark_del_id(buf, mc_ns(), mark);
     mc_cleanup(false, NULL, 0);
-    return;
+  } else if (mark == 0 && on != kFalse) {
+    mc_add(buf, pos);
   }
-  mc_add(buf, pos);
 }
 
 /// Places an mcursor at position `pos` in `buf`.
-void mc_add(buf_T *buf, pos_T pos)
+///
+/// @return  The new cursor's Context, or NULL if not placed.
+Context *mc_add(buf_T *buf, pos_T pos)
 {
   if (mc_replaying()) {
     // Can't add cursors while the cascade iterates them.
-    return;
+    return NULL;
   }
   // Ignore duplicate cursor (e.g. repeated "[count]Q", nvim_mcursor()).
   if (mc_mark_at(buf, pos) != 0) {
-    return;
+    return NULL;
   }
   // Discard the pending Visual atom, else it would cascade to the cursor created below.
   atom_visual_reset();
   if (kv_size(mc_cursors) == 0) {
-    // Session start: snapshot the primary's regs; hand the display to mcursor.lua.
+    // Session start: snapshot primary regs, '< '>; hand the display to mcursor.lua.
     mc_start.time = (Timestamp)os_realtime();
-    ctx_save(&mc_start.regs, kCtxRegs);
+    ctx_save(&mc_start.ctx, kCtxRegs | kCtxVisual);
     mc_lua_enable(true);
   }
   kv_push(mc_cursors, (Context)CONTEXT_INIT);
@@ -1317,6 +1551,7 @@ void mc_add(buf_T *buf, pos_T pos)
   ctx->buf = buf->handle;
   ctx->pos = pos;
   mc_mark_upd(buf, &ctx->mark, pos);
+  return ctx;
 }
 
 /// A reload/wipe invalidated the tracked positions: deletes the mcursors + "gQ" snapshot.
@@ -1412,6 +1647,6 @@ void mc_free_all(void)
   }
   kv_destroy(mc_cursors);
   kv_destroy(mc_ins_span.regions);
-  ctx_free(&mc_start.regs);
+  ctx_free(&mc_start.ctx);
 }
 #endif

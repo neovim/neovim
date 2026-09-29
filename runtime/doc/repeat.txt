@@ -339,9 +339,12 @@ context), multicursor replays actions "semantically" (|CmdAtom|).
 - Motions (|q=|) and Visual sequences replay at each cursor: "viweex"
   re-executes the selection so the extents are per-cursor (each cursor's own
   word, block, …).
+- Undo is atomic: |u| reverts the aggregate edits from all cursors at once.
 - Registers are cursor-local. Each cursor reads/writes its own registers.
   The yanks are joined (linewise) when the multicursor session ends.
-- Undo is atomic: |u| reverts the aggregate edits from all cursors at once.
+- Marks |'<| |'>| (|gv|), |'[| |']|, |'.| |'^| are cursor-local: "`." at each
+  cursor goes to its own last change. The |jumplist| and |changelist| are
+  global.
 - Folds are ignored during replay. Edits replay within folds ("dd" deletes the
   line at cursor, not the entire folded contents). Motions step into folds
   instead of skipping over them. The primary cursor keeps the usual
@@ -376,24 +379,53 @@ UI supports the Kitty multiple-cursors protocol.
 COMMANDS
 							*Q*
 Q			Toggles a multicursor at the current cursor position.
-			Disables follow-mode |q=|.
+			Disables 'follow' mode.
 
-[count]Q		Places a cursor at every match (|gn|) of the last
-			search pattern. Example:
-			1. Search for something ("*", "/pattern<CR>", …).
-			2. Type "1Q".
+			Use [count] to force (un)placement instead of toggling:
+			"1Q" adds, "2Q" removes.
+
+							*zq*
+zq{motion}		Places a cursor at {motion}, repeated from the current
+			position until end of buffer (or limited to a Visual
+			selection: |v_zq|). Think of it like `%:g` as an operator.
+
+			A search motion ("zq*", "zqn", "zqgn") places a cursor
+			at every match, wrapping if 'wrapscan' is enabled.
+			Sets the Visual area (|gv|) per-cursor, so "gv"
+			selects the match at each cursor.
+
+			Examples:
+			- "zqw": every word.
+			- "zqgn": every match.
+			- "zq*gvc" changes each match of the word under the cursor.
+
+			Not supported:
+			- Text objects
+			- Lua, |<Cmd>| or ":" mappings (except |:map-<expr>|).
+
+
+							*v_zq*
+{Visual}zq{motion}	Like |zq|, but limited to the Visual range.
+
+			|blockwise-visual| acts on each line of the block,
+			from the block's left column (or the end of a short
+			line, like |v_b_A|).
+
+			Examples:
+			- "vipzqw": each word in the paragraph.
+			- "vipzqj" (or "zq+"): each line.
+			- "vipzq*": each match.
+			- "<C-V>3jzql": each line of the blockwise column.
 
 							*v_Q*
-{Visual}Q		Places a cursor on each line of the Visual selection.
-			Enables follow-mode |q=|.
-
-{Visual}[count]Q	Places a cursor at each match of the last search pattern
-			within the Visually-selected lines.
+{Visual}Q		Places a cursor on each line of the selection, at the
+			cursor column. Same as "{Visual}zqj". |v_zq|
+			Enables 'follow' mode.
 
 							*mcursor-mouse* *<C-LeftMouse>*
 <C-LeftMouse>		Toggles a multicursor at the click position, without
-			moving the primary cursor (or changing windows). Does
-			NOT disable follow-mode |q=|. No-op in Insert-mode.
+			moving the primary cursor (or changing windows). No-op
+			in Insert-mode.
 
 							*q=*
 q=			Toggles 'follow' mode: cursor-relative motions ("w",
@@ -402,7 +434,7 @@ q=			Toggles 'follow' mode: cursor-relative motions ("w",
 			line) are merged (deduplicated).
 
 			Not replayed:
-			- Absolute motions (scrolls/jumps: "G", marks,
+			- Absolute motions (scrolls/jumps: "G", global marks,
 			  CTRL-O).
 			- Motions that fail/beep ("j" on the last line).
 
@@ -447,7 +479,7 @@ already there (unlike |Q|, which toggles). >lua
     end)
 <
 Example: a "follow-once" mapping: "q-{motion}" replays {motion} at every
-cursor, then disables follow-mode again. >lua
+cursor, then disables 'follow' mode again. >lua
 
     vim.keymap.set('n', 'q-', function()
       vim.cmd('normal! 1q=')

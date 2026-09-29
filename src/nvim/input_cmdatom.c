@@ -546,8 +546,10 @@ static void atom_stage_flush(CmdFrame *frame)
   if (frame->staged.keys == NULL) {
     return;
   }
-  // Staged cmds are edits: cascade. Except if no keys (void Visual), or already-cascaded as spans.
-  bool cascade = *frame->staged.keys != NUL && !frame->staged.cascaded;
+  // Staged cmds are edits: cascade. Except if no keys (void Visual), already-cascaded as spans, or
+  // a global op ("zq").
+  bool cascade = *frame->staged.keys != NUL && !frame->staged.cascaded
+                 && global_ops == frame->global_ops;
   atom_push(cascade, &frame->staged);
   frame->staged = (CmdAtom){ 0 };
 }
@@ -748,6 +750,10 @@ unsigned atom_key_class(int cmd, int arg)
     return strchr("[](){}mMcsz#*/", arg) != NULL ? kKeyMotion : 0;
   case 'z':
     return (arg == 'j' || arg == 'k') ? kKeyMotion : 0;
+  case '\'':
+  case '`':
+    // Marks in kCtxVisual|kCtxMarks are cursor-local; other marks are absolute.
+    return arg != NUL && strchr("<>[].^", arg) != NULL ? kKeyMotion : kKeyJump;
   case K_DOWN:
   case K_END:
   case K_HOME:
@@ -1563,10 +1569,11 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
       // The payload ('operatorfunc' getchar()) is not in the captured redo, append it.
       atom_payload_append(&atom, old);
 
-      // Cascade only an observable "effect": edit, register-write, or cursor-move (only during
-      // follow-mode).
-      bool effect = changed || reg_max_ts(true) > old->reg_ts
-                    || (mc_following() && atom_origin_moved(old->origin));
+      // Cascade only an observable, non-global-op "effect": edit, register-write, or cursor-move
+      // (only during follow-mode).
+      bool effect = (changed || reg_max_ts(true) > old->reg_ts
+                     || (mc_following() && atom_origin_moved(old->origin)))
+                    && global_ops == old->global_ops;
       if (atom.keys != NULL && *atom.keys != NUL) {
         atom.origin = old->origin;
         atom_push(effect, &atom);

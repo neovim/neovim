@@ -941,7 +941,7 @@ endfunc
 " Test for errors with z command
 func Test_normal_z_error()
   call assert_beeps('normal! z2p')
-  call assert_beeps('normal! zq')
+  call assert_beeps('normal! zK')
   call assert_beeps('normal! cz1')
 endfunc
 

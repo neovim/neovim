@@ -21,7 +21,8 @@ typedef struct {
   pos_T op_start;        ///< (Cache) '[ (b_op_start).
   pos_T op_end;          ///< (Cache) '] (b_op_end).
   fmark_T last_change;   ///< (Cache) '. (b_last_change).
-  uint32_t pos_marks[5];  ///< Extmarks tracking the (Cache) positions above (in that order),
+  fmark_T last_insert;   ///< (Cache) '^ (b_last_insert).
+  uint32_t pos_marks[6];  ///< Extmarks tracking the (Cache) positions above (in that order),
                           ///< across buffer edits. 0: none.
   handle_T buf;      ///< Current buffer handle.
   String regs;       ///< Registers (shada msgpack string).
@@ -41,6 +42,7 @@ typedef kvec_t(Context) ContextVec;
   .op_start = { 0 }, \
   .op_end = { 0 }, \
   .last_change = { .mark = { 0 } }, \
+  .last_insert = { .mark = { 0 } }, \
   .pos_marks = { 0 }, \
   .buf = 0, \
   .regs = STRING_INIT, \
@@ -61,7 +63,8 @@ typedef enum {
 
   // In-memory only (TODO(justinmk): support this in dict/kCtxAll too):
   kCtxCursor = 64,    ///< Cursor position and curswant.
-  kCtxMarks = 128,    ///< Visual area ('< '>, visualmode()) and change marks ('[ '] '.).
+  kCtxMarks = 128,    ///< Change marks ('[ '] '.), last insert ('^).
+  kCtxVisual = 256,   ///< Visual area ('< '>, visualmode()).
 } CtxStateFlags;
 
 /// "How" to load, orthogonal to "what" (CtxStateFlags).

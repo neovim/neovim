@@ -209,7 +209,7 @@ static const struct nv_cmd {
   { '$',       nv_dollar,      NV_MOTION,              0 },
   { '%',       nv_percent,     NV_MOTION,              0 },
   { '&',       nv_optrans,     0,                      0 },
-  { '\'',      nv_gomark,      NV_NCH_ALW|NV_NCH_ARG|NV_JUMP, true },
+  { '\'',      nv_gomark,      NV_NCH_ALW|NV_NCH_ARG,  true },
   { '(',       nv_brace,       NV_MOTION,              BACKWARD },
   { ')',       nv_brace,       NV_MOTION,              FORWARD },
   { '*',       nv_ident,       NV_MOTION,              0 },
@@ -265,7 +265,7 @@ static const struct nv_cmd {
   { ']',       nv_brackets,    NV_NCH_ALW,             FORWARD },
   { '^',       nv_beginline,   NV_MOTION,              BL_WHITE | BL_FIX },
   { '_',       nv_lineop,      NV_MOTION,              0 },
-  { '`',       nv_gomark,      NV_NCH_ALW|NV_NCH_ARG|NV_JUMP, false },
+  { '`',       nv_gomark,      NV_NCH_ALW|NV_NCH_ARG,  false },
   { 'a',       nv_edit,        NV_NCH,                 0 },
   { 'b',       nv_bck_word,    NV_MOTION,              0 },
   { 'c',       nv_operator,    0,                      0 },
@@ -1766,6 +1766,9 @@ void clearop(oparg_T *oap)
 
 void clearopbeep(oparg_T *oap)
 {
+  if (oap->op_type == OP_MCURSOR) {
+    return;  // "zq": motion failing at primary, does not cancel the op.
+  }
   clearop(oap);
   beep_flush();
 }
@@ -2886,6 +2889,12 @@ static void nv_zet(cmdarg_T *cap)
     nv_operator(cap);
     break;
 
+  // "zq": place multicursor(s) at (repeated) motion.
+  case 'q':
+    mc_zq_start(cap);
+    nv_operator(cap);
+    break;
+
   // "zF": create fold command
   // "zf": create fold operator
   case 'F':
@@ -3096,35 +3105,20 @@ static void nv_zet(cmdarg_T *cap)
   }
 }
 
-/// "Q" command: Toggles a multicursor at the cursor position.
-/// "[count]Q": Places a multicursor at every match of the last search pattern.
+/// "Q" command: Toggles a multicursor at the cursor position ("1Q": add, "2Q": remove).
 /// "{visual}Q": Places a multicursor on each selected line.
 static void nv_Q(cmdarg_T *cap)
 {
-  if (reg_recording != 0 || reg_executing != 0) {
+  if (reg_recording != 0 || reg_executing != 0 || (!Visual.active && cap->count0 > 2)) {
     // Not allowed while recording/executing a macro. |mcursor-limitations|
     vim_beep(0);
   } else if (!checkclearop(cap->oap)) {
-    if (Visual.active && cap->count0 == 0) {
-      // {Visual}Q: a cursor per selected line.
-      typval_T tv_args[] = { { .v_type = VAR_UNKNOWN } };
-      nlua_call_typval("vim._core.mcursor", "visual", tv_args, NULL);
-    } else if (cap->count0 > 0) {
-      // [count]Q / {Visual}[count]Q: a cursor at each match (limited to Visual lines, if any).
-      linenr_T first = 0;
-      linenr_T last = 0;
-      if (Visual.active) {
-        first = MIN(Visual.start.lnum, curwin->w_cursor.lnum);
-        last = MAX(Visual.start.lnum, curwin->w_cursor.lnum);
-      }
-      typval_T tv_args[] = {
-        { .v_type = VAR_NUMBER, .vval.v_number = first },  // 0: whole buffer.
-        { .v_type = VAR_NUMBER, .vval.v_number = last },
-        { .v_type = VAR_UNKNOWN },
-      };
-      nlua_call_typval("vim._core.mcursor", "matches", tv_args, NULL);
+    if (Visual.active) {
+      do_cmdline_cmd("normal! zqj");  // |v_zq|: each line at the cursor column.
+      mc_follow_set(kTrue);
     } else {
-      mc_toggle(curbuf, curwin->w_cursor, true);
+      mc_toggle(curbuf, curwin->w_cursor, true,
+                cap->count0 == 0 ? kNone : cap->count0 == 1 ? kTrue : kFalse);
     }
   }
 }

@@ -52,6 +52,7 @@ typedef struct {
   linenr_T line_count;     ///< number of lines from op_start to op_end (inclusive)
   bool empty;              ///< op_start and op_end the same (only used by op_change())
   bool is_VIsual;          ///< operator on Visual area
+  bool from_visual;        ///< Started in Visual. For "zq" (which ends Visual, to accept a motion).
   colnr_T start_vcol;      ///< start col for block mode operator
   colnr_T end_vcol;        ///< end col for block mode operator
   int prev_opcount;        ///< ca.opcount saved for K_EVENT

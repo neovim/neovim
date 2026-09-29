@@ -580,7 +580,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       got_click = false;  // ignore drag&release now
       if ((State & MODE_INSERT) == 0) {
         pos.coladd = 0;
-        mc_toggle(wp->w_buffer, pos, false);
+        mc_toggle(wp->w_buffer, pos, false, kNone);
       }
       return false;
     }
