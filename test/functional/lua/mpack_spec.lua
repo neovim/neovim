@@ -54,6 +54,54 @@ describe('lua vim.mpack', function()
     end
   end)
 
+  it('encodes negative integers below -2^32 correctly', function()
+    eq(
+      {},
+      exec_lua(function()
+        local failures = {}
+        for _, v in ipairs({ -(2 ^ 32 + 5), -(3 * 2 ^ 32 + 70000), -(2 ^ 53 - 1) }) do
+          local decoded = vim.mpack.decode(vim.mpack.encode(v))
+          if decoded ~= v then
+            table.insert(failures, ('%.17g -> %.17g'):format(v, decoded))
+          end
+        end
+        return failures
+      end)
+    )
+  end)
+
+  it('encodes numbers beyond 2^53 #32216', function()
+    eq(
+      {},
+      exec_lua(function()
+        local failures = {}
+        local tests = {
+          2 ^ 53,
+          -2 ^ 53,
+          2 ^ 64 - 2048, -- largest uint64 double
+          -2 ^ 63, -- smallest int64
+          -2 ^ 63 - 2048, -- below int64, encoded as float
+          -1.5 * 2 ^ 63,
+          2 ^ 64, -- above uint64, encoded as float
+          1e300,
+          math.huge,
+          -math.huge,
+        }
+        for _, v in ipairs(tests) do
+          local decoded = vim.mpack.decode(vim.mpack.encode(v))
+          if decoded ~= v then
+            table.insert(failures, ('%.17g -> %.17g'):format(v, decoded))
+          end
+        end
+        local nan = vim.mpack.decode(vim.mpack.encode(0 / 0))
+        if nan == nan then
+          table.insert(failures, ('nan -> %.17g'):format(nan))
+        end
+        return failures
+      end)
+    )
+  end)
+
   it('encodes dict keys of length 20-31 as fixstr #32784', function()
     -- MessagePack fixstr format: 0xa0 | length (for lengths 0-31)
     -- Before #36737, strings 20-31 bytes were incorrectly encoded as str8 (0xd9, len)
