@@ -66,6 +66,7 @@ local ns_to_ms = 0.000001
 --- @field clients table<integer, vim.lsp.Client>
 --- @field triggers table<string, vim.lsp.Client[]>
 --- @field convert? fun(item: lsp.CompletionItem): table
+--- @field augroup integer
 
 --- @type table<integer, vim.lsp.completion.BufHandle>
 local buf_handles = {}
@@ -1246,6 +1247,16 @@ local function on_insert_leave()
   Context:reset()
 end
 
+--- @param bufnr integer
+local function destroy_handle(bufnr)
+  local handle = buf_handles[bufnr]
+  if not handle then
+    return
+  end
+  buf_handles[bufnr] = nil
+  api.nvim_del_augroup_by_id(handle.augroup)
+end
+
 --- @param client_id integer
 --- @param bufnr integer
 local function disable_completions(client_id, bufnr)
@@ -1256,8 +1267,7 @@ local function disable_completions(client_id, bufnr)
 
   handle.clients[client_id] = nil
   if not next(handle.clients) then
-    buf_handles[bufnr] = nil
-    api.nvim_del_augroup_by_name(get_augroup(bufnr))
+    destroy_handle(bufnr)
   else
     for char, clients in pairs(handle.triggers) do
       --- @param c vim.lsp.Client
@@ -1279,25 +1289,27 @@ end
 ---@param bufnr integer
 ---@param opts vim.lsp.completion.BufferOpts
 local function enable_completions(client_id, bufnr, opts)
+  local client = assert(lsp.get_client_by_id(client_id), 'invalid client ID')
+
   local buf_handle = buf_handles[bufnr]
   if not buf_handle then
+    local group = register_completedone(bufnr)
     buf_handle = {
       clients = {},
       triggers = {},
       convert = opts.convert,
       cmp = opts.cmp,
       commit_characters = opts.commit_characters ~= false,
+      augroup = group,
     }
     buf_handles[bufnr] = buf_handle
 
     -- Set up autocommands.
-    local group = register_completedone(bufnr)
     nvim_on('BufUnload', group, {
       buf = bufnr,
       desc = 'vim.lsp.completion: clean up on unload',
     }, function(ev)
-      buf_handles[ev.buf] = nil
-      api.nvim_del_augroup_by_id(group)
+      destroy_handle(ev.buf)
     end)
     nvim_on('LspDetach', group, {
       buf = bufnr,
@@ -1315,8 +1327,6 @@ local function enable_completions(client_id, bufnr, opts)
   end
 
   if not buf_handle.clients[client_id] then
-    local client = assert(lsp.get_client_by_id(client_id), 'invalid client ID')
-
     -- Add the new client to the buffer's clients.
     buf_handle.clients[client_id] = client
 
