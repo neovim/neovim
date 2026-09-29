@@ -1662,6 +1662,7 @@ describe('vim.pack', function()
           -- Should not be affected by special environment variables
           fn.setenv('GIT_WORK_TREE', t.paths.test_source_path)
           fn.setenv('GIT_DIR', vim.fs.joinpath(t.paths.test_source_path, '.git'))
+          fn.setenv('GIT_INDEX_FILE', vim.fs.joinpath(repo_get_path('defbranch'), '.git', 'index'))
           api.nvim_win_set_cursor(0, pos)
           exec_lua(function()
             vim.lsp.buf.hover()
@@ -1684,6 +1685,7 @@ describe('vim.pack', function()
 
           exec_lua('vim.uv.os_unsetenv("GIT_WORK_TREE")')
           exec_lua('vim.uv.os_unsetenv("GIT_DIR")')
+          exec_lua('vim.uv.os_unsetenv("GIT_INDEX_FILE")')
         end
 
         assert_hover({ 14, 0 }, 'Commit from `main` to be removed')

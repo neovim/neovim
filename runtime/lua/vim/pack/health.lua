@@ -15,7 +15,7 @@ end
 local function git_cmd(cmd, cwd)
   cmd = vim.list_extend({ 'git', '-c', 'gc.auto=0' }, cmd)
   local env = vim.fn.environ() --- @type table<string,string>
-  env.GIT_DIR, env.GIT_WORK_TREE = nil, nil
+  env.GIT_DIR, env.GIT_WORK_TREE, env.GIT_INDEX_FILE = nil, nil, nil
   local sys_opts = { cwd = cwd, text = true, env = env, clear_env = true }
   local out = vim.system(cmd, sys_opts):wait() --- @type vim.SystemCompleted
   if out.code ~= 0 then
