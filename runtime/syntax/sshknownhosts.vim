@@ -3,6 +3,8 @@
 " Author:       Fionn Fitzmaurice (github.com/fionn)
 " Maintainer:   Fionn Fitzmaurice (github.com/fionn)
 " License:      Vim & Apache 2.0
+" Last Change:  2026 Jun 28
+" 2026 Sep 28 by Vim project: update syntax file #21387
 
 if exists("b:current_syntax")
     finish
@@ -21,7 +23,7 @@ syn match sshKnownHostsHashedHostname "|1|[a-zA-Z0-9/+]\+=\{,2}|[a-zA-Z0-9/+]\+=
 
 hi def link sshKnownHostsMarker Statement
 hi def link sshKnownHostsHostname Identifier
-hi def link sshKnownHostsHostnameSeparator Punctuation
+hi def link sshKnownHostsHostnameSeparator Delimiter
 hi def link sshKnownHostsHashedHostname Identifier
 
 let b:current_syntax = "sshknownhosts"
