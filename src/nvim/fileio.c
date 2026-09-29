@@ -2766,16 +2766,14 @@ int vim_rename(const char *from, const char *to)
     return rename_with_tmp(from, to);
   }
 
-  // Delete the "to" file, this is required on some systems to make the
-  // os_rename() work, on other systems it makes sure that we don't have
-  // two files when the os_rename() fails.
-
-  os_remove(to);
-
-  // First try a normal rename, return if it works.
+  // First try a normal rename, which atomically replaces "to" if it exists.
   if (os_rename(from, to) == OK) {
     return 0;
   }
+
+  // Rename failed (e.g. across different filesystems). Try copying the file.
+  // Delete the "to" file first so that vim_copyfile (using UV_FS_COPYFILE_EXCL) can succeed.
+  os_remove(to);
 
   // Rename() failed, try copying the file.
   int ret = vim_copyfile(from, to);
