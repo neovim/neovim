@@ -10,6 +10,7 @@
 " Originally:	2009-07-09
 " Last Change:	2026 Mar 11
 " 2026 Sep 27 by Vim project: update secure keywords #21376
+" 2026 Sep 27 by Vim project: fix typo #21390
 " SSH Version:	10.1p1
 "
 
@@ -54,9 +55,9 @@ syn match   sshdconfigCiphersDeprecated "\<rijndael-cbc@lysator\.liu\.se\>"
 syn keyword sshdconfigCiphers aes128-ctr
 syn keyword sshdconfigCiphers aes192-ctr
 syn keyword sshdconfigCiphers aes256-ctr
-syn match sshdconfigCiphers "\<aes128-gcm@openssh\.com\>"
-syn match sshdconfigCiphers "\<aes256-gcm@openssh\.com\>"
-syn match sshdconfigCiphers "\<chacha20-poly1305@openssh\.com\>"
+syn match   sshdconfigCiphers "\<aes128-gcm@openssh\.com\>"
+syn match   sshdconfigCiphers "\<aes256-gcm@openssh\.com\>"
+syn match   sshdconfigCiphers "\<chacha20-poly1305@openssh\.com\>"
 
 syn keyword sshdconfigMAC hmac-sha1
 syn keyword sshdconfigMAC hmac-sha1-96
@@ -173,7 +174,7 @@ syn keyword sshdconfigKeyword AuthorizedPrincipalsCommandUser
 syn keyword sshdconfigKeyword AuthorizedPrincipalsFile
 syn keyword sshdconfigKeyword Banner
 syn keyword sshdconfigKeyword CASignatureAlgorithms
-syn keyword sshdConfigDeprecated ChallengeResponseAuthentication
+syn keyword sshdconfigDeprecated ChallengeResponseAuthentication
 syn keyword sshdconfigKeyword ChannelTimeout
 syn keyword sshdconfigKeyword ChrootDirectory
 syn keyword sshdconfigKeyword Ciphers
