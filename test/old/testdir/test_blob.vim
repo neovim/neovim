@@ -794,6 +794,21 @@ func Test_list2blob()
   call assert_equal(0z, list2blob(v:_null_list))
 endfunc
 
+func Test_list2blob_large()
+  let values = repeat(range(256), 32)
+  let b = list2blob(values)
+  call assert_equal(values, blob2list(b))
+  call add(b, 42)
+  call assert_equal(42, remove(b, -1))
+  call assert_equal(values, blob2list(b))
+  call assert_equal(range(255, 0, -1), blob2list(list2blob(range(255, 0, -1))))
+
+  call add(values, 256)
+  call assert_fails('call list2blob(values)', 'E1239:')
+  let values[-1] = []
+  call assert_fails('call list2blob(values)', 'E745:')
+endfunc
+
 " The following used to cause an out-of-bounds memory access
 func Test_blob2string()
   let v = '0z' .. repeat('01010101.', 444)
