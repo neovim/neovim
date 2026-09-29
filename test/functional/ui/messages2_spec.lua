@@ -1469,4 +1469,33 @@ describe('messages2', function()
                                                            |
     ]])
   end)
+
+  it('substitute confirm prompt with cmdheight=0 and pending message #42116', function()
+    command('set cmdheight=0')
+    command('call setline(1, ["foo one", "foo two"])')
+    command('echo "hello"')
+    feed(':%s/foo/bar/gc<CR>')
+    screen:expect([[
+      {2:foo} one                                              |
+      {10:foo} two                                              |
+      {1:~                                                    }|*9
+      hello                                                |
+      {6:replace with bar? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scro}|
+      {6:ll up(^E)/down(^Y)}^                                   |
+    ]])
+    feed('y')
+    screen:expect([[
+      bar one                                              |
+      {2:foo} two                                              |
+      {1:~                                                    }|*10
+      {6:replace with bar? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scro}|
+      {6:ll up(^E)/down(^Y)}^                                   |
+    ]])
+    feed('y')
+    screen:expect([[
+      bar one                                              |
+      ^bar two                                              |
+      {1:~                                                    }|*12
+    ]])
+  end)
 end)
