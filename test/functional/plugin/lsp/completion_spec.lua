@@ -964,6 +964,31 @@ describe('vim.lsp.completion: protocol', function()
     end)
   end
 
+  it('does not error on :checktime after client restart', function()
+    local fname = 'Xtest-lsp-completion-reload'
+    t.write_file(fname, 'foo')
+    t.finally(function()
+      os.remove(fname)
+    end)
+    local mtime = os.time() - 10
+    vim.uv.fs_utime(fname, mtime, mtime)
+    n.command('edit ' .. fname)
+    n.command('set autoread')
+
+    local client_id = create_server('dummy', { isIncomplete = false, items = {} })
+    exec_lua(function()
+      vim.lsp.get_client_by_id(client_id):stop(true)
+      vim.wait(1000, function()
+        return vim.lsp.get_client_by_id(client_id) == nil
+      end)
+    end)
+    create_server('dummy', { isIncomplete = false, items = {} })
+
+    t.write_file(fname, 'bar')
+    n.command('checktime')
+    eq({ 'bar' }, n.api.nvim_buf_get_lines(0, 0, -1, true))
+  end)
+
   it('fetches completions and shows them using complete on trigger', function()
     create_server('dummy', {
       isIncomplete = false,

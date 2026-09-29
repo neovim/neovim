@@ -1290,18 +1290,15 @@ local function enable_completions(client_id, bufnr, opts)
     }
     buf_handles[bufnr] = buf_handle
 
-    -- Attach to buffer events.
-    api.nvim_buf_attach(bufnr, false, {
-      on_detach = function(_, buf)
-        buf_handles[buf] = nil
-      end,
-      on_reload = function(_, buf)
-        M.enable(true, client_id, buf, opts)
-      end,
-    })
-
     -- Set up autocommands.
     local group = register_completedone(bufnr)
+    nvim_on('BufUnload', group, {
+      buf = bufnr,
+      desc = 'vim.lsp.completion: clean up on unload',
+    }, function(ev)
+      buf_handles[ev.buf] = nil
+      api.nvim_del_augroup_by_id(group)
+    end)
     nvim_on('LspDetach', group, {
       buf = bufnr,
       desc = 'vim.lsp.completion: clean up client on detach',
