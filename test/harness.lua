@@ -527,7 +527,7 @@ end
 --- Convert an arbitrary error value into printable text.
 --- @param err any
 --- @return string
-local function format_error_value(err)
+function M.format_error_value(err)
   if type(err) == 'string' then
     return err
   end
@@ -626,7 +626,7 @@ end
 --- Once execution returns to the harness, the rest of the stack is framework
 --- noise and should not be printed in verbose failure output.
 --- @return string?
-local function build_error_traceback()
+function M.build_error_traceback(framework_source)
   local lines = {}
 
   for level = 3, math.huge do
@@ -635,7 +635,7 @@ local function build_error_traceback()
       break
     end
 
-    if info.source == harness_source then
+    if info.source == framework_source then
       break
     end
 
@@ -676,12 +676,12 @@ local function exception_handler(err)
     return err
   end
 
-  local message = format_error_value(err)
+  local message = M.format_error_value(err)
   local raw_traceback = debug.traceback('', 2)
   return {
     message = message,
     trace = parse_error_trace(message, raw_traceback),
-    traceback = build_error_traceback() or raw_traceback,
+    traceback = M.build_error_traceback(harness_source) or raw_traceback,
   }
 end
 
