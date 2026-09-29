@@ -3,6 +3,8 @@
 " Author:       Fionn Fitzmaurice (github.com/fionn)
 " Maintainer:   Fionn Fitzmaurice (github.com/fionn)
 " License:      Vim & Apache 2.0
+" Last Change:  2026 Jun 28
+" 2026 Sep 28 by Vim project: update syntax file #21387
 
 if exists("b:current_syntax")
     finish
@@ -18,7 +20,7 @@ syn match sshAuthorizedKeyOptionValue '"\(\\\"\|[^"]\)*"' contained
 runtime! syntax/sshpublickey.vim
 
 hi def link sshAuthorizedKeyOptionKeyword Keyword
-hi def link sshAuthorizedKeyOptionSeparator Punctuation
+hi def link sshAuthorizedKeyOptionSeparator Delimiter
 hi def link sshAuthorizedKeyOptionAssignment Operator
 hi def link sshAuthorizedKeyOptionValue String
 
