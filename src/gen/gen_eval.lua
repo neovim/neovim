@@ -70,8 +70,14 @@ end
 local metadata = mpack.decode(io.open(metadata_file, 'rb'):read('*all'))
 for _, fun in ipairs(metadata) do
   if fun.eval then
+    local args
+    if type(fun.opts_idx) == 'number' then
+      args = { fun.opts_idx - 1, #fun.parameters }
+    else
+      args = #fun.parameters
+    end
     funcs[fun.name] = {
-      args = #fun.parameters,
+      args = args,
       func = 'api_wrapper',
       data = '{ .func_api = &method_handlers[' .. fun.handler_id .. '] }',
     }
