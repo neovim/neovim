@@ -2053,7 +2053,7 @@ describe('API/extmarks', function()
     api.nvim_buf_set_lines(buf, 0, 0, false, { 'foo', 'bar' })
     local id = api.nvim_buf_set_extmark(buf, ns, 1, 0, { invalidate = true })
     api.nvim_buf_delete(buf, { unload = true })
-    local mark = { 0, 0, { invalid = true, invalidate = true, ns_id = 3, right_gravity = true } }
+    local mark = { 0, 0, { invalid = true, invalidate = true, ns_id = ns, right_gravity = true } }
     eq(mark, api.nvim_buf_get_extmark_by_id(buf, ns, id, { details = true }))
   end)
 end)

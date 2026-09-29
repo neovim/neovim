@@ -350,6 +350,8 @@ context), multicursor replays actions "semantically" (|CmdAtom|).
   instead of skipping over them. The primary cursor keeps the usual
   |fold-behavior|.
 - Cursors are per-buffer, and cascade only while their buffer is current.
+- Multicursors are presented as |hl-MCursor| highlights, unless your
+  (terminal) UI supports the Kitty multiple-cursors protocol.
 - CTRL-C interrupts the cascade.
 
 Example: place a cursor on every matching pattern: >
@@ -359,22 +361,6 @@ Example: place a cursor at each |quickfix| item, or a range: >
     :cdo normal! Q
     :2,4cdo normal! Q
 <
-Example: place a cursor at every match, using the API: >lua
-    for _, m in ipairs(vim.fn.matchbufline('%', [[pattern]], 1, '$')) do
-      vim.api.nvim_mcursor(0, { m.lnum, m.byteidx })
-    end
-<
-Plugins can place cursors with |nvim_mcursor()| and inspect user actions via
-the |CmdAtom| event.
-
-The cursor positions are tracked as |extmarks| in the "nvim.multicursor"
-namespace. Query them with |nvim_buf_get_extmarks()|; deleting an extmark
-deletes the cursor. You can also use |:marks| to peek at cursors: >
-    :marks nvim.multicursor
-<
-Multicursors are presented as |hl-MCursor| highlights, unless your (terminal)
-UI supports the Kitty multiple-cursors protocol.
-
 
 COMMANDS
 							*Q*
@@ -467,14 +453,29 @@ g CTRL-A		During a multicursor session, inserts an ascending
 [C			Jump to the [count]'th previous cursor.
 
 
+API								 *mcursor-api*
+
+Plugins can place cursors by setting or deleting |extmarks| in the
+"nvim.multicursor" namespace, and inspect user actions via the |CmdAtom|
+event.
+
+Adding an extmark (|nvim_buf_set_extmark()|) adds a cursor, unless one is
+already there. Query them with |nvim_buf_get_extmarks()|. Deleting an extmark
+deletes the cursor.
+
+You can also use |:marks| to peek at cursors: >
+    :marks nvim.multicursor
+<
+
 EXAMPLES						*mcursor-examples*
 
-Example: "]C" mapping which places a cursor before jumping to the next, so you
-can "rotate" through the cursors. |nvim_mcursor()| is a no-op if a cursor is
-already there (unlike |Q|, which toggles). >lua
+Example: a "]C" mapping which places a cursor before jumping to the next, so
+you can "rotate" through the cursors. >lua
 
+    local ns = vim.api.nvim_create_namespace('nvim.multicursor')
     vim.keymap.set('n', ']C', function()
-      vim.api.nvim_mcursor(0, vim.api.nvim_win_get_cursor(0))
+      local row, col = vim.pos.cursor(0):to_extmark()
+      vim.api.nvim_buf_set_extmark(0, ns, row, col, {})
       vim.cmd('normal! ]C')
     end)
 <
@@ -493,6 +494,13 @@ cursor, then disables 'follow' mode again. >lua
         end,
       })
     end)
+<
+Example: place a cursor at every match, using the API: >lua
+
+    local ns = vim.api.nvim_create_namespace('nvim.multicursor')
+    for _, m in ipairs(vim.fn.matchbufline('%', [[pattern]], 1, '$')) do
+      vim.api.nvim_buf_set_extmark(0, ns, m.lnum - 1, m.byteidx, {})
+    end
 <
 
 LIMITATIONS						*mcursor-limitations*

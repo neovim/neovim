@@ -1453,40 +1453,6 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow,
   });
 }
 
-/// Adds a multicursor in the given buffer.
-///
-/// @param buf  Buffer handle, or 0 for current buffer
-/// @param pos  (row, col) (1,0)-indexed cursor position (byte offset)
-/// @param[out] err Error details, if any
-/// @return Total number of extra cursors.
-Integer nvim_mcursor(Buffer buf, ArrayOf(Integer, 2) pos, Error *err)
-  FUNC_API_SINCE(15)
-{
-  buf_T *b = find_buffer_by_handle(buf, err);
-  if (b == NULL) {
-    return 0;
-  }
-  VALIDATE_EXP(!(pos.size != 2 || pos.items[0].type != kObjectTypeInteger
-                 || pos.items[1].type != kObjectTypeInteger), "pos", "[row, col] array", NULL, {
-    return 0;
-  });
-
-  int64_t row = pos.items[0].data.integer;
-  int64_t col = pos.items[1].data.integer;
-
-  VALIDATE_RANGE(!(row < 1 || row > b->b_ml.ml_line_count), "cursor line", {
-    return 0;
-  });
-  VALIDATE_RANGE(!(col > MAXCOL || col < 0), "cursor column", {
-    return 0;
-  });
-
-  // Silently clamp to the EOL insertion point, like nvim_win_set_cursor().
-  col = MIN(col, (int64_t)ml_get_buf_len(b, (linenr_T)row));
-  mc_add(b, (pos_T){ .lnum = (linenr_T)row, .col = (colnr_T)col, .coladd = 0 });
-  return (Integer)mc_count();
-}
-
 /// Returns the 24-bit RGB value of a |nvim_get_color_map()| color name or
 /// "#rrggbb" hexadecimal string.
 ///

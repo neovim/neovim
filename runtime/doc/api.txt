@@ -1279,20 +1279,6 @@ nvim_load_context({dict})                                *nvim_load_context()*
     Return: ~
         (`any`)
 
-nvim_mcursor({buf}, {pos})                                    *nvim_mcursor()*
-    Adds a multicursor in the given buffer.
-
-    Attributes: ~
-        Since: 0.13.0
-
-    Parameters: ~
-      • {buf}  (`integer`) Buffer handle, or 0 for current buffer
-      • {pos}  (`[integer, integer]`) (row, col) (1,0)-indexed cursor position
-               (byte offset)
-
-    Return: ~
-        (`integer`) Total number of extra cursors.
-
 nvim_open_term({buf}, {opts})                               *nvim_open_term()*
     Open a terminal instance in a buffer
 

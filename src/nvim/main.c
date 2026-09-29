@@ -73,6 +73,7 @@
 #include "nvim/main.h"
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -200,6 +201,7 @@ static void early_init(mparm_T *paramp)
   init_normal_cmds();   // Init the table of Normal mode commands.
   runtime_init();
   highlight_init();
+  mc_init();
 
 #ifdef MSWIN
   OSVERSIONINFO ovi;
