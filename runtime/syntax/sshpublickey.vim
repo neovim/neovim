@@ -5,14 +5,16 @@
 " License:      Vim & Apache 2.0
 " Last Change:  2026 Jun 28
 " 2026 Sep 27 by Vim project: Add a new SSH key type
+" 2026 Sep 28 by Vim project: update syntax file
 
 if exists("b:current_syntax")
     finish
 endif
 
-setlocal iskeyword=_,.,@-@,-,a-z,A-Z,48-57
+syn iskeyword _,.,@-@,-,a-z,A-Z,48-57
 
 syn keyword sshKeyType ssh-mldsa44-ed25519 nextgroup=sshKeyBase64Encoded skipwhite
+syn keyword sshKeyType ssh-mldsa44-ed25519@openssh.com nextgroup=sshKeyBase64Encoded skipwhite
 syn keyword sshKeyType ssh-ed25519 nextgroup=sshKeyBase64Encoded skipwhite
 syn keyword sshKeyType sk-ssh-ed25519@openssh.com nextgroup=sshKeyBase64Encoded skipwhite
 syn keyword sshKeyType ecdsa-sha2-nistp256 nextgroup=sshKeyBase64Encoded skipwhite
