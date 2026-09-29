@@ -480,16 +480,7 @@ describe('multicursor', function()
       feed('<Esc>')
       eq({ 'V', 1, 2 }, { fn.visualmode(), fn.line("'<"), fn.line("'>") })
 
-      -- Not supported: textobjects, non-motions ("zqx").
-      clear_cursors()
-      cursors({ 'aa bb cc' }, '')
-      feed('zqiw')
-      eq(0, ncursors())
-      feed('zqx')
-      eq(0, ncursors())
-      eq({ 'aa bb cc' }, get_lines())
-
-      -- One-shot motion (a Lua "label" jump): one cursor there, the primary stays.
+      -- Not supported: textobjects, non-motions ("zqx"), non-repeatable ("label" plugin).
       clear_cursors()
       cursors({ 'aa bb cc' }, '')
       n.exec_lua(function()
@@ -497,9 +488,12 @@ describe('multicursor', function()
           vim.api.nvim_win_set_cursor(0, { 1, 6 })
         end)
       end)
-      feed('zq<F2>')
-      eq({ 1, 0 }, api.nvim_win_get_cursor(0))
-      eq({ { 0, 0 }, { 0, 6 } }, anchors())
+      for _, keys in ipairs({ 'zqiw', 'zqx', 'zq<F2>' }) do
+        feed(keys)
+        eq(0, ncursors(), keys)
+        eq({ 1, 0 }, api.nvim_win_get_cursor(0), keys)
+      end
+      eq({ 'aa bb cc' }, get_lines())
     end)
 
     it('does nothing without a previous search (E35)', function()

@@ -387,18 +387,22 @@ Q			Toggles a multicursor at the current cursor position.
 							*zq*
 zq{motion}		Places a cursor at {motion}, repeated from the current
 			position until end of buffer (or limited to a Visual
-			selection: |v_zq|). A search motion ("zq*", "zqn",
-			"zqgn") places a cursor at every match, wrapping if
-			'wrapscan' is enabled. A non-repeatable motion (e.g.
-			"label" plugins) places one cursor.
+			selection: |v_zq|). Think of it like `%:g` as an operator.
 
+			A search motion ("zq*", "zqn", "zqgn") places a cursor
+			at every match, wrapping if 'wrapscan' is enabled.
 			Sets the Visual area (|gv|) per-cursor, so "gv"
-			selects the match at each cursor. E.g. "zq*gvc"
-			changes each match of the word under the cursor.
+			selects the match at each cursor.
 
 			Examples:
 			- "zqw": every word.
 			- "zqgn": every match.
+			- "zq*gvc" changes each match of the word under the cursor.
+
+			Not supported:
+			- Text objects
+			- Lua, |<Cmd>| or ":" mappings (except |:map-<expr>|).
+
 
 							*v_zq*
 {Visual}zq{motion}	Like |zq|, but limited to the Visual range.

@@ -1394,8 +1394,7 @@ void mc_zq_start(cmdarg_T *cap)
 }
 
 /// "zq{motion}": places a cursor at repeated {motion} ("zqw": each word). A search motion ("*",
-/// "gn", "?pat<CR>", …) steps through its matches like "/<CR>". A non-repeatable motion
-/// (Lua/<Cmd>/: e.g. a "label" plugin) has one step.
+/// "gn", "?pat<CR>", …) steps through its matches like "/<CR>".
 ///
 /// Sets per-cursor Visual area ('< '>, "gv", mc_zq_target), so "zq*" + "gv" selects every match.
 ///
@@ -1410,8 +1409,9 @@ void mc_zq(oparg_T *oap, cmdarg_T *cap, pos_T origin)
 {
   atom_did_global_op();
   if (mc_replaying() || oap->motion_type == kMTUnknown || cap->cmdchar == 'i'
-      || cap->cmdchar == 'a') {
-    beep_flush();  // Not supported (motion/textobj).
+      || cap->cmdchar == 'a' || cap->cmdchar == K_LUA || cap->cmdchar == K_COMMAND
+      || cap->cmdchar == ':') {
+    beep_flush();  // Not a motion, or not supported.
     curwin->w_cursor = origin;
     return;
   }
@@ -1421,8 +1421,6 @@ void mc_zq(oparg_T *oap, cmdarg_T *cap, pos_T origin)
   pos_T bounds[2] = { mark_get_visual(curbuf, '<')->mark, mark_get_visual(curbuf, '>')->mark };
   colnr_T vcols[2] = { 0, MAXCOL };
   if (v.vi_mode == Ctrl_V) {
-    bounds[0].col = 0;
-    bounds[1].col = MAXCOL;
     getvcols(curwin, &v.vi_start, &v.vi_end, &vcols[0], &vcols[1], 0);
     vcols[1] = v.vi_curswant == MAXCOL ? MAXCOL : vcols[1];  // "$": to the end of every line.
   }
@@ -1435,53 +1433,37 @@ void mc_zq(oparg_T *oap, cmdarg_T *cap, pos_T origin)
                           && strchr("*#nN", cap->nchar) != NULL);
   int placed = 0;
   pos_T first = { 0 };
-  if (cap->cmdchar == K_LUA || cap->cmdchar == K_COMMAND || cap->cmdchar == ':') {
-    // Non-repeatable motion. One step, plus a cursor at the primary.
-    pos_T step = equalpos(oap->start, origin) ? oap->end : oap->start;
-    colnr_T vcol = 0;
-    getvcol(curwin, &step, &vcol, NULL, NULL, 0);
-    if (!equalpos(step, primary)
-        && (!oap->from_visual || (ltoreq(bounds[0], step) && ltoreq(step, bounds[1])
-                                  && vcol >= vcols[0] && vcol <= vcols[1]))) {
-      mc_zq_target(step, false, oap->motion_type, mc_add(curbuf, step));
-      mc_zq_target(primary, false, oap->motion_type, mc_add(curbuf, primary));
-      first = primary;
-      placed = 2;
+  // The search motion already set the pattern. Each step is "/<CR>".
+  String keys = search ? cstr_to_string("/\n")
+                       : redo_keys(&(CmdSpec){ .count = cap->count0, .cmd = cap->cmdchar,
+                                               .cmd2 = cap->nchar });
+  if (!oap->from_visual) {
+    // The primary is a step (search: if on a match, else its next match is, like the motion).
+    first = (!search || equalpos(mc_zq_target(primary, true, oap->motion_type, NULL).vi_start,
+                                 primary))
+            ? primary : mc_zq_step(keys.data, primary);
+    placed = mc_zq_run(keys.data, search, oap->motion_type, (pos_T){ .lnum = MAXLNUM }, first);
+  } else if (v.vi_mode != Ctrl_V) {
+    if (mc_zq_first(keys.data, search, oap->motion_type, bounds, &first)) {
+      placed = mc_zq_run(keys.data, search, oap->motion_type, bounds[1], first);
     }
   } else {
-    // The search motion already set the pattern. Each step is "/<CR>".
-    String keys = search ? cstr_to_string("/\n")
-                         : redo_keys(&(CmdSpec){ .count = cap->count0, .cmd = cap->cmdchar,
-                                                 .cmd2 = cap->nchar });
-    if (!oap->from_visual) {
-      // The primary is a step (search: if on a match, else its next match is, like the motion).
-      first = (!search || equalpos(mc_zq_target(primary, true, oap->motion_type, NULL).vi_start,
-                                   primary))
-              ? primary : mc_zq_step(keys.data, primary);
-      placed = mc_zq_run(keys.data, search, oap->motion_type, (pos_T){ .lnum = MAXLNUM },
-                         first);
-    } else if (v.vi_mode != Ctrl_V) {
-      if (mc_zq_first(keys.data, search, oap->motion_type, bounds, &first)) {
-        placed = mc_zq_run(keys.data, search, oap->motion_type, bounds[1], first);
+    // Blockwise: each line's part of the block is its own charwise selection.
+    for (linenr_T lnum = bounds[0].lnum; lnum <= bounds[1].lnum; lnum++) {
+      pos_T line[2] = { { .lnum = lnum }, { .lnum = lnum, .col = MAXCOL } };
+      if (getvpos(curwin, &line[0], vcols[0]) == FAIL) {
+        line[0].col = ml_get_len(lnum);  // Short line: its end, like "v_b_A".
+      } else if (vcols[1] != MAXCOL) {
+        getvpos(curwin, &line[1], vcols[1]);
       }
-    } else {
-      // Blockwise: each line's part of the block is its own charwise selection.
-      for (linenr_T lnum = bounds[0].lnum; lnum <= bounds[1].lnum; lnum++) {
-        pos_T line[2] = { { .lnum = lnum }, { .lnum = lnum, .col = MAXCOL } };
-        if (getvpos(curwin, &line[0], vcols[0]) == FAIL) {
-          line[0].col = ml_get_len(lnum);  // Short line: its end, like "v_b_A".
-        } else if (vcols[1] != MAXCOL) {
-          getvpos(curwin, &line[1], vcols[1]);
-        }
-        pos_T step;
-        if (mc_zq_first(keys.data, search, oap->motion_type, line, &step)) {
-          first = first.lnum == 0 ? step : first;
-          placed += mc_zq_run(keys.data, search, oap->motion_type, line[1], step);
-        }
+      pos_T step;
+      if (mc_zq_first(keys.data, search, oap->motion_type, line, &step)) {
+        first = first.lnum == 0 ? step : first;
+        placed += mc_zq_run(keys.data, search, oap->motion_type, line[1], step);
       }
     }
-    api_free_string(keys);
   }
+  api_free_string(keys);
 
   if (placed > 0) {
     if (mc_mark_at(curbuf, primary) == 0) {
