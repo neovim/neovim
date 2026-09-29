@@ -3274,6 +3274,8 @@ void f_list2blob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
+  ga_grow(&blob->bv_ga, tv_list_len(l));
+
   TV_LIST_ITER_CONST(l, li, {
     bool error = false;
     varnumber_T n = tv_get_number_chk(TV_LIST_ITEM_TV(li), &error);
@@ -3284,7 +3286,7 @@ void f_list2blob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       ga_clear(&blob->bv_ga);
       return;
     }
-    ga_append(&blob->bv_ga, (uint8_t)n);
+    ((uint8_t *)blob->bv_ga.ga_data)[blob->bv_ga.ga_len++] = (uint8_t)n;
   });
 }
 
