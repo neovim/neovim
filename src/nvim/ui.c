@@ -327,11 +327,11 @@ void ui_busy_stop(void)
 /// val is one of the OptBoFlags values, e.g., kOptBoFlagOperator
 void vim_beep(unsigned val)
 {
-  did_beep++;
-
   if (emsg_silent != 0 || in_assert_fails) {
+    did_beep_silent++;
     return;
   }
+  did_beep++;
 
   if (!((bo_flags & val) || (bo_flags & kOptBoFlagAll))) {
     static int beeps = 0;

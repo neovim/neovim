@@ -300,7 +300,7 @@ describe('multicursor', function()
   end)
 
   describe('zq', function()
-    it('zqn places a cursor at each "n" match', function()
+    it('zq{search} places a cursor at each match', function()
       fn.setline(1, { 'foo bar foo', 'baz foo qux', 'foobar foo' })
       feed('gg0') -- on the first "foo"
       feed('*') -- whole-word pattern; the cursor moves to the next match
@@ -321,6 +321,7 @@ describe('multicursor', function()
       feed('zq#')
       eq(4, ncursors())
       eq(0, api.nvim_get_vvar('searchforward')) -- The motion's direction is preserved.
+
       -- A "/" search likewise, also with several matches per line.
       clear_cursors()
       api.nvim_buf_set_lines(0, 0, -1, true, { 'ab ab ab', 'xx ab' })
@@ -329,6 +330,7 @@ describe('multicursor', function()
       eq(4, ncursors())
       feed('x')
       eq({ 'b b b', 'xx b' }, get_lines())
+
       -- In mappings: an operator alias ("gz"); an edit after "zq" applies at every cursor it placed.
       clear_cursors()
       n.exec_lua(function()
@@ -343,6 +345,7 @@ describe('multicursor', function()
       clear_cursors()
       feed('<F3>')
       eq({ 'X bar', 'X baz', 'qux X' }, get_lines())
+
       -- Placement uses the real search engine, so it matches what "n" finds under the current
       -- case options. 'ignorecase': "/foo" matches all three cases.
       clear_cursors()
@@ -353,6 +356,7 @@ describe('multicursor', function()
       eq(3, ncursors())
       feed('gUiw')
       eq({ 'FOO FOO FOO' }, get_lines())
+
       -- 'smartcase': an uppercase letter in the pattern forces case-sensitivity.
       clear_cursors()
       command('set smartcase')
@@ -362,6 +366,18 @@ describe('multicursor', function()
       eq(2, ncursors())
       feed('x')
       eq({ 'oo foo oo' }, get_lines())
+
+      -- 'nowrapscan': from the match at (or after) primary; none if no match.
+      clear_cursors()
+      command('set nowrapscan')
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'foo x' })
+      fn.setreg('/', 'foo')
+      feed('$zqN') -- Backwards. Places at "x".
+      eq(0, ncursors())
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'foo bar foo' })
+      feed('$hzq#') -- Mid-word on the last "foo": at its start.
+      eq({ { 0, 8 } }, anchors())
+      eq({ 1, 8 }, api.nvim_win_get_cursor(0))
     end)
 
     it('zq{motion} {Visual} bounds, per-cursor gv', function()
@@ -382,10 +398,15 @@ describe('multicursor', function()
       cursors({ 'aa bb cc dd ee' }, '')
       feed('2zqw')
       eq({ { 0, 0 }, { 0, 6 }, { 0, 12 }, { 0, 13 } }, anchors())
-      -- Forward motions only: a backward motion stops after its first step.
+      -- Forward motions only: a backward motion has no step after the cursor.
       clear_cursors()
       feed('$zqb')
-      eq({ { 0, 12 }, { 0, 13 } }, anchors())
+      eq(0, ncursors())
+      -- A step that stays ("ti" before an "i") retries from the next char.
+      clear_cursors()
+      cursors({ '#include <limits.h>' }, '')
+      feed('zqti')
+      eq({ { 0, 0 }, { 0, 10 }, { 0, 12 } }, anchors())
       -- A search that wraps on its first step (no match after the cursor).
       clear_cursors()
       fn.setline(1, { 'foo x foo y' })
@@ -404,6 +425,16 @@ describe('multicursor', function()
       api.nvim_buf_set_lines(0, 0, -1, true, fn['repeat']({ 'x' }, 100))
       feed('50Gztzqj')
       eq({ 50, 50 }, { fn.line('w0'), fn.line('.') })
+      -- The primary is considered a zq "step" only if the motion lands on it.
+      clear_cursors()
+      cursors({ 'xx', 'xbc a da' }, 'jl')
+      feed('zqfa')
+      eq({ 2, 4 }, api.nvim_win_get_cursor(0))
+      eq({ { 1, 4 }, { 1, 7 } }, anchors())
+      clear_cursors()
+      feed('zqfz') -- Fails from the primary (no "z").
+      eq({ 2, 4 }, api.nvim_win_get_cursor(0))
+      eq(0, ncursors())
 
       -- {Visual}zq{motion} limits to the selection. Primary + existing cursor (1:3) stays.
       clear_cursors()
@@ -429,9 +460,14 @@ describe('multicursor', function()
       feed('Vjzq*')
       eq({ 2, 0 }, api.nvim_win_get_cursor(0))
       eq({ { 0, 3 }, { 1, 0 } }, anchors())
+
+      -- Failed motion does not place cursors.
       clear_cursors()
       feed('Vkzq/zz<CR>') -- Failed motion: no cursors, the cursor stays.
       eq({ 1, 0 }, api.nvim_win_get_cursor(0))
+      eq(0, ncursors())
+      feed('Vjzqfx') -- Failed from selection start (no "x").
+      eq({ 2, 0 }, api.nvim_win_get_cursor(0))
       eq(0, ncursors())
 
       -- The steps iterate from the selection-start until selection-end.

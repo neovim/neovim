@@ -360,7 +360,6 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
   if (atom.type == kAInsertSpan && mc_ins_span.first && did_beep != beeps
       && buf_get_changedtick(curbuf) == tick) {
     // XXX: Insert-entering cmd failed ("ct;" did not match ";"). Drop the cursor. #41960
-    // (Not detected under emsg_silent: beep_flush() does not beep.)
     extmark_del_id(curbuf, mc_ns(), ctx.mark);
     return;
   }
@@ -1261,7 +1260,7 @@ uint32_t mc_mark_at(buf_T *buf, pos_T pos, uint32_t skip)
 
 /// For "zq{motion}": runs motion `keys` at `pos`.
 ///
-/// @return  Where the motion moved the cursor.
+/// @return  Where the motion moved the cursor. lnum=0: it failed (beeped).
 static pos_T mc_zq_step(const char *keys, pos_T pos)
 {
   curwin->w_cursor = pos;
@@ -1277,14 +1276,16 @@ static pos_T mc_zq_step(const char *keys, pos_T pos)
   block_autocmds();
   save_state_T sst;
   save_current_state(&sst);
+  const uint64_t beeps = did_beep_silent;
   exec_normal_cmd((char *)keys, REMAP_NONE, true);
+  const bool failed = did_beep_silent != beeps;
   restore_current_state(&sst);
   unblock_autocmds();
   atom_suppress(false);
   cmdmod.cmod_flags = save_cmod_flags;
   emsg_silent--;
   msg_silent--;
-  return curwin->w_cursor;
+  return failed ? (pos_T){ 0 } : curwin->w_cursor;
 }
 
 /// Visual area ('< '>) of the target at `step`: its search match, else the char (or line).
@@ -1294,8 +1295,11 @@ static visualinfo_T mc_zq_target(pos_T step, bool search, MotionType motion_type
 {
   const visualinfo_T save = curbuf->b_visual;
   const int save_mode_eval = curbuf->b_visual_mode_eval;
-  curbuf->b_visual = (visualinfo_T){ .vi_start = step, .vi_end = step, .vi_curswant = step.col,
-                                     .vi_mode = motion_type == kMTLineWise ? 'V' : 'v' };
+  // Search: lnum=0 if "gn" finds no match.
+  curbuf->b_visual = search ? (visualinfo_T){ 0 }
+                            : (visualinfo_T){ .vi_start = step, .vi_end = step,
+                                              .vi_curswant = step.col,
+                                              .vi_mode = motion_type == kMTLineWise ? 'V' : 'v' };
   curbuf->b_visual_mode_eval = curbuf->b_visual.vi_mode;
   if (search) {
     mc_zq_step("gn\033", step);  // Selects the match at `step`; <Esc> stores it as '< '>.
@@ -1352,13 +1356,17 @@ static bool mc_zq_first(const char *keys, bool search, MotionType motion_type, c
   if (step->lnum != 0) {
     return true;
   }
+  const bool failed = s.lnum == 0;
+  if (failed && motion_type != kMTLineWise && equalpos(from, start)) {
+    return false;  // Fails from the start ("fx" without "x"): no step.
+  }
   if (bof
       && (!search || equalpos(mc_zq_target(start, true, motion_type, NULL).vi_start, start))) {
     *step = start;  // Buffer start, nothing before it: a step (search: if a match starts there).
     return true;
   }
-  if (equalpos(s, from)) {
-    *step = start;  // Stays: the start is a step ("0").
+  if (failed || equalpos(s, from)) {
+    *step = start;  // Stays: the start is a step ("0", "j" on the last line, a short line's end).
     return true;
   }
   *step = s;
@@ -1379,9 +1387,14 @@ static int mc_zq_run(const char *keys, bool search, MotionType motion_type, pos_
     mc_zq_target(step, search, motion_type, mc_add(curbuf, step));
     placed++;
     const pos_T prev = step;
-    step = mc_zq_step(keys, prev);
-    if (equalpos(step, prev)) {
-      break;  // Failed, or does not advance.
+    pos_T from = prev;
+    step = mc_zq_step(keys, from);
+    if (equalpos(step, from) && inc(&from) != -1) {
+      // Retry from next char. The motion neither failed nor advanced ("ti" before an "i").
+      step = mc_zq_step(keys, from);
+    }
+    if (step.lnum == 0 || equalpos(step, prev) || equalpos(step, from)) {
+      break;  // Failed, or did not advance (after retry).
     }
     if (lt(step, prev)) {  // Wrapped around the end of the buffer ('wrapscan'), or backward.
       if (!wrap || wrapped) {
@@ -1431,16 +1444,23 @@ void mc_zq(oparg_T *oap, cmdarg_T *cap, pos_T origin)
     return;
   }
   pos_T primary = origin;
+
+  // "zq": from primary to end of buffer.
   // "{Visual}zq": the selection ('< '>). Linewise, blockwise: whole lines (blockwise: `vcols`).
   visualinfo_T v = curbuf->b_visual;
-  pos_T bounds[2] = { mark_get_visual(curbuf, '<')->mark, mark_get_visual(curbuf, '>')->mark };
+  pos_T bounds[2] = { primary, { .lnum = MAXLNUM } };
+  if (oap->from_visual) {
+    bounds[0] = mark_get_visual(curbuf, '<')->mark;
+    bounds[1] = mark_get_visual(curbuf, '>')->mark;
+  }
+
   const bool lines = oap->motion_type == kMTLineWise;  // Linewise motion ("j") steps by lines.
   if (lines) {
     bounds[0].col = 0;
     bounds[1].col = MAXCOL;
   }
   colnr_T vcols[2] = { 0, MAXCOL };
-  const bool blockwise = v.vi_mode == Ctrl_V && !lines;
+  const bool blockwise = oap->from_visual && v.vi_mode == Ctrl_V && !lines;
   if (blockwise) {
     getvcols(curwin, &v.vi_start, &v.vi_end, &vcols[0], &vcols[1], 0);
     vcols[1] = v.vi_curswant == MAXCOL ? MAXCOL : vcols[1];  // "$": to the end of every line.
@@ -1461,12 +1481,11 @@ void mc_zq(oparg_T *oap, cmdarg_T *cap, pos_T origin)
   spec.regname = 0;  // The operator's ("\"azq").
   // The search motion already set the pattern. Each step is "/<CR>".
   String keys = search ? cstr_to_string("/\n") : redo_keys(&spec);
-  if (!oap->from_visual) {
-    // The primary is a step (search: if on a match, else its next match is, like the motion).
-    first = (!search || equalpos(mc_zq_target(primary, true, oap->motion_type, NULL).vi_start,
-                                 primary))
-            ? primary : mc_zq_step(keys.data, primary);
-    placed = mc_zq_run(keys.data, search, oap->motion_type, (pos_T){ .lnum = MAXLNUM }, first);
+  if (!oap->from_visual && search) {
+    first = mc_zq_target(primary, true, oap->motion_type, NULL).vi_start;  // Match at/after it.
+    if (first.lnum != 0) {
+      placed = mc_zq_run(keys.data, search, oap->motion_type, bounds[1], first);
+    }
   } else if (!blockwise) {
     if (mc_zq_first(keys.data, search, oap->motion_type, bounds, &first)) {
       placed = mc_zq_run(keys.data, search, oap->motion_type, bounds[1], first);

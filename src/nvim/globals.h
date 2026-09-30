@@ -183,7 +183,8 @@ EXTERN char *emsg_assert_fails_context INIT( = NULL);
 EXTERN bool did_endif INIT( = false);        // just had ":endif"
 EXTERN int did_emsg;                        // incremented by emsg() when a
                                             // message is displayed or thrown
-EXTERN uint64_t did_beep;                   // Incremented by vim_beep().
+EXTERN uint64_t did_beep;                   // Incremented by vim_beep(), if not silenced.
+EXTERN uint64_t did_beep_silent;            // Incremented by vim_beep(), if silenced (emsg_silent).
 EXTERN bool did_emsg_syntax;                // did_emsg set because of a
                                             // syntax error
 EXTERN int called_emsg;                     // always incremented by emsg()
