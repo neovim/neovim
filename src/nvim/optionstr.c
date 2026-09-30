@@ -316,7 +316,9 @@ static const char *check_stl_str_adv_scope(char **s, const CharBuf *errbuf, StlS
       while (**s && **s != STL_HIGHLIGHT) {
         (*s)++;
       }
-      (*s)++;
+      if (**s) {
+        (*s)++;
+      }
       continue;
     }
     if (**s == '-') {
