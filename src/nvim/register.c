@@ -2658,7 +2658,7 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
         if (*line_end == NUL) {
           line_end++;  // registers can have NUL chars
         } else {
-          line_end += utf_ptr2len_len(line_end, (int)(end - line_end));
+          line_end += utfc_ptr2len_len(line_end, (int)(end - line_end));
         }
       }
       assert(line_end - start >= 0);

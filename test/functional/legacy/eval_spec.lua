@@ -524,6 +524,14 @@ describe('eval', function()
     )
   end)
 
+  it('setting register with grahpeme clusters in block mode', function()
+    command("call setreg('a', ['🇧🇷'], 'b')")
+    eq('\0222', eval("getregtype('a')"))
+
+    command("call setreg('b', '🇧🇷', 'b')")
+    eq('\0222', eval("getregtype('b')"))
+  end)
+
   it('getreg("a",1,1) returns a valid list when "a is unset', function()
     -- Precondition: "a is actually unset and "0 is nonempty
     eq('', eval("getregtype('a')"))
