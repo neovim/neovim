@@ -649,12 +649,11 @@ list_missing_vimpatches() {
     git_log_args+=("$i")
   done
 
-  missing_numbers=$(_git -C "${VIM_SOURCE_DIR}" log --reverse --since="${VIM_VERSION_0_DATE}" --no-walk --tags --format='%(decorate:prefix=,suffix=,tag=)' "${git_log_args[@]}" |
-    grep -v -e 'HEAD' |
+  missing_numbers=$(_git -C "${VIM_SOURCE_DIR}" log --decorate-refs='refs/tags/*' --reverse --since="${VIM_VERSION_0_DATE}" --no-walk --tags --format='%(decorate:prefix=,suffix=,tag=)' "${git_log_args[@]}" |
     grep -v -F -f <(list_vimpatch_numbers) |
     sed -E 's/,.*$//')
-  missing_hashes=$(_git -C "${VIM_SOURCE_DIR}" log --reverse --since="${VIM_VERSION_0_DATE}" --format='%H%D' "${git_log_args[@]}" |
-    grep -v -e 'tag:' -e 'HEAD' |
+  missing_hashes=$(_git -C "${VIM_SOURCE_DIR}" log --decorate-refs='refs/tags/*' --reverse --since="${VIM_VERSION_0_DATE}" --format='%H%D' "${git_log_args[@]}" |
+    grep -v -e 'tag:' |
     grep -v -f <(list_vimpatch_hashes | sed -E 's/(.*)/^\1/'))
   if test -n "${git_log_format}"; then
     (echo "${missing_numbers}"; echo "${missing_hashes}") |
