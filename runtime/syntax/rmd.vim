@@ -3,7 +3,8 @@
 " Former Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
 " Former Repository: https://github.com/jalvesaq/R-Vim-runtime
 " Last Change: 2023 Dec 24  07:21AM
-"   2024 Feb 19 by Vim Project (announce adoption)
+"   2024 Feb 19 by Vim project (announce adoption)
+"   2026 Sep 29 by Vim project (fix typo in code block delimiter pattern)
 "
 "   For highlighting pandoc extensions to markdown like citations and TeX and
 "   many other advanced features like folding of markdown sections, it is
@@ -134,7 +135,7 @@ endif
 " Step_3: Highlight code blocks.
 
 syn region rmdCodeBlock matchgroup=rmdCodeDelim start="^\s*```\s*{.*}$" matchgroup=rmdCodeDelim end="^\s*```\ze\s*$" keepend
-syn region rmdCodeBlock matchgroup=rmdCodeDelim start="^\s*```.+$" matchgroup=rmdCodeDelim end="^```$" keepend
+syn region rmdCodeBlock matchgroup=rmdCodeDelim start="^\s*```.\+$" matchgroup=rmdCodeDelim end="^\s*```\ze\s*$" keepend
 hi link rmdCodeBlock Special
 
 " Now highlight chunks:
