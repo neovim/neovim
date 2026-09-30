@@ -3898,6 +3898,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       break;
 
     case OP_MCURSOR:
+      // Restore linebreak, so that the steps move like typed motions ("gj").
+      restore_lbr(lbr_saved);
       mc_zq(oap, cap, op_origin);
       break;
 

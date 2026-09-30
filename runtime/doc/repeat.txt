@@ -524,6 +524,9 @@ LIMITATIONS						*mcursor-limitations*
 - Reloading/unloading a buffer (|:edit!|, 'autoread') clears its cursors
   (extmarks limitation).
 - |Q|, |zq|, |gQ| are not allowed while recording or executing a macro.
+- |zq| at the start of a line guesses whether the start is a step: at the
+  start of the buffer it always is ("ggVzqw" on an indented line), elsewhere
+  "f"/"t" skip it ("0zqfa" on a line starting with "a").
 - A mapping or function that does not re-read its input will not cascade
   correctly.
 

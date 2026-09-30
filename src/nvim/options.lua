@@ -3852,8 +3852,8 @@ local options = {
       defaults = false,
       desc = [=[
         Enables |multicursor| follow-mode: cursor-relative motions performed
-        by the primary cursor, cascade to all cursors |mcursor|.  Toggled by
-        |q=| (buffer-local).
+        by the primary cursor, cascade to all cursors.  Toggled by |q=|
+        (buffer-local).
       ]=],
       full_name = 'follow',
       scope = { 'buf' },

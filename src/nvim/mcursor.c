@@ -117,7 +117,7 @@ static struct {
 /// Editor state when the mc session started, which every cursor replays against.
 static struct {
   Timestamp time;  ///< When the session started (nanoseconds).
-  Context ctx;     ///< Registers, marks. Perf: per-cursor registers are "sparse".
+  Context ctx;     ///< Registers. Perf: per-cursor registers are "sparse".
 } mc_start = { .ctx = CONTEXT_INIT };
 
 /// Registers that can carry per-cursor values (skips the read-only/special ones).
@@ -542,7 +542,6 @@ static void mc_cleanup(bool dedupe, const pos_T *primary, uint32_t keep_mark)
   }
   kv_size(mc_cursors) = n;
   if (n == 0 && had_cursors) {
-    ctx_load(&mc_start.ctx, kCtxVisual, 0);  // Restore primary '< '> marks.
     ctx_free(&mc_start.ctx);
     mc_start.time = 0;
     mc_lua_enable(false);
@@ -1327,6 +1326,8 @@ static bool mc_zq_first(const char *keys, bool search, MotionType motion_type, c
                         pos_T *step)
 {
   const pos_T start = bounds[0];
+  // The primary's curswant: restored after each mc_zq_step() below ("gj" advances it).
+  const colnr_T curswant = curwin->w_curswant;
   pos_T before = start;
   const bool bof = dec(&before) == -1;  // Beginning of file.
   step->lnum = 0;
@@ -1337,6 +1338,7 @@ static bool mc_zq_first(const char *keys, bool search, MotionType motion_type, c
     p_ww = "s,l,>";  // 'whichwrap'
     const pos_T s = mc_zq_step(keys, before);
     p_ww = save_ww;
+    curwin->w_curswant = curswant;
     if (ltoreq(start, s) && ltoreq(s, bounds[1])) {
       *step = s;
     }
@@ -1353,6 +1355,7 @@ static bool mc_zq_first(const char *keys, bool search, MotionType motion_type, c
       *step = c;
     }
   }
+  curwin->w_curswant = curswant;
   if (step->lnum != 0) {
     return true;
   }
@@ -1383,6 +1386,7 @@ static int mc_zq_run(const char *keys, bool search, MotionType motion_type, pos_
   bool wrapped = false;
   int placed = 0;
   pos_T step = first;
+  const colnr_T curswant = curwin->w_curswant;  // Flows between steps, like typed "gj gj".
   while (!got_int) {
     mc_zq_target(step, search, motion_type, mc_add(curbuf, step));
     placed++;
@@ -1406,6 +1410,7 @@ static int mc_zq_run(const char *keys, bool search, MotionType motion_type, pos_
       break;  // Back at the first step, or out of bounds.
     }
   }
+  curwin->w_curswant = curswant;  // The next run (blockwise line) starts from the primary's.
   return placed;
 }
 
@@ -1608,9 +1613,9 @@ void mc_on_extmark_set(buf_T *buf, uint32_t ns_id, uint32_t id, pos_T pos)
   // Discard the pending Visual atom, else it would cascade to the cursor created below.
   atom_visual_reset();
   if (kv_size(mc_cursors) == 0) {
-    // Session start: snapshot primary regs, '< '>; hand the display to mcursor.lua.
+    // Session start: snapshot primary regs; delegate display to mcursor.lua.
     mc_start.time = (Timestamp)os_realtime();
-    ctx_save(&mc_start.ctx, kCtxRegs | kCtxVisual);
+    ctx_save(&mc_start.ctx, kCtxRegs);
     mc_lua_enable(true);
   }
   kv_push(mc_cursors, (Context)CONTEXT_INIT);
