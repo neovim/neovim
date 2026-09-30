@@ -114,6 +114,9 @@ local legacy_names = {
 ---
 --- @type table<string, table<string, true>>
 local legacy_fields = {
+  ['vim.inspect_pos.Result'] = {
+    buffer = true, -- Existing return field, now documented by a named class.
+  },
   ['vim.Diagnostic'] = {
     bufnr = true,
   },

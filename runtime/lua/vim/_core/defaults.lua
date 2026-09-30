@@ -5,12 +5,22 @@ local nvim_on = require('vim._core.util').nvim_on
 --- Default user commands
 do
   vim.api.nvim_create_user_command('Inspect', function(cmd)
-    if cmd.bang then
-      vim.print(vim.inspect_pos())
-    else
-      vim.show_pos()
+    local opts = {} --- @type vim.inspect_pos.Opts
+    local row, col --- @type integer?, integer?
+    if cmd.range > 0 then
+      row, col = cmd.line1 - 1, 0
+      opts.end_row, opts.end_col = cmd.line2, 0
     end
-  end, { desc = 'Inspect highlights and extmarks at the cursor', bang = true })
+    if cmd.bang then
+      vim.print(vim.inspect_pos(0, row, col, opts))
+    else
+      vim.show_pos(0, row, col, opts)
+    end
+  end, {
+    desc = 'Inspect highlights and extmarks at the cursor or in a line range',
+    bang = true,
+    range = true,
+  })
 
   vim.api.nvim_create_user_command('InspectTree', function(cmd)
     local opts = { lang = cmd.fargs[1] }
