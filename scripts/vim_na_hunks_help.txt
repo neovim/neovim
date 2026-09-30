@@ -125,6 +125,7 @@
 \*patches-\(after-\)\?[0-9].*\*
 \*pkzip\*
 \*popup-window-functions\*
+\*restricted-mode\*
 \*sound-functions\*
 \*tabpanel[-a-z]*\*
 \*term++\(close\|open\)\*
