@@ -550,6 +550,8 @@ void beep_flush(void)
       flush_buffers(FLUSH_MINIMAL);
     }
     vim_beep(kOptBoFlagError);
+  } else {
+    did_beep_silent++;  // Lets a silenced internal step detect failure.
   }
 }
 
