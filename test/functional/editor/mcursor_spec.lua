@@ -44,6 +44,12 @@ local function anchors()
   return positions
 end
 
+--- Adds a cursor at `pos` in `buf`, via extmark API.
+local function add_cursor(buf, pos)
+  local ns = api.nvim_create_namespace('nvim.multicursor')
+  api.nvim_buf_set_extmark(buf, ns, pos[1] - 1, pos[2], {})
+end
+
 --- Sets the buffer lines, then places cursors by "Q".
 local function cursors(lines, place)
   api.nvim_buf_set_lines(0, 0, -1, true, lines)
@@ -91,17 +97,6 @@ describe('multicursor', function()
       eq(true, n.exec_lua("return require('vim._core.mcursor').active()"))
       feed('gg0x')
       eq({ 'aa', 'bb', 'ccc' }, get_lines())
-    end)
-
-    it('nvim_mcursor() at an existing cursor is a no-op (no double-apply)', function()
-      fn.setline(1, { 'abcdef', 'ghijkl' })
-      feed('gg0')
-      api.nvim_mcursor(0, { 1, 0 })
-      api.nvim_mcursor(0, { 1, 0 }) -- The duplicate is ignored ("Q" toggles instead)...
-      eq(1, ncursors())
-      feed('j0x') -- ...so the edit applies once at the line-1 cursor.
-      eq({ 'bcdef', 'hijkl' }, get_lines())
-      eq(1, ncursors())
     end)
 
     it('entering a buffer with mcursors via a nav mapping keeps them', function()
@@ -620,7 +615,7 @@ describe('multicursor', function()
       api.nvim_buf_set_lines(0, 0, -1, true, lines)
       api.nvim_win_set_cursor(0, { 1, 0 })
       for i = 2, nlines do
-        api.nvim_mcursor(0, { i, 0 })
+        add_cursor(0, { i, 0 })
       end
       eq(nlines - 1, ncursors())
 
@@ -1141,32 +1136,33 @@ describe('multicursor', function()
     end)
   end)
 
-  describe('nvim_mcursor()', function()
-    it('adds a cursor at (row, col), which cascades', function()
+  describe('extmarks', function()
+    it('adding an extmark adds a cursor, which cascades', function()
       fn.setline(1, { 'aaa', 'bbb', 'ccc' })
-      eq(1, api.nvim_mcursor(0, { 1, 0 }))
-      eq(2, api.nvim_mcursor(0, { 2, 0 }))
+      add_cursor(0, { 1, 0 })
+      add_cursor(0, { 2, 0 })
+      eq({ { 0, 0 }, { 1, 0 } }, anchors())
       feed('Gx')
       eq({ 'aa', 'bb', 'cc' }, get_lines())
 
-      -- Can add mcursor to a hidden buffer.
+      -- Also in a hidden buffer.
       command('set hidden')
       local other = api.nvim_create_buf(true, false)
       api.nvim_buf_set_lines(other, 0, -1, true, { 'xxx', 'yyy' })
-      eq(3, api.nvim_mcursor(other, { 1, 0 }))
+      add_cursor(other, { 1, 0 })
       api.nvim_set_current_buf(other)
       feed('Gx')
       eq({ 'xx', 'yy' }, get_lines())
-    end)
 
-    it('rejects invalid positions', function()
-      fn.setline(1, { 'aaa' })
-      t.matches('Invalid cursor line: out of range', t.pcall_err(api.nvim_mcursor, 0, { 99, 0 }))
-      t.matches(
-        "Invalid 'pos': expected %[row, col%] array",
-        t.pcall_err(api.nvim_mcursor, 0, { 1 })
-      )
-      t.matches('Invalid buffer', t.pcall_err(api.nvim_mcursor, 9999, { 1, 0 }))
+      -- Ignored if a cursor already exists (no double-apply), unlike "Q" which toggles.
+      clear_cursors()
+      fn.setline(1, { 'abcdef', 'ghijkl' })
+      feed('gg0')
+      add_cursor(0, { 1, 0 })
+      add_cursor(0, { 1, 0 })
+      eq({ { 0, 0 } }, anchors())
+      feed('j0x')
+      eq({ 'bcdef', 'hijkl' }, get_lines())
     end)
 
     it('deleting an extmark deletes its cursor', function()
@@ -1185,21 +1181,23 @@ describe('multicursor', function()
       feed('yy') -- Session-written register, exit path reaches mc_reg_gather.
       command('new')
       fn.setline(1, { 'ccc' })
-      api.nvim_mcursor(0, { 1, 0 })
+      add_cursor(0, { 1, 0 })
       n.expect_exit(command, 'qall!')
     end)
 
     it('cursors are disposed with their buffer', function()
+      local screen = Screen.new(30, 5)
+      command('set showcmd')
       fn.setline(1, { 'aaa', 'bbb' })
       local buf = api.nvim_get_current_buf()
-      eq(1, api.nvim_mcursor(0, { 1, 0 }))
-      eq(2, api.nvim_mcursor(0, { 2, 0 }))
+      add_cursor(0, { 1, 0 })
+      add_cursor(0, { 2, 0 })
 
       -- Deleting an unrelated buffer does not dedupe the cursor under the primary. #41651
       for _, has_cursor in ipairs({ false, true }) do
         local scratch = api.nvim_create_buf(false, true)
         if has_cursor then
-          eq(3, api.nvim_mcursor(scratch, { 1, 0 }))
+          add_cursor(scratch, { 1, 0 })
         end
         api.nvim_buf_delete(scratch, { force = true })
         eq({ { 0, 0 }, { 1, 0 } }, anchors())
@@ -1212,10 +1210,11 @@ describe('multicursor', function()
       eq('KEEP', fn.getreg('"'))
       eq('v', fn.getregtype('"'))
       fn.setline(1, { 'xxx', 'yyy' })
-      -- The wiped buffer's cursors are gone: only the new one counts.
-      eq(1, api.nvim_mcursor(0, { 1, 0 }))
+      add_cursor(0, { 1, 0 })
       feed('Gx')
       eq({ 'xx', 'yy' }, get_lines())
+      -- The wiped buffer's cursors are gone: only the new one counts.
+      screen:expect({ any = ' 1×' })
     end)
   end)
 
@@ -3459,15 +3458,16 @@ describe('multicursor', function()
     it('cursors placed inside the opfunc are live for the next typed cascade', function()
       -- Occurrence-operator pattern (vim-mode-plus "co{motion}", issue #21334): the
       -- 'operatorfunc' places a cursor at each occurrence of the word within the motion, then
-      -- a following typed edit cascades to all of them. Pins that nvim_mcursor() called from
-      -- WITHIN an opfunc yields cursors the next command cascades to (the g@ itself has no
+      -- a following typed edit cascades to all of them. Rule: extmarks added from WITHIN
+      -- an opfunc yield cursors the next command cascades to (the g@ itself has no
       -- effect, so it does not cascade and the placed cursors survive, like |v_Q| placement).
       n.exec_lua([==[
         _G.occur_opfunc = function()
           local ms = vim.fn.matchbufline('%', _G.occur_pat, vim.fn.line("'["), vim.fn.line("']"))
           vim.api.nvim_win_set_cursor(0, { ms[1].lnum, ms[1].byteidx })
+          local ns = vim.api.nvim_create_namespace('nvim.multicursor')
           for i = 2, #ms do
-            vim.api.nvim_mcursor(0, { ms[i].lnum, ms[i].byteidx })
+            vim.api.nvim_buf_set_extmark(0, ns, ms[i].lnum - 1, ms[i].byteidx, {})
           end
         end
         vim.keymap.set('n', 'co', function()
@@ -3555,7 +3555,7 @@ describe('multicursor', function()
       end
       fn.setline(1, lines)
       feed('gg0Q')
-      api.nvim_mcursor(0, { 30, 0 })
+      add_cursor(0, { 30, 0 })
       feed(']C') -- jump to line 30: the viewport must follow
       eq(30, fn.line('.'))
       screen:expect({ any = 'ine 30' }) -- ("l" is under the painted cursor cell)
@@ -3579,8 +3579,10 @@ describe('multicursor', function()
       eq({ { 0, 0 } }, anchors())
       -- |mcursor-examples| mapping: ]C lays an egg before jumping.
       n.exec_lua([[
+        local ns = vim.api.nvim_create_namespace('nvim.multicursor')
         vim.keymap.set('n', ']C', function()
-          vim.api.nvim_mcursor(0, vim.api.nvim_win_get_cursor(0))
+          local row, col = vim.pos.cursor(0):to_extmark()
+          vim.api.nvim_buf_set_extmark(0, ns, row, col, {})
           vim.cmd('normal! ]C')
         end)
       ]])

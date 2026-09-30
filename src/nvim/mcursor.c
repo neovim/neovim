@@ -133,6 +133,11 @@ static ContextVec mc_cursors = KV_INITIAL_VALUE;
 /// Replay is in progress: keys re-executing internally, hooks suppressed.
 static bool mc_replay = false;
 
+void mc_init(void)
+{
+  mc_ns();  // Eagerly create the namespace so mc_on_extmark_set() can assume it exists.
+}
+
 /// Namespace for tracking multicursor positions.
 static uint32_t mc_ns(void)
 {
@@ -368,7 +373,11 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
   const bool wrote_regs = swap_regs && reg_max_ts(false) != regs_ts;
 
   if (cursoridx >= kv_size(mc_cursors)) {
-    // Cursors were removed while replaying (e.g. gQ via autocmd); already freed.
+    // Cursors were removed during replay (e.g. gQ via autocmd); already freed.
+    return;
+  }
+  if (!extmark_get_pos(curbuf, mc_ns(), ctx.mark, &ctx.pos)) {
+    // Extmark was deleted during replay; mc_cleanup() will sweep the cursor state.
     return;
   }
 
@@ -517,7 +526,7 @@ static void mc_cleanup(bool dedupe, const pos_T *primary, uint32_t keep_mark)
                      && ((curwin != NULL && buf == curbuf
                           && primary != NULL && equalpos(ctx->pos, *primary)
                           && ctx->mark != keep_mark)
-                         || mc_mark_at(buf, ctx->pos) != ctx->mark);
+                         || mc_mark_at(buf, ctx->pos, 0) != ctx->mark);
     if (dup) {
       extmark_del_id(buf, mc_ns(), ctx->mark);
       ctx_free(ctx);
@@ -1222,8 +1231,8 @@ static void mc_lua_enable(bool enable)
   nlua_call_typval("vim._core.mcursor", "enable", tv_args, NULL);
 }
 
-/// The first cursor extmark at `pos` in `buf`, or 0 if none.
-uint32_t mc_mark_at(buf_T *buf, pos_T pos)
+/// The first cursor extmark (except `skip`) at `pos` in `buf`, or 0 if none.
+uint32_t mc_mark_at(buf_T *buf, pos_T pos, uint32_t skip)
 {
   if (kv_size(mc_cursors) == 0) {
     return 0;
@@ -1234,7 +1243,7 @@ uint32_t mc_mark_at(buf_T *buf, pos_T pos)
   // Perf: bisect the marktree, instead of scanning mc_cursors (quadratic).
   while ((k = marktree_itr_current(itr)).id != 0
          && k.pos.row == pos.lnum - 1 && k.pos.col == pos.col) {
-    if (k.ns == mc_ns() && !mt_end(k)) {
+    if (k.ns == mc_ns() && !mt_end(k) && k.id != skip) {
       return k.id;
     }
     if (!marktree_itr_next(buf->b_marktree, itr)) {
@@ -1466,7 +1475,7 @@ void mc_zq(oparg_T *oap, cmdarg_T *cap, pos_T origin)
   api_free_string(keys);
 
   if (placed > 0) {
-    if (mc_mark_at(curbuf, primary) == 0) {
+    if (mc_mark_at(curbuf, primary, 0) == 0) {
       primary = first;  // Not on a step; move the primary to the first placement.
       curwin->w_set_curswant = true;
     }
@@ -1516,7 +1525,7 @@ void mc_toggle(buf_T *buf, pos_T pos, bool end_follow, TriState on)
   if (end_follow) {
     mc_follow_set(kFalse);
   }
-  uint32_t mark = mc_mark_at(buf, pos);
+  uint32_t mark = mc_mark_at(buf, pos, 0);
   if (mark != 0 && on != kTrue) {
     extmark_del_id(buf, mc_ns(), mark);
     mc_cleanup(false, NULL, 0);
@@ -1530,14 +1539,29 @@ void mc_toggle(buf_T *buf, pos_T pos, bool end_follow, TriState on)
 /// @return  The new cursor's Context, or NULL if not placed.
 Context *mc_add(buf_T *buf, pos_T pos)
 {
+  const size_t count = kv_size(mc_cursors);
+  uint32_t mark = 0;
+  mc_mark_upd(buf, &mark, pos);
+  return kv_size(mc_cursors) > count ? &kv_last(mc_cursors) : NULL;
+}
+
+/// Called when an extmark is set. Extmarks added to the "nvim.multicursor" namespace are cursors.
+///
+/// Deletes the new extmark if a cursor already exists there, or during cascade (not supported).
+void mc_on_extmark_set(buf_T *buf, uint32_t ns_id, uint32_t id, pos_T pos)
+{
+  if (ns_id != mc_ns()) {
+    return;
+  }
   if (mc_replaying()) {
-    // Can't add cursors while the cascade iterates them.
-    return NULL;
+    extmark_del_id(buf, ns_id, id);  // Can't add cursors while the cascade iterates them.
+    return;
   }
-  // Ignore duplicate cursor (e.g. repeated "[count]Q", nvim_mcursor()).
-  if (mc_mark_at(buf, pos) != 0) {
-    return NULL;
+  if (mc_mark_at(buf, pos, id) != 0) {
+    extmark_del_id(buf, ns_id, id);  // Duplicate cursor (e.g. repeated "1Q").
+    return;
   }
+  mc_mark_upd(buf, &id, pos);  // Ensure our extmark flags.
   // Discard the pending Visual atom, else it would cascade to the cursor created below.
   atom_visual_reset();
   if (kv_size(mc_cursors) == 0) {
@@ -1550,8 +1574,7 @@ Context *mc_add(buf_T *buf, pos_T pos)
   Context *ctx = &kv_last(mc_cursors);
   ctx->buf = buf->handle;
   ctx->pos = pos;
-  mc_mark_upd(buf, &ctx->mark, pos);
-  return ctx;
+  ctx->mark = id;
 }
 
 /// A reload/wipe invalidated the tracked positions: deletes the mcursors + "gQ" snapshot.

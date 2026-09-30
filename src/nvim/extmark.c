@@ -148,6 +148,11 @@ revised:
   if (idp) {
     *idp = id;
   }
+
+  if (created) {
+    // A new multicursor extmark is a new cursor.
+    mc_on_extmark_set(buf, ns_id, id, (pos_T){ .lnum = row + 1, .col = col });
+  }
 }
 
 /// Moves a raw mark back to a recorded position.

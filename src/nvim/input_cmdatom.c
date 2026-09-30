@@ -216,7 +216,7 @@ static CmdOrigin atom_origin(void)
 {
   CmdOrigin origin = { .win = curwin, .pos = curwin->w_cursor,
                        .tick = buf_get_changedtick(curbuf), .maptick = maptick,
-                       .mcursor = mc_mark_at(curbuf, curwin->w_cursor) };
+                       .mcursor = mc_mark_at(curbuf, curwin->w_cursor, 0) };
   set_bufref(&origin.buf, curbuf);
   return origin;
 }

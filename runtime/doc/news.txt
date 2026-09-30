@@ -275,7 +275,8 @@ DIAGNOSTICS
 EDITOR
 
 • Multiple cursors (|multicursor|): edit in many places at once.
-  • Toggle cursors with |Q|, |<C-LeftMouse>|, or |nvim_mcursor()|.
+  • Toggle cursors with |Q|, |<C-LeftMouse>|, or via API (the
+    "nvim.multicursor" extmarks namespace).
   • Toggle "follow mode" with |q=|.
   • Clear cursors with |CTRL-L|, restore them with |gQ|.
   • |zq| places a cursor at all targets of a motion. E.g. "zqgn" places at

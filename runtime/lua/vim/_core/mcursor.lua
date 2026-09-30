@@ -214,7 +214,7 @@ function M.restore()
     if m[2] < lastrow and m[1] == 1 then -- Extmark 1 = primary cursor.
       primary = { m[2] + 1, m[3] }
     elseif m[2] < lastrow then
-      vim.api.nvim_mcursor(0, { m[2] + 1, m[3] })
+      vim.api.nvim_buf_set_extmark(0, ns, m[2], m[3], {})
     end
   end
   if primary then
