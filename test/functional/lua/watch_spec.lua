@@ -39,7 +39,10 @@ describe('vim._watch', function()
           scanned[#scanned + 1] = path:sub(#root + 1)
           return fs_scandir(path, ...)
         end
+        local prefix = vim.fn.escape(root, '\\/*?[]{}#')
         local cancel = vim._watch.watchdirs(root, {
+          -- The opaque LPeg alternative must keep directories outside the glob prefix.
+          include_pattern = { prefix .. '/src/*.py', vim.glob.to_lpeg('**/*.lua') },
           exclude_pattern = vim.glob.to_lpeg(exclude_pattern),
         }, function() end)
         vim.uv.fs_scandir = fs_scandir
@@ -50,6 +53,62 @@ describe('vim._watch', function()
 
       eq({ '', '/node_modules', '/node_modules/pkg', '/src', '/src/deep' }, scanned, pattern)
     end
+  end)
+
+  it('watchdirs() prunes directories outside the include and rule glob prefixes', function()
+    local root_dir = t.tmpname(false) .. '[1]'
+    t.finally(function()
+      n.rmdir(root_dir)
+    end)
+    for _, dir in ipairs({
+      'src[1]/deep', -- Both filters allow this subtree; the brackets must be treated literally.
+      'src[1]/deep2', -- Shares a name prefix, but is outside the rule's subtree.
+      'tests/unit', -- Both filters allow this subtree.
+      'tests/other', -- Allowed by a rule, but not by include_pattern.
+      'vendor/pkg', -- Allowed by a rule, but not by include_pattern.
+    }) do
+      n.mkdir_p(root_dir .. '/' .. dir)
+    end
+    local result = exec_lua(function(root)
+      root = vim.fs.normalize(root)
+      local prefix = vim.fn.escape(root, '\\/*?[]{}#')
+      local rules = {
+        {
+          path = root,
+          pattern = { prefix .. '/src\\[1\\]/deep/**', prefix .. '/vendor/**' },
+        },
+        { path = root, pattern = prefix .. '/tests/**' },
+      }
+      local opts = {
+        include_pattern = {
+          prefix .. '/src\\[1\\]/**/*.lua',
+          prefix .. '/tests/unit/**/*.lua',
+        },
+        on_error = error,
+      }
+      local scanned, watched = {}, {}
+      local fs_scandir = vim.uv.fs_scandir
+      vim.uv.fs_scandir = function(path, ...)
+        scanned[#scanned + 1] = path:sub(#root + 1)
+        return fs_scandir(path, ...)
+      end
+      local cancel = vim._watch.watchdirs(rules, opts, function() end)
+      vim.uv.fs_scandir = fs_scandir
+      vim.uv.walk(function(handle)
+        if handle:get_type() == 'fs_event' and handle:is_active() then
+          watched[#watched + 1] = handle:getpath():sub(#root + 1)
+        end
+      end)
+      cancel()
+      table.sort(scanned)
+      table.sort(watched)
+      return { scanned = scanned, watched = watched }
+    end, root_dir)
+
+    -- Keep the allowed subtrees and their ancestors. The empty string is the root itself.
+    local expected = { '', '/src[1]', '/src[1]/deep', '/tests', '/tests/unit' }
+    eq(expected, result.scanned, 'directories scanned')
+    eq(expected, result.watched, 'directories watched')
   end)
 
   it('watchdirs() tolerates directories deleted during setup', function()
@@ -268,6 +327,19 @@ describe('vim._watch', function()
     end)
     exec_lua(function(root)
       root = vim.fs.normalize(root)
+      -- Finish all queued stats before asserting that a directory was not watched.
+      local pending_stats = 0
+      local fs_stat = vim.uv.fs_stat
+      vim.uv.fs_stat = function(path, callback)
+        if not callback then
+          return fs_stat(path)
+        end
+        pending_stats = pending_stats + 1
+        return fs_stat(path, function(...)
+          callback(...)
+          pending_stats = pending_stats - 1
+        end)
+      end
       local callbacks = {}
       vim.uv.new_fs_event = function()
         return {
@@ -280,28 +352,36 @@ describe('vim._watch', function()
           close = function() end,
         }
       end
+      local prefix = vim.fn.escape(root, '\\/*?[]{}#') .. '/src/new/'
       local events = {}
       local cancel = vim._watch.watchdirs(root, {
-        include_pattern = '**/*.py',
+        -- Duplicate and overlapping prefixes must not broaden matching.
+        include_pattern = { prefix .. 'lib/**/*.js', prefix .. '**/*.py', prefix .. '**/*.py' },
+        on_error = error,
         debounce = 1,
       }, function(path)
         events[#events + 1] = path
       end)
       assert(callbacks[root .. '/src'], 'existing parent directory must be watched')
-      vim.fn.mkdir(root .. '/new')
-      callbacks[root](nil, 'new', { rename = true })
+      vim.fn.mkdir(root .. '/src/other')
+      callbacks[root .. '/src'](nil, 'other', { rename = true })
+      vim.fn.mkdir(root .. '/src/new')
+      callbacks[root .. '/src'](nil, 'new', { rename = true })
       assert(
         vim.wait(1000, function()
-          return callbacks[root .. '/new'] ~= nil
+          return callbacks[root .. '/src/new'] ~= nil and pending_stats == 0
         end),
         'new parent directory must be watched'
       )
-      vim.fn.writefile({}, root .. '/new/file.py')
-      callbacks[root .. '/new'](nil, 'file.py', { rename = true })
+      assert(not callbacks[root .. '/src/other'], 'unrelated directory must not be watched')
+      vim.fn.writefile({}, root .. '/src/new/file.js')
+      callbacks[root .. '/src/new'](nil, 'file.js', { rename = true })
+      vim.fn.writefile({}, root .. '/src/new/file.py')
+      callbacks[root .. '/src/new'](nil, 'file.py', { rename = true })
       assert(vim.wait(1000, function()
-        return #events == 1
+        return #events == 1 and pending_stats == 0
       end))
-      assert(events[1] == root .. '/new/file.py')
+      assert(events[1] == root .. '/src/new/file.py')
       cancel()
     end, root_dir)
   end)
