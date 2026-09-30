@@ -51,8 +51,8 @@ end
 -- For text nodes inside curly braces. It stops parsing when reaching an escapable character.
 local braced_text = (text(escapable) ^ 0) / escape_text()
 
--- Within choice nodes, only backslash, comma, and pipe characters are escapable.
-local choice_text = C(text('\\,|') ^ 1) / escape_text('\\,|')
+-- Dollar signs and braces are literal in choices; keep accepting their legacy escapes.
+local choice_text = C(text(escapable .. ',|', '\\,|') ^ 1) / escape_text(escapable .. ',|')
 
 -- Within format nodes, make sure we stop at /
 local format_text = C(text(escapable, escapable .. '/') ^ 1) / escape_text()

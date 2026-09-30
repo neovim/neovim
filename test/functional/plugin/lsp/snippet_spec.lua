@@ -85,6 +85,19 @@ describe('vim.lsp._snippet_grammar', function()
     }, parse('${1|\\,,\\||}'))
   end)
 
+  it('preserves legacy dollar and brace escapes in choices', function()
+    eq({
+      {
+        type = type.Choice,
+        data = { tabstop = 1, values = { 'a$b', 'a}b' } },
+      },
+    }, parse([[${1|a\$b,a\}b|}]]))
+  end)
+
+  it('rejects unknown escapes in choices', function()
+    eq(false, exec_lua([[return pcall(require('vim.lsp._snippet_grammar').parse, '${1|a\\zb|}')]]))
+  end)
+
   it('parses literal dollar signs and braces in choices #30495', function()
     eq({
       {

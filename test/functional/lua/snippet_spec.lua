@@ -322,6 +322,13 @@ describe('vim.snippet', function()
     end)
   end
 
+  it('inserts legacy dollar and brace escapes from a choice', function()
+    test_expand_success({ [[${1|a\$b\}c,other|}]] }, { '' })
+    wait_for_pum()
+    feed('<C-y>')
+    eq({ 'a$b}c' }, buf_lines(0))
+  end)
+
   it('closes the choice completion menu when jumping', function()
     test_expand_success({ 'console.${1|assert,log,error|}($2)' }, { 'console.()' })
     wait_for_pum()
