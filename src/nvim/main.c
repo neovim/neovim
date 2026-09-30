@@ -1751,6 +1751,17 @@ static void read_stdin(void)
   check_swap_exists_action();
 }
 
+/// Find a displayed buffer that startup scripts have not loaded yet.
+static win_T *find_window_to_load(void)
+{
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_buffer->b_ml.ml_mfp == NULL) {
+      return wp;
+    }
+  }
+  return NULL;
+}
+
 // Create the requested number of windows and edit buffers in them.
 // Also does recovery if "recoverymode" set.
 static void create_windows(mparm_T *parmp)
@@ -1801,25 +1812,26 @@ static void create_windows(mparm_T *parmp)
     win_T *startup_curwin = curwin;
     bool dorewind = true;
     while (done++ < 1000) {
-      if (dorewind) {
-        if (parmp->window_layout == WIN_TABS) {
+      CtxSwitch cs = { 0 };
+      int save_rows = Rows;
+      int save_columns = Columns;
+      if (parmp->window_layout == WIN_TABS) {
+        if (dorewind) {
           goto_tabpage(1);
+        } else if (curtab->tp_next == NULL) {
+          break;
         } else {
-          curwin = firstwin;
+          goto_tabpage(0);
         }
-      } else if (parmp->window_layout == WIN_TABS) {
-        if (curtab->tp_next == NULL) {
-          break;
-        }
-        goto_tabpage(0);
+        curbuf = curwin->w_buffer;
       } else {
-        if (curwin->w_next == NULL) {
+        win_T *wp = find_window_to_load();
+        if (wp == NULL) {
           break;
         }
-        curwin = curwin->w_next;
+        ctx_switch(&cs, wp, win_find_tabpage(wp), NULL, kCtxNoDisplay);
       }
       dorewind = false;
-      curbuf = curwin->w_buffer;
       if (curbuf->b_ml.ml_mfp == NULL) {
         // Set 'foldlevel' to 'foldlevelstart' if it's not negative..
         if (p_fdls >= 0) {
@@ -1848,7 +1860,15 @@ static void create_windows(mparm_T *parmp)
         } else {
           handle_swap_exists(NULL);
         }
-        dorewind = true;                        // start again
+        dorewind = true;
+      }
+      ctx_restore(&cs);
+      // A modeline may have resized the screen while loading another tabpage.
+      if (Rows != save_rows) {
+        win_new_screen_rows();
+      }
+      if (Columns != save_columns) {
+        win_new_screen_cols();
       }
       os_breakcheck();
       if (got_int) {

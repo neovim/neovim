@@ -968,6 +968,76 @@ describe('startup', function()
     ]])
   end)
 
+  for _, case in ipairs({
+    { '0tabnew', 1 },
+    { 'tabnew', 2 },
+    {
+      'lua vim.api.nvim_open_tabpage(vim.api.nvim_create_buf(false, false), true, { after = 0 })',
+      1,
+    },
+    {
+      'lua vim.api.nvim_open_tabpage(vim.api.nvim_create_buf(false, false), false, { after = 0 })',
+      2,
+    },
+  }) do
+    it(
+      'loads the original file when init opens another tabpage with ' .. case[1] .. ' #41426',
+      function()
+        local testfile = 'Xstartup_tab'
+        write_file(testfile, 'original file\n')
+        finally(function()
+          os.remove(testfile)
+        end)
+        clear({ args = { '--cmd', case[1], testfile } })
+        eq(2, #api.nvim_list_tabpages())
+        eq(case[2], fn.tabpagenr())
+        local buf = fn.bufnr(testfile)
+        eq(1, fn.bufloaded(buf))
+        eq({ 'original file' }, api.nvim_buf_get_lines(buf, 0, -1, true))
+      end
+    )
+  end
+
+  it('preserves tabpage context when loading startup buffers #41426', function()
+    local dirs = { t.tmpname(false), t.tmpname(false) }
+    for _, dir in ipairs(dirs) do
+      assert(mkdir(dir))
+    end
+    finally(function()
+      for _, dir in ipairs(dirs) do
+        rmdir(dir)
+      end
+    end)
+    clear({
+      args = {
+        '--cmd',
+        ('lua %s'):format(([[
+          vim.cmd('tabnew')
+          vim.cmd('vsplit')
+          vim.cmd.lcd(%q)
+          vim.cmd('wincmd p')
+          vim.cmd.lcd(%q)
+          vim.cmd('wincmd p')
+          vim.cmd('tabnew')
+          vim.cmd('tabprevious')
+          vim.g.startup_wins = vim.tbl_map(vim.api.nvim_tabpage_get_win, vim.api.nvim_list_tabpages())
+          vim.g.startup_alt = vim.fn.tabpagenr('#')
+          vim.g.startup_dir = vim.fn.getcwd()
+          vim.g.dir_changes = 0
+          vim.api.nvim_create_autocmd('DirChanged', {
+            callback = function() vim.g.dir_changes = vim.g.dir_changes + 1 end,
+          })
+        ]]):format(dirs[1], dirs[2]):gsub('\n', ' ')),
+      },
+    })
+    eq('', eval('v:errmsg'))
+    eq(eval('g:startup_wins'), vim.tbl_map(api.nvim_tabpage_get_win, api.nvim_list_tabpages()))
+    eq(eval('g:startup_alt'), fn.tabpagenr('#'))
+    eq(eval('g:startup_dir'), fn.getcwd())
+    eq(eval('g:startup_dir'), exec_lua('return vim.uv.cwd()'))
+    eq(0, eval('g:dir_changes'))
+  end)
+
   it("default 'diffopt' is applied with -d", function()
     clear({
       args = {
@@ -1309,6 +1379,11 @@ describe('startup', function()
     clear({ args = { '-p', 'Xtab1.noft', 'Xtab2.noft' } })
     eq(81, api.nvim_win_get_width(0))
     command('tabnext')
+    eq(81, api.nvim_win_get_width(0))
+
+    clear({ args = { '--cmd', 'tabnew', 'Xtab1.noft' } })
+    eq(81, api.nvim_win_get_width(0))
+    command('tabprevious')
     eq(81, api.nvim_win_get_width(0))
   end)
 end)
