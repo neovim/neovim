@@ -47,9 +47,18 @@ M.FileChangeType = {
 --- @field pattern? vim._watch.Filter Matches full paths; nil matches everything.
 --- @field events? vim._watch.FileChangeType[] Defaults to all event types.
 
---- @class (private) vim._watch.BackendOpts : vim._watch.watch.Opts
---- @field include_pattern? vim.lpeg.Pattern
---- @field exclude_pattern? vim.lpeg.Pattern
+--- A path matcher and the directories that could contain matching paths.
+--- @class (private) vim._watch.CompiledFilter
+--- @field pattern vim.lpeg.Pattern Exact matcher, used to filter events.
+--- Roots guide include traversal: keep these subtrees and their parents within the watched path.
+--- Nonempty roots end in '/'; an entry of '' covers any directory.
+--- @field roots string[]
+
+--- @class (private) vim._watch.BackendOpts
+--- @field include vim._watch.CompiledFilter
+--- @field exclude? vim._watch.CompiledFilter
+--- @field debounce? integer
+--- @field uvflags? uv.fs_event_start.flags
 --- @field on_error fun(err: string)
 
 --- @alias vim._watch.Backend fun(path: string, opts: vim._watch.BackendOpts, callback: vim._watch.Callback): (fun())?
@@ -82,15 +91,43 @@ function M.active()
   return active
 end
 
+--- Removes duplicate roots and roots covered by a parent, without changing any matchers.
+--- For example, { '/src/lib/', '/src/', '/src/' } becomes { '/src/' }.
+--- @param roots string[] Compacted in place.
+--- @return string[]
+local function minimize_roots(roots)
+  table.sort(roots)
+  local count = 0
+  for _, root in ipairs(roots) do
+    -- Nonempty roots end in '/', so '/src/' cannot cover '/src2/'.
+    if count == 0 or not vim.startswith(root, assert(roots[count])) then
+      count = count + 1
+      roots[count] = root
+    end
+  end
+  for i = #roots, count + 1, -1 do
+    roots[i] = nil
+  end
+  return roots
+end
+
+--- Compiles a filter, keeping its path matcher and directory roots together.
+--- For example, '/src/**/*.lua' has roots { '/src/' }.
+--- Roots guide directory traversal; the pattern decides which events to report.
+---
 --- An omitted filter matches everything; invalid or empty filters return nil.
+--- Invalid globs are reported to on_error and skipped.
+---
 --- @param filter vim._watch.Filter?
 --- @param on_error fun(err: string)
---- @return vim.lpeg.Pattern?
+--- @return vim._watch.CompiledFilter?
 local function compile(filter, on_error)
   if filter == nil then
-    return vim.lpeg.P(true)
+    return { pattern = vim.lpeg.P(true), roots = { '' } }
   elseif type(filter) == 'userdata' then
-    return filter --[[@as vim.lpeg.Pattern]]
+    -- Arbitrary LPeg filters cannot be inspected to restrict directory coverage.
+    --- @cast filter vim.lpeg.Pattern
+    return { pattern = filter, roots = { '' } }
   elseif type(filter) == 'string' then
     local ok, pattern = pcall(vim.glob.to_lpeg, filter)
     if not ok then
@@ -98,19 +135,49 @@ local function compile(filter, on_error)
       return nil
     end
 
-    return pattern
+    return { pattern = pattern, roots = { vim.glob._get_base(filter) } }
   end
 
   local pattern --- @type vim.lpeg.Pattern?
+  local roots = {} --- @type string[]
 
   for _, item in ipairs(filter) do
-    local p = compile(item, on_error)
-    if p then
-      pattern = pattern and pattern + p or p
+    local compiled = compile(item, on_error)
+    if compiled then
+      pattern = pattern and pattern + compiled.pattern or compiled.pattern
+      vim.list_extend(roots, compiled.roots)
     end
   end
 
-  return pattern
+  return pattern and { pattern = pattern, roots = minimize_roots(roots) } or nil
+end
+
+--- Builds a filter that only matches paths accepted by both inputs.
+--- Examples:
+--- - Roots '/src/' and '/src/lib/' give '/src/lib/'.
+--- - Roots '/src/' and '/test/' give no roots because they do not overlap.
+--- @param a vim._watch.CompiledFilter
+--- @param b vim._watch.CompiledFilter
+--- @return vim._watch.CompiledFilter
+local function intersect(a, b)
+  local roots = {} --- @type string[]
+  for _, root in ipairs(a.roots) do
+    for _, other in ipairs(b.roots) do
+      -- Nonempty roots end in '/', so startswith cannot confuse '/src/' with '/src2/'.
+      if vim.startswith(root, other) then
+        roots[#roots + 1] = root
+      elseif vim.startswith(other, root) then
+        roots[#roots + 1] = other
+      end
+    end
+  end
+
+  return {
+    -- Both filters must match from the beginning of the full path.
+    -- EmmyLua does not infer the LPeg length operator's result type.
+    pattern = (#a.pattern * b.pattern) --[[@as vim.lpeg.Pattern]],
+    roots = minimize_roots(roots),
+  }
 end
 
 --- @param entry vim._watch.Shared
@@ -154,20 +221,21 @@ local function subscribe(name, backend, path, opts, rules, subscriber)
 
   -- Validate every subscription, even when reusing a backend. Invalid globs do not mean the
   -- backend has failed, and each subscriber should receive its own diagnostics.
-  local include_pattern = compile(key.include_pattern, subscriber.on_error)
-  local exclude_pattern = key.exclude_pattern and compile(key.exclude_pattern, subscriber.on_error)
+  local include = compile(key.include_pattern, subscriber.on_error)
+  local exclude = key.exclude_pattern and compile(key.exclude_pattern, subscriber.on_error)
   local compiled = {} --- @type {pattern: vim.lpeg.Pattern, events: vim._watch.FileChangeType[]?}[]
-  local include = vim.lpeg.P(false)
+  local combined = { pattern = vim.lpeg.P(false), roots = {} } --- @type vim._watch.CompiledFilter
 
   for _, rule in ipairs(key.rules) do
-    local pattern = compile(rule.pattern, subscriber.on_error)
-    if pattern then
-      compiled[#compiled + 1] = { pattern = pattern, events = rule.events }
-      include = include + pattern
+    local filter = compile(rule.pattern, subscriber.on_error)
+    if filter then
+      compiled[#compiled + 1] = { pattern = filter.pattern, events = rule.events }
+      combined.pattern = combined.pattern + filter.pattern
+      vim.list_extend(combined.roots, filter.roots)
     end
   end
 
-  if not include_pattern or #compiled == 0 then
+  if not include or #compiled == 0 then
     return function() end
   end
 
@@ -197,11 +265,8 @@ local function subscribe(name, backend, path, opts, rules, subscriber)
     local backend_opts = {
       debounce = key.debounce,
       uvflags = key.uvflags,
-      -- Both filters must match from the beginning of the full path.
-      -- EmmyLua does not infer the LPeg length operator's result type.
-      ---@diagnostic disable-next-line: assign-type-mismatch
-      include_pattern = #include_pattern * include,
-      exclude_pattern = exclude_pattern,
+      include = intersect(include, combined),
+      exclude = exclude,
       on_error = function(err)
         entry.failed = true
         emit(entry, 'on_error', err)
@@ -304,17 +369,36 @@ local function start_watch(name, backend, path, opts, callback)
   return cancel_all
 end
 
+--- Can this directory contain matching paths? Keep ancestors so that matching directories
+--- created later can still be discovered. Every nonempty root ends in '/', so '/src/'
+--- cannot cover '/src2/'.
+--- @param path string
+--- @param filter vim._watch.CompiledFilter
+--- @return boolean
+local function matches_dir(path, filter)
+  local dir = path:gsub('/$', '') .. '/'
+  for _, root in ipairs(filter.roots) do
+    if vim.startswith(dir, root) or vim.startswith(root, dir) then
+      return true
+    end
+  end
+  return false
+end
+
 --- Decides if `path` should be skipped.
----
 --- @param path string
 --- @param opts vim._watch.BackendOpts
---- @param directory? boolean Ignore include_pattern when traversing directories.
+--- @param directory? boolean Check whether the directory can contain matching paths.
 local function skip(path, opts, directory)
-  if not directory and opts.include_pattern and opts.include_pattern:match(path) == nil then
+  if directory then
+    if not matches_dir(path, opts.include) then
+      return true
+    end
+  elseif opts.include.pattern:match(path) == nil then
     return true
   end
 
-  if opts.exclude_pattern and opts.exclude_pattern:match(path) ~= nil then
+  if opts.exclude and opts.exclude.pattern:match(path) ~= nil then
     return true
   end
 
@@ -508,8 +592,7 @@ local function watchdirs(path, opts, callback)
     vim.fs.dir(path, {
       depth = max_depth,
       skip = function(dir)
-        return not opts.exclude_pattern
-          or opts.exclude_pattern:match(vim.fs.joinpath(path, dir)) == nil
+        return not skip(vim.fs.joinpath(path, dir), opts, true)
       end,
     })
   do

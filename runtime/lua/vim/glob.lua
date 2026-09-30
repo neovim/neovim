@@ -45,6 +45,7 @@ local M = {}
 
 -- Basic patterns for matching glob components
 local letter = m.P(1) - m.S('*?[]{}/\\') -- Any character except special glob characters
+local escape = m.P('\\') * m.C(1) -- Escaped character
 local slash = m.P '/' * m.Cc(m.P '/') -- Path separator with capture
 local notslash = m.P(1) - m.P '/' -- Any character except path separator
 local notcomma = m.P(1) - m.S(',\\') -- Any character except comma and backslash
@@ -318,7 +319,7 @@ g = {
   Token    = m.V'Ques' + m.V'Class' + m.V'Escape' + m.V'Literal',
   Star     = m.P'*',
   Ques     = m.P'?' * m.Cc(notslash),
-  Escape   = m.P'\\' * m.C(1) / m.P,
+  Escape   = escape / m.P,
   Literal  = m.C(letter^1) / m.P,
 
   -- Branch handling for braced conditions
@@ -369,6 +370,17 @@ function M.to_lpeg(pattern)
   local lpeg_pattern = g:match(pattern, 1, false) --[[@as vim.lpeg.Pattern?]]
   assert(lpeg_pattern, string.format('Invalid glob: %s', pattern))
   return lpeg_pattern
+end
+
+local literal_prefix = m.Cs((escape / '%1' + letter + m.P('/')) ^ 0)
+
+--- Gets the literal directory before the first wildcard in a valid glob, with a trailing slash.
+--- For example, '/project/src/**/*.lua' gives '/project/src/'. An empty string means any directory.
+--- @internal
+--- @param pattern string
+--- @return string
+function M._get_base(pattern)
+  return literal_prefix:match(pattern):match('^.*/') or ''
 end
 
 return M
