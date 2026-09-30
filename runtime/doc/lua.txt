@@ -1182,6 +1182,36 @@ vim.wo[{winid}][{bufnr}]                                              *vim.wo*
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
 
+*vim.Ringbuf*
+
+    Fields: ~
+      • {clear}  (`fun()`) See |Ringbuf:clear()|.
+      • {peek}   (`fun(): T?`) See |Ringbuf:peek()|.
+      • {pop}    (`fun(): T?`) See |Ringbuf:pop()|.
+      • {push}   (`fun(item: T)`) See |Ringbuf:push()|.
+
+
+Ringbuf:clear()                                              *Ringbuf:clear()*
+    Clear all items
+
+Ringbuf:peek()                                                *Ringbuf:peek()*
+    Returns the first unread item without removing it
+
+    Return: ~
+        (`T?`)
+
+Ringbuf:pop()                                                  *Ringbuf:pop()*
+    Removes and returns the first unread item
+
+    Return: ~
+        (`T?`)
+
+Ringbuf:push({item})                                          *Ringbuf:push()*
+    Adds an item, overriding the oldest item if the buffer is full.
+
+    Parameters: ~
+      • {item}  (`T`)
+
 vim.cmd({cmd})                                                     *vim.cmd()*
     Executes Vimscript (|Ex-command|s).
 
@@ -1227,443 +1257,6 @@ vim.cmd({cmd})                                                     *vim.cmd()*
 
     See also: ~
       • |ex-cmd-index|
-
-vim.defer_fn({fn}, {timeout})                                 *vim.defer_fn()*
-    Defers calling {fn} until {timeout} ms passes.
-
-    Use to do a one-shot timer that calls {fn}. Note: The {fn} is |schedule|d
-    automatically, so API functions are safe to call.
-
-    Parameters: ~
-      • {fn}       (`function`) Callback to call once `timeout` expires
-      • {timeout}  (`integer`) Number of milliseconds to wait before calling
-                   `fn`
-
-    Return: ~
-        (`uv.uv_timer_t`) timer luv timer object
-
-                                                             *vim.deprecate()*
-vim.deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
-    Shows a deprecation message to the user.
-
-    Parameters: ~
-      • {name}         (`string`) Deprecated feature (function, API, etc.).
-      • {alternative}  (`string?`) Suggested alternative feature.
-      • {version}      (`string`) Version when the deprecated function will be
-                       removed.
-      • {plugin}       (`string?`) Name of the plugin that owns the deprecated
-                       feature. Defaults to "Nvim".
-      • {backtrace}    (`boolean?`) Prints backtrace. Defaults to true.
-
-    Return: ~
-        (`string?`) Deprecation message, or nil if no message was shown.
-
-vim.inspect()                                                  *vim.inspect()*
-    Gets a human-readable representation of the given object.
-
-    Overloads: ~
-      • `fun(x: any, opts?: vim.inspect.Opts): string`
-
-    Return: ~
-        (`string`)
-
-    See also: ~
-      • |vim.print()|
-      • https://github.com/kikito/inspect.lua
-      • https://github.com/mpeterv/vinspect
-
-vim.keycode({keys}, {info})                                    *vim.keycode()*
-    Converts keys from |key-notation| to the internal encoding. Optionally
-    returns structured *key-chord* info as retval 2.
-
-    Inverse of |keytrans()|, which converts the internal encoding back to
-    |key-notation|.
-
-    Examples: >lua
-        local k = vim.keycode
-        vim.g.mapleader = k'<bs>'
-
-        -- Split a key sequence into chords, e.g. to inspect modifiers.
-        local _, chords = vim.keycode('<C-w>v', true)
-        assert(chords[1].key == 'w' and chords[1].mod[1] == 'C')
-
-        -- keytrans() is the inverse: internal encoding => key-notation.
-        assert(vim.fn.keytrans(vim.keycode('<C-a>')) == '<C-A>')
-<
-
-    Parameters: ~
-      • {keys}  (`string`) Keys in |key-notation|.
-      • {info}  (`boolean?`) Also return key-chord info.
-
-    Return (multiple): ~
-        (`string`) Internal representation of the given `keys`.
-        (`table?`) List of parsed key-chords, each with fields:
-        • {key} (`string`) Key without modifiers. Example: `<C-A>` has
-          `key="a"`.
-        • {key_alt} (`string?`) Alternative spelling of `key`, or nil if There
-          Is No Alternative (TINA). Example: `"<"` has `key_alt="lt"`.
-        • {keys} (`string`) Full key-chord in canonical key-notation (as
-          produced by |keytrans()|), including modifiers. Example: `<A-f>` has
-          `keys="<M-f>"`.
-        • {mod} (`('M'|'T'|'C'|'S'|'2'|'3'|'4'|'D')[]`) List of key-chord
-          modifiers. Example: `<C-S-f>` has `mod={ 'C', 'S' }`.
-
-    See also: ~
-      • |nvim_replace_termcodes()|
-      • |keytrans()|
-
-vim.lua_omnifunc({find_start})                            *vim.lua_omnifunc()*
-    Omnifunc for completing Lua values from the runtime Lua interpreter,
-    similar to the builtin completion for the `:lua` command.
-
-    Activate using `vim.bo.omnifunc = vim.lua_omnifunc` in a Lua buffer.
-
-    Parameters: ~
-      • {find_start}  (`1|0`)
-
-vim.notify({msg}, {level}, {opts})                              *vim.notify()*
-    Displays a notification to the user.
-
-    This function can be overridden by plugins to display notifications using
-    a custom provider (such as the system notification provider). By default,
-    writes to |:messages|.
-
-    Parameters: ~
-      • {msg}    (`string`) Content of the notification to show to the user.
-      • {level}  (`integer?`) One of the values from |vim.log.levels|.
-      • {opts}   (`table?`) Optional parameters. Unused by default.
-
-vim.notify_once({msg}, {level}, {opts})                    *vim.notify_once()*
-    Displays a notification only one time.
-
-    Like |vim.notify()|, but subsequent calls with the same message will not
-    display a notification.
-
-    Parameters: ~
-      • {msg}    (`string`) Content of the notification to show to the user.
-      • {level}  (`integer?`) One of the values from |vim.log.levels|.
-      • {opts}   (`table?`) Optional parameters. Unused by default.
-
-    Return: ~
-        (`boolean`) true if message was displayed, else false
-
-vim.on_key({fn}, {ns_id}, {opts})                               *vim.on_key()*
-    Registers function {fn} with |namespace| {ns_id} as a listener to EVERY
-    input key (except keys consumed by |getchar()|, by {fn} itself, or by a
-    <Cmd> payload).
-
-    To parse |key-chord|s, see |vim.keycode()|. Example: >lua
-        local keychords = vim.keycode(vim.fn.keytrans(key), true)
-<
-
-    Note: ~
-      • If {fn} returns an empty string, {key} is discarded/ignored; if {key}
-        is <Cmd> then the "<Cmd>…<CR>" sequence is discarded as a whole.
-      • Non-recursive: if {fn} itself consumes input, it won't be invoked for
-        those keys.
-      • Not invoked for keys consumed by getchar()/getcharstr(): they never
-        reach the main loop.
-      • To UNregister a given {ns_id}, pass `nil` {fn}.
-      • {fn} will be removed on error.
-      • {fn} will not be cleared by |nvim_buf_clear_namespace()|
-      • The |-w| command-line option is related but does not support callbacks
-        and cannot be toggled dynamically.
-
-    Parameters: ~
-      • {fn}     (`fun(key: string, typed: string): string??`) Function
-                 invoked for every input key, after mappings have been applied
-                 but before further processing. Arguments {key} and {typed}
-                 are raw input (use |keytrans()| to get |keycodes|).
-                 • {key} is the key after mappings are applied.
-                 • {typed} is the input before mappings are applied; may be
-                   empty if {key} was produced by non-typed key(s) or by the
-                   same typed key(s) that produced a previous {key}.
-      • {ns_id}  (`integer?`) Namespace ID. If nil or 0, returns a new
-                 |namespace| id.
-      • {opts}   (`table?`) Optional parameters
-
-    Return: ~
-        (`integer`) Namespace id associated with {fn}. Or count of all
-        callbacks if on_key() is called without arguments.
-
-    See also: ~
-      • |keytrans()|
-      • |vim.keycode()|
-
-vim.paste({lines}, {phase})                                      *vim.paste()*
-    Paste handler, invoked by |nvim_paste()|.
-
-    Note: This is provided only as a "hook", don't call it directly; call
-    |nvim_paste()| instead, which arranges redo (dot-repeat) and invokes
-    `vim.paste`.
-
-    Example: To remove ANSI color codes when pasting: >lua
-        vim.paste = (function(overridden)
-          return function(lines, phase)
-            for i,line in ipairs(lines) do
-              -- Scrub ANSI color codes from paste input.
-              lines[i] = line:gsub('\27%[[0-9;mK]+', '')
-            end
-            return overridden(lines, phase)
-          end
-        end)(vim.paste)
-<
-
-    Parameters: ~
-      • {lines}  (`string[]`) |readfile()|-style list of lines to paste.
-                 |channel-lines|
-      • {phase}  (`-1|1|2|3`) -1: "non-streaming" paste: the call contains all
-                 lines. If paste is "streamed", `phase` indicates the stream
-                 state:
-                 • 1: starts the paste (exactly once)
-                 • 2: continues the paste (zero or more times)
-                 • 3: ends the paste (exactly once)
-
-    Return: ~
-        (`boolean`) result false if client should cancel the paste.
-
-    See also: ~
-      • |paste|
-
-vim.print({...})                                                 *vim.print()*
-    "Pretty prints" the given arguments and returns them unmodified.
-
-    Example: >lua
-        local hl_normal = vim.print(vim.api.nvim_get_hl(0, { name = 'Normal' }))
-<
-
-    Parameters: ~
-      • {...}  (`any`)
-
-    Return: ~
-        (`any`) given arguments.
-
-    See also: ~
-      • |vim.inspect()|
-      • |:=|
-
-vim.schedule_wrap({fn})                                  *vim.schedule_wrap()*
-    Returns a function which calls {fn} via |vim.schedule()|.
-
-    The returned function passes all arguments to {fn}.
-
-    Example: >lua
-        function notify_readable(_err, readable)
-          vim.notify("readable? " .. tostring(readable))
-        end
-        vim.uv.fs_access(vim.fn.stdpath("config"), "R", vim.schedule_wrap(notify_readable))
-<
-
-    Parameters: ~
-      • {fn}  (`function`)
-
-    Return: ~
-        (`function`)
-
-    See also: ~
-      • |lua-loop-callbacks|
-      • |vim.schedule()|
-      • |vim.in_fast_event()|
-
-                                                         *vim.str_byteindex()*
-vim.str_byteindex({s}, {encoding}, {index}, {strict_indexing})
-    Convert UTF-32, UTF-16 or UTF-8 {index} to byte index. If
-    {strict_indexing} is false then an out of range index will return byte
-    length instead of throwing an error.
-
-    Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|. An {index}
-    in the middle of a UTF-16 sequence is rounded upwards to the end of that
-    sequence.
-
-    Parameters: ~
-      • {s}                (`string`)
-      • {encoding}         (`"utf-8"|"utf-16"|"utf-32"`)
-      • {index}            (`integer`)
-      • {strict_indexing}  (`boolean?`) default: true
-
-    Return: ~
-        (`integer`)
-
-                                                          *vim.str_utfindex()*
-vim.str_utfindex({s}, {encoding}, {index}, {strict_indexing})
-    Convert byte index to UTF-32, UTF-16 or UTF-8 indices. If {index} is not
-    supplied, the length of the string is used. All indices are zero-based.
-
-    If {strict_indexing} is false then an out of range index will return
-    string length instead of throwing an error. Invalid UTF-8 bytes, and
-    embedded surrogates are counted as one code point each. An {index} in the
-    middle of a UTF-8 sequence is rounded upwards to the end of that sequence.
-
-    Parameters: ~
-      • {s}                (`string`)
-      • {encoding}         (`"utf-8"|"utf-16"|"utf-32"`)
-      • {index}            (`integer?`)
-      • {strict_indexing}  (`boolean?`) default: true
-
-    Return: ~
-        (`integer`)
-
-vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
-    Waits up to `time` milliseconds, until `callback` returns `true`
-    (success). Executes `callback` immediately, then on user events, internal
-    events, and approximately every `interval` milliseconds (default 200).
-    Returns `true` plus any remaining callback results on success.
-
-    Nvim processes other events while waiting. Cannot be called during an
-    |api-fast| event.
-
-    Examples: >lua
-        -- Wait for 100 ms, allowing other events to process.
-        vim.wait(100)
-
-        -- Wait up to 1000 ms or until `vim.g.foo` is true, at intervals of ~500 ms.
-        vim.wait(1000, function() return vim.g.foo end, 500)
-
-        -- Wait indefinitely until `vim.g.foo` is true, and get the callback results.
-        local ok, rv1, rv2, rv3 = vim.wait(math.huge, function()
-          return vim.g.foo, 'a', 42, { ok = { 'yes' } }
-        end)
-
-        -- Schedule a function to set a value in 100ms. This would wait 10s if blocked, but actually
-        -- only waits 100ms because `vim.wait` processes other events while waiting.
-        vim.defer_fn(function() vim.g.timer_result = true end, 100)
-        if vim.wait(10000, function() return vim.g.timer_result end) then
-          print('Only waiting a little bit of time!')
-        end
-
-        -- Yield via vim.wait() to allow CTRL-C to interrupt Lua code.
-        while true do
-          -- ...work...
-          local _, code = vim.wait(0, nil, 0)
-          if code == -2 then -- CTRL-C.
-            break
-          end
-        end
-<
-
-    Parameters: ~
-      • {time}       (`number`) Number of milliseconds to wait. Must be
-                     non-negative number, any fractional part is truncated.
-      • {callback}   (`fun(): boolean, ...?`) Optional callback. Waits until
-                     {callback} returns true
-      • {interval}   (`integer?`) (Approximate) number of milliseconds to wait
-                     between polls
-      • {fast_only}  (`boolean?`) If true, only |api-fast| events will be
-                     processed.
-
-    Return (multiple): ~
-        (`boolean`)
-        (`-1|-2?`)
-        • If callback returns `true` before timeout: `true, ...` (remaining
-          callback results).
-        • On timeout: `false, -1`
-        • On interrupt: `false, -2`
-        • On error: the error is raised.
-
-
-==============================================================================
-Lua module: vim.inspector                                      *vim.inspector*
-
-vim.inspect_pos({buf}, {row}, {col}, {filter})             *vim.inspect_pos()*
-    Get all the items at a given buffer position.
-
-    Can also be pretty-printed with `:Inspect!`.                   *:Inspect!*
-
-    Attributes: ~
-        Since: 0.9.0
-
-    Parameters: ~
-      • {buf}     (`integer?`) defaults to the current buffer
-      • {row}     (`integer?`) row to inspect, 0-based. Defaults to the row of
-                  the current cursor
-      • {col}     (`integer?`) col to inspect, 0-based. Defaults to the col of
-                  the current cursor
-      • {filter}  (`table?`) Table with key-value pairs to filter the items
-                  • {extmarks} (`boolean|"all"`, default: true) Include
-                    extmarks. When `all`, then extmarks without a `hl_group`
-                    will also be included.
-                  • {semantic_tokens} (`boolean`, default: true) Include
-                    semantic token highlights.
-                  • {syntax} (`boolean`, default: `true`) Include syntax based
-                    highlight groups.
-                  • {treesitter} (`boolean`, default: `true`) Include
-                    treesitter based highlight groups.
-
-    Return: ~
-        (`table`) a table with the following key-value pairs. Items are in
-        "traversal order":
-        • treesitter: a list of treesitter captures
-        • syntax: a list of syntax groups
-        • semantic_tokens: a list of semantic tokens
-        • extmarks: a list of extmarks
-        • buffer: the buffer used to get the items
-        • row: the row used to get the items
-        • col: the col used to get the items
-
-vim.show_pos({buf}, {row}, {col}, {filter})                   *vim.show_pos()*
-    Show all the items at a given buffer position.
-
-    Can also be shown with `:Inspect`.                              *:Inspect*
-
-    See also |:marks| to list all extmarks.
-
-    Example: To bind this function to the vim-scriptease inspired `zS` in
-    Normal mode: >lua
-        vim.keymap.set('n', 'zS', vim.show_pos)
-<
-
-    Attributes: ~
-        Since: 0.9.0
-
-    Parameters: ~
-      • {buf}     (`integer?`) defaults to the current buffer
-      • {row}     (`integer?`) row to inspect, 0-based. Defaults to the row of
-                  the current cursor
-      • {col}     (`integer?`) col to inspect, 0-based. Defaults to the col of
-                  the current cursor
-      • {filter}  (`table?`) A table with the following fields:
-                  • {extmarks} (`boolean|"all"`, default: true) Include
-                    extmarks. When `all`, then extmarks without a `hl_group`
-                    will also be included.
-                  • {semantic_tokens} (`boolean`, default: true) Include
-                    semantic token highlights.
-                  • {syntax} (`boolean`, default: `true`) Include syntax based
-                    highlight groups.
-                  • {treesitter} (`boolean`, default: `true`) Include
-                    treesitter based highlight groups.
-
-
-
-
-*vim.Ringbuf*
-
-    Fields: ~
-      • {clear}  (`fun()`) See |Ringbuf:clear()|.
-      • {peek}   (`fun(): T?`) See |Ringbuf:peek()|.
-      • {pop}    (`fun(): T?`) See |Ringbuf:pop()|.
-      • {push}   (`fun(item: T)`) See |Ringbuf:push()|.
-
-
-Ringbuf:clear()                                              *Ringbuf:clear()*
-    Clear all items
-
-Ringbuf:peek()                                                *Ringbuf:peek()*
-    Returns the first unread item without removing it
-
-    Return: ~
-        (`T?`)
-
-Ringbuf:pop()                                                  *Ringbuf:pop()*
-    Removes and returns the first unread item
-
-    Return: ~
-        (`T?`)
-
-Ringbuf:push({item})                                          *Ringbuf:push()*
-    Adds an item, overriding the oldest item if the buffer is full.
-
-    Parameters: ~
-      • {item}  (`T`)
 
 vim.deep_equal({a}, {b})                                    *vim.deep_equal()*
     Deep compare values for equality
@@ -1718,6 +1311,36 @@ vim.defaulttable({createfn})                              *vim.defaulttable()*
     Return: ~
         (`table`) Empty table with `__index` metamethod.
 
+vim.defer_fn({fn}, {timeout})                                 *vim.defer_fn()*
+    Defers calling {fn} until {timeout} ms passes.
+
+    Use to do a one-shot timer that calls {fn}. Note: The {fn} is |schedule|d
+    automatically, so API functions are safe to call.
+
+    Parameters: ~
+      • {fn}       (`function`) Callback to call once `timeout` expires
+      • {timeout}  (`integer`) Number of milliseconds to wait before calling
+                   `fn`
+
+    Return: ~
+        (`uv.uv_timer_t`) timer luv timer object
+
+                                                             *vim.deprecate()*
+vim.deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
+    Shows a deprecation message to the user.
+
+    Parameters: ~
+      • {name}         (`string`) Deprecated feature (function, API, etc.).
+      • {alternative}  (`string?`) Suggested alternative feature.
+      • {version}      (`string`) Version when the deprecated function will be
+                       removed.
+      • {plugin}       (`string?`) Name of the plugin that owns the deprecated
+                       feature. Defaults to "Nvim".
+      • {backtrace}    (`boolean?`) Prints backtrace. Defaults to true.
+
+    Return: ~
+        (`string?`) Deprecation message, or nil if no message was shown.
+
 vim.endswith({s}, {suffix})                                   *vim.endswith()*
     Tests if `s` ends with `suffix`.
 
@@ -1763,6 +1386,34 @@ vim.gsplit({s}, {sep}, {opts})                                  *vim.gsplit()*
       • |lua-pattern|s
       • https://www.lua.org/pil/20.2.html
       • http://lua-users.org/wiki/StringLibraryTutorial
+
+vim.inspect({root}, {options})                                 *vim.inspect()*
+    Gets a human-readable representation of the given object.
+
+    Parameters: ~
+      • {root}     (`any`)
+      • {options}  (`table?`) A table with the following fields:
+                   • {depth}? (`integer`, default: unlimited) Maximum table
+                     nesting depth. Deeper tables are shown as `{...}`.
+                   • {indent}? (`string`, default: `"  "`) String repeated for
+                     each level of indentation.
+                   • {newline}? (`string`, default: `"\n"`) String used for
+                     line breaks.
+                   • {process}? (`fun(item: any, path: any[]): any`)
+                     Transforms values, keys, and metatables before
+                     formatting. Return a replacement value, or `nil` to omit
+                     a table entry. {path} lists the keys leading to {item},
+                     with `vim.inspect.KEY` appended for keys or
+                     `vim.inspect.METATABLE` for metatables. The root has an
+                     empty path.
+
+    Return: ~
+        (`string`)
+
+    See also: ~
+      • |vim.print()|
+      • https://github.com/kikito/inspect.lua
+      • https://github.com/mpeterv/vinspect
 
 vim.is_callable({f})                                       *vim.is_callable()*
     Returns true if object `f` can be called as a function.
@@ -1821,6 +1472,46 @@ vim.isnil({t})                                                   *vim.isnil()*
 
     Return: ~
         (`boolean`) `true` if `nil` or |vim.NIL|, else `false`.
+
+vim.keycode({keys}, {info})                                    *vim.keycode()*
+    Converts keys from |key-notation| to the internal encoding. Optionally
+    returns structured *key-chord* info as retval 2.
+
+    Inverse of |keytrans()|, which converts the internal encoding back to
+    |key-notation|.
+
+    Examples: >lua
+        local k = vim.keycode
+        vim.g.mapleader = k'<bs>'
+
+        -- Split a key sequence into chords, e.g. to inspect modifiers.
+        local _, chords = vim.keycode('<C-w>v', true)
+        assert(chords[1].key == 'w' and chords[1].mod[1] == 'C')
+
+        -- keytrans() is the inverse: internal encoding => key-notation.
+        assert(vim.fn.keytrans(vim.keycode('<C-a>')) == '<C-A>')
+<
+
+    Parameters: ~
+      • {keys}  (`string`) Keys in |key-notation|.
+      • {info}  (`boolean?`) Also return key-chord info.
+
+    Return (multiple): ~
+        (`string`) Internal representation of the given `keys`.
+        (`table?`) List of parsed key-chords, each with fields:
+        • {key} (`string`) Key without modifiers. Example: `<C-A>` has
+          `key="a"`.
+        • {key_alt} (`string?`) Alternative spelling of `key`, or nil if There
+          Is No Alternative (TINA). Example: `"<"` has `key_alt="lt"`.
+        • {keys} (`string`) Full key-chord in canonical key-notation (as
+          produced by |keytrans()|), including modifiers. Example: `<A-f>` has
+          `keys="<M-f>"`.
+        • {mod} (`('M'|'T'|'C'|'S'|'2'|'3'|'4'|'D')[]`) List of key-chord
+          modifiers. Example: `<C-S-f>` has `mod={ 'C', 'S' }`.
+
+    See also: ~
+      • |nvim_replace_termcodes()|
+      • |keytrans()|
 
 vim.list.bisect({t}, {val}, {opts})                        *vim.list.bisect()*
     Search for a position in a sorted |lua-list| {t} where {val} can be
@@ -1970,6 +1661,15 @@ vim.list_slice({list}, {start}, {finish})                   *vim.list_slice()*
     Return: ~
         (`any[]`) Copy of table sliced from start to finish (inclusive)
 
+vim.lua_omnifunc({find_start})                            *vim.lua_omnifunc()*
+    Omnifunc for completing Lua values from the runtime Lua interpreter,
+    similar to the builtin completion for the `:lua` command.
+
+    Activate using `vim.bo.omnifunc = vim.lua_omnifunc` in a Lua buffer.
+
+    Parameters: ~
+      • {find_start}  (`1|0`)
+
 vim.nonnil({...})                                               *vim.nonnil()*
     Returns the first argument which is not nil.
 
@@ -1992,6 +1692,32 @@ vim.nonnil({...})                                               *vim.nonnil()*
     Return: ~
         (`any`)
 
+vim.notify({msg}, {level}, {opts})                              *vim.notify()*
+    Displays a notification to the user.
+
+    This function can be overridden by plugins to display notifications using
+    a custom provider (such as the system notification provider). By default,
+    writes to |:messages|.
+
+    Parameters: ~
+      • {msg}    (`string`) Content of the notification to show to the user.
+      • {level}  (`integer?`) One of the values from |vim.log.levels|.
+      • {opts}   (`table?`) Optional parameters. Unused by default.
+
+vim.notify_once({msg}, {level}, {opts})                    *vim.notify_once()*
+    Displays a notification only one time.
+
+    Like |vim.notify()|, but subsequent calls with the same message will not
+    display a notification.
+
+    Parameters: ~
+      • {msg}    (`string`) Content of the notification to show to the user.
+      • {level}  (`integer?`) One of the values from |vim.log.levels|.
+      • {opts}   (`table?`) Optional parameters. Unused by default.
+
+    Return: ~
+        (`boolean`) true if message was displayed, else false
+
 vim.npcall({fn}, {...})                                         *vim.npcall()*
     Calls the function `fn` in `protected mode` like |pcall()|, but returns
     `nil` on error.
@@ -2006,6 +1732,84 @@ vim.npcall({fn}, {...})                                         *vim.npcall()*
     Return: ~
         (`any`) ...
 
+vim.on_key({fn}, {ns_id}, {opts})                               *vim.on_key()*
+    Registers function {fn} with |namespace| {ns_id} as a listener to EVERY
+    input key (except keys consumed by |getchar()|, by {fn} itself, or by a
+    <Cmd> payload).
+
+    To parse |key-chord|s, see |vim.keycode()|. Example: >lua
+        local keychords = vim.keycode(vim.fn.keytrans(key), true)
+<
+
+    Note: ~
+      • If {fn} returns an empty string, {key} is discarded/ignored; if {key}
+        is <Cmd> then the "<Cmd>…<CR>" sequence is discarded as a whole.
+      • Non-recursive: if {fn} itself consumes input, it won't be invoked for
+        those keys.
+      • Not invoked for keys consumed by getchar()/getcharstr(): they never
+        reach the main loop.
+      • To UNregister a given {ns_id}, pass `nil` {fn}.
+      • {fn} will be removed on error.
+      • {fn} will not be cleared by |nvim_buf_clear_namespace()|
+      • The |-w| command-line option is related but does not support callbacks
+        and cannot be toggled dynamically.
+
+    Parameters: ~
+      • {fn}     (`fun(key: string, typed: string): string??`) Function
+                 invoked for every input key, after mappings have been applied
+                 but before further processing. Arguments {key} and {typed}
+                 are raw input (use |keytrans()| to get |keycodes|).
+                 • {key} is the key after mappings are applied.
+                 • {typed} is the input before mappings are applied; may be
+                   empty if {key} was produced by non-typed key(s) or by the
+                   same typed key(s) that produced a previous {key}.
+      • {ns_id}  (`integer?`) Namespace ID. If nil or 0, returns a new
+                 |namespace| id.
+      • {opts}   (`table?`) Optional parameters
+
+    Return: ~
+        (`integer`) Namespace id associated with {fn}. Or count of all
+        callbacks if on_key() is called without arguments.
+
+    See also: ~
+      • |keytrans()|
+      • |vim.keycode()|
+
+vim.paste({lines}, {phase})                                      *vim.paste()*
+    Paste handler, invoked by |nvim_paste()|.
+
+    Note: This is provided only as a "hook", don't call it directly; call
+    |nvim_paste()| instead, which arranges redo (dot-repeat) and invokes
+    `vim.paste`.
+
+    Example: To remove ANSI color codes when pasting: >lua
+        vim.paste = (function(overridden)
+          return function(lines, phase)
+            for i,line in ipairs(lines) do
+              -- Scrub ANSI color codes from paste input.
+              lines[i] = line:gsub('\27%[[0-9;mK]+', '')
+            end
+            return overridden(lines, phase)
+          end
+        end)(vim.paste)
+<
+
+    Parameters: ~
+      • {lines}  (`string[]`) |readfile()|-style list of lines to paste.
+                 |channel-lines|
+      • {phase}  (`-1|1|2|3`) -1: "non-streaming" paste: the call contains all
+                 lines. If paste is "streamed", `phase` indicates the stream
+                 state:
+                 • 1: starts the paste (exactly once)
+                 • 2: continues the paste (zero or more times)
+                 • 3: ends the paste (exactly once)
+
+    Return: ~
+        (`boolean`) result false if client should cancel the paste.
+
+    See also: ~
+      • |paste|
+
 vim.pesc({s})                                                     *vim.pesc()*
     Escapes magic chars in |lua-pattern|s.
 
@@ -2017,6 +1821,23 @@ vim.pesc({s})                                                     *vim.pesc()*
 
     See also: ~
       • https://github.com/rxi/lume
+
+vim.print({...})                                                 *vim.print()*
+    "Pretty prints" the given arguments and returns them unmodified.
+
+    Example: >lua
+        local hl_normal = vim.print(vim.api.nvim_get_hl(0, { name = 'Normal' }))
+<
+
+    Parameters: ~
+      • {...}  (`any`)
+
+    Return: ~
+        (`any`) given arguments.
+
+    See also: ~
+      • |vim.inspect()|
+      • |:=|
 
 vim.ringbuf({size})                                            *vim.ringbuf()*
     Create a ring buffer limited to a maximal number of items. Once the buffer
@@ -2047,6 +1868,29 @@ vim.ringbuf({size})                                            *vim.ringbuf()*
 
     Return: ~
         (`vim.Ringbuf<any>`) ringbuf
+
+vim.schedule_wrap({fn})                                  *vim.schedule_wrap()*
+    Returns a function which calls {fn} via |vim.schedule()|.
+
+    The returned function passes all arguments to {fn}.
+
+    Example: >lua
+        function notify_readable(_err, readable)
+          vim.notify("readable? " .. tostring(readable))
+        end
+        vim.uv.fs_access(vim.fn.stdpath("config"), "R", vim.schedule_wrap(notify_readable))
+<
+
+    Parameters: ~
+      • {fn}  (`function`)
+
+    Return: ~
+        (`function`)
+
+    See also: ~
+      • |lua-loop-callbacks|
+      • |vim.schedule()|
+      • |vim.in_fast_event()|
 
 vim.spairs({t})                                                 *vim.spairs()*
     Enumerates key-value pairs of a table, ordered by key.
@@ -2099,6 +1943,44 @@ vim.startswith({s}, {prefix})                               *vim.startswith()*
 
     Return: ~
         (`boolean`) `true` if `prefix` is a prefix of `s`
+
+                                                         *vim.str_byteindex()*
+vim.str_byteindex({s}, {encoding}, {index}, {strict_indexing})
+    Convert UTF-32, UTF-16 or UTF-8 {index} to byte index. If
+    {strict_indexing} is false then an out of range index will return byte
+    length instead of throwing an error.
+
+    Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|. An {index}
+    in the middle of a UTF-16 sequence is rounded upwards to the end of that
+    sequence.
+
+    Parameters: ~
+      • {s}                (`string`)
+      • {encoding}         (`"utf-8"|"utf-16"|"utf-32"`)
+      • {index}            (`integer`)
+      • {strict_indexing}  (`boolean?`) default: true
+
+    Return: ~
+        (`integer`)
+
+                                                          *vim.str_utfindex()*
+vim.str_utfindex({s}, {encoding}, {index}, {strict_indexing})
+    Convert byte index to UTF-32, UTF-16 or UTF-8 indices. If {index} is not
+    supplied, the length of the string is used. All indices are zero-based.
+
+    If {strict_indexing} is false then an out of range index will return
+    string length instead of throwing an error. Invalid UTF-8 bytes, and
+    embedded surrogates are counted as one code point each. An {index} in the
+    middle of a UTF-8 sequence is rounded upwards to the end of that sequence.
+
+    Parameters: ~
+      • {s}                (`string`)
+      • {encoding}         (`"utf-8"|"utf-16"|"utf-32"`)
+      • {index}            (`integer?`)
+      • {strict_indexing}  (`boolean?`) default: true
+
+    Return: ~
+        (`integer`)
 
 vim.tbl_contains({t}, {value}, {opts})                    *vim.tbl_contains()*
     Checks if a table contains a given value, specified either directly or via
@@ -2357,6 +2239,135 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
     Overloads: ~
       • `fun(name: string, val: any, validator: vim.validate.Validator, message: string)`
       • `fun(spec: table<string,[any, vim.validate.Validator, boolean|string]>)`
+
+vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
+    Waits up to `time` milliseconds, until `callback` returns `true`
+    (success). Executes `callback` immediately, then on user events, internal
+    events, and approximately every `interval` milliseconds (default 200).
+    Returns `true` plus any remaining callback results on success.
+
+    Nvim processes other events while waiting. Cannot be called during an
+    |api-fast| event.
+
+    Examples: >lua
+        -- Wait for 100 ms, allowing other events to process.
+        vim.wait(100)
+
+        -- Wait up to 1000 ms or until `vim.g.foo` is true, at intervals of ~500 ms.
+        vim.wait(1000, function() return vim.g.foo end, 500)
+
+        -- Wait indefinitely until `vim.g.foo` is true, and get the callback results.
+        local ok, rv1, rv2, rv3 = vim.wait(math.huge, function()
+          return vim.g.foo, 'a', 42, { ok = { 'yes' } }
+        end)
+
+        -- Schedule a function to set a value in 100ms. This would wait 10s if blocked, but actually
+        -- only waits 100ms because `vim.wait` processes other events while waiting.
+        vim.defer_fn(function() vim.g.timer_result = true end, 100)
+        if vim.wait(10000, function() return vim.g.timer_result end) then
+          print('Only waiting a little bit of time!')
+        end
+
+        -- Yield via vim.wait() to allow CTRL-C to interrupt Lua code.
+        while true do
+          -- ...work...
+          local _, code = vim.wait(0, nil, 0)
+          if code == -2 then -- CTRL-C.
+            break
+          end
+        end
+<
+
+    Parameters: ~
+      • {time}       (`number`) Number of milliseconds to wait. Must be
+                     non-negative number, any fractional part is truncated.
+      • {callback}   (`fun(): boolean, ...?`) Optional callback. Waits until
+                     {callback} returns true
+      • {interval}   (`integer?`) (Approximate) number of milliseconds to wait
+                     between polls
+      • {fast_only}  (`boolean?`) If true, only |api-fast| events will be
+                     processed.
+
+    Return (multiple): ~
+        (`boolean`)
+        (`-1|-2?`)
+        • If callback returns `true` before timeout: `true, ...` (remaining
+          callback results).
+        • On timeout: `false, -1`
+        • On interrupt: `false, -2`
+        • On error: the error is raised.
+
+
+==============================================================================
+Lua module: vim.inspector                                      *vim.inspector*
+
+vim.inspect_pos({buf}, {row}, {col}, {filter})             *vim.inspect_pos()*
+    Get all the items at a given buffer position.
+
+    Can also be pretty-printed with `:Inspect!`.                   *:Inspect!*
+
+    Attributes: ~
+        Since: 0.9.0
+
+    Parameters: ~
+      • {buf}     (`integer?`) defaults to the current buffer
+      • {row}     (`integer?`) row to inspect, 0-based. Defaults to the row of
+                  the current cursor
+      • {col}     (`integer?`) col to inspect, 0-based. Defaults to the col of
+                  the current cursor
+      • {filter}  (`table?`) Table with key-value pairs to filter the items
+                  • {extmarks} (`boolean|"all"`, default: true) Include
+                    extmarks. When `all`, then extmarks without a `hl_group`
+                    will also be included.
+                  • {semantic_tokens} (`boolean`, default: true) Include
+                    semantic token highlights.
+                  • {syntax} (`boolean`, default: `true`) Include syntax based
+                    highlight groups.
+                  • {treesitter} (`boolean`, default: `true`) Include
+                    treesitter based highlight groups.
+
+    Return: ~
+        (`table`) a table with the following key-value pairs. Items are in
+        "traversal order":
+        • treesitter: a list of treesitter captures
+        • syntax: a list of syntax groups
+        • semantic_tokens: a list of semantic tokens
+        • extmarks: a list of extmarks
+        • buffer: the buffer used to get the items
+        • row: the row used to get the items
+        • col: the col used to get the items
+
+vim.show_pos({buf}, {row}, {col}, {filter})                   *vim.show_pos()*
+    Show all the items at a given buffer position.
+
+    Can also be shown with `:Inspect`.                              *:Inspect*
+
+    See also |:marks| to list all extmarks.
+
+    Example: To bind this function to the vim-scriptease inspired `zS` in
+    Normal mode: >lua
+        vim.keymap.set('n', 'zS', vim.show_pos)
+<
+
+    Attributes: ~
+        Since: 0.9.0
+
+    Parameters: ~
+      • {buf}     (`integer?`) defaults to the current buffer
+      • {row}     (`integer?`) row to inspect, 0-based. Defaults to the row of
+                  the current cursor
+      • {col}     (`integer?`) col to inspect, 0-based. Defaults to the col of
+                  the current cursor
+      • {filter}  (`table?`) A table with the following fields:
+                  • {extmarks} (`boolean|"all"`, default: true) Include
+                    extmarks. When `all`, then extmarks without a `hl_group`
+                    will also be included.
+                  • {semantic_tokens} (`boolean`, default: true) Include
+                    semantic token highlights.
+                  • {syntax} (`boolean`, default: `true`) Include syntax based
+                    highlight groups.
+                  • {treesitter} (`boolean`, default: `true`) Include
+                    treesitter based highlight groups.
 
 
 ==============================================================================
@@ -3306,10 +3317,7 @@ Iter:find({f})                                                   *Iter:find()*
         Since: 0.10.0
 
     Parameters: ~
-      • {f}  (`(fun(v: V1, ...: V...): boolean)|any`)
-
-    Overloads: ~
-      • `fun<V1, V...>(self: vim.IterArray<V1, V...>, f: V1|fun(v: V1, ...: V...): boolean): V1?, V...`
+      • {f}  (`V1|fun(v: V1, ...: V...): any`)
 
     Return (multiple): ~
         (`V1?`)
@@ -3583,10 +3591,6 @@ Iter:totable()                                                *Iter:totable()*
 
     Attributes: ~
         Since: 0.10.0
-
-    Overloads: ~
-      • `fun<T>(self: vim.Iter<T, never>): T[]`
-      • `fun<V1, V2, V...>(self: vim.Iter<V1, V2, V...>): [V1, V2, V...][]`
 
     Return: ~
         (`any[]`)
@@ -5871,7 +5875,7 @@ Example: >lua
     end
 <
 
-*vim.version()* returns the version of the current Nvim process.
+|vim.version()| returns the version of the current Nvim process.
 
 VERSION RANGE SPEC                                             *version-range*
 
@@ -5947,6 +5951,12 @@ VersionRange:has({version})                               *VersionRange:has()*
 
     See also: ~
       • https://github.com/npm/node-semver#ranges
+
+vim.version()                                                  *vim.version()*
+    Returns the current Nvim version.
+
+    Return: ~
+        (`vim.Version`)
 
 vim.version.cmp({v1}, {v2})                                *vim.version.cmp()*
     Parses and compares two version objects (the result of

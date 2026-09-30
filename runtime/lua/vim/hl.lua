@@ -156,7 +156,6 @@ function M.range(buf, ns, hlgroup, start, finish, opts)
   end
 end
 
----@private
 ---@class (private) vim.hl.OnEventState
 ---@field timer? uv.uv_timer_t Timer to clear the highlight.
 ---@field clear? fun() Function to clear the highlight immediately.

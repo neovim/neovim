@@ -12,7 +12,6 @@ local M = {}
 ---@field named vim.treesitter.dev.Node[]
 local TSTreeView = {}
 
----@private
 ---@class (private) vim.treesitter.dev.TSTreeViewOpts
 ---@field anon boolean If true, display anonymous nodes.
 ---@field lang boolean If true, display the language alongside each node.

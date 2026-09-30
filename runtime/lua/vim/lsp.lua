@@ -7,7 +7,6 @@ local lsp = vim._defer_require('vim.lsp', {
   _changetracking = ..., --- @module 'vim.lsp._changetracking'
   _folding_range = ..., --- @module 'vim.lsp._folding_range'
   _snippet_grammar = ..., --- @module 'vim.lsp._snippet_grammar'
-  _tagfunc = ..., --- @module 'vim.lsp._tagfunc'
   _watchfiles = ..., --- @module 'vim.lsp._watchfiles'
   buf = ..., --- @module 'vim.lsp.buf'
   client = ..., --- @module 'vim.lsp.client'
@@ -24,6 +23,9 @@ local lsp = vim._defer_require('vim.lsp', {
   protocol = ..., --- @module 'vim.lsp.protocol'
   rpc = ..., --- @module 'vim.lsp.rpc'
   semantic_tokens = ..., --- @module 'vim.lsp.semantic_tokens'
+  -- Work around EmmyLuaLs/emmylua-analyzer-rust#1238 for function exports.
+  --- @type fun(pattern: string, flags: string): table[]|vim.NIL
+  tagfunc = ..., --- @module 'vim.lsp.tagfunc'
   util = ..., --- @module 'vim.lsp.util'
 })
 
@@ -396,19 +398,17 @@ lsp.config = setmetatable({ _configs = {} }, {
 local function get_config_names()
   local config_names = vim
     .iter(api.nvim_get_runtime_file('lsp/*.lua', true))
-    --- @param path string
     :map(function(path)
-      local file_name = path:match('[^/]*.lua$')
+      local file_name = assert(path:match('[^/]*.lua$'))
       return file_name:sub(0, #file_name - 4)
     end)
-    :totable()
+    :totable() --[[@as string[] ]]
 
   vim.list_extend(config_names, vim.tbl_keys(lsp.config._configs))
 
   return vim
     .iter(config_names)
     :unique()
-    --- @param name string
     :filter(function(name)
       return name ~= '*'
     end)
@@ -1441,23 +1441,6 @@ function lsp.formatexpr(opts)
 
   -- do not run builtin formatter.
   return 0
-end
-
---- Provides an interface between the built-in client and 'tagfunc'.
----
---- When used with normal mode commands (e.g. |CTRL-]|) this will invoke
---- the "textDocument/definition" LSP method to find the tag under the cursor.
---- Otherwise, uses "workspace/symbol". If no results are returned from
---- any LSP servers, falls back to using built-in tags.
----
----@param pattern string Pattern used to find a workspace symbol
----@param flags string See |tag-function|
----
----@return table[]|vim.NIL tags A list of matching tags, or `vim.NIL` to use the built-in tags.
-function lsp.tagfunc(pattern, flags)
-  -- EmmyLua incorrectly treats function exports referenced by @module as non-callable.
-  --- @diagnostic disable-next-line:call-non-callable EmmyLuaLs/emmylua-analyzer-rust#1238
-  return vim.lsp._tagfunc(pattern, flags)
 end
 
 --- Provides an interface between the built-in client and a `foldexpr` function.

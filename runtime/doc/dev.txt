@@ -248,6 +248,7 @@ Docstring format:
   0), it is marked as "experimental".
   - See scripts/util.lua for the mapping of api-level to Nvim version.
 - Use `@deprecated` to mark deprecated functions.
+- For callable module tables, document `__call` in `setmetatable(M, { ... })`.
 - Use `@nodoc` to prevent documentation generation.
 - Use `@private` for private functions.
   - Naming a function with an underscore prefix ("_foo", not "foo") implies

@@ -890,7 +890,7 @@ local function install_list(plug_list, confirm)
   if not confirm or confirm_install(plug_list) then
     trigger_events(plug_list, 'PackChangedPre', 'install')
     run_list(plug_list, do_install, 'Installing plugins')
-    local installed = vim.tbl_filter(function(p) --- @param p vim.pack.Plug
+    local installed = vim.tbl_filter(function(p)
       return p.info.installed == true
     end, plug_list)
     trigger_events(installed, 'PackChanged', 'install')
@@ -945,7 +945,7 @@ local function infer_update_details(p)
   local any_version = vim.version.range('*') --[[@as vim.VersionRange]]
   local last_version = get_last_semver_tag(past_tags, any_version)
 
-  local newer_semver_tags = vim.tbl_filter(function(x) --- @param x string
+  local newer_semver_tags = vim.tbl_filter(function(x)
     return vim.version.gt(x, last_version)
   end, all_semver_tags)
 
@@ -1400,7 +1400,7 @@ local function update_list(plug_list)
   end
   run_list(plug_list, do_update, 'Applying updates')
 
-  local updated = vim.tbl_filter(function(p) --- @param p vim.pack.Plug
+  local updated = vim.tbl_filter(function(p)
     return p.info.updated == true
   end, plug_list)
   trigger_events(updated, 'PackChanged', 'update')
@@ -1503,7 +1503,7 @@ function M.update(names, opts)
 
   -- Update and show report
   if opts.force then
-    local plugs_to_update = vim.tbl_filter(function(p) --- @param p vim.pack.Plug
+    local plugs_to_update = vim.tbl_filter(function(p)
       return p.info.sha_head ~= p.info.sha_target
     end, plug_list)
     update_list(plugs_to_update)

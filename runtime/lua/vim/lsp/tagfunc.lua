@@ -86,9 +86,17 @@ local function query_workspace_symbols(pattern)
   return results
 end
 
----@param pattern string
----@param flags string
----@return table[]|vim.NIL
+--- Provides an interface between the built-in client and 'tagfunc'.
+---
+--- When used with normal mode commands (e.g. |CTRL-]|) this will invoke
+--- the "textDocument/definition" LSP method to find the tag under the cursor.
+--- Otherwise, uses "workspace/symbol". If no results are returned from
+--- any LSP servers, falls back to using built-in tags.
+---
+---@param pattern string Pattern used to find a workspace symbol
+---@param flags string See |tag-function|
+---
+---@return table[]|vim.NIL tags A list of matching tags, or `vim.NIL` to use the built-in tags.
 local function tagfunc(pattern, flags)
   -- avoid definition/symbol queries for insert completion
   if string.match(flags, 'i') then

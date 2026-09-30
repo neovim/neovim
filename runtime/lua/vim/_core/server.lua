@@ -37,7 +37,7 @@ function M.serverlist(opts, addrs)
   if want_info then
     local self_pid = vim.fn.getpid()
     local self_active = vim.v.useractive
-    peers = vim.tbl_map(function(addr) ---@param addr vim.ServerInfo
+    peers = vim.tbl_map(function(addr)
       return {
         addr = addr,
         pid = self_pid,

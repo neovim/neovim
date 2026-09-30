@@ -762,9 +762,9 @@ local function check_sysinfo()
   vim.health.start('System Info')
 
   -- Use :version because `vim.version().build` returns "Homebrew" for brew installs.
-  local version_out = vim.api.nvim_exec2('version', { output = true }).output
+  local version_out = vim.api.nvim_exec2('version', { output = true }).output --[[@as string]]
   local nvim_version = version_out:match('NVIM (v[^\n]+)') or 'unknown'
-  local commit --[[@type string]] = (version_out:match('%+g(%x+)') or ''):sub(1, 12)
+  local commit = (version_out:match('%+g(%x+)') or ''):sub(1, 12)
 
   if vim.fn.executable('git') ~= 1 then
     vim.health.warn('Cannot check for updates: git not found')

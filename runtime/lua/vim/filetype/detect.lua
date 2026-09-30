@@ -1,3 +1,5 @@
+--- @diagnostic disable: annotation-usage-error
+
 -- Contains filetype detection functions for use in filetype.lua that are either:
 --  * used more than once or
 --  * complex (e.g. check more than one line or use conditionals).

@@ -12,7 +12,7 @@
 --- end
 --- ```
 ---
---- [vim.version()]() returns the version of the current Nvim process.
+--- [vim.version()] returns the version of the current Nvim process.
 ---
 --- VERSION RANGE SPEC [version-range]()
 ---

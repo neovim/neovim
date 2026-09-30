@@ -243,22 +243,6 @@ function vim._os_proc_children(ppid)
   return children
 end
 
---- @nodoc
---- @class vim.inspect.Opts
---- @field depth? integer
---- @field newline? string
---- @field indent? string
---- @field process? fun(item: any, path: any[]): any
-
---- Gets a human-readable representation of the given object.
----
----@see |vim.print()|
----@see https://github.com/kikito/inspect.lua
----@see https://github.com/mpeterv/vinspect
----@return string
----@overload fun(x: any, opts?: vim.inspect.Opts): string
-vim.inspect = vim.inspect
-
 do
   local startpos --- @type integer[]?
   local tdots = 0
@@ -1119,7 +1103,7 @@ function vim._expand_pat(pat, env)
     local vars = vim.fn.getcompletion(prefix .. match_part, type) --- @type string[]
     insert_keys(vim
       .iter(vars)
-      :map(function(s) ---@param s string
+      :map(function(s)
         s = s:gsub('[()]+$', '') -- strip '(' and ')' for function completions
         return s:sub(#prefix + 1) -- strip the prefix, e.g., 'g:foo' => 'foo'
       end)

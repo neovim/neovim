@@ -329,6 +329,8 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
     or (api.nvim_buf_line_count(buf) - ((replace_last or cr or append) and 1 or 0))
   local curline = (cr or append) and api.nvim_buf_get_lines(buf, row, row + 1, false)[1]
   col = mark[2] or (append and not cr and math.min(col, #curline) or 0)
+  --- EmmyLuaLs/emmylua-analyzer-rust#1269
+  --- @type integer, integer, integer
   local start_row, start_col, lines = row, col, o.lines
 
   local function set_target_pos()
