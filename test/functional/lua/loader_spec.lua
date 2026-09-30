@@ -137,9 +137,11 @@ describe('vim.loader', function()
         local timer = vim.uv.new_timer()
         local result
         timer:start(0, 0, function()
-          result = { pcall(function()
-            return assert(loadfile(path))(), assert(loadfile(path))()
-          end) }
+          result = {
+            pcall(function()
+              return assert(loadfile(path))(), assert(loadfile(path))()
+            end),
+          }
           timer:close()
         end)
         assert(vim.wait(1000, function()
