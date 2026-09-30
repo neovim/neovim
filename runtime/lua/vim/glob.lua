@@ -199,7 +199,7 @@ local function add_cond(a, b)
 end
 
 --- Expands patterns handling segment boundaries
---- `#` prefix is added for sub-grammar to detect in-segment flag
+--- Pass the in-segment flag separately from the glob text.
 ---
 ---@param a (any[]|vim.lpeg.Pattern[]) Array of patterns
 ---@param b string Tail string
@@ -207,10 +207,7 @@ end
 ---@return vim.lpeg.Pattern #Expanded pattern
 local function expand(a, b, inseg)
   for i = 1, #a do
-    if inseg then
-      a[i] = '#' .. a[i]
-    end
-    a[i] = g:match(a[i] .. b)
+    a[i] = g:match(a[i] .. b, 1, inseg or false)
   end
   local res = a[1]
   for i = 2, #a do
@@ -300,7 +297,7 @@ local opt_tail = re.compile [[
 --- Main grammar for glob pattern matching
 g = {
   'Glob',
-  Glob     = (m.P'#' * m.Cg(m.Cc(true), 'inseg') + m.Cg(m.Cc(false), 'inseg')) *
+  Glob     = m.Cg(m.Carg(1), 'inseg') *
              m.Cf(m.V'Element'^-1 * (slash * m.V'Element')^0 * (slash^-1 * eof), mt.__mul),
   -- Elements handle segments, globstar patterns
   Element  = m.V'DSeg' + m.V'DSEnd' + m.Cf(m.V'Segment' * (slash * m.V'Segment')^0 * (slash * eof + eof^-1), mt.__mul),
@@ -369,7 +366,7 @@ g = m.P(g)
 ---@param pattern string The raw glob pattern
 ---@return vim.lpeg.Pattern #An |lua-lpeg| representation of the pattern
 function M.to_lpeg(pattern)
-  local lpeg_pattern = g:match(pattern) --[[@as vim.lpeg.Pattern?]]
+  local lpeg_pattern = g:match(pattern, 1, false) --[[@as vim.lpeg.Pattern?]]
   assert(lpeg_pattern, string.format('Invalid glob: %s', pattern))
   return lpeg_pattern
 end
