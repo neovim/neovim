@@ -1305,6 +1305,7 @@ describe('messages2', function()
       /even                              [2/2]             |
     ]])
   end)
+
   it('crops long messages to make place for ruler', function()
     command('set noruler | echo "-"->repeat(&columns)')
     screen:expect([[
