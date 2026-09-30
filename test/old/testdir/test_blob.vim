@@ -827,6 +827,10 @@ func Test_blob_repeat()
   call assert_equal(0z, repeat(0z1234, 0))
   call assert_equal(0z1234, repeat(0z1234, 1))
   call assert_equal(0z12341234, repeat(0z1234, 2))
+
+  " Overflow test
+  call assert_fails('call repeat(0z010203040506, 715827883)', 'E1510:')
+  call assert_fails('call repeat(0z12, 4294967297)', 'E1510:')
 endfunc
 
 " Test for blob allocation failure
