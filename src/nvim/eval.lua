@@ -10841,7 +10841,6 @@ M.funcs = {
       {expr} is a String or a Blob.
 
     ]=],
-    fast = true,
     name = 'sha256',
     params = { { 'expr', 'string' } },
     returns = 'string',

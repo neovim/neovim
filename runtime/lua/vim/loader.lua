@@ -1,6 +1,6 @@
 local fs = vim.fs -- "vim.fs" is a dependency, so must be loaded early.
 local uv = vim.uv
-local sha256 = vim.fn.sha256
+local uri_encode = vim.uri_encode --- @type function
 
 --- @type (fun(modename: string): fun()|string)[]
 local loaders = package.loaders
@@ -126,7 +126,8 @@ local function cache_filename(name)
     name = name:match('(/usr/.*)') or name
   end
 
-  return ('%s/%s.luac'):format(M.path, sha256(name))
+  local ret = ('%s/%s'):format(M.path, uri_encode(name, 'rfc2396'))
+  return ret:sub(-4) == '.lua' and (ret .. 'c') or (ret .. '.luac')
 end
 
 --- Saves the cache entry for a given module or file
@@ -134,7 +135,12 @@ end
 --- @param hash vim.loader.CacheHash
 --- @param chunk function
 local function write_cachefile(cname, hash, chunk)
-  local f = assert(uv.fs_open(cname, 'w', 438))
+  local f, err, errname = uv.fs_open(cname, 'w', 438)
+  if not f and errname == 'ENAMETOOLONG' then
+    -- Cache filenames may exceed filesystem limits even when source paths do not.
+    return
+  end
+  assert(f, err)
   local header = {
     VERSION,
     hash.size,
