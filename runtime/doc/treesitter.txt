@@ -1577,6 +1577,21 @@ This Lua |treesitter-query| interface allows you to create queries and use
 them to parse text. See |vim.treesitter.query.parse()| for a working example.
 
 
+*TSQuery*
+    Extends: |userdata|
+
+    Reference to an object held by the treesitter library that is used as a
+    component of the |vim.treesitter.Query| for language feature support. See
+    |treesitter-query| for more about queries or
+    |vim.treesitter.query.parse()| for an example of how to obtain a query
+    object.
+
+    Fields: ~
+      • {disable_capture}  (`fun(self: TSQuery, capture_name: string)`) See
+                           |TSQuery:disable_capture()|.
+      • {disable_pattern}  (`fun(self: TSQuery, pattern_index: integer)`) See
+                           |TSQuery:disable_pattern()|.
+
 *vim.treesitter.Query*
     Parsed query, see |vim.treesitter.query.parse()|
 
@@ -1870,25 +1885,6 @@ set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
       • {lang}        (`string`) Language to use for the query
       • {query_name}  (`string`) Name of the query (e.g., "highlights")
       • {text}        (`string`) Query text (unparsed).
-
-
-
-
-*TSQuery*
-    Extends: |userdata|
-
-    Reference to an object held by the treesitter library that is used as a
-    component of the |vim.treesitter.Query| for language feature support. See
-    |treesitter-query| for more about queries or
-    |vim.treesitter.query.parse()| for an example of how to obtain a query
-    object.
-
-    Fields: ~
-      • {disable_capture}  (`fun(self: TSQuery, capture_name: string)`) See
-                           |TSQuery:disable_capture()|.
-      • {disable_pattern}  (`fun(self: TSQuery, pattern_index: integer)`) See
-                           |TSQuery:disable_pattern()|.
-
 
 TSQuery:disable_capture({capture_name})            *TSQuery:disable_capture()*
     Disable a specific capture in this query; once disabled the capture cannot

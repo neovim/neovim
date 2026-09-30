@@ -380,6 +380,20 @@ run({func}, {...})                                           *vim.async.run()*
     Return: ~
         (`vim.async.Task<R...>`)
 
+semaphore({permits})                                   *vim.async.semaphore()*
+    Create an async semaphore that allows up to a given number of
+    acquisitions.
+
+    Prefer |Semaphore:with()| for most uses so permits are released reliably.
+    Use |Semaphore:acquire()| and |Semaphore:release()| directly only when the
+    acquire and release points cannot be expressed as one function call.
+
+    Parameters: ~
+      • {permits}  (`integer?`) (default: 1)
+
+    Return: ~
+        (`vim.async.Semaphore`)
+
 Semaphore:acquire()                                      *Semaphore:acquire()*
     Acquire a semaphore permit.
 

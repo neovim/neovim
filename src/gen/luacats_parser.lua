@@ -58,6 +58,17 @@ local luacats_grammar = require('gen.luacats_grammar') * vim.lpeg.Cp()
 --- @field last_doc_item? nvim.luacats.parser.param|nvim.luacats.parser.return|nvim.luacats.parser.note
 --- @field last_doc_item_indent? integer
 
+--- @class nvim.luacats.parser.module
+--- @field name string Module name inferred from the path, used to resolve require().
+--- @field modvar? string
+--- @field class? nvim.luacats.parser.class Class of the returned module table.
+--- @field requires table<string,string> Module fields assigned directly from require(), keyed by field name.
+--- @field imports table<string,nvim.luacats.parser.module> Bindings linked by resolve_modules().
+--- @field parent? nvim.luacats.parser.module Module whose returned class is this module class's parent.
+--- @field callable? nvim.luacats.parser.fun Returned function or the returned table's __call.
+--- @field assignments table<string,true> Field assignments (`M.name = ...`), including unannotated ones.
+--- @field funs nvim.luacats.parser.fun[]
+
 --- @alias nvim.luacats.parser.obj
 --- | nvim.luacats.parser.class
 --- | nvim.luacats.parser.fun
@@ -409,20 +420,9 @@ end
 local function determine_modvar(str)
   local modvar --- @type string?
   for line in vim.gsplit(str, '\n') do
-    do
-      --- @type string?
-      local m = line:match('^return%s+([a-zA-Z_]+)')
-      if m then
-        modvar = m
-      end
-    end
-    do
-      --- @type string?
-      local m = line:match('^return%s+setmetatable%(([a-zA-Z_]+),')
-      if m then
-        modvar = m
-      end
-    end
+    modvar = line:match('^return%s+setmetatable%s*%(%s*([%w_]+)%s*,')
+      or line:match('^return%s+([%w_]+)')
+      or modvar
   end
   return modvar
 end
@@ -495,6 +495,16 @@ function M.parse_str(str, filename)
   local module = filename:match('.*/lua/([a-z_][a-z0-9_/]+)%.lua') or filename
   module = module:gsub('/', '.')
 
+  --- @type nvim.luacats.parser.module
+  local module_info = {
+    name = module,
+    modvar = mod_return,
+    requires = {},
+    imports = {},
+    assignments = {},
+    funs = funs,
+  }
+
   local classvars = {} --- @type table<string,string>
 
   local state = {} --- @type nvim.luacats.parser.State
@@ -503,12 +513,20 @@ function M.parse_str(str, filename)
   local uncommitted = {} --- @type nvim.luacats.parser.obj[]
 
   local comments = {}
+  local in_module_metatable = false
   for line in vim.gsplit(str, '\n') do
     local has_indent = line:match('^%s+') ~= nil
     line = vim.trim(line)
     if vim.startswith(line, '---') then
       comments[#comments + 1] = use_type_alt(line:sub(4):gsub('^%s+@', '@'))
     else
+      -- Recognize the returned module's inline metatable at file scope.
+      if not has_indent and line ~= '' and not vim.startswith(line, '--') then
+        local target = line:match('^setmetatable%s*%(%s*([%w_]+)%s*,%s*{')
+          or line:match('^return%s+setmetatable%s*%(%s*([%w_]+)%s*,%s*{')
+        in_module_metatable = target ~= nil and target == mod_return
+      end
+
       if #comments > 0 then
         local comment = table.concat(comments, '\n') .. '\n'
         local pos = 1
@@ -523,12 +541,36 @@ function M.parse_str(str, filename)
       end
       add_doc_lines_to_obj(state)
 
+      if not has_indent then
+        local parent, name, value = line:match('^([%w_]+)%.([%w_]+)%s*=%s*(.*)$')
+        if parent == mod_return and name then
+          module_info.assignments[name] = true
+          local _, required, tail = value:match([[^require%s*%(%s*(['"])([^'"]+)%1%s*%)%s*(.*)$]])
+          module_info.requires[name] = required and (tail == '' or tail:match('^%-%-')) and required
+            or nil
+        end
+      end
+
       if state.cur_obj then
         state.cur_obj.modvar = mod_return
         state.cur_obj.module = module
       end
 
-      process_lua_line(line, state, classes, classvars, has_indent)
+      -- Keep the callable declaration separate from the table's member functions.
+      local returned = line:match('^local%s+function%s+([%w_]+)%s*%(')
+      local callable_name = returned
+      if in_module_metatable and line:match('^__call%s*=%s*function%s*%(') then
+        in_module_metatable = false
+        returned = mod_return
+        callable_name = '__call'
+      end
+      if returned and returned == mod_return and state.cur_obj then
+        state.cur_obj.name = callable_name
+        module_info.callable = state.cur_obj
+        state.cur_obj = nil
+      else
+        process_lua_line(line, state, classes, classvars, has_indent)
+      end
 
       -- Commit the object
       local cur_obj = state.cur_obj
@@ -543,9 +585,51 @@ function M.parse_str(str, filename)
     end
   end
 
+  if mod_return then
+    module_info.class = classes[classvars[mod_return]]
+  end
+
   -- dump_uncommitted(filename, uncommitted)
 
-  return classes, funs, briefs, uncommitted
+  return classes, funs, briefs, uncommitted, module_info
+end
+
+--- Connect separately parsed modules by filling their `imports` and `parent` fields.
+--- Call after parsing all input files, passing their module records keyed by module name.
+---
+--- For example, the Lua source file pkg/child.lua contains:
+--- ```lua
+--- --- @class Child: Base
+--- local M = {}
+--- M.factory = require('pkg.factory')
+--- return M
+--- ```
+--- The caller stores the parsed record for this file in `modules['pkg.child']`.
+--- That record describes M, the table returned by the source file:
+--- - `requires.factory` contains the string 'pkg.factory'. This function fills
+---   `imports.factory` with `modules['pkg.factory']`, the parsed record for that file.
+--- - `class.parent` contains the string 'Base'. This function fills `parent` with
+---   the parsed record of the module whose returned table is annotated `@class Base`.
+---
+--- Each link points to the original parsed module; a missing target leaves it nil.
+--- The string names in `requires` and `class.parent` are retained. No declarations
+--- are copied, renamed or hidden.
+--- @param modules table<string,nvim.luacats.parser.module> Parsed modules keyed by require path.
+function M.resolve_modules(modules)
+  local by_class = {} --- @type table<string,nvim.luacats.parser.module>
+  for _, module in pairs(modules) do
+    if module.class then
+      by_class[module.class.name] = module
+    end
+  end
+
+  for _, module in pairs(modules) do
+    module.imports = {}
+    for name, required in pairs(module.requires) do
+      module.imports[name] = modules[required]
+    end
+    module.parent = module.class and by_class[module.class.parent] or nil
+  end
 end
 
 --- @param filename string

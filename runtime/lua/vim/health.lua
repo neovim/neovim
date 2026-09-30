@@ -144,6 +144,8 @@ local function filepath_to_healthcheck(path)
       :find(function(dir)
         return vim.fs.relpath(dir, path)
       end)
+    -- The healthcheck path came from nvim_get_runtime_file(), so a runtime directory must match.
+    assert(rtp_lua)
     -- "/path/to/rtp/lua/foo/bar/health.lua" => "foo/bar/health.lua"
     -- "/another/rtp/lua/baz/health/init.lua" => "baz/health/init.lua"
     local subpath = path:gsub('^' .. vim.pesc(rtp_lua), ''):gsub('^/+', '')

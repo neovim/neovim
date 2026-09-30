@@ -55,7 +55,7 @@ local function check_line(line)
         { details = true }
       ))
       :filter(function(extmark)
-        return not extmark[4].invalid
+        return not assert(extmark[4]).invalid
       end)
       :totable()
 

@@ -71,7 +71,7 @@
 --- @overload fun<T>(src: T[]): vim.IterArray<T, never>
 --- @overload fun<K, V>(src: table<K, V>): vim.Iter<K, V>
 --- @overload fun(src: table, ...): vim.Iter<any, any...>
---- @overload fun(src: function, ...): vim.Iter<any, any...>
+--- @overload fun<S, C, R1, R...>(src: (fun(state: S, control: C): R1, R...), state?: S, control?: C): vim.Iter<R1, R...>
 local M = {}
 
 --- @nodoc
@@ -440,7 +440,7 @@ function Iter:each(f)
   end
 end
 
---- @private
+--- @nodoc
 --- @param f fun(v: V1, ...: V...)
 function IterArray:each(f)
   local inc = self._head < self._tail and 1 or -1
@@ -475,8 +475,6 @@ end
 ---
 ---
 --- @since 12
---- @overload fun<T>(self: vim.Iter<T, never>): T[]
---- @overload fun<V1, V2, V...>(self: vim.Iter<V1, V2, V...>): [V1, V2, V...][]
 --- @return any[]
 function Iter:totable()
   local t = {}
@@ -493,8 +491,6 @@ function Iter:totable()
 end
 
 --- @nodoc
---- @overload fun<T>(self: vim.IterArray<T, never>): T[]
---- @overload fun<V1, V2, V...>(self: vim.IterArray<V1, V2, V...>): [V1, V2, V...][]
 --- @return any[]
 function IterArray:totable()
   if self.next ~= IterArray.next or self._head >= self._tail then
@@ -627,7 +623,7 @@ function Iter:next()
   return self._next()
 end
 
---- @package
+--- @nodoc
 --- @return V1?, V...
 function IterArray:next()
   if self._head ~= self._tail then
@@ -693,7 +689,7 @@ function Iter:peek()
   return unpack(self._peeked)
 end
 
---- @private
+--- @nodoc
 --- @return V1?, V...
 function IterArray:peek()
   if self._head ~= self._tail then
@@ -723,8 +719,7 @@ end
 ---
 --- ```
 --- @since 12
---- @param f (fun(v: V1, ...: V...): boolean)|any
---- @overload fun<V1, V...>(self: vim.IterArray<V1, V...>, f: V1|fun(v: V1, ...: V...): boolean): V1?, V...
+--- @param f V1|fun(v: V1, ...: V...): any
 --- @return V1?, V...
 function Iter:find(f)
   if type(f) ~= 'function' then
@@ -862,7 +857,7 @@ function Iter:take(n)
   return self
 end
 
---- @private
+--- @nodoc
 --- @param n integer|fun(v: V1, ...: V...): boolean
 --- @return vim.IterArray<V1, V...>
 function IterArray:take(n)
@@ -997,7 +992,7 @@ function Iter:skip(n)
   return self
 end
 
---- @private
+--- @nodoc
 --- @param n integer|fun(v: V1, ...: V...): boolean
 --- @return vim.IterArray<V1, V...>
 function IterArray:skip(n)
@@ -1185,7 +1180,7 @@ function Iter:last()
   return last
 end
 
---- @private
+--- @nodoc
 --- @return V1?, V...
 function IterArray:last()
   if self._head == self._tail then
@@ -1236,7 +1231,7 @@ function Iter:enumerate()
   end)
 end
 
---- @private
+--- @nodoc
 --- @return vim.IterArray<integer, V1, V...>
 function IterArray:enumerate()
   local inc = self._head < self._tail and 1 or -1

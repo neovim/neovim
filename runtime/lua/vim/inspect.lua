@@ -1,4 +1,5 @@
---- @diagnostic disable: no-unknown
+--- @class (private) vim.InspectModule
+--- @overload fun(root: any, options?: vim.inspect.Opts): string
 local inspect = {
   _VERSION = 'inspect.lua 3.1.0',
   _URL = 'http://github.com/kikito/inspect.lua',
@@ -311,6 +312,7 @@ local function tabify(inspector)
   puts(inspector.buf, inspector.newline .. rep(inspector.indent, inspector.level))
 end
 
+--- @nodoc
 --- @param v any
 function Inspector:getId(v)
   local id = self.ids[v]
@@ -323,6 +325,7 @@ function Inspector:getId(v)
   return tostring(id)
 end
 
+--- @nodoc
 --- @param v any
 function Inspector:putValue(v)
   local buf = self.buf
@@ -407,8 +410,31 @@ function Inspector:putValue(v)
   end
 end
 
+--- @inlinedoc
+--- @class vim.inspect.Opts
+---
+--- Maximum table nesting depth. Deeper tables are shown as `{...}`.
+--- (default: unlimited)
+--- @field depth? integer
+---
+--- String used for line breaks.
+--- (default: `"\n"`)
+--- @field newline? string
+---
+--- String repeated for each level of indentation.
+--- (default: `"  "`)
+--- @field indent? string
+---
+--- Transforms values, keys, and metatables before formatting. Return a replacement value,
+--- or `nil` to omit a table entry. {path} lists the keys leading to {item}, with
+--- `vim.inspect.KEY` appended for keys or `vim.inspect.METATABLE` for metatables.
+--- The root has an empty path.
+--- @field process? fun(item: any, path: any[]): any
+
+--- @nodoc
 --- @param root any
 --- @param options? vim.inspect.Opts
+--- @return string
 function inspect.inspect(root, options)
   options = options or {}
 
@@ -440,6 +466,14 @@ function inspect.inspect(root, options)
 end
 
 setmetatable(inspect, {
+  --- Gets a human-readable representation of the given object.
+  ---
+  --- @see |vim.print()|
+  --- @see https://github.com/kikito/inspect.lua
+  --- @see https://github.com/mpeterv/vinspect
+  --- @param root any
+  --- @param options? vim.inspect.Opts
+  --- @return string
   __call = function(_, root, options)
     return inspect.inspect(root, options)
   end,

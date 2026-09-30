@@ -434,6 +434,7 @@ end
 --- |lsp-handler| for the method `workspace/codeLens/refresh`
 ---
 ---@internal
+---@diagnostic disable-next-line: annotation-usage-error
 ---@type lsp.Handler
 function M.on_refresh(err, _, ctx)
   if err then

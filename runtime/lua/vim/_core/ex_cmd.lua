@@ -189,7 +189,6 @@ function M.lsp_complete(_, line)
     local subcmd = split[2]
     return vim
       .iter(complete_args[subcmd]())
-      --- @param n string
       :map(function(n)
         return vim.fn.escape(n, ' \t')
       end)
