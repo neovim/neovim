@@ -493,6 +493,7 @@ void flush_buffers(flush_buffers_T flush_typeahead)
     atom_composite_abort();
   }
 
+  const bool discard_redo = readbuf2.keys.size > 0;
   free_buff(&readbuf1);
   free_buff(&readbuf2);
 
@@ -529,6 +530,12 @@ void flush_buffers(flush_buffers_T flush_typeahead)
   typebuf.tb_no_abbr_cnt = 0;
   if (++typebuf.tb_change_cnt == 0) {
     typebuf.tb_change_cnt = 1;
+  }
+
+  if (discard_redo) {
+    // The operator that would finish the replayed selection was discarded.
+    // Do this after cleanup: ending Visual mode may trigger ModeChanged autocommands.
+    reset_VIsual();
   }
 }
 
