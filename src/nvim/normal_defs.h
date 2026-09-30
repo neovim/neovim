@@ -99,6 +99,7 @@ typedef struct {
   int select_reg;         ///< Register name for Select mode.
   bool select_exclu_adj;  ///< Cursor was incremented during exclusive selection.
   int restart_select;     ///< Restart Select mode when next cmd finished.
+  bool need_end;          ///< End Visual mode when the cmd finishes.
   int reselect;           ///< Restart the selection after a Select-mode mapping or menu.
   int mode;               ///< Type of Visual mode: 'v', 'V', Ctrl-V.
   VisualExtent resel;     ///< Previous Visual area's extent, for {count}v reselect.
