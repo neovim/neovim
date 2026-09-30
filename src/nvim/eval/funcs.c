@@ -7421,7 +7421,7 @@ static void f_timer_pause(typval_T *argvars, typval_T *unused, EvalFuncData fptr
     return;
   }
 
-  int paused = (bool)tv_get_number(&argvars[1]);
+  bool paused = (bool)tv_get_bool(&argvars[1]);
   timer_T *timer = find_timer_by_nr(tv_get_number(&argvars[0]));
   if (timer != NULL) {
     if (!timer->paused && paused) {
