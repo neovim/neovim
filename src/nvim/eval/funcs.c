@@ -7072,7 +7072,7 @@ static void f_submatch(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   int retList = 0;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    retList = (int)tv_get_number_chk(&argvars[1], &error);
+    retList = (int)tv_get_bool_chk(&argvars[1], &error);
     if (error) {
       return;
     }
