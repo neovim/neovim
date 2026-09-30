@@ -1292,7 +1292,9 @@ describe('messages2', function()
   end)
 
   it('search offset with semicolon #41929', function()
-    command('set shortmess-=S | call setline(1, ["odd line", "even line", "odd line", "even line"])')
+    command(
+      'set shortmess-=S | call setline(1, ["odd line", "even line", "odd line", "even line"])'
+    )
     feed('/even/;/even<CR>')
     screen:expect([[
       odd line                                             |
