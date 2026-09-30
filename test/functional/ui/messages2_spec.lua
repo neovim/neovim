@@ -651,6 +651,28 @@ describe('messages2', function()
     ]])
   end)
 
+  it('routes a prompt after an empty message to the dialog #42154', function()
+    screen:try_resize(71, screen._height)
+    exec_lua(function()
+      require('vim._core.ui2').enable({ msg = { targets = 'msg' } })
+      vim.keymap.set('n', '<CR>', function()
+        vim.fn.inputlist({ 'item 1', 'item 2', 'item 3' })
+      end)
+    end)
+    feed(':<Esc>')
+    feed('<CR>')
+    screen:expect([[
+                                                                             |
+      {1:~                                                                      }|*8
+      {3:                                                                       }|
+      item 1                                                                 |
+      item 2                                                                 |
+      item 3                                                                 |
+      Type number and <Enter> (q or empty cancels): ^                         |
+    ]])
+    feed('<Esc>')
+  end)
+
   it('paging prompt dialog #35191', function()
     screen:try_resize(71, screen._height)
     -- Don't consume <Esc> when paging is not necessary.

@@ -1480,6 +1480,24 @@ stack traceback:
     })
   end)
 
+  it('keeps command messages non-fast around empty chunks', function()
+    local events = exec_lua(function()
+      local events = {}
+      local ns = vim.api.nvim_create_namespace('')
+      vim.ui_attach(ns, { ext_messages = true }, function(event, kind)
+        if event == 'msg_show' then
+          events[#events + 1] = { kind, vim.in_fast_event() }
+          return true
+        end
+      end)
+      vim.api.nvim_echo({ { 'first' }, { '' }, { 'last' } }, false, {})
+      vim.cmd([[echo '' 'second']])
+      vim.ui_detach(ns)
+      return events
+    end)
+    eq({ { 'empty', false }, { 'echo', false }, { 'empty', false }, { 'echo', false } }, events)
+  end)
+
   it('ruler redraw does not crash due to double grid_line_start()', function()
     exec_lua([[
       local ns = vim.api.nvim_create_namespace('')
