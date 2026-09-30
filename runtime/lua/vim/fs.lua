@@ -354,7 +354,7 @@ function M.find(names, opts)
 
   if opts.upward then
     if path == stop then
-      return matches, errors
+      return matches
     end
 
     local test --- @type fun(p: string): string[]
