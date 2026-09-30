@@ -99,6 +99,7 @@ struct stl_item {
     Expression,
     Highlight,
     HighlightCombining,
+    HighlightScope,
     HighlightSign,
     HighlightFold,
     TabPage,
