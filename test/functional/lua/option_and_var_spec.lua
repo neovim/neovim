@@ -878,6 +878,43 @@ describe('lua stdlib', function()
           eq('*.c', wildignore[1])
         end)
 
+        it('preserves escaped commas when copying errorformat #19949', function()
+          local global = eval('&g:errorformat')
+          exec_lua('vim.opt_local.errorformat = vim.opt_global.errorformat:get()')
+          eq(global, eval('&l:errorformat'))
+
+          local formats = { [[%f\, line %l: %m]], '%f:%l:%m' }
+          eq(
+            formats,
+            exec_lua(function(formats)
+              vim.opt_global.errorformat = formats
+              return vim.opt_global.errorformat:get()
+            end, formats)
+          )
+          exec_lua('vim.opt_local.errorformat = vim.opt_global.errorformat:get()')
+          eq(table.concat(formats, ','), eval('&l:errorformat'))
+          local items = fn.getqflist({
+            lines = { 'test.c, line 12: message', 'test.c:34:another message' },
+            efm = eval('&l:errorformat'),
+          }).items
+          eq({ 12, 34 }, { items[1].lnum, items[2].lnum })
+          eq({ 'message', 'another message' }, { items[1].text, items[2].text })
+          eq({ 1, 1 }, { items[1].valid, items[2].valid })
+        end)
+
+        it('roundtrips escaped commas in list options', function()
+          local items = { [[foo\,bar]], [[baz\\\,qux]] }
+          eq(
+            items,
+            exec_lua(function(items)
+              vim.opt.wildignore = items
+              return vim.opt.wildignore:get()
+            end, items)
+          )
+          exec_lua('vim.opt.wildignore = vim.opt.wildignore:get()')
+          eq(table.concat(items, ','), eval('&wildignore'))
+        end)
+
         it('works for array list type options', function()
           eq_exec_lua({ eol = '~', space = '-' }, function()
             vim.opt.listchars = { 'eol:~', 'space:-' }

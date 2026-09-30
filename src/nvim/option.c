@@ -3732,7 +3732,10 @@ Object optval_to_obj(OptIndex opt_idx, Object value, Arena *arena)
       if (!as_map) {
         // Note: the raw string preserves the ",," literal-comma convention (e.g. 'isfname'); the
         // structured view splits on every comma and does not reconstruct literal commas.
-        ADD_C(a, STRING_OBJ(CSTR_TO_ARENA_STR(arena, item)));
+        // List items use option syntax, so retain escapes removed by copy_option_part().
+        char *escaped = vim_strsave_escaped(item, ",");
+        ADD_C(a, STRING_OBJ(CSTR_TO_ARENA_STR(arena, escaped)));
+        xfree(escaped);
         continue;
       }
       char *colon = strchr(item, ':');
