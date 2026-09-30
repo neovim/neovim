@@ -151,6 +151,7 @@ function M.request(method, url, opts, on_response)
 
   local system_opts = opts.body and { stdin = opts.body } or {}
   local job = vim.system(args, system_opts, function(res)
+    --- @cast res.stdout -?
     ---@type string?, vim.net.request.Response?
     local err, response = nil, nil
     if res.signal ~= 0 then

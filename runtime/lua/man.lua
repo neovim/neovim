@@ -8,7 +8,7 @@ local M = {}
 --- @param env? table<string,string|number>
 --- @return string
 local function system(cmd, silent, env)
-  if fn.executable(cmd[1]) == 0 then
+  if fn.executable(assert(cmd[1])) == 0 then
     error(string.format('executable not found: "%s"', cmd[1]), 0)
   end
 
@@ -158,7 +158,7 @@ local function render_line(line, row, hls)
           --- @type string?, string?
           match, sgr = sgr:match('^(%d*);?(.*)')
           -- Both captures match even when empty, so this pattern cannot fail.
-          add_attr_hl(assert(match) + 0) -- coerce to number
+          add_attr_hl(vim._assert_integer(match))
         end
         escape = false
       elseif prev_char == ']8;' then
@@ -736,7 +736,7 @@ local function ref_from_args(args)
 end
 
 --- @param count integer
---- @param smods vim.api.keyset.cmd.mods
+--- @param smods vim.api.keyset.cmd_mods
 --- @param args string[]
 --- @return string? err
 function M.open_page(count, smods, args)

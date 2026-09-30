@@ -164,6 +164,7 @@ local function get_node(range, top_node, parent_chain)
       for _, child_tree in ipairs(child:trees()) do
         for _, child_region in ipairs(tree_get_ranges(child_tree)) do
           local child_root_node_range = { child_tree:root():range() }
+          --- @cast child_root_node_range Range4
           local child_range = Range.intersection(child_region, child_root_node_range)
 
           local child_top_node = create_top_node(child_tree, child_region, child)
@@ -299,6 +300,7 @@ local function node_get_children_no_normalize(node)
     for _, child_tree in ipairs(child:trees()) do
       for _, child_region in ipairs(tree_get_ranges(child_tree)) do
         local child_root_node_range = { child_tree:root():range() }
+        --- @cast child_root_node_range Range4
         local child_range = Range.intersection(child_region, child_root_node_range)
 
         if child_range and Range.contains(node_range(node), child_range) then
@@ -352,7 +354,6 @@ local function get_selection()
   local pos1 = vim.fn.getpos('v')
   local pos2 = vim.fn.getpos('.')
   if pos1[2] > pos2[2] or (pos1[2] == pos2[2] and pos1[3] > pos2[3]) then
-    --- @type Range4,Range4
     pos1, pos2 = pos2, pos1
   end
 

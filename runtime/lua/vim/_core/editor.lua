@@ -228,7 +228,7 @@ function vim._os_proc_children(ppid)
   if ppid == nil or ppid <= 0 or type(ppid) ~= 'number' then
     error('invalid ppid')
   end
-  local cmd = { 'pgrep', '-P', ppid }
+  local cmd = { 'pgrep', '-P', tostring(ppid) }
   local r = vim.system(cmd):wait()
   local stdout = assert(r.stdout)
   if r.code == 1 and vim.trim(stdout) == '' then
@@ -260,7 +260,12 @@ end
 vim.inspect = vim.inspect
 
 do
-  local startpos, tdots, tick, got_line1, undo_started, trailing_nl = nil, 0, 0, false, false, false
+  local startpos --- @type integer[]?
+  local tdots = 0
+  local tick = 0
+  local got_line1 = false
+  local undo_started = false
+  local trailing_nl = false
 
   --- Paste handler, invoked by |nvim_paste()|.
   ---
@@ -611,7 +616,7 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   -- in case of block selection, columns need to be adjusted for non-ASCII characters
   -- TODO: handle double-width characters
   if regtype:byte() == 22 then
-    local bufline = vim.api.nvim_buf_get_lines(bufnr, pos1[1], pos1[1] + 1, true)[1]
+    local bufline = assert(vim.api.nvim_buf_get_lines(bufnr, pos1[1], pos1[1] + 1, true)[1])
     pos1[2] = vim.str_utfindex(bufline, 'utf-32', pos1[2])
   end
 
@@ -623,7 +628,7 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
       c1 = pos1[2]
       c2 = c1 + vim._assert_integer(regtype:sub(2))
       -- and adjust for non-ASCII characters
-      local bufline = vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1]
+      local bufline = assert(vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1])
       local utflen = vim.str_utfindex(bufline, 'utf-32', #bufline)
       if c1 <= utflen then
         c1 = vim.str_byteindex(bufline, 'utf-32', c1)
@@ -641,7 +646,7 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
     else
       c1 = (l == pos1[1]) and pos1[2] or 0
       if inclusive and l == pos2[1] then
-        local bufline = vim.api.nvim_buf_get_lines(bufnr, pos2[1], pos2[1] + 1, true)[1]
+        local bufline = assert(vim.api.nvim_buf_get_lines(bufnr, pos2[1], pos2[1] + 1, true)[1])
         pos2[2] = vim.fn.byteidx(bufline, vim.fn.charidx(bufline, pos2[2]) + 1)
       end
       c2 = (l == pos2[1]) and pos2[2] or -1
@@ -1354,7 +1359,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
   local f_silent = false
   local f_tab = false
 
-  local subcmd = string.sub(args[1], 10)
+  local subcmd = assert(args[1]):sub(10)
   if subcmd == 'tab' then
     f_tab = true
   elseif subcmd == 'silent' then

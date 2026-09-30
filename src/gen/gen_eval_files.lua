@@ -26,6 +26,7 @@ local TEXT_WIDTH = 78
 --- @field since integer
 
 local LUA_API_RETURN_OVERRIDES = {
+  nvim_parse_cmd = 'vim.api.keyset.cmd_ret',
   nvim_win_get_config = 'vim.api.keyset.win_config_ret',
 }
 

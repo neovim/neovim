@@ -78,8 +78,7 @@ local function restore_extmarks(bufnr, last)
 
     for _, extmark in ipairs(extmarks) do
       if not found[extmark[1]] then
-        local opts = extmark[4]
-        --- @diagnostic disable-next-line: inject-field
+        local opts = extmark[4] --[[@as vim.api.keyset.set_extmark]]
         opts.id = extmark[1]
         pcall(api.nvim_buf_set_extmark, bufnr, ns, extmark[2], extmark[3], opts)
       end
@@ -156,7 +155,7 @@ local function show_once_loaded(autocmd_key, ns, bufnr, fn)
 end
 
 --- @param priority integer
---- @param opts? { severity_sort?: {reverse?:boolean} }
+--- @param opts? { severity_sort?: boolean|{reverse?:boolean} }
 --- @return fun(severity: vim.diagnostic.Severity): integer
 local function severity_to_extmark_priority(priority, opts)
   opts = opts or {}

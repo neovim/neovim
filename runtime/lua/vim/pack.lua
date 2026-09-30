@@ -337,7 +337,7 @@ local function git_ensure_exec()
   if not ok then
     error('No `git` executable')
   end
-  git_version = vim.version.parse(sys:wait().stdout) --[[@as vim.Version]]
+  git_version = vim.version.parse(assert(sys:wait().stdout)) --[[@as vim.Version]]
 end
 
 --- @async
@@ -869,7 +869,7 @@ local function checkout(p, timestamp, skip_stash)
 end
 
 --- @param plug_list vim.pack.Plug[]
---- @param confirm boolean
+--- @param confirm? boolean
 local function install_list(plug_list, confirm)
   local timestamp = get_timestamp()
   --- @async
@@ -954,7 +954,7 @@ local function infer_update_details(p)
 end
 
 --- @param plug vim.pack.Plug
---- @param load boolean|fun(plug_data: {spec: vim.pack.Spec, path: string})
+--- @param load? boolean|fun(plug_data: {spec: vim.pack.Spec, path: string})
 local function pack_add(plug, load)
   -- Add plugin only once, i.e. no overriding of spec. This allows users to put
   -- plugin first to fully control its spec.
@@ -966,7 +966,7 @@ local function pack_add(plug, load)
   active_plugins[plug.path] = { plug = plug, id = n_active_plugins }
 
   if vim.is_callable(load) then
-    ---@cast load -boolean
+    ---@cast load -boolean, -nil
     load({ spec = vim.deepcopy(plug.spec), path = plug.path })
     return
   end
@@ -1028,7 +1028,7 @@ end
 --- - Repair corrupted lock data for installed plugins.
 --- - Remove unrepairable corrupted lock data and plugins.
 --- @param confirm boolean
---- @param specs vim.pack.Spec[] Plugin specs provided by the user. Can contain
+--- @param specs (string|vim.pack.Spec)[] Plugin specs provided by the user. Can contain
 --- fields outside of what is in the lockfile to be passed down to events.
 local function lock_sync(confirm, specs)
   if type(plugin_lock.plugins) ~= 'table' then
@@ -1120,7 +1120,7 @@ local function lock_sync(confirm, specs)
 end
 
 --- @param confirm? boolean
---- @param specs? vim.pack.Spec[]
+--- @param specs? (string|vim.pack.Spec)[]
 local function lock_read(confirm, specs)
   if plugin_lock then
     return
@@ -1137,7 +1137,7 @@ local function lock_read(confirm, specs)
     plugin_lock = { plugins = {} }
   end
 
-  lock_sync(vim.nonnil(confirm, true), vim.nonnil(specs, {}))
+  lock_sync(confirm ~= false, specs or {})
 end
 
 --- @class vim.pack.keyset.add
@@ -1623,7 +1623,7 @@ end
 --- @field offline? boolean
 
 --- @param p_data_list vim.pack.PlugData[]
---- @param offline boolean
+--- @param offline? boolean
 local function add_p_data_info(p_data_list, offline)
   local funs = {} --- @type (async fun())[]
   local plug_dir = get_plug_dir()

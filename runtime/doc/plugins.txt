@@ -326,7 +326,8 @@ max_line_length                                 *editorconfig.max_line_length*
 root                                                       *editorconfig.root*
     If "true", then stop searching for `.editorconfig` files in parent
     directories. This property must be at the top-level of the `.editorconfig`
-    file (i.e. it must not be within a glob section).
+    file (i.e. it must not be within a glob section). It only controls the
+    search and is excluded from property callbacks and |b:editorconfig|.
 
 spelling_language                             *editorconfig.spelling_language*
     A code of the format ss or ss-TT, where ss is an ISO 639 language code and
@@ -350,30 +351,32 @@ Asks the user to download missing spellfiles. The spellfile is written to
 The plugin can be disabled by setting `g:loaded_spellfile_plugin = 1`.
 
 
-*nvim.spellfile.Opts*
+*nvim.spellfile.Config*
     A table with the following fields:
 
     Fields: ~
-      • {confirm}?     (`boolean`, default: `true`) Whether to ask user to
-                       confirm download.
-      • {timeout_ms}?  (`integer`, default: 15000) Number of milliseconds
-                       after which the |vim.net.request()| times out.
-      • {url}?         (`string`) The base URL from where the spellfiles are
-                       downloaded. Uses `g:spellfile_URL` if it's set,
-                       otherwise https://ftp.nluug.nl/pub/vim/runtime/spell.
+      • {confirm}     (`boolean`, default: `true`) Whether to ask user to
+                      confirm download.
+      • {timeout_ms}  (`integer`, default: 15000) Number of milliseconds after
+                      which the |vim.net.request()| times out.
+      • {url}         (`string`) The base URL from where the spellfiles are
+                      downloaded. Uses `g:spellfile_URL` if it's set,
+                      otherwise https://ftp.nluug.nl/pub/vim/runtime/spell.
 
 
 config({opts})                                            *spellfile.config()*
-    Configure spellfile download options. For example: >lua
+    Configure spellfile download options. Omit {opts} to retrieve the current
+    configuration. Otherwise, update only the supplied fields.
+
+    For example: >lua
         require('nvim.spellfile').config({ url = '...' })
 <
 
     Parameters: ~
-      • {opts}  (`nvim.spellfile.Opts?`) When omitted or `nil`, retrieve the
-                current configuration. Otherwise, a configuration table.
+      • {opts}  (`Partial<nvim.spellfile.Config>?`)
 
     Return: ~
-        (`nvim.spellfile.Opts?`) Current config if {opts} is omitted.
+        (`nvim.spellfile.Config?`) Current config if {opts} is omitted.
 
 get({lang})                                                  *spellfile.get()*
     Download spellfiles for language {lang} if available.

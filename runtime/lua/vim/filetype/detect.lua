@@ -909,7 +909,7 @@ end
 --- Recursively search for Hare source files in a directory and any
 --- subdirectories, up to a given depth.
 --- @param dir string
---- @param depth number
+--- @param depth integer
 --- @return boolean
 local function is_hare_module(dir, depth)
   depth = math.max(depth, 0)

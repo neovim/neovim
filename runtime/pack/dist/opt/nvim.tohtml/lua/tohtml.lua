@@ -292,7 +292,7 @@ local function _style_line_insert(style_line, col, field, val)
   if style_line[col] == nil then
     style_line[col] = { {}, {}, {}, {} }
   end
-  table.insert(style_line[col][field], val)
+  table.insert(assert(style_line[col][field]), val)
 end
 
 --- @param style_line vim.tohtml.line
@@ -646,7 +646,12 @@ local function styletable_folds(state)
       table.insert(styletable[row].virt_lines, { { foldtext, hlid } })
     end
   end
-  if has_folded and type(({ pcall(vim.api.nvim_eval, vim.o.foldtext) })[2]) == 'table' then
+  local foldtext = vim.o.foldtext
+  local foldtext_fn = type(foldtext) == 'function' and foldtext
+    or function()
+      return vim.api.nvim_eval(foldtext)
+    end
+  if has_folded and type(({ pcall(foldtext_fn) })[2]) == 'table' then
     notify('foldtext returning a table with highlights is not supported, HTML may be incorrect')
   end
 end
@@ -1296,9 +1301,9 @@ end
 --- @param title? string
 --- @return vim.tohtml.state.global
 local function opt_to_global_state(opt, title)
-  local fonts = {}
+  local fonts = {} --- @type string[]
   if opt.font then
-    fonts = type(opt.font) == 'string' and { opt.font } or opt.font --[[@as (string[])]]
+    fonts = (type(opt.font) == 'string' and { opt.font } or opt.font) --[[@as string[] ]]
     for i, v in pairs(fonts) do
       fonts[i] = ('"%s"'):format(v)
     end

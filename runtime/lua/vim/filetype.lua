@@ -2888,7 +2888,7 @@ local pattern = {
     ['/app%-defaults/'] = starsetf('xdefaults'),
     ['^Xresources'] = starsetf('xdefaults'),
     -- Increase priority to run before the pattern below
-    ['^XF86Config%-4'] = starsetf(detect.xfree86_v4, -math.huge + 1),
+    ['^XF86Config%-4'] = starsetf(detect.xfree86_v4, (-math.huge + 1) --[[@as integer]]),
     ['^XF86Config'] = starsetf(detect.xfree86_v3),
     ['Xmodmap$'] = 'xmodmap',
     ['xmodmap'] = starsetf('xmodmap'),
@@ -2970,7 +2970,7 @@ local function normalize_path(path, as_pattern)
     if as_pattern then
       -- Escape Lua's metacharacters when $HOME is used in a pattern.
       -- The rest of path should already be properly escaped.
-      normal = vim.pesc(vim.env.HOME) .. normal:sub(2)
+      normal = vim.pesc(assert(vim.env.HOME)) .. normal:sub(2)
     else
       normal = vim.env.HOME .. normal:sub(2) --- @type string
     end
@@ -3358,6 +3358,7 @@ function M.match(args)
       local ok, ft, on_detect = pcall(
         require('vim.filetype.detect').match_contents,
         contents,
+        --- @diagnostic disable-next-line: param-type-mismatch
         name,
         function(ext)
           return dispatch(extension[ext], name, bufnr)

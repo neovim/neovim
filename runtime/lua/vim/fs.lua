@@ -94,6 +94,7 @@ function M.dirname(file)
     return nil
   end
   vim.validate('file', file, 'string')
+  --- @cast file string
   local dir = vim.fn.fnamemodify(file, ':h')
   if iswin then
     return (dir:gsub(os_sep, '/'))
@@ -112,6 +113,7 @@ function M.basename(file)
     return nil
   end
   vim.validate('file', file, 'string')
+  --- @cast file string
   local name = vim.fn.fnamemodify(file, ':t')
   if iswin then
     return (name:gsub(os_sep, '/'))

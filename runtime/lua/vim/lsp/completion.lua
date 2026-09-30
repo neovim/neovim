@@ -121,7 +121,7 @@ end
 
 --- @param window integer
 --- @param warmup integer
---- @return fun(sample: integer): integer
+--- @return fun(sample: number): number
 local function exp_avg(window, warmup)
   local count = 0
   local sum = 0
@@ -157,7 +157,7 @@ end
 --- @param flag string
 --- @return boolean
 local function has_completeopt(flag)
-  return vim.list_contains(vim.opt.completeopt:get(), flag)
+  return vim.list_contains(vim.opt.completeopt:get() --[[@as string[] ]], flag)
 end
 
 --- @param s string?
@@ -260,7 +260,7 @@ local function apply_defaults(item, defaults, apply_kind)
 
   item.commitCharacters = merge
       -- No dedup, it ends up as a flat string anyway.
-      and vim.list_extend(item.commitCharacters or {}, defaults.commitCharacters)
+      and vim.list_extend(item.commitCharacters or {}, merge)
     -- An empty list means no commit chars, not use the defaults.
     or (item.commitCharacters or defaults.commitCharacters)
 
@@ -497,7 +497,7 @@ end
 --- @param server_start_boundary integer? server start boundary
 --- @param line string? current line content
 --- @param lnum integer? 0-indexed line number
---- @param encoding string? encoding
+--- @param encoding? 'utf-8'|'utf-16'|'utf-32' encoding
 --- @param default_start_byte integer? 0-indexed start byte for items without an edit range
 --- @return table[]
 --- @see complete-items
@@ -809,8 +809,8 @@ end
 --- @field bufnr integer? Buffer number for which the resolution is triggered
 --- @field word string? Word being completed
 --- @field last_request_time integer? Last request timestamp
---- @field doc_rtt_ms integer Last request timestamp
---- @field doc_compute_new_average fun(sample: integer): integer Last request timestamp
+--- @field doc_rtt_ms number Last request timestamp
+--- @field doc_compute_new_average fun(sample: number): number Last request timestamp
 local CompletionResolver = {}
 CompletionResolver.__index = CompletionResolver
 
@@ -862,7 +862,8 @@ end
 --- @return boolean, table Validity of the request and the completion info
 function CompletionResolver:is_valid()
   local cmp_info = vim.fn.complete_info({ 'selected', 'completed' })
-  return api.nvim_buf_is_valid(self.bufnr)
+  return self.bufnr ~= nil
+    and api.nvim_buf_is_valid(self.bufnr)
     and api.nvim_get_current_buf() == self.bufnr
     and vim.startswith(api.nvim_get_mode().mode, 'i')
     and vim.fn.pumvisible() ~= 0
@@ -927,12 +928,12 @@ function CompletionResolver:request(bufnr, param, selected_word)
         update_popup_window(windata.winid, windata.bufnr, kind)
       end
     end, bufnr)
-  end, debounce_time)
+  end, math.floor(debounce_time))
 end
 
 --- Defines a CompleteChanged handler to highlight the completion info popup and request/display LSP
 --- completion item documentation via completionItem/resolve
---- @param group integer
+--- @param group string
 --- @param bufnr integer
 local function on_completechanged(group, bufnr)
   nvim_on('CompleteChanged', group, {
@@ -951,7 +952,11 @@ local function on_completechanged(group, bufnr)
 
     if user_data.completion_item_needs_resolving then
       Context.resolve_handler = Context.resolve_handler or CompletionResolver.new()
-      Context.resolve_handler:request(ev.buf, user_data.completion_item, completed_item.word)
+      Context.resolve_handler:request(
+        ev.buf,
+        user_data.completion_item,
+        assert(completed_item.word)
+      )
     end
   end)
 end
@@ -1078,7 +1083,7 @@ local function register_completedone(bufnr)
 end
 
 --- @param bufnr integer
---- @param clients vim.lsp.Client[]
+--- @param clients table<integer, vim.lsp.Client>
 --- @param ctx lsp.CompletionContext
 local function trigger(bufnr, clients, ctx)
   reset_timer()

@@ -58,6 +58,7 @@ local function set_position_extmarks(bufnr, namespace)
   local buf_cache = rawget(diagnostic_cache, bufnr) --- @type table<integer,vim.Diagnostic[]?>?
   -- set extmarks at diagnostic locations to preserve logical positions despite text changes
   for _, diagnostic0 in ipairs(buf_cache and buf_cache[namespace] or {}) do
+    --- @cast diagnostic0 vim.Diagnostic
     local last_row = #lines - 1
     local row = math.max(0, math.min(diagnostic0.lnum, last_row))
     local row_len = #lines[row + 1]
@@ -209,8 +210,8 @@ function M.get_diagnostics(bufnr, opts, clamp)
     end
   elseif not namespace then
     bufnr = vim._resolve_bufnr(bufnr)
-    for iter_namespace in pairs(diagnostic_cache[bufnr]) do
-      add_all_diags(bufnr, diagnostic_cache[bufnr][iter_namespace])
+    for _, diags in pairs(diagnostic_cache[bufnr]) do
+      add_all_diags(bufnr, diags)
     end
   elseif bufnr == nil then
     for b, t in pairs(diagnostic_cache) do

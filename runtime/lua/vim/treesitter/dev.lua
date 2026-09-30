@@ -190,7 +190,7 @@ end
 --- Updates the cursor position in the inspector to match the node under the cursor.
 ---
 --- @param treeview vim.treesitter.dev.TSTreeView
---- @param lang string
+--- @param lang string?
 --- @param source_buf integer
 --- @param inspect_buf integer
 --- @param inspect_win integer

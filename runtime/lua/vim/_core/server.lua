@@ -61,6 +61,7 @@ function M.serverlist(opts, addrs)
     if not seen[socket] then
       local ok, chan = pcall(vim.fn.sockconnect, 'pipe', socket, { rpc = true })
       if ok and chan and chan > 0 then
+        --- @cast chan integer
         -- Check that the server is responding
         -- TODO: do we need a timeout or error handling here?
         local ok_rpc, peer_info = pcall(

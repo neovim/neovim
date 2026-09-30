@@ -100,7 +100,7 @@ local function runnables()
         local start, _, end_ = assert(node:parent()):range()
         local code = vim.treesitter.get_node_text(node, 0)
         local lang_id = assert(metadata[id]).lang --[[@as integer]]
-        local lang_node = match[lang_id][1]
+        local lang_node = assert(match[lang_id][1])
         local lang = vim.treesitter.get_node_text(lang_node, 0)
         for i = start + 1, end_ do
           code_blocks[i] = { lang = lang, code = code }
@@ -132,7 +132,7 @@ local url_ns = vim.api.nvim_create_namespace('nvim.help.urls')
 local function urls()
   local filepath = vim.fs.normalize(vim.api.nvim_buf_get_name(0))
 
-  if vim.fs.relpath(vim.env.VIMRUNTIME, filepath) ~= nil then
+  if vim.fs.relpath(assert(vim.env.VIMRUNTIME), filepath) ~= nil then
     local base = 'https://neovim.io/doc/user/helptag/?tag='
     local query = vim.treesitter.query.parse(
       'vimdoc',

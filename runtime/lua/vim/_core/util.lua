@@ -52,7 +52,7 @@ function M.get_buf_by_name(name)
 end
 
 --- Edit a file in a specific window
---- @param winnr number
+--- @param winnr integer
 --- @param file string
 --- @return number buffer number of the edited buffer
 M.edit_in = function(winnr, file)
@@ -84,9 +84,8 @@ end
 --- @param mods string|vim.api.keyset.cmd_mods Modifier string ("vertical") or structured mods table.
 function M.wrapped_edit(file, mods)
   if type(mods) == 'string' then
-    mods = vim.api.nvim_parse_cmd(mods .. ' edit').mods --[[@as vim.api.keyset.cmd_mods]]
+    mods = vim.api.nvim_parse_cmd(mods .. ' edit').mods
   end
-  --- @cast mods vim.api.keyset.cmd_mods
   if (mods.tab or 0) > 0 or (mods.split or '') ~= '' or mods.horizontal or mods.vertical then
     local buf = M.get_buf_by_name(file)
     if buf == nil then
@@ -99,7 +98,7 @@ end
 
 --- Read a chunk of data from a file
 --- @param file string
---- @param size number
+--- @param size integer
 --- @return string? chunk or nil on error
 function M.read_chunk(file, size)
   local fd = io.open(file, 'rb')

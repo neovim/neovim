@@ -125,6 +125,7 @@ local function new_buf_opt_accessor(bufnr)
   return setmetatable({}, {
     __index = function(_, k)
       if bufnr == nil and type(k) == 'number' then
+        --- @cast k integer
         return new_buf_opt_accessor(k)
       end
       return api.nvim_get_option_value(k, { buf = bufnr or 0 })
@@ -148,6 +149,7 @@ local function new_win_opt_accessor(winid, bufnr)
   return setmetatable({}, {
     __index = function(_, k)
       if bufnr == nil and type(k) == 'number' then
+        --- @cast k integer
         if winid == nil then
           return new_win_opt_accessor(k)
         else

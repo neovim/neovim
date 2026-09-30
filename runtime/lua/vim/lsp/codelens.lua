@@ -308,7 +308,7 @@ function M.get(filter)
       'vim.lsp.codelens.get({ bufnr = bufnr })',
       '0.13.0'
     )
-    local bufnr = vim._resolve_bufnr(filter)
+    local bufnr = vim._resolve_bufnr(filter --[[@as integer]])
     local provider = Provider.active[bufnr]
     if not provider then
       return {}

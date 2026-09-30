@@ -55,7 +55,7 @@ end
 --- @return string
 local function get_hex_code(color)
   -- The RGB values in lsp.Color are in the [0-1] range, but we want them to be in the [0-255] range instead.
-  --- @param n number
+  --- @param n decimal
   local rgb = vim.tbl_map(function(n)
     return math.floor((n * 255) + 0.5)
   end, color)

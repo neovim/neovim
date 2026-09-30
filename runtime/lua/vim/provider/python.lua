@@ -1,7 +1,7 @@
 local M = {}
 local min_version = '3.9'
 local s_err ---@type string?
-local s_host ---@type string?
+local s_host ---@type integer?
 
 local python_candidates = {
   'python3',
@@ -143,6 +143,7 @@ function M.call(method, args)
       vim.api.nvim_echo({ { result, 'WarningMsg' } }, true)
       return
     end
+    --- @cast result integer
     s_host = result
   end
 

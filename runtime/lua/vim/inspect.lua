@@ -79,6 +79,10 @@ else
   end
 end
 
+-- The constructor, writer and renderer always use the same buffer backend.
+--- @cast puts fun(buf: string.buffer|{ [integer]: string, n: integer }, str: string)
+--- @cast render fun(buf: string.buffer|{ [integer]: string, n: integer }): string
+
 local _rawget
 if rawget then
   _rawget = rawget

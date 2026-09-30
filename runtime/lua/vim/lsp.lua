@@ -562,7 +562,7 @@ local function lsp_enable_callback(bufnr)
       config = vim.deepcopy(config)
 
       if type(config.root_dir) == 'function' then
-        ---@param root_dir string
+        ---@param root_dir string?
         config.root_dir(bufnr, function(root_dir)
           config.root_dir = root_dir
           vim.schedule(function()
@@ -808,8 +808,8 @@ function lsp.status()
         -- Progress handlers carry the title over to report and end messages.
         local message = value.message and (value.title .. ': ' .. value.message) or value.title --[[@as string?]]
         messages[#messages + 1] = message
-        if value.percentage then
-          percentage = math.max(percentage or 0, value.percentage)
+        if type(value.percentage) == 'number' then
+          percentage = math.max(percentage or 0, value.percentage --[[@as number]])
         end
       end
       -- else: Doesn't look like work done progress and can be in any format
@@ -1099,7 +1099,7 @@ end
 ---@param force? boolean|integer See |Client:stop()|
 function lsp.stop_client(client_id, force)
   vim.deprecate('vim.lsp.stop_client()', 'vim.lsp.Client:stop()', '0.13')
-  --- @type integer[]|vim.lsp.Client[]
+  --- @type (integer|vim.lsp.Client)[]
   local ids = type(client_id) == 'table' and client_id or { client_id }
   for _, id in ipairs(ids) do
     if type(id) == 'table' then
@@ -1107,7 +1107,6 @@ function lsp.stop_client(client_id, force)
         id:stop(force)
       end
     else
-      --- @cast id -vim.lsp.Client
       local client = lsp.get_client_by_id(id)
       if client then
         client:stop(force)

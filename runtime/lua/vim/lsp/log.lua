@@ -100,7 +100,7 @@ end
 ---date, source and line number of the caller, followed by the arguments.
 function M.set_format_func(handle)
   log:set_format_func(function(_, level, ...)
-    return handle(M.levels[level], ...)
+    return handle(assert(M.levels[level]), ...)
   end)
 end
 

@@ -238,6 +238,7 @@ local function extract_with_password(command, source, path, dir)
     buffered = ''
     vim.fn.chansend(job, sent .. '\r')
   end
+  --- @cast exited -?
 
   if exited ~= 0 then
     return unzip_error(exited, '')

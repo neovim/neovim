@@ -74,6 +74,7 @@ function M.check()
   ---@field type string
   ---@field path string
   ---@field index integer
+
   local queries_by_lang = {} ---@type table<string, QueryEntry[]>
 
   for i, query_file in ipairs(query_files) do

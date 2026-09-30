@@ -291,7 +291,13 @@ function LanguageTree:lang()
   return self._lang
 end
 
---- @param region Range6[]
+--- @param range Range|Range[]
+--- @return Range[]
+local function to_range_list(range)
+  return (type(range[1]) == 'table' and range or { range }) --[[@as Range[] ]]
+end
+
+--- @param region Range[]
 --- @param range? boolean|Range|Range[]
 --- @return boolean
 local function intercepts_region(region, range)
@@ -307,49 +313,44 @@ local function intercepts_region(region, range)
     return range
   end
 
-  local is_range_list = type(range[1]) == 'table'
+  local ranges = to_range_list(range)
   for _, r in ipairs(region) do
-    if is_range_list then
-      for _, inner_range in ipairs(range) do
-        ---@cast inner_range Range
-        if Range.intercepts(r, inner_range) then
-          return true
-        end
+    for _, inner_range in ipairs(ranges) do
+      if Range.intercepts(r, inner_range) then
+        return true
       end
-    elseif Range.intercepts(r, range) then
-      return true
     end
   end
 
   return false
 end
 
---- @param region1 Range6[]
+--- @param region1 Range[]
 --- @param region2 Range|Range[]
 --- @return boolean
 local function contains_region(region1, region2)
-  if type(region2[1]) ~= 'table' then
-    region2 = {
-      region2 --[[@as Range]],
-    }
-  end
+  local ranges = to_range_list(region2)
 
   -- TODO: Combine intersection ranges in region1
-  local i, j, len1, len2 = 1, 1, #region1, #region2
-  while i <= len1 and j <= len2 do
-    local r1 = { Range.unpack4(region1[i]) }
-    local r2 = { Range.unpack4(region2[j]) }
+  local i, j = 1, 1
+  while true do
+    local r1, r2 = region1[i], ranges[j]
+    if not r1 or not r2 then
+      -- Succeed only when every requested range has been covered.
+      return r2 == nil
+    end
+
+    local _, _, end_row, end_col = Range.unpack4(r1)
+    local start_row, start_col = Range.unpack4(r2)
 
     if Range.contains(r1, r2) then
       j = j + 1
-    elseif Range.cmp_pos.lt(r1[3], r1[4], r2[1], r2[2]) then
+    elseif Range.cmp_pos.lt(end_row, end_col, start_row, start_col) then
       i = i + 1
     else
       return false -- r1 starts after r2 starts and thus can't cover it
     end
   end
-
-  return j > len2
 end
 
 --- Returns whether this LanguageTree is valid, i.e., |LanguageTree:trees()| reflects the latest
@@ -513,12 +514,8 @@ local function range_to_string(range)
   if type(range) ~= 'table' then
     return tostring(range)
   end
-  if type(range[1]) ~= 'table' then
-    return table.concat(range, ',')
-  end
-  ---@cast range Range[]
   local str = ''
-  for i, r in ipairs(range) do
+  for i, r in ipairs(to_range_list(range)) do
     if i > 1 then
       str = str .. '|'
     end
@@ -528,7 +525,7 @@ local function range_to_string(range)
 end
 
 --- @private
---- @param range boolean|Range?
+--- @param range boolean|Range|Range[]?
 --- @param callback fun(err?: string, trees?: table<integer, TSTree>)
 function LanguageTree:_push_async_callback(range, callback)
   local key = range_to_string(range)
@@ -538,7 +535,7 @@ function LanguageTree:_push_async_callback(range, callback)
 end
 
 --- @private
---- @param range boolean|Range?
+--- @param range boolean|Range|Range[]?
 --- @param err? string
 --- @param trees? table<integer, TSTree>
 function LanguageTree:_run_async_callbacks(range, err, trees)
@@ -553,7 +550,7 @@ end
 --- Run an asynchronous parse, calling {on_parse} when complete.
 ---
 --- @private
---- @param range boolean|Range?
+--- @param range boolean|Range|Range[]?
 --- @param on_parse fun(err?: string, trees?: table<integer, TSTree>)
 --- @return table<integer, TSTree>? trees the list of parsed trees, if parsing completed synchronously
 function LanguageTree:_async_parse(range, on_parse)
@@ -568,8 +565,7 @@ function LanguageTree:_async_parse(range, on_parse)
   end
 
   local source = self._source
-  local buf = type(source) == 'number' and vim.b[source] or nil
-  local ct = buf and buf.changedtick or nil
+  local ct = type(source) == 'number' and vim.b[source].changedtick or nil
   local total_parse_time = 0 ---@type number
   local redrawtime = vim.o.redrawtime * 1000000
 
@@ -579,14 +575,13 @@ function LanguageTree:_async_parse(range, on_parse)
   local parse = coroutine.wrap(self._parse)
 
   local function step()
-    if buf then
-      if
-        not vim.api.nvim_buf_is_valid(source --[[@as number]])
-      then
+    if type(source) == 'number' then
+      if not vim.api.nvim_buf_is_valid(source) then
         return nil
       end
 
       -- If buffer was changed in the middle of parsing, reset parse state
+      local buf = vim.b[source]
       if buf.changedtick ~= ct then
         ct = buf.changedtick
         total_parse_time = 0
@@ -647,7 +642,7 @@ function LanguageTree:parse(range, on_parse)
 end
 
 ---@param thread_state ParserThreadState
----@param time integer
+---@param time number
 ---@async
 function LanguageTree:_subtract_time(thread_state, time)
   thread_state.timeout = thread_state.timeout and math.max(thread_state.timeout - time, 0)
@@ -695,6 +690,8 @@ function LanguageTree:_parse(range, thread_state)
       )
     )
   then
+    -- EmmyLua loses the truthiness narrowing in the compound condition above.
+    ---@cast range -nil, -false
     local injections_by_lang = self:_get_injections(range, thread_state)
     local time = tcall(self._add_injections, self, injections_by_lang)
     self:_subtract_time(thread_state, time)
@@ -905,7 +902,7 @@ end
 
 ---@param node TSNode
 ---@param source string|integer
----@param metadata vim.treesitter.query.TSMetadata
+---@param metadata vim.treesitter.query.TSMetadata?
 ---@param include_children boolean
 ---@return Range6[]
 local function get_node_ranges(node, source, metadata, include_children)

@@ -202,6 +202,9 @@ function M.omnifunc(findstart, base)
 
   local buf = api.nvim_get_current_buf()
   local query_lang = guess_query_lang(buf)
+  if not query_lang then
+    return -2
+  end
 
   local ok, parser_info = pcall(vim.treesitter.language.inspect, query_lang)
   if not ok then

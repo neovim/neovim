@@ -99,6 +99,7 @@ function M.get_lines(buf, rows)
     return row_line
   end
 
+  --- @cast data string
   local need = vim.tbl_count(row_line)
   local row = 0
   for line in string.gmatch(data, '([^\n]*)\n?') do

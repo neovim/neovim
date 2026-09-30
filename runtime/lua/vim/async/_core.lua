@@ -133,7 +133,7 @@ do --- Task
     local thread = coroutine.create(function(marker, err)
       -- Drop the packed vararg table before user code can suspend; otherwise
       -- the coroutine closure retains it for the task lifetime.
-      local args = func_args
+      local args = assert(func_args)
       func_args = nil
       check_yield(marker, err)
       return func(unpack_len(args))
@@ -873,6 +873,7 @@ end
 --- @overload fun(name: string, func: async fun(...: T...), ...: T...): vim.async.Task<R...>
 function M.run(func, ...)
   if type(func) == 'string' then
+    --- @diagnostic disable-next-line: param-type-mismatch
     return run(func, ...)
   elseif is_callable(func) then
     return run(nil, func, ...)

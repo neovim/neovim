@@ -122,6 +122,8 @@ local function emit(entry, method, ...)
   -- Callbacks can subscribe or cancel other subscriptions while handling an event.
   for _, subscriber in ipairs(vim.tbl_keys(entry.subscribers)) do
     if entry.subscribers[subscriber] then
+      -- EmmyLua rejects the union of callback signatures passed to pcall.
+      --- @diagnostic disable-next-line: param-type-mismatch
       local ok, err = pcall(subscriber[method], ...)
       if not ok then
         first_error = first_error or tostring(err)
@@ -549,7 +551,7 @@ local function on_inotifywait_output(data, opts, callback)
   local d = vim.split(data, '%s+')
 
   -- only consider the last reported event
-  local path, event, file = d[1], d[2], d[#d]
+  local path, event, file = assert(d[1]), d[2], d[#d]
   local fullpath = vim.fs.joinpath(path, file)
 
   if skip(fullpath, opts) then

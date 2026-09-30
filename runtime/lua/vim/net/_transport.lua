@@ -4,7 +4,7 @@ local strbuffer = require('vim._core.stringbuffer')
 --- Interface for transport implementations.
 ---
 --- @class (internal, exact) vim.net.Transport
---- @field listen fun(self: vim.net.Transport, on_read: fun(err: any, data: string), on_exit: fun(code: integer, signal: integer))
+--- @field listen fun(self: vim.net.Transport, on_read: fun(err: string?, data: string?), on_exit: fun(code: integer, signal: integer))
 --- @field write fun(self: vim.net.Transport, msg: string)
 --- @field is_closing fun(self: vim.net.Transport): boolean
 --- @field terminate fun(self: vim.net.Transport)
@@ -27,7 +27,7 @@ function TransportRun.new(cmd, extra_spawn_params, log)
   }, { __index = TransportRun })
 end
 
---- @param on_read fun(err: any, data: string)
+--- @param on_read fun(err: string?, data: string?)
 --- @param on_exit fun(code: integer, signal: integer)
 function TransportRun:listen(on_read, on_exit)
   --- @param chunk string?
@@ -120,7 +120,7 @@ function TransportConnect.new(host_or_path, port, log)
   }, { __index = TransportConnect })
 end
 
---- @param on_read fun(err: any, data: string)
+--- @param on_read fun(err: string?, data: string?)
 --- @param on_exit? fun(code: integer, signal: integer)
 function TransportConnect:listen(on_read, on_exit)
   self.on_exit = on_exit
@@ -203,16 +203,16 @@ end
 --- decoder errors are reported through `on_error`.
 ---
 ---@class (internal, exact) vim.net.MessageStream
----@field private strbuf string.buffer
----@field private decode fun(strbuf: string.buffer): string?
+---@field private strbuf vim._core.stringbuffer
+---@field private decode fun(strbuf: vim._core.stringbuffer): string?
 ---@field private on_read fun(err: string?, data: string?)
 ---@field private on_error fun(err: any)
 ---@field feed fun(self: vim.net.MessageStream, err: string?, data: string?)
 ---@field encode fun(msg: string): string
----@field new fun(decode: (fun(strbuf: string.buffer): string?), encode: (fun(msg: string): string), on_read: fun(err: string?, data: string?), on_error: fun(err: any)): vim.net.MessageStream
+---@field new fun(decode: (fun(strbuf: vim._core.stringbuffer): string?), encode: (fun(msg: string): string), on_read: fun(err: string?, data: string?), on_error: fun(err: any)): vim.net.MessageStream
 local MessageStream = {}
 
----@param decode fun(strbuf: string.buffer): string?
+---@param decode fun(strbuf: vim._core.stringbuffer): string?
 ---@param encode fun(msg: string): string
 ---@param on_read fun(err: string?, data: string?)
 ---@param on_error fun(err: any)

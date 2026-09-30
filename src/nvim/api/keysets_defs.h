@@ -321,7 +321,7 @@ typedef struct {
   Boolean bang;
   ArrayOf(Union(Integer, String, Boolean)) args;
   DictAs(cmd__magic) magic;
-  DictAs(cmd__mods) mods;
+  DictAs(cmd_mods) mods;
   Union(Integer, Enum("?", "+", "*")) nargs;
   Enum("line", "arg", "buf", "load", "win", "tab", "qf", "none", "?") addr;
   String nextcmd;
@@ -338,7 +338,7 @@ typedef struct {
   Boolean silent;
   Boolean emsg_silent;
   Boolean unsilent;
-  Dict filter;
+  DictAs(cmd_mods_filter) filter;
   Boolean sandbox;
   Boolean noautocmd;
   Boolean browse;
@@ -354,7 +354,7 @@ typedef struct {
   Integer tab;
   Integer verbose;
   Boolean vertical;
-  String split;
+  Enum("", "botright", "topleft", "belowright", "aboveleft", "rightbelow", "leftabove") split;
 } Dict(cmd_mods);
 
 typedef struct {

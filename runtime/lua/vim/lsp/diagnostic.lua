@@ -33,8 +33,8 @@ Capability.enable('diagnostics', true)
 
 local DEFAULT_CLIENT_ID = -1
 
----@param severity lsp.DiagnosticSeverity
----@return vim.diagnostic.Severity
+---@param severity lsp.DiagnosticSeverity?
+---@return vim.diagnostic.Severity?
 local function severity_lsp_to_vim(severity)
   if type(severity) == 'string' then
     return protocol.DiagnosticSeverity[severity] --[[@as vim.diagnostic.Severity]]
@@ -367,8 +367,8 @@ function Diagnostics:refresh(client_id)
 
   local state = self.client_state[client_id]
   if client and state then
-    ---@param cap lsp.DiagnosticRegistrationOptions
     client:_provider_foreach(method, function(cap)
+      --- @cast cap lsp.DiagnosticRegistrationOptions
       local key = result_id_key(cap.identifier)
       ---@type lsp.DocumentDiagnosticParams
       local params = {
@@ -525,8 +525,8 @@ function M._workspace_diagnostics(opts)
   end
 
   for _, client in ipairs(clients) do
-    ---@param cap lsp.DiagnosticRegistrationOptions
     client:_provider_foreach('workspace/diagnostic', function(cap)
+      --- @cast cap lsp.DiagnosticRegistrationOptions
       --- @type lsp.WorkspaceDiagnosticParams
       local params = {
         identifier = cap.identifier,

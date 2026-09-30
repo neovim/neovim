@@ -274,10 +274,10 @@ local Client = {}
 Client.__index = Client
 
 --- @param obj table<string,any>
---- @param cls table<string,function?>
+--- @param cls table
 --- @param name string
 local function method_wrapper(obj, cls, name)
-  local meth = assert(cls[name])
+  local meth = assert(cls[name]) --[[@as function]]
   obj[name] = function(...)
     local arg = select(1, ...)
     if arg and getmetatable(arg) == cls then
@@ -379,7 +379,7 @@ local function validate_config(config)
   )
 end
 
---- @param trace string
+--- @param trace string?
 --- @return 'off'|'messages'|'verbose'
 local function get_trace(trace)
   local valid_traces = {
@@ -679,7 +679,7 @@ end
 --- Returns the handler associated with an LSP method.
 --- Returns the default handler if the user hasn't set a custom one.
 ---
---- @param method (vim.lsp.protocol.Method) LSP method name
+--- @param method string LSP method name
 --- @return lsp.Handler? handler for the given method, if defined, or the default from |vim.lsp.handlers|
 function Client:_resolve_handler(method)
   return self.handlers[method] or lsp.handlers[method]
@@ -797,7 +797,7 @@ local wait_result_reason = { [-1] = 'timeout', [-2] = 'interrupted', [-3] = 'err
 
 --- Concatenates and writes a list of strings to the Vim error buffer.
 ---
---- @param ... string List to write to the buffer
+--- @param ... string|number List to write to the buffer
 local function err_message(...)
   local chunks = { { table.concat(vim.iter({ ... }):flatten():totable()) } }
   if vim.in_fast_event() then
@@ -1034,7 +1034,7 @@ function Client:_register(registrations)
 end
 
 --- @private
---- @param unregistrations lsp.Unregistration[]
+--- @param unregistrations lsp.Unregistration[]|lsp.Registration[]
 function Client:_unregister_dynamic(unregistrations)
   for _, unreg in ipairs(unregistrations) do
     local provider = self:_registration_provider(unreg.method)
@@ -1384,7 +1384,7 @@ end
 --- Handles a notification sent by an LSP server by invoking the
 --- corresponding handler.
 ---
---- @param method vim.lsp.protocol.Method.ServerToClient.Notification LSP method name
+--- @param method string LSP method name
 --- @param params table The parameters for that method.
 function Client:_notification(method, params)
   log.trace('notification', method, params)
@@ -1398,7 +1398,7 @@ end
 --- @private
 --- Handles a request from an LSP server by invoking the corresponding handler.
 ---
---- @param method (vim.lsp.protocol.Method.ServerToClient) LSP method name
+--- @param method string LSP method name
 --- @param params (table) The parameters for that method
 --- @return any result
 --- @return lsp.ResponseError? error code and message set in case an exception happens during the request.
@@ -1576,10 +1576,12 @@ function Client:_remove_workspace_folder(dir)
     event = { added = {}, removed = wf },
   })
 
-  for idx, folder in pairs(self.workspace_folders) do
-    if folder.name == dir then
-      table.remove(self.workspace_folders, idx)
-      break
+  if self.workspace_folders then
+    for idx, folder in pairs(self.workspace_folders) do
+      if folder.name == dir then
+        table.remove(self.workspace_folders, idx)
+        break
+      end
     end
   end
 end

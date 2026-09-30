@@ -16,42 +16,42 @@ local M = {}
 --- @field dir string
 
 --- A table with the following fields:
---- @class nvim.spellfile.Opts
+--- @class nvim.spellfile.Config
 ---
 --- The base URL from where the spellfiles are downloaded. Uses `g:spellfile_URL`
 --- if it's set, otherwise https://ftp.nluug.nl/pub/vim/runtime/spell.
---- @field url? string
+--- @field url string
 ---
 --- Number of milliseconds after which the [vim.net.request()] times out.
 --- (default: 15000)
---- @field timeout_ms? integer
+--- @field timeout_ms integer
 ---
 --- Whether to ask user to confirm download.
 --- (default: `true`)
---- @field confirm? boolean
+--- @field confirm boolean
 
---- @type nvim.spellfile.Opts
+--- @type nvim.spellfile.Config
 local config = {
   url = vim.g.spellfile_URL or 'https://ftp.nluug.nl/pub/vim/runtime/spell',
   timeout_ms = 15000,
   confirm = true,
 }
 
---- Configure spellfile download options. For example:
+--- Configure spellfile download options. Omit {opts} to retrieve the current
+--- configuration. Otherwise, update only the supplied fields.
+---
+--- For example:
 --- ```lua
 --- require('nvim.spellfile').config({ url = '...' })
 --- ```
---- @param opts nvim.spellfile.Opts? When omitted or `nil`, retrieve the
----   current configuration. Otherwise, a configuration table.
---- @return nvim.spellfile.Opts? : Current config if {opts} is omitted.
+--- @param opts Partial<nvim.spellfile.Config>?
+--- @return nvim.spellfile.Config? : Current config if {opts} is omitted.
 function M.config(opts)
   vim.validate('opts', opts, 'table', true)
   if not opts then
     return vim.deepcopy(config, true)
   end
-  for k, v in
-    pairs(opts --[[@as table<any,any>]])
-  do
+  for k, v in pairs(opts) do
     config[k] = v
   end
 end

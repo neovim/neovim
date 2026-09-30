@@ -20,6 +20,7 @@ function Future:result()
   if self._err ~= nil then
     return false, self._err
   else
+    assert(self._result)
     return true, F.unpack_len(self._result)
   end
 end
@@ -32,6 +33,7 @@ function Future:on_complete(callback)
     if self._err ~= nil then
       callback(self._err)
     else
+      assert(self._result)
       callback(nil, F.unpack_len(self._result))
     end
     return function() end

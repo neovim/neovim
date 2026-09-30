@@ -388,7 +388,7 @@ function M.intersect(r1, r2)
   end
 end
 
----@param v string|vim.Version|number[]
+---@param v any
 ---@return string
 local function err_msg(v)
   if type(v) == 'string' then

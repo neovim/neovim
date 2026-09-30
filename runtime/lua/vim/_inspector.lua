@@ -117,9 +117,9 @@ function vim.inspect_pos(buf, row, col, filter)
   end
 
   --- Convert an extmark tuple into a table
-  --- @param extmark [integer, integer, integer, vim.api.keyset.extmark_details]
+  --- @param extmark vim.api.keyset.get_extmark_item
   local function to_map(extmark)
-    local opts = resolve_hl(extmark[4])
+    local opts = resolve_hl(assert(extmark[4]))
     return {
       id = extmark[1],
       row = extmark[2],

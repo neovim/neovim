@@ -134,7 +134,7 @@ end
 
 --- Flattens a single array-like table. Errors if it attempts to flatten a
 --- dict-like table
---- @param t table table which should be flattened
+--- @param t any value which should be flattened
 --- @param max_depth integer depth to which the table should be flattened
 --- @param depth integer current iteration depth
 --- @param result table output table that contains flattened result

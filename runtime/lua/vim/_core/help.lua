@@ -362,7 +362,7 @@ function M.local_additions()
   local plugins = {}
   local pattern = lang and ('doc/*.{txt,%sx}'):format(lang) or 'doc/*.txt'
   for _, docpath in ipairs(vim.api.nvim_get_runtime_file(pattern, true)) do
-    if not vim.fs.relpath(vim.env.VIMRUNTIME, docpath) then
+    if not vim.fs.relpath(assert(vim.env.VIMRUNTIME), docpath) then
       -- '/path/to/doc/plugin.txt' --> 'plugin'
       local plugname = vim.fs.basename(docpath):sub(1, -5)
       -- prefer language-specific files over .txt
@@ -457,7 +457,7 @@ do
     * example_line ^ 0
   -- Skip ordinary text in spans; consume invalid markers one character at a time.
   local text = (any - S('*>')) ^ 1 + any
-  helptags_pattern = Ct((example + tag + text) ^ 0)
+  helptags_pattern = Ct(((example + tag + text) ^ 0) --[[@as vim.lpeg.Pattern]])
 end
 
 ---Extract tags from {file} and add to list of tags. Modifies {tags}.
@@ -509,7 +509,9 @@ function M.gen_tagsfile(helpfiles, dir, outpath, index_tag, ignore_writeerr)
 
   -- (2) sort by byte value, as |tags-file-format| requires.
   -- PUC Lua uses strcoll(), so use C collation for this sort.
-  local locale = os.setlocale(nil, 'collate')
+  -- The stdlib annotation omits nil, which queries the current locale.
+  --- @diagnostic disable-next-line: param-type-mismatch
+  local locale = assert(os.setlocale(nil, 'collate'))
   os.setlocale('C', 'collate')
   table.sort(tags)
   os.setlocale(locale, 'collate')
@@ -540,9 +542,9 @@ function M.gen_tags(dir, include_index_tag)
   vim.validate('include_index_tag', include_index_tag, 'boolean', true)
 
   local dirs = dir and { vim.fs.normalize(dir) } or vim.api.nvim_get_runtime_file('doc', true)
-  local vimruntime = vim.fs.normalize(vim.fs.joinpath(vim.env.VIMRUNTIME, 'doc'))
+  local vimruntime = vim.fs.normalize(vim.fs.joinpath(assert(vim.env.VIMRUNTIME), 'doc'))
 
-  if dir and vim.fn.isdirectory(dirs[1]) == 0 then
+  if dir and vim.fn.isdirectory(assert(dirs[1])) == 0 then
     echo_err(('E150: Not a directory: %s'):format(dir))
     return
   end

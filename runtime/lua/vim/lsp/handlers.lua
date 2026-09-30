@@ -21,7 +21,7 @@ local RSC = {}
 local NSC = {}
 
 --- Writes to error buffer.
----@param ... string Will be concatenated before being written
+---@param ... string|number Will be concatenated before being written
 local function err_message(...)
   vim.notify(table.concat(vim.iter({ ... }):flatten():totable()), vim.log.levels.ERROR)
   api.nvim_command('redraw')
@@ -347,7 +347,7 @@ RCS['textDocument/rangeFormatting'] = function(_, result, ctx)
     return
   end
   local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
-  util.apply_text_edits(result, ctx.bufnr, client.offset_encoding)
+  util.apply_text_edits(result, assert(ctx.bufnr), client.offset_encoding)
 end
 
 --- @deprecated remove in 0.13
@@ -358,7 +358,7 @@ RCS['textDocument/formatting'] = function(_, result, ctx)
     return
   end
   local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
-  util.apply_text_edits(result, ctx.bufnr, client.offset_encoding)
+  util.apply_text_edits(result, assert(ctx.bufnr), client.offset_encoding)
 end
 
 --- @deprecated remove in 0.13
@@ -517,7 +517,7 @@ RCS['textDocument/documentHighlight'] = function(_, result, ctx)
   if not client then
     return
   end
-  util.buf_highlight_references(ctx.bufnr, result, client.offset_encoding)
+  util.buf_highlight_references(assert(ctx.bufnr), result, client.offset_encoding)
 end
 
 --- Displays call hierarchy in the quickfix window.
@@ -586,7 +586,8 @@ local function make_type_hierarchy_handler()
     local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
     local items = {}
     for _, type_hierarchy_item in pairs(result) do
-      local pos = vim.pos.lsp(ctx.bufnr, type_hierarchy_item.range.start, client.offset_encoding)
+      local pos =
+        vim.pos.lsp(assert(ctx.bufnr), type_hierarchy_item.range.start, client.offset_encoding)
       table.insert(items, {
         filename = vim.uri_to_fname(type_hierarchy_item.uri),
         text = format_item(type_hierarchy_item),
@@ -670,12 +671,7 @@ RSC['window/showDocument'] = function(_, params, ctx)
     return vim.NIL
   end
 
-  local location = {
-    uri = uri,
-    range = params.selection,
-  }
-
-  local success = util.show_document(location, client.offset_encoding, {
+  local success = util._show_document(uri, params.selection, client.offset_encoding, {
     reuse_win = true,
     focus = params.takeFocus,
   })

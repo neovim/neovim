@@ -77,7 +77,7 @@ local function get_group(client)
 end
 
 ---@param state vim.lsp.CTBufferState
----@param encoding string
+---@param encoding 'utf-8'|'utf-16'|'utf-32'
 ---@param bufnr integer
 ---@param firstline integer
 ---@param lastline integer
@@ -381,7 +381,7 @@ local function send_changes_for_group(bufnr, firstline, lastline, new_lastline, 
     local timer = assert(uv.new_timer(), 'Must be able to create timer')
     buf_state.timer = timer
     timer:start(
-      debounce,
+      math.floor(debounce),
       0,
       vim.schedule_wrap(function()
         reset_timer(buf_state)

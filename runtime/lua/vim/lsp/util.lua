@@ -31,7 +31,7 @@ local border_size = {
 
 --- Check the border given by opts or the default border for the additional
 --- size it adds to a float.
---- @param opts? {border:string|(string|[string,string])[]}
+--- @param opts? vim.lsp.util.open_floating_preview.Opts
 --- @return integer height
 --- @return integer width
 local function get_border_size(opts)
@@ -233,10 +233,8 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
 
     --- @cast text_edits ((lsp.TextEdit|lsp.AnnotatedTextEdit)&{_index: integer})[]
 
-    -- Sort text_edits
-    ---@param a (lsp.TextEdit|lsp.AnnotatedTextEdit)&{_index: integer}
-    ---@param b (lsp.TextEdit|lsp.AnnotatedTextEdit)&{_index: integer}
-    ---@return boolean
+    -- The checker rejects this array against its own inferred intersection type.
+    --- @diagnostic disable-next-line: param-type-mismatch
     table.sort(text_edits, function(a, b)
       if a.range.start.line ~= b.range.start.line then
         return a.range.start.line > b.range.start.line
@@ -422,7 +420,9 @@ function M.apply_text_document_edit(
     return
   end
 
-  M.apply_text_edits(text_document_edit.edits, bufnr, position_encoding, change_annotations)
+  -- Snippet edits are not supported or advertised in our client capabilities.
+  local edits = text_document_edit.edits --[[@as (lsp.TextEdit|lsp.AnnotatedTextEdit)[] ]]
+  M.apply_text_edits(edits, bufnr, position_encoding, change_annotations)
 end
 
 --- @param path string
@@ -913,6 +913,18 @@ function M.show_document(location, position_encoding, opts)
   if uri == nil then
     return false
   end
+  local range = location.range or location.targetSelectionRange
+  return M._show_document(uri, range, position_encoding, opts)
+end
+
+--- Shows a document, preserving its cursor position when no range is given.
+--- @private
+--- @param uri string
+--- @param range lsp.Range?
+--- @param position_encoding 'utf-8'|'utf-16'|'utf-32'
+--- @param opts? vim.lsp.util.show_document.Opts
+--- @return boolean
+function M._show_document(uri, range, position_encoding, opts)
   local bufnr = vim.uri_to_bufnr(uri)
 
   -- Return early if the buffer fails to load, to avoid partial setup.
@@ -944,8 +956,6 @@ function M.show_document(location, position_encoding, opts)
     api.nvim_set_current_win(win)
   end
 
-  -- location may be Location or LocationLink
-  local range = location.range or location.targetSelectionRange
   if range then
     -- Jump to new location (adjusting for encoding of characters)
     local pos = vim.pos.lsp(bufnr, range.start, position_encoding)
@@ -1070,7 +1080,7 @@ local function replace_separators(contents, divider)
   local trimmed = {}
   local l = 1
   while l <= #contents do
-    local line = contents[l]
+    local line = assert(contents[l])
     if is_separator_line(line) then
       if l > 1 and is_blank_line(contents[l - 1]) then
         table.remove(trimmed)
@@ -1678,8 +1688,8 @@ function M.open_floating_preview(contents, syntax, opts)
     'WinClosed',
     api.nvim_create_augroup('nvim.closing_floating_preview', { clear = true }),
     function(args)
-      local winid = vim._tointeger(args.match)
-      local preview_bufnr = vim.w[winid].lsp_floating_bufnr
+      local winid = vim._assert_integer(args.match)
+      local preview_bufnr = vim.w[winid].lsp_floating_bufnr --- @type integer?
       if
         preview_bufnr
         and api.nvim_buf_is_valid(preview_bufnr)

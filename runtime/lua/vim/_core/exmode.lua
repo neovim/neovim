@@ -61,7 +61,7 @@ end
 --- @return boolean
 local function block_complete(lines)
   -- :append/etc. not grouped by the skipped-:if below: collect until the "." terminator.
-  local ok, p = pcall(api.nvim_parse_cmd, lines[1], {})
+  local ok, p = pcall(api.nvim_parse_cmd, assert(lines[1]), {})
   if ok and (p.cmd == 'append' or p.cmd == 'insert' or p.cmd == 'change') then
     return vim.list_contains({ unpack(lines, 2) }, '.')
   end
@@ -135,7 +135,7 @@ function M.open()
       end
       line = table.concat(block, '\n')
     end
-    local parse_ok, parsed = pcall(api.nvim_parse_cmd, line:match('^[^\n]*'), {})
+    local parse_ok, parsed = pcall(api.nvim_parse_cmd, assert(line:match('^[^\n]*')), {})
     if parse_ok and not line:find('\n') and exit_cmds[parsed.cmd] then
       vim.fn.histadd('cmd', line)
       cmdwin._cleanup() -- Focuses the caller window.

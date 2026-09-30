@@ -14,7 +14,7 @@ local M = {}
 
 --- Apply the `:filter[!] /pattern/` modifier to a single message. See also `message_filtered()`.
 ---
---- @param filter vim.api.keyset.cmd_mods_filter ":filter" mod.
+--- @param filter { pattern: string, force: boolean }? ":filter" mod.
 --- @param msg string Message to test.
 --- @return boolean # True if `msg` should be skipped (not displayed).
 function M.filter(filter, msg)
@@ -229,7 +229,7 @@ end
 --- @return string[] completions
 function M.log_complete()
   local names = { 'nvim' } --- @type string[]
-  for file, type in fs.dir(log_dir, { depth = math.huge }) do
+  for file, type in fs.dir(log_dir, { depth = vim._maxint }) do
     local name, matches = file:gsub('%.log$', '')
     if matches ~= 0 and type == 'file' and name ~= 'nvim' then
       names[#names + 1] = name
@@ -290,7 +290,7 @@ function M.ex_oldfiles(eap)
       if idx then
         api.nvim_cmd({
           cmd = 'edit',
-          args = { vim.fn.expand(files[idx]) },
+          args = { vim.fn.expand(assert(files[idx])) },
           magic = { file = false, bar = true }, -- May contain '%' (e.g. swapfiles), don't expand.
         }, {})
       end
@@ -397,7 +397,7 @@ function M.packdel_complete(pattern, line)
   if #cmd.args == 1 and vim.startswith(pattern, '++') then
     return { '++all' }
   end
-  if vim.list_contains(cmd.args, '++all') then
+  if vim.list_contains(assert(cmd.args), '++all') then
     return {}
   end
   return vim.pack._get_names(not cmd.bang)

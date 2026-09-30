@@ -21,6 +21,7 @@ end
 --- @return fun(d: vim.Diagnostic):boolean
 function M.severity_predicate(filter)
   if type(filter) ~= 'table' then
+    --- @cast filter vim.diagnostic.Severity
     local severity0 = M.to_severity(filter)
     --- @param d vim.Diagnostic
     return function(d)

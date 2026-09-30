@@ -39,12 +39,12 @@ local function on_type_formatting(err, result, ctx)
 
   local client = assert(lsp.get_client_by_id(ctx.client_id))
 
-  util.apply_text_edits(result, ctx.bufnr, client.offset_encoding)
+  util.apply_text_edits(result, bufnr, client.offset_encoding)
 end
 
 ---@param bufnr integer
 ---@param typed string
----@param triggered_clients vim.lsp.Client[]
+---@param triggered_clients table<integer, vim.lsp.Client>
 ---@param idx integer?
 ---@param client vim.lsp.Client?
 local function format_iter(bufnr, typed, triggered_clients, idx, client)

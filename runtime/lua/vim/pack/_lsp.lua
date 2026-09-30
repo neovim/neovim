@@ -99,6 +99,8 @@ local function match_link(line, pattern, link_type, lnum, src)
     return nil
   end
 
+  --- @cast from integer
+  --- @cast to integer
   -- Convert to UTF index used in LSP positions
   local start_col = vim.str_utfindex(line, 'utf-16', from - 1, false)
   local end_col = vim.str_utfindex(line, 'utf-16', to - 2, false)
@@ -280,7 +282,7 @@ local commands = {
 methods['workspace/executeCommand'] = vim.schedule_wrap(function(params, callback)
   --- @type integer, table
   local bufnr, plug_data = unpack(params.arguments)
-  local ok, res = pcall(commands[params.command], plug_data)
+  local ok, res = pcall(commands[params.command] --[[@as function]], plug_data)
   if not ok then
     return callback({ code = 1, message = res }, {})
   end
@@ -315,7 +317,8 @@ methods['textDocument/hover'] = function(params, callback)
     return
   end
 
-  local path, path_lnum = nil, lnum - 1
+  local path --- @type string?
+  local path_lnum = lnum - 1
   while path == nil and path_lnum >= 1 do
     path = assert(lines[path_lnum]):match('^Path:%s+(.+)$')
     path_lnum = path_lnum - 1

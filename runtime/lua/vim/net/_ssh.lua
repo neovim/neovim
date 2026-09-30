@@ -191,7 +191,11 @@ function M.parse_ssh_config(text)
       if node.param:lower() == 'match' and node.value then
         local current = nil
         for ind, val in ipairs(node.value) do
-          if val:lower() == 'host' and ind + 1 <= #node.value and is_valid(node.value[ind + 1]) then
+          if
+            val:lower() == 'host'
+            and ind + 1 <= #node.value
+            and is_valid(assert(node.value[ind + 1]))
+          then
             current = node.value[ind + 1]
           end
         end
