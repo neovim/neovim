@@ -52,6 +52,7 @@
 ^mem_[a-zA-Z0-9_]\+(
 ^parse_argument_types(
 ^parse_queued_messages(
+^ret_[_a-z]\+(
 ^restore_buffer(bufref_T
 ^shortpath_[_a-zA-Z0-9]\+(
 ^static convertStruct [a-zA-Z]\+\[\] =
