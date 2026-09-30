@@ -536,10 +536,11 @@ void flush_buffers(flush_buffers_T flush_typeahead)
 void beep_flush(void)
 {
   if (emsg_silent == 0) {
-    // Don't flush during mc-replay. A failed motion ("vt;" where there is no ";") should not eat
-    // the keys typed after it ("c"). This matches Helix multiselection: each action during a Visual
-    // selection proceeds or fails, without canceling the next action.
-    if (!mc_replaying()) {
+    // Don't flush during mc-replay or Visual mode. A failed motion ("vt;" where there is no ";",
+    // or "vj" at the last line) should not eat the keys typed/replayed after it ("c" or "I1<Esc>").
+    // This matches Helix multiselection: each action during a Visual selection proceeds or fails,
+    // without canceling the next action.
+    if (!mc_replaying() && !Visual.active) {
       flush_buffers(FLUSH_MINIMAL);
     }
     vim_beep(kOptBoFlagError);

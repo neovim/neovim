@@ -928,6 +928,16 @@ describe('CmdAtom', function()
       feed('w.')
       eq('X X ccc', fn.getline(1))
 
+      -- Blockwise visual repeat at buffer end does not abort or stay in visual mode #41896
+      api.nvim_buf_set_lines(0, 0, -1, true, { '1', '2', '3' })
+      feed('<C-V>jI1<Esc>')
+      eq({ '11', '12', '3' }, get_lines())
+      feed('j.')
+      eq({ '11', '112', '13' }, get_lines())
+      feed('j.')
+      eq({ '11', '112', '113' }, get_lines())
+      eq('n', fn.mode(1))
+
       -- A fed (":normal!") Visual-put preps the selection keysequence, like any fed visual
       -- operator (":normal! vjd"): "." re-executes "Vjp", not a bare "p".
       api.nvim_buf_set_lines(0, 0, -1, true, { 'aa', 'bb', 'cc', 'dd', 'ee' })
