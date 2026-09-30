@@ -728,36 +728,91 @@ local function enter_pager()
     if not api.nvim_win_is_valid(ui.wins.pager) then
       return -- Pager was already closed somehow.
     end
+    local winopts = {} ---@type table<string, string|number|boolean>
+    -- Options changed by ui2 or style=minimal must be restored before FileType.
+    for _, name in ipairs({
+      'number',
+      'relativenumber',
+      'cursorline',
+      'cursorcolumn',
+      'spell',
+      'list',
+      'fillchars',
+      'winhighlight',
+      'signcolumn',
+      'foldcolumn',
+      'colorcolumn',
+      'statuscolumn',
+      'statusline',
+      'wrap',
+      'linebreak',
+      'smoothscroll',
+      'breakindent',
+      'foldenable',
+      'showbreak',
+    }) do
+      winopts[name] = api.nvim_get_option_value(name, { win = 0 })
+    end
     local height, id = api.nvim_win_get_height(ui.wins.pager), 0
     api.nvim_set_option_value('eiw', '', { scope = 'local', win = ui.wins.pager })
     api.nvim_set_current_win(ui.wins.pager)
-    id = nvim_on({ 'WinEnter', 'CmdwinEnter', 'WinResized' }, ui.augroup, {
-      desc = 'Hide or reposition pager window.',
-    }, function(ev)
-      if fn.getcmdtype() ~= '' then
-        -- WinEnter fires before we can detect cmdwin will be entered: keep open.
-        return
-      elseif ev.event == 'WinResized' and fn.getcmdwintype() == '' then
-        -- Remember height to be restored when cmdwin is closed.
-        height = api.nvim_win_get_height(ui.wins.pager)
-      elseif ev.event == 'WinEnter' then
-        -- Close when no longer current window.
-        in_pager = api.nvim_get_current_win() == ui.wins.pager
+    id = nvim_on(
+      { 'WinEnter', 'CmdwinEnter', 'WinResized', 'BufWinEnter', 'BufWinLeave' },
+      ui.augroup,
+      {
+        desc = 'Hide or reposition pager window.',
+      },
+      function(ev)
+        if
+          ev.event == 'BufWinLeave'
+          and ev.buf == ui.bufs.pager
+          and api.nvim_get_current_win() == ui.wins.pager
+        then
+          vim._with({ noautocmd = true }, function()
+            api.nvim_win_set_config(ui.wins.pager, { style = '' })
+            for name, value in pairs(winopts) do
+              api.nvim_set_option_value(name, value, { win = ui.wins.pager })
+            end
+          end)
+          return
+        elseif
+          ev.event == 'BufWinEnter'
+          and api.nvim_get_current_win() == ui.wins.pager
+          and api.nvim_get_current_buf() ~= ui.bufs.pager
+        then
+          -- Keep files opened from the pager in a regular editing window.
+          local win = ui.wins.pager
+          ui.wins.pager, in_pager = -1, false
+          api.nvim_del_autocmd(id)
+          api.nvim_win_set_config(win, { split = 'below', win = -1 })
+          ui.check_targets()
+          return
+        elseif fn.getcmdtype() ~= '' then
+          -- WinEnter fires before we can detect cmdwin will be entered: keep open.
+          return
+        elseif ev.event == 'WinResized' and fn.getcmdwintype() == '' then
+          -- Remember height to be restored when cmdwin is closed.
+          height = api.nvim_win_get_height(ui.wins.pager)
+        elseif ev.event == 'WinEnter' then
+          -- Close when no longer current window.
+          in_pager = api.nvim_get_current_win() == ui.wins.pager
+        end
+        in_pager = in_pager and api.nvim_win_is_valid(ui.wins.pager)
+        --- @type vim.api.keyset.win_config
+        local cfg = in_pager and { relative = 'laststatus', col = 0 } or { hide = true }
+        if in_pager then
+          local has_border
+          cfg.row, cfg.height, has_border = win_row_height_border('pager', height)
+          cfg.border = has_border
+              and { '', { mopt.msgsep, 'MsgSeparator' }, '', '', '', '', '', '' }
+            or 'none'
+        else
+          pcall(api.nvim_set_option_value, 'eiw', 'all', { scope = 'local', win = ui.wins.pager })
+          api.nvim_del_autocmd(id)
+        end
+        pcall(api.nvim_win_set_config, ui.wins.pager, cfg)
       end
-      in_pager = in_pager and api.nvim_win_is_valid(ui.wins.pager)
-      --- @type vim.api.keyset.win_config
-      local cfg = in_pager and { relative = 'laststatus', col = 0 } or { hide = true }
-      if in_pager then
-        local has_border
-        cfg.row, cfg.height, has_border = win_row_height_border('pager', height)
-        cfg.border = has_border and { '', { mopt.msgsep, 'MsgSeparator' }, '', '', '', '', '', '' }
-          or 'none'
-      else
-        pcall(api.nvim_set_option_value, 'eiw', 'all', { scope = 'local', win = ui.wins.pager })
-        api.nvim_del_autocmd(id)
-      end
-      pcall(api.nvim_win_set_config, ui.wins.pager, cfg)
-    end)
+    )
   end)
 end
 
