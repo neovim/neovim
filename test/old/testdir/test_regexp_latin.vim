@@ -1029,7 +1029,8 @@ func Test_regexp_error()
   call assert_fails('exe "normal /\\%#=2\\%102261126v\<CR>"',  'E951:')
   call assert_fails('exe "normal /\\%#=2\\%2147483646l\<CR>"', 'E486:')
   call assert_fails('exe "normal /\\%#=2\\%2147483646c\<CR>"', 'E486:')
-  call assert_fails('exe "normal /\\%#=2\\%102261125v\<CR>"',  'E486:')
+  call assert_fails('exe "normal /\\%#=2\\%102261125v\<CR>"',  'E951:')
+  call assert_fails('exe "normal /\\%#=2\\%71582787v\<CR>"',   'E486:')
   call assert_equal('', matchstr('abcd', '\%o181\%o142'))
 endfunc
 
