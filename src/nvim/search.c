@@ -1468,6 +1468,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
     }
 
     dirc = (uint8_t)(*++pat);
+    patlen--;
     search_delim = dirc;
     if (dirc != '?' && dirc != '/') {
       retval = 0;

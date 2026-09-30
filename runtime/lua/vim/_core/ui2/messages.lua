@@ -498,10 +498,13 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
     -- Extract only the search_count, not the entered search command.
     -- Match any of search.c:cmdline_search_stat():' [(x | >x | ?)/(y | >y | ??)]'
     content = { content[#content] }
-    content[1][2] = content[1][2]:match('W? %[>?%d*%??/>?%d*%?*%]') .. '  '
-    M.virt.last[M.virt.idx.search] = content
-    M.virt.last[M.virt.idx.cmd] = { { 0, (' '):rep(11) } }
-    set_virttext('last', 'cmd')
+    local stat = content[1][2]:match('W? %[>?%d*%??/>?%d*%?*%]')
+    if stat then
+      content[1][2] = stat .. '  '
+      M.virt.last[M.virt.idx.search] = content
+      M.virt.last[M.virt.idx.cmd] = { { 0, (' '):rep(11) } }
+      set_virttext('last', 'cmd')
+    end
   elseif (ui.cmd.prompt or (ui.cmd.level > 0 and tgt == 'cmd')) and ui.cmd.srow == 0 then
     -- Route to dialog when a prompt is active, or message would overwrite active cmdline.
     replace_last = api.nvim_win_get_config(ui.wins.dialog).hide or kind == 'wildlist'

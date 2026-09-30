@@ -1291,6 +1291,21 @@ describe('messages2', function()
     ]])
   end)
 
+  it('search offset with semicolon #41929', function()
+    command(
+      'set shortmess-=S | call setline(1, ["odd line", "even line", "odd line", "even line"])'
+    )
+    feed('/even/;/even<CR>')
+    screen:expect([[
+      odd line                                             |
+      {10:even} line                                            |
+      odd line                                             |
+      {10:^even} line                                            |
+      {1:~                                                    }|*9
+      /even                              [2/2]             |
+    ]])
+  end)
+
   it('crops long messages to make place for ruler', function()
     command('set noruler | echo "-"->repeat(&columns)')
     screen:expect([[
