@@ -13,6 +13,7 @@ local feed = n.feed
 local api = n.api
 local request = n.request
 local pcall_err = t.pcall_err
+local assert_alive = n.assert_alive
 local uv = vim.uv
 
 describe('nvim_ui_attach()', function()
@@ -333,4 +334,13 @@ it('autocmds VimSuspend/VimResume #22041', function()
   screen.suspended = false
   screen:attach()
   eq({ 's', 'r', 's', 'r', 's', 'r', 's', 'r' }, eval('g:ev'))
+end)
+
+it('does not crash on self-attach via nvim_ui_attach RPC', function()
+  local server = api.nvim_get_vvar('servername')
+  local session2 = n.connect(server)
+  local ok = pcall(function()
+    session2:request('nvim_ui_attach', 80, 24, {})
+  end)
+  assert_alive()
 end)
