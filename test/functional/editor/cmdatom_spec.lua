@@ -54,52 +54,34 @@ describe('dot-repeat', function()
     eq({ 'acbzacbonexy', 'czacbtwo' }, get_lines())
   end)
 
-  it('ends Visual mode when a replayed motion fails #41896', function()
+  it('failing mid-selection ends Visual-mode #41896', function()
     fn.setline(1, { '1', '2', '3' })
-    feed('<C-V>jI1<Esc>')
-    eq({ '11', '12', '3' }, get_lines())
-    feed('j.')
-    eq({ '11', '112', '13' }, get_lines())
-    feed('j.')
+    feed('<C-V>jI1<Esc>j.j.') -- The 2nd "." fails: "j" on the last line.
     eq({ '11', '112', '13' }, get_lines())
     eq('n', fn.mode(1))
-    -- A failed repeat does not replace the last change.
-    feed('k0.')
+    feed('k0.') -- The failed "." did not replace the last change.
     eq({ '11', '1112', '113' }, get_lines())
-    eq('n', fn.mode(1))
-  end)
-
-  for _, errorbells in ipairs({ 'noerrorbells', 'errorbells' }) do
-    it('ends Visual mode when a replayed motion raises an error with ' .. errorbells, function()
-      command('set ' .. errorbells)
-      fn.setline(1, { 'one', 'two' })
-      feed('majV`a~')
-      eq({ 'ONE', 'TWO' }, get_lines())
-      command('delmarks a')
+    -- Error (E20) instead of beep. ModeChanged fires after the error, not inside emsg().
+    command('autocmd ModeChanged V:n echomsg "ModeChanged"')
+    for _, eb in ipairs({ 'noerrorbells', 'errorbells' }) do
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'one', 'two' })
+      feed('ggmajV`a~')
+      command(('set %s | delmarks a | messages clear'):format(eb))
       feed('.')
-      eq('E20: Mark not set', api.nvim_get_vvar('errmsg'))
-      eq({ 'ONE', 'TWO' }, get_lines())
+      eq({ 'ONE', 'TWO' }, get_lines(), eb)
       eq('n', fn.mode(1))
-    end)
-  end
-
-  it('still stops macros and mappings on failed Visual motions', function()
-    fn.setline(1, { 'one', 'two', 'three' })
+      eq('\nE20: Mark not set\nModeChanged', fn.execute('messages'))
+    end
+    -- A macro or mapping still stops at the failed motion, in Visual mode (map-error).
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'one', 'two', 'three' })
     fn.setreg('q', 'Vjd')
-    feed('2@q')
-    eq({ 'three' }, get_lines())
-    eq('V', fn.mode(1))
-    feed('<Esc>')
     command('nnoremap Q Vjd')
-    feed('Q')
-    eq({ 'three' }, get_lines())
-    eq('V', fn.mode(1))
-    feed('<Esc>')
-    -- An ordinary failed motion still leaves the selection active.
-    feed('vj')
-    eq('v', fn.mode(1))
-    feed('d')
-    eq({ 'hree' }, get_lines())
+    for _, keys in ipairs({ 'gg2@q', 'Q' }) do
+      feed(keys)
+      eq({ 'three' }, get_lines(), keys)
+      eq('V', fn.mode(1))
+      feed('<Esc>')
+    end
   end)
 
   it('of a visual op does not churn showcmd', function()

@@ -1003,6 +1003,11 @@ static void normal_finish_command(NormalState *s, CmdFrame *frame)
   // Finish up after executing a Normal mode command.
 normal_end:
 
+  if (Visual.need_end) {
+    Visual.need_end = false;
+    reset_VIsual();
+  }
+
   msg_nowait = false;
 
   if (finish_op || did_visual_op) {
