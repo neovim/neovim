@@ -221,4 +221,8 @@ describe('eval-API', function()
     eq('hello', eval('g:v1'))
     eq('', eval('g:v2'))
   end)
+
+  it('supports omitting optional trailing opts', function()
+    eq(0, eval('nvim_get_hl_ns()'))
+  end)
 end)
