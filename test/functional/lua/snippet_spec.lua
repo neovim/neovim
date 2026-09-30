@@ -313,6 +313,15 @@ describe('vim.snippet', function()
     eq({ 'console.log()' }, buf_lines(0))
   end)
 
+  for _, text in ipairs({ 'a$b', 'a}b' }) do
+    it('inserts literal ' .. text .. ' from a choice #30495', function()
+      test_expand_success({ 'a(${1|' .. text .. ',other|})' }, { 'a()' })
+      wait_for_pum()
+      feed('<C-y>')
+      eq({ 'a(' .. text .. ')' }, buf_lines(0))
+    end)
+  end
+
   it('closes the choice completion menu when jumping', function()
     test_expand_success({ 'console.${1|assert,log,error|}($2)' }, { 'console.()' })
     wait_for_pum()

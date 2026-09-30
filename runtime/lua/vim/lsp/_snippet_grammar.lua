@@ -20,7 +20,7 @@ local format_capture = Cg(int / tonumber, 'capture')
 local format_modifier = Cg(P('upcase') + P('downcase') + P('capitalize'), 'modifier')
 local tabstop = Cg(int / tonumber, 'tabstop')
 
--- These characters are always escapable in text nodes no matter the context.
+-- Characters escapable in regular text nodes.
 local escapable = '$}\\'
 
 --- Returns a function that unescapes occurrences of "special" characters.
@@ -51,8 +51,8 @@ end
 -- For text nodes inside curly braces. It stops parsing when reaching an escapable character.
 local braced_text = (text(escapable) ^ 0) / escape_text()
 
--- Within choice nodes, \ also escapes comma and pipe characters.
-local choice_text = C(text(escapable .. ',|') ^ 1) / escape_text(escapable .. ',|')
+-- Within choice nodes, only backslash, comma, and pipe characters are escapable.
+local choice_text = C(text('\\,|') ^ 1) / escape_text('\\,|')
 
 -- Within format nodes, make sure we stop at /
 local format_text = C(text(escapable, escapable .. '/') ^ 1) / escape_text()

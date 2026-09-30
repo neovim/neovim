@@ -85,6 +85,15 @@ describe('vim.lsp._snippet_grammar', function()
     }, parse('${1|\\,,\\||}'))
   end)
 
+  it('parses literal dollar signs and braces in choices #30495', function()
+    eq({
+      {
+        type = type.Choice,
+        data = { tabstop = 1, values = { 'a$b', 'a}b', '${2:raw}', [[\]], ',', '|}' } },
+      },
+    }, parse([[${1|a$b,a}b,${2:raw},\\,\,,\|}|}]]))
+  end)
+
   it('parses format', function()
     eq(
       {
