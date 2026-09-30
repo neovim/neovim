@@ -375,10 +375,14 @@ func Test_strptime()
   endif
 endfunc
 
+func Test_repeat_overflow()
+  call assert_fails("call repeat('abcdef', 715827883)", 'E1510:')
+  call assert_fails("call repeat('ab', 4294967297)", 'E1510:')
+  call assert_fails('call repeat([1, 2, 3, 4, 5, 6], 715827883)', 'E1510:')
+endfunc
+
 func Test_resolve_unix()
-  if !has('unix')
-    return
-  endif
+  CheckUnix
 
   " Xlink1 -> Xlink2
   " Xlink2 -> Xlink3

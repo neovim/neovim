@@ -2425,6 +2425,29 @@ func Test_diff_inline_multibuffer_empty_block()
   call StopVimInTerminal(buf)
 endfunc
 
+" An inline:word diff block that starts with inserted words has df_count zero
+" for the first buffer, then the index of its last line is negative.  This
+" caused a heap-buffer underflow
+func Test_diff_inline_word_empty_block()
+  set diffopt=internal,filler,inline:word
+  enew!
+  call setline(1, ['b c', 'y z'])
+  diffthis
+  vnew
+  call setline(1, ['a b c d e', 'x y z w v'])
+  diffthis
+  redraw
+
+  " Part of the line is highlighted, not all of it.
+  let attrs = map(range(1, 9), 'screenattr(1, v:val)')
+  call assert_true(len(uniq(sort(attrs))) > 1)
+
+  diffoff!
+  set diffopt&
+  bwipe!
+  bwipe!
+endfunc
+
 func Test_diffget_diffput_linematch()
   CheckScreendump
   call delete('.Xdifile1.swp')

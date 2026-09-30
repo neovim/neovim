@@ -7,10 +7,10 @@
 #include "nvim/iconv_defs.h"
 
 enum {
-  /// Maximum number of bytes in a multi-byte character.  It can be one 32-bit
-  /// character of up to 6 bytes, or one 16-bit character of up to three bytes
-  /// plus six following composing characters of three bytes each.
-  MB_MAXBYTES = 21,
+  /// Maximum number of bytes in the multi-byte character of one screen cell.
+  /// It can be one character of up to six bytes, plus MAX_MCO following composing
+  /// characters of up to four bytes each.
+  MB_MAXBYTES = 30,
   /// Maximum length of a Unicode character, excluding composing characters.
   MB_MAXCHAR = 6,
 };
