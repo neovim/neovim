@@ -208,7 +208,8 @@ describe('multicursor', function()
       fn.setline(1, { 'aaa', 'bbb', 'ccc' })
       feed('gg0')
       feed('qq')
-      feed('Q') -- recording: not allowed (but still recorded)
+      feed('Q') -- Recording a macro: not allowed (but still recorded).
+      feed('zqj') -- Likewise "zq".
       feed('q')
       eq(0, ncursors())
       feed('@q') -- executing the recorded "Q": not allowed either
@@ -239,20 +240,32 @@ describe('multicursor', function()
   end)
 
   describe('{Visual}Q', function()
-    it('adds a cursor on each selected line', function()
+    it('places cursor on each selected line', function()
       fn.setline(1, { 'aaa', 'bbb', 'ccc' })
       feed('ggvjQ') -- selection spans lines 1-2, cursor ends on line 2
       eq('n', fn.mode()) -- Visual mode ended
       eq({ 2, 0 }, api.nvim_win_get_cursor(0)) -- primary: unmoved, where the selection ended
       eq({ { 0, 0 }, { 1, 0 } }, anchors()) -- One per selected line, including under the primary.
-      -- Cursors align by screen column, not byte column: a multibyte char before the cursor
-      -- on one line must not shift the cursors on the other lines.
+
+      -- Cursors align by screen (not byte) column. A multibyte char before the cursor must not
+      -- shift other cursors.
       clear_cursors()
       api.nvim_buf_set_lines(0, 0, -1, true, { 'é123', 'abcdef' })
       feed('gg0llvjQ') -- Visual from "2" (line 1) down; cursor ends on "c" (screen column 3)
       eq({ 2, 2 }, api.nvim_win_get_cursor(0)) -- primary: unmoved, on "c" (screen column 3)
       feed('x')
       eq({ 'é13', 'abdef' }, get_lines())
+
+      -- Each line, also where the cursor column is outside the selection: before '< (charwise), or
+      -- past a short line (blockwise).
+      clear_cursors()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'hello world', 'foo', '' })
+      feed('gg0wv}Q') -- From "world" to the blank line: the cursor column is 0.
+      eq({ { 0, 0 }, { 1, 0 }, { 2, 0 } }, anchors())
+      clear_cursors()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'abc', 'd', 'efg' })
+      feed('gg0ll<C-v>jjQ')
+      eq({ { 0, 2 }, { 1, 0 }, { 2, 2 } }, anchors())
     end)
 
     it('V{motion}Q keeps primary at selection-end; "$": each line end', function()
@@ -307,6 +320,7 @@ describe('multicursor', function()
       clear_cursors()
       feed('zq#')
       eq(4, ncursors())
+      eq(0, api.nvim_get_vvar('searchforward')) -- The motion's direction is preserved.
       -- A "/" search likewise, also with several matches per line.
       clear_cursors()
       api.nvim_buf_set_lines(0, 0, -1, true, { 'ab ab ab', 'xx ab' })
@@ -381,6 +395,15 @@ describe('multicursor', function()
       clear_cursors()
       feed('Gzqj') -- "j" fails on the last line.
       eq(1, ncursors())
+      -- 3-key motion ("g`a").
+      clear_cursors()
+      feed('0fxmagg0zqg`a')
+      eq({ { 0, 0 }, { 0, 4 } }, anchors())
+      -- The steps do not scroll the window.
+      clear_cursors()
+      api.nvim_buf_set_lines(0, 0, -1, true, fn['repeat']({ 'x' }, 100))
+      feed('50Gztzqj')
+      eq({ 50, 50 }, { fn.line('w0'), fn.line('.') })
 
       -- {Visual}zq{motion} limits to the selection. Primary + existing cursor (1:3) stays.
       clear_cursors()
@@ -464,7 +487,12 @@ describe('multicursor', function()
       cursors({ 'foo x foo', 'bar foo' }, '')
       feed('zq*gvcX<Esc>')
       eq({ 'X x X', 'bar X' }, get_lines())
-      -- Also the primary's, moved to the first match. The session end restores its '< '>.
+      -- Also an existing cursor (its '< '> "fo").
+      clear_cursors()
+      cursors({ 'foo bar foo' }, 'Qwvly')
+      feed('/foo<CR>zqngvcX<Esc>')
+      eq({ 'X bar X' }, get_lines())
+      -- A zq step on an existing cursor sets its '< '> too. Matches "foo" (not "fo" from "vly").
       clear_cursors()
       cursors({ 'x foo', 'y foo', 'z foo' }, '')
       feed('Vjzq/foo<CR>')
@@ -589,7 +617,7 @@ describe('multicursor', function()
   end)
 
   describe('normal-mode cascade', function()
-    it("'[ and '] are per-cursor", function()
+    it("cursor-local marks ('[ '] '. '^)", function()
       cursors({ 'aa bb', 'cc dd' }, 'Qj')
       feed('gUiw')
       eq({ 'AA bb', 'CC dd' }, get_lines())
@@ -598,12 +626,31 @@ describe('multicursor', function()
       feed('<F2>')
       eq({ 'aa bb', 'cc dd' }, get_lines())
 
+      -- '. and '^ are per-cursor: a cascaded mapping jumps to their cursor-local positions.
+      clear_cursors()
+      cursors({ 'abord1 line', 'abord2 line', 'abord3 line' })
+      command([[nnoremap <F4> lx$`.iZ<Esc>]])
+      feed('<F4>')
+      eq({ 'aZord1 line', 'aZord2 line', 'aZord3 line' }, get_lines())
+      eq({ 3, 1 }, api.nvim_buf_get_mark(0, '.'))
+      eq({ 3, 2 }, api.nvim_buf_get_mark(0, '^'))
+
       -- The primary's marks are shifted by edits from other cursors.
       clear_cursors()
       cursors({ 'a', 'b', 'c', 'd', 'e' }, 'Q3j')
       feed('dd') -- Delete line 1.
       eq({ 'b', 'c', 'e' }, get_lines())
       eq(3, fn.getpos("'[")[2])
+
+      -- A cursor without a change yet has no '., like a new editor, so "`." fails there (E20).
+      clear_cursors()
+      command('let v:errmsg = ""')
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'abc', 'def', 'ghi', 'jkl' })
+      feed('Gx') -- The primary's change.
+      feed('ggQjQjq=`.q=')
+      eq({ { 0, 0 }, { 1, 0 } }, anchors())
+      eq({ 4, 0 }, api.nvim_win_get_cursor(0))
+      eq('E20: Mark not set', api.nvim_get_vvar('errmsg'))
     end)
 
     it('CTRL-C interrupts the cascade; one "u" undoes the partial edit', function()
@@ -1860,13 +1907,6 @@ describe('multicursor', function()
       feed('viwy')
       eq({ 3, 0 }, api.nvim_buf_get_mark(0, '<'))
       eq({ 3, 5 }, api.nvim_buf_get_mark(0, '>'))
-
-      -- '. and '^ are per-cursor: a cascaded mapping jumps to their cursor-local positions.
-      command([[nnoremap <F4> lx$`.iZ<Esc>]])
-      feed('<F4>')
-      eq({ 'aZord1 line', 'aZord2 line', 'aZord3 line' }, api.nvim_buf_get_lines(0, 0, 3, true))
-      eq({ 3, 1 }, api.nvim_buf_get_mark(0, '.'))
-      eq({ 3, 2 }, api.nvim_buf_get_mark(0, '^'))
 
       -- Jumplist: a followed jump records one entry (the primary's).
       -- (Last: all cursors land on line 30 and merge.)

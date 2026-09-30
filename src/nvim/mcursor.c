@@ -287,7 +287,7 @@ static void mc_sandbox_leave(McSandbox *sb)
   mc_replay = false;
 }
 
-/// Cascade step: replays an atom at `cursoridx`, then updates Context.
+/// Cascade step: replays an atom at `cursoridx` and updates Context.
 static void mc_execute(size_t cursoridx, size_t atomidx)
 {
   Context ctx = kv_A(mc_cursors, cursoridx);
@@ -322,7 +322,13 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
     regs_ts = reg_max_ts(false);
   }
 
-  ctx_load(&ctx, kCtxCursor | kCtxVisual | kCtxMarks, 0);
+  // Perf: motions never set cursor-local marks; skip save/restore.
+  // Except motions (`.) that read them, and LHS-replay.
+  const int mark_cmd = atom.spec.cmd == 'g' ? atom.spec.cmd2 : atom.spec.cmd;  // g`. like `.
+  const bool swap_marks = atom.type != kAMotion || atom.remap || mark_cmd == '\''
+                          || mark_cmd == '`';
+
+  ctx_load(&ctx, swap_marks ? kCtxVisual | kCtxMarks | kCtxCursor : kCtxCursor, 0);
 
   // Edits by other cursors may have invalidated this cursor's position.
   if (atom.type == kAInsertSpan) {
@@ -386,7 +392,7 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
     api_free_string(ctx.regs);
     ctx.regs = shada_encode_regs(false, mc_start.time);
   }
-  ctx_save(&ctx, kCtxCursor | kCtxVisual | kCtxMarks);
+  ctx_save(&ctx, swap_marks ? kCtxVisual | kCtxMarks | kCtxCursor : kCtxCursor);
 
   if (atom.type == kAInsertSpan && curbuf->b_last_insert.mark.lnum > 0) {
     // Anchor at the insertion point ('^ mark): this is where the primary cursor, still in Insert
@@ -781,7 +787,7 @@ static bool mc_ins_keys_nonliteral(const char *keys, size_t len)
       key = TO_SPECIAL((uint8_t)keys[i + 1], (uint8_t)keys[i + 2]);
       i += 2;
     }
-    if ((atom_key_class(key, NUL) & kKeyInsFlush) != 0) {
+    if ((atom_key_class(key, NUL, NUL) & kKeyInsFlush) != 0) {
       return true;
     }
   }
@@ -1428,31 +1434,40 @@ void mc_zq(oparg_T *oap, cmdarg_T *cap, pos_T origin)
   // "{Visual}zq": the selection ('< '>). Linewise, blockwise: whole lines (blockwise: `vcols`).
   visualinfo_T v = curbuf->b_visual;
   pos_T bounds[2] = { mark_get_visual(curbuf, '<')->mark, mark_get_visual(curbuf, '>')->mark };
+  const bool lines = oap->motion_type == kMTLineWise;  // Linewise motion ("j") steps by lines.
+  if (lines) {
+    bounds[0].col = 0;
+    bounds[1].col = MAXCOL;
+  }
   colnr_T vcols[2] = { 0, MAXCOL };
-  if (v.vi_mode == Ctrl_V) {
+  const bool blockwise = v.vi_mode == Ctrl_V && !lines;
+  if (blockwise) {
     getvcols(curwin, &v.vi_start, &v.vi_end, &vcols[0], &vcols[1], 0);
     vcols[1] = v.vi_curswant == MAXCOL ? MAXCOL : vcols[1];  // "$": to the end of every line.
   }
   // The steps use the primary's column, not the column they start from.
   curwin->w_cursor = primary;
   update_curswant();
+  viewstate_T view;
+  save_viewstate(curwin, &view);
+  save_search_patterns();
 
   const bool search = (cap->cmdchar != NUL && strchr("*#/?nN", cap->cmdchar) != NULL)
                       || (cap->cmdchar == 'g' && cap->nchar != NUL
                           && strchr("*#nN", cap->nchar) != NULL);
   int placed = 0;
   pos_T first = { 0 };
+  CmdSpec spec = atom_cmd_spec(cap);
+  spec.regname = 0;  // The operator's ("\"azq").
   // The search motion already set the pattern. Each step is "/<CR>".
-  String keys = search ? cstr_to_string("/\n")
-                       : redo_keys(&(CmdSpec){ .count = cap->count0, .cmd = cap->cmdchar,
-                                               .cmd2 = cap->nchar });
+  String keys = search ? cstr_to_string("/\n") : redo_keys(&spec);
   if (!oap->from_visual) {
     // The primary is a step (search: if on a match, else its next match is, like the motion).
     first = (!search || equalpos(mc_zq_target(primary, true, oap->motion_type, NULL).vi_start,
                                  primary))
             ? primary : mc_zq_step(keys.data, primary);
     placed = mc_zq_run(keys.data, search, oap->motion_type, (pos_T){ .lnum = MAXLNUM }, first);
-  } else if (v.vi_mode != Ctrl_V) {
+  } else if (!blockwise) {
     if (mc_zq_first(keys.data, search, oap->motion_type, bounds, &first)) {
       placed = mc_zq_run(keys.data, search, oap->motion_type, bounds[1], first);
     }
@@ -1472,7 +1487,10 @@ void mc_zq(oparg_T *oap, cmdarg_T *cap, pos_T origin)
       }
     }
   }
+
   api_free_string(keys);
+  restore_search_patterns();
+  restore_viewstate(curwin, &view);
 
   if (placed > 0) {
     if (mc_mark_at(curbuf, primary, 0) == 0) {
@@ -1536,9 +1554,15 @@ void mc_toggle(buf_T *buf, pos_T pos, bool end_follow, TriState on)
 
 /// Places an mcursor at position `pos` in `buf`.
 ///
-/// @return  The new cursor's Context, or NULL if not placed.
+/// @return  The (new or existing) cursor at `pos`. NULL if not placed (cascade).
 Context *mc_add(buf_T *buf, pos_T pos)
 {
+  const uint32_t existing = mc_mark_at(buf, pos, 0);
+  for (size_t i = 0; existing != 0 && i < kv_size(mc_cursors); i++) {
+    if (kv_A(mc_cursors, i).buf == buf->handle && kv_A(mc_cursors, i).mark == existing) {
+      return &kv_A(mc_cursors, i);
+    }
+  }
   const size_t count = kv_size(mc_cursors);
   uint32_t mark = 0;
   mc_mark_upd(buf, &mark, pos);

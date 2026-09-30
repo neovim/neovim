@@ -207,7 +207,7 @@ CmdSpec atom_cmd_spec(const cmdarg_T *cap)
     .count = cap->count0,
     .cmd = cap->cmdchar,
     .cmd2 = operand ? NUL : cap->nchar,
-    .cmdarg = operand ? cap->nchar : NUL,
+    .cmdarg = operand ? cap->nchar : cap->extra_char,  // "g`a" => 'a'.
   };
 }
 
@@ -708,10 +708,10 @@ static bool atom_buf_has_consumers(void)
   return mc_buf_has_cursors(curbuf) || has_event(EVENT_CMDATOM);
 }
 
-/// Classifies key/command `cmd` (`arg` is its argument char, for two-char commands like "g;").
+/// Classifies key/command `cmd`. arg/arg2 are its argument chars, for commands like g; or g`a.
 ///
 /// @return  kKeyXx flags, or 0 for an ordinary key.
-unsigned atom_key_class(int cmd, int arg)
+unsigned atom_key_class(int cmd, int arg, int arg2)
 {
   switch (cmd) {
   case K_EVENT:
@@ -738,6 +738,9 @@ unsigned atom_key_class(int cmd, int arg)
     return kKeyInsFlush;
   // Multiplexed: one nv_cmds entry => many commands. Classified by char 2, not NV_MOTION/….
   case 'g':
+    if (arg == '\'' || arg == '`') {
+      return atom_key_class(arg, arg2, NUL);  // "g'x", "g`x": like "'x", "`x".
+    }
     if (strchr(";,go", arg) != NULL) {
       return kKeyJump;
     }
@@ -752,8 +755,8 @@ unsigned atom_key_class(int cmd, int arg)
     return (arg == 'j' || arg == 'k') ? kKeyMotion : 0;
   case '\'':
   case '`':
-    // Marks in kCtxVisual|kCtxMarks are cursor-local; other marks are absolute.
-    return arg != NUL && strchr("<>[].^", arg) != NULL ? kKeyMotion : kKeyJump;
+    // kCtxVisual|kCtxMarks and '( '{ etc. are cursor-relative; others are absolute.
+    return arg != NUL && strchr("<>[].^(){}", arg) != NULL ? kKeyMotion : kKeyJump;
   case K_DOWN:
   case K_END:
   case K_HOME:
@@ -850,7 +853,7 @@ void atom_typed_add(const uint8_t *chars, size_t len)
     return;
   }
   if (len == 3 && chars[0] == K_SPECIAL
-      && (atom_key_class(TERMCAP2KEY(chars[1], chars[2]), NUL) & kKeySynthetic)) {
+      && (atom_key_class(TERMCAP2KEY(chars[1], chars[2]), NUL, NUL) & kKeySynthetic)) {
     return;  // Not user input: K_IGNORE from a mapping resolved during peek/K_EVENT/…
   }
   for (size_t i = 0; i < len; i++) {
@@ -1391,7 +1394,7 @@ void atom_cmd_start(CmdFrame *old, int cmdchar)
     .origin = atom_origin(),
     .visual = Visual,
     .keytyped = KeyTyped,
-    .keyclass = atom_key_class(cmdchar, NUL),
+    .keyclass = atom_key_class(cmdchar, NUL, NUL),
     .ex_normal = ex_normal_busy,
     .captures = atom_captures,
     .global_ops = global_ops,
@@ -1447,7 +1450,7 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
   //
   const bool user = atom_is_user_cmd();
   const CmdFrame *root = root_frame();
-  const unsigned keycls = atom_key_class(ca->cmdchar, ca->nchar);
+  const unsigned keycls = atom_key_class(ca->cmdchar, ca->nchar, ca->extra_char);
   // Opaque cmd that changed nothing is invisible; one that changed the buffer/selection voids the
   // pending visual atom (see `kKeyOpaque`).
   //

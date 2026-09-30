@@ -1766,7 +1766,7 @@ void clearop(oparg_T *oap)
 
 void clearopbeep(oparg_T *oap)
 {
-  if (oap->op_type == OP_MCURSOR) {
+  if (oap->op_type == OP_MCURSOR && oap->motion_type != kMTUnknown) {
     return;  // "zq": motion failing at primary, does not cancel the op.
   }
   clearop(oap);
@@ -2891,6 +2891,11 @@ static void nv_zet(cmdarg_T *cap)
 
   // "zq": place multicursor(s) at (repeated) motion.
   case 'q':
+    if (reg_recording != 0 || reg_executing != 0) {
+      // Not allowed while recording/executing a macro. |mcursor-limitations|
+      clearopbeep(cap->oap);
+      break;
+    }
     mc_zq_start(cap);
     nv_operator(cap);
     break;
