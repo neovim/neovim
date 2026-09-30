@@ -5,6 +5,7 @@ local Preprocess = require('test.unit.preprocess')
 local t_global = require('test.testutil')
 local paths = t_global.paths
 local assert = require('test.assert')
+local harness = require('test.harness')
 
 local check_cores = t_global.check_cores
 local dedent = t_global.dedent
@@ -12,6 +13,8 @@ local neq = t_global.neq
 local map = vim.tbl_map
 local eq = t_global.eq
 local trim = vim.trim
+
+local testutil_source = debug.getinfo(1, 'S').source
 
 -- add some standard header locations
 for _, p in ipairs(paths.include_paths) do
@@ -663,6 +666,16 @@ local debug_log = only_separate(function(...)
   return _debug_log(...)
 end)
 
+local function exception_handler(err)
+  if type(err) == 'table' and err.__harness_pending then
+    --- @cast err test.harness.ErrorPayload
+    return err
+  end
+  local traceback = harness.build_error_traceback(testutil_source) or debug.traceback('', 2)
+  local message = harness.format_error_value(err)
+  return message .. '\nchild ' .. traceback
+end
+
 local function itp_child(wr, func)
   --- @param s string
   _debug_log = function(s)
@@ -673,7 +686,7 @@ local function itp_child(wr, func)
   if status then
     collectgarbage('stop')
     child_sethook(wr)
-    status, result = pcall(func)
+    status, result = xpcall(func, exception_handler)
     debug.sethook()
   end
   sc.write(wr, trace_end_msg)
