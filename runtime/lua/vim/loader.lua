@@ -1,6 +1,6 @@
 local fs = vim.fs -- "vim.fs" is a dependency, so must be loaded early.
 local uv = vim.uv
-local uri_encode = vim.uri_encode --- @type function
+local sha256 = vim.fn.sha256
 
 --- @type (fun(modename: string): fun()|string)[]
 local loaders = package.loaders
@@ -126,8 +126,7 @@ local function cache_filename(name)
     name = name:match('(/usr/.*)') or name
   end
 
-  local ret = ('%s/%s'):format(M.path, uri_encode(name, 'rfc2396'))
-  return ret:sub(-4) == '.lua' and (ret .. 'c') or (ret .. '.luac')
+  return ('%s/%s.luac'):format(M.path, sha256(name))
 end
 
 --- Saves the cache entry for a given module or file

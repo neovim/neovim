@@ -95,6 +95,61 @@ describe('vim.loader', function()
     eq(2, exec_lua('return loadfile(...)()', tmp2))
   end)
 
+  it('caches deeply nested module paths #29372 #25008', function()
+    local root = t.tmpname(false)
+    local rtp = root .. ('/' .. ('x'):rep(80)):rep(3)
+    n.fn.mkdir(rtp .. '/lua', 'p')
+    t.write_file(rtp .. '/lua/long_path.lua', 'return 42')
+    eq(
+      { 42, 42, 1 },
+      exec_lua(function(path, cache)
+        vim.loader.path = cache
+        vim.loader.enable()
+        vim.opt.runtimepath:prepend(path)
+        local fs_open = vim.uv.fs_open
+        local writes = 0
+        vim.uv.fs_open = function(name, mode, ...)
+          if mode == 'w' and vim.startswith(name, cache .. '/') then
+            writes = writes + 1
+          end
+          return fs_open(name, mode, ...)
+        end
+        local first = require('long_path')
+        package.loaded.long_path = nil
+        local second = require('long_path')
+        vim.uv.fs_open = fs_open
+        return { first, second, writes }
+      end, rtp, root .. '/cache')
+    )
+    for name in vim.fs.dir(root .. '/cache') do
+      -- eCryptfs has a smaller component limit than most filesystems.
+      t.ok(#name <= 143, 'at most 143 bytes', #name)
+    end
+  end)
+
+  it('loads cached files in fast events', function()
+    local tmp = t.tmpname()
+    t.write_file(tmp, 'return 42')
+    eq(
+      { true, 42, 42 },
+      exec_lua(function(path)
+        vim.loader.enable()
+        local timer = vim.uv.new_timer()
+        local result
+        timer:start(0, 0, function()
+          result = { pcall(function()
+            return assert(loadfile(path))(), assert(loadfile(path))()
+          end) }
+          timer:close()
+        end)
+        assert(vim.wait(1000, function()
+          return result ~= nil
+        end))
+        return result
+      end, tmp)
+    )
+  end)
+
   it('indents error message #29809', function()
     local errmsg = exec_lua [[
       vim.loader.enable()
