@@ -360,7 +360,6 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
   if (atom.type == kAInsertSpan && mc_ins_span.first && did_beep != beeps
       && buf_get_changedtick(curbuf) == tick) {
     // XXX: Insert-entering cmd failed ("ct;" did not match ";"). Drop the cursor. #41960
-    // (Not detected under emsg_silent: beep_flush() does not beep.)
     extmark_del_id(curbuf, mc_ns(), ctx.mark);
     return;
   }
