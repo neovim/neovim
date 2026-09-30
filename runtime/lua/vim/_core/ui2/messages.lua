@@ -720,7 +720,8 @@ end
 
 local function enter_pager()
   in_pager = true
-  if M.cmd_on_key then
+  if M.cmd_on_key or typed_g then
+    -- Cancel a pending g even when the handler did not expand the cmdline.
     api.nvim_feedkeys(vim.keycode('<Esc>'), 'tn', false)
   end
   -- Schedule: the fed <Esc> above is processed one event iteration later.
