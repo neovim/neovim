@@ -465,6 +465,9 @@ local Option = {} -- luacheck: no unused
 --- -- Will ignore: *.o
 --- ```
 ---
+--- For |'errorformat'|, comma escapes are retained in each entry so it can be
+--- reused as an |errorformat| pattern.
+---
 --- For values that are comma-separated maps, a table will be returned with
 --- the names as keys and the values as entries:
 ---

@@ -902,18 +902,26 @@ describe('lua stdlib', function()
           eq({ 1, 1 }, { items[1].valid, items[2].valid })
         end)
 
-        it('roundtrips escaped commas in list options', function()
-          local items = { [[foo\,bar]], [[baz\\\,qux]] }
-          eq(
-            items,
-            exec_lua(function(items)
-              vim.opt.wildignore = items
-              return vim.opt.wildignore:get()
-            end, items)
-          )
-          exec_lua('vim.opt.wildignore = vim.opt.wildignore:get()')
-          eq(table.concat(items, ','), eval('&wildignore'))
-        end)
+        for _, option in ipairs({ 'path', 'runtimepath' }) do
+          it('keeps decoded comma-containing ' .. option .. ' entries usable as paths', function()
+            local dir = t.tmpname(false) .. ',comma'
+            fn.mkdir(dir, 'p')
+            t.finally(function()
+              rmdir(dir)
+            end)
+            eq(
+              'directory',
+              exec_lua(function(name, path)
+                local saved = vim.o[name]
+                vim.o[name] = path:gsub(',', [[\,]])
+                local value = vim.opt[name]:get()[1]
+                local stat = vim.uv.fs_stat(value)
+                vim.o[name] = saved
+                return stat and stat.type
+              end, option, dir)
+            )
+          end)
+        end
 
         it('works for array list type options', function()
           eq_exec_lua({ eol = '~', space = '-' }, function()
