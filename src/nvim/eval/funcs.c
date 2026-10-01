@@ -7072,7 +7072,7 @@ static void f_submatch(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   int retList = 0;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    retList = (int)tv_get_number_chk(&argvars[1], &error);
+    retList = (int)tv_get_bool_chk(&argvars[1], &error);
     if (error) {
       return;
     }
@@ -7421,7 +7421,7 @@ static void f_timer_pause(typval_T *argvars, typval_T *unused, EvalFuncData fptr
     return;
   }
 
-  int paused = (bool)tv_get_number(&argvars[1]);
+  bool paused = (bool)tv_get_bool(&argvars[1]);
   timer_T *timer = find_timer_by_nr(tv_get_number(&argvars[0]));
   if (timer != NULL) {
     if (!timer->paused && paused) {
