@@ -48,10 +48,6 @@ describe('fileio', function()
     rmdir('Xtest_startup_swapdir')
     rmdir('Xtest_backupdir')
     rmdir('Xtest_backupdir with spaces')
-    os.remove('Xtest_rename_src')
-    os.remove('Xtest_rename_dest')
-    os.remove('Xtest_rename_dest_dir/file')
-    rmdir('Xtest_rename_dest_dir')
   end)
 
   local args = { '--clean', '--cmd', 'set nofsync directory=Xtest_startup_swapdir' }
@@ -311,26 +307,6 @@ describe('fileio', function()
       {1:~                                       }|*2
       <erwrite-forced" [noeol] 1L, 6B written |
     ]])
-  end)
-
-  it('rename() atomically replaces destination file #41940', function()
-    clear()
-    write_file('Xtest_rename_src', 'new_content')
-    write_file('Xtest_rename_dest', 'old_content')
-
-    eq(0, fn.rename('Xtest_rename_src', 'Xtest_rename_dest'))
-    eq(false, uv.fs_stat('Xtest_rename_src') ~= nil)
-    eq('new_content', read_file('Xtest_rename_dest'))
-
-    -- When destination is a directory, rename fails and destination is not removed
-    write_file('Xtest_rename_src', 'src_content')
-    mkdir('Xtest_rename_dest_dir')
-    write_file('Xtest_rename_dest_dir/file', 'dir_content')
-
-    neq(0, fn.rename('Xtest_rename_src', 'Xtest_rename_dest_dir'))
-    eq(true, uv.fs_stat('Xtest_rename_src') ~= nil)
-    eq(true, uv.fs_stat('Xtest_rename_dest_dir') ~= nil)
-    eq('dir_content', read_file('Xtest_rename_dest_dir/file'))
   end)
 end)
 
