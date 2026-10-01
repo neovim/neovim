@@ -112,7 +112,7 @@
 \*XLFD\*
 \*\(job\|sound\|term\|test_gui\)_[_a-zA-Z0-9]\+()\*
 \*autocommand-events\*
-\*blowfish\*
+\*blowfish2\?\*
 \*builtin-function-list\*
 \*channel-functions\*
 \*editorconfig-install\*
@@ -125,6 +125,7 @@
 \*patches-\(after-\)\?[0-9].*\*
 \*pkzip\*
 \*popup-window-functions\*
+\*restricted-mode\*
 \*sound-functions\*
 \*tabpanel[-a-z]*\*
 \*term++\(close\|open\)\*

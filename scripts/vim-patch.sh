@@ -874,8 +874,10 @@ is_na_patch() {
           '-I^\s+$' \
           '-I^[-=]+$' \
           '-I^(Functions:|GUI|Other)\s~$' \
+          '-I^[A-Z]\s+\*\+sodium\*\s+compiled with ' \
           '-I^\|(ch|popup)_[_a-z]+\(\)\|' \
           '-I^popup_[_a-z]+\(' \
+          '-I^sodium\s+Compiled with ' \
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
           '-I compiled (with|without) .*\(\|.+\|\) feature\.$' \
           '-I\{.+ (available|compiled) (with|without) .+\}' \
@@ -1018,7 +1020,7 @@ is_na_patch() {
           '-IEVENT_TERMINALWINOPEN' \
           '-I^#\s*include\s+<proto/' \
           '-I^\s+\{"ch_[_a-z]+",.*\sFEARG_[1-9],\s+arg[1-9]+_' \
-          '-I^\s+\{"(popup|prop|sound)_[_a-z]+",.*f_(popup|prop|sound)_[_a-z]+},$' \
+          '-I^\s+\{"(popup|prop|sound)_[_a-z]+",.*f_(popup|prop|sound)_[_a-z]+\)?},$' \
           '-I^\s+ret_[a-z]+,\s+(JOB|PROP)_FUNC\(f_.+\)},$' \
           '-I^\s*(static)?\s(char(|_u)|hashtab_T|int|void)( \*)?$' \
           '-I^static\s(char(|_u)|hashtab_T|int|void)\s\*?[^*]+\(.+\);$' \
