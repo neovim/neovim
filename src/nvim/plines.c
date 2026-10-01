@@ -351,7 +351,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
       colmax += col_adj;
       int n = colmax + win_col_off2(wp);
       if (n > 0) {
-        colmax += (((vcol - colmax) / n) + 1) * n - col_adj;
+        colmax += (((vcol + col_adj - colmax) / n) + 1) * n - col_adj;
       }
     }
 

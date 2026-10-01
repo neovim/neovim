@@ -404,4 +404,20 @@ func Test_linebreak_no_break_after_whitespace_only()
   call s:close_windows()
 endfunc
 
+func Test_linebreak_with_large_tabstop()
+  call s:test_windows('setl ts=45 linebreak wrap')
+  call setline(1, "foo\tbar")
+  normal! $
+  let lines = s:screen_lines([1, 3], winwidth(0))
+  let expect = [
+\ "foo                 ",
+\ "                    ",
+\ "     bar            ",
+\ ]
+  call s:compare_lines(expect, lines)
+  call assert_equal(3, winline())
+  call assert_equal(8, wincol())
+  call s:close_windows()
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
