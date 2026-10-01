@@ -21,6 +21,7 @@
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option_vars.h"
@@ -32,10 +33,6 @@
 #include "nvim/types_defs.h"
 #include "nvim/version.h"
 #include "nvim/vim_defs.h"
-
-#ifdef MSWIN
-# include "nvim/mbyte.h"
-#endif
 
 #ifdef BACKSLASH_IN_FILENAME
 # include "nvim/fileio.h"
@@ -94,6 +91,7 @@ char *os_getenv(const char *name)
     e = xmemdupz(buf, size);
   }
 end:
+  assert(r != UV_EINVAL);
   if (r != 0 && r != UV_ENOENT && r != UV_UNKNOWN) {
     ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }
@@ -123,6 +121,7 @@ char *os_getenv_buf(const char *const name, char *const buf, const size_t bufsiz
     }
     xfree(e);
   }
+  assert(r != UV_EINVAL);
 
   if (r != 0 || size == 0 || buf[0] == NUL) {
     if (r != 0 && r != UV_ENOENT && r != UV_UNKNOWN) {
@@ -602,8 +601,15 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
         } else
 #endif
         {
-          while (c-- > 0 && *tail != NUL && vim_isIDc((uint8_t)(*tail))) {
-            *var++ = *tail++;
+          while (vim_isIDp(tail)) {
+            const int len = utf_ptr2len(tail);
+            if (len > c) {
+              break;
+            }
+            memcpy(var, tail, (size_t)len);
+            var += len;
+            tail += len;
+            c -= len;
           }
         }
 
