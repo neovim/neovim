@@ -1378,7 +1378,7 @@ func Test_spellfile_truncated_prefcondnr()
   " spell file that has been read once is cached by its name.
   for n in range(len(bytes) - 40, len(bytes) - 1)
     let fname = 'Xtrunc' .. n .. '.spl'
-    call writefile(bytes[0 : n - 1], fname, 'B')
+    call writefile(bytes[0 : n - 1], fname)
     try
       execute 'set spl=' .. fname
       set spell
