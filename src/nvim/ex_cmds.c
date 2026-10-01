@@ -2972,6 +2972,47 @@ static void delbuf_msg(char *name)
 
 static int append_indent = 0;       // autoindent for first line
 
+/// Get the next line of text for ":append", ":insert" and ":change": the text
+/// after the bar, the next line of the command, or a line from the script or
+/// the user.  Returns NULL when there is no more.
+static char *get_append_line(exarg_T *eap, int indent)
+{
+  char *theline;
+  char *p;
+
+  if (*eap->arg == '|') {
+    // Get the text after the trailing bar.
+    theline = xstrdup(eap->arg + 1);
+    *eap->arg = NUL;
+  } else if (eap->ea_getline == NULL) {
+    // No getline() function, use the lines that follow. This ends
+    // when there is no more.
+    if (eap->nextcmd == NULL) {
+      return NULL;
+    }
+    p = vim_strchr(eap->nextcmd, NL);
+    if (p == NULL) {
+      p = eap->nextcmd + strlen(eap->nextcmd);
+    }
+    theline = xmemdupz(eap->nextcmd, (size_t)(p - eap->nextcmd));
+    if (*p != NUL) {
+      p++;
+    } else {
+      p = NULL;
+    }
+    eap->nextcmd = p;
+  } else {
+    int getline_State = State;
+    // Set State to avoid the cursor shape to be set to MODE_INSERT
+    // state when getline() returns.
+    State = MODE_CMDLINE;
+    theline = eap->ea_getline(eap->cstack->cs_looplevel > 0 ? -1 : NUL,
+                              eap->cookie, indent, true);
+    State = getline_State;
+  }
+  return theline;
+}
+
 /// ":insert" and ":append", also used by ":change"
 void ex_append(exarg_T *eap)
 {
@@ -2981,6 +3022,18 @@ void ex_append(exarg_T *eap)
   int indent = 0;
   char *p;
   bool empty = (curbuf->b_ml.ml_flags & ML_EMPTY);
+
+  if (eap->skip) {
+    // Not executing the command, only read the lines up to the ".".
+    while ((theline = get_append_line(eap, 0)) != NULL) {
+      bool end = theline[0] == '.' && theline[1] == NUL;
+      xfree(theline);
+      if (end) {
+        break;
+      }
+    }
+    return;
+  }
 
   // the ! flag toggles autoindent
   if (eap->forceit) {
@@ -3018,36 +3071,7 @@ void ex_append(exarg_T *eap)
         indent = get_indent_lnum(lnum);
       }
     }
-    if (*eap->arg == '|') {
-      // Get the text after the trailing bar.
-      theline = xstrdup(eap->arg + 1);
-      *eap->arg = NUL;
-    } else if (eap->ea_getline == NULL) {
-      // No getline() function, use the lines that follow. This ends
-      // when there is no more.
-      if (eap->nextcmd == NULL) {
-        break;
-      }
-      p = vim_strchr(eap->nextcmd, NL);
-      if (p == NULL) {
-        p = eap->nextcmd + strlen(eap->nextcmd);
-      }
-      theline = xmemdupz(eap->nextcmd, (size_t)(p - eap->nextcmd));
-      if (*p != NUL) {
-        p++;
-      } else {
-        p = NULL;
-      }
-      eap->nextcmd = p;
-    } else {
-      int getline_State = State;
-      // Set State to avoid the cursor shape to be set to MODE_INSERT
-      // state when getline() returns.
-      State = MODE_CMDLINE;
-      theline = eap->ea_getline(eap->cstack->cs_looplevel > 0 ? -1 : NUL,
-                                eap->cookie, indent, true);
-      State = getline_State;
-    }
+    theline = get_append_line(eap, indent);
     lines_left = Rows - 1;
     if (theline == NULL) {
       break;
@@ -3125,6 +3149,10 @@ void ex_change(exarg_T *eap)
 {
   linenr_T lnum;
 
+  if (eap->skip) {
+    ex_append(eap);
+    return;
+  }
   if (eap->line2 >= eap->line1
       && u_save(eap->line1 - 1, eap->line2 + 1) == FAIL) {
     return;

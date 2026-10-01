@@ -606,11 +606,13 @@ line.  If you want to use '|' in an argument, precede it with '\'.
 
 These commands see the '|' as their argument, and can therefore not be
 followed by another Vim command:
+    :append
     :argdo
     :autocmd
     :bufdo
     :cdo
     :cfdo
+    :change
     :command
     :debug
     :eval
@@ -620,6 +622,7 @@ followed by another Vim command:
     :global
     :help
     :helpgrep
+    :insert
     :ldo
     :lfdo
     :lhelpgrep
