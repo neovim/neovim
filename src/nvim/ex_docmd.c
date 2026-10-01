@@ -105,6 +105,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
+#include "nvim/register.h"
 #include "nvim/runtime.h"
 #include "nvim/runtime_defs.h"
 #include "nvim/search.h"
@@ -632,9 +633,11 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
       // If the command was typed, remember it for the ':' register.
       // Do this AFTER executing the command to make :@: work.
       if (getline_equal(fgetline, cookie, getexline) && new_last_cmdline != NULL) {
+        register_changed_capture(':', REG_VALUE_CSTR(last_cmdline));
         xfree(last_cmdline);
         last_cmdline = new_last_cmdline;
         new_last_cmdline = NULL;
+        register_changed(':', REG_VALUE_CSTR(last_cmdline), kRegChangedCmdline, NULL);
       }
     } else {
       // need to copy the command after the '|' to cmdline_copy, for the

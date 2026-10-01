@@ -201,7 +201,11 @@ vim.v.errors = ...
 ---                    example if `TextYankPost` is triggered
 ---                    by the `:yank` Ex command then
 ---                    `v:event.operator` is "y".
----   reason           `CompleteDone` reason.
+---   points_to        Register the unnamed register resolves
+---                    to on `RegisterChanged`.
+---   reason           `CompleteDone` reason, or the mechanism
+---                    that wrote a register on
+---                    `RegisterChanged`.
 ---   regcontents      Text stored in the register as a
 ---                    `readfile()`-style list of lines.
 ---   regname          Requested register (e.g "x" for "xyy), or

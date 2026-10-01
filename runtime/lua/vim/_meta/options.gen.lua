@@ -2242,6 +2242,7 @@ vim.go.ei = vim.go.eventignore
 --- 	`QuickFixCmdPost`,
 --- 	`QuickFixCmdPre`,
 --- 	`QuitPre`,
+--- 	`RegisterChanged`,
 --- 	`RemoteReply`,
 --- 	`SafeState`,
 --- 	`SessionLoadPost`,

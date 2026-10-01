@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string.h>
+
 #include "nvim/ascii_defs.h"
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
@@ -72,6 +74,28 @@ static inline int get_register_name(int num)
     return num + 'a' - 10;
   }
 }
+
+/// Build the |RegisterChanged| value of a special register - "/, "=, ": or ". -
+/// whose contents are a single NUL-terminated line.
+///
+/// NULL is the unset value, which is reported as an empty list: a special
+/// register cannot distinguish "unset" from "empty", and a handler must treat
+/// the two renderings as the same state.
+///
+/// The String has to outlive the call, so this takes one the caller owns. Use
+/// the REG_VALUE_CSTR() wrapper, which supplies a compound literal for it.
+static inline RegValue reg_value_cstr(String *s)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (s->data == NULL) {
+    return (RegValue){ .type = kMTCharWise };
+  }
+  s->size = strlen(s->data);
+  return (RegValue){ .lines = s, .count = 1, .type = kMTCharWise };
+}
+
+/// @see reg_value_cstr
+#define REG_VALUE_CSTR(s) reg_value_cstr(&(String){ .data = (char *)(s) })
 
 /// Check whether register is empty
 static inline bool reg_empty(const yankreg_T *const reg)
