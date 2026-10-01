@@ -874,8 +874,10 @@ is_na_patch() {
           '-I^\s+$' \
           '-I^[-=]+$' \
           '-I^(Functions:|GUI|Other)\s~$' \
+          '-I^[A-Z]\s+\*\+sodium\*\s+compiled with ' \
           '-I^\|(ch|popup)_[_a-z]+\(\)\|' \
           '-I^popup_[_a-z]+\(' \
+          '-I^sodium\s+Compiled with ' \
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
           '-I compiled (with|without) .*\(\|.+\|\) feature\.$' \
           '-I\{.+ (available|compiled) (with|without) .+\}' \

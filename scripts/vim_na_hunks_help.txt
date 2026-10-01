@@ -112,7 +112,7 @@
 \*XLFD\*
 \*\(job\|sound\|term\|test_gui\)_[_a-zA-Z0-9]\+()\*
 \*autocommand-events\*
-\*blowfish\*
+\*blowfish2\?\*
 \*builtin-function-list\*
 \*channel-functions\*
 \*editorconfig-install\*
