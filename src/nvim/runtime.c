@@ -2878,8 +2878,9 @@ retry:
     have_read = true;
     ga.ga_len = len;
 
-    // If the line was longer than the buffer, read more.
-    if (ga.ga_maxlen - ga.ga_len == 1 && buf[len - 1] != '\n') {
+    // If reading from a file and the line was longer than the buffer, read more.
+    if (!sp->source_from_buf_or_str
+        && ga.ga_maxlen - ga.ga_len == 1 && buf[len - 1] != '\n') {
       continue;
     }
 
