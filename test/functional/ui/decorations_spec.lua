@@ -1229,6 +1229,7 @@ describe('extmark decorations', function()
       [45] = { background = Screen.colors.Red, special = Screen.colors.Red, foreground = Screen.colors.Red },
       [46] = { background = Screen.colors.Blue, foreground = Screen.colors.Blue, special = Screen.colors.Red },
       [47] = { background = Screen.colors.Green, foreground = Screen.colors.Blue, special = Screen.colors.Red },
+      [48] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Blue, bold = true },
     }
 
     ns = api.nvim_create_namespace 'test'
@@ -1265,12 +1266,20 @@ describe('extmark decorations', function()
       virt_text = { { 'test', 'ErrorMsg' } },
       virt_text_pos = 'eol',
     })
-    command('set listchars=eol:$')
+    command('set nolist listchars=eol:$')
     screen:expect([[
       hell^o {4:test}          |
       {1:~                   }|*2
                           |
     ]])
+
+    feed('v$')
+    screen:expect([[
+      hell{27:o}{48:^ }{4:test}          |
+      {1:~                   }|*2
+      {24:-- VISUAL --}        |
+    ]])
+    feed('<Esc>')
 
     command('set list')
     screen:expect([[

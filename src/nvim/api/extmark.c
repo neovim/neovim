@@ -475,7 +475,8 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buf, Integer ns_i
 ///                 hidden because of scrolling with 'nowrap' or 'smoothscroll'. Currently only
 ///                 affects "overlay" virt_text.
 ///               - virt_text_pos: Position of virtual text:
-///                 - "eol": Right after EOL character (default).
+///                 - "eol": One cell after the line text or its displayed 'listchars' EOL character
+///                   (default).
 ///                 - "eol_right_align": Display right-aligned in the window unless the virtual text
 ///                   is longer than the space available. If the virtual text is too long, it is
 ///                   truncated to fit in the window after the EOL character. If the line is

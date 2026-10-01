@@ -2882,8 +2882,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
       // Keep end-of-line virtual text separated from the line or a displayed
       // 'listchars' eol character.
-      const bool has_listchars_eol = wp->w_p_list && lcs_eol != NUL;
-      const int eol_skip = (eol_hl_off == 0 && (lcs_eol_todo || has_listchars_eol) ? 1 : 0);
+      const int eol_skip = (eol_hl_off == 0 && (lcs_eol_todo || wp->w_p_list) ? 1 : 0);
 
       if (has_decor) {
         decor_redraw_eol(wp, &decor_state, &wlv.line_attr, wlv.col + eol_skip);
