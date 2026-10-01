@@ -94,17 +94,19 @@ M.create_server_definition = function()
           method = method,
           params = params,
         })
+        local request_id = #server.messages
         local handler = handlers[method]
         if handler then
-          handler(method, params, callback)
+          handler(method, params, function(err, result)
+            callback(err, result, request_id)
+          end)
         elseif method == 'initialize' then
           callback(nil, {
             capabilities = opts.capabilities or {},
-          })
+          }, request_id)
         elseif method == 'shutdown' then
-          callback(nil, nil)
+          callback(nil, nil, request_id)
         end
-        local request_id = #server.messages
         return true, request_id
       end
 
