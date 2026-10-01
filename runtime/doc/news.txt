@@ -387,6 +387,8 @@ LSP
   option is omitted.
 • Support for `workspace/foldingRange/refresh`:
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#workspace_foldingRange_refresh
+• |vim.lsp.completion.get()| accepts a `client_id` to request from only the
+  given clients.
 
 LUA
 
