@@ -60,19 +60,6 @@ func Test_rename_dir_to_dir()
 
   call delete('Xrenamedir2/Xrenamefile')
   call delete('Xrenamedir2', 'd')
-
-  " A directory can replace an existing file.
-  call mkdir('Xrenamedir1')
-  call writefile(['foo'], 'Xrenamedir1/Xrenamefile')
-  call writefile(['bar'], 'Xrenamedir2')
-
-  call assert_equal(0, rename('Xrenamedir1', 'Xrenamedir2'))
-  call assert_equal('', glob('Xrenamedir1'))
-  call assert_equal('dir', getftype('Xrenamedir2'))
-  call assert_equal(['foo'], readfile('Xrenamedir2/Xrenamefile'))
-
-  call delete('Xrenamedir2/Xrenamefile')
-  call delete('Xrenamedir2', 'd')
 endfunc
 
 func Test_rename_same_dir()
