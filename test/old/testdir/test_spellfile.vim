@@ -1358,4 +1358,45 @@ func Test_spell_sal_sofo_truncated()
   let &rtp = save_rtp
 endfunc
 
+" A <prefcondnr> in the prefix tree that is truncated reads as -1, which used to
+" be stored as the condition index and then used to index sl_prefprog[].
+func Test_spellfile_truncated_prefcondnr()
+  " PFXPOSTPONE puts the prefixes in the prefix tree, the conditions are what
+  " make a <prefcondnr> be written for each of them.
+  call writefile(['SET UTF-8', 'PFXPOSTPONE',
+	\ 'PFX A Y 1', 'PFX A 0 un [a-z]',
+	\ 'PFX B Y 1', 'PFX B 0 re [b-d]',
+	\ 'PFX C Y 1', 'PFX C 0 de [c-f]'], 'Xpfx.aff', 'D')
+  call writefile(['3', 'apple/A', 'bread/B', 'cat/C'], 'Xpfx.dic', 'D')
+  mkspell! Xpfx.spl Xpfx
+  defer delete('Xpfx.spl')
+
+  let bytes = readfile('Xpfx.spl', 'B')
+
+  " Truncating anywhere in the prefix tree must give an error, not store a
+  " negative condition index.  Every truncation needs its own file name, a
+  " spell file that has been read once is cached by its name.
+  for n in range(len(bytes) - 40, len(bytes) - 1)
+    let fname = 'Xtrunc' .. n .. '.spl'
+    call writefile(bytes[0 : n - 1], fname)
+    try
+      execute 'set spl=' .. fname
+      set spell
+    catch /E75[789]:/
+    endtry
+    " Use the prefix tree, in case a bad index was stored.
+    call spellbadword('unapple')
+    call spellbadword('rebread')
+    set nospell spl&
+    call delete(fname)
+  endfor
+
+  " The valid file still works, prefixed words are recognized.
+  set spl=Xpfx.spl spell
+  call assert_equal(['', ''], spellbadword('unapple'))
+  call assert_equal(['', ''], spellbadword('rebread'))
+
+  set nospell spl& spelllang&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
