@@ -1891,6 +1891,10 @@ static bool skip_cmd(const exarg_T *eap)
     case CMD_function:
       break;
 
+    // commands that read a block of lines
+    case CMD_append:
+    case CMD_change:
+    case CMD_insert:
     case CMD_loadkeymap:
       break;
 
