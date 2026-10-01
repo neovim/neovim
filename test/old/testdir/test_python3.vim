@@ -3672,6 +3672,13 @@ func Test_python3_keyboard_interrupt()
   close!
 endfunc
 
+func Test_python3_non_utf8_string()
+  smap <Esc>@ <A-@>
+  py3 vim.command('redir => _tmp_smaps | smap | redir END')
+  py3 vim.eval('_tmp_smaps').splitlines()
+  sunmap <Esc>@
+endfunc
+
 func Test_python3_fold_hidden_buffer()
   CheckFeature folding
 
