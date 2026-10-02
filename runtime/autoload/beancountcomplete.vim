@@ -117,13 +117,14 @@ for index, entry in enumerate(entries):
         if entry.payee:
             payees.add(entry.payee)
 
-vim.bindeval('b:')['beancount_accounts'] = sorted(accounts)
-vim.bindeval('b:')['beancount_currencies'] = sorted(currencies)
-vim.bindeval('b:')['beancount_events'] = sorted(events)
-vim.bindeval('b:')['beancount_links'] = sorted(links)
-vim.bindeval('b:')['beancount_payees'] = sorted(payees)
-vim.bindeval('b:')['beancount_tags'] = sorted(tags)
-vim.bindeval('b:')['beancount_loaded'] = 1
+# Nvim: change unsupported `vim.bindeval('b:')` to `vim.current.buffer.vars`.
+vim.current.buffer.vars['beancount_accounts'] = sorted(accounts)
+vim.current.buffer.vars['beancount_currencies'] = sorted(currencies)
+vim.current.buffer.vars['beancount_events'] = sorted(events)
+vim.current.buffer.vars['beancount_links'] = sorted(links)
+vim.current.buffer.vars['beancount_payees'] = sorted(payees)
+vim.current.buffer.vars['beancount_tags'] = sorted(tags)
+vim.current.buffer.vars['beancount_loaded'] = 1
 EOF
     endif
 endfunction
