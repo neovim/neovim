@@ -58,6 +58,10 @@ mouse:
   - changed-files:
     - any-glob-to-any-file: [ src/nvim/mouse* ]
 
+multicursor:
+  - changed-files:
+    - any-glob-to-any-file: [ src/nvim/mcursor.*, src/nvim/input_cmdatom*, runtime/lua/vim/_core/mcursor.lua ]
+
 netrw:
   - changed-files:
     - any-glob-to-any-file: [ runtime/autoload/netrw.vim, runtime/plugin/netrwPlugin.vim ]

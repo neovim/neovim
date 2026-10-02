@@ -53,6 +53,7 @@
 #include "nvim/marktree_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/memline_defs.h"
 #include "nvim/memory.h"
@@ -130,6 +131,7 @@ static kvec_t(char) replace_stack = KV_INITIAL_VALUE;
 // Otherwise trigger completion right away.
 #define TRIGGER_AUTOCOMPLETE() \
   do { \
+    mc_ins_cascade();  /* Multicursor: replay pending keys, since compl refused edit(). #41605 */ \
     redraw_later(curwin, UPD_VALID); \
     update_screen();  /* Show char deletion immediately */ \
     ui_flush(); \
@@ -381,6 +383,9 @@ static int insert_check(VimState *state)
 {
   InsertState *s = (InsertState *)state;
 
+  // Multicursor: insert-cascade, before entry ("A"/"o"/"cw"/…), and after every executed key.
+  mc_ins_cascade();
+
   if (!Ins.revins_legal) {
     Ins.revins_scol = -1;     // reset on illegal motions
   } else {
@@ -566,6 +571,10 @@ static int insert_execute(VimState *state, int key)
     // Don't want delayed autocompletion from the previous key either.
     ins_compl_clear_autocomplete_delay();
     ins_compl_disarm_autostart();
+    // A completion already on screen goes on being what it was.
+    if (!ins_compl_active()) {
+      ins_compl_disable_autocomplete();
+    }
   }
 
   // Special handling of keys while the popup menu is visible or wanted
@@ -1334,23 +1343,21 @@ static void insert_handle_key_post(InsertState *s)
 
 /// edit(): Start inserting text.
 ///
-/// "cmdchar" can be:
-/// 'i' normal insert command
-/// 'a' normal append command
-/// 'R' replace command
-/// 'r' "r<CR>" command: insert one <CR>.
-///     Note: count can be > 1, for redo, but still only one <CR> is inserted.
-///           <Esc> is not used for redo.
-/// 'g' "gI" command.
-/// 'V' "gR" command for Virtual Replace mode.
-/// 'v' "gr" command for single character Virtual Replace mode.
+/// May nest: ":normal i…" and multicursor insert-cascade enters it while an outer edit() is
+/// suspended. But i_CTRL-O does not nest: edit() returns, and the caller runs the Normal-mode
+/// command.
 ///
-/// This function is not called recursively.  For CTRL-O commands, it returns
-/// and lets the caller handle the Normal-mode command.
-///
-/// @param  cmdchar  command that started the insert
-/// @param  startln  if true, insert at start of line
-/// @param  count    repeat count for the command
+/// @param  cmdchar  Command that started the insert:
+///   - 'i'
+///   - 'a'
+///   - 'R'
+///   - 'r': "r<CR>" command: insert one <CR>. Note: count can be > 1, for redo, but still only one
+///     <CR> is inserted. <Esc> is not used for redo.
+///   - 'g': "gI" command.
+///   - 'V': "gR" command: Virtual Replace mode.
+///   - 'v': "gr" command: single-character Virtual Replace mode.
+/// @param  startln  If true, insert at start of line.
+/// @param  count    Repeat count for the command.
 ///
 /// @return true if a CTRL-O command caused the return (insert mode pending).
 bool edit(int cmdchar, bool startln, int count)
@@ -1373,10 +1380,10 @@ bool edit(int cmdchar, bool startln, int count)
     return false;
   }
 
-  // Don't allow changes in the buffer while editing the cmdline.  The
-  // caller of getcmdline() may get confused.
-  // Don't allow recursive insert mode when busy with completion.
-  // Allow in dummy buffers since they are only used internally
+  // Disallow edit() (insert-mode) when:
+  // - ins-completion is active
+  // - textlock (the caller of getcmdline() may get confused)
+  // - <expr> mapping eval
   if (textlock != 0 || ins_compl_active() || compl_busy || pum_visible()
       || expr_map_locked()) {
     emsg(_(e_textlock));
@@ -2089,7 +2096,7 @@ void insertchar(int c, int flags, int second_indent)
            && MB_BYTE2LEN(c) == 1
            && i < INPUT_BUFLEN
            && (textwidth == 0
-               || (virtcol += byte2cells((uint8_t)buf[i - 1])) < (colnr_T)textwidth)
+               || (virtcol += ascii2cells((uint8_t)buf[i - 1])) < (colnr_T)textwidth)
            && !(!no_abbr && !vim_iswordc(c) && vim_iswordc((uint8_t)buf[i - 1]))) {
       c = vgetc();
       buf[i++] = (char)c;
@@ -2236,6 +2243,7 @@ int stop_arrow(void)
       // The count is a spec field (not body bytes), so "[count]." replaces it ("3i…").
       prep_redo(false, false, (CmdSpec){ .count = 1, .cmd = 'i' });
       Ins.new_insert_skip = 2;
+      mc_ins_cascade_restart();
     } else {
       // Cursor-move was captured (start_arrow()): the atom mc-cascade will replay it.
       // Only `last_insert` (the ". register, i_CTRL-A) restarts here, like Vim.
@@ -2328,12 +2336,11 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
     // If a space was inserted for auto-formatting, remove it now.
     check_auto_format(true);
 
-    // If we just did an auto-indent, remove the white space from the end
-    // of the line, and put the cursor back.
+    // If we just did an auto-indent, remove the whitespace from EOL, and put the cursor back.
     // Do this when ESC was used or moving the cursor up/down.
-    // Check for the old position still being valid, just in case the text
-    // got changed unexpectedly.
-    if (!nomove && Ins.did_ai
+    // Check for the old position still being valid, just in case the text changed unexpectedly.
+    // Not for span replay during a mc-session: its synthetic <Esc> ends the nested session early.
+    if (!nomove && Ins.did_ai && !mc_ins_replaying()
         && (esc || (vim_strchr(p_cpo, kCpoIndent) == NULL
                     && curwin->w_cursor.lnum != end_insert_pos->lnum))
         && end_insert_pos->lnum <= curbuf->b_ml.ml_line_count) {
@@ -2899,7 +2906,7 @@ static void replace_do_bs(int limit_col)
       int vcol = start_vcol;
       for (int i = 0; i < ins_len; i++) {
         vcol += win_chartabsize(curwin, p + i, vcol);
-        i += utfc_ptr2len(p) - 1;
+        i += utfc_ptr2len(p + i) - 1;
       }
       vcol -= start_vcol;
 
@@ -3357,6 +3364,7 @@ static void ins_del(void)
         || do_join(2, false, true, false, false) == FAIL) {
       vim_beep(kOptBoFlagBackspace);
     } else {
+      mc_ins_join();
       curwin->w_cursor.col = temp;
       // Adjust orig_line_count in case more lines have been deleted than
       // have been added. That makes sure, that open_line() later
@@ -3439,6 +3447,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
 
   // Delete newline!
   if (curwin->w_cursor.col == 0) {
+    mc_ins_join();
     linenr_T lnum = Ins.start.lnum;
     if (curwin->w_cursor.lnum == lnum || Ins.revins_on) {
       if (u_save((linenr_T)(curwin->w_cursor.lnum - 2),
@@ -3564,8 +3573,9 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
           space_sci = sci;
           space_vcol = vcol;
         }
-        vcol += charsize_nowrap(curbuf, sci.ptr, use_ts, vcol, sci.chr.value);
-        sci = utfc_next(sci);
+        ClusterInfo cli = utf_ClusterInfo(sci);
+        vcol += charsize_nowrap(curbuf, sci.ptr, use_ts, vcol, sci.chr.value, cli.cells);
+        sci = cli.next;
         prev_space = cur_space;
       }
 
@@ -3580,12 +3590,14 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       // Find the position to stop backspacing.
       // Use charsize_nowrap() so that virtual text and wrapping are ignored.
       while (true) {
-        int size = charsize_nowrap(curbuf, space_sci.ptr, use_ts, space_vcol, space_sci.chr.value);
+        ClusterInfo cli = utf_ClusterInfo(space_sci);
+        int size = charsize_nowrap(curbuf, space_sci.ptr, use_ts, space_vcol, space_sci.chr.value,
+                                   cli.cells);
         if (space_vcol + size > want_vcol) {
           break;
         }
         space_vcol += size;
-        space_sci = utfc_next(space_sci);
+        space_sci = cli.next;
       }
       colnr_T const want_col = (int)(space_sci.ptr - line);
 
@@ -4076,7 +4088,7 @@ static bool ins_tab(void)
     // Use as many TABs as possible.  Beware of 'breakindent', 'showbreak'
     // and 'linebreak' adding extra virtual columns.
     while (ascii_iswhite(*ptr)) {
-      int i = win_charsize(cstype, vcol, tab, tab_v, &csarg).width;
+      int i = win_charsize(cstype, vcol, tab, tab_v, &csarg, 1).width;
       if (vcol + i > want_vcol) {
         break;
       }
@@ -4100,7 +4112,7 @@ static bool ins_tab(void)
       // Skip over the spaces we need.
       cstype = init_charsize_arg(&csarg, curwin, 0, ptr);
       while (vcol < want_vcol && *ptr == ' ') {
-        vcol += win_charsize(cstype, vcol, ptr, ' ', &csarg).width;
+        vcol += win_charsize(cstype, vcol, ptr, ' ', &csarg, 1).width;
         ptr++;
         repl_off++;
       }
@@ -4301,11 +4313,12 @@ int ins_copychar(linenr_T lnum)
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   int vcol = 0;
   while (vcol < end_vcol && *ci.ptr != NUL) {
-    vcol += win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg).width;
+    ClusterInfo cli = utf_ClusterInfo(ci);
+    vcol += win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg, cli.cells).width;
     if (vcol > end_vcol) {
       break;
     }
-    ci = utfc_next(ci);
+    ci = cli.next;
   }
 
   int c = ci.chr.value < 0 ? (uint8_t)(*ci.ptr) : ci.chr.value;
@@ -4375,14 +4388,14 @@ static char *do_insert_char_pre(int c)
   char buf[MB_MAXBYTES + 1];
   const int save_State = State;
 
-  if (c == Ctrl_RSB) {
+  if (c == Ctrl_RSB  // i_CTRL-] only triggers abbreviations.
+      // Stuffed text was transformed when typed and appended to redobuf (redo_append_lit).
+      // Like abbreviations (vgetorpeek()), don't transform it again.
+      || KeyStuffed
+      || !has_event(EVENT_INSERTCHARPRE)) {
     return NULL;
   }
 
-  // Return quickly when there is nothing to do.
-  if (!has_event(EVENT_INSERTCHARPRE)) {
-    return NULL;
-  }
   size_t buflen = (size_t)utf_char2bytes(c, buf);
   buf[buflen] = NUL;
 

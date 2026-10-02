@@ -1979,6 +1979,34 @@ func Test_splitkeep_screen_cursor_pos()
   set splitkeep&
 endfunc
 
+func Test_splitkeep_phantom_jump()
+  set splitbelow
+  call setline(1, range(1, 100))
+  split
+
+  " Move cursor to last visible line so it is at risk of being pushed off
+  normal! L
+  let old = getcurpos()
+
+  " No jumps, just 3 header lines
+  call assert_equal(3, execute('jumps')->split('\n')->len())
+
+  " Switching to "screen" was causing vim to not update relevant variables
+  set splitkeep=screen
+
+  " Reduce window 2's space, and so bump up the cursor
+  set cmdheight=2
+
+  " Cursor has moved up a single line in the buffer, respecting splitkeep
+  call assert_equal(4, execute('jumps')->split('\n')->len())
+
+  let old[1] = old[1] - 1
+  call assert_equal(old, getcurpos())
+
+  %bwipeout!
+  set splitbelow& splitkeep& cmdheight&
+endfunc
+
 func Test_splitkeep_cmdheight()
   set splitkeep=screen
   call setline(1, range(&lines))

@@ -572,7 +572,7 @@ describe('nvim.dir', function()
     eq({ 'unsaved' }, api.nvim_buf_get_lines(old_buf, 0, -1, false))
   end)
 
-  it('does not shadow startup plugin `-` mappings in directory buffers', function()
+  it('does not shadow startup plugin mappings in directory buffers', function()
     make_fixture()
     write_config_plugin(
       'plugin/dirvish.lua',
@@ -581,6 +581,8 @@ describe('nvim.dir', function()
         vim.keymap.set('n', '-', function()
           vim.g.dirvish_up = vim.g.dirvish_up + 1
         end)
+        vim.keymap.set('n', 'a', '<Nop>')
+        vim.keymap.set('n', 's', '<Plug>(nvim-dir-split)')
       ]]
     )
 
@@ -591,12 +593,17 @@ describe('nvim.dir', function()
     edit(root)
     assert_directory(root)
     eq(0, fn.maparg('-', 'n', false, true).buffer)
+    eq('<Nop>', fn.maparg('a', 'n'))
+    eq('', fn.maparg('o', 'n'))
 
-    feed('-')
+    feed('-as')
     poke_eventloop()
 
     eq(1, exec_lua('return vim.g.dirvish_up'))
     assert_directory(root)
+    eq(2, #api.nvim_list_wins())
+    feed('<C-W>p')
+    assert_directory(subdir)
   end)
 
   it('preserves alternate buffer when opening a parent directory', function()
@@ -669,6 +676,22 @@ describe('nvim.dir', function()
     eq(vim.uv.fs_realpath(root), vim.uv.fs_realpath(fn.getcwd()))
     eq('alpha.txt', fn.findfile('alpha.txt'))
 
+    local win = api.nvim_get_current_win()
+    for key, entry in pairs({ a = 'alpha.txt', o = 'subdir/' }) do
+      local cursor = { line_of(entry), 0 }
+      api.nvim_win_set_cursor(0, cursor)
+      feed(key)
+      poke_eventloop()
+      eq(win, api.nvim_get_current_win())
+      assert_directory(root)
+      eq(cursor, api.nvim_win_get_cursor(0))
+      eq(2, #api.nvim_list_wins())
+      eq(key == 'a' and 'row' or 'col', fn.winlayout()[1])
+      feed('<C-W>p')
+      eq(root .. '/' .. entry, api.nvim_buf_get_name(0))
+      command('close')
+    end
+
     api.nvim_win_set_cursor(0, { line_of('alpha.txt'), 0 })
     feed('<CR>')
     poke_eventloop()
@@ -680,6 +703,9 @@ describe('nvim.dir', function()
     assert_directory(subdir)
     eq({ '' }, lines())
     eq(vim.uv.fs_realpath(subdir), vim.uv.fs_realpath(fn.getcwd()))
+    feed('ao')
+    poke_eventloop()
+    eq(1, #api.nvim_list_wins())
 
     feed('-')
     poke_eventloop()
@@ -824,7 +850,7 @@ describe('nvim.dir', function()
       line_of(raw_name)
     end
     api.nvim_win_set_cursor(0, { line_of('line\0break.txt'), 0 })
-    feed('<CR>')
+    feed('a<C-W>p')
     poke_eventloop()
 
     eq(root .. '/' .. name, api.nvim_buf_get_name(0))

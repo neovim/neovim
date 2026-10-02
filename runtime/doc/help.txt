@@ -4,7 +4,7 @@
 Nvim documentation
 
 If you are new to Nvim, see |nvim-intro|. (To go to a help link, move the
-cursor to it and hit CTRL-], or ctrl-click with mouse. Try it here: |bars|.)
+cursor to it and hit CTRL-], or right-click with mouse. Try it here: |bars|.)
 
 ------------------------------------------------------------------------------
 About Nvim						*reference_toc* *Q_ct*

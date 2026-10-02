@@ -257,7 +257,7 @@ bool cause_errthrow(const char *mesg, bool multiline, bool concat, bool severe, 
       elem->throw_msg = NULL;
       *plist = elem;
       if (plist == msg_list || severe) {
-        // Skip the extra "Vim " prefix for message "E458".
+        // Skip the extra "Vim " prefix for message "E457".
         char *tmsg = elem->msg;
         if (strncmp(tmsg, "Vim E", 5) == 0
             && ascii_isdigit(tmsg[5])

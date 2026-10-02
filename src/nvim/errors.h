@@ -14,7 +14,6 @@ EXTERN const char e_afterinit[] INIT(= N_("E905: Cannot set this option after st
 EXTERN const char e_api_spawn_failed[] INIT(= N_("E903: Could not spawn API job"));
 EXTERN const char e_argreq[] INIT(= N_("E471: Argument required"));
 EXTERN const char e_backslash[] INIT(= N_("E10: \\ should be followed by /, ? or &"));
-EXTERN const char e_cmdwin[] INIT(= N_("E11: Invalid in command-line window; <CR> executes, CTRL-C quits"));
 EXTERN const char e_curdir[] INIT(= N_("E12: Command not allowed in secure mode in current dir or tag search"));
 EXTERN const char e_invalid_buffer_name_str[] INIT(= N_("E158: Invalid buffer name: %s"));
 EXTERN const char e_command_too_recursive[] INIT(= N_("E169: Command too recursive"));
@@ -83,6 +82,7 @@ EXTERN const char e_openerrf[] INIT(= N_("E40: Can't open errorfile %s"));
 EXTERN const char e_outofmem[] INIT(= N_("E41: Out of memory!"));
 EXTERN const char e_patnotf2[] INIT(= N_("E486: Pattern not found: %s"));
 EXTERN const char e_positive[] INIT(= N_("E487: Argument must be positive"));
+// E458 unused
 EXTERN const char e_prev_dir[] INIT(= N_("E459: Cannot go back to previous directory"));
 
 EXTERN const char e_no_errors[] INIT(= N_("E42: No Errors"));

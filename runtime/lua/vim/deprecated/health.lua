@@ -1,7 +1,7 @@
 local M = {}
 local health = vim.health
 
-local deprecated = {} ---@type [string, table, string][]
+local deprecated = {} ---@type table<string, [string, string[], string?]>
 
 function M.check()
   if next(deprecated) == nil then
@@ -13,8 +13,8 @@ function M.check()
     health.start('')
 
     local version, backtraces, alternative = v[1], v[2], v[3]
-    local major, minor = version:match('(%d+)%.(%d+)')
-    major, minor = vim._assert_integer(major), vim._assert_integer(minor)
+    local major_str, minor_str = version:match('(%d+)%.(%d+)')
+    local major, minor = vim._assert_integer(major_str), vim._assert_integer(minor_str)
     local removal_version = string.format('nvim-%d.%d', major, minor)
     local will_be_removed = vim.fn.has(removal_version) == 1 and 'was removed' or 'will be removed'
 
@@ -27,6 +27,10 @@ function M.check()
   end
 end
 
+--- @param name string
+--- @param version string
+--- @param backtrace string
+--- @param alternative? string
 function M.add(name, version, backtrace, alternative)
   if deprecated[name] == nil then
     deprecated[name] = { version, { backtrace }, alternative }

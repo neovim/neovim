@@ -888,11 +888,12 @@ describe('API/extmarks', function()
     set_extmark(ns, marks[1], 1, 2)
     feed('0<c-v>k>')
     check_undo_redo(ns, marks[1], 1, 2, 1, 6)
-    feed('<c-v>j>')
+    -- "gg0": the cursor after undo/redo depends on |restore-undo-cursor|.
+    feed('gg0<c-v>j>')
     expect('\t12345\n\t12345')
     check_undo_redo(ns, marks[1], 1, 6, 1, 3)
 
-    feed('<c-v>j<LT>')
+    feed('gg0<c-v>j<LT>')
     check_undo_redo(ns, marks[1], 1, 3, 1, 6)
   end)
 
@@ -2052,7 +2053,7 @@ describe('API/extmarks', function()
     api.nvim_buf_set_lines(buf, 0, 0, false, { 'foo', 'bar' })
     local id = api.nvim_buf_set_extmark(buf, ns, 1, 0, { invalidate = true })
     api.nvim_buf_delete(buf, { unload = true })
-    local mark = { 0, 0, { invalid = true, invalidate = true, ns_id = 3, right_gravity = true } }
+    local mark = { 0, 0, { invalid = true, invalidate = true, ns_id = ns, right_gravity = true } }
     eq(mark, api.nvim_buf_get_extmark_by_id(buf, ns, id, { details = true }))
   end)
 end)

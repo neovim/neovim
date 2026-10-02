@@ -5,19 +5,12 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/mark_defs.h"
+#include "nvim/normal_defs.h"
 #include "nvim/option_defs.h"
 
 enum { UNDO_HASH_SIZE = 32, };  ///< Size in bytes of the hash used in the undo file.
 
 typedef struct u_header u_header_T;
-
-/// Structure to store info about the Visual area.
-typedef struct {
-  pos_T vi_start;       ///< Start pos of last Visual.
-  pos_T vi_end;         ///< End position of last Visual.
-  int vi_mode;          ///< Visual.mode of last Visual.
-  colnr_T vi_curswant;  ///< MAXCOL from w_curswant.
-} visualinfo_T;
 
 typedef struct u_entry u_entry_T;
 struct u_entry {
@@ -55,8 +48,9 @@ struct u_header {
   int uh_walk;                    ///< used by undo_time()
   u_entry_T *uh_entry;            ///< pointer to first entry
   u_entry_T *uh_getbot_entry;     ///< pointer to where ue_bot must be set
-  pos_T uh_cursor;                ///< cursor position before saving
-  colnr_T uh_cursor_vcol;
+  pos_T uh_cursor;                ///< Pre-change cursor pos; restored on undo.
+  pos_T uh_cursor_after;          ///< Post-change pos; restored on redo. Not saved to undofile.
+  colnr_T uh_cursor_vcol;         ///< Virtual column of uh_cursor ('virtualedit'), or -1.
   int uh_flags;                   ///< see below
   fmark_T uh_namedm[NMARKS];      ///< marks before undo/after redo
   extmark_undo_vec_t uh_extmark;  ///< info to move extmarks

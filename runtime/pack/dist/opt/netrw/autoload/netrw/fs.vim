@@ -115,8 +115,8 @@ function! netrw#fs#Glob(direntry, expr, pare)
         keepalt 1sp
         keepalt enew
         let keep_liststyle = w:netrw_liststyle
-        let w:netrw_liststyle = s:THINLIST
-        if s:NetrwRemoteListing() == 0
+        let w:netrw_liststyle = netrw#Expose('THINLIST')
+        if netrw#Call('NetrwRemoteListing') == 0
             keepj keepalt %s@/@@
             let filelist = getline(1,$)
             q!

@@ -309,7 +309,7 @@ local M = vim._defer_require('vim.diagnostic', {
 ---   signs = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
 --- })
 --- ```
---- @field text? table<vim.diagnostic.Severity,string>
+--- @field text? table<vim.diagnostic.Severity|vim.diagnostic.SeverityName,string>
 ---
 --- A table mapping |diagnostic-severity| to the highlight group used for the
 --- line number where the sign is placed.
@@ -441,6 +441,7 @@ local all_namespaces = {}
 ---@param namespace integer? Update the options for the given namespace.
 ---                          When omitted, update the global diagnostic options.
 ---@return vim.diagnostic.Opts? : Current diagnostic config if {opts} is omitted.
+---@overload fun(opts?: nil, namespace?: integer): vim.diagnostic.Opts
 function M.config(opts, namespace)
   return M._config.config(opts, namespace)
 end
@@ -507,8 +508,7 @@ end
 ---@param buf integer? Buffer number to get diagnostics from. Use 0 for
 ---                      current buffer or nil for all buffers.
 ---@param opts? vim.diagnostic.GetOpts
----@return vim.Diagnostic[] : Fields `buf`, `end_lnum`, `end_col`, and `severity`
----                           are guaranteed to be present.
+---@return vim.Diagnostic[]
 function M.get(buf, opts)
   return M._store.get(buf, opts)
 end
@@ -790,7 +790,7 @@ local errlist_type_map = {
 --- @return integer?
 local function get_qf_id_for_title(title)
   local lastqflist = vim.fn.getqflist({ nr = '$' })
-  for i = 1, lastqflist.nr do
+  for i = 1, assert(lastqflist.nr) do
     local qflist = vim.fn.getqflist({ nr = i, id = 0, title = 0 })
     if qflist.title == title then
       return qflist.id
@@ -837,8 +837,8 @@ local function set_list(loclist, opts)
   if open then
     if not loclist then
       -- First navigate to the diagnostics quickfix list.
-      local qflist = vim.fn.getqflist({ id = qf_id, nr = 0 }) --- @type { nr: integer }
-      local nr = qflist.nr
+      local qflist = vim.fn.getqflist({ id = qf_id, nr = 0 })
+      local nr = assert(qflist.nr)
       api.nvim_command(('silent %dchistory'):format(nr))
       -- Now open the quickfix list.
       api.nvim_command('botright cwindow')
@@ -979,7 +979,7 @@ end
 --- WARNING filename:27:3: Variable 'foo' does not exist
 --- ```
 ---
---- This can be parsed into |vim.Diagnostic| structure with:
+--- This can be parsed into a |vim.Diagnostic.Set| structure with:
 ---
 --- ```lua
 --- local s = "WARNING filename:27:3: Variable 'foo' does not exist"
@@ -990,14 +990,14 @@ end
 ---
 ---@param str string String to parse diagnostics from.
 ---@param pat string Lua pattern with capture groups.
----@param groups string[] List of fields in a |vim.Diagnostic| structure to
+---@param groups string[] List of fields in a |vim.Diagnostic.Set| structure to
 ---                    associate with captures from {pat}.
 ---@param severity_map table A table mapping the severity field from {groups}
 ---                          with an item from |vim.diagnostic.severity|.
 ---@param defaults table? Table of default values for any fields not listed in {groups}.
 ---                       When omitted, numeric values default to 0 and "severity" defaults to
 ---                       ERROR.
----@return vim.Diagnostic?: |vim.Diagnostic| structure or `nil` if {pat} fails to match {str}.
+---@return vim.Diagnostic.Set?: |vim.Diagnostic.Set| structure or `nil` if {pat} fails to match {str}.
 function M.match(str, pat, groups, severity_map, defaults)
   return M._severity.match(str, pat, groups, severity_map, defaults)
 end
@@ -1050,7 +1050,7 @@ end
 
 --- Convert a list of quickfix items to a list of diagnostics.
 ---
----@param list vim.quickfix.entry[] List of quickfix items from |getqflist()| or |getloclist()|.
+---@param list vim.fn.getqflist.ret.item[] List of quickfix items from |getqflist()| or |getloclist()|.
 ---@param opts? vim.diagnostic.fromqflist.Opts
 ---@return vim.Diagnostic[]
 function M.fromqflist(list, opts)
@@ -1063,10 +1063,10 @@ function M.fromqflist(list, opts)
   local last_diag --- @type vim.Diagnostic?
   for _, item in ipairs(list) do
     if item.valid == 1 then
-      local lnum = math.max(0, item.lnum - 1)
-      local col = math.max(0, item.col - 1)
-      local end_lnum = item.end_lnum > 0 and (item.end_lnum - 1) or lnum
-      local end_col = item.end_col > 0 and (item.end_col - 1) or col
+      local lnum = math.max(0, (item.lnum or 0) - 1)
+      local col = math.max(0, (item.col or 0) - 1)
+      local end_lnum = item.end_lnum and item.end_lnum > 0 and (item.end_lnum - 1) or lnum
+      local end_col = item.end_col and item.end_col > 0 and (item.end_col - 1) or col
       local code = item.nr > 0 and item.nr or nil
       local item_type = item.type or ''
       --- @type vim.Diagnostic
@@ -1119,30 +1119,23 @@ local default_status_signs = {
 function M.status(buf)
   vim.validate('buf', buf, 'number', true)
   buf = buf or 0
-  local config = assert(vim.diagnostic.config()).status or {} --- @type vim.diagnostic.Opts.Status
+  local config = vim.diagnostic.config().status or {} --- @type vim.diagnostic.Opts.Status
   vim.validate('config.format', config.format, 'function', true)
 
   local counts = M.count(buf)
   local format = config.format
-  local result_str --- @type string
   if type(format) == 'function' then
-    result_str = format(counts)
-  else
-    local resolved_signs = M._config.get_resolved_options(vim.diagnostic.config(), nil, buf).signs
-    local signs = (type(resolved_signs) == 'table' and resolved_signs.text) or default_status_signs
-    result_str = vim
-      .iter(pairs(counts))
-      :map(function(level, value)
-        return ('%%#%s#%s:%s'):format(status_hl_map[level], signs[level], value)
-      end)
-      :join(' ')
+    local result_str = format(counts)
+    return result_str:len() > 0 and '%#(' .. result_str .. '%#)' or ''
   end
-
-  if result_str:len() > 0 then
-    result_str = result_str .. '%##'
-  end
-
-  return result_str
+  local resolved_signs = M._config.get_resolved_options(vim.diagnostic.config(), nil, buf).signs
+  local signs = (type(resolved_signs) == 'table' and resolved_signs.text) or default_status_signs
+  return vim
+    .iter(pairs(counts))
+    :map(function(level, value)
+      return ('%%#(%%$%s$%s:%s%%#)'):format(status_hl_map[level], signs[level], value)
+    end)
+    :join(' ')
 end
 
 nvim_on('DiagnosticChanged', api.nvim_create_augroup('nvim.diagnostic.status'), {

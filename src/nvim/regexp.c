@@ -54,12 +54,6 @@ typedef enum {
 } reg_getline_flags_T;
 
 enum {
-  /// In the NFA engine: how many braces are allowed.
-  /// TODO(RE): Use dynamic memory allocation instead of static, like here
-  NFA_MAX_BRACES = 20,
-};
-
-enum {
   /// In the NFA engine: how many states are allowed.
   NFA_MAX_STATES = 100000,
   NFA_TOO_EXPENSIVE = -1,
@@ -1012,13 +1006,16 @@ static int peekchr(void)
     } else {
       // Next character can never be (made) magic?
       // Then backslashing it won't do anything.
-      curchr = utf_ptr2char(regparse + 1);
+      curchr = c >= 0x80 ? utf_ptr2char(regparse + 1) : c;
     }
     break;
   }
 
   default:
-    curchr = utf_ptr2char(regparse);
+    // curchr already holds regparse[0]; only a multi-byte lead byte needs decoding.
+    if (curchr >= 0x80) {
+      curchr = utf_ptr2char(regparse);
+    }
   }
 
   return curchr;
@@ -1034,8 +1031,13 @@ static void skipchr(void)
     prevchr_len = 0;
   }
   if (regparse[prevchr_len] != NUL) {
-    // Exclude composing chars that utfc_ptr2len does include.
-    prevchr_len += utf_ptr2len(regparse + prevchr_len);
+    // Exclude composing chars that utfc_ptr2len does include.  A byte
+    // below 0x80 is always a single character.
+    if ((uint8_t)regparse[prevchr_len] < 0x80) {
+      prevchr_len++;
+    } else {
+      prevchr_len += utf_ptr2len(regparse + prevchr_len);
+    }
   }
   regparse += prevchr_len;
   prev_at_start = at_start;
@@ -1759,7 +1761,7 @@ static int cstrncmp(char *s1, char *s2, int *n)
     int n1 = *n;
     // count the number of characters for byte-length of s1
     while (n1 > 0 && *p != NUL) {
-      n1 -= utfc_ptr2len(s1);
+      n1 -= utfc_ptr2len(p);
       MB_PTR_ADV(p);
       n2++;
     }
@@ -2661,6 +2663,94 @@ static void init_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_
   rex.reg_maxcol = rmp->rmm_maxcol;
 }
 
+#define CLASS_not            0x80
+#define CLASS_af             0x40
+#define CLASS_AF             0x20
+#define CLASS_az             0x10
+#define CLASS_AZ             0x08
+#define CLASS_o7             0x04
+#define CLASS_o9             0x02
+#define CLASS_underscore     0x01
+
+/// Parse the "[...]" collection between "start" (the first character after the
+/// "[") and "end" (the "]") into a combination of CLASS_ bits, so that it can
+/// be turned into a faster character class like \d or \x.  Sets "*newl" to TRUE
+/// when the collection also matches a newline.  Returns -1 when the collection
+/// is not a plain combination of the recognized ranges.
+static int get_char_class_bits(const uint8_t *start, const uint8_t *end, bool *newl)
+{
+  int config = 0;
+
+  *newl = false;
+  if (*end != ']') {
+    return -1;
+  }
+  const uint8_t *p = start;
+  if (*p == '^') {
+    config |= CLASS_not;
+    p++;
+  }
+
+  while (p < end) {
+    if (p + 2 < end && *(p + 1) == '-') {
+      switch (*p) {
+      case '0':
+        if (*(p + 2) == '9') {
+          config |= CLASS_o9;
+          break;
+        } else if (*(p + 2) == '7') {
+          config |= CLASS_o7;
+          break;
+        }
+        return -1;
+      case 'a':
+        if (*(p + 2) == 'z') {
+          config |= CLASS_az;
+          break;
+        } else if (*(p + 2) == 'f') {
+          config |= CLASS_af;
+          break;
+        }
+        return -1;
+      case 'A':
+        if (*(p + 2) == 'Z') {
+          config |= CLASS_AZ;
+          break;
+        } else if (*(p + 2) == 'F') {
+          config |= CLASS_AF;
+          break;
+        }
+        return -1;
+      default:
+        return -1;
+      }
+      p += 3;
+    } else if (p + 1 < end && *p == '\\' && *(p + 1) == 'n') {
+      *newl = true;
+      p += 2;
+    } else if (*p == '_') {
+      config |= CLASS_underscore;
+      p++;
+    } else if (*p == '\n') {
+      *newl = true;
+      p++;
+    } else {
+      return -1;
+    }
+  }   // while (p < end)
+
+  if (p != end) {
+    return -1;
+  }
+
+  // U+017F and U+212A fold to ASCII 's' and 'k', missed by the class opcodes
+  if (config & (CLASS_az | CLASS_AZ)) {
+    return -1;
+  }
+
+  return config;
+}
+
 // regexp_bt.c {{{1
 
 // Backtracking regular expression implementation.
@@ -2913,6 +3003,50 @@ static const int classcodes[] = {
   ALPHA, NALPHA, LOWER, NLOWER,
   UPPER, NUPPER
 };
+
+/// Search between "start" (the first char of the range) and "end" (the closing
+/// "]") and try to recognize a character class in expanded form, for example
+/// [0-9].  On success, return the atom to be emitted, on failure 0.
+static int bt_recognize_char_class(const uint8_t *start, const uint8_t *end)
+{
+  bool newl;
+  int config = get_char_class_bits(start, end, &newl);
+
+  // A newline would need the ADD_NL variant, don't bother with it here.
+  if (config < 0 || newl) {
+    return 0;
+  }
+
+  // The old engine has no case-insensitive class opcode, so [a-z] and [A-Z]
+  // are left as collections.  The classes below are case-independent.
+  switch (config) {
+  case CLASS_o9:
+    return DIGIT;
+  case CLASS_not | CLASS_o9:
+    return NDIGIT;
+  case CLASS_af | CLASS_AF | CLASS_o9:
+    return HEX;
+  case CLASS_not | CLASS_af | CLASS_AF | CLASS_o9:
+    return NHEX;
+  case CLASS_o7:
+    return OCTAL;
+  case CLASS_not | CLASS_o7:
+    return NOCTAL;
+  case CLASS_az | CLASS_AZ | CLASS_o9 | CLASS_underscore:
+    return WORD;
+  case CLASS_not | CLASS_az | CLASS_AZ | CLASS_o9 | CLASS_underscore:
+    return NWORD;
+  case CLASS_az | CLASS_AZ | CLASS_underscore:
+    return HEAD;
+  case CLASS_not | CLASS_az | CLASS_AZ | CLASS_underscore:
+    return NHEAD;
+  case CLASS_az | CLASS_AZ:
+    return ALPHA;
+  case CLASS_not | CLASS_az | CLASS_AZ:
+    return NALPHA;
+  }
+  return 0;
+}
 
 // When regcode is set to this value, code is not emitted and size is computed
 // instead.
@@ -4721,6 +4855,18 @@ collection:
       if (*lp == ']') {         // there is a matching ']'
         int startc = -1;                // > 0 when next '-' is a range
         int endc;
+
+        if (extra == 0) {
+          int cl = bt_recognize_char_class((uint8_t *)regparse, lp);
+
+          if (cl != 0) {
+            ret = regnode(cl);
+            regparse = (char *)lp;
+            skipchr();
+            *flagp |= HASWIDTH | SIMPLE;
+            break;
+          }
+        }
 
         // In a character class, different parsing rules apply.
         // Not even \ is special anymore, nothing is.
@@ -8566,9 +8712,16 @@ static const char e_value_too_large[] = N_("E951: \\% value too large");
 // Variables only used in nfa_regcomp() and descendants.
 static int nfa_re_flags;  ///< re_flags passed to nfa_regcomp().
 static int *post_start;   ///< holds the postfix form of r.e.
+static size_t post_start_len;  ///< size of allocated post_start (in ints)
 static int *post_end;
 static int *post_ptr;
 static int nfa_reg_parse_depth;  // nesting depth in nfa_reg()
+
+// The postfix list (post_start) and fragment stack (nfa_stack) are reused
+// across compilations; a buffer that grew past these sizes for a big pattern
+// is freed afterwards instead of being kept, to avoid holding much memory.
+#define NFA_POSTFIX_KEEP        10000   // number of ints (~40 Kbyte)
+#define NFA_STACK_KEEP          4000    // number of Frag_T (~64 Kbyte)
 
 // Set when the pattern should use the NFA engine.
 // E.g. [[:upper:]] only allows 8bit characters for BT engine,
@@ -8613,9 +8766,15 @@ static void nfa_regcomp_start(uint8_t *expr, int re_flags)
   // Size for postfix representation of expr.
   postfix_size = sizeof(int) * nstate_max;
 
-  post_start = (int *)xmalloc(postfix_size);
+  // Reuse the postfix buffer across compilations, only growing it when the
+  // estimate exceeds the current size; it is freed in free_regexp_stuff().
+  if (post_start == NULL || post_start_len < nstate_max) {
+    xfree(post_start);
+    post_start = xmalloc(postfix_size);
+    post_start_len = nstate_max;
+  }
   post_ptr = post_start;
-  post_end = post_start + nstate_max;
+  post_end = post_start + post_start_len;
   wants_nfa = false;
   rex.nfa_has_zend = false;
   rex.nfa_has_backref = false;
@@ -8804,6 +8963,7 @@ static void realloc_post_list(void)
   post_ptr = new_start + (post_ptr - post_start);
   post_end = new_start + new_max;
   post_start = new_start;
+  post_start_len = new_max;
 }
 
 // Search between "start" and "end" and try to recognize a
@@ -8816,79 +8976,15 @@ static void realloc_post_list(void)
 // need to be interpreted as [a-zA-Z].
 static int nfa_recognize_char_class(uint8_t *start, const uint8_t *end, int extra_newl)
 {
-#define CLASS_not            0x80
-#define CLASS_af             0x40
-#define CLASS_AF             0x20
-#define CLASS_az             0x10
-#define CLASS_AZ             0x08
-#define CLASS_o7             0x04
-#define CLASS_o9             0x02
-#define CLASS_underscore     0x01
+  bool newl;
+  int config = get_char_class_bits(start, end, &newl);
 
-  uint8_t *p;
-  int config = 0;
-
-  bool newl = extra_newl == true;
-
-  if (*end != ']') {
+  if (config < 0) {
     return FAIL;
   }
-  p = start;
-  if (*p == '^') {
-    config |= CLASS_not;
-    p++;
-  }
 
-  while (p < end) {
-    if (p + 2 < end && *(p + 1) == '-') {
-      switch (*p) {
-      case '0':
-        if (*(p + 2) == '9') {
-          config |= CLASS_o9;
-          break;
-        } else if (*(p + 2) == '7') {
-          config |= CLASS_o7;
-          break;
-        }
-        return FAIL;
-      case 'a':
-        if (*(p + 2) == 'z') {
-          config |= CLASS_az;
-          break;
-        } else if (*(p + 2) == 'f') {
-          config |= CLASS_af;
-          break;
-        }
-        return FAIL;
-      case 'A':
-        if (*(p + 2) == 'Z') {
-          config |= CLASS_AZ;
-          break;
-        } else if (*(p + 2) == 'F') {
-          config |= CLASS_AF;
-          break;
-        }
-        return FAIL;
-      default:
-        return FAIL;
-      }
-      p += 3;
-    } else if (p + 1 < end && *p == '\\' && *(p + 1) == 'n') {
-      newl = true;
-      p += 2;
-    } else if (*p == '_') {
-      config |= CLASS_underscore;
-      p++;
-    } else if (*p == '\n') {
-      newl = true;
-      p++;
-    } else {
-      return FAIL;
-    }
-  }   // while (p < end)
-
-  if (p != end) {
-    return FAIL;
+  if (extra_newl == true) {
+    newl = true;
   }
 
   if (newl == true) {
@@ -11744,6 +11840,10 @@ static nfa_state_T *alloc_state(int c, nfa_state_T *out, nfa_state_T *out1)
   return s;
 }
 
+// Reused across compilations by post2nfa(); freed in free_regexp_stuff().
+static Frag_T *nfa_stack;
+static int nfa_stack_len;
+
 // A partially built NFA without the matching state filled in.
 // Frag_T.start points at the start state.
 // Frag_T.out is a list of places that need to be set to the
@@ -12095,13 +12195,18 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
 #define POP()       st_pop(&stackp, stack); \
   if (stackp < stack) { \
     st_error(postfix, end, p); \
-    xfree(stack); \
     return NULL; \
   }
 
   if (nfa_calc_size == false) {
-    // Allocate space for the stack. Max states on the stack: "nstate".
-    stack = xmalloc((size_t)(nstate + 1) * sizeof(Frag_T));
+    // Reuse the fragment stack across compilations, growing when needed;
+    // it is freed in free_regexp_stuff().
+    if (nfa_stack == NULL || nfa_stack_len < nstate + 1) {
+      xfree(nfa_stack);
+      nfa_stack = xmalloc((size_t)(nstate + 1) * sizeof(Frag_T));
+      nfa_stack_len = nstate + 1;
+    }
+    stack = nfa_stack;
     stackp = stack;
     stack_end = stack + (nstate + 1);
   }
@@ -12559,13 +12664,11 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
 
   e = POP();
   if (stackp != stack) {
-    xfree(stack);
     EMSG_RET_NULL(_("E875: (NFA regexp) (While converting from postfix to NFA),"
                     "too many states left on stack"));
   }
 
   if (istate >= nstate) {
-    xfree(stack);
     EMSG_RET_NULL(_("E876: (NFA regexp) "
                     "Not enough space to store the whole NFA "));
   }
@@ -12579,7 +12682,6 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
   ret = e.start;
 
 theend:
-  xfree(stack);
   return ret;
 
 #undef POP1
@@ -12729,21 +12831,32 @@ static void clear_sub(regsub_T *sub)
 }
 
 // Copy the submatches from "from" to "to".
-static void copy_sub(regsub_T *to, regsub_T *from)
+static inline void copy_sub(regsub_T *to, regsub_T *from)
 {
   to->in_use = from->in_use;
   if (from->in_use <= 0) {
     return;
   }
 
-  // Copy the match start and end positions.
+  // Copy the match start and end positions.  addstate() calls this for
+  // every state it adds, so it is very hot.  Patterns without capturing
+  // groups only use subexpression zero (the whole match), so special-case
+  // "in_use == 1" with a direct assignment to avoid the mch_memmove() call.
   if (REG_MULTI) {
-    memmove(&to->list.multi[0], &from->list.multi[0],
-            sizeof(struct multipos) * (size_t)from->in_use);
+    if (from->in_use == 1) {
+      to->list.multi[0] = from->list.multi[0];
+    } else {
+      memmove(&to->list.multi[0], &from->list.multi[0],
+              sizeof(struct multipos) * (size_t)from->in_use);
+    }
     to->orig_start_col = from->orig_start_col;
   } else {
-    memmove(&to->list.line[0], &from->list.line[0],
-            sizeof(struct linepos) * (size_t)from->in_use);
+    if (from->in_use == 1) {
+      to->list.line[0] = from->list.line[0];
+    } else {
+      memmove(&to->list.line[0], &from->list.line[0],
+              sizeof(struct linepos) * (size_t)from->in_use);
+    }
   }
 }
 
@@ -13074,11 +13187,12 @@ static bool state_in_list(nfa_list_T *l, nfa_state_T *state, regsubs_T *subs)
 /// @param subs_arg  pointers to subexpressions
 /// @param pim       postponed look-behind match
 /// @param off_arg   byte offset, when -1 go to next line
+/// @param depth     recursion depth
 ///
 /// @return  "subs_arg", possibly copied into temp_subs.
 ///          NULL when recursiveness is too deep.
 static regsubs_T *addstate(nfa_list_T *l, nfa_state_T *state, regsubs_T *subs_arg, nfa_pim_T *pim,
-                           int off_arg)
+                           int off_arg, int depth)
   FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int subidx;
@@ -13098,12 +13212,10 @@ static regsubs_T *addstate(nfa_list_T *l, nfa_state_T *state, regsubs_T *subs_ar
 #ifdef REGEXP_DEBUG
   int did_print = false;
 #endif
-  static int depth = 0;
 
   // This function is called recursively.  When the depth is too much we run
   // out of stack and crash, limit recursiveness here.
-  if (++depth >= 5000 || subs == NULL) {
-    depth--;
+  if (depth >= 5000 || subs == NULL) {
     return NULL;
   }
 
@@ -13210,7 +13322,6 @@ skip_add:
                   abs(state->id), l->id, state->c, code,
                   pim == NULL ? "NULL" : "yes", l->has_pim, found);
 #endif
-          depth--;
           return subs;
         }
       }
@@ -13230,7 +13341,6 @@ skip_add:
 
       if ((int64_t)(newsize >> 10) >= p_mmp) {
         emsg(_(e_pattern_uses_more_memory_than_maxmempattern));
-        depth--;
         return NULL;
       }
       if (subs != &temp_subs) {
@@ -13279,14 +13389,14 @@ skip_add:
 
   case NFA_SPLIT:
     // order matters here
-    subs = addstate(l, state->out, subs, pim, off_arg);
-    subs = addstate(l, state->out1, subs, pim, off_arg);
+    subs = addstate(l, state->out, subs, pim, off_arg, depth + 1);
+    subs = addstate(l, state->out1, subs, pim, off_arg, depth + 1);
     break;
 
   case NFA_EMPTY:
   case NFA_NOPEN:
   case NFA_NCLOSE:
-    subs = addstate(l, state->out, subs, pim, off_arg);
+    subs = addstate(l, state->out, subs, pim, off_arg, depth + 1);
     break;
 
   case NFA_MOPEN:
@@ -13363,7 +13473,7 @@ skip_add:
       sub->list.line[subidx].start = rex.input + off;
     }
 
-    subs = addstate(l, state->out, subs, pim, off_arg);
+    subs = addstate(l, state->out, subs, pim, off_arg, depth + 1);
     if (subs == NULL) {
       break;
     }
@@ -13391,7 +13501,7 @@ skip_add:
             ? subs->norm.list.multi[0].end_lnum >= 0
             : subs->norm.list.line[0].end != NULL)) {
       // Do not overwrite the position set by \ze.
-      subs = addstate(l, state->out, subs, pim, off_arg);
+      subs = addstate(l, state->out, subs, pim, off_arg, depth + 1);
       break;
     }
     FALLTHROUGH;
@@ -13451,7 +13561,7 @@ skip_add:
       CLEAR_FIELD(save_multipos);
     }
 
-    subs = addstate(l, state->out, subs, pim, off_arg);
+    subs = addstate(l, state->out, subs, pim, off_arg, depth + 1);
     if (subs == NULL) {
       break;
     }
@@ -13470,7 +13580,6 @@ skip_add:
     sub->in_use = save_in_use;
     break;
   }
-  depth--;
   return subs;
 }
 
@@ -13494,7 +13603,7 @@ static regsubs_T *addstate_here(nfa_list_T *l, nfa_state_T *state, regsubs_T *su
   // First add the state(s) at the end, so that we know how many there are.
   // Pass the listidx as offset (avoids adding another argument to
   // addstate()).
-  regsubs_T *r = addstate(l, state, subs, pim, -listidx - ADDSTATE_HERE_OFFSET);
+  regsubs_T *r = addstate(l, state, subs, pim, -listidx - ADDSTATE_HERE_OFFSET, 0);
   if (r == NULL) {
     return NULL;
   }
@@ -14150,6 +14259,72 @@ static int find_match_text(colnr_T *startcol, int regstart, uint8_t *match_text)
   return 0L;
 }
 
+/// Check whether the composing characters at the current input position match
+/// the NFA composing sub-expression that starts at "sta" (the first state
+/// after NFA_COMPOSING).  "curc" is the base character and "clen" its byte
+/// length.
+/// Returns OK when it matches, FAIL otherwise.
+static int match_composing(nfa_state_T *sta, int curc, int clen)
+{
+  int mc = curc;
+  int len = 0;
+  int cchars[MAX_MCO];
+  int ccount = 0;
+  int j;
+
+  len = 0;
+  if (utf_iscomposing_legacy(sta->c)) {
+    // Only match composing character(s), ignore base
+    // character.  Used for ".{composing}" and "{composing}"
+    // (no preceding character).
+    len += utf_char2len(mc);
+  }
+
+  if (rex.reg_icombine && len == 0) {
+    // If \Z was present, then ignore composing characters.
+    // When ignoring the base character this always matches.
+    return sta->c == curc ? OK : FAIL;
+  }
+
+  // Check base character matches first, unless ignored.
+  if (len == 0 && mc != sta->c) {
+    return FAIL;
+  }
+
+  if (len == 0) {
+    len += utf_char2len(mc);
+    sta = sta->out;
+  }
+
+  // We don't care about the order of composing characters.
+  // Get them into cchars[] first.
+  while (len < clen) {
+    mc = utf_ptr2char((char *)rex.input + len);
+    cchars[ccount++] = mc;
+    len += utf_char2len(mc);
+    if (ccount == MAX_MCO) {
+      break;
+    }
+  }
+
+  // Check that each composing char in the pattern matches a
+  // composing char in the text.  We do not check if all
+  // composing chars are matched.
+  while (sta->c != NFA_END_COMPOSING) {
+    for (j = 0; j < ccount; j++) {
+      if (cchars[j] == sta->c) {
+        break;
+      }
+    }
+    if (j == ccount) {
+      return FAIL;
+    }
+    sta = sta->out;
+  }
+
+  return OK;
+}
+
 static int nfa_did_time_out(void)
 {
   if (nfa_time_limit != NULL && profile_passed_limit(*nfa_time_limit)) {
@@ -14262,9 +14437,9 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       m->norm.list.line[0].start = rex.input;
     }
     m->norm.in_use = 1;
-    r = addstate(thislist, start->out, m, NULL, 0);
+    r = addstate(thislist, start->out, m, NULL, 0, 0);
   } else {
-    r = addstate(thislist, start, m, NULL, 0);
+    r = addstate(thislist, start, m, NULL, 0, 0);
   }
   if (r == NULL) {
     nfa_match = NFA_TOO_EXPENSIVE;
@@ -14279,8 +14454,17 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 
   // Run for each character.
   while (true) {
-    int curc = utf_ptr2char((char *)rex.input);
-    int clen = utfc_ptr2len((char *)rex.input);
+    int curc, clen;
+    // Fast path for an ASCII byte not followed by a composing
+    // character, matching the check in utfc_ptr2len().  Avoids two
+    // indirect calls for the common case.
+    if (rex.input[0] != NUL && rex.input[0] < 0x80 && rex.input[1] < 0x80) {
+      curc = rex.input[0];
+      clen = 1;
+    } else {
+      curc = utf_ptr2char((char *)rex.input);
+      clen = utfc_ptr2len((char *)rex.input);
+    }
     if (curc == NUL) {
       clen = 0;
       go_to_nextline = false;
@@ -14712,71 +14896,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_COMPOSING: {
-        int mc = curc;
-        int len = 0;
         nfa_state_T *end;
-        nfa_state_T *sta;
-        int cchars[MAX_MCO];
-        int ccount = 0;
-        int j;
-
-        sta = t->state->out;
-        len = 0;
-        if (utf_iscomposing_legacy(sta->c)) {
-          // Only match composing character(s), ignore base
-          // character.  Used for ".{composing}" and "{composing}"
-          // (no preceding character).
-          len += utf_char2len(mc);
-        }
-        if (rex.reg_icombine && len == 0) {
-          // If \Z was present, then ignore composing characters.
-          // When ignoring the base character this always matches.
-          if (sta->c != curc) {
-            result = FAIL;
-          } else {
-            result = OK;
-          }
-          while (sta->c != NFA_END_COMPOSING) {
-            sta = sta->out;
-          }
-        } else if (len > 0 || mc == sta->c) {
-          // Check base character matches first, unless ignored.
-          if (len == 0) {
-            len += utf_char2len(mc);
-            sta = sta->out;
-          }
-
-          // We don't care about the order of composing characters.
-          // Get them into cchars[] first.
-          while (len < clen) {
-            mc = utf_ptr2char((char *)rex.input + len);
-            cchars[ccount++] = mc;
-            len += utf_char2len(mc);
-            if (ccount == MAX_MCO) {
-              break;
-            }
-          }
-
-          // Check that each composing char in the pattern matches a
-          // composing char in the text.  We do not check if all
-          // composing chars are matched.
-          result = OK;
-          while (sta->c != NFA_END_COMPOSING) {
-            for (j = 0; j < ccount; j++) {
-              if (cchars[j] == sta->c) {
-                break;
-              }
-            }
-            if (j == ccount) {
-              result = FAIL;
-              break;
-            }
-            sta = sta->out;
-          }
-        } else {
-          result = FAIL;
-        }
-
+        result = match_composing(t->state->out, curc, clen);
         end = t->state->out1;               // NFA_END_COMPOSING
         ADD_STATE_IF_MATCH(end);
         break;
@@ -14815,71 +14936,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         result_if_matched = (t->state->c == NFA_START_COLL);
         while (true) {
           if (state->c == NFA_COMPOSING) {
-            int mc = curc;
-            int len = 0;
             nfa_state_T *end;
-            nfa_state_T *sta;
-            int cchars[MAX_MCO];
-            int ccount = 0;
-            int j;
-
-            sta = t->state->out->out;
-            if (utf_iscomposing_legacy(sta->c)) {
-              // Only match composing character(s), ignore base
-              // character.  Used for ".{composing}" and "{composing}"
-              // (no preceding character).
-              len += utf_char2len(mc);
-            }
-            if (rex.reg_icombine && len == 0) {
-              // If \Z was present, then ignore composing characters.
-              // When ignoring the base character this always matches.
-              if (sta->c != curc) {
-                result = FAIL;
-              } else {
-                result = OK;
-              }
-              while (sta->c != NFA_END_COMPOSING) {
-                sta = sta->out;
-              }
-            }
-            // Check base character matches first, unless ignored.
-            else if (len > 0 || mc == sta->c) {
-              if (len == 0) {
-                len += utf_char2len(mc);
-                sta = sta->out;
-              }
-
-              // We don't care about the order of composing characters.
-              // Get them into cchars[] first.
-              while (len < clen) {
-                mc = utf_ptr2char((char *)rex.input + len);
-                cchars[ccount++] = mc;
-                len += utf_char2len(mc);
-                if (ccount == MAX_MCO) {
-                  break;
-                }
-              }
-
-              // Check that each composing char in the pattern matches a
-              // composing char in the text.  We do not check if all
-              // composing chars are matched.
-              result = OK;
-              while (sta->c != NFA_END_COMPOSING) {
-                for (j = 0; j < ccount; j++) {
-                  if (cchars[j] == sta->c) {
-                    break;
-                  }
-                }
-                if (j == ccount) {
-                  result = FAIL;
-                  break;
-                }
-                sta = sta->out;
-              }
-            } else {
-              result = FAIL;
-            }
-
+            result = match_composing(t->state->out->out, curc, clen);
             if (t->state->out->out1 != NULL
                 && t->state->out->out1->c == NFA_END_COMPOSING) {
               end = t->state->out->out1;
@@ -15439,7 +15497,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         if (add_here) {
           r = addstate_here(thislist, add_state, &t->subs, pim, &listidx);
         } else {
-          r = addstate(nextlist, add_state, &t->subs, pim, add_off);
+          r = addstate(nextlist, add_state, &t->subs, pim, add_off, 0);
           if (add_count > 0) {
             nextlist->t[nextlist->n - 1].count = add_count;
           }
@@ -15519,7 +15577,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
           } else {
             m->norm.list.line[0].start = rex.input + clen;
           }
-          if (addstate(nextlist, start->out, m, NULL, clen) == NULL) {
+          if (addstate(nextlist, start->out, m, NULL, clen, 0) == NULL) {
             nfa_match = NFA_TOO_EXPENSIVE;
             goto theend;
           }
@@ -15542,7 +15600,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
           }
         }
 
-        r = addstate(nextlist, start, m, NULL, clen);
+        r = addstate(nextlist, start, m, NULL, clen, 0);
 
         rex.line = save_line;
         rex.input = save_input;
@@ -15967,8 +16025,18 @@ static regprog_T *nfa_regcomp(uint8_t *expr, int re_flags)
 #endif
 
 out:
-  xfree(post_start);
-  post_start = post_ptr = post_end = NULL;
+  // The postfix list and fragment stack are reused by the next compilation
+  // (and freed in free_regexp_stuff()), but drop ones that grew large for a
+  // big pattern to avoid holding much memory.
+  if (post_start_len > NFA_POSTFIX_KEEP) {
+    XFREE_CLEAR(post_start);
+    post_start_len = 0;
+  }
+  post_ptr = post_end = NULL;
+  if (nfa_stack_len > NFA_STACK_KEEP) {
+    XFREE_CLEAR(nfa_stack);
+    nfa_stack_len = 0;
+  }
   state_ptr = NULL;
   return (regprog_T *)prog;
 
@@ -16193,6 +16261,12 @@ void free_regexp_stuff(void)
   ga_clear(&backpos);
   xfree(reg_tofree);
   xfree(reg_prev_sub);
+  xfree(post_start);   // NFA postfix buffer, reused across compilations
+  post_start = NULL;
+  post_start_len = 0;
+  xfree(nfa_stack);    // NFA fragment stack, reused across compilations
+  nfa_stack = NULL;
+  nfa_stack_len = 0;
 }
 
 #endif

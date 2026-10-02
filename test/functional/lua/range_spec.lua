@@ -106,6 +106,17 @@ describe('vim.range', function()
     eq({ 1, 0, 1, 0 }, mark_range)
   end)
 
+  it('uses the preceding line for inclusive marks ending at column zero', function()
+    insert('abcdef\nx')
+    eq(
+      { 1, 0, 1, 5 },
+      exec_lua(function()
+        vim.o.selection = 'inclusive'
+        return { vim.range(0, 0, 0, 1, 0):to_mark() }
+      end)
+    )
+  end)
+
   it("converts between vim.Range and extmark on buffer's last line", function()
     local buf = exec_lua(function()
       return vim.api.nvim_get_current_buf()
@@ -191,6 +202,17 @@ describe('vim.range', function()
       false,
       exec_lua(function()
         return vim.range(0, 1, 0, 1, 0):has(vim.range(0, 0, 0, 1, 0))
+      end)
+    )
+  end)
+
+  it('preserves single-character intersections', function()
+    insert('abc')
+    eq(
+      { 0, 1, 0, 2 },
+      exec_lua(function()
+        local overlap = vim.range(0, 0, 0, 0, 2):intersect(vim.range(0, 0, 1, 0, 3))
+        return overlap and { overlap:to_extmark() } or nil
       end)
     )
   end)

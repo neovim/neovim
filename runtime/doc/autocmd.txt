@@ -458,8 +458,8 @@ CmdAtom				After a user action (an "atom" of input): any
 				The |event-data| has these fields (type: `vim.event.cmdatom.data`):
 
 				- atoms: Ordered "subatoms" of a composite
-				  atom (multi-command mapping, Visual sequence).
-				- changed: Buffer was changed by the atom.
+				  atom (complex mapping, Visual sequence).
+				- changed: Buffer was changed by the command.
 				- cmd: Command/motion/object name: "w", "f",
 				  "iw", "gJ", "<Home>", …. |key-notation|
 				- cmdarg: Operand of `cmd`: the "x" of "fx",
@@ -470,44 +470,42 @@ CmdAtom				After a user action (an "atom" of input): any
 				  key-notation): feed to |nvim_feedkeys()|
 				  (mode "n") to replay. Empty: unreplayable.
 				  Nil: lossy capture, replay `lhs` (mode "m").
-				- lhs: User input, before it is
-				  resolved/translated. Mapping LHS plus any
-				  payload it read (|getchar()|), macro register
-				  ("@q"), or Visual sequence. Raw bytes, like
-				  `keys`.
+				- lhs: User input, before it is resolved.
+				  Mapping LHS plus any payload it read
+				  (|getchar()|), macro register ("@q"), or
+				  Visual sequence. Raw bytes, like `keys`.
 				- motionforce |forced-motion|: "v", "V", or
 				  "<C-V>" (|key-notation|).
-				- moved: Cursor moved.
+				- moved: Cursor moved. May be `false` even if
+				  the action is classified as a "motion" (e.g.
+				  "w" at buffer end, failed "fx").
 				- operator: Operator: "d", "g@", "zf", ….
 				  |key-notation|, like `cmd`.
 				- pos: Start position: [row, col], 1-indexed
 				  row, 0-indexed col.
 				- reg: Register name.
-				- text: Payload text: inserted text of an
-				  insert session (after its last cursor-move,
-				  like |quote.|), Ex cmdline, or search.
-				  Literal text, not key encoding.
+				- text: Payload: full text of an insert
+				  session, Ex cmdline, or search. Raw bytes,
+				  like `keys`.
 				  Examples:
 				    - typed "iab<Esc>" → text="ab"
 				    - typed ":cnext<CR>" → text="cnext"
 				    - typed "<Cmd>cnext<CR>" → text="cnext"
 				    - typed "iab<Left>c<Esc>" → text="c"
 				- type:
-				    - "excmd"
-				    - "insert"
-				    - "jump": Moves the cursor via
-				      absolute/shared navigation state
-				      (|jumplist|, marks, |star|).
-				    - "mapping"
-				    - "motion": Non-jump motion. May emit
-				      `moved=false` ("w" at buffer end, failed
-				      "fx", …).
+				    - "excmd": Ex cmdline session.
+				    - "insert": Insert session.
+				    - "jump": Absolute motion ("G", marks,
+				      "H", |jumplist).
+				    - "mapping": Composite (≥2 subatoms).
+				    - "motion": Cursor-relative motion ("w",
+				      "%", "fx", "*").
 				    - "mouse"
-				    - "normal": Non-motion/jump command ("u",
-				      CTRL-R, "za", CTRL-W, …).
+				    - "normal": Other commands ("u", CTRL-R,
+				      "za", CTRL-W, …).
 				    - "operator"
-				    - "scroll"
-				    - "visual"
+				    - "scroll": Viewport scroll.
+				    - "visual": Visual composite.
 				- undoseq: Undo state after the action
 				  (|undotree()| `seq_cur`). Decreases on undo.
 
@@ -779,7 +777,7 @@ FileChangedShell		When Vim notices that the modification time of
 				change or when the size of the file changes.
 				|timestamp|
 				Triggered for each changed file, after:
-				- executing a shell command
+				- executing a shell command or |:terminal| job
 				- |:checktime|
 				- |FocusGained|
 
@@ -902,6 +900,8 @@ InsertCharPre			When a character is typed in Insert mode,
 				a different character.  When |v:char| is set
 				to more than one character this text is
 				inserted literally.
+
+				Not triggered for |.| redo, |i_CTRL-R|, |i_CTRL-A|.
 
 				Cannot change the text. |textlock|
 
@@ -1169,8 +1169,9 @@ SessionWritePost		After writing a session file by calling
 ShellCmdPost			After executing a shell command with |:!cmd|,
 				|:make| and |:grep|.  Can be used to check for
 				any changed files.
+
 				For non-blocking shell commands, see
-				|job-control|.
+				|TermClose| |job-control|.
 
 							*ShellFilterPost*
 ShellFilterPost			After executing a shell command with
@@ -1323,7 +1324,8 @@ TermRequest			When a |:terminal| child process emits an OSC,
 				autocommand defined without |autocmd-nested|.
 
 							*TermResponse*
-TermResponse			When Nvim receives a DA1, OSC, DCS, or APC response from
+TermResponse			When Nvim receives an OSC, DCS, APC, or recognized
+				CSI (DA1, kitty multiple-cursors) response from
 				the host terminal. Sets |v:termresponse|.
 
 				The |event-data| has these keys (type: `vim.event.termresponse.data`):

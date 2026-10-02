@@ -283,6 +283,7 @@ local function dump_option(i, o, write)
   end
 
   write('    .immutable=', (o.immutable and 'true' or 'false'))
+  write('    .opt_validate_cb=', o.validation_cb or 'NULL')
   write('    .opt_did_set_cb=', o.cb or 'NULL')
   write('    .opt_expand_cb=', o.expand_cb or 'NULL')
 
@@ -669,6 +670,7 @@ local function gen_keysets(output_file)
   write('#pragma once')
   write('')
   write('#include <stddef.h>')
+  write('')
   write('#include "nvim/api/private/defs.h"')
   write('#include "nvim/option_defs.h"')
 
@@ -737,7 +739,7 @@ local function gen_keysets(output_file)
     end
   end
 
-  -- Union of all keyset types, for `opt_keyset(NULL, …)`.
+  -- Union of all keyset types, for opt_keyset()'s shared storage.
   write('')
   write('typedef union {')
   for _, s in ipairs(struct_opts) do

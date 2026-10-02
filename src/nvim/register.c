@@ -14,6 +14,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/extmark.h"
 #include "nvim/file_search.h"
@@ -27,6 +28,7 @@
 #include "nvim/keycodes.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
 #include "nvim/move.h"
@@ -70,6 +72,9 @@ yankreg_T *get_y_register(int reg)
   return &y_regs[reg];
 }
 
+/// What `p` pastes: the last-written register (x: -, yy: 0, "+yy: +, :let @"=…: 0).
+///
+/// Exception: with clipboard=unnamed/unnamedplus, `p` tries the provider first.
 yankreg_T *get_y_previous(void)
   FUNC_ATTR_PURE
 {
@@ -794,8 +799,14 @@ int insert_reg(int regname, yankreg_T *reg, bool literally_arg)
     if (reg->y_array == NULL) {
       retval = FAIL;
     } else {
+      // Put (not stuff). Redo "<C-R>x" instead of the literal text.
+      const bool put = reg->y_type == kMTCharWise
+                       && (regname == '-'
+                           // Multicursor: per-cursor registers.
+                           || (mc_ins_cascading() && reg->y_size == 1
+                               && (ASCII_ISALNUM(regname) || regname == '"')));
       for (size_t i = 0; i < reg->y_size; i++) {
-        if (regname == '-' && reg->y_type == kMTCharWise) {
+        if (put) {
           Direction dir = BACKWARD;
           if ((State & REPLACE_FLAG) != 0) {
             pos_T curpos;
@@ -985,14 +996,13 @@ void free_register(yankreg_T *reg)
   FUNC_ATTR_NONNULL_ALL
 {
   XFREE_CLEAR(reg->additional_data);
-  if (reg->y_array == NULL) {
-    return;
+  if (reg->y_array != NULL) {
+    for (size_t i = reg->y_size; i-- > 0;) {  // from y_size - 1 to 0 included
+      API_CLEAR_STRING(reg->y_array[i]);
+    }
+    XFREE_CLEAR(reg->y_array);
   }
-
-  for (size_t i = reg->y_size; i-- > 0;) {  // from y_size - 1 to 0 included
-    API_CLEAR_STRING(reg->y_array[i]);
-  }
-  XFREE_CLEAR(reg->y_array);
+  *reg = (yankreg_T){ 0 };
 }
 
 /// Copy a block range into a register.
@@ -1525,6 +1535,9 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
         return;
       }
     }
+
+    // Execute the stuffed keys here: the put resolves within the current command.
+    exec_stuffed(NULL);
     return;
   }
 
@@ -1795,9 +1808,10 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
       StrCharInfo ci = utf_ptr2StrCharInfo(oldp);
       vcol = 0;
       while (vcol < col && *ci.ptr != NUL) {
-        incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg).width;
+        ClusterInfo cli = utf_ClusterInfo(ci);
+        incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg, cli.cells).width;
         vcol += incr;
-        ci = utfc_next(ci);
+        ci = cli.next;
       }
       char *ptr = ci.ptr;
       bd.textcol = (colnr_T)(ptr - oldp);
@@ -1830,8 +1844,9 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
         cstype = init_charsize_arg(&csarg, curwin, 0, y_array[i].data);
         ci = utf_ptr2StrCharInfo(y_array[i].data);
         while (*ci.ptr != NUL) {
-          spaces -= win_charsize(cstype, 0, ci.ptr, ci.chr.value, &csarg).width;
-          ci = utfc_next(ci);
+          ClusterInfo cli = utf_ClusterInfo(ci);
+          spaces -= win_charsize(cstype, 0, ci.ptr, ci.chr.value, &csarg, cli.cells).width;
+          ci = cli.next;
         }
         spaces = MAX(spaces, 0);
       }
@@ -2643,7 +2658,7 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
         if (*line_end == NUL) {
           line_end++;  // registers can have NUL chars
         } else {
-          line_end += utf_ptr2len_len(line_end, (int)(end - line_end));
+          line_end += utfc_ptr2len_len(line_end, (int)(end - line_end));
         }
       }
       assert(line_end - start >= 0);

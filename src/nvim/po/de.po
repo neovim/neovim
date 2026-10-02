@@ -2039,10 +2039,6 @@ msgstr "E471: Argument benötigt"
 msgid "E10: \\ should be followed by /, ? or &"
 msgstr "E10: \\ sollte von /, ? or & gefolgt werden"
 
-#: ../globals.h:999
-msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
-msgstr "E11: Ungültig im Kommandozeilenfenster; <CR> führt aus, CTRL-C beendet"
-
 #: ../globals.h:1001
 msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
 msgstr ""

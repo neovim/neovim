@@ -178,8 +178,9 @@ State                                                              *dev-state*
 - sessions/views (`src/nvim/ex_session.c`): windows/layout, per-window
   cursor/options, CWD, …. Vimscript format: commands, not merged data.
   Overlaps shada for the buffer list and global variables.
-- context (`src/nvim/context.c`): |nvim_get_context()|.
-  Currently interfaces shada and other state. Needs more thought.
+- context (`src/nvim/context.c`): |nvim_get_context()|. Interfaces shada and
+  other state; also in-memory per-cursor state (`kCtxVisual`, `kCtxMarks`, …)
+  for |multicursor|. Needs more thought.
 - scoped execution ("temporary state"): `ctx_switch()`, `vim._with()`,
   |nvim_win_call()|, |nvim_buf_call()|, `cmdmod_T`. Temporary switches, not
   snapshots. The C mechanisms overlap with each other; `vim._with()` is the
@@ -485,10 +486,17 @@ All the global variables are declared in `globals.h`.
 
 THE MAIN EVENT-LOOP
 
-The main loop is implemented in state_enter. The basic idea is that Vim waits
+The main loop is implemented in state_enter. The basic idea is that Nvim waits
 for the user to type a character and processes it until another character is
-needed.  Thus there are several places where Vim waits for a character to be
+needed.  Thus there are several places where Nvim waits for a character to be
 typed.  The `vgetc()` function is used for this.  It also handles mapping.
+
+Internal logic "stuffs" keys (readahead) only for a consumer on the current
+call stack: `exec_stuffed()`, or a nested reader it invokes.  See "Stuffing"
+in input.c. (This is simpler and more predictable than Vim, where a command
+may stuff chars, and let the main loop deal with them at some arbitrary future
+point, thus requiring global flags checked at the right time, scattered
+throughout the codebase.)
 
 What we consider the "Nvim event loop" is actually a wrapper around `uv_run` to
 handle both the `fast_events` queue and possibly (a suitable subset of) deferred
@@ -555,20 +563,26 @@ CONCEPTS
   structured fields (`CmdSpec`). Every user action emits a |CmdAtom| event.
   - SPAN: Fragment of an Insert or Visual sequence, cascades but does not emit
     a CmdAtom.
-- COMPOSITE: An atom composed of subatoms (`CmdAtom.atoms`): a mapping/macro's
-  commands, or a Visual sequence.
+  - FRAME: Scopes one MODE_NORMAL command (Normal, Visual, Select,
+    Op-pending). Non-MODE_NORMAL modes (Insert, Cmdline) are "sessions", not
+    "frames". All emit atoms.
+- CASCADE: Replay queued atoms at the "clock edge" at every cursor. Visual
+  edits cascade span-by-span each preceded by "gv"; the non-edit "tail"
+  dry-runs to display the selection.
+- COMPOSITE: An atom composed of subatoms (`CmdAtom.atoms`): a mapping/macro,
+  or a Visual sequence.
 - INSERT-SESSION: All changes from an insert-mode session, until <Esc>.
   - INSERTION: An `Ins.start`..cursor "undo unit" within a session.
   - INSERT-CASCADE: Replay an insert-session span-by-span as it is typed (each
     span is packaged as a quasi-session: `i` + keys + `<Esc>`), via nested
     `edit()`. Pending literal text is a PREVIEW until its span completes.
-- REPLAY: Execute keys (dot-repeat, or atom).
-- CASCADE: Replay queued atoms at the "clock edge" at every cursor. Visual
-  cascade "dry-runs" spans to display the selection.
-- VOID: When a pending (Visual) atom's keys were tainted/poisoned (by: mouse,
-  `gv`, a scroll that drags the cursor, …), thus not replayable.
 - LOSSY: When capture lost part of a composite (payload with no capturing
   atom, incomplete insert-session): `keys` cannot replay it, `lhs` can.
+- PAYLOAD: Keys a command reads interactively while executing: a search/Ex
+  cmdline (`d/pat<CR>`), `f{char}`, a mapping's `getchar()`.
+- REPLAY: Execute keys (dot-repeat, or atom).
+- VOID: When a pending (Visual) atom's keys were tainted/poisoned (by: mouse,
+  Select mode, a scroll that drags the cursor, …), thus not replayable.
 
 IMPLEMENTATION
 
@@ -580,35 +594,34 @@ Capture happens at the `atom_xx()` hooks.
 - `atom_cmd_start()` delimits a command in `normal_execute()`.  Everything not
   covered above is decided here (motions, jumps, scrolls, mouse).
 - `atom_ins_start()` delimits an insert session.
-- `atom_map_start()`, `atom_macro_start()` delimits a composite.
+- `atom_map_start()`, `atom_macro_start()` delimit a composite.
 - `atom_visual_end()` completes the pending Visual atom, `viweex` => `viweed`.
   <Esc> discards it; non-replayable commands VOID it.
 - `atom_cmdline_set()` gets an invoked cmdline payload (e.g. `/pat<CR>` is
-  a motion atom, `:cnext<CR>` is an "ex" atom.)
+  a motion atom, `:cnext<CR>` is an "excmd" atom.)
 
 DOT-REPEAT
 
-The redo buffer itself is the pending change atom (`RedoBuf`); the register,
-Visual flag and count are FIELDS, and the command body is bytes appended
-during execution by the `redo_append_xx()` family (Vim's `AppendToRedobuff*`).
-The old `["x][v][count]body` byte encoding no longer exists; `prep_redo()`
-stores the prefix structurally, and consumers recompose it at the boundaries
-(`redo_keys()`, `start_redo()`, `atom_from_redo()`).
+The redo buffer is the pending change as a `CmdSpec` (`RedoState`): the
+`["x][count]` prefix is structured fields set by `prep_redo()`, and the
+command body is bytes appended during execution by the `redo_append_xx()`
+family (Vim's `AppendToRedobuff*`).  Consumers rebuild the keysequence at
+the boundaries (`redo_keys()`, `start_redo()`, `atom_from_redo()`).
 
 THE CASCADE
 
-Cursors are `Context` entries in `mc_cursors`, tracked as extmarks. The
+Cursors are extmarks with associated `Context` data (`mc_cursors`). The
 extmark is authoritative: it follows edits, and user code may delete cursors
-by deleting their extmarks. Cursor-local state is swapped in on replay, so
-e.g. each cursor reads/writes its own registers.
+by deleting their extmarks. Cursor-local state is swapped-in on replay, so
+each cursor reads/writes its own registers, Visual area and change marks.
 
 CmdAtoms queued for cascade (`g_atoms`) are replayed at every cursor on the
 "clock edge": the completion of a toplevel `normal_execute()`.  While
 a mapping is executing (its keys are still in typebuf) the edge is deferred
 (subatoms queue/accumulate).
 
-Undo is buffer-global and applied in bulk.  Each cascade adds exactly one undo
-state, and undo/redo is itself never cascaded (`u_doit()` calls `atom_op_global_set()`).
+Undo is buffer-global and applied in bulk.  Each cascade adds one undo state,
+and undo/redo itself is not cascaded.
 
 The insert-cascade PREVIEW/COMMIT model (why text is previewed instead of
 replayed) is documented at `mc_ins_span`.  Sessions that cannot insert-cascade
@@ -616,9 +629,53 @@ replayed) is documented at `mc_ins_span`.  Sessions that cannot insert-cascade
 - See `CmdAtomType` and `atom_key_class()` to understand how input is
   classified to decide whether and how it can be replayed.
 
+RHS VS LHS
+
+Multicursor "cascade" is meaningful only for edits and motions. Example: while
+you have multicursors placed, you may want to scroll or switch to a window
+temporarily; it would be a chore if you had to exit multicursor before doing
+those actions.
+
+Thus, cascade prefers to replay, skip, or partially-apply RHS (the resolved
+`keys`) instead of naively replaying LHS (the unresolved, remap-enabled, user
+input). In general, RHS "degrades gracefully" by doing LESS (and a single "u"
+reverts it), whereas LHS worst-case is unbounded (it fails by doing MORE; "u"
+cannot revert its side-effects).
+
+LHS may resolve to arbitrary Excmds/Lua that make sense at the primary, but
+not at cascade. Whereas RHS classification allows multicursor to skip (or
+partially apply) a user action that involves unreplayable subatoms. Similar to
+how insert-completion does not show a menu at every cursor, but it does
+cascade.
+
+Examples where RHS replay behaves better than LHS:
+
+- Performance:
+  - LHS replays the entire callback per-cursor, which can be very slow if it
+    involves treesitter queries, LSP requests, etc.
+  - RHS replays only the resolved normal commands.
+- Viewport-relative commands (zt/<C-d>/H/L/… in mapping):
+  - LHS cascade is nonsense because cursors may be offscreen.
+- Jumps / global ops (absolute, not cursor-relative):
+  - `nnoremap X Gdd`: RHS replays only dd, per cursor.
+  - `nnoremap <Down> ]C`: LHS (follow-mode) moves each cursor to its neighbor.
+  - `nnoremap u u`: LHS would undo N times.
+- Editor state outside of current buffer:
+  - `nnoremap ]x <Cmd>cnext<CR>x`:
+    - LHS is nonsense.
+    - RHS: `:cnext` runs once at primary; only `x` cascades.
+  - `nnoremap X <Cmd>set wrap!<CR>x`:
+    - LHS toggles N times, the result depends on N.
+    - RHS does not cascade the `<Cmd>`.
+
+Examples where LHS replay behaves better (and RHS replay is wrong):
+
+- Conditional mappings, e.g. `nnoremap X <Cmd>if getline('.') =~ 'foo' \| normal! dd \| endif<CR>`.
+  - Unblocked by `setrepeat()` API: https://github.com/neovim/neovim/issues/42069
+
 RENDERING
 
-Display is owned by `runtime/lua/vim/_core/mcursor.lua`. the C core maintains
+Display is owned by `runtime/lua/vim/_core/mcursor.lua`. The C core maintains
 the model, as extmarks:
 
 - "nvim.multicursor": the tracking marks (cursor positions).
@@ -639,7 +696,7 @@ draw "real" cursors, it is expected to:
   "nvim.multicursor.cursor" positions while any exist (in-progress Visual
   selection).
 - render selections from "nvim.multicursor.visual", or simply keep their
-  "hl-MultiCursorVisual" grid highlights.
+  |hl-MCursorVisual| grid highlights.
 
 ==============================================================================
 

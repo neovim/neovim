@@ -214,6 +214,7 @@ local exp = m.P{ "Exp",
             ((m.V"Definition" / firstdef) * (m.V"Definition" % adddef)^0) / mm.P
 }
 
+--- @type vim.lpeg.Pattern
 local pattern = S * m.Cg(m.Cc(false), "G") * exp / mm.P * (-any + patt_error)
 
 

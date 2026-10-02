@@ -1,9 +1,12 @@
 local M = {}
 
-local git_cmd = function(cmd, cwd, on_exit)
+--- @param cmd string[]
+--- @param cwd string
+--- @param on_exit fun(out: vim.SystemCompleted)
+local function git_cmd(cmd, cwd, on_exit)
   cmd = vim.list_extend({ 'git', '-c', 'gc.auto=0' }, cmd)
   local env = vim.fn.environ() --- @type table<string,string>
-  env.GIT_DIR, env.GIT_WORK_TREE = nil, nil
+  env.GIT_DIR, env.GIT_WORK_TREE, env.GIT_INDEX_FILE = nil, nil, nil
   local sys_opts = { cwd = cwd, text = true, env = env, clear_env = true }
   vim.system(cmd, sys_opts, vim.schedule_wrap(on_exit))
 end
@@ -28,26 +31,33 @@ function methods.shutdown(_, callback)
   return callback(nil, nil)
 end
 
-local get_confirm_bufnr = function(uri)
+--- @param uri string
+local function get_confirm_bufnr(uri)
   return vim._tointeger(uri:match('^nvim%-pack://confirm#(%d+)$'))
 end
 
 local group_header_pattern = '^# (%S+)'
 local plugin_header_pattern = '^## (.+)$'
 
+--- @param bufnr integer
+--- @param lnum integer
 --- @return { group: string?, name: string?, from: integer?, to: integer?, active: boolean? }
-local get_plug_data_at_lnum = function(bufnr, lnum)
+local function get_plug_data_at_lnum(bufnr, lnum)
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   --- @type string, string, integer, integer
   local group, name, from, to
   for i = lnum, 1, -1 do
-    group = group or lines[i]:match(group_header_pattern) --[[@as string]]
+    local line = lines[i]
+    if not line then
+      return {}
+    end
+    group = group or line:match(group_header_pattern) --[[@as string]]
     -- If group is found earlier than name - `lnum` is for group header line
     -- If later - proper group header line.
     if group then
       break
     end
-    name = name or lines[i]:match(plugin_header_pattern) --[[@as string]]
+    name = name or line:match(plugin_header_pattern) --[[@as string]]
     from = (not from and name) and i or from --[[@as integer]]
   end
   if not (group and name and from) then
@@ -77,21 +87,23 @@ end
 
 --- Finds a line range to be linked and computes the LSP style link
 --- @param line string Buffer line to find a link in
---- @param pattern string Pattern matching link location and contents, like `'^Path: +()(.+)()$'`
+--- @param pattern string Pattern with three captures: `()`, the link text, and `()`,
+--- like `'^Path: +()(.+)()$'`. The empty captures return byte positions.
 --- @param link_type "commit"|"path"|"src"|"tag"
---- @param lnum number Line number in a buffer
+--- @param lnum integer Line number in a buffer
 --- @param src string Plugin source
 --- @return vim.pack.lsp.DocumentLink? # A link structure according to the LSP specification
 local function match_link(line, pattern, link_type, lnum, src)
-  --- @type number?, string?, number?
   local from, match, to = line:match(pattern)
-  if not (from and match and to) then
+  if type(from) ~= 'number' or type(match) ~= 'string' or type(to) ~= 'number' then
     return nil
   end
 
+  --- @cast from integer
+  --- @cast to integer
   -- Convert to UTF index used in LSP positions
-  from = vim.str_utfindex(line, 'utf-16', from - 1, false)
-  to = vim.str_utfindex(line, 'utf-16', to - 2, false)
+  local start_col = vim.str_utfindex(line, 'utf-16', from - 1, false)
+  local end_col = vim.str_utfindex(line, 'utf-16', to - 2, false)
 
   --- @type string?
   local target = match
@@ -106,9 +118,13 @@ local function match_link(line, pattern, link_type, lnum, src)
     return nil
   end
 
-  local start = { line = lnum - 1, character = from }
-  local end_ = { line = lnum - 1, character = to }
-  return { range = { start = start, ['end'] = end_ }, target = target }
+  return {
+    range = {
+      start = { line = lnum - 1, character = start_col },
+      ['end'] = { line = lnum - 1, character = end_col },
+    },
+    target = target,
+  }
 end
 
 --- @param params { textDocument: { uri: string } }
@@ -122,7 +138,7 @@ methods['textDocument/documentLink'] = function(params, callback)
   --- @type vim.pack.lsp.DocumentLink[]
   local links = {}
   local cur_src = ''
-  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   for i, l in ipairs(lines) do
     cur_src = l:match('^Source: +(.+)$') or cur_src
 
@@ -153,13 +169,20 @@ methods['textDocument/documentSymbol'] = function(params, callback)
   ---   children: vim.pack.lsp.Symbol[]?,
   --- }
 
+  --- @param name string?
+  --- @param start_line integer?
+  --- @param end_line integer
+  --- @param kind integer
   --- @return vim.pack.lsp.Symbol?
-  local new_symbol = function(name, start_line, end_line, kind)
+  local function new_symbol(name, start_line, end_line, kind)
     if name == nil then
       return nil
     end
     local range = {
-      start = { line = start_line, character = 0 },
+      start = {
+        line = start_line --[[@as integer]],
+        character = 0,
+      },
       ['end'] = { line = end_line, character = 0 },
     }
     return { name = name, kind = kind, range = range, selectionRange = range }
@@ -167,11 +190,15 @@ methods['textDocument/documentSymbol'] = function(params, callback)
 
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 
+  --- @param pattern string
+  --- @param start_line integer
+  --- @param end_line integer
+  --- @param kind integer
   --- @return vim.pack.lsp.Symbol[]
-  local parse_headers = function(pattern, start_line, end_line, kind)
+  local function parse_headers(pattern, start_line, end_line, kind)
     local res, cur_match, cur_start = {}, nil, nil
     for i = start_line, end_line do
-      local m = lines[i + 1]:match(pattern)
+      local m = assert(lines[i + 1]):match(pattern)
       if m ~= nil and m ~= cur_match then
         table.insert(res, new_symbol(cur_match, cur_start, i, kind))
         cur_match, cur_start = m, i
@@ -209,6 +236,8 @@ methods['textDocument/codeAction'] = function(params, callback)
     return callback(nil, {})
   end
 
+  --- @param title string
+  --- @param command string
   local function new_action(title, command)
     return {
       title = ('%s `%s`'):format(title, plug_data.name),
@@ -223,7 +252,7 @@ methods['textDocument/codeAction'] = function(params, callback)
       new_action('Skip updating', 'skip_update_plugin'),
     }, 0)
   end
-  plug_data.active = vim.pack.get({ plug_data.name })[1].active
+  plug_data.active = assert(vim.pack.get({ plug_data.name })[1]).active
   vim.list_extend(res, { new_action('Delete', 'delete_plugin') })
   callback(nil, res)
 end
@@ -253,7 +282,7 @@ local commands = {
 methods['workspace/executeCommand'] = vim.schedule_wrap(function(params, callback)
   --- @type integer, table
   local bufnr, plug_data = unpack(params.arguments)
-  local ok, res = pcall(commands[params.command], plug_data)
+  local ok, res = pcall(commands[params.command] --[[@as function]], plug_data)
   if not ok then
     return callback({ code = 1, message = res }, {})
   end
@@ -278,15 +307,20 @@ methods['textDocument/hover'] = function(params, callback)
 
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local lnum = params.position.line + 1
-  local commit = lines[lnum]:match('^[<>] (%x+) │') or lines[lnum]:match('^Revision.*:%s+(%x+)')
-  local tag = lines[lnum]:match('^• (.+)$')
+  local line = lines[lnum]
+  if not line then
+    return
+  end
+  local commit = line:match('^[<>] (%x+) │') or line:match('^Revision.*:%s+(%x+)')
+  local tag = line:match('^• (.+)$')
   if commit == nil and tag == nil then
     return
   end
 
-  local path, path_lnum = nil, lnum - 1
+  local path --- @type string?
+  local path_lnum = lnum - 1
   while path == nil and path_lnum >= 1 do
-    path = lines[path_lnum]:match('^Path:%s+(.+)$')
+    path = assert(lines[path_lnum]):match('^Path:%s+(.+)$')
     path_lnum = path_lnum - 1
   end
   if path == nil then
@@ -306,11 +340,15 @@ local dispatchers = {}
 
 -- TODO: Simplify after `vim.lsp.server` is a thing
 -- https://github.com/neovim/neovim/pull/24338
-local cmd = function(disp)
+--- @param disp vim.lsp.rpc.Dispatchers
+local function cmd(disp)
   -- Store dispatchers to use for showing progress notifications
   dispatchers = disp
   local res, closing, request_id = {}, false, 0
 
+  --- @param method vim.lsp.protocol.Method.ClientToServer.Request
+  --- @param params table?
+  --- @param callback fun(err: lsp.ResponseError?, result: any)
   function res.request(method, params, callback)
     local method_impl = methods[method]
     if method_impl ~= nil then
@@ -320,6 +358,7 @@ local cmd = function(disp)
     return true, request_id
   end
 
+  --- @param method vim.lsp.protocol.Method.ClientToServer.Notification
   function res.notify(method, _)
     if method == 'exit' then
       dispatchers.on_exit(0, 15)

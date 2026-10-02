@@ -316,75 +316,77 @@ an 50.50.220 &Syntax.HIJK.Hex\ dump.XXD :cal SetSyn("xxd")<CR>
 an 50.50.230 &Syntax.HIJK.Hex\ dump.Intel\ MCS51 :cal SetSyn("hex")<CR>
 an 50.50.240 &Syntax.HIJK.Hg\ commit :cal SetSyn("hgcommit")<CR>
 an 50.50.250 &Syntax.HIJK.HIP :cal SetSyn("hip")<CR>
-an 50.50.260 &Syntax.HIJK.HLSPlaylist :cal SetSyn("hlsplaylist")<CR>
-an 50.50.270 &Syntax.HIJK.Hollywood :cal SetSyn("hollywood")<CR>
-an 50.50.280 &Syntax.HIJK.HTML.HTML :cal SetSyn("html")<CR>
-an 50.50.290 &Syntax.HIJK.HTML.HTMLAngular :cal SetSyn("htmlangular")<CR>
-an 50.50.300 &Syntax.HIJK.HTML.HTML\ with\ M4 :cal SetSyn("htmlm4")<CR>
-an 50.50.310 &Syntax.HIJK.HTML.HTML\ with\ Ruby\ (eRuby) :cal SetSyn("eruby")<CR>
-an 50.50.320 &Syntax.HIJK.HTML.Cheetah\ HTML\ template :cal SetSyn("htmlcheetah")<CR>
-an 50.50.330 &Syntax.HIJK.HTML.Django\ HTML\ template :cal SetSyn("htmldjango")<CR>
-an 50.50.340 &Syntax.HIJK.HTML.Vue.js\ HTML\ template :cal SetSyn("vuejs")<CR>
-an 50.50.350 &Syntax.HIJK.HTML.HTML/OS :cal SetSyn("htmlos")<CR>
-an 50.50.360 &Syntax.HIJK.HTML.XHTML :cal SetSyn("xhtml")<CR>
-an 50.50.370 &Syntax.HIJK.Host\.conf :cal SetSyn("hostconf")<CR>
-an 50.50.380 &Syntax.HIJK.Hosts\ access :cal SetSyn("hostsaccess")<CR>
-an 50.50.390 &Syntax.HIJK.Hyper\ Builder :cal SetSyn("hb")<CR>
-an 50.50.400 &Syntax.HIJK.Hyprlang :cal SetSyn("hyprlang")<CR>
-an 50.50.420 &Syntax.HIJK.I3Config :cal SetSyn("i3config")<CR>
-an 50.50.430 &Syntax.HIJK.Icewm\ menu :cal SetSyn("icemenu")<CR>
-an 50.50.440 &Syntax.HIJK.Icon :cal SetSyn("icon")<CR>
-an 50.50.450 &Syntax.HIJK.IDL\Generic\ IDL :cal SetSyn("idl")<CR>
-an 50.50.460 &Syntax.HIJK.IDL\Microsoft\ IDL :cal SetSyn("msidl")<CR>
-an 50.50.470 &Syntax.HIJK.Idris2 :cal SetSyn("idris2")<CR>
-an 50.50.480 &Syntax.HIJK.Indent\ profile :cal SetSyn("indent")<CR>
-an 50.50.490 &Syntax.HIJK.Inform :cal SetSyn("inform")<CR>
-an 50.50.500 &Syntax.HIJK.Informix\ 4GL :cal SetSyn("fgl")<CR>
-an 50.50.510 &Syntax.HIJK.Initng :cal SetSyn("initng")<CR>
-an 50.50.520 &Syntax.HIJK.Inittab :cal SetSyn("inittab")<CR>
-an 50.50.530 &Syntax.HIJK.Inno\ setup :cal SetSyn("iss")<CR>
-an 50.50.540 &Syntax.HIJK.Innovation\ Data\ Processing.Upstream\ dat :cal SetSyn("upstreamdat")<CR>
-an 50.50.550 &Syntax.HIJK.Innovation\ Data\ Processing.Upstream\ log :cal SetSyn("upstreamlog")<CR>
-an 50.50.560 &Syntax.HIJK.Innovation\ Data\ Processing.Upstream\ rpt :cal SetSyn("upstreamrpt")<CR>
-an 50.50.570 &Syntax.HIJK.Innovation\ Data\ Processing.Upstream\ Install\ log :cal SetSyn("upstreaminstalllog")<CR>
-an 50.50.580 &Syntax.HIJK.Innovation\ Data\ Processing.Usserver\ log :cal SetSyn("usserverlog")<CR>
-an 50.50.590 &Syntax.HIJK.Innovation\ Data\ Processing.USW2KAgt\ log :cal SetSyn("usw2kagtlog")<CR>
-an 50.50.600 &Syntax.HIJK.InstallShield\ script :cal SetSyn("ishd")<CR>
-an 50.50.610 &Syntax.HIJK.Interactive\ Data\ Lang :cal SetSyn("idlang")<CR>
-an 50.50.620 &Syntax.HIJK.Ipkg :cal SetSyn("ipkg")<CR>
-an 50.50.630 &Syntax.HIJK.IPfilter :cal SetSyn("ipfilter")<CR>
-an 50.50.650 &Syntax.HIJK.J :cal SetSyn("j")<CR>
-an 50.50.660 &Syntax.HIJK.JAL :cal SetSyn("jal")<CR>
-an 50.50.670 &Syntax.HIJK.JAM :cal SetSyn("jam")<CR>
-an 50.50.680 &Syntax.HIJK.Jargon :cal SetSyn("jargon")<CR>
-an 50.50.690 &Syntax.HIJK.Java.Java :cal SetSyn("java")<CR>
-an 50.50.700 &Syntax.HIJK.Java.JavaCC :cal SetSyn("javacc")<CR>
-an 50.50.710 &Syntax.HIJK.Java.Java\ Server\ Pages :cal SetSyn("jsp")<CR>
-an 50.50.720 &Syntax.HIJK.Java.Java\ Properties :cal SetSyn("jproperties")<CR>
-an 50.50.730 &Syntax.HIJK.JavaScript :cal SetSyn("javascript")<CR>
-an 50.50.740 &Syntax.HIJK.JavaScriptReact :cal SetSyn("javascriptreact")<CR>
-an 50.50.750 &Syntax.HIJK.Jess :cal SetSyn("jess")<CR>
-an 50.50.760 &Syntax.HIJK.Jgraph :cal SetSyn("jgraph")<CR>
-an 50.50.770 &Syntax.HIJK.Jinja :cal SetSyn("jinja")<CR>
-an 50.50.780 &Syntax.HIJK.JJdescription :cal SetSyn("jjdescription")<CR>
-an 50.50.790 &Syntax.HIJK.Jovial :cal SetSyn("jovial")<CR>
-an 50.50.800 &Syntax.HIJK.JQ :cal SetSyn("jq")<CR>
-an 50.50.810 &Syntax.HIJK.JSON.JSON :cal SetSyn("json")<CR>
-an 50.50.820 &Syntax.HIJK.JSON.JSON-LD :cal SetSyn("jsonld")<CR>
-an 50.50.830 &Syntax.HIJK.JSON.JSON5 :cal SetSyn("json5")<CR>
-an 50.50.840 &Syntax.HIJK.JSON.JSONC :cal SetSyn("jsonc")<CR>
-an 50.50.850 &Syntax.HIJK.Julia :cal SetSyn("julia")<CR>
-an 50.50.860 &Syntax.HIJK.Just :cal SetSyn("just")<CR>
-an 50.50.880 &Syntax.HIJK.Karel :cal SetSyn("karel")<CR>
-an 50.50.890 &Syntax.HIJK.Kconfig :cal SetSyn("kconfig")<CR>
-an 50.50.900 &Syntax.HIJK.KDE\ script :cal SetSyn("kscript")<CR>
-an 50.50.910 &Syntax.HIJK.Kdl :cal SetSyn("kdl")<CR>
-an 50.50.920 &Syntax.HIJK.Kimwitu++ :cal SetSyn("kwt")<CR>
-an 50.50.930 &Syntax.HIJK.Kitty :cal SetSyn("kitty")<CR>
-an 50.50.940 &Syntax.HIJK.Kivy :cal SetSyn("kivy")<CR>
-an 50.50.950 &Syntax.HIJK.KixTart :cal SetSyn("kix")<CR>
-an 50.50.960 &Syntax.HIJK.Kotlin :cal SetSyn("kotlin")<CR>
-an 50.50.970 &Syntax.HIJK.Krl :cal SetSyn("krl")<CR>
+an 50.50.260 &Syntax.HIJK.HLSL :cal SetSyn("hlsl")<CR>
+an 50.50.270 &Syntax.HIJK.HLSPlaylist :cal SetSyn("hlsplaylist")<CR>
+an 50.50.280 &Syntax.HIJK.Hollywood :cal SetSyn("hollywood")<CR>
+an 50.50.290 &Syntax.HIJK.HTML.HTML :cal SetSyn("html")<CR>
+an 50.50.300 &Syntax.HIJK.HTML.HTMLAngular :cal SetSyn("htmlangular")<CR>
+an 50.50.310 &Syntax.HIJK.HTML.HTML\ with\ M4 :cal SetSyn("htmlm4")<CR>
+an 50.50.320 &Syntax.HIJK.HTML.HTML\ with\ Ruby\ (eRuby) :cal SetSyn("eruby")<CR>
+an 50.50.330 &Syntax.HIJK.HTML.Cheetah\ HTML\ template :cal SetSyn("htmlcheetah")<CR>
+an 50.50.340 &Syntax.HIJK.HTML.Django\ HTML\ template :cal SetSyn("htmldjango")<CR>
+an 50.50.350 &Syntax.HIJK.HTML.Vue.js\ HTML\ template :cal SetSyn("vuejs")<CR>
+an 50.50.360 &Syntax.HIJK.HTML.HTML/OS :cal SetSyn("htmlos")<CR>
+an 50.50.370 &Syntax.HIJK.HTML.XHTML :cal SetSyn("xhtml")<CR>
+an 50.50.380 &Syntax.HIJK.Host\.conf :cal SetSyn("hostconf")<CR>
+an 50.50.390 &Syntax.HIJK.Hosts\ access :cal SetSyn("hostsaccess")<CR>
+an 50.50.400 &Syntax.HIJK.Hyper\ Builder :cal SetSyn("hb")<CR>
+an 50.50.410 &Syntax.HIJK.Hyprlang :cal SetSyn("hyprlang")<CR>
+an 50.50.430 &Syntax.HIJK.I3Config :cal SetSyn("i3config")<CR>
+an 50.50.440 &Syntax.HIJK.Icalendar :cal SetSyn("icalendar")<CR>
+an 50.50.450 &Syntax.HIJK.Icewm\ menu :cal SetSyn("icemenu")<CR>
+an 50.50.460 &Syntax.HIJK.Icon :cal SetSyn("icon")<CR>
+an 50.50.470 &Syntax.HIJK.IDL\Generic\ IDL :cal SetSyn("idl")<CR>
+an 50.50.480 &Syntax.HIJK.IDL\Microsoft\ IDL :cal SetSyn("msidl")<CR>
+an 50.50.490 &Syntax.HIJK.Idris2 :cal SetSyn("idris2")<CR>
+an 50.50.500 &Syntax.HIJK.Indent\ profile :cal SetSyn("indent")<CR>
+an 50.50.510 &Syntax.HIJK.Inform :cal SetSyn("inform")<CR>
+an 50.50.520 &Syntax.HIJK.Informix\ 4GL :cal SetSyn("fgl")<CR>
+an 50.50.530 &Syntax.HIJK.Initng :cal SetSyn("initng")<CR>
+an 50.50.540 &Syntax.HIJK.Inittab :cal SetSyn("inittab")<CR>
+an 50.50.550 &Syntax.HIJK.Inno\ setup :cal SetSyn("iss")<CR>
+an 50.50.560 &Syntax.HIJK.Innovation\ Data\ Processing.Upstream\ dat :cal SetSyn("upstreamdat")<CR>
+an 50.50.570 &Syntax.HIJK.Innovation\ Data\ Processing.Upstream\ log :cal SetSyn("upstreamlog")<CR>
+an 50.50.580 &Syntax.HIJK.Innovation\ Data\ Processing.Upstream\ rpt :cal SetSyn("upstreamrpt")<CR>
+an 50.50.590 &Syntax.HIJK.Innovation\ Data\ Processing.Upstream\ Install\ log :cal SetSyn("upstreaminstalllog")<CR>
+an 50.50.600 &Syntax.HIJK.Innovation\ Data\ Processing.Usserver\ log :cal SetSyn("usserverlog")<CR>
+an 50.50.610 &Syntax.HIJK.Innovation\ Data\ Processing.USW2KAgt\ log :cal SetSyn("usw2kagtlog")<CR>
+an 50.50.620 &Syntax.HIJK.InstallShield\ script :cal SetSyn("ishd")<CR>
+an 50.50.630 &Syntax.HIJK.Interactive\ Data\ Lang :cal SetSyn("idlang")<CR>
+an 50.50.640 &Syntax.HIJK.Ipkg :cal SetSyn("ipkg")<CR>
+an 50.50.650 &Syntax.HIJK.IPfilter :cal SetSyn("ipfilter")<CR>
+an 50.50.670 &Syntax.HIJK.J :cal SetSyn("j")<CR>
+an 50.50.680 &Syntax.HIJK.JAL :cal SetSyn("jal")<CR>
+an 50.50.690 &Syntax.HIJK.JAM :cal SetSyn("jam")<CR>
+an 50.50.700 &Syntax.HIJK.Jargon :cal SetSyn("jargon")<CR>
+an 50.50.710 &Syntax.HIJK.Java.Java :cal SetSyn("java")<CR>
+an 50.50.720 &Syntax.HIJK.Java.JavaCC :cal SetSyn("javacc")<CR>
+an 50.50.730 &Syntax.HIJK.Java.Java\ Server\ Pages :cal SetSyn("jsp")<CR>
+an 50.50.740 &Syntax.HIJK.Java.Java\ Properties :cal SetSyn("jproperties")<CR>
+an 50.50.750 &Syntax.HIJK.JavaScript :cal SetSyn("javascript")<CR>
+an 50.50.760 &Syntax.HIJK.JavaScriptReact :cal SetSyn("javascriptreact")<CR>
+an 50.50.770 &Syntax.HIJK.Jess :cal SetSyn("jess")<CR>
+an 50.50.780 &Syntax.HIJK.Jgraph :cal SetSyn("jgraph")<CR>
+an 50.50.790 &Syntax.HIJK.Jinja :cal SetSyn("jinja")<CR>
+an 50.50.800 &Syntax.HIJK.JJdescription :cal SetSyn("jjdescription")<CR>
+an 50.50.810 &Syntax.HIJK.Jovial :cal SetSyn("jovial")<CR>
+an 50.50.820 &Syntax.HIJK.JQ :cal SetSyn("jq")<CR>
+an 50.50.830 &Syntax.HIJK.JSON.JSON :cal SetSyn("json")<CR>
+an 50.50.840 &Syntax.HIJK.JSON.JSON-LD :cal SetSyn("jsonld")<CR>
+an 50.50.850 &Syntax.HIJK.JSON.JSON5 :cal SetSyn("json5")<CR>
+an 50.50.860 &Syntax.HIJK.JSON.JSONC :cal SetSyn("jsonc")<CR>
+an 50.50.870 &Syntax.HIJK.Julia :cal SetSyn("julia")<CR>
+an 50.50.880 &Syntax.HIJK.Just :cal SetSyn("just")<CR>
+an 50.50.900 &Syntax.HIJK.Karel :cal SetSyn("karel")<CR>
+an 50.50.910 &Syntax.HIJK.Kconfig :cal SetSyn("kconfig")<CR>
+an 50.50.920 &Syntax.HIJK.KDE\ script :cal SetSyn("kscript")<CR>
+an 50.50.930 &Syntax.HIJK.Kdl :cal SetSyn("kdl")<CR>
+an 50.50.940 &Syntax.HIJK.Kimwitu++ :cal SetSyn("kwt")<CR>
+an 50.50.950 &Syntax.HIJK.Kitty :cal SetSyn("kitty")<CR>
+an 50.50.960 &Syntax.HIJK.Kivy :cal SetSyn("kivy")<CR>
+an 50.50.970 &Syntax.HIJK.KixTart :cal SetSyn("kix")<CR>
+an 50.50.980 &Syntax.HIJK.Kotlin :cal SetSyn("kotlin")<CR>
+an 50.50.990 &Syntax.HIJK.Krl :cal SetSyn("krl")<CR>
 an 50.60.100 &Syntax.L.Lace :cal SetSyn("lace")<CR>
 an 50.60.110 &Syntax.L.LambdaProlog :cal SetSyn("lprolog")<CR>
 an 50.60.120 &Syntax.L.Latte :cal SetSyn("latte")<CR>
@@ -584,35 +586,36 @@ an 50.100.120 &Syntax.R.R.R\ noweb :cal SetSyn("rnoweb")<CR>
 an 50.100.130 &Syntax.R.Racc\ input :cal SetSyn("racc")<CR>
 an 50.100.140 &Syntax.R.Racket :cal SetSyn("racket")<CR>
 an 50.100.150 &Syntax.R.Radiance :cal SetSyn("radiance")<CR>
-an 50.100.160 &Syntax.R.Raml :cal SetSyn("raml")<CR>
-an 50.100.170 &Syntax.R.Rapid :cal SetSyn("rapid")<CR>
-an 50.100.180 &Syntax.R.Rasi :cal SetSyn("rasi")<CR>
-an 50.100.190 &Syntax.R.Ratpoison :cal SetSyn("ratpoison")<CR>
-an 50.100.200 &Syntax.R.RCS.RCS\ log\ output :cal SetSyn("rcslog")<CR>
-an 50.100.210 &Syntax.R.RCS.RCS\ file :cal SetSyn("rcs")<CR>
-an 50.100.220 &Syntax.R.Readline\ config :cal SetSyn("readline")<CR>
-an 50.100.230 &Syntax.R.Rebol :cal SetSyn("rebol")<CR>
-an 50.100.240 &Syntax.R.ReDIF :cal SetSyn("redif")<CR>
-an 50.100.250 &Syntax.R.Rego :cal SetSyn("rego")<CR>
-an 50.100.260 &Syntax.R.Relax\ NG :cal SetSyn("rng")<CR>
-an 50.100.270 &Syntax.R.Remind :cal SetSyn("remind")<CR>
-an 50.100.280 &Syntax.R.Relax\ NG\ compact :cal SetSyn("rnc")<CR>
-an 50.100.290 &Syntax.R.Renderman.Renderman\ Shader\ Lang :cal SetSyn("sl")<CR>
-an 50.100.300 &Syntax.R.Renderman.Renderman\ Interface\ Bytestream :cal SetSyn("rib")<CR>
-an 50.100.310 &Syntax.R.Requirements :cal SetSyn("requirements")<CR>
-an 50.100.320 &Syntax.R.Resolv\.conf :cal SetSyn("resolv")<CR>
-an 50.100.330 &Syntax.R.Reva\ Forth :cal SetSyn("reva")<CR>
-an 50.100.340 &Syntax.R.Rexx :cal SetSyn("rexx")<CR>
-an 50.100.350 &Syntax.R.Robots\.txt :cal SetSyn("robots")<CR>
-an 50.100.360 &Syntax.R.RockLinux\ package\ desc\. :cal SetSyn("desc")<CR>
-an 50.100.370 &Syntax.R.Rpcgen :cal SetSyn("rpcgen")<CR>
-an 50.100.380 &Syntax.R.RPL/2 :cal SetSyn("rpl")<CR>
-an 50.100.390 &Syntax.R.ReStructuredText :cal SetSyn("rst")<CR>
-an 50.100.400 &Syntax.R.ReStructuredText\ with\ R\ statements :cal SetSyn("rrst")<CR>
-an 50.100.410 &Syntax.R.Routeros :cal SetSyn("routeros")<CR>
-an 50.100.420 &Syntax.R.RTF :cal SetSyn("rtf")<CR>
-an 50.100.430 &Syntax.R.Ruby :cal SetSyn("ruby")<CR>
-an 50.100.440 &Syntax.R.Rust :cal SetSyn("rust")<CR>
+an 50.100.160 &Syntax.R.Radvd\ config :cal SetSyn("radvd")<CR>
+an 50.100.170 &Syntax.R.Raml :cal SetSyn("raml")<CR>
+an 50.100.180 &Syntax.R.Rapid :cal SetSyn("rapid")<CR>
+an 50.100.190 &Syntax.R.Rasi :cal SetSyn("rasi")<CR>
+an 50.100.200 &Syntax.R.Ratpoison :cal SetSyn("ratpoison")<CR>
+an 50.100.210 &Syntax.R.RCS.RCS\ log\ output :cal SetSyn("rcslog")<CR>
+an 50.100.220 &Syntax.R.RCS.RCS\ file :cal SetSyn("rcs")<CR>
+an 50.100.230 &Syntax.R.Readline\ config :cal SetSyn("readline")<CR>
+an 50.100.240 &Syntax.R.Rebol :cal SetSyn("rebol")<CR>
+an 50.100.250 &Syntax.R.ReDIF :cal SetSyn("redif")<CR>
+an 50.100.260 &Syntax.R.Rego :cal SetSyn("rego")<CR>
+an 50.100.270 &Syntax.R.Relax\ NG :cal SetSyn("rng")<CR>
+an 50.100.280 &Syntax.R.Remind :cal SetSyn("remind")<CR>
+an 50.100.290 &Syntax.R.Relax\ NG\ compact :cal SetSyn("rnc")<CR>
+an 50.100.300 &Syntax.R.Renderman.Renderman\ Shader\ Lang :cal SetSyn("sl")<CR>
+an 50.100.310 &Syntax.R.Renderman.Renderman\ Interface\ Bytestream :cal SetSyn("rib")<CR>
+an 50.100.320 &Syntax.R.Requirements :cal SetSyn("requirements")<CR>
+an 50.100.330 &Syntax.R.Resolv\.conf :cal SetSyn("resolv")<CR>
+an 50.100.340 &Syntax.R.Reva\ Forth :cal SetSyn("reva")<CR>
+an 50.100.350 &Syntax.R.Rexx :cal SetSyn("rexx")<CR>
+an 50.100.360 &Syntax.R.Robots\.txt :cal SetSyn("robots")<CR>
+an 50.100.370 &Syntax.R.RockLinux\ package\ desc\. :cal SetSyn("desc")<CR>
+an 50.100.380 &Syntax.R.Rpcgen :cal SetSyn("rpcgen")<CR>
+an 50.100.390 &Syntax.R.RPL/2 :cal SetSyn("rpl")<CR>
+an 50.100.400 &Syntax.R.ReStructuredText :cal SetSyn("rst")<CR>
+an 50.100.410 &Syntax.R.ReStructuredText\ with\ R\ statements :cal SetSyn("rrst")<CR>
+an 50.100.420 &Syntax.R.Routeros :cal SetSyn("routeros")<CR>
+an 50.100.430 &Syntax.R.RTF :cal SetSyn("rtf")<CR>
+an 50.100.440 &Syntax.R.Ruby :cal SetSyn("ruby")<CR>
+an 50.100.450 &Syntax.R.Rust :cal SetSyn("rust")<CR>
 an 50.110.100 &Syntax.S-Sm.S-Lang :cal SetSyn("slang")<CR>
 an 50.110.110 &Syntax.S-Sm.Samba\ config :cal SetSyn("samba")<CR>
 an 50.110.120 &Syntax.S-Sm.SAS :cal SetSyn("sas")<CR>
@@ -711,15 +714,16 @@ an 50.120.510 &Syntax.Sn-Sy.Structurizr :cal SetSyn("structurizr")<CR>
 an 50.120.520 &Syntax.Sn-Sy.Stylus :cal SetSyn("stylus")<CR>
 an 50.120.530 &Syntax.Sn-Sy.Subversion\ commit :cal SetSyn("svn")<CR>
 an 50.120.540 &Syntax.Sn-Sy.Sudoers :cal SetSyn("sudoers")<CR>
-an 50.120.550 &Syntax.Sn-Sy.SVG :cal SetSyn("svg")<CR>
-an 50.120.560 &Syntax.Sn-Sy.Swayconfig :cal SetSyn("swayconfig")<CR>
-an 50.120.570 &Syntax.Sn-Sy.Swift.Swift :cal SetSyn("swift")<CR>
-an 50.120.580 &Syntax.Sn-Sy.Swift.GYB :cal SetSyn("swiftgyb")<CR>
-an 50.120.590 &Syntax.Sn-Sy.Swig :cal SetSyn("swig")<CR>
-an 50.120.600 &Syntax.Sn-Sy.Symbian\ meta-makefile :cal SetSyn("mmp")<CR>
-an 50.120.610 &Syntax.Sn-Sy.Sysctl\.conf :cal SetSyn("sysctl")<CR>
-an 50.120.620 &Syntax.Sn-Sy.Systemd :cal SetSyn("systemd")<CR>
-an 50.120.630 &Syntax.Sn-Sy.SystemVerilog :cal SetSyn("systemverilog")<CR>
+an 50.120.550 &Syntax.Sn-Sy.Svelt :cal SetSyn("svelte")<CR>
+an 50.120.560 &Syntax.Sn-Sy.SVG :cal SetSyn("svg")<CR>
+an 50.120.570 &Syntax.Sn-Sy.Swayconfig :cal SetSyn("swayconfig")<CR>
+an 50.120.580 &Syntax.Sn-Sy.Swift.Swift :cal SetSyn("swift")<CR>
+an 50.120.590 &Syntax.Sn-Sy.Swift.GYB :cal SetSyn("swiftgyb")<CR>
+an 50.120.600 &Syntax.Sn-Sy.Swig :cal SetSyn("swig")<CR>
+an 50.120.610 &Syntax.Sn-Sy.Symbian\ meta-makefile :cal SetSyn("mmp")<CR>
+an 50.120.620 &Syntax.Sn-Sy.Sysctl\.conf :cal SetSyn("sysctl")<CR>
+an 50.120.630 &Syntax.Sn-Sy.Systemd :cal SetSyn("systemd")<CR>
+an 50.120.640 &Syntax.Sn-Sy.SystemVerilog :cal SetSyn("systemverilog")<CR>
 an 50.130.100 &Syntax.T.TADS :cal SetSyn("tads")<CR>
 an 50.130.110 &Syntax.T.Tags :cal SetSyn("tags")<CR>
 an 50.130.120 &Syntax.T.TAK.TAK\ compare :cal SetSyn("takcmp")<CR>

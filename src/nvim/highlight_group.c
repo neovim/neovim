@@ -143,7 +143,7 @@ static const char e_missing_argument_str[]
 // they still work when the runtime files can't be found.
 
 static const char *highlight_init_both[] = {
-  "Cursor            guifg=bg      guibg=fg",
+  "Cursor            guifg=bg      guibg=fg                cterm=reverse",
   "CursorLineNr      gui=bold      cterm=bold",
   "Ignore            guifg=bg      ctermfg=0",
   "PmenuMatch        gui=bold      cterm=bold",
@@ -153,7 +153,7 @@ static const char *highlight_init_both[] = {
   "TabLineSel        guifg=fg      guibg=bg                gui=bold cterm=nocombine",
   "TermCursor        gui=reverse   cterm=reverse",
   "Underlined        gui=underline cterm=underline",
-  "lCursor           guifg=bg      guibg=fg",
+  "lCursor           guifg=bg      guibg=fg                cterm=reverse",
 
   // UI
   "default link CursorIM         Cursor",
@@ -183,6 +183,8 @@ static const char *highlight_init_both[] = {
   "default link ComplMatchIns    NONE",
   "default link ComplHint        NonText",
   "default link ComplHintMore    MoreMsg",
+  "default link MCursor          CurSearch",
+  "default link MCursorVisual    Visual",
   "default link Substitute       Search",
   "default link StatusLineTerm   StatusLine",
   "default link StatusLineTermNC StatusLineNC",
@@ -524,6 +526,7 @@ static const char *highlight_init_dark[] = {
   NULL
 };
 
+// NOLINTNEXTLINE(misc-use-internal-linkage): used with FFI in unittests
 const char *const highlight_init_cmdline[] = {
   // XXX When modifying a list modify it in both valid and invalid halves.
   // TODO(ZyX-I): merge valid and invalid groups via a macros.
@@ -2293,7 +2296,7 @@ void highlight_changed(void)
     if (id == 0) {
       abort();
     }
-    int ns_id = -1;
+    int ns_id = 0;
     int final_id = id;
     syn_ns_get_final_id(&ns_id, &final_id);
     if (hlf == HLF_SNC) {

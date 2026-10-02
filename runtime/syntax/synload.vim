@@ -48,7 +48,7 @@ fun! s:SynSet()
     " Load the syntax file(s).  When there are several, separated by dots,
     " load each in sequence.  Skip empty entries.
     for name in split(s, '\.')
-      if !empty(name)
+      if !empty(name) && name !=# 'syntax'
         " XXX: "[.]" in the first pattern makes it a wildcard on Windows
         exe $'runtime! syntax/{name}[.]{{vim,lua}} syntax/{name}/*.{{vim,lua}}'
       endif

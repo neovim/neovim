@@ -84,7 +84,7 @@ function M.parse_ssh_config(text)
       if escaped then
         table.insert(val, chr == '"' and chr or '\\' .. chr)
         escaped = false
-      elseif chr == '"' and (val == {} or quoted) then
+      elseif chr == '"' and (#val == 0 or quoted) then
         quoted = not quoted
       elseif chr == '\\' then
         escaped = true
@@ -127,7 +127,7 @@ function M.parse_ssh_config(text)
       elseif quoted then
         table.insert(val, chr)
       elseif chr:match('[ \t=]') then
-        if val ~= {} then
+        if #val > 0 then
           table.insert(results, vim.trim(table.concat(val)))
           val = {}
         end
@@ -143,7 +143,7 @@ function M.parse_ssh_config(text)
       error('Unexpected line break at line ' .. line)
     end
 
-    if val ~= {} then
+    if #val > 0 then
       table.insert(results, vim.trim(table.concat(val)))
     end
 
@@ -191,7 +191,11 @@ function M.parse_ssh_config(text)
       if node.param:lower() == 'match' and node.value then
         local current = nil
         for ind, val in ipairs(node.value) do
-          if val:lower() == 'host' and ind + 1 <= #node.value and is_valid(node.value[ind + 1]) then
+          if
+            val:lower() == 'host'
+            and ind + 1 <= #node.value
+            and is_valid(assert(node.value[ind + 1]))
+          then
             current = node.value[ind + 1]
           end
         end

@@ -846,28 +846,29 @@ void f_winrestview(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if ((di = tv_dict_find(dict, S_LEN("coladd"))) != NULL) {
     curwin->w_cursor.coladd = (colnr_T)tv_get_number(&di->di_tv);
   }
-  if ((di = tv_dict_find(dict, S_LEN("curswant"))) != NULL) {
-    curwin->w_curswant = (colnr_T)tv_get_number(&di->di_tv);
-    curwin->w_set_curswant = false;
-  }
   if ((di = tv_dict_find(dict, S_LEN("topline"))) != NULL) {
-    set_topline(curwin, (linenr_T)tv_get_number(&di->di_tv));
+    set_topline(curwin, (linenr_T)tv_get_number(&di->di_tv));  // A folded line: its fold start.
+  }
+  viewstate_T vs;
+  save_viewstate(curwin, &vs);  // Keys absent from the dict keep their value.
+  if ((di = tv_dict_find(dict, S_LEN("curswant"))) != NULL) {
+    vs.vs_curswant = (colnr_T)tv_get_number(&di->di_tv);
+    vs.vs_set_curswant = false;
   }
   if ((di = tv_dict_find(dict, S_LEN("topfill"))) != NULL) {
-    curwin->w_topfill = (int)tv_get_number(&di->di_tv);
+    vs.vs_topfill = (int)tv_get_number(&di->di_tv);
   }
   if ((di = tv_dict_find(dict, S_LEN("leftcol"))) != NULL) {
-    curwin->w_leftcol = (colnr_T)tv_get_number(&di->di_tv);
+    vs.vs_leftcol = (colnr_T)tv_get_number(&di->di_tv);
   }
   if ((di = tv_dict_find(dict, S_LEN("skipcol"))) != NULL) {
-    curwin->w_skipcol = (colnr_T)tv_get_number(&di->di_tv);
+    vs.vs_skipcol = (colnr_T)tv_get_number(&di->di_tv);
   }
+  restore_viewstate(curwin, &vs);
 
+  // The dict may name positions beyond the buffer.
   check_cursor(curwin);
-  win_new_height(curwin, curwin->w_height);
-  win_new_width(curwin, curwin->w_width);
   changed_window_setting(curwin);
-
   if (curwin->w_topline <= 0) {
     curwin->w_topline = 1;
   }
@@ -887,12 +888,14 @@ void f_winsaveview(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   tv_dict_add_nr(dict, S_LEN("col"), (varnumber_T)curwin->w_cursor.col);
   tv_dict_add_nr(dict, S_LEN("coladd"), (varnumber_T)curwin->w_cursor.coladd);
   update_curswant();
-  tv_dict_add_nr(dict, S_LEN("curswant"), (varnumber_T)curwin->w_curswant);
+  viewstate_T vs;
+  save_viewstate(curwin, &vs);
+  tv_dict_add_nr(dict, S_LEN("curswant"), (varnumber_T)vs.vs_curswant);
 
-  tv_dict_add_nr(dict, S_LEN("topline"), (varnumber_T)curwin->w_topline);
-  tv_dict_add_nr(dict, S_LEN("topfill"), (varnumber_T)curwin->w_topfill);
-  tv_dict_add_nr(dict, S_LEN("leftcol"), (varnumber_T)curwin->w_leftcol);
-  tv_dict_add_nr(dict, S_LEN("skipcol"), (varnumber_T)curwin->w_skipcol);
+  tv_dict_add_nr(dict, S_LEN("topline"), (varnumber_T)vs.vs_topline);
+  tv_dict_add_nr(dict, S_LEN("topfill"), (varnumber_T)vs.vs_topfill);
+  tv_dict_add_nr(dict, S_LEN("leftcol"), (varnumber_T)vs.vs_leftcol);
+  tv_dict_add_nr(dict, S_LEN("skipcol"), (varnumber_T)vs.vs_skipcol);
 }
 
 /// "winwidth(nr)" function

@@ -1,7 +1,7 @@
 " Creator:    Charles E Campbell
 " Previous Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
 " Maintainer: This runtime file is looking for a new maintainer.
-" Last Change: 2026 Aug 21
+" Last Change: 2026 Sep 07
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -8393,10 +8393,6 @@ function s:LocalBrowseRefresh()
     if !exists("w:netrw_bannercnt")
         return
     endif
-    if !empty(getcmdwintype())
-        " cannot move away from cmdline window, see :h E11
-        return
-    endif
     if exists("s:netrw_events") && s:netrw_events == 1
         " s:LocalFastBrowser gets called (indirectly) from a
         let s:netrw_events= 2
@@ -9309,12 +9305,9 @@ function s:NetrwLcd(newdir)
 
     if err472
         call netrw#msg#Notify('ERROR', printf('unable to change directory to <%s> (permissions?)', a:newdir))
-        if exists("w:netrw_prvdir")
-            let a:newdir= w:netrw_prvdir
-        else
+        if !exists("w:netrw_prvdir")
             call s:NetrwOptionsRestore("w:")
             exe "setl ".g:netrw_bufsettings
-            let a:newdir= dirname
         endif
         return -1
     endif

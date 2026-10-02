@@ -147,7 +147,7 @@ functionaltest-lua: | nvim
 	$(CMAKE) --build build --target functionaltest
 
 FORMAT=formatc formatlua formatquery format
-LINT=lintlua lintsh lintc clang-analyzer lintcommit lintdoc lintdocurls lint luals lintquery linterrcodes
+LINT=lintlua lintsh lintc clang-analyzer lintcommit lintdoc lintdocurls lint emmylua-check lintquery linterrcodes
 TEST=functionaltest unittest
 generated-sources benchmark $(FORMAT) $(LINT) $(TEST) doc: | build/.ran-cmake
 	$(CMAKE) --build build --target $@
@@ -194,9 +194,3 @@ appimage-%:
 	bash scripts/genappimage.sh $*
 
 .PHONY: test clean distclean nvim libnvim cmake deps install appimage checkprefix benchmark $(FORMAT) $(LINT) $(TEST)
-
-.PHONY: emmylua-check
-emmylua-check:
-	-emmylua_check runtime/lua \
-		--config .luarc.json \
-		--config .emmyrc.json

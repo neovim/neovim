@@ -77,7 +77,7 @@ local function get_group(client)
 end
 
 ---@param state vim.lsp.CTBufferState
----@param encoding string
+---@param encoding 'utf-8'|'utf-16'|'utf-32'
 ---@param bufnr integer
 ---@param firstline integer
 ---@param lastline integer
@@ -130,7 +130,6 @@ end
 ---@param client vim.lsp.Client
 ---@param bufnr integer
 function M.init(client, bufnr)
-  assert(client.offset_encoding, 'lsp client must have an offset_encoding')
   local group = get_group(client)
   local state = state_by_group[group]
   if state then
@@ -250,7 +249,6 @@ function M.reset_buf(client, bufnr)
   if not state then
     return
   end
-  assert(state.buffers, 'CTGroupState must have buffers')
   local buf_state = state.buffers[bufnr]
   if not buf_state then
     return
@@ -383,7 +381,7 @@ local function send_changes_for_group(bufnr, firstline, lastline, new_lastline, 
     local timer = assert(uv.new_timer(), 'Must be able to create timer')
     buf_state.timer = timer
     timer:start(
-      debounce,
+      math.floor(debounce),
       0,
       vim.schedule_wrap(function()
         reset_timer(buf_state)

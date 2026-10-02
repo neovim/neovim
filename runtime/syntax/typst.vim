@@ -1,7 +1,7 @@
 " Vim syntax file
 " Maintainer:  Maxim Kim <habamax@gmail.com>
 " Language:    Typst
-" Last Change: 2026 Jun 30
+" Last Change: 2026 Sep 10
 " Based on the syntax file from https://github.com/kaarmu/typst.vim
 
 if exists('b:current_syntax')
@@ -175,8 +175,8 @@ for s:name in get(g:, 'typst_embedded_languages', [])
     let s:rule = ['syn region'
                 \ ,"typstMarkupRawBlock_"..s:name
                 \ ,'matchgroup=typstMarkupRawDelimiter'
-                \ ,'start=/```'..s:name..'\>/ end=/```/' 
-                \ ,'contains=@typstEmbedded_'..s:name 
+                \ ,'start=/```'..s:name..'\>/ end=/```/'
+                \ ,'contains=@typstEmbedded_'..s:name
                 \ ,'keepend'
                 \ ,'concealends']
 
@@ -303,9 +303,7 @@ hi def link typstExprNumberType Constant
 hi def link typstExprString String
 hi def link typstExprLabel Structure
 
-hi def link typstMarkupRawInline PreProc
 hi def link typstMarkupRawDelimiter Special
-hi def link typstMarkupRawBlock PreProc
 hi def link typstMarkupDollar Special
 hi def link typstMarkupLabel PreProc
 hi def link typstMarkupReference Special

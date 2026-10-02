@@ -41,7 +41,7 @@
 ---@field private filename string
 ---
 --- Internal state for the log file handle. `nil` until the file is opened.
----@field private logfile file*?
+---@field private logfile file?
 ---
 --- Internal state for the log file open error.
 ---@field private openerr string?
@@ -104,8 +104,8 @@ local function default_format_func(min_level, level, ...)
     '[%s][%s] %s:%s',
     level_names[level],
     os.date(log_date_format),
-    info.short_src,
-    info.currentline
+    info and info.short_src or '?',
+    info and info.currentline or -1
   )
   local parts = { header }
   local argc = select('#', ...)

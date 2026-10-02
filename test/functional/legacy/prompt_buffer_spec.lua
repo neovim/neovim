@@ -543,10 +543,11 @@ describe('prompt buffer', function()
       {5:-- INSERT --}             |
     ]])
     feed('<Esc>u')
+    -- Nvim: the cursor returns to its pre-"S" position (|restore-undo-cursor|).
     screen:expect([[
       cmd: tests-initial       |
       Command: "tests-initial" |
-      ^cmd: hello               |
+      cmd: hell^o               |
       {1:~                        }|
       {3:[Prompt]                 }|
       other buffer             |
@@ -561,7 +562,7 @@ describe('prompt buffer', function()
     screen:expect([[
       cmd: tests-initial       |
       Command: "tests-initial" |
-      c^md > hello              |
+      cmd > hell^o              |
       {1:~                        }|
       {3:[Prompt]                 }|
       other buffer             |

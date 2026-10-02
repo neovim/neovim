@@ -767,8 +767,9 @@ func Test_search_regexp()
   call assert_equal([0, 2, 5, 0], getpos('.'))
   call assert_equal(2, line('$'))
   normal u
-  call assert_equal('9 foobar', getline('.'))
-  call assert_equal([0, 2, 6, 0], getpos('.'))
+  " Nvim: undo restores the cursor to where "dv?bar?" started.
+  call assert_equal('9 foobar', getline(2))
+  call assert_equal([0, 3, 1, 0], getpos('.'))
   call assert_equal(3, line('$'))
 
   set undolevels&

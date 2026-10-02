@@ -281,28 +281,6 @@ void tabstop_fromto(colnr_T start_col, colnr_T end_col, int ts_arg, const colnr_
   *nspcs = spaces % (int)vts[tabcount];
 }
 
-/// See if two tabstop arrays contain the same values.
-static bool tabstop_eq(const colnr_T *ts1, const colnr_T *ts2)
-{
-  if ((ts1 == 0 && ts2) || (ts1 && ts2 == 0)) {
-    return false;
-  }
-  if (ts1 == ts2) {
-    return true;
-  }
-  if (ts1[0] != ts2[0]) {
-    return false;
-  }
-
-  for (int t = 1; t <= ts1[0]; t++) {
-    if (ts1[t] != ts2[t]) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
 /// Copy a tabstop array, allocating space for the new array.
 int *tabstop_copy(const int *oldts)
 {
@@ -396,7 +374,7 @@ int get_indent_buf(buf_T *buf, linenr_T lnum)
 int indent_size_no_ts(char const *ptr)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  int tab_size = byte2cells(TAB);
+  int tab_size = dy_escape_width;
 
   int vcol = 0;
   while (true) {
@@ -1206,12 +1184,14 @@ void change_indent(int type, int amount, int round, bool call_changed_bytes)
       CSType cstype = init_charsize_arg(&csarg, curwin, 0, line);
       StrCharInfo ci = utf_ptr2StrCharInfo(line);
       while (true) {
-        int next_vcol = vcol + win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg).width;
+        ClusterInfo cli = utf_ClusterInfo(ci);
+        int next_vcol = vcol + win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg,
+                                            cli.cells).width;
         if (next_vcol > end_vcol) {
           break;
         }
         vcol = next_vcol;
-        ci = utfc_next(ci);
+        ci = cli.next;
         if (*ci.ptr == NUL) {
           break;
         }
@@ -1447,9 +1427,6 @@ void ex_retab(exarg_T *eap)
   linenr_T last_line = 0;               // last changed line
   bool is_indent_only = false;
 
-  int save_list = curwin->w_p_list;
-  curwin->w_p_list = 0;             // don't want list mode here
-
   char *ptr = eap->arg;
   if (strncmp(ptr, "-indentonly", 11) == 0 && ascii_iswhite_or_nul(ptr[11])) {
     is_indent_only = true;
@@ -1473,6 +1450,10 @@ void ex_retab(exarg_T *eap)
   } else {
     new_ts_str = xmemdupz(new_ts_str, (size_t)(ptr - new_ts_str));
   }
+
+  int save_list = curwin->w_p_list;
+  curwin->w_p_list = 0;             // don't want list mode here
+
   for (linenr_T lnum = eap->line1; !got_int && lnum <= eap->line2; lnum++) {
     ptr = ml_get(lnum);
     int old_len = ml_get_len(lnum);
@@ -1576,44 +1557,36 @@ void ex_retab(exarg_T *eap)
     emsg(_(e_interr));
   }
 
-  // If a single value was given then it can be considered equal to
-  // either the value of 'tabstop' or the value of 'vartabstop'.
-  if (tabstop_count(curbuf->b_p_vts_array) == 0
-      && tabstop_count(new_vts_array) == 1
-      && curbuf->b_p_ts == tabstop_first(new_vts_array)) {
-    // not changed
-  } else if (tabstop_count(curbuf->b_p_vts_array) > 0
-             && tabstop_eq(curbuf->b_p_vts_array, new_vts_array)) {
-    // not changed
-  } else {
-    redraw_curbuf_later(UPD_NOT_VALID);
-  }
   if (first_line != 0) {
     changed_lines(curbuf, first_line, 0, last_line + 1, 0, true);
   }
 
   curwin->w_p_list = save_list;         // restore 'list'
+  // Finish buffer cleanup before OptionSet can switch buffers.
+  u_clearline(curbuf);
 
   if (new_ts_str != NULL) {  // set the new tabstop
+    const handle_T win_handle = curwin->handle;
+    const handle_T buf_handle = curbuf->handle;
+
     // If 'vartabstop' is in use or if the value given to retab has more
     // than one tabstop then update 'vartabstop'.
-    colnr_T *old_vts_ary = curbuf->b_p_vts_array;
-
-    if (tabstop_count(old_vts_ary) > 0 || tabstop_count(new_vts_array) > 1) {
-      set_option_direct(kOptVartabstop, CSTR_AS_OBJ(new_ts_str), OPT_LOCAL, 0);
-      curbuf->b_p_vts_array = new_vts_array;
-      xfree(old_vts_ary);
+    if (tabstop_count(curbuf->b_p_vts_array) > 0 || tabstop_count(new_vts_array) > 1) {
+      set_option_value(kOptVartabstop, CSTR_AS_OBJ(new_ts_str), OPT_LOCAL, true, NULL);
     } else {
       // 'vartabstop' wasn't in use and a single value was given to
       // retab then update 'tabstop'.
-      curbuf->b_p_ts = tabstop_first(new_vts_array);
-      xfree(new_vts_array);
+      set_option_value(kOptTabstop, INTEGER_OBJ(tabstop_first(new_vts_array)), OPT_LOCAL, true,
+                       NULL);
     }
+    xfree(new_vts_array);
     xfree(new_ts_str);
+    // OptionSet may have left the command's window or buffer.
+    if (curwin->handle != win_handle || curbuf->handle != buf_handle) {
+      return;
+    }
   }
   coladvance(curwin, curwin->w_curswant);
-
-  u_clearline(curbuf);
 }
 
 /// Get indent level from 'indentexpr'.
@@ -1765,8 +1738,9 @@ int get_lisp_indent(void)
       StrCharInfo sci = utf_ptr2StrCharInfo(line);
       amount = 0;
       while (*sci.ptr != NUL && col > 0) {
-        amount += win_charsize(cstype, amount, sci.ptr, sci.chr.value, &csarg).width;
-        sci = utfc_next(sci);
+        ClusterInfo cli = utf_ClusterInfo(sci);
+        amount += win_charsize(cstype, amount, sci.ptr, sci.chr.value, &csarg, cli.cells).width;
+        sci = cli.next;
         col--;
       }
       char *that = sci.ptr;
@@ -1785,7 +1759,7 @@ int get_lisp_indent(void)
         colnr_T firsttry = amount;
 
         while (ascii_iswhite(*that)) {
-          amount += win_charsize(cstype, amount, that, (uint8_t)(*that), &csarg).width;
+          amount += win_charsize(cstype, amount, that, (uint8_t)(*that), &csarg, 1).width;
           that++;
         }
 
@@ -1814,21 +1788,21 @@ int get_lisp_indent(void)
                 parencount--;
               }
               if ((ci.value == '\\') && (*(that + 1) != NUL)) {
-                amount += win_charsize(cstype, amount, that, ci.value, &csarg).width;
-                StrCharInfo next_sci = utfc_next((StrCharInfo){ that, ci });
-                that = next_sci.ptr;
-                ci = next_sci.chr;
+                ClusterInfo cli = utf_ClusterInfo((StrCharInfo){ that, ci });
+                amount += win_charsize(cstype, amount, that, ci.value, &csarg, cli.cells).width;
+                that = cli.next.ptr;
+                ci = cli.next.chr;
               }
 
-              amount += win_charsize(cstype, amount, that, ci.value, &csarg).width;
-              StrCharInfo next_sci = utfc_next((StrCharInfo){ that, ci });
-              that = next_sci.ptr;
-              ci = next_sci.chr;
+              ClusterInfo cli = utf_ClusterInfo((StrCharInfo){ that, ci });
+              amount += win_charsize(cstype, amount, that, ci.value, &csarg, cli.cells).width;
+              that = cli.next.ptr;
+              ci = cli.next.chr;
             }
           }
 
           while (ascii_iswhite(*that)) {
-            amount += win_charsize(cstype, amount, that, (uint8_t)(*that), &csarg).width;
+            amount += win_charsize(cstype, amount, that, (uint8_t)(*that), &csarg, 1).width;
             that++;
           }
 

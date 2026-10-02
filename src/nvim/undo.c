@@ -29,7 +29,7 @@
 //
 // Each u_entry list contains the information for one undo or redo.
 // curbuf->b_u_curhead points to the header of the last undo (the next redo),
-// or is NULL if nothing has been undone (end of the branch).
+// or is NULL if nothing has been undone ("leaf", end of the branch).
 //
 // For keeping alternate undo/redo branches the uh_alt field is used.  Thus at
 // each point in the list a branch may appear for an alternate to redo.  The
@@ -113,6 +113,7 @@
 #include "nvim/mark.h"
 #include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/memline_defs.h"
 #include "nvim/memory.h"
@@ -474,12 +475,14 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, bool r
     uhp->uh_walk = 0;
     uhp->uh_entry = NULL;
     uhp->uh_getbot_entry = NULL;
-    uhp->uh_cursor = curwin->w_cursor;          // save cursor pos. for undo
-    if (virtual_active(curwin) && curwin->w_cursor.coladd > 0) {
+    uhp->uh_cursor = atom_origin_pos(buf);  // The pre-change position: undo restores it.
+    if (virtual_active(curwin) && curwin->w_cursor.coladd > 0
+        && equalpos(uhp->uh_cursor, curwin->w_cursor)) {
       uhp->uh_cursor_vcol = getviscol();
     } else {
       uhp->uh_cursor_vcol = -1;
     }
+    clearpos(&uhp->uh_cursor_after);
 
     // save changed and buffer empty flag for undo
     uhp->uh_flags = (buf->b_changed ? UH_CHANGED : 0) +
@@ -519,12 +522,7 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, bool r
 
         // If lines have been inserted/deleted we give up.
         // Also when the line was included in a multi-line save.
-        if ((buf->b_u_newhead->uh_getbot_entry != uep
-             ? (uep->ue_top + uep->ue_size + 1
-                != (uep->ue_bot == 0
-                    ? buf->b_ml.ml_line_count + 1
-                    : uep->ue_bot))
-             : uep->ue_lcount != buf->b_ml.ml_line_count)
+        if (u_entry_resized(buf, uep)
             || (uep->ue_size > 1
                 && top >= uep->ue_top
                 && top + 2 <= uep->ue_top + uep->ue_size + 1)) {
@@ -620,6 +618,15 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, bool r
   u_check(false);
 #endif
   return OK;
+}
+
+/// Whether lines were added or deleted since `uep` (an entry of the newest undo state) was saved.
+static bool u_entry_resized(buf_T *buf, u_entry_T *uep)
+{
+  return buf->b_u_newhead->uh_getbot_entry != uep
+         ? uep->ue_top + uep->ue_size + 1
+         != (uep->ue_bot == 0 ? buf->b_ml.ml_line_count + 1 : uep->ue_bot)
+         : uep->ue_lcount != buf->b_ml.ml_line_count;
 }
 
 // magic at start of undofile
@@ -1864,30 +1871,7 @@ bool u_undo_and_forget(int count, bool do_buf_event)
     return false;
   }
 
-  // Delete the current redo header
-  // set the redo header to the next alternative branch (if any)
-  // otherwise we will be in the leaf state
-  u_header_T *to_forget = curbuf->b_u_curhead;
-  curbuf->b_u_newhead = to_forget->uh_next.ptr;
-  curbuf->b_u_curhead = to_forget->uh_alt_next.ptr;
-  if (curbuf->b_u_curhead) {
-    to_forget->uh_alt_next.ptr = NULL;
-    curbuf->b_u_curhead->uh_alt_prev.ptr = to_forget->uh_alt_prev.ptr;
-    curbuf->b_u_seq_cur = curbuf->b_u_curhead->uh_next.ptr
-                          ? curbuf->b_u_curhead->uh_next.ptr->uh_seq : 0;
-  } else if (curbuf->b_u_newhead) {
-    curbuf->b_u_seq_cur = curbuf->b_u_newhead->uh_seq;
-  }
-  if (to_forget->uh_alt_prev.ptr) {
-    to_forget->uh_alt_prev.ptr->uh_alt_next.ptr = curbuf->b_u_curhead;
-  }
-  if (curbuf->b_u_newhead) {
-    curbuf->b_u_newhead->uh_prev.ptr = curbuf->b_u_curhead;
-  }
-  if (curbuf->b_u_seq_last == to_forget->uh_seq) {
-    curbuf->b_u_seq_last--;
-  }
-  u_freebranch(curbuf, to_forget, NULL);
+  u_forget_header(curbuf, curbuf->b_u_curhead);  // The undone branch.
   return true;
 }
 
@@ -1901,7 +1885,7 @@ static void u_doit(int startcount, bool quiet, bool do_buf_event)
   if (!undo_allowed(curbuf)) {
     return;
   }
-  atom_op_global_set();  // multicursor: undo/redo must not cascade (global, not per-cursor).
+  atom_did_global_op();  // multicursor: undo/redo must not cascade (global, not per-cursor).
 
   u_newcount = 0;
   u_oldcount = 0;
@@ -1978,6 +1962,7 @@ void undo_time(int step, bool sec, bool file, bool absolute)
     text_locked_msg();
     return;
   }
+  mc_undo_time();  // Time-travel crosses cascade boundaries, exit mc-session.
 
   // First make sure the current undoable change is synced.
   if (!curbuf->b_u_synced) {
@@ -2530,35 +2515,50 @@ static void u_undoredo(bool undo, bool do_buf_event)
     curhead->uh_visual = visualinfo;
   }
 
-  // If the cursor is only off by one line, put it at the same position as
-  // before starting the change (for the "o" command).
-  // Otherwise the cursor should go to the first undone line.
-  if (curhead->uh_cursor.lnum + 1 == curwin->w_cursor.lnum
-      && curwin->w_cursor.lnum > 1) {
-    curwin->w_cursor.lnum--;
-  }
-  if (curwin->w_cursor.lnum <= curbuf->b_ml.ml_line_count) {
-    if (curhead->uh_cursor.lnum == curwin->w_cursor.lnum) {
-      curwin->w_cursor.col = curhead->uh_cursor.col;
-      if (virtual_active(curwin) && curhead->uh_cursor_vcol >= 0) {
-        coladvance(curwin, curhead->uh_cursor_vcol);
-      } else {
-        curwin->w_cursor.coladd = 0;
-      }
-    } else {
-      beginline(BL_SOL | BL_FIX);
+  if (undo && curhead->uh_cursor.lnum >= 1
+      && curhead->uh_cursor.lnum <= curbuf->b_ml.ml_line_count) {
+    // Undo restores the pre-change text; restore the pre-change cursor too. #5989
+    curwin->w_cursor = curhead->uh_cursor;
+    if (virtual_active(curwin) && curhead->uh_cursor_vcol >= 0) {
+      coladvance(curwin, curhead->uh_cursor_vcol);
     }
   } else {
-    // We get here with the current cursor line being past the end (eg
-    // after adding lines at the end of the file, and then undoing it).
-    // check_cursor() will move the cursor to the last line.  Move it to
-    // the first column here.
-    curwin->w_cursor.col = 0;
-    curwin->w_cursor.coladd = 0;
+    // If the cursor is only off by one line, put it at the same position as
+    // before starting the change (for the "o" command).
+    // Otherwise the cursor should go to the first changed line.
+    if (curhead->uh_cursor.lnum + 1 == curwin->w_cursor.lnum
+        && curwin->w_cursor.lnum > 1) {
+      curwin->w_cursor.lnum--;
+    }
+    if (curwin->w_cursor.lnum <= curbuf->b_ml.ml_line_count) {
+      if (curhead->uh_cursor.lnum == curwin->w_cursor.lnum) {
+        curwin->w_cursor.col = curhead->uh_cursor.col;
+        if (virtual_active(curwin) && curhead->uh_cursor_vcol >= 0) {
+          coladvance(curwin, curhead->uh_cursor_vcol);
+        } else {
+          curwin->w_cursor.coladd = 0;
+        }
+      } else {
+        beginline(BL_SOL | BL_FIX);
+      }
+    } else {
+      // We get here with the current cursor line being past the end (eg
+      // after adding lines at the end of the file, and then undoing it).
+      // check_cursor() will move the cursor to the last line.  Move it to
+      // the first column here.
+      curwin->w_cursor.col = 0;
+      curwin->w_cursor.coladd = 0;
+    }
   }
 
   // Make sure the cursor is on an existing line and column.
   check_cursor(curwin);
+
+  if (!undo && curhead->uh_cursor_after.lnum > 0) {
+    // Restore the post-change cursor pos, if available.
+    curwin->w_cursor = curhead->uh_cursor_after;
+    check_cursor(curwin);
+  }
 
   // Remember where we are for "g-" and ":earlier 10s".
   curbuf->b_u_seq_cur = curhead->uh_seq;
@@ -2985,6 +2985,39 @@ static void u_freebranch(buf_T *buf, u_header_T *uhp, u_header_T **uhpp)
   }
 }
 
+/// Forgets `uhp` and its branch (the changes above it). The alt branch displaced by `uhp` (see
+/// u_savecommon()) takes its place as the redo branch; if there is none, the tree is at the leaf
+/// state (end of the branch, nothing to redo).
+static void u_forget_header(buf_T *buf, u_header_T *uhp)
+{
+  u_header_T *parent = uhp->uh_next.ptr;
+  u_header_T *alt = uhp->uh_alt_next.ptr;
+  if (alt != NULL) {
+    alt->uh_alt_prev.ptr = uhp->uh_alt_prev.ptr;
+  }
+  if (uhp->uh_alt_prev.ptr != NULL) {
+    uhp->uh_alt_prev.ptr->uh_alt_next.ptr = alt;
+  }
+  if (parent != NULL) {
+    parent->uh_prev.ptr = alt;
+  }
+  if (buf->b_u_oldhead == uhp) {
+    buf->b_u_oldhead = alt;
+  }
+  // Detached: u_freebranch() must not touch the alternate branch.
+  uhp->uh_alt_next.ptr = NULL;
+  uhp->uh_alt_prev.ptr = NULL;
+  // Positioned at the parent, with the alternate branch as redo.
+  buf->b_u_newhead = parent;
+  buf->b_u_curhead = alt;
+  buf->b_u_seq_cur = parent != NULL ? parent->uh_seq : 0;
+  if (buf->b_u_seq_last == uhp->uh_seq) {
+    buf->b_u_seq_last--;
+  }
+  buf->b_u_synced = true;
+  u_freebranch(buf, uhp, NULL);
+}
+
 /// Free all the undo entries for one header and the header itself.
 /// This means that "uhp" is invalid when returning.
 ///
@@ -3028,6 +3061,35 @@ static void u_freeentry(u_entry_T *uep, int n)
   uep->ue_magic = 0;
 #endif
   xfree(uep);
+}
+
+/// Prunes the newest undo entry if it has no changes (u_save() not followed by an actual edit).
+/// Frees the undo state (and extmark undo) if no entries remain, restoring the redo branch it
+/// displaced.
+///
+/// Dropping the entry loses nothing: undoing it would "restore" identical lines.
+void u_forget_unchanged(buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  u_header_T *uhp = buf->b_u_newhead;
+  u_entry_T *uep = uhp != NULL ? uhp->uh_entry : NULL;
+  if (uep == NULL || buf->b_u_curhead != NULL || u_entry_resized(buf, uep)) {
+    return;  // Keep the entry: not at leaf, or lines were added/deleted.
+  }
+  for (linenr_T i = 0; i < uep->ue_size; i++) {
+    if (strcmp(uep->ue_array[i], ml_get_buf(buf, uep->ue_top + 1 + i)) != 0) {
+      return;  // Keep the entry: it has changes (lines differ vs the buffer).
+    }
+  }
+
+  uhp->uh_entry = uep->ue_next;
+  if (uhp->uh_getbot_entry == uep) {
+    uhp->uh_getbot_entry = NULL;
+  }
+  u_freeentry(uep, uep->ue_size);
+  if (uhp->uh_entry == NULL) {
+    u_forget_header(buf, uhp);  // Empty state (no changes).
+  }
 }
 
 /// invalidate the undo buffer; called when storage has already been released
@@ -3104,6 +3166,7 @@ void u_undoline(void)
     beep_flush();
     return;
   }
+  atom_did_global_op();  // multicursor: treat "U" as a global op.
 
   // first save the line for the 'u' command
   if (u_savecommon(curbuf, curbuf->b_u_line_lnum - 1,

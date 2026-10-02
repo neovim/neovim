@@ -435,6 +435,9 @@ static void internal_read_event(void **argv)
 
   p->read_ptr = buffer->data;
   p->read_size = buffer->size;
+  if (unpacker_closed(p)) {
+    goto end;
+  }
   parse_msgpack(channel);
 
   if (p->read_size) {
@@ -444,6 +447,7 @@ static void internal_read_event(void **argv)
     }
   }
 
+end:
   channel_decref(channel);
   wstream_release_wbuffer(buffer);
 }

@@ -41,6 +41,7 @@ function M.check()
   end)
 
   for i, parser in ipairs(sorted_parsers) do
+    local previous = sorted_parsers[i - 1]
     local is_loadable, err_or_nil = pcall(ts.language.add, parser.name)
 
     if not is_loadable then
@@ -52,7 +53,7 @@ function M.check()
           err_or_nil or '?'
         )
       )
-    elseif i > 1 and sorted_parsers[i - 1].name == parser.name then
+    elseif previous and previous.name == parser.name then
       -- Sorted by runtime path order (load order), thus, if the previous parser has the same name,
       -- the current parser will not be loaded and `ts.language.inspect(parser.name)` with have
       -- incorrect information.
@@ -73,6 +74,7 @@ function M.check()
   ---@field type string
   ---@field path string
   ---@field index integer
+
   local queries_by_lang = {} ---@type table<string, QueryEntry[]>
 
   for i, query_file in ipairs(query_files) do

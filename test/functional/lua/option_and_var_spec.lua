@@ -1057,6 +1057,14 @@ describe('lua stdlib', function()
         end)
       end)
 
+      it('removes flags from a set when calling remove with a table: #41953', function()
+        eq_exec_lua({ j = true, q = true, l = true }, function()
+          vim.opt.formatoptions = 'jcroql'
+          vim.opt.formatoptions:remove { 'c', 'r', 'o' }
+          return vim.opt.formatoptions:get()
+        end)
+      end)
+
       it('automatically sets when calling append', function()
         eq_exec_lua('foo,bar,baz,bing', function()
           vim.opt.wildignore = 'foo,bar,baz'
@@ -1378,6 +1386,14 @@ describe('lua stdlib', function()
           vim.opt_local.tags:append('baz')
           vim.opt_local.tags:append('qux')
           return vim.bo.tags
+        end)
+      end)
+
+      it('removes a table of flags from a flag-list option: #41953', function()
+        eq_exec_lua('jql', function()
+          vim.opt_local.formatoptions = 'jcroql'
+          vim.opt_local.formatoptions:remove { 'c', 'r', 'o' }
+          return vim.bo.formatoptions
         end)
       end)
     end)

@@ -61,7 +61,7 @@ func Test_sign()
 
   " Check placed signs
   let a=execute('sign place')
-  call assert_equal("\n--- Signs ---\nSigns for [NULL]:\n" .
+  call assert_equal("\n--- Signs ---\nSigns for Untitled:\n" .
 		\ "    line=3  id=41  name=Sign1  priority=10", a)
 
   " Unplace the sign and try jumping to it again should fail.
@@ -90,7 +90,7 @@ func Test_sign()
   sign place 77 line=9 name=Sign2
   let a=execute('sign place')
   " Nvim: sign line clamped to buffer length
-  call assert_equal("\n--- Signs ---\nSigns for [NULL]:\n" .
+  call assert_equal("\n--- Signs ---\nSigns for Untitled:\n" .
 		\ "    line=4  id=77  name=Sign2  priority=10", a)
   sign unplace *
 
@@ -2133,6 +2133,28 @@ func Test_sign_signcolumn_change_no_clear()
   sign undefine SignA
   set signcolumn& number&
   bwipe!
+endfunc
+
+" A buffer name containing a bar must not be interpreted as an Ex command
+" separator when jumping to a sign in a buffer that is not displayed.
+func Test_sign_jump_name_with_bar()
+  let bufnr = bufadd('Xsign|call setline(1, "PWNED")')
+  " The name is not valid for a file on MS-Windows, do not create a swap file.
+  call setbufvar(bufnr, '&swapfile', 0)
+  call bufload(bufnr)
+  call setbufline(bufnr, 1, ['one', 'two', 'three'])
+
+  sign define sjTest text=x
+  call sign_place(1, '', 'sjTest', bufnr, #{lnum: 2})
+
+  call sign_jump(1, '', bufnr)
+
+  call assert_equal(bufnr, bufnr('%'))
+  call assert_equal(2, line('.'))
+  call assert_equal('two', getline(2))
+
+  call sign_undefine('sjTest')
+  exe 'bwipe! ' .. bufnr
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

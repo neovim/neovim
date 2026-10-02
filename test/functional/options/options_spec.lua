@@ -87,6 +87,37 @@ end)
 describe('options validation', function()
   before_each(clear)
 
+  it('rejects a restricted callback assignment before evaluating its expression', function()
+    local filename = t.tmpname()
+    t.finally(function()
+      os.remove(filename)
+    end)
+    t.write_file(filename, 'vim: set syntax=optiontest :\n')
+    source([[
+      set modeline
+      let g:arg_calls = 0
+      function! MakeArg()
+        let g:arg_calls += 1
+        return 0
+      endfunction
+      function! Handler(...)
+        return 0
+      endfunction
+      set operatorfunc=Handler
+      autocmd Syntax optiontest set operatorfunc=function('Handler',\ [MakeArg()])
+    ]])
+
+    -- Syntax handlers triggered by a modeline run in secure mode. Setting operatorfunc
+    -- must be rejected before MakeArg() runs, even though it only constructs a callback.
+    matches('E523:', pcall_err(command, 'edit ' .. n.fn.fnameescape(filename)))
+    eq(0, eval('g:arg_calls'))
+    eq('Handler', eval('&operatorfunc'))
+
+    -- The same assignment is allowed afterwards, outside the modeline's restrictions.
+    command([[set operatorfunc=function('Handler',\ [MakeArg()])]])
+    eq(1, eval('g:arg_calls > 0'))
+  end)
+
   -- Improved error messages for structured "key:value" options ("schema" in options.lua).
   it('reports specific errors for structured (schema) options', function()
     eq("Vim(set):E474: Unknown item 'foo': diffopt=foo", pcall_err(command, 'set diffopt=foo'))

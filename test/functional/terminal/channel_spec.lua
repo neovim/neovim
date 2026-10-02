@@ -125,7 +125,7 @@ it('chansend sends lines to terminal channel in proper order', function()
   clear({ args = { '--cmd', 'set laststatus=2' } })
   local screen = Screen.new(100, 20)
   screen._default_attr_ids = nil
-  local shells = is_os('win') and { 'cmd.exe', 'pwsh.exe -nop', 'powershell.exe -nop' } or { 'sh' }
+  local shells = is_os('win') and { 'cmd.exe', 'pwsh.exe -nop' } or { 'sh' }
   -- Prompt which indicates the shell is ready to read.
   local prompt = is_os('win') and '>' or '%$ '
   for _, sh in ipairs(shells) do

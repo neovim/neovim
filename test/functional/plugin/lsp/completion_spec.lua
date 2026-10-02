@@ -477,7 +477,7 @@ describe('vim.lsp.completion: item conversion', function()
     }, extract_word_abbr(result.items))
   end)
 
-  it('trims trailing newline or tab from textEdit', function()
+  it('trims trailing newline or tab from textEdit and insertText', function()
     local range0 = {
       start = { line = 0, character = 0 },
       ['end'] = { line = 0, character = 0 },
@@ -494,11 +494,17 @@ describe('vim.lsp.completion: item conversion', function()
           range = range0,
         },
       },
+      {
+        kind = 7,
+        label = 'ansible.builtin.copy',
+        sortText = '3_ansible.builtin.copy',
+        insertText = 'ansible.builtin.copy:\n	',
+      },
     }
-    eq(
-      { { abbr = 'ansible.builtin.lineinfile', word = 'ansible.builtin.lineinfile:' } },
-      extract_word_abbr(complete('|', items).items)
-    )
+    eq({
+      { abbr = 'ansible.builtin.lineinfile', word = 'ansible.builtin.lineinfile:' },
+      { abbr = 'ansible.builtin.copy', word = 'ansible.builtin.copy:' },
+    }, extract_word_abbr(complete('|', items).items))
   end)
 
   it('handles multiword textEdits', function()
@@ -958,6 +964,31 @@ describe('vim.lsp.completion: protocol', function()
     end)
   end
 
+  it('does not error on :checktime after client restart', function()
+    local fname = 'Xtest-lsp-completion-reload'
+    t.write_file(fname, 'foo')
+    t.finally(function()
+      os.remove(fname)
+    end)
+    local mtime = os.time() - 10
+    vim.uv.fs_utime(fname, mtime, mtime)
+    n.command('edit ' .. fname)
+    n.command('set autoread')
+
+    local client_id = create_server('dummy', { isIncomplete = false, items = {} })
+    exec_lua(function()
+      vim.lsp.get_client_by_id(client_id):stop(true)
+      vim.wait(1000, function()
+        return vim.lsp.get_client_by_id(client_id) == nil
+      end)
+    end)
+    create_server('dummy', { isIncomplete = false, items = {} })
+
+    t.write_file(fname, 'bar')
+    n.command('checktime')
+    eq({ 'bar' }, n.api.nvim_buf_get_lines(0, 0, -1, true))
+  end)
+
   it('fetches completions and shows them using complete on trigger', function()
     create_server('dummy', {
       isIncomplete = false,
@@ -1076,6 +1107,47 @@ describe('vim.lsp.completion: protocol', function()
     assert_matches(function(matches)
       eq(1, #matches)
       eq('hallo', matches[1].word)
+    end)
+  end)
+
+  it('reads completionProvider from a dynamic registration', function()
+    exec_lua(function()
+      local server = _G._create_server({
+        capabilities = {},
+        handlers = {
+          ['textDocument/completion'] = function(_, _, callback)
+            callback(nil, { isIncomplete = false, items = { { label = 'hello' } } })
+          end,
+        },
+      })
+      local client_id = assert(vim.lsp.start({
+        name = 'dummy',
+        cmd = server.cmd,
+        capabilities = {
+          textDocument = { completion = { dynamicRegistration = true } },
+        },
+      }))
+      assert(vim.lsp.get_client_by_id(client_id)):_register({
+        {
+          id = 'nvim.test.completion',
+          method = 'textDocument/completion',
+          registerOptions = {
+            triggerCharacters = { '.' },
+            resolveProvider = true,
+            allCommitCharacters = { ';' },
+          },
+        },
+      })
+      vim.lsp.completion.enable(true, client_id, 0, { autotrigger = true })
+    end)
+
+    feed('i.')
+
+    assert_matches(function(matches)
+      eq(1, #matches)
+      eq('hello', matches[1].word)
+      eq(';', matches[1].commit_chars)
+      eq(true, matches[1].user_data.nvim.lsp.completion_item_needs_resolving)
     end)
   end)
 
@@ -1384,6 +1456,34 @@ describe('vim.lsp.completion: integration', function()
       end)
     )
     assert_cleanup_after_detach(client_id)
+  end)
+
+  it('expands a snippet before a slow resolve answers', function()
+    exec_lua(function()
+      vim.o.completeopt = 'menuone,noselect'
+      local server = _G._create_server({
+        capabilities = { completionProvider = { resolveProvider = true } },
+        handlers = {
+          ['textDocument/completion'] = function(_, _, callback)
+            callback(nil, {
+              isIncomplete = false,
+              items = { { label = 'hello', insertText = 'hello($0)', insertTextFormat = 2 } },
+            })
+          end,
+          ['completionItem/resolve'] = function(_, item, callback)
+            vim.defer_fn(function()
+              callback(nil, item)
+            end, 100)
+          end,
+        },
+      })
+      local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = server.cmd }))
+      vim.lsp.completion.enable(true, client_id, 0)
+    end)
+    feed('S<C-x><C-o>')
+    wait_for_pum()
+    feed('<C-n><C-y>x')
+    eq({ 'hello(x)' }, n.api.nvim_buf_get_lines(0, 0, -1, true))
   end)
 
   it('clear multiple-lines word', function()

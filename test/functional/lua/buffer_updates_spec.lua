@@ -167,6 +167,8 @@ describe('lua: nvim_buf_attach on_lines', function()
     tick = tick + 1
     check_events { { 'test2', 'lines', 1, tick, 1, 1, 2, 0 } }
 
+    -- Undo restored the cursor (|restore-undo-cursor|); pin it for the relative edits below.
+    api.nvim_win_set_cursor(0, { 5, 0 })
     feed('wix')
     tick = tick + 1
     check_events { { 'test2', 'lines', 1, tick, 4, 5, 5, 16 } }

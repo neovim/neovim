@@ -4,7 +4,9 @@ local Screen = require('test.functional.ui.screen')
 local t_lsp = require('test.functional.plugin.lsp.testutil')
 
 local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
+local dedent = t.dedent
 local eq = t.eq
+local retry = t.retry
 
 local clear_notrace = t_lsp.clear_notrace
 local create_server_definition = t_lsp.create_server_definition
@@ -99,13 +101,14 @@ static int foldLevel(linenr_T lnum)
     exec_lua(create_server_definition)
     bufnr = n.api.nvim_get_current_buf()
     client_id = exec_lua(function()
+      _G.folding_ranges = result
       _G.server = _G._create_server({
         capabilities = {
           foldingRangeProvider = true,
         },
         handlers = {
           ['textDocument/foldingRange'] = function(_, _, callback)
-            callback(nil, result)
+            callback(nil, _G.folding_ranges)
           end,
         },
       })
@@ -182,6 +185,101 @@ static int foldLevel(linenr_T lnum)
         [20] = '<1',
         [21] = '0',
       }, foldlevels)
+    end)
+
+    it('treats unknown folding range kinds like an absent kind #41765', function()
+      exec_lua(function()
+        _G.folding_ranges = {
+          { startLine = 0, endLine = 1, kind = 'function' },
+          { startLine = 3, endLine = 4 },
+          { startLine = 6, endLine = 7, kind = '' },
+          { startLine = 9, endLine = 10, kind = 'comment' },
+          { startLine = 12, endLine = 13, kind = 'imports' },
+          { startLine = 15, endLine = 16, kind = 'region' },
+        }
+        vim.lsp._folding_range.on_refresh(
+          nil,
+          nil,
+          { method = 'workspace/foldingRange/refresh', client_id = client_id }
+        )
+      end)
+
+      retry(nil, nil, function()
+        eq(
+          {
+            '>1',
+            '<1',
+            '0',
+            '>1',
+            '<1',
+            '0',
+            '>1',
+            '<1',
+            '0',
+            '>1',
+            '<1',
+            '0',
+            '>1',
+            '<1',
+            '0',
+            '>1',
+            '<1',
+          },
+          exec_lua(function()
+            local levels = {}
+            for lnum = 1, 17 do
+              levels[lnum] = vim.lsp.foldexpr(lnum)
+            end
+            return levels
+          end)
+        )
+      end)
+
+      exec_lua(function()
+        for _, kind in ipairs({ 'comment', 'imports', 'region', 'function', '' }) do
+          vim.lsp.foldclose(kind)
+        end
+      end)
+      -- Unknown and absent kinds are not selected by kind-specific folding.
+      eq(
+        { -1, -1, -1, 10, 13, 16 },
+        exec_lua(function()
+          return vim.tbl_map(vim.fn.foldclosed, { 1, 4, 7, 10, 13, 16 })
+        end)
+      )
+
+      command('normal! zM')
+      eq(
+        { 1, 4, 7, 10, 13, 16 },
+        exec_lua(function()
+          return vim.tbl_map(vim.fn.foldclosed, { 1, 4, 7, 10, 13, 16 })
+        end)
+      )
+    end)
+
+    it('refreshes folding ranges on request', function()
+      local function foldlevels()
+        return exec_lua(function()
+          return { vim.lsp.foldexpr(1), vim.lsp.foldexpr(2), vim.lsp.foldexpr(3) }
+        end)
+      end
+
+      retry(nil, nil, function()
+        eq({ '>1', '<1', '0' }, foldlevels())
+      end)
+
+      exec_lua(function()
+        _G.folding_ranges = { { startLine = 1, endLine = 2 } }
+        vim.lsp._folding_range.on_refresh(
+          nil,
+          nil,
+          { method = 'workspace/foldingRange/refresh', client_id = client_id }
+        )
+      end)
+
+      retry(nil, nil, function()
+        eq({ '0', '>1', '<1' }, foldlevels())
+      end)
     end)
 
     it('updates folds in all windows', function()
@@ -622,6 +720,116 @@ static int foldLevel(linenr_T lnum)
                                                                                   |
   ]],
       })
+    end)
+  end)
+end)
+
+describe('vim.lsp nested folding ranges', function()
+  local bufnr ---@type integer
+
+  local function start_server(text, ranges)
+    insert(text)
+    exec_lua(function(ranges)
+      _G.server = _G._create_server({
+        capabilities = {
+          foldingRangeProvider = true,
+        },
+        handlers = {
+          ['textDocument/foldingRange'] = function(_, _, callback)
+            callback(nil, ranges)
+          end,
+        },
+      })
+
+      vim.api.nvim_win_set_buf(0, bufnr)
+      vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+    end, ranges)
+    command(
+      [[set foldmethod=expr foldexpr=v:lua.vim.lsp.foldexpr() foldtext=v:lua.vim.lsp.foldtext() foldminlines=0]]
+    )
+  end
+
+  before_each(function()
+    clear_notrace()
+    exec_lua(create_server_definition)
+    bufnr = api.nvim_get_current_buf()
+  end)
+  after_each(function()
+    api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
+  end)
+
+  it('uses the outermost level when nested ranges end on the same row', function()
+    start_server(
+      dedent([=[
+        local function first()
+          return {
+            child = {
+              value = true,
+            } } end; local function second() return {
+          child = {
+            value = false,
+          },
+        }
+        end
+      ]=]),
+      {
+        { startLine = 0, endLine = 3, kind = 'region' },
+        { startLine = 4, endLine = 8, kind = 'region' },
+        { startLine = 1, endLine = 3, kind = 'region' },
+        { startLine = 4, endLine = 7, kind = 'region' },
+        { startLine = 2, endLine = 3, kind = 'region' },
+        { startLine = 5, endLine = 6, kind = 'region' },
+      }
+    )
+
+    retry(nil, nil, function()
+      eq(
+        { '>1', '>2', '>3', '<1', '>2', '>3', '<3', '<2', '<1', '0' },
+        exec_lua(function()
+          local levels = {}
+          for lnum = 1, 10 do
+            levels[lnum] = vim.lsp.foldexpr(lnum)
+          end
+          return levels
+        end)
+      )
+    end)
+
+    exec_lua(function()
+      vim._foldupdate(vim.api.nvim_get_current_win(), 0, vim.api.nvim_buf_line_count(0))
+    end)
+    command('normal! zM')
+    eq(
+      { 1, 4, 5, 9 },
+      exec_lua(function()
+        return {
+          vim.fn.foldclosed(1),
+          vim.fn.foldclosedend(1),
+          vim.fn.foldclosed(5),
+          vim.fn.foldclosedend(5),
+        }
+      end)
+    )
+  end)
+
+  it('prefers a fold start when ranges end and start on the same row', function()
+    start_server('one\ntwo\nthree\nfour\nfive', {
+      { startLine = 0, endLine = 4 },
+      { startLine = 2, endLine = 4 },
+      { startLine = 0, endLine = 2 },
+    })
+
+    retry(nil, nil, function()
+      eq(
+        { '>2', '2', '>3', '2', '<1' },
+        exec_lua(function()
+          local levels = {}
+          for lnum = 1, 5 do
+            levels[lnum] = vim.lsp.foldexpr(lnum)
+          end
+          return levels
+        end)
+      )
     end)
   end)
 end)

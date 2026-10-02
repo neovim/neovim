@@ -13,6 +13,7 @@ local feed = n.feed
 local api = n.api
 local request = n.request
 local pcall_err = t.pcall_err
+local assert_alive = n.assert_alive
 local uv = vim.uv
 
 describe('nvim_ui_attach()', function()
@@ -133,9 +134,10 @@ describe('nvim_ui_send', function()
 
     screen:expect_unchanged()
 
-    -- The TUI client queries OSC 11 on connect, so that precedes the payload.
-    local bg_request = '\027]11;?\007'
-    eq(bg_request .. 'Hello world', table.concat(read_data))
+    -- On connect, these queries precede the payload.
+    local mcursor_request = '\027[> q' -- kitty-multicursor (CSI > SP q) query.
+    local bg_request = '\027]11;?\007' -- TUI client OSC 11 query.
+    eq(mcursor_request .. bg_request .. 'Hello world', table.concat(read_data))
   end)
 
   it('ignores ui_send event for UIs without stdout_tty', function()
@@ -332,4 +334,13 @@ it('autocmds VimSuspend/VimResume #22041', function()
   screen.suspended = false
   screen:attach()
   eq({ 's', 'r', 's', 'r', 's', 'r', 's', 'r' }, eval('g:ev'))
+end)
+
+it('does not crash on self-attach via nvim_ui_attach RPC', function()
+  local server = api.nvim_get_vvar('servername')
+  local session2 = n.connect(server)
+  local ok = pcall(function()
+    session2:request('nvim_ui_attach', 80, 24, {})
+  end)
+  assert_alive()
 end)

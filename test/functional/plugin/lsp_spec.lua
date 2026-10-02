@@ -2052,6 +2052,28 @@ describe('LSP', function()
       end)
     end)
 
+    it('ignores blank lines before content-length', function()
+      exec_lua(function()
+        _G._send_msg_to_server(
+          'Info: Parsed 35 declarations\n\nContent-Length: ' .. #body .. ' \r\n\r\n' .. body
+        )
+      end)
+      verify_single_notification(function(method, args) ---@param args [string]
+        eq('body', method)
+        eq(body, args[1])
+      end)
+    end)
+
+    it('skips partial match of "content-length"', function()
+      exec_lua(function()
+        _G._send_msg_to_server('Cont\nContent-Length: ' .. #body .. ' \r\n\r\n' .. body)
+      end)
+      verify_single_notification(function(method, args) ---@param args [string]
+        eq('body', method)
+        eq(body, args[1])
+      end)
+    end)
+
     it('should not trim vim.NIL from the end of a list', function()
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', client_id = 1 } },
@@ -3345,6 +3367,30 @@ describe('LSP', function()
       end)
       eq('initialize', result.method)
     end)
+
+    it('clean up failed lsp client when rpc.connect fails', function()
+      exec_lua(function()
+        local server = assert(vim.uv.new_tcp())
+        server:bind('127.0.0.1', 0)
+        local port = server:getsockname().port
+        server:close()
+        local exited = false
+        vim.lsp.start({
+          name = 'dummy',
+          cmd = vim.lsp.rpc.connect('127.0.0.1', port),
+          on_exit = function()
+            exited = true
+          end,
+        })
+        assert(
+          vim.wait(1000, function()
+            return #vim.lsp.get_clients({ name = 'dummy', _uninitialized = true }) == 0
+          end),
+          'Timed out waiting for errored client to be cleaned up'
+        )
+        assert(exited)
+      end)
+    end)
   end)
 
   describe('handlers', function()
@@ -4062,9 +4108,71 @@ describe('LSP', function()
       deleted = exec_lua([[return vim.lsp.protocol.FileChangeType.Deleted]])
     end)
 
-    local function test_filechanges(watchfunc)
+    before_each(function()
+      exec_lua(create_server_definition)
+      exec_lua(function()
+        _G.start_watchfiles_client = function(root_dir)
+          local server = _G._create_server()
+          local client_id = assert(vim.lsp.start({
+            name = 'watchfiles-test',
+            cmd = server.cmd,
+            root_dir = root_dir,
+            capabilities = {
+              workspace = { didChangeWatchedFiles = { dynamicRegistration = true } },
+            },
+          }))
+
+          local function wait_for_messages(count)
+            assert(
+              vim.wait(2500, function()
+                return #server.messages == count
+              end),
+              'Timed out waiting for messages: ' .. vim.inspect(server.messages)
+            )
+          end
+
+          wait_for_messages(2) -- initialize, initialized
+          return assert(vim.lsp.get_client_by_id(client_id)), server, wait_for_messages
+        end
+
+        -- Mock the process so glob compilation, sharing, and event delivery still run.
+        _G.mock_watch = function()
+          local watchers = {}
+          vim.lsp._watchfiles._watchfunc = vim._watch.inotify
+          vim.system = function(_, opts)
+            watchers[#watchers + 1] = opts
+            return {
+              kill = function()
+                assert(not opts.stopped, 'watcher cancelled twice')
+                opts.stopped = true
+              end,
+            }
+          end
+
+          local function send_event(path, change_type)
+            local event = ({ 'CREATE', 'MODIFY', 'DELETE' })[change_type]
+            for _, opts in ipairs(watchers) do
+              if not opts.stopped then
+                opts.stdout(
+                  nil,
+                  vim.fs.dirname(path) .. ' ' .. event .. ' ' .. vim.fs.basename(path)
+                )
+              end
+            end
+          end
+
+          return watchers, send_event
+        end
+      end)
+    end)
+
+    local function test_filechanges(watchfunc, root_change)
       it(
-        string.format('sends notifications when files change (watchfunc=%s)', watchfunc),
+        string.format(
+          'sends notifications when files change (watchfunc=%s)%s',
+          watchfunc,
+          root_change and (' after root is ' .. root_change) or ''
+        ),
         function()
           if watchfunc == 'inotify' then
             skip(is_os('win'), 'not supported on windows')
@@ -4090,44 +4198,21 @@ describe('LSP', function()
           end
 
           local root_dir = tmpname(false)
-          mkdir(root_dir)
+          if root_change ~= 'created' then
+            mkdir(root_dir)
+          end
 
-          exec_lua(create_server_definition)
           local result = exec_lua(function()
             local logfile = vim.lsp.log.get_filename()
+            vim.lsp.log.set_level('info')
             vim.fn.writefile({ '' }, logfile)
-            local server = _G._create_server()
-            local client_id = assert(vim.lsp.start({
-              name = 'watchfiles-test',
-              cmd = server.cmd,
-              root_dir = root_dir,
-              capabilities = {
-                workspace = {
-                  didChangeWatchedFiles = {
-                    dynamicRegistration = true,
-                  },
-                },
-              },
-            }))
-
-            require('vim.lsp._watchfiles')._watchfunc = require('vim._watch')[watchfunc]
-
-            local expected_messages = 0
-
-            local msg_wait_timeout = watchfunc == 'watch' and 200 or 2500
-
-            local function wait_for_message(incr)
-              expected_messages = expected_messages + (incr or 1)
-              assert(
-                vim.wait(msg_wait_timeout, function()
-                  return #server.messages == expected_messages
-                end),
-                'Timed out waiting for expected number of messages. Current messages seen so far: '
-                  .. vim.inspect(server.messages)
-              )
+            local notifications = {}
+            vim.notify = function(message, level)
+              notifications[#notifications + 1] = { message, level }
             end
+            local client, server, wait_for_messages = _G.start_watchfiles_client(root_dir)
 
-            wait_for_message(2) -- initialize, initialized
+            vim.lsp._watchfiles._watchfunc = vim._watch[watchfunc]
 
             vim.lsp.handlers['client/registerCapability'](nil, {
               registrations = {
@@ -4155,7 +4240,26 @@ describe('LSP', function()
                   },
                 },
               },
-            }, { client_id = client_id })
+            }, { client_id = client.id })
+
+            if root_change then
+              local method = 'workspace/didChangeWatchedFiles'
+              local reg = vim.deepcopy(client.registrations[method][1])
+              if root_change == 'replaced' then
+                -- Allocate a different inode before deleting the original directory.
+                vim.fn.mkdir(root_dir .. '-replacement')
+                assert(vim.uv.fs_rmdir(root_dir))
+                assert(vim.uv.fs_rename(root_dir .. '-replacement', root_dir))
+              else
+                reg.id = 'watchfiles-test-missing'
+                client:_register({ reg })
+                client:_unregister({ { id = reg.id, method = method } })
+                vim.fn.mkdir(root_dir)
+              end
+              reg.id = 'watchfiles-test-1'
+              client:_register({ reg })
+              client:_unregister({ { id = 'watchfiles-test-0', method = method } })
+            end
 
             if watchfunc ~= 'watch' then
               vim.wait(100)
@@ -4166,15 +4270,15 @@ describe('LSP', function()
             io.open(tmp, 'w'):close()
             vim.uv.fs_rename(tmp, path)
 
-            wait_for_message()
+            wait_for_messages(3)
 
             os.remove(path)
 
-            wait_for_message()
+            wait_for_messages(4)
 
-            vim.lsp.get_client_by_id(client_id):stop()
+            client:stop()
 
-            return { logfile = logfile, messages = server.messages }
+            return { logfile = logfile, messages = server.messages, notifications = notifications }
           end)
 
           local uri = vim.uri_from_fname(root_dir .. '/watch')
@@ -4206,16 +4310,19 @@ describe('LSP', function()
             },
           }, messages[4])
 
-          t.assert_log(
-            '%[ERROR%].-skipping invalid workspace/didChangeWatchedFiles globPattern.-'
-              .. pesc('a/**b'),
-            result.logfile
-          )
-          t.assert_log(
-            '%[ERROR%].-skipping invalid workspace/didChangeWatchedFiles globPattern.-'
-              .. pesc('{foo}'),
-            result.logfile
-          )
+          eq(root_change == 'created' and 3 or 2, #result.notifications)
+          for i, pattern in ipairs({ 'a/**b', '{foo}' }) do
+            t.assert_log('%[ERROR%].-Invalid glob.-' .. pesc(pattern), result.logfile)
+            local message, level = unpack(result.notifications[i])
+            eq(vim.log.levels.ERROR, level)
+            matches('Invalid glob.-' .. pesc(pattern), message)
+            matches(pesc('(watching ' .. root_dir .. ')'), message)
+          end
+          if root_change == 'created' then
+            t.assert_log('%[INFO%].-ENOENT:.-' .. pesc(root_dir), result.logfile)
+            eq(vim.log.levels.INFO, result.notifications[3][2])
+            matches('file watcher failed: ENOENT:.-' .. pesc(root_dir), result.notifications[3][1])
+          end
         end
       )
     end
@@ -4223,50 +4330,68 @@ describe('LSP', function()
     test_filechanges('watch')
     test_filechanges('watchdirs')
     test_filechanges('inotify')
+    test_filechanges('watchdirs', 'created')
+    test_filechanges('watch', 'replaced')
+    test_filechanges('watchdirs', 'replaced')
+
+    for _, stop_client in ipairs({ false, true }) do
+      it(
+        'shares identical registrations until ' .. (stop_client and 'client stop' or 'unregister'),
+        function()
+          local root_dir = tmpname(false)
+          mkdir(root_dir)
+          t.finally(function()
+            n.rmdir(root_dir)
+          end)
+          local result = exec_lua(function(stop_client_)
+            local client, server, wait_for_messages = _G.start_watchfiles_client(root_dir)
+
+            local watchers, send_event = _G.mock_watch()
+            -- Repeating an ID must neither restart the watcher nor add an owner.
+            for _, id in ipairs({ 'a', 'a', 'b', 'c', 'c' }) do
+              client:_register({
+                {
+                  id = id,
+                  method = 'workspace/didChangeWatchedFiles',
+                  registerOptions = { watchers = { { globPattern = '**/*.py' } } },
+                },
+              })
+            end
+            assert(#watchers == 1, 'identical registrations must share one watcher')
+
+            client:_unregister({ { id = 'a', method = 'workspace/didChangeWatchedFiles' } })
+            if not stop_client_ then
+              client:_unregister({ { id = 'b', method = 'workspace/didChangeWatchedFiles' } })
+            end
+            assert(not watchers[1].stopped, 'watcher cancelled while registrations remain')
+            send_event(root_dir .. '/file.py', vim._watch.FileChangeType.Created)
+            send_event(root_dir .. '/file.txt', vim._watch.FileChangeType.Created)
+            wait_for_messages(3)
+            if stop_client_ then
+              client:stop(true)
+            else
+              client:_unregister({ { id = 'c', method = 'workspace/didChangeWatchedFiles' } })
+            end
+            assert(watchers[1].stopped, 'watcher not cancelled after its last registration')
+            return server.messages[3]
+          end, stop_client)
+
+          eq({
+            method = 'workspace/didChangeWatchedFiles',
+            params = {
+              changes = { { uri = vim.uri_from_fname(root_dir .. '/file.py'), type = created } },
+            },
+          }, result)
+        end
+      )
+    end
 
     it('correctly registers and unregisters', function()
       local root_dir = '/some_dir'
-      exec_lua(create_server_definition)
       local result = exec_lua(function()
-        local server = _G._create_server()
-        local client_id = assert(vim.lsp.start({
-          name = 'watchfiles-test',
-          cmd = server.cmd,
-          root_dir = root_dir,
-          capabilities = {
-            workspace = {
-              didChangeWatchedFiles = {
-                dynamicRegistration = true,
-              },
-            },
-          },
-        }))
+        local client, server, wait_for_messages = _G.start_watchfiles_client(root_dir)
 
-        local expected_messages = 2 -- initialize, initialized
-        local function wait_for_messages()
-          assert(
-            vim.wait(200, function()
-              return #server.messages == expected_messages
-            end),
-            'Timed out waiting for expected number of messages. Current messages seen so far: '
-              .. vim.inspect(server.messages)
-          )
-        end
-
-        wait_for_messages()
-
-        local send_event --- @type function
-        require('vim.lsp._watchfiles')._watchfunc = function(_, _, callback)
-          local stopped = false
-          send_event = function(...)
-            if not stopped then
-              callback(...)
-            end
-          end
-          return function()
-            stopped = true
-          end
-        end
+        local _, send_event = _G.mock_watch()
 
         vim.lsp.handlers['client/registerCapability'](nil, {
           registrations = {
@@ -4282,13 +4407,12 @@ describe('LSP', function()
               },
             },
           },
-        }, { client_id = client_id })
+        }, { client_id = client.id })
 
         send_event(root_dir .. '/file.watch0', vim._watch.FileChangeType.Created)
         send_event(root_dir .. '/file.watch1', vim._watch.FileChangeType.Created)
 
-        expected_messages = expected_messages + 1
-        wait_for_messages()
+        wait_for_messages(3)
 
         vim.lsp.handlers['client/registerCapability'](nil, {
           registrations = {
@@ -4304,7 +4428,7 @@ describe('LSP', function()
               },
             },
           },
-        }, { client_id = client_id })
+        }, { client_id = client.id })
 
         vim.lsp.handlers['client/unregisterCapability'](nil, {
           unregisterations = {
@@ -4313,13 +4437,12 @@ describe('LSP', function()
               method = 'workspace/didChangeWatchedFiles',
             },
           },
-        }, { client_id = client_id })
+        }, { client_id = client.id })
 
         send_event(root_dir .. '/file.watch0', vim._watch.FileChangeType.Created)
         send_event(root_dir .. '/file.watch1', vim._watch.FileChangeType.Created)
 
-        expected_messages = expected_messages + 1
-        wait_for_messages()
+        wait_for_messages(4)
 
         return server.messages
       end)
@@ -4349,49 +4472,12 @@ describe('LSP', function()
       }, result[4].params)
     end)
 
-    it('correctly handles the registered watch kind', function()
+    it('correctly handles the registered watch kind with a literal baseUri', function()
       local root_dir = 'some_dir'
-      exec_lua(create_server_definition)
       local result = exec_lua(function()
-        local server = _G._create_server()
-        local client_id = assert(vim.lsp.start({
-          name = 'watchfiles-test',
-          cmd = server.cmd,
-          root_dir = root_dir,
-          capabilities = {
-            workspace = {
-              didChangeWatchedFiles = {
-                dynamicRegistration = true,
-              },
-            },
-          },
-        }))
+        local client, server, wait_for_messages = _G.start_watchfiles_client(root_dir)
 
-        local expected_messages = 2 -- initialize, initialized
-        local function wait_for_messages()
-          assert(
-            vim.wait(200, function()
-              return #server.messages == expected_messages
-            end),
-            'Timed out waiting for expected number of messages. Current messages seen so far: '
-              .. vim.inspect(server.messages)
-          )
-        end
-
-        wait_for_messages()
-
-        local watch_callbacks = {} --- @type function[]
-        local function send_event(...)
-          for _, cb in ipairs(watch_callbacks) do
-            cb(...)
-          end
-        end
-        require('vim.lsp._watchfiles')._watchfunc = function(_, _, callback)
-          table.insert(watch_callbacks, callback)
-          return function()
-            -- noop because this test never stops the watch
-          end
-        end
+        local _, send_event = _G.mock_watch()
 
         local protocol = require('vim.lsp.protocol')
 
@@ -4402,7 +4488,7 @@ describe('LSP', function()
         for i = 0, max_kind do
           table.insert(watchers, {
             globPattern = {
-              baseUri = vim.uri_from_fname('/dir'),
+              baseUri = vim.uri_from_fname('/dir[1]'),
               pattern = 'watch' .. tostring(i),
             },
             kind = i,
@@ -4418,23 +4504,23 @@ describe('LSP', function()
               },
             },
           },
-        }, { client_id = client_id })
+        }, { client_id = client.id })
 
         for i = 0, max_kind do
-          local filename = '/dir/watch' .. tostring(i)
+          send_event('/dir1/watch' .. tostring(i), vim._watch.FileChangeType.Created)
+          local filename = '/dir[1]/watch' .. tostring(i)
           send_event(filename, vim._watch.FileChangeType.Created)
           send_event(filename, vim._watch.FileChangeType.Changed)
           send_event(filename, vim._watch.FileChangeType.Deleted)
         end
 
-        expected_messages = expected_messages + 1
-        wait_for_messages()
+        wait_for_messages(3)
 
         return server.messages
       end)
 
       local function watched_uri(fname)
-        return vim.uri_from_fname('/dir/' .. fname)
+        return vim.uri_from_fname('/dir[1]/' .. fname)
       end
 
       eq(3, #result)
@@ -4495,34 +4581,8 @@ describe('LSP', function()
 
     it('prunes duplicate events', function()
       local root_dir = 'some_dir'
-      exec_lua(create_server_definition)
       local result = exec_lua(function()
-        local server = _G._create_server()
-        local client_id = assert(vim.lsp.start({
-          name = 'watchfiles-test',
-          cmd = server.cmd,
-          root_dir = root_dir,
-          capabilities = {
-            workspace = {
-              didChangeWatchedFiles = {
-                dynamicRegistration = true,
-              },
-            },
-          },
-        }))
-
-        local expected_messages = 2 -- initialize, initialized
-        local function wait_for_messages()
-          assert(
-            vim.wait(200, function()
-              return #server.messages == expected_messages
-            end),
-            'Timed out waiting for expected number of messages. Current messages seen so far: '
-              .. vim.inspect(server.messages)
-          )
-        end
-
-        wait_for_messages()
+        local client, server, wait_for_messages = _G.start_watchfiles_client(root_dir)
 
         local send_event --- @type function
         require('vim.lsp._watchfiles')._watchfunc = function(_, _, callback)
@@ -4546,7 +4606,7 @@ describe('LSP', function()
               },
             },
           },
-        }, { client_id = client_id })
+        }, { client_id = client.id })
 
         send_event('file1', vim._watch.FileChangeType.Created)
         send_event('file1', vim._watch.FileChangeType.Created) -- pruned
@@ -4554,8 +4614,7 @@ describe('LSP', function()
         send_event('file2', vim._watch.FileChangeType.Created)
         send_event('file1', vim._watch.FileChangeType.Changed) -- pruned
 
-        expected_messages = expected_messages + 1
-        wait_for_messages()
+        wait_for_messages(3)
 
         return server.messages
       end)
@@ -4581,7 +4640,6 @@ describe('LSP', function()
     end)
 
     it("ignores registrations by servers when the client doesn't advertise support", function()
-      exec_lua(create_server_definition)
       exec_lua(function()
         _G.server = _G._create_server()
         require('vim.lsp._watchfiles')._watchfunc = function(_, _, _)

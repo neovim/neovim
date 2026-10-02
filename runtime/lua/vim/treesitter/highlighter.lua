@@ -37,7 +37,7 @@ end
 ---@return integer?
 function TSHighlighterQuery:get_hl_from_capture(capture)
   if not self.hl_cache[capture] then
-    local name = self._query.captures[capture]
+    local name = assert(assert(self._query).captures[capture])
     local id = 0
     if not vim.startswith(name, '_') then
       id = api.nvim_get_hl_id_by_name('@' .. name .. '.' .. self.lang)
@@ -118,10 +118,12 @@ function TSHighlighter.new(tree, opts)
     end,
   })
 
-  -- Enable conceal_lines if query exists for lang and has conceal_lines metadata.
+  --- Enable conceal_lines if query exists for lang and has conceal_lines metadata.
+  --- @param lang string
   local function set_conceal_lines(lang)
-    if not self._conceal_line and self:get_query(lang):query() then
-      self._conceal_line = self:get_query(lang):query().has_conceal_line
+    local hl_query = not self._conceal_line and self:get_query(lang):query()
+    if hl_query then
+      self._conceal_line = hl_query.has_conceal_line
     end
   end
 
@@ -298,7 +300,7 @@ end
 --- @param metadata vim.treesitter.query.TSMetadata
 --- @return string?
 local function get_url(match, bufnr, capture, metadata)
-  ---@type string|number|nil
+  ---@type string|integer|nil
   local url = metadata[capture] and metadata[capture].url
 
   if not url or type(url) == 'string' then
@@ -313,7 +315,7 @@ local function get_url(match, bufnr, capture, metadata)
 
   -- Assume there is only one matching node. If there is more than one, take the URL
   -- from the first.
-  local other_node = captures[url][1]
+  local other_node = assert(captures[url][1])
 
   return vim.treesitter.get_node_text(other_node, bufnr, {
     metadata = metadata[url],
@@ -369,7 +371,6 @@ local function on_range_impl(
   self:for_each_highlight_state(function(state)
     subtree_counter = subtree_counter + 1
     local root_node = state.tstree:root()
-    ---@type { [1]: integer, [2]: integer, [3]: integer, [4]: integer }
     local root_range = { root_node:range() }
 
     if
@@ -389,13 +390,14 @@ local function on_range_impl(
 
     local next_row = state.next_row
     local next_col = state.next_col
+    local hl_query = assert(state.highlighter_query:query())
 
     if state.iter == nil or cmp_lt(next_row, next_col, range_start_row, range_start_col) then
       -- Mainly used to skip over folds
 
       -- TODO(lewis6991): Creating a new iterator loses the cached predicate results for query
       -- matches. Move this logic inside iter_captures() so we can maintain the cache.
-      state.iter = state.highlighter_query:query():iter_captures(
+      state.iter = hl_query:iter_captures(
         root_node,
         self.bufnr,
         range_start_row,
@@ -404,13 +406,13 @@ local function on_range_impl(
       )
     end
 
-    local captures = state.highlighter_query:query().captures
+    local captures = hl_query.captures
 
     while cmp_lt(next_row, next_col, range_end_row, range_end_col) do
       local capture, node, metadata, match = state.iter(range_end_row, range_end_col)
       if not node then
-        next_row = math.huge
-        next_col = math.huge
+        next_row = vim._maxint
+        next_col = vim._maxint
         break
       end
 
@@ -431,7 +433,7 @@ local function on_range_impl(
 
           local hl = state.highlighter_query:get_hl_from_capture(capture)
 
-          local capture_name = captures[capture]
+          local capture_name = assert(captures[capture])
 
           local spell, spell_pri_offset = get_spell(capture_name)
 
@@ -549,7 +551,7 @@ function TSHighlighter._on_conceal_line(_, _, buf, row)
 
   -- Do not affect potentially populated highlight state.
   local highlight_states = self._highlight_states
-  self.tree:parse({ row, row })
+  self.tree:parse({ row, row + 1 })
   self:prepare_highlight_states(row, row)
   on_range_impl(self, buf, row, 0, row + 1, 0, false, true)
   self._highlight_states = highlight_states

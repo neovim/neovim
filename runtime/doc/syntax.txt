@@ -594,13 +594,18 @@ Variable		Highlight ~
 *c_ansi_typedefs*	 ... but do standard ANSI types
 *c_ansi_constants*	 ... but do standard ANSI constants
 *c_no_utf*		don't highlight \u and \U in strings
-*c_syntax_for_h*	for `*.h` files use C syntax instead of C++ and use objc
-			syntax instead of objcpp
+*c_syntax_for_h*	use C syntax for `*.h` files instead of C++/ObjC/ObjC++
+			(NOTE: This variable is deprecated and no longer
+			 necessary, as `*.h` files now default to C, unless the
+			 file contains C++ or Objective-C syntax. If the
+			 automated detection fails, the default filetype can
+			 be adjusted using `g:filetype_h`.)
 *c_no_if0*		don't highlight "#if 0" blocks as comments
 *c_no_cformat*		don't highlight %-formats in strings
 *c_no_c99*		don't highlight C99 standard items
 *c_no_c11*		don't highlight C11 standard items
 *c_no_c23*		don't highlight C23 standard items
+*c_no_c29*		don't highlight C29 standard items
 *c_no_bsd*		don't highlight BSD specific types
 *c_functions*		highlight function calls and definitions
 *c_function_pointers*	highlight function pointers definitions
@@ -673,7 +678,7 @@ for C.
 
 By setting a variable you can tell Vim to use Ch syntax for `*.h` files, instead
 of C or C++: >
-	:let ch_syntax_for_h = 1
+	:let g:filetype_h = 'ch'
 
 
 CHILL							*ft-chill-syntax*
@@ -1524,9 +1529,11 @@ You can also disable this rendering by adding the following line to your
 vimrc file: >
 	:let html_no_rendering=1
 
-By default Vim synchronises the syntax to 250 lines before the first displayed
-line.  This can be configured using: >
+By default Vim starts parsing 1.5 times "html_minlines" lines before the first
+displayed line, and searches a further "html_maxlines" lines back for a
+synchronization point.  These values can be configured using: >
 	:let html_minlines = 500
+	:let html_maxlines = 750
 <
 HTML comments are rather special (see an HTML reference document for the
 details), and the syntax coloring scheme will highlight all errors.
@@ -1592,6 +1599,21 @@ for how to recognize this filetype.
 To have `*.inc` files be recognized as IA64, add this to your vimrc file: >
 	:let g:filetype_inc = "ia64"
 
+
+
+ICALENDAR						*ft-icalendar-syntax*
+
+Highlighting for iCalendar files (RFC 5545), as used by calendaring
+applications with an ".ics" extension.
+
+Component boundaries (BEGIN: and END:), property names, property
+parameters and recurrence rule parts are highlighted separately.  A content
+line may be split across several lines by inserting a line break followed
+by a space or a tab; such folded lines are highlighted as a single logical
+line.
+
+Folding of components is provided by the filetype plugin and is off by
+default; see |ft-icalendar-plugin|.
 
 INFORM							*ft-inform-syntax*
 
@@ -1813,11 +1835,11 @@ cycles for such a feature to become either integrated into the platform or
 withdrawn from this effort.  To cater for early adopters, there is optional
 support in Vim for syntax related preview features that are implemented.  You
 can request it by specifying a list of preview feature numbers as follows: >
-	:let g:java_syntax_previews = [530]
+	:let g:java_syntax_previews = [532]
 
 The supported JEP numbers are to be drawn from this table:
 	`430`: String Templates [JDK 21]
-	`530`: Primitive types in Patterns, instanceof, and switch
+	`532`: Primitive types in Patterns, instanceof, and switch
 
 Note that as soon as the particular preview feature will have been integrated
 into the Java platform, its entry will be removed from the table and related
@@ -5376,6 +5398,10 @@ CursorLineSign	Like SignColumn when 'cursorline' is set for the cursor line.
 							*hl-MatchParen*
 MatchParen	Character under the cursor or just before it, if it
 		is a paired bracket, and its match. |pi_paren.txt|
+							*hl-MCursor*
+MCursor		|multicursor| cursor.
+							*hl-MCursorVisual*
+MCursorVisual	|multicursor| Visual selection.
 							*hl-ModeMsg*
 ModeMsg		'showmode' message (e.g., "-- INSERT --").
 							*hl-MsgArea*

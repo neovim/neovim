@@ -37,7 +37,7 @@ function M.serverlist(opts, addrs)
   if want_info then
     local self_pid = vim.fn.getpid()
     local self_active = vim.v.useractive
-    peers = vim.tbl_map(function(addr) ---@param addr vim.ServerInfo
+    peers = vim.tbl_map(function(addr)
       return {
         addr = addr,
         pid = self_pid,
@@ -61,6 +61,7 @@ function M.serverlist(opts, addrs)
     if not seen[socket] then
       local ok, chan = pcall(vim.fn.sockconnect, 'pipe', socket, { rpc = true })
       if ok and chan and chan > 0 then
+        --- @cast chan integer
         -- Check that the server is responding
         -- TODO: do we need a timeout or error handling here?
         local ok_rpc, peer_info = pcall(

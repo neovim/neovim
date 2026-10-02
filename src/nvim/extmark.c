@@ -38,6 +38,7 @@
 #include "nvim/globals.h"
 #include "nvim/map_defs.h"
 #include "nvim/marktree.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/pos_defs.h"
@@ -147,6 +148,11 @@ revised:
   if (idp) {
     *idp = id;
   }
+
+  if (created) {
+    // A new multicursor extmark is a new cursor.
+    mc_on_extmark_set(buf, ns_id, id, (pos_T){ .lnum = row + 1, .col = col });
+  }
 }
 
 /// Moves a raw mark back to a recorded position.
@@ -251,6 +257,9 @@ bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_r
     return false;
   }
 
+  // Multicursor extmarks are about to die, let mc snapshot them.
+  mc_ns_clearing(buf, ns_id);
+
   bool all_ns = (ns_id == 0);
   uint32_t *ns = NULL;
   if (!all_ns) {
@@ -295,6 +304,9 @@ bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_r
 
   if (marks_cleared_any) {
     decor_state_invalidate(buf);
+    // Deleting the "nvim.multicursor" namespace deletes the cursors it tracked.
+    // TODO(justinmk): ideally, clearing a ns could be handled in userspace, e.g. an event?
+    mc_ns_cleared(buf, ns_id);
   }
 
   return marks_cleared_any;
@@ -377,6 +389,38 @@ MTPair extmark_from_id(buf_T *buf, uint32_t ns_id, uint32_t id)
   MTKey end = marktree_get_alt(buf->b_marktree, mark, NULL);
 
   return mtpair_from(mark, end);
+}
+
+/// Creates or updates point extmark (shifts with buffer edits) `mark` at `pos`.
+///
+/// @param right_gravity  The mark shifts with text inserted exactly at its position (e.g. "o" on the
+///                       line above).
+/// @param no_undo        Transient mark: undo does not restore its position.
+/// @param ui_watched     Mark is drawn by the UI, which receives its position per redraw (ui-event
+///                       "win_extmark").
+void extmark_set_pos(buf_T *buf, uint32_t ns_id, uint32_t *mark, pos_T pos, bool right_gravity,
+                     bool no_undo, bool ui_watched)
+{
+  DecorInline decor = DECOR_INLINE_INIT;
+  if (ui_watched) {
+    decor.data.hl.flags = kSHUIWatched | kSHUIWatchedOverlay;
+  }
+  extmark_set(buf, ns_id, mark, (int)pos.lnum - 1, pos.col, -1, 0, decor,
+              ui_watched ? MT_FLAG_DECOR_HL : 0, right_gravity, false, no_undo, false, NULL);
+}
+
+/// Gets the position of an extmark, shifted by buffer edits since it was set. Keeps `pos->coladd`.
+///
+/// @return  False if the mark no longer exists (`pos` untouched).
+bool extmark_get_pos(buf_T *buf, uint32_t ns_id, uint32_t id, pos_T *pos)
+{
+  MTPair mtp = extmark_from_id(buf, ns_id, id);
+  if (mtp.start.id == 0) {
+    return false;
+  }
+  pos->lnum = mtp.start.pos.row + 1;
+  pos->col = mtp.start.pos.col;
+  return true;
 }
 
 /// free extmarks from the buffer

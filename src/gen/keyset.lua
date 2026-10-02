@@ -45,10 +45,10 @@ function M.emit(write, p)
   write('')
   local inl = p.static and 'static inline ' or ''
   write(inl .. p.hashfun)
-  write(inl .. ('KeySetLink *%s(const char *str, size_t len)'):format(p.get_field))
+  write(inl .. ('const KeySetLink *%s(const char *str, size_t len)'):format(p.get_field))
   write('{')
   write(('  int hash = %s_hash(str, len);'):format(p.name))
-  write(('  return hash == -1 ? NULL : (KeySetLink *)&%s_table[hash];'):format(p.name))
+  write(('  return hash == -1 ? NULL : &%s_table[hash];'):format(p.name))
   write('}')
 end
 

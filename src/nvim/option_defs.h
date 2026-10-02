@@ -6,6 +6,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/regexp_defs.h"
+#include "nvim/types_defs.h"
 
 #include "options_enum.generated.h"
 
@@ -28,11 +29,11 @@ typedef enum {
   kOptFlagOneComma  = (1 << 11) | kOptFlagComma,  ///< Comma-separated list that cannot have two consecutive commas.
   kOptFlagNoDup     = 1 << 12,  ///< Don't allow duplicate strings.
   kOptFlagFlagList  = 1 << 13,  ///< List of single-char flags.
-  kOptFlagSecure    = 1 << 14,  ///< Cannot change in modeline or secure mode.
+  kOptFlagSecure    = 1 << 14,  ///< Cannot change in modelines, secure mode, or the sandbox.
   kOptFlagGettext   = 1 << 15,  ///< Expand default value with _().
   kOptFlagNoGlob    = 1 << 16,  ///< Do not use local value for global vimrc.
   kOptFlagNFname    = 1 << 17,  ///< Only normal file name chars allowed.
-  kOptFlagInsecure  = 1 << 18,  ///< Option was set from a modeline.
+  kOptFlagInsecure  = 1 << 18,  ///< Value contains untrusted content; evaluate it in the sandbox.
   kOptFlagPriMkrc   = 1 << 19,  ///< Priority for :mkvimrc (setting option has side effects).
   kOptFlagCurswant  = 1 << 20,  ///< Update curswant required; not needed when there is a redraw flag.
   kOptFlagNDname    = 1 << 21,  ///< Only normal directory name chars allowed.
@@ -86,18 +87,18 @@ typedef enum {
   OP_REMOVING,    ///< "opt-=arg"
 } set_op_T;
 
-/// Argument for the callback function (opt_did_set_cb_T) invoked after an
-/// option value is modified.
+/// Arguments for validating an option value or applying it after storage.
 typedef struct {
   /// Pointer to the option variable.  The variable can be an OptInt (numeric
-  /// option), an int (boolean option) or a char pointer (string option).
+  /// option), an int (boolean option), a char pointer (string option), or a Callback.
+  /// Holds the old value during validation and the new value when applying it.
   void *os_varp;
   OptIndex os_idx;
   int os_flags;
 
   /// Old value of the option.
   Object os_oldval;
-  /// New value of the option.
+  /// New value of the option (not yet stored during validation).
   Object os_newval;
 
   /// Option value was checked to be safe, no need to set kOptFlagInsecure
@@ -114,19 +115,20 @@ typedef struct {
   /// If the value specified for an option is not valid and the error message
   /// is parameterized, then the "os_errbuf" buffer is used to store the error
   /// message (when it is not NULL).
-  char *os_errbuf;
-  /// length of the error buffer
-  size_t os_errbuflen;
+  const CharBuf *os_errbuf;
 
-  void *os_win;
-  void *os_buf;
+  win_T *os_win;
+  buf_T *os_buf;
 } optset_T;
 
-/// Type for the callback function that is invoked after an option value is
-/// changed to validate and apply the new value.
+/// Check a candidate value without changing option variables or derived state,
+/// or evaluating user code. Return an error message, or NULL on success.
+typedef const char *(*opt_validate_cb_T)(const optset_T *args);
+
+/// Type for the callback function invoked after storing an option value to
+/// apply it and update derived state.
 ///
-/// Returns NULL if the option value is valid and successfully applied.
-/// Otherwise returns an error message.
+/// Returns NULL on success, or an error message if the value could not be applied.
 typedef const char *(*opt_did_set_cb_T)(optset_T *args);
 
 /// Argument for the callback function (opt_expand_cb_T) invoked after a string
@@ -185,8 +187,10 @@ typedef struct {
   /// Grammar of a dict option ("schema.dict" in options.lua); NULL otherwise.
   const OptSchemaItem *schema;
 
-  /// callback function to invoke after an option is modified to validate and
-  /// apply the new value.
+  /// Validate a candidate value before storing it, without side effects.
+  opt_validate_cb_T opt_validate_cb;
+
+  /// Apply the stored value. Some handlers still perform option-specific validation.
   opt_did_set_cb_T opt_did_set_cb;
 
   /// callback function to invoke when expanding possible values on the

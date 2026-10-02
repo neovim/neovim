@@ -639,7 +639,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
       if case == 'split' then
         screen:expect([[
           Inc substitution on |
-          two line^s           |
+          ^two lines           |
                               |
           {1:~                   }|*6
           Already ...t change |
@@ -647,7 +647,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
       else
         screen:expect([[
           Inc substitution on |
-          two line^s           |
+          ^two lines           |
                               |
           {1:~                   }|*6
           Already ...t change |

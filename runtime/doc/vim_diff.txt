@@ -235,6 +235,7 @@ MAJOR COMPONENTS
 - Job control                     |job-control|
 - LSP framework                   |lsp|
 - Lua scripting                   |lua| |-l|
+- Multicursor                     |multicursor|
 - Parsing engine                  |treesitter|
 - Plugin manager                  |vim.pack|
 - Providers
@@ -308,14 +309,15 @@ Command-line:
   callback defined in `g:Nvim_color_cmdline` (this callback is for testing
   only, and will be removed in the future).
 - |cmdwin| (|q:|, |q/|, |q?|, |c_CTRL-F|) is a "normal" buffer+window, instead
-  of a nested modal loop. API and Lua callbacks can run without |E11| while it
-  is open. The |cmdwin-char| is shown via 'statuscolumn'.
+  of a nested modal loop. API and Lua callbacks can run while it is open. The
+  |cmdwin-char| is shown via 'statuscolumn'.
 
 Commands:
 - |:bcd|
 - |:checkhealth|
 - |:connect|
 - |:detach|
+- |:diffget|, |:diffput| (|do|, |dp|) can be |.| repeated.
 - |:drop| is always available
 - |:EditQuery|
 - |:Inspect|
@@ -348,6 +350,8 @@ Editor:
 
 Events (autocommands):
 - Fixed inconsistent behavior in execution of nested autocommands #23368
+- |InsertCharPre| is not triggered for stuffed text (|.| redo, |i_CTRL-R|,
+  |i_CTRL-A|), which also skips mappings and abbreviations.
 - |OptionSet| is triggered for 'modified' when writing a file, undoing changes,
   or using |:set| modified.
 - |Progress|
@@ -407,8 +411,7 @@ Input/Mappings:
 Normal commands:
 - |gO| shows a filetype-defined "outline" of the current buffer.
 - |gQ| restores |multicursor|s.
-- |Q| adds a |multicursor| ([count]Q: at each match; {Visual}Q: at each
-  selected line |v_Q|) instead of switching to Ex mode.
+- |Q| adds a |multicursor| instead of switching to Ex mode.
 - [count]q: enters |Ex-mode|.
 - |ZR| performs |:restart|
 - |v_al| selects the whole buffer; |v_il| selects the current line without
@@ -524,7 +527,6 @@ TUI:
   uses one or the other, it does not attempt to merge the two.
 
 UI/Display:
-- |Visual| selection highlights the character at cursor. |visual-use|
 - messages: When showing messages longer than 'cmdheight', only
   scroll the message lines, not the entire screen. The
   separator line is decorated by |hl-MsgSeparator| and
@@ -559,6 +561,7 @@ These Nvim features were later integrated into Vim.
 - |vim-tutor-mode|
 - Lua: `require()` also searches for modules in 'runtimepath'.
 - Lua: vim.g, vim.w, vim.b, vim.t, vim.v, vim.fn, vim.call()
+- |Visual| selection highlights the character at cursor. |visual-use|
 
 ==============================================================================
 Other changes                                            *nvim-changed*
@@ -687,6 +690,8 @@ Marks:
   being undone; the mark shifts with the text it was moved to, the same as a
   mark the change never touched. Vim restores its old (wrong) position. Marks
   moved by the change itself are still restored.
+- An operator on a target that creates a Visual selection ("cgn") does not
+  change |'<| |'>|. |gv|
 
 Motion:
 - The |jumplist| avoids useless/phantom jumps.

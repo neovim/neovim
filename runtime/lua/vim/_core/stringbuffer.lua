@@ -107,7 +107,7 @@ end
 --- @param k integer
 --- @return integer
 function StrBuffer:_index(k)
-  return self:_normalize().buf[1]:byte(k + 1)
+  return assert(self:_normalize().buf[1]):byte(k + 1)
 end
 
 --- @return vim._core.stringbuffer.ptr, integer

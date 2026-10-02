@@ -974,6 +974,32 @@ func Test_set_option_errors()
   call assert_fails('call setwinvar(0, "&nosuchoption", [])', ['E355:', 'E355:'])
 endfunc
 
+func Test_set_encoding()
+  throw 'skipped: Nvim supports ''utf8'' encoding only'
+  let save_encoding = &encoding
+
+  set enc=iso8859-1
+  call assert_equal('latin1', &enc)
+  set enc=iso8859_1
+  call assert_equal('latin1', &enc)
+  set enc=iso-8859-1
+  call assert_equal('latin1', &enc)
+  set enc=iso_8859_1
+  call assert_equal('latin1', &enc)
+  set enc=iso88591
+  call assert_equal('latin1', &enc)
+  set enc=iso8859
+  call assert_equal('latin1', &enc)
+  set enc=iso-8859
+  call assert_equal('latin1', &enc)
+  set enc=iso_8859
+  call assert_equal('latin1', &enc)
+  call assert_fails('set enc=iso8858', 'E474:')
+  call assert_equal('latin1', &enc)
+
+  let &encoding = save_encoding
+endfunc
+
 func CheckWasSet(name)
   let verb_cm = execute('verbose set ' .. a:name .. '?')
   call assert_match('Last set from.*test_options.vim', verb_cm)

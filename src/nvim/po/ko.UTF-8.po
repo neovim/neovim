@@ -2582,10 +2582,6 @@ msgstr "E471: 인자가 필요합니다"
 msgid "E10: \\ should be followed by /, ? or &"
 msgstr "E10: /, ? 혹은 &는 \\ 뒤에 와야 합니다"
 
-#: ../globals.h:1000
-msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
-msgstr "E11: 명령줄 창에 잘못됨; <CR> 실행, CTRL-C 끝내기"
-
 #: ../globals.h:1002
 msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
 msgstr ""

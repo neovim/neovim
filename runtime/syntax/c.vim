@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:		C
 " Maintainer:		The Vim Project <https://github.com/vim/vim>
-" Last Change:		2026 Jul 25
+" Last Change:		2026 Sep 21
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Quit when a (custom) syntax file was already loaded
@@ -23,6 +23,13 @@ let s:in_cpp_family = exists("b:filetype_in_cpp_family")
 if exists("c_autodoc")
   syn include @cAutodoc <sfile>:p:h/autodoc.vim
   unlet b:current_syntax
+endif
+
+" In VMS C keywords contain '$' characters.
+if has("vms")
+  syn iskeyword @,48-57,_,192-255,$
+else
+  syn iskeyword @,48-57,_,192-255
 endif
 
 " A bunch of useful C keywords
@@ -215,13 +222,13 @@ syn match	cNumbersCom	display contained transparent "\<\d\|\.\d" contains=cNumbe
 
 " cpp.vim handles these
 if !exists("c_no_c23") && !s:in_cpp_family
-  syn match	cNumber		display contained "\d\%('\=\d\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>"
+  syn match	cNumber		display contained "\d\+\%('\d\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>"
   "hex number
-  syn match	cNumber		display contained "0x\x\%('\=\x\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>"
+  syn match	cNumber		display contained "0x\x\+\%('\x\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>"
   " Flag the first zero of an octal number as something special
-  syn match	cOctal		display contained "0\o\%('\=\o\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>" contains=cOctalZero
+  syn match	cOctal		display contained "0\o*\%('\o\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>" contains=cOctalZero
   "binary number
-  syn match	cNumber		display contained "0b[01]\%('\=[01]\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>"
+  syn match	cNumber		display contained "0b[01]\+\%('[01]\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>"
 else
   syn match	cNumber		display contained "\d\+\%(u\=l\{0,2}\|ll\=u\)\>"
   "hex number
@@ -229,6 +236,11 @@ else
   " Flag the first zero of an octal number as something special
   syn match	cOctal		display contained "0\o\+\%(u\=l\{0,2}\|ll\=u\)\>" contains=cOctalZero
   syn match	cOctalZero	display contained "\<0"
+endif
+
+if !exists("c_no_c29") && !s:in_cpp_family
+  " XXX: 0-prefixed octal literals e.g. 0123 are obsolescent since C29
+  syn match	cOctal		display contained "0[Oo]\o\+\%('\o\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>"
 endif
 
 "floating point number, with dot, optional exponent

@@ -77,6 +77,7 @@
 #include "nvim/mark.h"
 #include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
+#include "nvim/mcursor.h"
 #include "nvim/memfile_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memline_defs.h"
@@ -373,7 +374,7 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
 
   // if first time loading this buffer, init b_chartab[]
   if (curbuf->b_flags & BF_NEVERLOADED) {
-    buf_init_chartab(curbuf, false);
+    buf_init_isk_chartab(curbuf);
     parse_cino(curbuf);
   }
 
@@ -635,8 +636,8 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
   if (win_valid && win->w_buffer == buf && buf->b_nwindows == 1) {
     buf->b_locked++;
     buf->b_locked_split++;
-    if (apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false,
-                       buf) && !bufref_valid(&bufref)) {
+    if (apply_autocmds_win(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false,
+                           buf, win) && !bufref_valid(&bufref)) {
       // Autocommands deleted the buffer.
       emsg(_(e_auabort));
       return false;
@@ -813,6 +814,7 @@ void buf_clear(void)
 {
   linenr_T line_count = curbuf->b_ml.ml_line_count;
   extmark_free_all(curbuf);   // delete any extmarks
+  mc_buf_free(curbuf);        // Multicursors died with their extmarks.
   while (!(curbuf->b_ml.ml_flags & ML_EMPTY)) {
     ml_delete(1);
   }
@@ -924,6 +926,7 @@ bool buf_freeall(buf_T *buf, int flags)
   linenr_T count = buf->b_ml.ml_line_count;
   ml_close(buf, true);              // close and delete the memline/memfile
   buf->b_ml.ml_line_count = 0;      // no lines in buffer
+  mc_buf_clear(buf);                // Tracked mc positions died with the text.
 
   // Ensure marks are adjusted for cleared buffer in case buffer not on disk:
   // if it is reloaded the buffer will be empty.
@@ -1020,6 +1023,7 @@ static void free_buffer_stuff(buf_T *buf, int free_flags)
   }
   uc_clear(&buf->b_ucmds);               // clear local user commands
   extmark_free_all(buf);                 // delete any extmarks
+  mc_buf_free(buf);                      // Multicursors died with their extmarks.
   map_clear_mode(buf, MAP_ALL_MODES, true, false);  // clear local mappings
   map_clear_mode(buf, MAP_ALL_MODES, true, true);   // clear local abbrevs
   XFREE_CLEAR(buf->b_start_fenc);
@@ -2213,6 +2217,9 @@ void free_buf_options(buf_T *buf, bool free_p_ff)
   clear_string_option(&buf->b_p_cinw);
   clear_string_option(&buf->b_p_cot);
   clear_string_option(&buf->b_p_cpt);
+#ifdef BACKSLASH_IN_FILENAME
+  clear_string_option(&buf->b_p_csl);
+#endif
   callback_free(&buf->b_p_cfu);
   callback_free(&buf->b_p_ofu);
   callback_free(&buf->b_p_tsrfu);
@@ -3434,6 +3441,7 @@ void maketitle(void)
   char *title_str = NULL;
   char *icon_str = NULL;
   char buf[IOSIZE];
+  const CharBuf outbuf = { buf, sizeof(buf) };
 
   if (!redrawing()) {
     // Postpone updating the title when 'lazyredraw' is set.
@@ -3455,7 +3463,7 @@ void maketitle(void)
 
     if (*p_titlestring != NUL) {
       if (stl_syntax & STL_IN_TITLE) {
-        build_stl_str_hl(curwin, buf, sizeof(buf), p_titlestring,
+        build_stl_str_hl(curwin, outbuf, p_titlestring,
                          kOptTitlestring, 0, 0, maxlen, NULL, NULL, NULL, NULL);
         title_str = buf;
       } else {
@@ -3468,7 +3476,7 @@ void maketitle(void)
       p_ssl = true;
 #endif
       char *default_titlestring = "%t%( %M%)%( (%{expand('%:p:~:h')})%)%a - Nvim";
-      build_stl_str_hl(curwin, buf, sizeof(buf), default_titlestring,
+      build_stl_str_hl(curwin, outbuf, default_titlestring,
                        kOptTitlestring, 0, 0, maxlen, NULL, NULL, NULL, NULL);
       title_str = buf;
 #ifdef MSWIN
@@ -3482,7 +3490,7 @@ void maketitle(void)
     icon_str = buf;
     if (*p_iconstring != NUL) {
       if (stl_syntax & STL_IN_ICON) {
-        build_stl_str_hl(curwin, icon_str, sizeof(buf), p_iconstring,
+        build_stl_str_hl(curwin, outbuf, p_iconstring,
                          kOptIconstring, 0, 0, 0, NULL, NULL, NULL, NULL);
       } else {
         icon_str = p_iconstring;

@@ -587,7 +587,6 @@ static int store_session_globals(FILE *fd)
 static int makeopens(FILE *fd, char *dirnow)
 {
   bool only_save_windows = true;
-  bool restore_size = true;
   win_T *edited_win = NULL;
   win_T *tab_firstwin;
   frame_T *tab_topframe;
@@ -823,6 +822,7 @@ static int makeopens(FILE *fd, char *dirnow)
     // Check if window sizes can be restored (no windows omitted).
     // Remember the window number of the current window after restoring.
     int nr = 0;
+    bool restore_size = true;
     for (win_T *wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (ses_do_win(wp)) {
         nr++;
@@ -1023,7 +1023,9 @@ void ex_mkrc(exarg_T *eap)
       flagp = &ssop_flags;
     }
 
-    apply_autocmds(EVENT_SESSIONWRITEPRE, NULL, NULL, false, curbuf);
+    if (eap->cmdidx == CMD_mksession) {
+      apply_autocmds(EVENT_SESSIONWRITEPRE, NULL, NULL, false, curbuf);
+    }
 
     // Write the version command for :mkvimrc
     if (eap->cmdidx == CMD_mkvimrc) {
@@ -1101,13 +1103,9 @@ void ex_mkrc(exarg_T *eap)
       if (Search.no_hlsearch && fprintf(fd, "%s", "nohlsearch\n") < 0) {
         failed = true;
       }
-      if (fprintf(fd, "%s", "doautoall SessionLoadPost\n") < 0) {
+      if (eap->cmdidx == CMD_mksession
+          && fprintf(fd, "doautoall SessionLoadPost\nunlet SessionLoad\n") < 0) {
         failed = true;
-      }
-      if (eap->cmdidx == CMD_mksession) {
-        if (fprintf(fd, "unlet SessionLoad\n") < 0) {
-          failed = true;
-        }
       }
     }
     if (put_line(fd, "\" vim: set ft=vim :") == FAIL) {
@@ -1130,7 +1128,9 @@ void ex_mkrc(exarg_T *eap)
 
   xfree(viewFile);
 
-  apply_autocmds(EVENT_SESSIONWRITEPOST, NULL, NULL, false, curbuf);
+  if (eap->cmdidx == CMD_mksession) {
+    apply_autocmds(EVENT_SESSIONWRITEPOST, NULL, NULL, false, curbuf);
+  }
 }
 
 /// @return  the name of the view file for the current buffer.

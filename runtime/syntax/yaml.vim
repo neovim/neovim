@@ -2,7 +2,8 @@
 " Language:         YAML (YAML Ain't Markup Language) 1.2
 " Maintainer:       Nikolai Pavlov <zyx.vim@gmail.com>
 " First author:     Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2024-04-01
+" Latest Revision:  2024 Apr 01
+" 2026 Aug 28 by Vim project: force BT regexp engine to improve performance #21182
 
 if exists('b:current_syntax')
     finish
@@ -169,24 +170,31 @@ syn cluster yamlBlockNode contains=@yamlFlowNode,yamlBlockMappingKey,yamlBlockMa
 syn cluster yamlScalarWithSpecials contains=yamlPlainScalar,yamlBlockMappingKey,yamlFlowMappingKey
 
 let s:_bounder = s:SimplifyToAssumeAllPrintable('\%([[\]{}, \t]\@!\p\)')
+" These scalar patterns begin with a lookbehind, so the regexp engine cannot
+" derive a leading character to search for; the automatic engine then routes
+" them to the NFA engine, which is markedly slower for these short numeric
+" matches tried at every column.  The leading "\%#=1" forces Vim's other
+" (backtracking) regexp engine instead, which yields identical matches but is
+" far faster here.  See ":help /\%#=".  Do NOT copy this to the plain scalar
+" and mapping-key patterns below: backtracking is far slower for those.
 if b:yaml_schema is# 'json'
     syn keyword yamlNull null contained containedin=@yamlScalarWithSpecials
     syn keyword yamlBool true false
-    exe 'syn match   yamlInteger /'.s:_bounder.'\@1<!\%(0\|-\=[1-9][0-9]*\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
-    exe 'syn match   yamlFloat   /'.s:_bounder.'\@1<!\%(-\=[1-9][0-9]*\%(\.[0-9]*\)\=\(e[-+]\=[0-9]\+\)\=\|0\|-\=\.inf\|\.nan\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
+    exe 'syn match   yamlInteger /\%#=1'.s:_bounder.'\@1<!\%(0\|-\=[1-9][0-9]*\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
+    exe 'syn match   yamlFloat   /\%#=1'.s:_bounder.'\@1<!\%(-\=[1-9][0-9]*\%(\.[0-9]*\)\=\(e[-+]\=[0-9]\+\)\=\|0\|-\=\.inf\|\.nan\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
 elseif b:yaml_schema is# 'core'
     syn keyword yamlNull null Null NULL contained containedin=@yamlScalarWithSpecials
     syn keyword yamlBool true True TRUE false False FALSE contained containedin=@yamlScalarWithSpecials
-    exe 'syn match   yamlNull /'.s:_bounder.'\@1<!\~'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
-    exe 'syn match   yamlInteger /'.s:_bounder.'\@1<!\%([-+]\=\%(\%(0\%(b[0-1_]\+\|o\?[0-7_]\+\|x[0-9a-fA-F_]\+\)\=\|\%([1-9][0-9_]*\%(:[0-5]\=\d\)\+\)\)\|[1-9][0-9_]*\)\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
-    exe 'syn match   yamlFloat /'.s:_bounder.'\@1<!\%([-+]\=\%(\%(\d[0-9_]*\)\.[0-9_]*\%([eE][-+]\=\d\+\)\=\|\.[0-9_]\+\%([eE][-+]\=[0-9]\+\)\=\|\d[0-9_]*\%(:[0-5]\=\d\)\+\.[0-9_]*\|\.\%(inf\|Inf\|INF\)\)\|\%(\.\%(nan\|NaN\|NAN\)\)\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
+    exe 'syn match   yamlNull /\%#=1'.s:_bounder.'\@1<!\~'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
+    exe 'syn match   yamlInteger /\%#=1'.s:_bounder.'\@1<!\%([-+]\=\%(\%(0\%(b[0-1_]\+\|o\?[0-7_]\+\|x[0-9a-fA-F_]\+\)\=\|\%([1-9][0-9_]*\%(:[0-5]\=\d\)\+\)\)\|[1-9][0-9_]*\)\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
+    exe 'syn match   yamlFloat /\%#=1'.s:_bounder.'\@1<!\%([-+]\=\%(\%(\d[0-9_]*\)\.[0-9_]*\%([eE][-+]\=\d\+\)\=\|\.[0-9_]\+\%([eE][-+]\=[0-9]\+\)\=\|\d[0-9_]*\%(:[0-5]\=\d\)\+\.[0-9_]*\|\.\%(inf\|Inf\|INF\)\)\|\%(\.\%(nan\|NaN\|NAN\)\)\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
 elseif b:yaml_schema is# 'pyyaml'
     syn keyword yamlNull null Null NULL contained containedin=@yamlScalarWithSpecials
     syn keyword yamlBool true True TRUE false False FALSE yes Yes YES no No NO on On ON off Off OFF contained containedin=@yamlScalarWithSpecials
-    exe 'syn match   yamlNull /'.s:_bounder.'\@1<!\~'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
-    exe 'syn match  yamlFloat /'.s:_bounder.'\@1<!\%(\v[-+]?%(\d[0-9_]*)\.[0-9_]*%([eE][-+]\d+)?|\.[0-9_]+%([eE][-+]\d+)?|[-+]?\d[0-9_]*%(\:[0-5]?\d)+\.[0-9_]*|[-+]?\.%(inf|Inf|INF)|\.%(nan|NaN|NAN)\m\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
-    exe 'syn match  yamlInteger /'.s:_bounder.'\@1<!\%(\v[-+]?0b[0-1_]+|[-+]?0[0-7_]+|[-+]?%(0|[1-9][0-9_]*)|[-+]?0x[0-9a-fA-F_]+|[-+]?[1-9][0-9_]*%(:[0-5]?\d)+\m\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
-    exe 'syn match  yamlTimestamp /'.s:_bounder.'\@1<!\%(\v\d\d\d\d\-\d\d\-\d\d|\d\d\d\d \-\d\d? \-\d\d?%([Tt]|[ \t]+)\d\d?\:\d\d \:\d\d %(\.\d*)?%([ \t]*%(Z|[-+]\d\d?%(\:\d\d)?))?\m\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
+    exe 'syn match   yamlNull /\%#=1'.s:_bounder.'\@1<!\~'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
+    exe 'syn match  yamlFloat /\%#=1'.s:_bounder.'\@1<!\%(\v[-+]?%(\d[0-9_]*)\.[0-9_]*%([eE][-+]\d+)?|\.[0-9_]+%([eE][-+]\d+)?|[-+]?\d[0-9_]*%(\:[0-5]?\d)+\.[0-9_]*|[-+]?\.%(inf|Inf|INF)|\.%(nan|NaN|NAN)\m\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
+    exe 'syn match  yamlInteger /\%#=1'.s:_bounder.'\@1<!\%(\v[-+]?0b[0-1_]+|[-+]?0[0-7_]+|[-+]?%(0|[1-9][0-9_]*)|[-+]?0x[0-9a-fA-F_]+|[-+]?[1-9][0-9_]*%(:[0-5]?\d)+\m\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
+    exe 'syn match  yamlTimestamp /\%#=1'.s:_bounder.'\@1<!\%(\v\d\d\d\d\-\d\d\-\d\d|\d\d\d\d \-\d\d? \-\d\d?%([Tt]|[ \t]+)\d\d?\:\d\d \:\d\d %(\.\d*)?%([ \t]*%(Z|[-+]\d\d?%(\:\d\d)?))?\m\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
 elseif b:yaml_schema is# 'failsafe'
     " Nothing
 endif

@@ -47,6 +47,7 @@
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/message.h"
+#include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/pos_defs.h"
@@ -60,11 +61,11 @@
 #include "nvim/ui_defs.h"
 #include "nvim/vim_defs.h"
 
-/// List used for abbreviations.
-static mapblock_T *first_abbr = NULL;  // first entry in abbrlist
+/// Global abbreviations (first entry in the linkedlist).
+static mapblock_T *first_abbr = NULL;
 
-// Each mapping is put in one of the MAX_MAPHASH hash lists,
-// to speed up finding it.
+/// Global mappings.
+/// Each mapping is put in one of the MAX_MAPHASH hash lists, to speed up finding it.
 static mapblock_T *(maphash[MAX_MAPHASH]) = { 0 };
 
 // Make a hash value for a mapping.
@@ -144,6 +145,34 @@ mapblock_T *get_maphash_list(int state, int c)
 mapblock_T *get_buf_maphash_list(int state, int c)
 {
   return curbuf->b_maphash[MAP_HASH(state, c)];
+}
+
+/// Finds the Lua mapping whose `m_str` embeds `id`.
+static mapblock_T *map_luaid_scan(mapblock_T *const *mappings, size_t size, int id)
+{
+  for (size_t i = 0; i < size; i++) {
+    for (mapblock_T *mp = mappings[i]; mp != NULL; mp = mp->m_next) {
+      // Find `id` in "<K_LUA><id><CR>".
+      if (mp->m_luaref != LUA_NOREF && atoi(mp->m_str + 3) == id) {
+        return mp;
+      }
+    }
+  }
+  return NULL;
+}
+
+/// Resolves a Lua-mapping id to its callback.
+///
+/// @return  Lua callback, or LUA_NOREF if the mapping no longer exists.
+LuaRef map_luaid_get(int n)
+{
+  mapblock_T *mp = map_luaid_scan(maphash, MAX_MAPHASH, n);
+  mp = mp != NULL ? mp : map_luaid_scan(&first_abbr, 1, n);
+  FOR_ALL_BUFFERS(fb) {
+    mp = mp != NULL ? mp : map_luaid_scan(fb->b_maphash, MAX_MAPHASH, n);
+    mp = mp != NULL ? mp : map_luaid_scan(&fb->b_first_abbr, 1, n);
+  }
+  return mp != NULL ? mp->m_luaref : LUA_NOREF;
 }
 
 /// Delete one entry from the abbrlist or maphash[].
@@ -371,9 +400,10 @@ static void set_maparg_rhs(const char *const orig_rhs, const size_t orig_rhs_len
     // orig_rhs is not used for Lua mappings, but still needs to be a string.
     mapargs->orig_rhs = xcalloc(1, sizeof(char));
     mapargs->orig_rhs_len = 0;
-    // stores <lua>ref_no<cr> in map_str
+    // Stores "<K_LUA><lua-mapping-id><CR>" in map_str.
+    static int map_luaid = 0;
     mapargs->rhs_len = (size_t)vim_snprintf(S_LEN(tmp_buf), "%c%c%c%d\r", K_SPECIAL,
-                                            KS_EXTRA, KE_LUA, rhs_lua);
+                                            KS_EXTRA, KE_LUA, ++map_luaid);
     mapargs->rhs = xstrdup(tmp_buf);
   }
 }
@@ -1720,6 +1750,11 @@ int makemap(FILE *fd, buf_T *buf)
       }
 
       for (; mp; mp = mp->m_next) {
+        // simplified map blocks are not created explicitly
+        if (mp->m_simplified) {
+          continue;
+        }
+
         // skip script-local mappings
         if (mp->m_noremap == REMAP_SCRIPT) {
           continue;
@@ -2608,10 +2643,8 @@ const char *did_set_langmap(optset_T *args)
         }
       }
       if (to == NUL) {
-        snprintf(args->os_errbuf, args->os_errbuflen,
-                 _("E357: 'langmap': Matching character missing for %s"),
-                 transchar(from));
-        return args->os_errbuf;
+        return opt_error(args->os_errbuf, N_("E357: 'langmap': Matching character missing for %s"),
+                         transchar(from));
       }
 
       if (from >= 256) {
@@ -2632,10 +2665,8 @@ const char *did_set_langmap(optset_T *args)
           p = p2;
           if (p[0] != NUL) {
             if (p[0] != ',') {
-              snprintf(args->os_errbuf, args->os_errbuflen,
-                       _("E358: 'langmap': Extra characters after semicolon: %s"),
-                       p);
-              return args->os_errbuf;
+              return opt_error(args->os_errbuf,
+                               N_("E358: 'langmap': Extra characters after semicolon: %s"), p);
             }
             p++;
           }

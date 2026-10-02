@@ -36,7 +36,7 @@ local function ctx_is_valid(ctx)
     not bufnr
     or not api.nvim_buf_is_valid(bufnr)
     or api.nvim_get_current_buf() ~= bufnr
-    or vim.lsp.util.buf_versions[bufnr] ~= ctx.version
+    or lsp.util.buf_versions[bufnr] ~= ctx.version
   then
     return false
   end
@@ -197,9 +197,16 @@ function M.hover(config)
   end)
 end
 
+--- @param name vim.lsp.protocol.Method.ClientToServer.Request
+--- @param params lsp.DocumentSymbolParams|lsp.WorkspaceSymbolParams
+--- @param opts? vim.lsp.ListOpts
 local function request_with_opts(name, params, opts)
   local req_handler --- @type function?
   if opts then
+    --- @param err lsp.ResponseError?
+    --- @param result lsp.DocumentSymbol[]|lsp.SymbolInformation[]|lsp.WorkspaceSymbol[]|nil
+    --- @param ctx lsp.HandlerContext
+    --- @param config? vim.lsp.ListOpts
     req_handler = function(err, result, ctx, config)
       local client = assert(lsp.get_client_by_id(ctx.client_id))
       local handler = client.handlers[name] or lsp.handlers[name]
@@ -261,7 +268,7 @@ local function get_locations(method, context, opts)
       vim.list_extend(all_items, items)
     end
 
-    local name = string.gsub(method:match('textDocument/(.*)'), '(%u)', ' %1'):lower()
+    local name = string.gsub(assert(method:match('textDocument/(.*)')), '(%u)', ' %1'):lower()
     if vim.tbl_isempty(all_items) then
       vim.notify(('No %s found'):format(name), vim.log.levels.INFO)
       return
@@ -469,7 +476,7 @@ function M.signature_help(config)
       return
     end
 
-    local ft = vim.bo[ctx.bufnr].filetype
+    local ft = vim.bo[assert(ctx.bufnr)].filetype
     local total = #signatures
     local can_cycle = total > 1 and config.focusable ~= false
     local idx = active_signature - 1
@@ -477,7 +484,8 @@ function M.signature_help(config)
     --- @param update_win? integer
     local function show_signature(update_win)
       idx = (idx % total) + 1
-      local client, result = signatures[idx][1], signatures[idx][2]
+      local signature = assert(signatures[idx])
+      local client, result = signature[1], signature[2]
       --- @type string[]?
       local triggers =
         vim.tbl_get(client.server_capabilities, 'signatureHelpProvider', 'triggerCharacters')
@@ -541,7 +549,7 @@ end
 
 ---@param bufnr integer
 ---@param mode "v"|"V"
----@return table {start={row,col}, end={row,col}} using (1, 0) indexing
+---@return {start: [integer,integer], end: [integer,integer]} using (1, 0) indexing
 local function range_from_selection(bufnr, mode)
   -- TODO: Use `vim.fn.getregionpos()` instead.
 
@@ -580,8 +588,11 @@ end
 --- See https://microsoft.github.io/language-server-protocol/specification/#formattingOptions
 --- @field formatting_options? lsp.FormattingOptions
 ---
---- Time in milliseconds to block for formatting requests. No effect if async=true.
---- (default: `1000`)
+--- Time in milliseconds allowed for each formatting request. On timeout, cancels
+--- the request and continues with the next client. With async=true, there is no
+--- timeout unless this option is set. Responses received after the request times
+--- out are ignored.
+--- (default: `1000` for synchronous requests)
 --- @field timeout_ms? integer
 ---
 --- Restrict formatting to the clients attached to the given buffer.
@@ -631,7 +642,7 @@ function M.format(opts)
   local mode = api.nvim_get_mode().mode
   local range = opts.range
   -- Try to use visual selection if no range is given
-  if not range and mode == 'v' or mode == 'V' then
+  if not range and (mode == 'v' or mode == 'V') then
     range = range_from_selection(bufnr, mode)
   end
 
@@ -675,14 +686,15 @@ function M.format(opts)
       return util.make_given_range_params(r.start, r['end'], bufnr, client.offset_encoding).range
     end
 
-    local ret = params --[[@as lsp.DocumentFormattingParams|lsp.DocumentRangeFormattingParams|lsp.DocumentRangesFormattingParams]]
+    --- @type lsp.DocumentFormattingParams|lsp.DocumentRangeFormattingParams|lsp.DocumentRangesFormattingParams
+    local ret = params
     if passed_multiple_ranges then
       --- @cast range {start:[integer,integer],end:[integer, integer]}[]
-      ret = params --[[@as lsp.DocumentRangesFormattingParams]]
+      --- @cast ret lsp.DocumentRangesFormattingParams
       ret.ranges = vim.tbl_map(to_lsp_range, range)
     elseif range then
       --- @cast range {start:[integer,integer],end:[integer, integer]}
-      ret = params --[[@as lsp.DocumentRangeFormattingParams]]
+      --- @cast ret lsp.DocumentRangeFormattingParams
       ret.range = to_lsp_range(range)
     end
     return ret
@@ -696,11 +708,39 @@ function M.format(opts)
         return
       end
       local params = set_range(client, util.make_formatting_params(opts.formatting_options))
-      client:request(method, params, function(...)
+      local timer = opts.timeout_ms and assert(vim.uv.new_timer())
+      local success, request_id = client:request(method, params, function(...)
+        if timer then
+          if timer:is_closing() then
+            return
+          end
+          timer:close()
+        end
         local handler = client.handlers[method] or lsp.handlers[method]
         handler(...)
         do_format(next(clients, idx))
       end, bufnr)
+      if timer and not timer:is_closing() then
+        if not success then
+          timer:close()
+          return
+        end
+        timer:start(
+          assert(opts.timeout_ms),
+          0,
+          vim.schedule_wrap(function()
+            if timer:is_closing() then
+              return
+            end
+            timer:close()
+            if request_id and client.requests[request_id] then
+              client:cancel_request(request_id)
+            end
+            vim.notify(string.format('[LSP][%s] timeout', client.name), vim.log.levels.WARN)
+            do_format(next(clients, idx))
+          end)
+        )
+      end
     end
     do_format(next(clients))
   else
@@ -795,7 +835,7 @@ function M.rename(new_name, opts)
 
     if client:supports_method('textDocument/prepareRename') then
       local params = util.make_position_params(win, client.offset_encoding)
-      ---@param result? lsp.Range|{ range: lsp.Range, placeholder: string }
+      ---@param result? lsp.PrepareRenameResult
       client:request('textDocument/prepareRename', params, function(err, result)
         if err or result == nil then
           if next(clients, idx) then
@@ -815,10 +855,8 @@ function M.rename(new_name, opts)
 
         local range ---@type vim.Range?
         if result.start then
-          ---@cast result lsp.Range
           range = vim.range.lsp(bufnr, result, client.offset_encoding)
         elseif result.range then
-          ---@cast result { range: lsp.Range, placeholder: string }
           range = vim.range.lsp(bufnr, result.range, client.offset_encoding)
         end
         if range then
@@ -840,8 +878,6 @@ function M.rename(new_name, opts)
           prompt_opts.default = result.placeholder
         elseif result.start then
           prompt_opts.default = get_text_at_range(result, client.offset_encoding)
-        elseif result.range then
-          prompt_opts.default = get_text_at_range(result.range, client.offset_encoding)
         else
           prompt_opts.default = cword
         end
@@ -1244,7 +1280,7 @@ local function on_code_action_results(results, opts)
     end
   end
 
-  ---@param choice {action: lsp.Command|lsp.CodeAction, ctx: lsp.HandlerContext}
+  ---@param choice? {action: lsp.Command|lsp.CodeAction, ctx: lsp.HandlerContext}
   local function on_user_choice(choice)
     if not choice then
       return
@@ -1272,6 +1308,8 @@ local function on_code_action_results(results, opts)
       return
     end
 
+    -- Work around incorrect union narrowing: EmmyLuaLs/emmylua-analyzer-rust#1239.
+    ---@cast action lsp.CodeAction
     if action.disabled then
       vim.notify(action.disabled.reason, vim.log.levels.ERROR)
       return
@@ -1380,14 +1418,14 @@ function M.code_action(opts)
   end
 
   lsp.buf_request_all(bufnr, 'textDocument/codeAction', function(client)
-    ---@type lsp.CodeActionParams
     local params
 
     if range then
-      assert(type(range) == 'table', 'code_action range must be a table')
-      local start = assert(range.start, 'range must have a `start` property')
-      local end_ = assert(range['end'], 'range must have a `end` property')
-      params = util.make_given_range_params(start, end_, bufnr, client.offset_encoding)
+      validate('range', range, 'table')
+      validate('range.start', range.start, 'table')
+      validate('range.end', range['end'], 'table')
+      params =
+        util.make_given_range_params(range.start, range['end'], bufnr, client.offset_encoding)
     else
       params = util.make_range_params(win, client.offset_encoding)
     end
@@ -1401,6 +1439,7 @@ function M.code_action(opts)
       local diagnostics = {}
 
       client:_provider_foreach('textDocument/diagnostic', function(cap)
+        --- @cast cap lsp.DiagnosticRegistrationOptions
         local ns_pull = lsp.diagnostic.get_namespace(client.id, true, cap.identifier)
         vim.list_extend(
           diagnostics,
@@ -1463,7 +1502,7 @@ function M.selection_range(direction, timeout_ms)
     local new_index = selection_ranges.index + direction
     selection_ranges.index = math.min(#selection_ranges.ranges, math.max(1, new_index))
 
-    select_range(selection_ranges.ranges[selection_ranges.index])
+    select_range(assert(selection_ranges.ranges[selection_ranges.index]))
     return
   end
 
@@ -1497,7 +1536,7 @@ function M.selection_range(direction, timeout_ms)
   end
 
   -- We only requested one range, thus we get the first and only response here.
-  local response = assert(result[client.id].result[1]) ---@type lsp.SelectionRange
+  local response = assert(result[client.id].result[1]) ---@type lsp.SelectionRange?
   local ranges = {} ---@type lsp.Range[]
   local lines = api.nvim_buf_get_lines(0, 0, -1, false)
 
@@ -1532,7 +1571,7 @@ function M.selection_range(direction, timeout_ms)
   if #ranges > 0 then
     local index = math.min(#ranges, math.max(1, direction))
     selection_ranges = { index = index, ranges = ranges }
-    select_range(ranges[index])
+    select_range(assert(ranges[index]))
   end
 end
 

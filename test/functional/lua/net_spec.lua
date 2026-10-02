@@ -5,42 +5,68 @@ local skip_integ = os.getenv('NVIM_TEST_INTEG') ~= '1'
 
 local exec_lua = n.exec_lua
 
+-- Serve one request and record what curl sent.
+local function http_server(body, status)
+  t.skip(n.fn.executable('curl') == 0, 'curl not found')
+  return exec_lua(function()
+    vim.env.no_proxy = '127.0.0.1'
+    local server = assert(vim.uv.new_tcp())
+    assert(server:bind('127.0.0.1', 0))
+    assert(server:listen(1, function(err)
+      assert(not err, err)
+      local client = assert(vim.uv.new_tcp())
+      assert(server:accept(client))
+      server:close()
+      local data = ''
+      client:read_start(function(read_err, chunk)
+        assert(not read_err, read_err)
+        assert(chunk, 'Connection closed before the request was complete')
+        data = data .. chunk
+        -- TCP can split the headers and body across reads.
+        local header_end = data:find('\r\n\r\n', 1, true)
+        if not header_end then
+          return
+        end
+        local headers = {}
+        for name, value in data:sub(1, header_end + 1):gmatch('\r\n([^:]+):[ \t]*([^\r\n]*)') do
+          headers[name:lower()] = value
+        end
+        local request_body = data:sub(header_end + 4)
+        if #request_body < (tonumber(headers['content-length']) or 0) then
+          return
+        end
+        client:read_stop()
+        local method = data:match('^(%S+)')
+        _G.http_request = { method = method, headers = headers, body = request_body }
+        local response = ('HTTP/1.1 %s\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s'):format(
+          status or '200 OK',
+          #body,
+          method == 'HEAD' and '' or body
+        )
+        client:write(response, function(write_err)
+          assert(not write_err, write_err)
+          client:close()
+        end)
+      end)
+    end))
+    return ('http://127.0.0.1:%d/'):format(server:getsockname().port)
+  end)
+end
+
 ---@param method vim.net.HttpMethod
+---@param url string
 ---@param opts? vim.net.request.Opts
 ---@return table
---- Helper method to make a HTTP request with a 2s timeout
 local function request(method, url, opts)
-  opts = opts or {}
-  opts.retry = 3
-  local result = exec_lua(function()
-    local done = false
-    local result
-
+  exec_lua(function()
     vim.net.request(method, url, opts, function(err, res)
-      if err then
-        result = { error = err }
-      else
-        ---@type string|table
-        local resp
-
-        local ok, parsed = pcall(vim.json.decode, res.body)
-        if ok then
-          resp = parsed
-        else
-          resp = res.body
-        end
-        result = { error = nil, response = resp }
-      end
-      done = true
+      vim.rpcnotify(1, 'response', { error = err, response = res and res.body })
     end)
-
-    vim.wait(2000, function()
-      return done
-    end)
-    return result
   end)
 
-  return result
+  local msg = assert(n.next_msg(), 'Timed out waiting for HTTP response')
+  t.eq({ 'notification', 'response' }, { msg[1], msg[2] })
+  return msg[3][1]
 end
 
 describe('vim.net.request', function()
@@ -49,13 +75,11 @@ describe('vim.net.request', function()
   end)
 
   it('fetches a URL into memory (async success)', function()
-    t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
-
     ---@type table
-    local result = request('GET', 'https://httpbingo.org/anything')
+    local result = request('GET', http_server('hello'))
 
-    t.eq(nil, result.error, ('request failed: %s'):format(result.error))
-    t.eq('https://httpbingo.org/anything', result.response.url)
+    t.eq(nil, result.error)
+    t.eq('hello', result.response)
   end)
 
   it("detects filetype, sets 'nomodified'", function()
@@ -86,14 +110,12 @@ describe('vim.net.request', function()
   end)
 
   it('calls on_response with error on 404 (async failure)', function()
-    t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
-
-    local result = request('GET', 'https://httpbingo.org/status/404')
+    local result = request('GET', http_server('', '404 Not Found'))
     t.matches('404', result.error)
   end)
 
   it('plugin writes output to buffer', function()
-    t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
+    local url = http_server('<html>test</html>')
 
     local content = exec_lua(function()
       ---@type string[]
@@ -101,7 +123,7 @@ describe('vim.net.request', function()
 
       local buf = vim.api.nvim_create_buf(false, true)
       ---@diagnostic disable-next-line: param-type-mismatch
-      vim.net.request('https://httpbingo.org', { outbuf = buf })
+      vim.net.request(url, { outbuf = buf })
 
       vim.wait(2000, function()
         lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
@@ -221,9 +243,8 @@ describe('vim.net.request', function()
   end)
 
   it('accepts custom headers', function()
-    t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
     ---@type table
-    local result = request('GET', 'https://httpbingo.org/anything', {
+    local result = request('GET', http_server('hello'), {
       headers = {
         Authorization = 'Bearer test-token',
         ['X-Custom-Header'] = 'custom-value',
@@ -231,28 +252,18 @@ describe('vim.net.request', function()
       },
     })
 
-    t.eq(nil, result.error, ('request failed: %s'):format(result.error))
-    t.eq('table', type(result.response.headers), 'Expected headers to be a table')
-
-    -- httpbingo.org/request returns each header as a list in the returned value
-    t.eq(
-      'Bearer test-token',
-      result.response.headers.Authorization[1],
-      'Expected Authorization header'
-    )
-    t.eq('custom-value', result.response.headers['X-Custom-Header'][1], 'Expected X-Custom-Header')
-    t.eq('', result.response.headers['Empty'][1], 'Expected Empty header')
+    t.eq(nil, result.error)
+    local headers = exec_lua('return http_request.headers')
+    t.eq('Bearer test-token', headers.authorization, 'Expected Authorization header')
+    t.eq('custom-value', headers['x-custom-header'], 'Expected X-Custom-Header')
+    t.eq('', headers.empty, 'Expected Empty header')
   end)
 
   it('accepts multiple HTTP methods', function()
-    t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
-
-    local url = 'https://httpbingo.org/anything'
-
     local function assert_accept_method(method)
-      local result = request(method, url)
+      local result = request(method, http_server('hello'))
       t.eq(nil, result.error)
-      t.eq(method, result.response.method)
+      t.eq(method, exec_lua('return http_request.method'))
     end
 
     assert_accept_method('GET')
@@ -261,18 +272,22 @@ describe('vim.net.request', function()
     assert_accept_method('DELETE')
 
     -- HEAD request
-    local result = request('HEAD', url)
+    local result = request('HEAD', http_server('hello'))
     t.eq(nil, result.error)
+    t.eq('HEAD', exec_lua('return http_request.method'))
 
     -- testing body payload
-    result = request('POST', url, {
+    result = request('POST', http_server('hello'), {
       body = '{"a": 1}',
       headers = {
         ['Content-Type'] = 'application/json',
       },
     })
     t.eq(nil, result.error)
-    t.eq(1, result.response.json.a)
+    local sent = exec_lua('return http_request')
+    t.eq('POST', sent.method)
+    t.eq('application/json', sent.headers['content-type'])
+    t.eq('{"a": 1}', sent.body)
   end)
 
   it('validation', function()

@@ -9,11 +9,6 @@
             .url = "git+https://github.com/natecraddock/ziglua.git#9ae39fa50b1ab8427d35f963216116d7bff1e584",
             .hash = "zlua-0.1.0-hGRpC1mUBQCNQf4CnmRTM4I7gxE3YpCvZ-p2EarlcyER",
         },
-        .lpeg = .{
-            .url = "https://github.com/neovim/deps/raw/d495ee6f79e7962a53ad79670cb92488abe0b9b4/opt/lpeg-1.1.0.tar.gz",
-            .hash = "N-V-__8AAMnaAwCEutreuREG3QayBVEZqUTDQFY1Nsrv2OIt",
-            .lazy = true,
-        },
         .luv = .{
             .url = "git+https://github.com/luvit/luv?ref=1.52.1-0#f65fe9d7616f9fbcd20227fc7a73b38d1c5c180d",
             .hash = "N-V-__8AANegDwD93oh3SzPCFx_LVS4ash9TDITp7Oq0HlDJ",
@@ -25,8 +20,8 @@
             .lazy = true,
         },
         .treesitter = .{
-            .url = "git+https://github.com/tree-sitter/tree-sitter#baad4174e551e527bde1b069f4b41082e4abd085",
-            .hash = "tree_sitter-0.27.0-Tw2sR2PIDQCAo9BUSY4nHYXcjt7g6UswYTT1LolwvVcy",
+            .url = "git+https://github.com/tree-sitter/tree-sitter?ref=v0.27.0#6070dbfefd326bd735e5683eb128cc1b57dad0c0",
+            .hash = "tree_sitter-0.27.0-Tw2sRzbJDQAI0igzBO7QpcYZiblLoFMNjSLLHKbx1ck3",
             .lazy = true,
         },
         .libuv = .{
@@ -34,15 +29,21 @@
             .hash = "libuv-1.52.0-htqqvzNqAAAB6cHIx-wIffe_mqMW5GOKjHeDBJYHGwls",
             .lazy = true,
         },
-        .utf8proc = .{ .path = "./deps/utf8proc/", .lazy = true },
-        .unibilium = .{ .path = "./deps/unibilium/", .lazy = true },
+        .utf8proc = .{
+            .url = "git+https://github.com/juliastrings/utf8proc?ref=v2.12.0#79cdd5ab40c79afa559f689ffc13b76812dee1ac",
+            .hash = "utf8proc-2.12.0-xFSJu938JQDM47JNh9SNXvUSz3ZN6cErXn_Ji3XU0I1_",
+        },
+        .unibilium = .{
+            .url = "git+https://github.com/neovim/unibilium?ref=v2.1.4#b0567db6a30898d8b25d206223960a8be2795fa8",
+            .hash = "unibilium-2.1.4-INdqiXdRAQAKcGtWWj0Pb85VOTw07W3TDjMv6jrwUXgx",
+        },
         .uncrustify = .{
             .url = "git+https://codeberg.org/allyourcodebase/uncrustify#2cdf880e4ffbe438a7946368cd45fca2df9f0f7a",
             .hash = "uncrustify-0.83.0-qkVd7cVCAADAg1kS3ctVBhY2gkxEIs-W8wgurLadbgC-",
         },
         .libiconv = .{
-            .url = "git+https://github.com/allyourcodebase/libiconv#9def4c8a1743380e85bcedb80f2c15b455e236f3",
-            .hash = "libiconv-1.18.0-p9sJwWnqAACzVYeWgXB5r5lOQ74XwTPlptixV0JPRO28",
+            .url = "git+https://github.com/allyourcodebase/libiconv#a244cea3e4f7a0962158307b0e09e656306f4936",
+            .hash = "libiconv-1.19.0-p9sJweX8AAAjGeVgi3PLprwy3KBn28SPkZRPXNKXpeNN",
             .lazy = true,
         },
         .treesitter_c = .{

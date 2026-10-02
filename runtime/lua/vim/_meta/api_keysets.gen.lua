@@ -31,7 +31,7 @@ error('Cannot require a meta file')
 --- @field cmd? string
 --- @field count? integer
 --- @field magic? vim.api.keyset.cmd.magic
---- @field mods? vim.api.keyset.cmd.mods
+--- @field mods? vim.api.keyset.cmd_mods
 --- @field nargs? integer|"?"|"+"|"*"
 --- @field nextcmd? string
 --- @field range? integer[]
@@ -45,7 +45,7 @@ error('Cannot require a meta file')
 --- @field browse? boolean
 --- @field confirm? boolean
 --- @field emsg_silent? boolean
---- @field filter? table<string,any>
+--- @field filter? vim.api.keyset.cmd_mods_filter
 --- @field hide? boolean
 --- @field horizontal? boolean
 --- @field keepalt? boolean
@@ -57,7 +57,7 @@ error('Cannot require a meta file')
 --- @field noswapfile? boolean
 --- @field sandbox? boolean
 --- @field silent? boolean
---- @field split? string
+--- @field split? ""|"botright"|"topleft"|"belowright"|"aboveleft"|"rightbelow"|"leftabove"
 --- @field tab? integer
 --- @field unsilent? boolean
 --- @field verbose? integer
@@ -476,7 +476,7 @@ error('Cannot require a meta file')
 
 --- @class vim.api.keyset.win_config
 --- @field anchor? "NW"|"NE"|"SW"|"SE"
---- @field border? any[]|"none"|"single"|"double"|"rounded"|"solid"|"shadow"
+--- @field border? any[]|""|"none"|"single"|"double"|"rounded"|"solid"|"shadow"|"bold"
 --- @field bufpos? integer[]
 --- @field col? number
 --- @field external? boolean

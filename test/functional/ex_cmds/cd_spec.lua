@@ -2,9 +2,12 @@
 
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
 
 local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local eq = t.eq
+local neq = t.neq
+local exec_lua = n.exec_lua
 local pcall_err = t.pcall_err
 local call = n.call
 local clear = n.clear
@@ -572,7 +575,8 @@ describe('cd during temp context-switch', function()
     eq({ 1, tabdir, tabdir, startdir }, { tlwd(), tcwd(), cwd(), cwd(-1, -1) })
   end)
 
-  it('does not linger in buffer names after switch back #41424', function()
+  it('buffer names/statusline updated after switch back #41424', function()
+    local screen = Screen.new(40, 8)
     local bufdir = join(startdir, directories.buffer)
     command('edit ' .. join(bufdir, tmpfile))
     command('bcd ' .. bufdir)
@@ -581,12 +585,45 @@ describe('cd during temp context-switch', function()
     command('wincmd p')
     eq({ bufdir, tmpfile }, { cwd(), call('bufname', '%') })
 
+    -- 'statusline' shows buffer names, so it must be redrawn exactly when they change.
+    exec_lua([[
+      _G.evals = 0
+      function _G.stl()
+        _G.evals = _G.evals + 1
+        return 'STL'
+      end
+      vim.o.laststatus = 2
+      vim.o.statusline = '%!v:lua.stl()'
+    ]])
+    screen:expect({ any = 'STL' })
+
     -- Entering a window leaves `bufdir`, since the buffer there has no local dir.
-    call('win_execute', otherwin, 'split | close')
+    exec_lua(
+      [[
+      vim._with({ win = ... }, function()
+        vim.cmd('split | close')
+        vim.api.nvim__redraw({ flush = true }) -- Paints the names relative to the other CWD.
+        _G.inner = _G.evals
+      end)
+      vim.api.nvim__redraw({ flush = true })
+    ]],
+      otherwin
+    )
 
     -- Names relative to the old CWD would cause ":write" to target nonsense.
     eq({ bufdir, tmpfile }, { cwd(), call('bufname', '%') })
     command('write')
+
+    -- The switch moved the CWD, so the names changed and back: 'statusline' follows them.
+    neq(exec_lua('return _G.inner'), exec_lua('return _G.evals'))
+
+    -- Without a local dir the switch doesn't move the CWD, so nothing needs a redraw. #41561
+    command('bcd!')
+    exec_lua('vim.api.nvim__redraw({ flush = true })')
+    local evals = exec_lua('return _G.evals')
+    call('win_execute', otherwin, 'let g:x = 1')
+    exec_lua('vim.api.nvim__redraw({ flush = true })')
+    eq(evals, exec_lua('return _G.evals'))
   end)
 
   it("nvim_open_win / nvim_win_set_buf keep the caller's cwd", function()

@@ -58,6 +58,7 @@
 #include "nvim/mark_defs.h"
 #include "nvim/math.h"
 #include "nvim/mbyte.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
@@ -1147,12 +1148,6 @@ Integer nvim_open_term(Buffer buf, Dict(open_term) *opts, Error *err)
     return 0;
   }
 
-  // Refuse to repurpose the cmdwin buffer.
-  if (bt_cmdwin(b)) {
-    api_set_error(err, kErrorTypeException, "%s", _(e_cmdwin));
-    return 0;
-  }
-
   bool may_read_buffer = true;
   if (b->terminal) {
     if (terminal_running(b->terminal)) {
@@ -2089,6 +2084,14 @@ void nvim__invalidate_glyph_cache(void)
 }
 
 /// @nodoc
+/// Returns true if a multicursor cascade is in-progress.
+Boolean nvim__mcursor_cascading(void)
+  FUNC_API_SINCE(15) FUNC_API_FAST
+{
+  return mc_replaying();
+}
+
+/// @nodoc
 Object nvim__unpack(String str, Arena *arena, Error *err)
   FUNC_API_FAST
 {
@@ -2229,7 +2232,8 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
   int statuscol_lnum = 0;
 
   if (str.size < 2 || memcmp(str.data, "%!", 2) != 0) {
-    const char *const errmsg = check_stl_option(str.data);
+    const CharBuf errbuf = { (char[ERR_BUFLEN]){ 0 }, ERR_BUFLEN };
+    const char *const errmsg = check_stl_option(str.data, &errbuf);
     VALIDATE(!errmsg, "%s", errmsg, {
       return result;
     });
@@ -2252,7 +2256,6 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
 
   win_T *wp = opts->use_tabline ? curwin : find_window_by_handle(window, err);
   if (wp == NULL) {
-    api_set_error(err, kErrorTypeException, "unknown winid %d", window);
     return result;
   }
 
@@ -2320,7 +2323,7 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
   }
 
   result = arena_dict(arena, 3);
-  char *buf = arena_alloc(arena, MAXPATHL, false);
+  const CharBuf buf = { arena_alloc(arena, MAXPATHL, false), MAXPATHL };
   stl_hlrec_t *hltab;
   size_t hltab_len = 0;
 
@@ -2328,7 +2331,7 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
   int p_crb_save = wp->w_p_crb;
   wp->w_p_crb = false;
 
-  int width = build_stl_str_hl(wp, buf, MAXPATHL, str.data, -1, 0, fillchar, maxwidth,
+  int width = build_stl_str_hl(wp, buf, str.data, -1, 0, fillchar, maxwidth,
                                opts->highlights ? &hltab : NULL, &hltab_len, NULL,
                                statuscol_lnum ? &statuscol : NULL);
 
@@ -2345,7 +2348,7 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
     // add the default highlight at the beginning of the highlight list
     const char *dfltname = get_default_stl_hl(opts->use_tabline ? NULL : wp,
                                               opts->use_winbar, stc_hl_id);
-    if (hltab->start == NULL || (hltab->start - buf) != 0) {
+    if (hltab->start == NULL || (hltab->start - buf.data) != 0) {
       Dict hl_info = arena_dict(arena, 3);
       PUT_C(hl_info, "start", INTEGER_OBJ(0));
       PUT_C(hl_info, "group", CSTR_AS_OBJ(dfltname));
@@ -2369,7 +2372,7 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
       const char *combine = sp->item == STL_SIGNCOL ? syn_id2name(scl_hl_id)
                                                     : sp->item == STL_FOLDCOL ? grpname : dfltname;
       Dict hl_info = arena_dict(arena, 3);
-      PUT_C(hl_info, "start", INTEGER_OBJ(sp->start - buf));
+      PUT_C(hl_info, "start", INTEGER_OBJ(sp->start - buf.data));
       PUT_C(hl_info, "group", CSTR_AS_OBJ(grpname));
       Array groups = arena_array(arena, 1 + (combine != grpname));
       if (combine != grpname) {
@@ -2381,7 +2384,7 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
     }
     PUT_C(result, "highlights", ARRAY_OBJ(hl_values));
   }
-  PUT_C(result, "str", CSTR_AS_OBJ(buf));
+  PUT_C(result, "str", CSTR_AS_OBJ(buf.data));
 
   return result;
 }
@@ -2393,9 +2396,10 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
 /// @param opts   Optional parameters.
 ///       - info: (string) info text.
 /// @return Dict containing these keys:
-///       - winid: (number) floating window id
-///       - bufnr: (number) buffer id in floating window
-DictOf(Float) nvim__complete_set(Integer index, Dict(complete_set) *opts, Arena *arena, Error *err)
+///       - winid: (integer) floating window id
+///       - bufnr: (integer) buffer id in floating window
+DictOf(Integer) nvim__complete_set(Integer index, Dict(complete_set) *opts, Arena *arena,
+                                   Error *err)
 {
   Dict rv = arena_dict(arena, 2);
   if ((get_cot_flags() & kOptCotFlagPopup) == 0) {

@@ -2141,50 +2141,7 @@ static int getregionpos(typval_T *argvars, typval_T *rettv, pos_T *p1, pos_T *p2
   p1->col--;
   p2->col--;
 
-  if (!lt(*p1, *p2)) {
-    // swap position
-    pos_T p = *p1;
-    *p1 = *p2;
-    *p2 = p;
-  }
-
-  if (*region_type == kMTCharWise) {
-    // Handle 'selection' == "exclusive".
-    if (is_select_exclusive && !equalpos(*p1, *p2)) {
-      // When backing up to previous line, inclusive becomes false.
-      *inclusive = !unadjust_for_sel_inner(p2);
-    }
-    // If p2 is on NUL (end of line), inclusive becomes false.
-    if (*inclusive && !virtual_op && *ml_get_pos(p2) == NUL) {
-      *inclusive = false;
-    }
-  } else if (*region_type == kMTBlockWise) {
-    colnr_T sc1, ec1, sc2, ec2;
-    const bool lbr_saved = reset_lbr();
-    getvvcol(curwin, p1, &sc1, NULL, &ec1, 0);
-    getvvcol(curwin, p2, &sc2, NULL, &ec2, 0);
-    restore_lbr(lbr_saved);
-    oap->motion_type = kMTBlockWise;
-    oap->inclusive = true;
-    oap->op_type = OP_NOP;
-    oap->start = *p1;
-    oap->end = *p2;
-    oap->start_vcol = MIN(sc1, sc2);
-    if (block_width > 0) {
-      oap->end_vcol = oap->start_vcol + block_width - 1;
-    } else if (is_select_exclusive && ec1 < sc2 && 0 < sc2 && ec2 > ec1) {
-      oap->end_vcol = sc2 - 1;
-    } else {
-      oap->end_vcol = MAX(ec1, ec2);
-    }
-  }
-
-  // Include the trailing byte of a multi-byte char.
-  int l = utfc_ptr2len(ml_get_pos(p2));
-  if (l > 1) {
-    p2->col += l - 1;
-  }
-
+  getregionpos_prep(p1, p2, *region_type, is_select_exclusive, block_width, inclusive, oap);
   return OK;
 }
 
@@ -2260,6 +2217,7 @@ static void f_getregionpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
   bool inclusive = true;
   MotionType region_type = kMTUnknown;
   bool allow_eol = false;
+  bool bounds_only = false;
   oparg_T oa;
 
   if (getregionpos(argvars, rettv, &p1, &p2, &inclusive, &region_type, &oa) == FAIL) {
@@ -2268,77 +2226,31 @@ static void f_getregionpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 
   if (argvars[2].v_type == VAR_DICT) {
     allow_eol = tv_dict_get_bool(argvars[2].vval.v_dict, "eol", false);
+    bounds_only = tv_dict_get_bool(argvars[2].vval.v_dict, "bounds", false);
   }
 
-  for (linenr_T lnum = p1.lnum; lnum <= p2.lnum; lnum++) {
-    pos_T ret_p1, ret_p2;
-    char *line = ml_get(lnum);
-    colnr_T line_len = ml_get_len(lnum);
+  if (bounds_only) {
+    // Only the outer bounds of the region are wanted, so the lines in
+    // between do not have to be visited.
+    pos_T start_pos, end_pos;
 
-    if (region_type == kMTLineWise) {
-      ret_p1.col = 1;
-      ret_p1.coladd = 0;
-      ret_p2.col = MAXCOL;
-      ret_p2.coladd = 0;
-    } else {
-      struct block_def bd;
+    getregionpos_line(p1.lnum, p1, p2, inclusive, region_type, &oa,
+                      allow_eol, &start_pos, &end_pos);
+    if (p2.lnum != p1.lnum) {
+      pos_T unused;
 
-      if (region_type == kMTBlockWise) {
-        block_prep(&oa, &bd, lnum, false);
-      } else {
-        charwise_block_prep(p1, p2, &bd, lnum, inclusive);
-      }
-
-      if (bd.is_oneChar) {  // selection entirely inside one char
-        if (region_type == kMTBlockWise) {
-          ret_p1.col = (colnr_T)(mb_prevptr(line, bd.textstart) - line) + 1;
-          ret_p1.coladd = bd.start_char_vcols - (bd.start_vcol - oa.start_vcol);
-        } else {
-          ret_p1.col = p1.col + 1;
-          ret_p1.coladd = p1.coladd;
-        }
-      } else if (region_type == kMTBlockWise && oa.start_vcol > bd.start_vcol) {
-        // blockwise selection entirely beyond end of line
-        ret_p1.col = MAXCOL;
-        ret_p1.coladd = oa.start_vcol - bd.start_vcol;
-        bd.is_oneChar = true;
-      } else if (bd.startspaces > 0) {
-        ret_p1.col = (colnr_T)(mb_prevptr(line, bd.textstart) - line) + 1;
-        ret_p1.coladd = bd.start_char_vcols - bd.startspaces;
-      } else {
-        ret_p1.col = bd.textcol + 1;
-        ret_p1.coladd = 0;
-      }
-
-      if (bd.is_oneChar) {  // selection entirely inside one char
-        ret_p2.col = ret_p1.col;
-        ret_p2.coladd = ret_p1.coladd + bd.startspaces + bd.endspaces;
-      } else if (bd.endspaces > 0) {
-        ret_p2.col = bd.textcol + bd.textlen + 1;
-        ret_p2.coladd = bd.endspaces;
-      } else {
-        ret_p2.col = bd.textcol + bd.textlen;
-        ret_p2.coladd = 0;
-      }
+      getregionpos_line(p2.lnum, p1, p2, inclusive, region_type, &oa,
+                        allow_eol, &unused, &end_pos);
     }
+    add_regionpos_range(rettv, start_pos, end_pos);
+  } else {
+    for (linenr_T lnum = p1.lnum; lnum <= p2.lnum; lnum++) {
+      pos_T ret_p1, ret_p2;
 
-    if (!allow_eol && ret_p1.col > line_len) {
-      ret_p1.col = 0;
-      ret_p1.coladd = 0;
-    } else if (ret_p1.col > line_len + 1) {
-      ret_p1.col = line_len + 1;
+      getregionpos_line(lnum, p1, p2, inclusive, region_type, &oa,
+                        allow_eol, &ret_p1, &ret_p2);
+      add_regionpos_range(rettv, ret_p1, ret_p2);
     }
-
-    if (!allow_eol && ret_p2.col > line_len) {
-      ret_p2.col = ret_p1.col == 0 ? 0 : line_len;
-      ret_p2.coladd = 0;
-    } else if (ret_p2.col > line_len + 1) {
-      ret_p2.col = line_len + 1;
-    }
-
-    ret_p1.lnum = lnum;
-    ret_p2.lnum = lnum;
-    add_regionpos_range(rettv, ret_p1, ret_p2);
   }
 
   // getregionpos() may change curbuf and virtual_op
@@ -3475,11 +3387,6 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (term) {
     if (text_locked()) {
       text_locked_msg();
-      shell_free_argv(argv);
-      return;
-    }
-    if (bt_cmdwin(curbuf)) {
-      emsg(_(e_cmdwin));
       shell_free_argv(argv);
       return;
     }
@@ -5150,7 +5057,17 @@ static void f_reltimestr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// Repeat the list "l" "n" times and set "rettv" to the new list.
 static void repeat_list(list_T *l, varnumber_T n, typval_T *rettv)
 {
-  tv_list_alloc_ret(rettv, (n > 0) * n * tv_list_len(l));
+  const int slen = tv_list_len(l);
+
+  tv_list_alloc_ret(rettv, (n > 0) * n * slen);
+  if (l == NULL || n <= 0 || slen == 0) {
+    return;
+  }
+
+  if (check_repeat_count(slen, n) == FAIL) {
+    return;
+  }
+
   while (n-- > 0) {
     tv_list_extend(rettv->vval.v_list, l, NULL);
   }
@@ -5167,10 +5084,13 @@ static void repeat_blob(typval_T *blob_tv, varnumber_T n, typval_T *rettv)
   }
 
   const int slen = blob->bv_ga.ga_len;
-  const int len = (int)(slen * n);
-  if (len <= 0) {
+  if (slen <= 0) {
     return;
   }
+  if (check_repeat_count(slen, n) == FAIL) {
+    return;
+  }
+  const int len = slen * (int)n;
 
   ga_grow(&rettv->vval.v_blob->bv_ga, len);
 
@@ -5188,7 +5108,7 @@ static void repeat_blob(typval_T *blob_tv, varnumber_T n, typval_T *rettv)
     return;
   }
 
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < (int)n; i++) {
     tv_blob_set_range(rettv->vval.v_blob, i * slen, (i + 1) * slen - 1, blob_tv);
   }
 }
@@ -5205,14 +5125,13 @@ static void repeat_string(typval_T *str_tv, varnumber_T n, typval_T *rettv)
   const char *const p = tv_get_string(str_tv);
 
   const size_t slen = strlen(p);
-  if (slen == 0) {
+  if (slen == 0 || n <= 0) {
+    return;
+  }
+  if (check_repeat_count((varnumber_T)slen, n) == FAIL) {
     return;
   }
   const size_t len = slen * (size_t)n;
-  // Detect overflow.
-  if (len / (size_t)n != slen) {
-    return;
-  }
 
   char *const r = xmallocz(len);
 
@@ -7153,7 +7072,7 @@ static void f_submatch(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   int retList = 0;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    retList = (int)tv_get_number_chk(&argvars[1], &error);
+    retList = (int)tv_get_bool_chk(&argvars[1], &error);
     if (error) {
       return;
     }
@@ -7502,7 +7421,7 @@ static void f_timer_pause(typval_T *argvars, typval_T *unused, EvalFuncData fptr
     return;
   }
 
-  int paused = (bool)tv_get_number(&argvars[1]);
+  bool paused = (bool)tv_get_bool(&argvars[1]);
   timer_T *timer = find_timer_by_nr(tv_get_number(&argvars[0]));
   if (timer != NULL) {
     if (!timer->paused && paused) {

@@ -60,20 +60,29 @@ function M.range(buf, ns, hlgroup, start, finish, opts)
 
   local v_maxcol = vim.v.maxcol
 
-  local pos1 = type(start) == 'string' and vim.fn.getpos(start)
-    or {
+  local pos1 --- @type [integer, integer, integer, integer]
+  if type(start) == 'string' then
+    pos1 = vim.fn.getpos(start)
+  else
+    pos1 = {
       buf,
       start[1] + 1,
       start[2] ~= -1 and start[2] ~= v_maxcol and start[2] + 1 or v_maxcol,
       0,
     }
-  local pos2 = type(finish) == 'string' and vim.fn.getpos(finish)
-    or {
+  end
+
+  local pos2 ---@type [integer, integer, integer, integer]
+  if type(finish) == 'string' then
+    pos2 = vim.fn.getpos(finish)
+  else
+    pos2 = {
       buf,
       finish[1] + 1,
-      finish[2] ~= -1 and start[2] ~= v_maxcol and finish[2] + 1 or v_maxcol,
+      finish[2] ~= -1 and finish[2] ~= v_maxcol and finish[2] + 1 or v_maxcol,
       0,
     }
+  end
 
   local buf_line_count = api.nvim_buf_line_count(buf)
   pos1[2] = math.min(pos1[2], buf_line_count)
@@ -94,15 +103,15 @@ function M.range(buf, ns, hlgroup, start, finish, opts)
     end
   end)
 
+  -- For non-blockwise selection, use a single extmark and only compute its bounds.
+  local bounds = regtype == 'v' or regtype == 'V'
   local region = vim.fn.getregionpos(pos1, pos2, {
     type = regtype,
     exclusive = not inclusive,
     eol = true,
+    bounds = bounds,
   })
-  -- For non-blockwise selection, use a single extmark.
-  if regtype == 'v' or regtype == 'V' then
-    --- @type [ [integer, integer, integer, integer], [integer, integer, integer, integer]][]
-    region = { { assert(region[1])[1], assert(region[#region])[2] } }
+  if bounds then
     local region1 = assert(region[1])
     if
       regtype == 'V'
@@ -147,7 +156,6 @@ function M.range(buf, ns, hlgroup, start, finish, opts)
   end
 end
 
----@private
 ---@class (private) vim.hl.OnEventState
 ---@field timer? uv.uv_timer_t Timer to clear the highlight.
 ---@field clear? fun() Function to clear the highlight immediately.
@@ -198,7 +206,9 @@ function M.hl_op(opts)
   local winid = api.nvim_get_current_win()
 
   local state = hl_op_state[state_key]
-  if state ~= nil and state.timer and not state.timer:is_closing() then
+  -- Multicursor cascade: accumulate per-cursor, don't cancel the previous event's highlight.
+  local cascading = api.nvim__mcursor_cascading()
+  if state ~= nil and state.timer and not state.timer:is_closing() and not cascading then
     state.timer:close()
     assert(state.clear)
     state.clear()
@@ -219,6 +229,7 @@ function M.hl_op(opts)
 end
 
 --- @deprecated Use |vim.hl.hl_op()| instead.
+--- @param opts? table
 function M.on_yank(opts)
   vim.deprecate('vim.hl.on_yank', 'vim.hl.hl_op', '0.14')
   return M.hl_op(opts)

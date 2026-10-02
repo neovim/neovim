@@ -1184,7 +1184,7 @@ void do_autocmd_progress(MsgID msg_id, HlMessage msg, MessageData *msg_data)
   apply_autocmds_group(EVENT_PROGRESS,
                        (msg_data && msg_data->source.size > 0) ? msg_data->source.data : "", NULL,
                        true,
-                       AUGROUP_ALL, NULL, NULL, &DICT_OBJ(data), false);
+                       AUGROUP_ALL, NULL, curwin, NULL, &DICT_OBJ(data), false);
   kv_destroy(messages);
 }
 
@@ -2254,7 +2254,7 @@ void msg_prt_line(const char *s, bool list)
         sc = curwin->w_p_lcs_chars.eol;
         hl_id = HLF_AT;
         s--;
-      } else if (c != NUL && (n = byte2cells(c)) > 1) {
+      } else if (c != NUL && (n = ascii2cells(c)) > 1) {
         n_extra = n - 1;
         p_extra = transchar_byte_buf(NULL, c);
         sc = schar_from_ascii(*p_extra++);

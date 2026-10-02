@@ -3119,7 +3119,7 @@ static void do_autocmd_winclosed(win_T *win)
   recursive = true;
   char winid[NUMBUFLEN];
   vim_snprintf(winid, sizeof(winid), "%d", win->handle);
-  apply_autocmds(EVENT_WINCLOSED, winid, winid, false, win->w_buffer);
+  apply_autocmds_win(EVENT_WINCLOSED, winid, winid, false, win->w_buffer, win);
   recursive = false;
 }
 
@@ -3795,7 +3795,7 @@ void frame_new_height(frame_T *topfrp, int height, bool topfirst, bool wfh, bool
     OptInt new_ch = MAX(min_set_ch, p_ch + topfrp->fr_height - height);
     if (new_ch != p_ch) {
       const OptInt save_ch = min_set_ch;
-      set_option_value(kOptCmdheight, INTEGER_OBJ(new_ch), 0);
+      set_option_value(kOptCmdheight, INTEGER_OBJ(new_ch), 0, true, NULL);
       min_set_ch = save_ch;
     }
     height = (int)MIN(ROWS_AVAIL, height);
@@ -4781,7 +4781,7 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
     OptInt new_ch = p_ch;
     p_ch = prev_p_ch;
     command_frame_height = false;
-    set_option_value(kOptCmdheight, INTEGER_OBJ(new_ch), 0);
+    set_option_value(kOptCmdheight, INTEGER_OBJ(new_ch), 0, true, NULL);
     command_frame_height = true;
   } else if (old_curtab != curtab) {
     tabpage_check_windows(old_curtab);
@@ -6084,17 +6084,21 @@ void may_trigger_win_scrolled_resized(void)
 
   // Save window info before autocmds since they can free windows
   char resize_winid[NUMBUFLEN];
+  win_T *resize_win = NULL;
   bufref_T resize_bufref;
   if (trigger_resize) {
-    vim_snprintf(resize_winid, sizeof(resize_winid), "%d", first_size_win->handle);
-    set_bufref(&resize_bufref, first_size_win->w_buffer);
+    resize_win = first_size_win;
+    vim_snprintf(resize_winid, sizeof(resize_winid), "%d", resize_win->handle);
+    set_bufref(&resize_bufref, resize_win->w_buffer);
   }
 
   char scroll_winid[NUMBUFLEN];
+  win_T *scroll_win = NULL;
   bufref_T scroll_bufref;
   if (trigger_scroll) {
-    vim_snprintf(scroll_winid, sizeof(scroll_winid), "%d", first_scroll_win->handle);
-    set_bufref(&scroll_bufref, first_scroll_win->w_buffer);
+    scroll_win = first_scroll_win;
+    vim_snprintf(scroll_winid, sizeof(scroll_winid), "%d", scroll_win->handle);
+    set_bufref(&scroll_bufref, scroll_win->w_buffer);
   }
 
   // If both are to be triggered do WinResized first.
@@ -6105,7 +6109,9 @@ void may_trigger_win_scrolled_resized(void)
     if (tv_dict_add_list(v_event, S_LEN("windows"), windows_list) == OK) {
       tv_dict_set_keys_readonly(v_event);
       buf_T *buf = bufref_valid(&resize_bufref) ? resize_bufref.br_buf : curbuf;
-      apply_autocmds(EVENT_WINRESIZED, resize_winid, resize_winid, false, buf);
+      // May have been freed by an earlier autocmd.
+      win_T *win = win_valid_any_tab(resize_win) ? resize_win : curwin;
+      apply_autocmds_win(EVENT_WINRESIZED, resize_winid, resize_winid, false, buf, win);
     }
     restore_v_event(v_event, &save_v_event);
   }
@@ -6120,7 +6126,9 @@ void may_trigger_win_scrolled_resized(void)
     tv_dict_unref(scroll_dict);
 
     buf_T *buf = bufref_valid(&scroll_bufref) ? scroll_bufref.br_buf : curbuf;
-    apply_autocmds(EVENT_WINSCROLLED, scroll_winid, scroll_winid, false, buf);
+    // May have been freed by the WinResized autocmds above.
+    win_T *win = win_valid_any_tab(scroll_win) ? scroll_win : curwin;
+    apply_autocmds_win(EVENT_WINSCROLLED, scroll_winid, scroll_winid, false, buf, win);
 
     restore_v_event(v_event, &save_v_event);
   }
@@ -7918,7 +7926,7 @@ void win_ui_flush(bool validate)
     }
   }
   // The popupmenu could also have moved or changed its comp_index
-  pum_ui_flush();
+  pum_pos_ui_flush(false);
 
   // And the message
   msg_ui_flush();

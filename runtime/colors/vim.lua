@@ -12,7 +12,9 @@
 vim.cmd.highlight('clear')
 vim.g.colors_name = 'vim'
 
-local hi = function(name, val)
+--- @param name string
+--- @param val vim.api.keyset.highlight
+local function hi(name, val)
   -- Force links
   val.force = true
 

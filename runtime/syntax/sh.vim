@@ -3,7 +3,7 @@
 " Maintainer:		This runtime file is looking for a new maintainer.
 " Previous Maintainers:	Charles E. Campbell
 " 		Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		2026 Aug 13 by Vim Project
+" Last Change:		2026 Sep 15 by Vim Project
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
@@ -341,7 +341,7 @@ if exists("b:is_kornshell") || exists("b:is_bash") || exists("b:is_posix")
 
     " Touch: {{{1
     " =====
-    syn match shTouch	'\<touch\>[^;#]*'	skipwhite nextgroup=shComment contains=shTouchCmd,shDoubleQuote,shSingleQuote,shDeref,shDerefSimple
+    syn match shTouch	'\<touch\>[^;#]*'	skipwhite nextgroup=shComment contains=shTouchCmd,shDoubleQuote,shSingleQuote,shDeref,shDerefSimple,shExpr
     syn match shTouchCmd	'\<touch\>'		contained
 endif
 

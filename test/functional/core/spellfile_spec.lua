@@ -122,6 +122,20 @@ describe('spellfile', function()
     api.nvim_set_option_value('spellfile', fname, {})
   end)
 
+  it('uses the current mkspellmem limits for each build', function()
+    local words = testdir .. '/words'
+    write_file(words, 'one\ntwo\nthree\n')
+    for _, case in ipairs({
+      { '16,16,1', 2 }, -- Compress while reading and at the end.
+      { '1000,50,10', 1 }, -- Compress only at the end.
+    }) do
+      api.nvim_set_option_value('mkspellmem', case[1], {})
+      local output = n.exec_capture('mkspell! ' .. testdir .. '/spell/test.spl ' .. words)
+      local _, count = output:gsub('Compressed case%-folded:', '')
+      eq(case[2], count)
+    end
+  end)
+
   describe('default location', function()
     it("is stdpath('data')/site/spell/en.utf-8.add", function()
       n.command('set spell')

@@ -64,7 +64,7 @@ static bool pending_mode_update = false;
 static handle_T cursor_grid_handle = DEFAULT_GRID_HANDLE;
 
 static PMap(uint32_t) ui_event_cbs = MAP_INIT;
-bool ui_cb_ext[kUIExtCount];  ///< Internalized UI capabilities.
+static bool ui_cb_ext[kUIExtCount];  ///< Internalized UI capabilities.
 
 static bool has_mouse = false;
 static int pending_has_mouse = -1;
@@ -220,7 +220,7 @@ void ui_refresh(void)
   // Reset 'cmdheight' for all tabpages when ext_messages toggles.
   if (had_message != ui_ext[kUIMessages]) {
     if (ui_refresh_cmdheight) {
-      set_option_value(kOptCmdheight, INTEGER_OBJ(had_message), 0);
+      set_option_value(kOptCmdheight, INTEGER_OBJ(had_message), 0, true, NULL);
       FOR_ALL_TABS(tp) {
         tp->tp_ch_used = had_message;
       }
@@ -327,11 +327,11 @@ void ui_busy_stop(void)
 /// val is one of the OptBoFlags values, e.g., kOptBoFlagOperator
 void vim_beep(unsigned val)
 {
-  called_vim_beep = true;
-
   if (emsg_silent != 0 || in_assert_fails) {
+    did_beep_silent++;
     return;
   }
+  did_beep++;
 
   if (!((bo_flags & val) || (bo_flags & kOptBoFlagAll))) {
     static int beeps = 0;

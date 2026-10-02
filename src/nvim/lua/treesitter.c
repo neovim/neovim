@@ -1588,9 +1588,9 @@ static int tslua_parse_query(lua_State *L)
   TSQuery *query = ts_query_new(lang, src, (uint32_t)len, &error_offset, &error_type);
 
   if (!query) {
-    char err_msg[IOSIZE];
-    query_err_string(src, (int)error_offset, error_type, err_msg, sizeof(err_msg));
-    return luaL_error(L, "%s", err_msg);
+    const CharBuf err = { (char[IOSIZE]){ 0 }, IOSIZE };
+    query_err_string(src, (int)error_offset, error_type, err);
+    return luaL_error(L, "%s", err.data);
   }
 
   TSQuery **ud = lua_newuserdata(L, sizeof(TSQuery *));  // [udata]
@@ -1618,8 +1618,8 @@ static const char *query_err_to_string(TSQueryError error_type)
   }
 }
 
-static void query_err_string(const char *src, int error_offset, TSQueryError error_type, char *err,
-                             size_t errlen)
+static void query_err_string(const char *src, int error_offset, TSQueryError error_type,
+                             CharBuf err)
 {
   int line_start = 0;
   int row = 0;
@@ -1644,10 +1644,10 @@ static void query_err_string(const char *src, int error_offset, TSQueryError err
   int column = error_offset - line_start;
 
   const char *type_msg = query_err_to_string(error_type);
-  snprintf(err, errlen, "Query error at %d:%d. %s", row + 1, column + 1, type_msg);
-  size_t offset = strlen(err);
-  errlen = errlen - offset;
-  err = err + offset;
+  snprintf(err.data, err.size, "Query error at %d:%d. %s", row + 1, column + 1, type_msg);
+  size_t offset = strlen(err.data);
+  err.size -= offset;
+  err.data += offset;
 
   // Error types that report names
   if (error_type == TSQueryErrorNodeType
@@ -1674,18 +1674,18 @@ static void query_err_string(const char *src, int error_offset, TSQueryError err
         c = suffix[++suffix_len];
       }
     }
-    snprintf(err, errlen, "\"%.*s\":\n", suffix_len, suffix);
-    offset = strlen(err);
-    errlen = errlen - offset;
-    err = err + offset;
+    snprintf(err.data, err.size, "\"%.*s\":\n", suffix_len, suffix);
+    offset = strlen(err.data);
+    err.size -= offset;
+    err.data += offset;
   }
 
   if (!error_line) {
-    snprintf(err, errlen, "Unexpected EOF\n");
+    snprintf(err.data, err.size, "Unexpected EOF\n");
     return;
   }
 
-  snprintf(err, errlen, "%.*s\n%*s^\n", error_line_len, error_line, column, "");
+  snprintf(err.data, err.size, "%.*s\n%*s^\n", error_line_len, error_line, column, "");
 }
 
 static TSQuery *query_check(lua_State *L, int index)

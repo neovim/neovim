@@ -462,15 +462,16 @@ reads back as the function (from Lua) or a `"<Lua …>"` hint (Vimscript/RPC).
 Setting the filetype
 
 :setf[iletype] [FALLBACK] {filetype}			*:setf* *:setfiletype*
-			Set the 'filetype' option to {filetype}, but only if
-			not done yet in a sequence of (nested) autocommands.
+			Set the 'filetype' option to {filetype}, unless it was
+			already set (non-empty) in a sequence of (nested)
+			autocommands.
 			This is short for: >
 				:if !did_filetype()
 				:  setlocal filetype={filetype}
 				:endif
-<			This command is used in a filetype.vim file to avoid
-			setting the 'filetype' option twice, causing different
-			settings and syntax files to be loaded.
+<			Used in a filetype.vim file to avoid setting the
+			'filetype' option twice, causing different settings
+			and syntax files to be loaded.
 
 			When the optional FALLBACK argument is present, a
 			later :setfiletype command will override the
@@ -2098,7 +2099,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'cursorline'* *'cul'* *'nocursorline'* *'nocul'*
 'cursorline' 'cul'	boolean	(default off)
 			local to window
-	Highlight the text line of the cursor with CursorLine |hl-CursorLine|.
+	Highlighting used for the line the cursor is on:
+
+	CursorLine		the text line |hl-CursorLine|
+	CursorLineFold		the fold column |hl-CursorLineFold|
+	CursorLineSign		the sign column |hl-CursorLineSign|
+	CursorLineNr		the line number, when 'cursorlineopt' contains
+				"number" |hl-CursorLineNr|
+
 	Useful to easily spot the cursor.  Will make screen redrawing slower.
 	When Visual mode is active the highlighting isn't used to make it
 	easier to see the selected text.
@@ -3183,6 +3191,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When set to an empty string, foldtext is disabled, and the line
 	is displayed normally with highlighting and no line wrapping.
 
+						*'follow'* *'nofollow'*
+'follow'		boolean	(default off)
+			local to buffer
+	Enables |multicursor| follow-mode: cursor-relative motions performed
+	by the primary cursor, cascade to all cursors |mcursor|.  Toggled by
+	|q=| (buffer-local).
+
 						*'formatexpr'* *'fex'*
 'formatexpr' 'fex'	string	(default "")
 			local to buffer
@@ -3887,36 +3902,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When the 'lisp' option is on the '-' character is always included.
 	This option also influences syntax highlighting, unless the syntax
 	uses |:syn-iskeyword|.
-
-						*'isprint'* *'isp'*
-'isprint' 'isp'		string	(default "@,161-255")
-			global
-	The characters given by this option are displayed directly on the
-	screen.  It is also used for "\p" in a |pattern|.  The characters from
-	space (ASCII 32) to '~' (ASCII 126) are always displayed directly,
-	even when they are not included in 'isprint' or excluded.  See
-	'isfname' for a description of the format of this option.
-
-	Non-printable characters are displayed with two characters:
-		  0 -  31	"^@" - "^_"
-		 32 - 126	always single characters
-		   127		"^?"
-		128 - 159	"~@" - "~_"
-		160 - 254	"| " - "|~"
-		   255		"~?"
-	Illegal bytes from 128 to 255 (invalid UTF-8) are
-	displayed as <xx>, with the hexadecimal value of the byte.
-	When 'display' contains "uhex" all unprintable characters are
-	displayed as <xx>.
-	The SpecialKey highlighting will be used for unprintable characters.
-	|hl-SpecialKey|
-
-	Multi-byte characters 256 and above are always included, only the
-	characters up to 255 are specified with this option.  When a character
-	is printable but it is not available in the current font, a
-	replacement character will be shown.
-	Unprintable and zero-width Unicode characters are displayed as <xxxx>.
-	There is no option to specify these characters.
 
 			*'joinspaces'* *'js'* *'nojoinspaces'* *'nojs'*
 'joinspaces' 'js'	boolean	(default off)
@@ -6592,6 +6577,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	      applied to StatusLineNC for the statusline of non-current
 	      windows.
 	      The number N must be between 1 and 9.  See |hl-User1..9|
+	#( -  Start of a highlight scope.  The exact highlighting before the
+	      scope is reset at the end.  No width fields allowed.
+	#) -  End of highlight scope.  No width fields allowed.
 
 	When displaying a flag, Vim removes the leading comma, if any, when
 	that flag comes right after plaintext.  This will make a nice display

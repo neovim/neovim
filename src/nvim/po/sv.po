@@ -4027,9 +4027,6 @@ msgstr "Avbruten"
 msgid "E10: \\ should be followed by /, ? or &"
 msgstr "E10: \\ borde följas av /, ? eller &"
 
-msgid "E11: Invalid in command-line window; :q<CR> closes the window"
-msgstr "E11: Ogiltigt i kommandoradsfönstret; :q<CR> stänger fönstret"
-
 msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
 msgstr ""
 "E12: Kommando inte tillåtet från exrc/vimrc i aktuell katalog eller "

@@ -149,12 +149,13 @@ function vim.gsplit(s, sep, opts)
   local empty_start = true -- Only empty segments seen so far.
 
   --- @param i integer?
-  --- @param j integer
+  --- @param j integer?
   --- @param ... unknown
   --- @return string
   --- @return ...
   local function _pass(i, j, ...)
     if i then
+      assert(j)
       assert(j + 1 > start, 'Infinite loop detected')
       local seg = s:sub(start, i - 1)
       start = j + 1
@@ -272,10 +273,10 @@ end
 --- Applies function `fn` to all values of table `t`, in `pairs()` iteration order (which is not
 --- guaranteed to be stable, even when the data doesn't change).
 ---
----@generic T
----@param fn fun(value: T): any Function
+---@generic T, R
+---@param fn fun(value: T): R Function
 ---@param t table<any, T> Table
----@return table : Table of transformed values
+---@return table<any, R> : Table of transformed values
 function vim.tbl_map(fn, t)
   vim.validate('fn', fn, 'callable')
   vim.validate('t', t, 'table')
@@ -343,6 +344,7 @@ function vim.tbl_contains(t, value, opts)
     vim.validate('value', value, 'callable')
     pred = value
   else
+    --- @param v any
     pred = function(v)
       return v == value
     end
@@ -457,7 +459,7 @@ function vim.list.unique(t, key)
   return t
 end
 
----@class vim.list.bisect.Opts
+---@class vim.list.bisect.Opts<T>
 ---@inlinedoc
 ---
 --- Start index of the list.
@@ -468,9 +470,10 @@ end
 --- (default: `#t + 1`)
 ---@field hi? integer
 ---
---- Optional, compare the return value instead of the {val} itself if provided.
---- If a string, index each value by this field name.
----@field key? string|fun(val: any): any
+--- Applied to {val} and the list elements being compared.
+--- If a string, index both by this field name. If a function, it must accept both
+--- {val} and the list elements and return mutually comparable keys.
+---@field key? (string & keyof T)|fun(val: T): any
 ---
 --- Specifies the search variant.
 ---   - "lower": returns the first position
@@ -480,12 +483,12 @@ end
 --- (default: `'lower'`)
 ---@field bound? 'lower' | 'upper'
 
----@generic T
+---@generic T, Q
 ---@param t T[]
----@param val T
+---@param val Q
 ---@param lo integer
 ---@param hi integer
----@param key_fn fun(val: any): any
+---@param key_fn fun(val: T|Q): any
 ---@return integer i in range such that `t[j]` < {val} for all j < i,
 ---                and `t[j]` >= {val} for all j >= i,
 ---                or return {hi} if no such index is found.
@@ -503,12 +506,12 @@ local function lower_bound(t, val, lo, hi, key_fn)
   return lo
 end
 
----@generic T
+---@generic T, Q
 ---@param t T[]
----@param val T
+---@param val Q
 ---@param lo integer
 ---@param hi integer
----@param key_fn fun(val: any): any
+---@param key_fn fun(val: T|Q): any
 ---@return integer i in range such that `t[j]` <= {val} for all j < i,
 ---                and `t[j]` > {val} for all j >= i,
 ---                or return {hi} if no such index is found.
@@ -532,7 +535,12 @@ end
 --- Use {bound} to determine whether to return the first or the last position,
 --- defaults to "lower", i.e., the first position.
 ---
---- NOTE: Behavior is undefined on unsorted lists!
+--- With {opts.key}, {val} may differ from the list elements, provided the key
+--- function accepts both. For a string key, that field must exist on both.
+--- A partial record is sufficient if it contains all fields used by the key.
+---
+--- NOTE: The values being compared must support `<`, and the list must be sorted
+--- by those values (after applying {opts.key}, if provided).
 ---
 --- Example:
 --- ```lua
@@ -560,10 +568,12 @@ end
 --- ```
 ---@since 14
 ---@generic T
----@param t T[] A comparable list.
+---@param t T[] A sorted list.
 ---@param val T The value to search.
----@param opts? vim.list.bisect.Opts
+---@param opts? vim.list.bisect.Opts<T>
 ---@return integer index serves as either the lower bound or the upper bound position.
+---@overload fun<T, Q>(t: T[], val: Q, opts: vim.list.bisect.Opts<T|Q> & { key: fun(val: T|Q): any }): integer
+---@overload fun<T: table, Q: table>(t: T[], val: Q, opts: vim.list.bisect.Opts<T|Q> & { key: string & keyof T & keyof Q }): integer
 function vim.list.bisect(t, val, opts)
   vim.validate('t', t, 'table')
   vim.validate('opts', opts, 'table', true)
@@ -593,6 +603,7 @@ end
 
 --- We only merge empty tables or tables that are not list-like (indexed by consecutive integers
 --- starting from 1)
+--- @param v any
 local function can_merge(v)
   return type(v) == 'table' and (vim.tbl_isempty(v) or not vim.islist(v))
 end
@@ -951,11 +962,13 @@ function vim.islist(t)
   return true
 end
 
+-- EmmyLua 0.25.1 cannot subtract unions, so return_cast only removes Lua nil on false.
 --- Tests if `t` is `nil` or |vim.NIL|.
 ---
 --- @since 15
 --- @param t? any
 --- @return boolean `true` if `nil` or |vim.NIL|, else `false`.
+--- @return_cast t nil|vim.NIL else -nil
 function vim.isnil(t)
   return t == nil or t == vim.NIL
 end
@@ -1108,6 +1121,8 @@ do
   --- @field [2] vim.validate.Validator Argument validator
   --- @field [3]? boolean|string Optional flag or error message
 
+  --- @param val any
+  --- @param t string
   local function is_type(val, t)
     return type(val) == t or (t == 'callable' and vim.is_callable(val))
   end
@@ -1131,6 +1146,7 @@ do
       end
     elseif vim.is_callable(validator) then
       -- Check user-provided validation function
+      ---@cast validator fun(v: any): boolean, string?
       local valid, opt_msg = validator(val)
       if not valid then
         local err_msg = ('%s: expected %s, got %s'):format(
@@ -1331,11 +1347,11 @@ end
 
 do
   ---@class vim.Ringbuf<T>
-  ---@field private _items table[]
+  ---@field private _items table<integer, T?>
   ---@field private _idx_read integer
   ---@field private _idx_write integer
   ---@field private _size integer
-  ---@overload fun(self): table?
+  ---@overload fun(self: vim.Ringbuf<T>): T?
   local Ringbuf = {}
 
   --- Clear all items
@@ -1346,7 +1362,6 @@ do
   end
 
   --- Adds an item, overriding the oldest item if the buffer is full.
-  ---@generic T
   ---@param item T
   function Ringbuf.push(self, item)
     self._items[self._idx_write] = item
@@ -1357,7 +1372,6 @@ do
   end
 
   --- Removes and returns the first unread item
-  ---@generic T
   ---@return T?
   function Ringbuf.pop(self)
     local idx_read = self._idx_read
@@ -1371,7 +1385,6 @@ do
   end
 
   --- Returns the first unread item without removing it
-  ---@generic T
   ---@return T?
   function Ringbuf.peek(self)
     if self._idx_read == self._idx_write then
@@ -1407,7 +1420,7 @@ do
   --- - |Ringbuf:clear()|
   ---
   ---@param size integer
-  ---@return vim.Ringbuf ringbuf
+  ---@return vim.Ringbuf<any> ringbuf
   function vim.ringbuf(size)
     local ringbuf = {
       _items = {},
@@ -1495,10 +1508,10 @@ end
 
 --- @nodoc
 --- @class vim.context.state
---- @field bo? table<string, any>
---- @field env? table<string, any>
---- @field go? table<string, any>
---- @field wo? table<string, any>
+--- @field bo table<string, any>
+--- @field env table<string, any>
+--- @field go table<string, any>
+--- @field wo table<string, any>
 
 local scope_map = { buf = 'bo', global = 'go', win = 'wo' }
 local scope_order = { 'o', 'wo', 'bo', 'go', 'env' }
@@ -1507,7 +1520,7 @@ local state_restore_order = { 'bo', 'wo', 'go', 'env' }
 --- Gets data about current state, enough to properly restore specified options/env/etc.
 --- @param context vim.context.mods
 --- @return vim.context.state
-local get_context_state = function(context)
+local function get_context_state(context)
   --- @type vim.context.state
   local res = { bo = {}, env = {}, go = {}, wo = {} }
 
@@ -1554,9 +1567,10 @@ end
 ---   Not triggering `OptionSet` seems to be a good idea, though. So probably
 ---   only moving context save and restore to lower level might resolve this.
 ---
+--- @generic R...
 --- @param context vim.context.mods
---- @param f function
---- @return any
+--- @param f fun(): R...
+--- @return R...
 function vim._with(context, f)
   vim.validate('context', context, 'table')
   vim.validate('f', f, 'function')
@@ -1674,6 +1688,7 @@ end
 --- @return T[]
 function vim._ensure_list(x)
   if type(x) == 'table' then
+    --- @cast x T[]
     return x
   end
   return { x }

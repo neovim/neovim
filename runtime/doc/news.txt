@@ -120,6 +120,8 @@ EDITOR
 • On Windows, the |trust| db now stores paths with "/" slashes. This means the
   trust store will be reset (one time).
 • `stdpath("log")` moved to `stdpath("state")/logs`.
+• An operator on a target that creates a Visual selection ("cgn") does not
+  change |'<| |'>|. |gv|
 • |cmdwin| (|q:|, |q/|, |q?|, |c_CTRL-F|):
   • Only supports one "cmdline level", not "infinite recursion".
   • Expr-register (|i_CTRL-R_=|, |c_CTRL-R_=|) no longer supports opening
@@ -133,6 +135,7 @@ EDITOR
     inoremap <Right> <C-o><Right>
 • |visual-repeat| is "semantic" instead of "fixed-size". See
   |visual-fixed-size| if you prefer Vim's "fixed-size" Visual-repeat.
+• |:diffget|, |:diffput| (|do|, |dp|) can be |.| repeated.
 • |Q| adds a |multicursor| instead of replaying the last recorded register.
   To get the old behavior: >lua
     vim.keymap.set('n', 'Q', function()
@@ -238,6 +241,7 @@ API
 • |nvim_set_option_value()| returns the new option value.
 • |nvim_create_autocmd()| is now |api-fast|, so it can be called from a fast
   event context (e.g. |vim.uv| callbacks).
+• |nvim_create_autocmd()| callback |event-args| provide `win`.
 
 BUILD
 
@@ -270,6 +274,14 @@ DIAGNOSTICS
 
 EDITOR
 
+• Multiple cursors (|multicursor|): edit in many places at once.
+  • Toggle cursors with |Q|, |<C-LeftMouse>|, or via API (the
+    "nvim.multicursor" extmarks namespace).
+  • Toggle "follow mode" with |q=|.
+  • Clear cursors with |CTRL-L|, restore them with |gQ|.
+  • |zq| places a cursor at all targets of a motion. E.g. "zqgn" places at
+    every match (and "gv" selects the matches), "Vzqw" places at every
+    Visual-selected word.
 • |:bcd| sets a buffer-local directory. |getcwd()| and |haslocaldir()| take
   `bufnr` as a third parameter.
 • |:lcd!| |:tcd!| |:bcd!| unsets the directory of that scope.
@@ -305,6 +317,11 @@ EDITOR
   real-time, instead of only on |FocusGained| or |:checktime|.
 • During |complete()|-triggered completion, CTRL-N and CTRL-P are now subject
   to insert-mode mappings.
+• |undo| restores the cursor to its original position ("diw", "atest<Esc>",
+  "d^", …), instead of jumping to the start of the changed text.
+• |undo| no longer restores the old (wrong) position of a mark that you moved
+  (|m|, |:mark|) later. The mark shifts with the text it was moved to, the
+  same as a mark the change never touched.
 • Multibyte characters, translated by 'langmap', now invoke correct
   mappings.
   Example: >vim
@@ -339,10 +356,15 @@ LSP
     "preselect". https://microsoft.github.io/language-server-protocol/specification/#completionClientCapabilities
   • `textDocument/foldingRange` |vim.lsp.foldtext()| highlights collapsed text.
     https://microsoft.github.io/language-server-protocol/specification/#textDocument_foldingRange
-  • Completon supports `CompletionList.applyKind`: a server can ask for
+  • Completion supports `CompletionList.applyKind`: a server can ask for
     `commitCharacters` and `data` from `itemDefaults` to be merged with the
     item's own values instead of replacing them.
     https://microsoft.github.io/language-server-protocol/specification/#completionItemApplyKinds
+  • Completion supports a `completionProvider` registered with
+    `client/registerCapability` instead of declared at `initialize`. Nvim does
+    not advertise `completion.dynamicRegistration` by default; set it in
+    |vim.lsp.Config| `capabilities` to opt in.
+    https://microsoft.github.io/language-server-protocol/specification/#client_registerCapability
 • `:checkhealth vim.lsp` highlights the "current buffer".
 • |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|,
   |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()|
@@ -360,9 +382,17 @@ LSP
 • |vim.lsp.formatexpr()| now falls back to `textDocument/formatting` if the whole
   buffer is being formatted and the language server doesn't support
   `textDocument/rangeFormatting`.
+• |vim.lsp.buf.format()| respects an explicit `timeout_ms` with `async=true`.
+  The timeout applies per client. Async requests have no timeout when the
+  option is omitted.
+• Support for `workspace/foldingRange/refresh`:
+  https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#workspace_foldingRange_refresh
 
 LUA
 
+• |lua-async|: `vim.async` provides structured concurrency primitives for Lua
+  code, including task handles, await helpers, cooperative cancellation,
+  completion-order iteration, and semaphores.
 • |vim.ui.img| can display images. Use `:checkhealth vim.health` to confirm
   your terminal supports it.
 • |vim.net.request()| can specify custom headers by passing `opts.headers`.
@@ -418,6 +448,7 @@ OPTIONS
   The `%=` item is supported within item groups to separate alignment sections
   within the containing group until its `minwid` is reached. The truncation
   of an item group to its `maxwid` can be controlled with the `%<` item.
+  The new %#(...%#) item denotes a highlight scope.
   The same applies to 'rulerformat', 'statuscolumn', 'tabline', 'winbar',
   'titlestring', and 'iconstring'.
 • 'winpinned' prevents window from closing unless specifically targeted.
@@ -428,6 +459,8 @@ OPTIONS
 
 PERFORMANCE
 
+• LSP shares identical file watcher registrations, reducing startup work in
+  large workspaces.
 • |treesitter-highlight| performance on large injection-heavy files improves
   by 50% to 100% by reusing edited child-tree ranges.
 • Nvim architecture allows pure-Lua implementations of some `vim.fn`
@@ -438,6 +471,10 @@ PERFORMANCE
   memory reallocation during each data reset.
 • RPC client avoids string allocations when parsing Content-Length messages.
 • LSP: "overscan" semantic_token range requests to avoid flicker.
+• |vim.hl.range()| and |vim.hl.hl_op()| are faster for large characterwise and
+  linewise regions.
+• The display of multibyte text with grapheme clusters has been optimized,
+  by calculating byte length and cell width of clusters in a single loop.
 
 PLUGINS
 
@@ -457,6 +494,9 @@ TERMINAL
 
 TREESITTER
 
+• |vim.treesitter.get_captures()| returns highlight captures at a given position,
+  on a whole line, or overlapping a range. It replaces
+  |vim.treesitter.get_captures_at_pos()|.
 • |v_]N| |v_[N| expand selection to sibling treesitter node.
 • |treesitter-highlight-conceal| can be removed by adding a `@noconceal`
   capture.
@@ -482,6 +522,9 @@ UI
   • |:recover|
   • |:tselect|
   • |z=| (spell suggest)
+• The |ui2| dialog window scrolls with the mouse wheel, by 'mousescroll'
+  lines.
+• The |ui2| `[+x]` "spill" indicator is highlighted with |hl-MoreMsg|.
 
 VIMSCRIPT
 
@@ -503,8 +546,11 @@ CHANGED FEATURES                                                 *news-changed*
 These existing features changed their behavior.
 
 • `nvim_exec_autocmds({buf=…})` runs in the context of the target buffer.
+• |SessionLoadPost| is no longer included in views saved by |:mkview|.
 • |OptionSet| is no longer triggered during startup by automatic
   |'background'| detection.
+• |SessionWritePre| and |SessionWritePost| are no longer triggered by
+  |:mkview|, |:mkvimrc|, or |:mkexrc|.
 • Editing a local directory now shows its contents in a `filetype=directory`
   buffer. See |dir|.
 • |:Open| with no arguments uses the current file.
@@ -527,13 +573,24 @@ These existing features changed their behavior.
   `opts.plain=true` and now does not expand leading tildes ("~") in addition
   to environment variables ("expand_env" is still accepted, for backwards
   compatibility).
-• |undo| no longer restores the old (wrong) position of a mark that you moved
-  (|m|, |:mark|) later. The mark shifts with the text it was moved to, the
-  same as a mark the change never touched.
 • |:helptags| finds help tags with the "vimdoc" |treesitter| parser (and thus
   requires it to be installed).
 • `:helptags ALL` reports |E152| for "doc" directories it cannot write,
   instead of silently skipping them.
+• The highlighting groups |hl-CursorLineFold| and |hl-CursorLineSign| are
+  always used when 'cursorline' is set.
+• |vim.lsp.util.apply_text_edits()| accepts `opts.keep_cursor`, to hold the
+  cursor on the text it is on while edits move around it.
+• 'tagfunc' is now also used for :tag completion.
+• Some character clusters are restored to occupy two cells like they
+  did prior to Nvim 0.11. These include Thai syllables like สำ and
+  half-width Katakana with voicing marks ｶﾞ. The TUI renders these in
+  a safe way which also supports terminals which consider these to be
+  single-width.
+• in script mode |-l|, |print()| now behaves more similar to standalone
+  lua. Printing is done to stdout, and empty lines are not stripped.
+  No translation of special characters is done, so escape sequences
+  can be used when printing to a terminal.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

@@ -4177,6 +4177,35 @@ describe('vim.diagnostic', function()
       eq(result[1], result[2])
     end)
 
+    it('uses the start position when quickfix coordinates are absent', function()
+      eq(
+        {
+          {
+            lnum = 0,
+            col = 0,
+            end_lnum = 0,
+            end_col = 0,
+            severity = vim.diagnostic.severity.ERROR,
+            message = 'missing coordinates',
+          },
+          {
+            lnum = 3,
+            col = 2,
+            end_lnum = 3,
+            end_col = 2,
+            severity = vim.diagnostic.severity.ERROR,
+            message = 'missing end coordinates',
+          },
+        },
+        exec_lua(function()
+          return vim.diagnostic.fromqflist({
+            { valid = 1, nr = 0, text = 'missing coordinates' },
+            { valid = 1, nr = 0, lnum = 4, col = 3, text = 'missing end coordinates' },
+          })
+        end)
+      )
+    end)
+
     it('merge_lines=true merges continuation lines', function()
       local function get_fromqflist(merge_lines)
         return exec_lua(function(merge_lines_)
@@ -4277,7 +4306,7 @@ describe('vim.diagnostic', function()
       end)
 
       eq(
-        '%#DiagnosticSignError#E:1 %#DiagnosticSignWarn#W:2 %#DiagnosticSignInfo#I:3 %#DiagnosticSignHint#H:4%##',
+        '%#(%$DiagnosticSignError$E:1%#) %#(%$DiagnosticSignWarn$W:2%#) %#(%$DiagnosticSignInfo$I:3%#) %#(%$DiagnosticSignHint$H:4%#)',
         result
       )
 
@@ -4311,7 +4340,7 @@ describe('vim.diagnostic', function()
         return vim.diagnostic.status()
       end)
 
-      eq('%#DiagnosticSignError#⨯:1 %#DiagnosticSignWarn#⚠︎:1%##', result)
+      eq('%#(%$DiagnosticSignError$⨯:1%#) %#(%$DiagnosticSignWarn$⚠︎:1%#)', result)
     end)
 
     it('works when signs are disabled', function()
@@ -4326,7 +4355,7 @@ describe('vim.diagnostic', function()
         return vim.diagnostic.status()
       end)
 
-      eq('%#DiagnosticSignError#E:1 %#DiagnosticSignWarn#W:1%##', result)
+      eq('%#(%$DiagnosticSignError$E:1%#) %#(%$DiagnosticSignWarn$W:1%#)', result)
     end)
 
     it('uses format function diagnostic.config().status.format', function()
@@ -4365,7 +4394,7 @@ describe('vim.diagnostic', function()
         return vim.diagnostic.status()
       end)
 
-      eq('%#ERROR#EE 1 %#WARN#WW 1 %#INFO#II 0 %#HINT#HH 0%##', result)
+      eq('%#(%#ERROR#EE 1 %#WARN#WW 1 %#INFO#II 0 %#HINT#HH 0%#)', result)
     end)
   end)
 

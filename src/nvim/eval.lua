@@ -1693,7 +1693,7 @@ M.funcs = {
       	echo cosh(0.5)
       <	1.127626 >vim
       	echo cosh(-0.5)
-      <	-1.127626
+      <	1.127626
 
     ]=],
     func_float = 'cosh',
@@ -1952,10 +1952,11 @@ M.funcs = {
   did_filetype = {
     desc = [=[
       Returns |TRUE| when autocommands are being executed and the
-      FileType event has been triggered at least once.  Can be used
-      to avoid triggering the FileType event again in the scripts
-      that detect the file type. |FileType|
+      FileType event triggered at least once for a buffer with
+      a non-empty 'filetype'.  Can be used to avoid triggering
+      the FileType event again in the |ftdetect| scripts. |FileType|
       Returns |FALSE| when `:setf FALLBACK` was used.
+
       When editing another file, the counter is reset, thus this
       really checks if the FileType event has been triggered for the
       current buffer.  This allows an autocommand that starts
@@ -2516,7 +2517,7 @@ M.funcs = {
     name = 'expand',
     params = {
       { 'string', 'string' },
-      { 'nosuf', 'boolean' },
+      { 'nosuf', 'boolean?' },
       { 'list', 'true|number|string|table' },
     },
     returns = 'string|string[]',
@@ -4317,6 +4318,17 @@ M.funcs = {
       <When {lnum} is a number smaller than 1 or bigger than the
       number of lines in the buffer, an empty string is returned.
 
+    ]=],
+    name = 'getline',
+    params = { { 'lnum', 'integer|string' } },
+    signature = 'getline({lnum})',
+    returns = 'string',
+    see_lua = { '|nvim_get_current_line()|', '|nvim_buf_get_lines()|' },
+  },
+  getline__1 = {
+    args = { 2 },
+    base = 1,
+    desc = [=[
       When {end} is given the result is a |List| where each item is
       a line from the current buffer in the range {lnum} to {end},
       including line {end}.
@@ -4332,18 +4344,10 @@ M.funcs = {
       |getbufoneline()|
     ]=],
     name = 'getline',
-    params = { { 'lnum', 'integer|string' }, { 'end', 'nil|false' } },
-    signature = 'getline({lnum} [, {end}])',
-    returns = 'string',
-    see_lua = { '|nvim_get_current_line()|', '|nvim_buf_get_lines()|' },
-  },
-  getline__1 = {
-    args = { 2 },
-    base = 1,
-    name = 'getline',
-    params = { { 'lnum', 'integer|string' }, { 'end', 'true|number|string|table' } },
-    returns = 'string|string[]',
-    see_lua = { '|nvim_get_current_line()|', '|nvim_buf_get_lines()|' },
+    params = { { 'lnum', 'integer|string' }, { 'end', 'integer|string' } },
+    signature = 'getline({lnum}, {end})',
+    returns = 'string[]',
+    see_lua = { '|nvim_buf_get_lines()|' },
   },
   getloclist = {
     args = { 1, 2 },
@@ -4355,7 +4359,15 @@ M.funcs = {
       For a location list window, the displayed location list is
       returned.  For an invalid {nr}, an empty list is returned.
       Otherwise, same as |getqflist()|.
-
+    ]=],
+    name = 'getloclist',
+    params = { { 'nr', 'integer' } },
+    returns = 'vim.fn.getqflist.ret.item[]',
+    signature = 'getloclist({nr})',
+  },
+  getloclist__1 = {
+    args = { 2 },
+    desc = [=[
       If the optional {what} dictionary argument is supplied, then
       returns the items listed in {what} as a dictionary.  Refer to
       |getqflist()| for the supported items in {what}.
@@ -4380,8 +4392,9 @@ M.funcs = {
       <
     ]=],
     name = 'getloclist',
-    params = { { 'nr', 'integer' }, { 'what', 'table' } },
-    signature = 'getloclist({nr} [, {what}])',
+    params = { { 'nr', 'integer' }, { 'what', 'vim.fn.getloclist.what' } },
+    returns = 'vim.fn.getloclist.ret',
+    signature = 'getloclist({nr}, {what})',
   },
   getmarklist = {
     args = { 0, 1 },
@@ -4594,8 +4607,8 @@ M.funcs = {
       	type	type of the error, 'E', '1', etc.
       	valid	|TRUE|: recognized error message
       	user_data
-      		custom data associated with the item, can be
-      		any type.
+      		any type.  This entry is present only when
+      		user data was set for this item.
 
       When there is no error list or it's empty, an empty list is
       returned.  Quickfix list entries with a non-existing buffer
@@ -4610,6 +4623,15 @@ M.funcs = {
       	   echo bufname(d.bufnr) ':' d.lnum '=' d.text
       	endfor
       <
+    ]=],
+    name = 'getqflist',
+    params = {},
+    returns = 'vim.fn.getqflist.ret.item[]',
+    signature = 'getqflist()',
+  },
+  getqflist__1 = {
+    args = { 1 },
+    desc = [=[
       If the optional {what} dictionary argument is supplied, then
       returns only the items listed in {what} as a dictionary.  The
       following string items are supported in {what}:
@@ -4637,6 +4659,11 @@ M.funcs = {
       	qfbufnr number of the buffer displayed in the quickfix
       		window.  Returns 0 if the quickfix buffer is
       		not present.  See |quickfix-buffer|.
+      	quickfixtextfunc
+      		function to get the text to display in the
+      		quickfix window.  Returns an empty string if
+      		this function is not set for the list.  See
+      		|quickfix-window-function|.
       	size	number of entries in the quickfix list
       	title	get the list title |quickfix-title|
       	winid	get the quickfix |window-ID|
@@ -4668,6 +4695,9 @@ M.funcs = {
       		0
       	qfbufnr	number of the buffer displayed in the quickfix
       		window.  If not present, set to 0.
+      	quickfixtextfunc
+      		'quickfixtextfunc' setting of the list.  If
+      		not present, set to "".
       	size	number of entries in the quickfix list.  If
       		not present, set to 0.
       	title	quickfix list title text.  If not present, set
@@ -4681,8 +4711,9 @@ M.funcs = {
       <
     ]=],
     name = 'getqflist',
-    params = { { 'what', 'table' } },
-    signature = 'getqflist([{what}])',
+    params = { { 'what', 'vim.fn.getqflist.what' } },
+    returns = 'vim.fn.getqflist.ret',
+    signature = 'getqflist({what})',
   },
   getreg = {
     args = { 0, 3 },
@@ -4831,7 +4862,7 @@ M.funcs = {
       describing the buffer text segments bound by {pos1} and
       {pos2}.
       The segments are a pair of positions for every line: >
-      	[[{start_pos}, {end_pos}], ...]
+      	[[{startpos}, {endpos}], ...]
       <
       The position is a |List| with four numbers:
           [bufnum, lnum, col, off]
@@ -4863,12 +4894,37 @@ M.funcs = {
       			beyond the end of a line, a "col"
       			value of 0 is used for both positions.
       			(default: |FALSE|)
+
+      	bounds		If |TRUE|, return only the outer
+      			bounds of the region as a single
+      			pair: >
+      				[[{startpos}, {endpos}]]
+      <			{startpos} is the start position on
+      			the first line of the region and
+      			{endpos} the end position on its last
+      			line.  The lines in between are not
+      			visited, which is much faster for a
+      			large region.
+      			(default: |FALSE|)
+
+      Using "bounds" with the same {opts} is equivalent to taking
+      the outer positions of the full result: >vim
+      	let full = getregionpos(pos1, pos2, opts)
+      	let bounds = [[full[0][0], full[-1][1]]]
+      <When the full result is empty, e.g. because {pos1} and {pos2}
+      are in different buffers, the result is empty as well.
+      Note that the two positions then come from different lines, so
+      they describe a diagonal of the region and not its shape.  For
+      a blockwise region they are the start of the first line and
+      the end of the last line, not the corners of the block.
+      Likewise, when the first line is empty and "eol" is |FALSE|,
+      {startpos} has a "col" of 0 while {endpos} may not.
     ]=],
     name = 'getregionpos',
     params = {
       { 'pos1', '[integer, integer, integer, integer]' },
       { 'pos2', '[integer, integer, integer, integer]' },
-      { 'opts', '{type?:string, exclusive?:boolean, eol?:boolean}' },
+      { 'opts', '{type?:string, exclusive?:boolean, eol?:boolean, bounds?:boolean}' },
     },
     returns = '[ [integer, integer, integer, integer], [integer, integer, integer, integer] ][]',
     signature = 'getregionpos({pos1}, {pos2} [, {opts}])',
@@ -5525,7 +5581,7 @@ M.funcs = {
       Obsolete name for |hlexists()|.
     ]=],
     func = 'f_hlexists',
-    params = { { 'name', 'string' } },
+    params = { { 'name', 'string|number|boolean|nil' } },
     signature = 'highlight_exists({name})',
     see_lua = { '|nvim_get_hl()|' },
   },
@@ -5672,7 +5728,7 @@ M.funcs = {
 
     ]=],
     name = 'hlexists',
-    params = { { 'name', 'string' } },
+    params = { { 'name', 'string|number|boolean|nil' } },
     returns = '0|1',
     signature = 'hlexists({name})',
     see_lua = { '|nvim_get_hl()|' },
@@ -8548,7 +8604,7 @@ M.funcs = {
       <      1.41
 
       You will get an overflow error |E1510|, when the field-width
-      or precision will result in a string longer than 1 MB
+      or precision will result in a string longer than 1 MiB
       (1024*1024 = 1048576) chars.
 
       					*E1500*
@@ -10156,6 +10212,8 @@ M.funcs = {
       through the text to check if the cell widths of your terminal
       match with what Vim knows about each emoji.  If it doesn't
       look right you need to adjust the {list} argument.
+
+      |getcellwidths()| can be used to get the overrides later.
     ]=],
     name = 'setcellwidths',
     params = { { 'list', 'any[]' } },
@@ -10534,7 +10592,10 @@ M.funcs = {
       		call setqflist([], 'r')
       <
       'u'	Like 'r', but tries to preserve the current selection
-      	in the quickfix list.
+      	in the quickfix list.  The entry nearest to the
+      	previously selected one becomes the current entry.
+      	Proximity is determined by comparing the file, then
+      	the line number and then the column number.
       'f'	All the quickfix lists in the quickfix stack are
       	freed.
 
@@ -12256,7 +12317,7 @@ M.funcs = {
     base = 1,
     desc = [=[
       Translates all unprintable characters in {string} into
-      printable characters 'isprint', like they are shown in a
+      printable characters, like they are shown in a
       window.  Example: >vim
       	echo strtrans(@a)
       <This displays a newline in register a as "^@" instead of

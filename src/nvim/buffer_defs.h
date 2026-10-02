@@ -9,6 +9,7 @@
 #include "nvim/mapping_defs.h"
 #include "nvim/marktree_defs.h"
 #include "nvim/memline_defs.h"
+#include "nvim/normal_defs.h"
 #include "nvim/option_defs.h"
 #include "nvim/os/fs_defs.h"
 #include "nvim/statusline_defs.h"
@@ -65,7 +66,7 @@ typedef struct {
 #define BF_NEW          0x10    // file didn't exist when editing started
 #define BF_NEW_W        0x20    // Warned for BF_NEW and file created
 #define BF_READERR      0x40    // got errors while reading the file
-#define BF_DUMMY        0x80    // dummy buffer, only used internally
+#define BF_DUMMY        0x80    // Internal-only dummy buffer.
 #define BF_SYN_SET      0x200   // 'syntax' option was set
 
 // Mask to check for flags that prevent normal writing
@@ -314,6 +315,8 @@ typedef struct {
   // b_sst_array        pointer to an array of synstate_T
   // b_sst_len          number of entries in b_sst_array[]
   // b_sst_first        pointer to first used entry in b_sst_array[] or NULL
+  // b_sst_search       cached entry near the last accessed line, used as a
+  //                    start point for forward lookups, or NULL
   // b_sst_firstfree    pointer to first free entry in b_sst_array[] or NULL
   // b_sst_freecount    number of free entries in b_sst_array[]
   // b_sst_check_lnum   entries after this lnum need to be checked for
@@ -321,6 +324,7 @@ typedef struct {
   synstate_T *b_sst_array;
   int b_sst_len;
   synstate_T *b_sst_first;
+  synstate_T *b_sst_search;
   synstate_T *b_sst_firstfree;
   int b_sst_freecount;
   linenr_T b_sst_check_lnum;
@@ -340,7 +344,7 @@ typedef struct {
   char *b_p_spo;              // 'spelloptions'
   unsigned b_p_spo_flags;      // 'spelloptions' flags
   int b_cjk;                  // all CJK letters as OK
-  uint8_t b_syn_chartab[32];  // syntax iskeyword option
+  uint64_t b_syn_chartab[4];  // syntax iskeyword option
   char *b_syn_isk;            // iskeyword option
 } synblock_T;
 
@@ -463,13 +467,13 @@ struct file_buffer {
   // bitset with 4*64=256 bits: 1 bit per character 0-255.
   uint64_t b_chartab[4];
 
-  // Table used for mappings local to a buffer.
+  // Buffer-local mappings.
   mapblock_T *(b_maphash[MAX_MAPHASH]);
-
-  // First abbreviation local to a buffer.
+  // Buffer-local abbreviations.
   mapblock_T *b_first_abbr;
-  // User commands local to the buffer.
+  // Buffer-local user commands.
   garray_T b_ucmds;
+
   // start and end of an operator, also used for '[ and ']
   pos_T b_op_start;
   pos_T b_op_start_orig;  // used for Ins.start_orig
@@ -573,6 +577,7 @@ struct file_buffer {
   char *b_p_fenc;               ///< 'fileencoding'
   char *b_p_ff;                 ///< 'fileformat'
   char *b_p_ft;                 ///< 'filetype'
+  int b_p_follow;               ///< 'follow'
   char *b_p_fo;                 ///< 'formatoptions'
   char *b_p_flp;                ///< 'formatlistpat'
   int b_p_inf;                  ///< 'infercase'

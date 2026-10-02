@@ -21,6 +21,7 @@ end
 --- @return fun(d: vim.Diagnostic):boolean
 function M.severity_predicate(filter)
   if type(filter) ~= 'table' then
+    --- @cast filter vim.diagnostic.Severity
     local severity0 = M.to_severity(filter)
     --- @param d vim.Diagnostic
     return function(d)
@@ -67,10 +68,10 @@ end
 ---
 --- @param str string String to parse diagnostics from.
 --- @param pat string Lua pattern with capture groups.
---- @param groups string[] List of fields in a |vim.Diagnostic| structure to associate with captures from {pat}.
+--- @param groups string[] List of fields in a |vim.Diagnostic.Set| structure to associate with captures from {pat}.
 --- @param severity_map table? A table mapping the severity field from {groups} with an item from |vim.diagnostic.severity|.
 --- @param defaults table? Table of default values for any fields not listed in {groups}.
---- @return vim.Diagnostic?
+--- @return vim.Diagnostic.Set?
 function M.match(str, pat, groups, severity_map, defaults)
   vim.validate('str', str, 'string')
   vim.validate('pat', pat, 'string')
@@ -98,7 +99,7 @@ function M.match(str, pat, groups, severity_map, defaults)
     end
   end
 
-  diagnostic = vim.tbl_extend('keep', diagnostic, defaults or {}) --- @type vim.Diagnostic
+  diagnostic = vim.tbl_extend('keep', diagnostic, defaults or {}) --- @type vim.Diagnostic.Set
   diagnostic.severity = diagnostic.severity or severity.ERROR
   diagnostic.col = diagnostic.col or 0
   diagnostic.end_lnum = diagnostic.end_lnum or diagnostic.lnum

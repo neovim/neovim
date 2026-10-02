@@ -34,6 +34,14 @@ describe('luacats grammar', function()
     desc = 'this is a description',
   })
 
+  test(
+    '@overload fun<T, Q>(opts: vim.list.bisect.Opts<T|Q> & { key: string & keyof T & keyof Q }): integer',
+    {
+      kind = 'overload',
+      type = 'fun<T, Q>(opts: vim.list.bisect.Opts<T|Q> & { key: string & keyof T & keyof Q }): integer',
+    }
+  )
+
   test('@param hello vim.type?|string? this is a description', {
     kind = 'param',
     name = 'hello',
@@ -244,6 +252,8 @@ describe('luacats grammar', function()
     { 'number[][][]' },
     { 'number[][]?' },
     { 'string|integer[][]?' },
+    { 'vim.type & { key: string|function }' },
+    { '(vim.type & { key: string })|nil' },
 
     -- tuples
     { '[string]' },

@@ -300,8 +300,11 @@ If you need to modify or debug the documentation flow, these are the main files:
 
 ### Lua docstrings
 
-Use [LuaLS] annotations in Lua docstrings to annotate parameter types, return
+Use [LuaCATS] annotations in Lua docstrings to annotate parameter types, return
 types, etc. See [:help dev-lua-doc][dev-lua-doc].
+
+Run `make emmylua-check` to check the runtime with [EmmyLua]. The build downloads
+the pinned checker automatically. Settings are in `.emmyrc.json`.
 
 Third-party dependencies
 ------------------------
@@ -353,7 +356,8 @@ as context, use the `-W` argument as well.
 [conventional_commits]: https://www.conventionalcommits.org
 [dev-doc-guide]: https://neovim.io/doc/user/dev.html#dev-doc
 [dev-lua-doc]: https://neovim.io/doc/user/dev.html#dev-lua-doc
-[LuaLS]: https://luals.github.io/wiki/annotations/
+[LuaCATS]: https://luals.github.io/wiki/annotations/
+[EmmyLua]: https://github.com/EmmyLuaLs/emmylua-analyzer-rust
 [gcc-warnings]: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
 [gh]: https://cli.github.com/
 [git-bisect]: http://git-scm.com/book/en/v2/Git-Tools-Debugging-with-Git
@@ -362,7 +366,6 @@ as context, use the `-W` argument as well.
 [github-issues]: https://github.com/neovim/neovim/issues
 [include-what-you-use-install]: https://github.com/include-what-you-use/include-what-you-use#how-to-install
 [include-what-you-use]: https://github.com/include-what-you-use/include-what-you-use#using-with-cmake
-[lua-language-server]: https://github.com/sumneko/lua-language-server/
 [nvim-lspconfig/clangd]: https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#clangd
 [pr-draft]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request
 [pr-ready]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request

@@ -47,6 +47,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
+#include "nvim/mcursor.h"
 #include "nvim/memfile.h"
 #include "nvim/memfile_defs.h"
 #include "nvim/memline.h"
@@ -1914,12 +1915,19 @@ failed:
       apply_autocmds_exarg(EVENT_FILTERREADPOST, NULL, sfname,
                            false, curbuf, eap);
     } else if (newfile || (read_buffer && sfname != NULL)) {
-      apply_autocmds_exarg(EVENT_BUFREADPOST, NULL, sfname,
-                           false, curbuf, eap);
+      // 'filetype' detection is triggered by BufReadPost.
+      bool did_bufrp = apply_autocmds_exarg(EVENT_BUFREADPOST, NULL, sfname, false, curbuf, eap);
+
       if (!curbuf->b_au_did_filetype && *curbuf->b_p_ft != NUL) {
         // EVENT_FILETYPE was not triggered but the buffer already has a
         // filetype.  Trigger EVENT_FILETYPE using the existing filetype.
         apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname, true, curbuf);
+      }
+
+      if (!did_bufrp && *curbuf->b_p_ft == NUL && augroup_exists("filetypedetect")) {
+        // BufReadPost was skipped, and 'filetype' is empty. Retry filetype-detection now.
+        apply_autocmds_group(EVENT_BUFREADPOST, sfname, NULL, true, augroup_find("filetypedetect"),
+                             curbuf, curwin, NULL, NULL, false);
       }
     } else {
       apply_autocmds_exarg(EVENT_FILEREADPOST, sfname, sfname,
@@ -2364,48 +2372,59 @@ static char *check_for_bom(const char *p_in, int size, int *lenp, int flags)
 ///
 /// For buffers that have buftype "nofile" or "scratch": never change the file
 /// name.
-void shorten_buf_fname(buf_T *buf, char *dirname, int force)
+///
+/// @return  True if `b_fname` changed.
+bool shorten_buf_fname(buf_T *buf, char *dirname, int force)
 {
   if (buf->b_fname == NULL
       || bt_nofilename(buf)
       || path_with_url(buf->b_fname)
       || !(force || buf->b_sfname == NULL || path_is_absolute(buf->b_sfname))) {
-    return;
+    return false;
   }
 
   char *p = path_shorten_fname(buf->b_ffname, dirname);
-  if (p != NULL && *p != NUL && buf->b_sfname != NULL && strcmp(p, buf->b_sfname) == 0) {
+  bool shorten = p != NULL && *p != NUL;
+  if (shorten && buf->b_sfname != NULL && strcmp(p, buf->b_sfname) == 0) {
     // Same name: keep the allocation. Callers (readfile()) alias `b_fname` across autocommands and
     // check the pointer to detect a rename. Very cool... #41454
-    return;
+    return false;
   }
+
+  // Decide now, the old name may be freed below.
+  char *new_fname = shorten ? p : buf->b_ffname;
+  bool changed = new_fname == NULL || strcmp(new_fname, buf->b_fname) != 0;
 
   if (buf->b_sfname != buf->b_ffname) {
     XFREE_CLEAR(buf->b_sfname);
   }
-  if (p != NULL && *p != NUL) {
+  if (shorten) {
     buf->b_sfname = xstrdup(p);
     buf->b_fname = buf->b_sfname;
   } else {
     buf->b_fname = buf->b_ffname;
   }
+  return changed;
 }
 
-/// Shorten filenames for all buffers.
+/// Shortens filenames for all buffers. Schedules a statusline redraw if any name changed.
 void shorten_fnames(int force)
 {
   char dirname[MAXPATHL];
+  bool changed = false;
 
   os_dirname(dirname, MAXPATHL);
   FOR_ALL_BUFFERS(buf) {
-    shorten_buf_fname(buf, dirname, force);
+    changed |= shorten_buf_fname(buf, dirname, force);
 
     // Always make the swap file name a full path, a "nofile" buffer may
     // also have a swap file.
     mf_fullname(buf->b_ml.ml_mfp);
   }
-  status_redraw_all();
-  redraw_tabline = true;
+  if (changed) {
+    status_redraw_all();
+    redraw_tabline = true;
+  }
 }
 
 /// Get new filename ended by given extension.
@@ -3156,6 +3175,8 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
 
   // Set curwin/curbuf for "buf" and save some things.
   ctx_switch(&aco, NULL, NULL, buf, 0);
+
+  mc_buf_clear(buf);  // Multicursor: file-reload invalidates the extmarks.
 
   // Unless reload_options is set, we only want to read the text from the
   // file, not reset the syntax highlighting, clear marks, diff status, etc.

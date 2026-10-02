@@ -79,7 +79,7 @@ describe('messages2', function()
       bar                                                  |
       baz                                                  |
       bar                                                  |
-      baz [+23]                                            |
+      baz{6: [+23]}                                            |
     ]])
     -- Any key press resizes the cmdline and updates the spill indicator.
     feed('j')
@@ -161,7 +161,7 @@ describe('messages2', function()
       {5: + [No Name] }{24: [No Name] }{2:                            }{24:X}|
       ^x                                                    |
       {1:~                                                    }|*11
-      foo [+1]                           1,1            All|
+      foo{6: [+1]}                           1,1            All|
     ]])
     -- Don't enter the pager in insert mode.
     command('tabonly | call nvim_echo([["foo\n"]]->repeat(&lines), 1, {}) | startinsert')
@@ -170,14 +170,14 @@ describe('messages2', function()
       {1:~                                                    }|*5
       {3:                                                     }|
       foo                                                  |*6
-      foo [+8]                                             |
+      foo{6: [+8]}                                             |
     ]])
     feed('<CR>')
     screen:expect([[
                                                            |
       ^x                                                    |
       {1:~                                                    }|*11
-      foo [+14]                          2,1            All|
+      foo{6: [+14]}                          2,1            All|
     ]])
     feed('<BS><Esc>')
     -- First multiline message expands cmdline, additional message updates spill indicator.
@@ -187,7 +187,7 @@ describe('messages2', function()
       {1:~                                                    }|*5
       {3:                                                     }|
       foo                                                  |*6
-      foo [+9]                                             |
+      foo{6: [+9]}                                             |
     ]])
     -- Do enter the pager in normal mode (with keybinding setup).
     -- Also checks that "messagesopt=pager:…" is normalized to the keytrans() form.
@@ -401,11 +401,22 @@ describe('messages2', function()
     feed([[echo "bar\n"->repeat(&lines)<CR>]])
     screen:expect([[
       ^                                                     |
-      {1:~                                                    }|*4
-      {3:                                                     }|
+      {1:~                                                    }|*5
       foo                                                  |
       bar                                                  |*5
-      bar [+8]                                             |
+      bar{6: [+8]}                                             |
+    ]])
+  end)
+
+  it('does not draw the message seperator with cmdheight=0', function()
+    command('set laststatus=2 statusline=%f')
+    command('set cmdheight=0')
+    command('echo "hello"')
+
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      hello                                                |
     ]])
   end)
 
@@ -448,11 +459,11 @@ describe('messages2', function()
       {1:~                                                    }|*12
       {19:W10: Warning: Changing a readonly file}               |
     ]])
-    feed('<Esc>Qi')
+    feed('<Esc>@@i')
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
-      {9:E354: Invalid register name: '^@'}                    |
+      {9:E748: No previously used register}                    |
     ]])
   end)
 
@@ -464,14 +475,14 @@ describe('messages2', function()
     feed('Vj')
     screen:expect([[
       {17:one two}                                              |
-      ^t{17:hree four}                                           |
+      {17:^three four}                                           |
       {1:~                                                    }|*11
       {5:-- VISUAL LINE --}                                    |
     ]])
     feed('g<C-G>')
     screen:expect([[
       {17:one two}                                              |
-      ^t{17:hree four}                                           |
+      {17:^three four}                                           |
       {1:~                                                    }|*11
       Selected 2 of 2 Lines; 4 of 4 Words; 19 of 19 Bytes  |
     ]])
@@ -490,7 +501,7 @@ describe('messages2', function()
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
-      foo [+1]                                             |
+      foo{6: [+1]}                                             |
     ]])
   end)
 
@@ -501,7 +512,7 @@ describe('messages2', function()
       {1:~                                                    }|*5
       {3:                                                     }|
       foo                                                  |*6
-      foo [+8]                                             |
+      foo{6: [+8]}                                             |
     ]])
     -- Place cmdline below expanded messages: #37653, without "more" title #38481.
     feed(':call setline(1, "foo")')
@@ -510,7 +521,7 @@ describe('messages2', function()
       {1:~                                                    }|*4
       {3:                                                     }|
       foo                                                  |*6
-      foo [+8]                                             |
+      foo{6: [+8]}                                             |
       {16::}{15:call} {25:setline}{16:(}{26:1}{16:,} {26:"foo"}{16:)}^                              |
     ]])
     -- No message closes expanded cmdline and keeps the entered command.
@@ -533,6 +544,8 @@ describe('messages2', function()
       baz                                                  |
       {16::}{15:echo} {26:"baz"}                                          |
     ]])
+    -- Moving the mouse does not dismiss the pager.
+    api.nvim_input_mouse('move', '', '', 0, 0, 3)
     -- Subsequent typed commands are appended to the pager.
     feed(':echo "typed append"<CR>')
     screen:expect([[
@@ -665,9 +678,10 @@ describe('messages2', function()
       3                                                                      |
       4                                                                      |
       5                                                                      |
-      6 [+93]                                                                |
+      6{6: [+93]}                                                                |
       Type number and <Enter> (q or empty cancels): ^                         |
     ]]
+    command('set mousescroll=ver:2')
     feed(':call inputlist(range(100))<CR>')
     screen:expect(top)
     feed('<Down>')
@@ -675,13 +689,13 @@ describe('messages2', function()
                                                                              |
       {1:~                                                                      }|*4
       {3:                                                                       }|
-      1 [+1]                                                                 |
+      1{6: [+1]}                                                                 |
       2                                                                      |
       3                                                                      |
       4                                                                      |
       5                                                                      |
       6                                                                      |
-      7 [+92]                                                                |
+      7{6: [+92]}                                                                |
       Type number and <Enter> (q or empty cancels): ^                         |
     ]])
     feed('<Up>')
@@ -691,13 +705,13 @@ describe('messages2', function()
                                                                              |
       {1:~                                                                      }|*4
       {3:                                                                       }|
-      5 [+5]                                                                 |
+      5{6: [+5]}                                                                 |
       6                                                                      |
       7                                                                      |
       8                                                                      |
       9                                                                      |
       10                                                                     |
-      11 [+88]                                                               |
+      11{6: [+88]}                                                               |
       Type number and <Enter> (q or empty cancels): ^                         |
     ]])
     feed('<PageUp>')
@@ -707,7 +721,7 @@ describe('messages2', function()
                                                                              |
       {1:~                                                                      }|*4
       {3:                                                                       }|
-      93 [+93]                                                               |
+      93{6: [+93]}                                                               |
       94                                                                     |
       95                                                                     |
       96                                                                     |
@@ -720,6 +734,37 @@ describe('messages2', function()
     feed('<PageDown>')
     screen:expect_unchanged()
     feed('<Home>')
+    screen:expect(top)
+    -- The wheel scrolls by 'mousescroll'; the arrow keys above still scrolled by one #39172
+    feed('<ScrollWheelDown><0,0>')
+    screen:expect([[
+                                                                             |
+      {1:~                                                                      }|*4
+      {3:                                                                       }|
+      2{6: [+2]}                                                                 |
+      3                                                                      |
+      4                                                                      |
+      5                                                                      |
+      6                                                                      |
+      7                                                                      |
+      8{6: [+91]}                                                                |
+      Type number and <Enter> (q or empty cancels): ^                         |
+    ]])
+    feed('<Up>')
+    screen:expect([[
+                                                                             |
+      {1:~                                                                      }|*4
+      {3:                                                                       }|
+      1{6: [+1]}                                                                 |
+      2                                                                      |
+      3                                                                      |
+      4                                                                      |
+      5                                                                      |
+      6                                                                      |
+      7{6: [+92]}                                                                |
+      Type number and <Enter> (q or empty cancels): ^                         |
+    ]])
+    feed('<ScrollWheelUp><0,0>')
     screen:expect(top)
   end)
 
@@ -987,10 +1032,9 @@ describe('messages2', function()
     command('ls!')
     screen:expect([[
       ^                                                     |
-      {1:~                                                    }|
-      {3:                                                     }|
+      {1:~                                                    }|*2
       foo                                                  |*2
-      {14:f}oo [+6]                                             |
+      {14:f}oo{6: [+6]}                                             |
     ]])
     feed('<Esc>')
     screen:expect([[
@@ -1175,6 +1219,16 @@ describe('messages2', function()
     ]])
   end)
 
+  it('no modal/blocking prompt on exit', function()
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'one' })
+    feed(':quit<CR>')
+    screen:expect([[
+      ^one                                                  |
+      {1:~                                                    }|*12
+      {9:E37: No write since last change}{6: [+2]}                 |
+    ]])
+  end)
+
   it('no crash for resized grid during redraw #39075', function()
     exec_lua(function()
       vim.api.nvim_set_decoration_provider(vim.api.nvim_create_namespace(''), {
@@ -1205,7 +1259,7 @@ describe('messages2', function()
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
-      foo [+1]                                             |
+      foo{6: [+1]}                                             |
     ]])
   end)
 
@@ -1234,6 +1288,21 @@ describe('messages2', function()
       bar                                                  |
       {1:~                                                    }|*11
       -----------------------------------1,1            All|
+    ]])
+  end)
+
+  it('search offset with semicolon #41929', function()
+    command(
+      'set shortmess-=S | call setline(1, ["odd line", "even line", "odd line", "even line"])'
+    )
+    feed('/even/;/even<CR>')
+    screen:expect([[
+      odd line                                             |
+      {10:even} line                                            |
+      odd line                                             |
+      {10:^even} line                                            |
+      {1:~                                                    }|*9
+      /even                              [2/2]             |
     ]])
   end)
 
@@ -1394,6 +1463,24 @@ describe('messages2', function()
       {3:                                                     }|
       {19:^c}                                                    |
       {9:de}                                                   |
+                                                           |
+    ]])
+
+    -- A prompt with pending cmd messages moves them to the dialog (cmdline.lua). The pager is
+    -- still shown, but its line count must not offset the marks copied into the dialog.
+    exec_lua(function()
+      local ui = require('vim._core.ui2')
+      vim.api.nvim_buf_set_lines(ui.bufs.cmd, 0, -1, false, { 'err' })
+      local o = { end_row = 0, end_col = 3, hl_group = 'ErrorMsg' }
+      vim.api.nvim_buf_set_extmark(ui.bufs.cmd, ui.ns, 0, 0, o)
+      ui.msg.expand_msg('cmd', 'dialog')
+    end)
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*9
+      {3:                                                     }|
+      {3:^                                                     }|
+      {9:err}                                                  |
                                                            |
     ]])
   end)

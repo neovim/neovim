@@ -295,13 +295,19 @@ func Test_vartabs_linebreak()
 
   let expect = ['          x                             ',
         \       'x                   x                   ',
-        \       'x                                       ']
+        \       '                    x                   ']
   let lines = ScreenLines([1, 3], winwidth(0))
   call s:compare_lines(expect, lines)
   setl list listchars=tab:>-
   let expect = ['>---------x>------------------          ',
         \       'x>------------------x>------------------',
-        \       'x                                       ']
+        \       '--------------------x                   ']
+  let lines = ScreenLines([1, 3], winwidth(0))
+  call s:compare_lines(expect, lines)
+  setl nolinebreak
+  let expect = ['>---------x>------------------x>--------',
+        \       '--------------------x>------------------',
+        \       '--------------------x                   ']
   let lines = ScreenLines([1, 3], winwidth(0))
   call s:compare_lines(expect, lines)
   setl linebreak vartabstop=40

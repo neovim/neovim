@@ -1441,47 +1441,62 @@ describe('vim.lsp.buf', function()
       }
     end)
 
-    it('can format async', function()
-      local expected_handlers = {
-        { NIL, {}, { method = 'shutdown', client_id = 1 } },
-        { NIL, {}, { method = 'start', client_id = 1 } },
-      }
-      local client --- @type vim.lsp.Client
-      test_rpc_server {
-        test_name = 'basic_formatting',
-        on_init = function(c)
-          client = c
-        end,
-        on_handler = function(_, _, ctx)
-          table.remove(expected_handlers)
-          if ctx.method == 'start' then
-            local result = exec_lua(function()
-              local bufnr = vim.api.nvim_get_current_buf()
-              vim.lsp.buf_attach_client(bufnr, _G.TEST_RPC_CLIENT_ID)
-
-              local notify_msg --- @type string?
-              local notify = vim.notify
-              vim.notify = function(msg, _)
-                notify_msg = msg
+    it('can format async with an optional timeout', function()
+      exec_lua(create_server_definition)
+      exec_lua(function()
+        _G.edits = {
+          {
+            range = {
+              start = { line = 0, character = 0 },
+              ['end'] = { line = 0, character = 0 },
+            },
+            newText = 'formatted',
+          },
+        }
+        local opts = {
+          capabilities = { documentFormattingProvider = true },
+          handlers = {
+            ['textDocument/formatting'] = function(_, _, callback)
+              table.insert(_G.callbacks, callback)
+              if #_G.callbacks == 2 then
+                callback(nil, _G.edits)
               end
+            end,
+          },
+        }
+        _G.server = _G._create_server(opts)
+        _G.server2 = _G._create_server(opts)
+        vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+        vim.lsp.start({ name = 'dummy2', cmd = _G.server2.cmd })
+      end)
 
-              _G.handler_called = false
-              vim.lsp.buf.format({ bufnr = bufnr, async = true })
-              vim.wait(1000, function()
-                return _G.handler_called
-              end)
-
-              vim.notify = notify
-              return { notify_msg = notify_msg, handler_called = _G.handler_called }
-            end)
-            eq({ handler_called = true }, result)
-          elseif ctx.method == 'textDocument/formatting' then
-            exec_lua('_G.handler_called = true')
-          elseif ctx.method == 'shutdown' then
-            client:stop()
-          end
-        end,
-      }
+      for _, timeout_ms in ipairs({ false, 20 }) do
+        eq(
+          1,
+          exec_lua(function()
+            _G.callbacks = {}
+            vim.api.nvim_buf_set_lines(0, 0, -1, true, { '' })
+            vim.lsp.buf.format({ async = true, timeout_ms = timeout_ms or nil })
+            return #_G.callbacks
+          end)
+        )
+        if not timeout_ms then
+          exec_lua('_G.callbacks[1](nil, _G.edits)')
+        end
+        local expected = { timeout_ms and 'formatted' or 'formattedformatted' }
+        retry(nil, 1000, function()
+          eq(expected, api.nvim_buf_get_lines(0, 0, -1, true))
+        end)
+        if timeout_ms then
+          eq(
+            { method = '$/cancelRequest', params = { id = 4 } },
+            exec_lua('return _G.server.messages[5] or _G.server2.messages[5]')
+          )
+          exec_lua('_G.callbacks[1](nil, _G.edits)')
+          eq(expected, api.nvim_buf_get_lines(0, 0, -1, true))
+        end
+        eq(2, exec_lua('return #_G.callbacks'))
+      end
     end)
 
     it('format formats range in visual mode', function()

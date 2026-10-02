@@ -1630,6 +1630,42 @@ func Test_heap_buffer_overflow()
   set updatecount&
 endfunc
 
+func s:ScreenAttr(row, col)
+  redraw
+  return screenattr(a:row, a:col)
+endfunc
+
+func Test_charwise_visual_hl_inclusive_and_exclusive_selection()
+  new
+  call setline(1, '12345')
+
+  normal! V$
+  const visual_attr = s:ScreenAttr(1, 1)
+  let VisualCols = {-> range(1, strlen(getline(1)))->filter({_, c ->
+        \ s:ScreenAttr(1, c) == visual_attr})}
+
+  exe "normal! \<Esc>"
+  call assert_true(visual_attr != s:ScreenAttr(1, 1),
+        \ "sanity check: Visual displayed differently to Normal")
+
+  set selection=inclusive
+  normal! ggf2vf4
+  call assert_equal([2, 3, 4], VisualCols())
+
+  set selection=exclusive
+  exe "normal! \<Esc>ggf2vll"
+  call assert_equal([2, 3], VisualCols())  " (Character under cursor excluded.)
+  normal! o
+  call assert_equal(2, col('.'), "sanity check: cursor column after 'o'")
+  call assert_equal([2, 3], VisualCols())
+  normal! y
+  call assert_equal('23', @",
+        \ "sanity check: yanked text matches visual selection")
+
+  set selection&
+  bwipe!
+endfunc
+
 " Test Visual highlight with cursor at end of screen line and 'showbreak'
 func Test_visual_hl_with_showbreak()
   CheckScreendump
@@ -2633,6 +2669,107 @@ func Test_visual_getregion()
     bwipe!
   END
   call CheckLegacyAndVim9Success(lines)
+endfunc
+
+" Test the "bounds" option of getregionpos(), which returns only the outer
+" endpoints of the region as a single pair.
+func Test_visual_getregionpos_bounds()
+  new
+  call setline(1, [
+        \ 'one two',
+        \ '',
+        \ "a\tb\tc",
+        \ 'ábĉdé',
+        \ "e\u0301x\u0301",
+        \ "\U0001f1e6\u00ab\U0001f1e7\u00ab\U0001f1e8",
+        \ 'last line',
+        \ ])
+  let b = bufnr('%')
+
+  " The pair is the start on the first line and the end on the last line.
+  call assert_equal([[[b, 1, 5, 0], [b, 3, 3, 0]]],
+        \ getregionpos([0, 1, 5, 0], [0, 3, 3, 0], #{bounds: v:true}))
+  call assert_equal([[[b, 1, 1, 0], [b, 3, 5, 0]]],
+        \ getregionpos([0, 1, 5, 0], [0, 3, 3, 0],
+        \              #{type: 'V', bounds: v:true}))
+
+  " For a blockwise region that is a diagonal of the block, not its corners.
+  call assert_equal([[[b, 1, 3, 0], [b, 3, 5, 0]]],
+        \ getregionpos([0, 1, 3, 0], [0, 3, 5, 0],
+        \              #{type: "\<C-v>", bounds: v:true}))
+  call assert_equal([[[b, 1, 3, 0], [b, 3, 2, 5]]],
+        \ getregionpos([0, 1, 3, 0], [0, 3, 5, 0],
+        \              #{type: "\<C-v>4", bounds: v:true}))
+
+  " When the first line is empty and "eol" is false its "col" is 0, while the
+  " "col" of the end position is not.
+  call assert_equal([[[b, 2, 0, 0], [b, 4, 5, 0]]],
+        \ getregionpos([0, 2, 1, 0], [0, 4, 5, 0], #{bounds: v:true}))
+  call assert_equal([[[b, 2, 1, 0], [b, 4, 5, 0]]],
+        \ getregionpos([0, 2, 1, 0], [0, 4, 5, 0],
+        \              #{eol: v:true, bounds: v:true}))
+
+  " Region within one line, also with the positions reversed.
+  call assert_equal([[[b, 4, 3, 0], [b, 4, 8, 0]]],
+        \ getregionpos([0, 4, 3, 0], [0, 4, 7, 0], #{bounds: v:true}))
+  call assert_equal([[[b, 4, 3, 0], [b, 4, 8, 0]]],
+        \ getregionpos([0, 4, 7, 0], [0, 4, 3, 0], #{bounds: v:true}))
+
+  " Combining characters and v:maxcol.
+  call assert_equal([[[b, 5, 1, 0], [b, 6, 16, 0]]],
+        \ getregionpos([0, 5, 1, 0], [0, 6, v:maxcol, 0], #{bounds: v:true}))
+
+  " The pair is always what indexing the full result gives.
+  for ve in ['', 'all', 'block', 'onemore']
+    let &virtualedit = ve
+    for sel in ['inclusive', 'exclusive']
+      let &selection = sel
+      for type in ['v', 'V', "\<C-v>", "\<C-v>3"]
+        for excl in [#{}, #{exclusive: v:false}, #{exclusive: v:true}]
+          for eol in [v:false, v:true]
+            let opts = extend(#{type: type, eol: eol}, excl)
+            for p1 in [[0, 1, 3, 0], [0, 2, 1, 0], [0, 3, 4, 0], [0, 5, 1, 0]]
+              for p2 in [[0, 3, 2, 0], [0, 4, 6, 0],
+                    \    [0, 6, v:maxcol, 0], [0, 7, 10, 0]]
+                for args in [[p1, p2], [p2, p1]]
+                  let full = getregionpos(args[0], args[1], opts)
+                  call assert_equal([[full[0][0], full[-1][1]]],
+                        \ getregionpos(args[0], args[1],
+                        \              extend(copy(opts), #{bounds: v:true})),
+                        \ printf('%s ve=%s sel=%s %s',
+                        \        string(args), ve, sel, string(opts)))
+                endfor
+              endfor
+            endfor
+          endfor
+        endfor
+      endfor
+    endfor
+  endfor
+  set virtualedit& selection&
+
+  " "bounds" does not change the errors for invalid arguments.
+  call assert_fails('call getregionpos(1, 2, #{bounds: v:true})', 'E1211:')
+  call assert_fails('call getregionpos([0, 1, 1, 0], [0, 1, 1, 0],
+        \ #{type: "", bounds: v:true})', 'E475:')
+  call assert_fails('call getregionpos([0, 0, 1, 0], [0, 1, 1, 0],
+        \ #{bounds: v:true})', 'E966:')
+  call assert_fails('call getregionpos([0, 1, 0, 0], [0, 1, 1, 0],
+        \ #{bounds: v:true})', 'E964:')
+
+  " Positions in two different buffers still give an empty list, not a pair.
+  new
+  call setline(1, ['other buffer'])
+  let other = bufnr('%')
+  normal! mA
+  wincmd p
+  call assert_equal([],
+        \ getregionpos(getpos('.'), getpos("'A"), #{bounds: v:true}))
+  call assert_equal([],
+        \ getregionpos(getpos("'A"), getpos('.'), #{bounds: v:true}))
+
+  exe other .. 'bwipe!'
+  bwipe!
 endfunc
 
 func Test_getregion_invalid_buf()

@@ -30,6 +30,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -259,8 +260,8 @@ void setpcmark(void)
 {
   xfmark_T *fm;
 
-  // for :global the mark is set only once
-  if (global_busy || listcmd_busy || (cmdmod.cmod_flags & CMOD_KEEPJUMPS)) {
+  // For :global the mark is set only once. Not for multicursor replay (primary owns the jumplist).
+  if (global_busy || listcmd_busy || (cmdmod.cmod_flags & CMOD_KEEPJUMPS) || mc_replaying()) {
     return;
   }
 

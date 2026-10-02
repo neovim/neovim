@@ -3590,11 +3590,6 @@ msgstr "E471: 引数が必要です"
 msgid "E10: \\ should be followed by /, ? or &"
 msgstr "E10: \\ の後は / か ? か & でなければなりません"
 
-msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
-msgstr ""
-"E11: コマンドラインウィンドウでは使用できません。<CR> で実行、CTRL-C で終了し"
-"ます。"
-
 #, fuzzy
 #~ msgid "E12: Command not allowed in secure mode in current dir or tag search"
 #~ msgstr "E12: このコマンドは現在のディレクトリやタグ検索では使用できません"

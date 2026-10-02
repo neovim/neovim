@@ -439,7 +439,7 @@ Array string_to_array(const String input, bool crlf, Arena *arena)
     // If line ends at end-of-buffer, add empty final item.
     // This is "readfile()-style", see also ":help channel-lines".
     if (i + 1 == input.size && (*end == NL || (crlf && *end == CAR))) {
-      kvi_push(ret, STRING_OBJ(STRING_INIT));
+      kvi_push(ret, STRING_OBJ(CBUF_TO_ARENA_STR(arena, "", 0)));
     }
   }
 
@@ -804,7 +804,7 @@ bool api_dict_to_keydict(void *retval, FieldHashfn hashy, Dict dict, Error *err)
 {
   for (size_t i = 0; i < dict.size; i++) {
     String k = dict.items[i].key;
-    KeySetLink *field = hashy(k.data, k.size);
+    const KeySetLink *field = hashy(k.data, k.size);
     if (!field) {
       api_set_error(err, kErrorTypeValidation, "Invalid key: '%.*s'", (int)k.size, k.data);
       return false;

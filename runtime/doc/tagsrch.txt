@@ -41,8 +41,7 @@ below.
 			first one is jumped to.  See |tag-matchlist| for
 			jumping to other matching tags.
 
-g<LeftMouse>						*g<LeftMouse>*
-<C-LeftMouse>					*<C-LeftMouse>* *CTRL-]*
+g<LeftMouse>					*g<LeftMouse>* *CTRL-]*
 CTRL-]			Jump to the definition of the keyword under the
 			cursor.  Same as ":tag {name}", where {name} is the
 			keyword under or after cursor.

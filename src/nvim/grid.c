@@ -197,7 +197,7 @@ int schar_cells(schar_T sc)
 
   char sc_buf[MAX_SCHAR_SIZE];
   schar_get(sc_buf, sc);
-  return utf_ptr2cells(sc_buf);
+  return ptr2cells(sc_buf);
 }
 
 /// gets first raw UTF-8 byte of an schar

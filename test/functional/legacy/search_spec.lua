@@ -916,7 +916,7 @@ describe('Search highlight', function()
     screen:expect([[
       xxx {101:y}{100:yy}{17: zzz}                             |
       {17:xxx }{100:yyy}{17: zzz}                             |
-      {17:xxx }{100:y}{101:^yy} zzz                             |
+      {17:xxx }{100:y^y}{101:y} zzz                             |
       {1:~                                       }|*2
       {5:-- VISUAL --}                            |
     ]])

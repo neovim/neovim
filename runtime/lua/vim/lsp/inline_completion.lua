@@ -235,7 +235,9 @@ function Completor:show(hint)
   -- The first line of the text to be inserted
   -- usually contains characters entered by the user,
   -- which should be skipped before displaying the virtual text.
-  local virt_text = lines[1]
+  -- Splitting on a nonempty separator always yields a line, with its first chunk.
+  local virt_text = assert(lines[1])
+  assert(virt_text[1])
   local skip = lcp(line_text:sub(col + 1), virt_text[1][1])
   local winid = api.nvim_get_current_win()
   -- At least, characters before the cursor should be skipped.
@@ -495,9 +497,9 @@ function M.get(opts)
       -- Note that we do not intend for `on_accept`
       -- to take effect when there is no current item.
       if on_accept then
-        item = on_accept(item)
-        if item then
-          completor:accept(item)
+        local accepted_item = on_accept(item)
+        if accepted_item then
+          completor:accept(accepted_item)
         end
       else
         completor:accept(item)

@@ -3,6 +3,7 @@
 " Maintainer:   Herrington Darkholme
 " Last Change:  2024 May 24
 " 2025 Aug 05   support for new TypeScript syntaxes
+" 2026 Sep 30   fix exponential backtracking in typescriptArrowFuncDef
 " Based On:     Herrington Darkholme's yats.vim
 " Changes:      See https://github.com/HerringtonDarkholme/yats.vim
 " Credits:      See yats.vim on github
@@ -1948,12 +1949,12 @@ syntax match   typescriptArrowFuncDef          contained /\K\k*\s*=>/
   \ nextgroup=@typescriptExpression,typescriptBlock
   \ skipwhite skipempty
 
-syntax match   typescriptArrowFuncDef          contained /(\%(\_[^()]\+\|(\_[^()]*)\)*)\_s*=>/
+syntax match   typescriptArrowFuncDef          contained /(\%(\_[^()]\|(\_[^()]*)\)*)\_s*=>/
   \ contains=typescriptArrowFuncArg,typescriptArrowFunc,@typescriptCallSignature
   \ nextgroup=@typescriptExpression,typescriptBlock
   \ skipwhite skipempty
 
-syntax region  typescriptArrowFuncDef          contained start=/(\%(\_[^()]\+\|(\_[^()]*)\)*):/ matchgroup=typescriptArrowFunc end=/=>/
+syntax region  typescriptArrowFuncDef          contained start=/(\%(\_[^()]\|(\_[^()]*)\)*):/ matchgroup=typescriptArrowFunc end=/=>/
   \ contains=typescriptArrowFuncArg,typescriptTypeAnnotation,@typescriptCallSignature
   \ nextgroup=@typescriptExpression,typescriptBlock
   \ skipwhite skipempty keepend

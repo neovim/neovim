@@ -106,8 +106,8 @@ local function compute_start_range(
 )
   position_encoding = position_encoding or 'utf-8'
 
-  local char_idx --- @type integer?
-  local byte_idx --- @type integer?
+  local char_idx --- @type integer
+  local byte_idx --- @type integer
   -- If firstline == lastline, no existing text is changed. All edit operations
   -- occur on a new line pointed to by lastline. This occurs during insertion of
   -- new lines(O), the new newline is inserted at the line indicated by
@@ -289,6 +289,7 @@ end
 ---@param lines table list of lines
 ---@param start_range vim.lsp.sync.Range table returned by first_difference
 ---@param end_range vim.lsp.sync.Range new_end_range returned by last_difference
+---@param line_ending string
 ---@return string text extracted from defined region
 local function extract_text(lines, start_range, end_range, line_ending)
   if not lines[start_range.line_idx] then

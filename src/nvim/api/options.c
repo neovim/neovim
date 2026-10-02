@@ -314,8 +314,8 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
 /// @param value     New option value
 /// @param opts      Optional parameters
 ///                  - buf: Buffer number. Used for setting buffer local option.
-///                  - dry_run: (`boolean?`, default: false) If true, then the
-///                    option value won't be set.
+///                  - dry_run: (`boolean?`, default: false) If true, validates the
+///                    option value without setting it.
 ///                  - operation: One of "set", "append", "prepend", or "remove".
 ///                    Corresponds to |:set=|, |:set+=|, |:set^=|, and |:set-=|.
 ///                    Default is "set".
@@ -404,16 +404,24 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
   if (optval_right.type == kObjectTypeInteger || optval_right.type == kObjectTypeString) {
     Object oldval = optval_own(opt_idx, opt_from_varp(opt_idx, varp));
     merged_val = get_option_newval(opt_idx, opt_flags, PREFIX_NONE, &argp, 0, operation,
-                                   option->flags, varp, &oldval, NULL, 0, &errmsg);
+                                   varp, &oldval, &errmsg);
     optval_free(oldval);
     VALIDATE(errmsg == NULL, "%s", errmsg, {
       return NIL;
     });
   }
 
-  if (!dry_run) {
+  if (dry_run) {
+    const CharBuf errbuf = { (char[IOSIZE]){ 0 }, IOSIZE };
+    errmsg = validate_option_value(opt_idx, &merged_val, opt_flags, buf, win, &errbuf);
+    if (errmsg != NULL) {
+      api_set_error(err, kErrorTypeException, "%s", errmsg);
+      optval_free(merged_val);
+      return NIL;
+    }
+  } else {
     WITH_SCRIPT_CONTEXT(channel_id, {
-      set_option_value_for(name.data, opt_idx, merged_val, opt_flags, scope, to, err);
+      set_option_value_for(opt_idx, merged_val, opt_flags, scope, to, operation == OP_NONE, err);
     });
   }
 

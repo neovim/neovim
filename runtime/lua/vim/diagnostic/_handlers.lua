@@ -78,8 +78,7 @@ local function restore_extmarks(bufnr, last)
 
     for _, extmark in ipairs(extmarks) do
       if not found[extmark[1]] then
-        local opts = extmark[4]
-        --- @diagnostic disable-next-line: inject-field
+        local opts = extmark[4] --[[@as vim.api.keyset.set_extmark]]
         opts.id = extmark[1]
         pcall(api.nvim_buf_set_extmark, bufnr, ns, extmark[2], extmark[3], opts)
       end
@@ -156,7 +155,7 @@ local function show_once_loaded(autocmd_key, ns, bufnr, fn)
 end
 
 --- @param priority integer
---- @param opts? { severity_sort?: {reverse?:boolean} }
+--- @param opts? { severity_sort?: boolean|{reverse?:boolean} }
 --- @return fun(severity: vim.diagnostic.Severity): integer
 local function severity_to_extmark_priority(priority, opts)
   opts = opts or {}
@@ -219,8 +218,11 @@ function M.signs.show(namespace, bufnr, diagnostics, opts)
 
     for _, diagnostic0 in ipairs(diagnostics) do
       if diagnostic0.lnum <= line_count then
+        local severity_name = (
+          severity --[[@as table<vim.diagnostic.Severity, vim.diagnostic.SeverityName>]]
+        )[diagnostic0.severity]
         api.nvim_buf_set_extmark(bufnr, ns.user_data.sign_ns, diagnostic0.lnum, 0, {
-          sign_text = text[diagnostic0.severity] or text[severity[diagnostic0.severity]] or 'U',
+          sign_text = text[diagnostic0.severity] or text[severity_name] or 'U',
           sign_hl_group = sign_highlight_map[diagnostic0.severity],
           number_hl_group = numhl[diagnostic0.severity],
           line_hl_group = linehl[diagnostic0.severity],
@@ -591,15 +593,15 @@ local function render_virtual_lines(namespace, bufnr, diagnostics, opts)
     -- Note that we read in the order opposite to insertion.
     for i = #stack, 1, -1 do
       if stack[i][1] == ElementType.Diagnostic then
-        local diagnostic0 = stack[i][2]
+        local diagnostic0 = stack[i][2] --[[@as vim.Diagnostic]]
         local left = {} --- @type [string, string]
         local overlap = false
         local multi = false
 
         -- Iterate the stack for this line to find elements on the left.
         for j = 1, i - 1 do
-          local element_type = stack[j][1]
-          local data = stack[j][2]
+          local element = assert(stack[j])
+          local element_type, data = element[1], element[2]
           if element_type == ElementType.Space then
             if multi then
               --- @cast data string
@@ -612,7 +614,7 @@ local function render_virtual_lines(namespace, bufnr, diagnostics, opts)
             end
           elseif element_type == ElementType.Diagnostic then
             -- If an overlap follows this line, don't add an extra column.
-            if stack[j + 1][1] ~= ElementType.Overlap then
+            if assert(stack[j + 1])[1] ~= ElementType.Overlap then
               table.insert(left, { chars.vertical, virtual_lines_highlight_map[data.severity] })
             end
             overlap = false

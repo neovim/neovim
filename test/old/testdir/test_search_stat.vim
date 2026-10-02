@@ -198,6 +198,13 @@ func Test_search_stat()
   let pat = escape(@/ .. '/+1', '()*?'). '\s\+'
   call assert_match(pat .. stat, g:a)
 
+  " with semicolon, with/without trailing slash
+  call cursor(1, 1)
+  call feedkeys("/fooo/;/foobar/\<cr>", 'tx')
+  call assert_match('^/foobar\s*\[2/20\]', Screenline(&lines))
+  call feedkeys("/fooo/;/foobar\<cr>", 'tx')
+  call assert_match('^/foobar\s*\[4/20\]', Screenline(&lines))
+
   " normal, n comes from a mapping
   "     Need to move over more than 64 lines to trigger char_avail(.
   nnoremap n nzv

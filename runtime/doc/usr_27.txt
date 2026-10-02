@@ -464,7 +464,7 @@ The character classes are:
 	\I	like \i, excluding digits
 	\k	keyword characters		'iskeyword'
 	\K	like \k, excluding digits
-	\p	printable characters		'isprint'
+	\p	printable characters
 	\P	like \p, excluding digits
 	\f	file name characters		'isfname'
 	\F	like \f, excluding digits

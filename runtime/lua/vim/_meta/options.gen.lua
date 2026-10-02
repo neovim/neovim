@@ -1624,7 +1624,14 @@ vim.o.cuc = vim.o.cursorcolumn
 vim.wo.cursorcolumn = vim.o.cursorcolumn
 vim.wo.cuc = vim.wo.cursorcolumn
 
---- Highlight the text line of the cursor with CursorLine `hl-CursorLine`.
+--- Highlighting used for the line the cursor is on:
+---
+--- CursorLine		the text line `hl-CursorLine`
+--- CursorLineFold		the fold column `hl-CursorLineFold`
+--- CursorLineSign		the sign column `hl-CursorLineSign`
+--- CursorLineNr		the line number, when 'cursorlineopt' contains
+--- 			"number" `hl-CursorLineNr`
+---
 --- Useful to easily spot the cursor.  Will make screen redrawing slower.
 --- When Visual mode is active the highlighting isn't used to make it
 --- easier to see the selected text.
@@ -2901,6 +2908,14 @@ vim.o.fdt = vim.o.foldtext
 vim.wo.foldtext = vim.o.foldtext
 vim.wo.fdt = vim.wo.foldtext
 
+--- Enables `multicursor` follow-mode: cursor-relative motions performed
+--- by the primary cursor, cascade to all cursors `mcursor`.  Toggled by
+--- `q=` (buffer-local).
+---
+--- @type boolean
+vim.o.follow = false
+vim.bo.follow = vim.o.follow
+
 --- Expression which is evaluated to format a range of lines for the `gq`
 --- operator or automatic formatting (see 'formatoptions').  When this
 --- option is empty 'formatprg' is used.
@@ -3745,39 +3760,6 @@ vim.o.iskeyword = "@,48-57,_,192-255"
 vim.o.isk = vim.o.iskeyword
 vim.bo.iskeyword = vim.o.iskeyword
 vim.bo.isk = vim.bo.iskeyword
-
---- The characters given by this option are displayed directly on the
---- screen.  It is also used for "\p" in a `pattern`.  The characters from
---- space (ASCII 32) to '~' (ASCII 126) are always displayed directly,
---- even when they are not included in 'isprint' or excluded.  See
---- 'isfname' for a description of the format of this option.
----
---- Non-printable characters are displayed with two characters:
---- 	  0 -  31	"^@" - "^_"
---- 	 32 - 126	always single characters
---- 	   127		"^?"
---- 	128 - 159	"~@" - "~_"
---- 	160 - 254	"| " - "|~"
---- 	   255		"~?"
---- Illegal bytes from 128 to 255 (invalid UTF-8) are
---- displayed as <xx>, with the hexadecimal value of the byte.
---- When 'display' contains "uhex" all unprintable characters are
---- displayed as <xx>.
---- The SpecialKey highlighting will be used for unprintable characters.
---- `hl-SpecialKey`
----
---- Multi-byte characters 256 and above are always included, only the
---- characters up to 255 are specified with this option.  When a character
---- is printable but it is not available in the current font, a
---- replacement character will be shown.
---- Unprintable and zero-width Unicode characters are displayed as <xxxx>.
---- There is no option to specify these characters.
----
---- @type string
-vim.o.isprint = "@,161-255"
-vim.o.isp = vim.o.isprint
-vim.go.isprint = vim.o.isprint
-vim.go.isp = vim.go.isprint
 
 --- Insert two spaces after a '.', '?' and '!' with a join command.
 --- Otherwise only one space is inserted.
@@ -6971,6 +6953,9 @@ vim.wo.stc = vim.wo.statuscolumn
 ---       applied to StatusLineNC for the statusline of non-current
 ---       windows.
 ---       The number N must be between 1 and 9.  See `hl-User1..9`
+--- #( -  Start of a highlight scope.  The exact highlighting before the
+---       scope is reset at the end.  No width fields allowed.
+--- #) -  End of highlight scope.  No width fields allowed.
 ---
 --- When displaying a flag, Vim removes the leading comma, if any, when
 --- that flag comes right after plaintext.  This will make a nice display
@@ -7074,7 +7059,7 @@ vim.wo.stc = vim.wo.statuscolumn
 ---
 ---
 --- @type string
-vim.o.statusline = "%<%f %h%w%m%r %{% v:lua.require('vim._core.util').term_exitcode() %}%=%{% luaeval('(package.loaded[''vim.ui''] and vim.api.nvim_get_current_win() == tonumber(vim.g.actual_curwin or -1) and vim.ui.progress_status()) or '''' ')%}%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &busy > 0 ? '◐ ' : '' %}%{% luaeval('(package.loaded[''vim.diagnostic''] and next(vim.diagnostic.count()) and vim.diagnostic.status() .. '' '') or '''' ') %}%{% &ruler ? &rulerformat : '' %}"
+vim.o.statusline = "%<%f%( %h%w%m%r%{ v:lua.require('vim._core.util').term_exitcode() }%)%= %(%-10S %)%{ &busy > 0 ? '◐ ' : '' }%(%{ luaeval('(package.loaded[''vim.ui''] and vim.api.nvim_get_current_win() == tonumber(vim.g.actual_curwin or -1) and vim.ui.progress_status()) or '''' ')} %)%{% luaeval('(package.loaded[''vim.diagnostic''] and next(vim.diagnostic.count(0)) and vim.diagnostic.status() .. '' '') or '''' ') %}%(%k %)%{% &ruler ? &rulerformat : '' %}"
 vim.o.stl = vim.o.statusline
 vim.wo.statusline = vim.o.statusline
 vim.wo.stl = vim.wo.statusline

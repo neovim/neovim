@@ -159,4 +159,4 @@ typedef struct {
   bool is_hlgroup;
 } KeySetLink;
 
-typedef KeySetLink *(*FieldHashfn)(const char *str, size_t len);
+typedef const KeySetLink *(*FieldHashfn)(const char *str, size_t len);

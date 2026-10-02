@@ -133,6 +133,10 @@ function Test_NetrwFile(fname) abort
     return s:NetrwFile(a:fname)
 endfunction
 
+function Test_NetrwLcd(newdir) abort
+    return s:NetrwLcd(a:newdir)
+endfunction
+
 " Test hostname validation
 function Test_NetrwValidateHostname(hostname) abort
     return s:NetrwValidateHostname(a:hostname)
@@ -319,6 +323,44 @@ func s:combine
   endfor
 endfunction
 
+
+func Test_netrw_lcd_failure()
+  CheckUnix
+  CheckNotRoot
+  let dirname = getcwd() .. '/Xnetrw_noaccess'
+  call mkdir(dirname)
+  call assert_true(setfperm(dirname, 'r--------'))
+  try
+    for prevdir in [1, 0]
+      new
+      try
+        let cwd = getcwd()
+        if prevdir
+          let w:netrw_prvdir = cwd
+        else
+          unlet! w:netrw_prvdir
+        endif
+        setlocal modifiable noreadonly number
+        let msg = execute('call assert_equal(-1, Test_NetrwLcd(dirname))')
+        call assert_match('unable to change directory to <' .. dirname .. '>', msg)
+        call assert_equal(cwd, getcwd())
+        if prevdir
+          call assert_equal(cwd, w:netrw_prvdir)
+          call assert_true(&l:modifiable)
+        else
+          call assert_false(&l:modifiable)
+          call assert_true(&l:readonly)
+          call assert_false(&l:number)
+        endif
+      finally
+        bwipe!
+      endtry
+    endfor
+  finally
+    call setfperm(dirname, 'rwx------')
+    call delete(dirname, 'd')
+  endtry
+endfunc
 
 func Test_netrw_parse_remote_simple()
   let result = TestNetrwCaptureRemotePath('scp://user@localhost:2222/test.txt')

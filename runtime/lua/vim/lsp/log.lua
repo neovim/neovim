@@ -18,9 +18,16 @@
 --- - "ERROR" messages containing "stderr" only indicate that the log was sent to stderr. Many
 ---   servers send harmless messages via stderr.
 
-local M = {}
-
 local log_levels = vim.log.levels
+
+local M = {
+  TRACE = log_levels.TRACE,
+  DEBUG = log_levels.DEBUG,
+  INFO = log_levels.INFO,
+  WARN = log_levels.WARN,
+  ERROR = log_levels.ERROR,
+  OFF = log_levels.OFF,
+}
 
 local protocol = require('vim.lsp.protocol')
 
@@ -42,15 +49,11 @@ M._self = log
 --- Returns the log filename.
 ---@return string log filename
 function M.get_filename()
-  ---@diagnostic disable-next-line: invisible
+  ---@diagnostic disable-next-line: access-invisible
   return log.filename
 end
 
 for level, levelnr in pairs(log_levels) do
-  -- Also export the log level on the root object.
-  ---@diagnostic disable-next-line: no-unknown
-  M[level] = levelnr
-
   -- Add a reverse lookup.
   M.levels[levelnr] = level
 end
@@ -97,7 +100,7 @@ end
 ---date, source and line number of the caller, followed by the arguments.
 function M.set_format_func(handle)
   log:set_format_func(function(_, level, ...)
-    return handle(M.levels[level], ...)
+    return handle(assert(M.levels[level]), ...)
   end)
 end
 

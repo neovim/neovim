@@ -73,17 +73,30 @@ local function query_workspace_symbols(pattern)
   for client_id, responses in pairs(assert(results_by_client)) do
     local client = lsp.get_client_by_id(client_id)
     local position_encoding = client and client.offset_encoding or 'utf-16'
-    local symbols = responses.result --[[@as lsp.SymbolInformation[]|nil]]
-    for _, symbol in pairs(symbols or {}) do
-      local loc = symbol.location
-      local item = mk_tag_item(symbol.name, loc.range, loc.uri, position_encoding)
-      item.kind = lsp.protocol.SymbolKind[symbol.kind] or 'Unknown'
-      table.insert(results, item)
+    local symbols = responses.result --[[@as lsp.SymbolInformation[]?]]
+    if symbols then
+      for _, symbol in pairs(symbols) do
+        local loc = symbol.location
+        local item = mk_tag_item(symbol.name, loc.range, loc.uri, position_encoding)
+        item.kind = lsp.protocol.SymbolKind[symbol.kind] or 'Unknown'
+        table.insert(results, item)
+      end
     end
   end
   return results
 end
 
+--- Provides an interface between the built-in client and 'tagfunc'.
+---
+--- When used with normal mode commands (e.g. |CTRL-]|) this will invoke
+--- the "textDocument/definition" LSP method to find the tag under the cursor.
+--- Otherwise, uses "workspace/symbol". If no results are returned from
+--- any LSP servers, falls back to using built-in tags.
+---
+---@param pattern string Pattern used to find a workspace symbol
+---@param flags string See |tag-function|
+---
+---@return table[]|vim.NIL tags A list of matching tags, or `vim.NIL` to use the built-in tags.
 local function tagfunc(pattern, flags)
   -- avoid definition/symbol queries for insert completion
   if string.match(flags, 'i') then

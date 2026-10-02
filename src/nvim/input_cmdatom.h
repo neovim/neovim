@@ -13,21 +13,40 @@
 /// Multicursor: pending atoms; they cascade as a batch (mc_clock_edge).
 extern CmdAtomVec g_atoms;
 
-/// Pre-command state sampled at entry + storage for its "staged" atom. atom_cmd_end() finalizes it.
+/// One `normal_execute()`: the scope of a MODE_NORMAL command (Normal/Visual/Select/Op-pending, see
+/// get_real_state()). Same lifetime as `cmdarg_T`. A `composite` spans successive toplevel frames.
+///
+/// Entry state (`origin`, …) is diffed at `atom_cmd_end()` into the command's CmdAtom.
+///
+/// Insert/Cmdline modes (non-MODE_NORMAL) are "sessions", not "frames" (atom_ins_start(),
+/// atom_payload_start()). Mappings initiating from non-MODE_NORMAL defer their `composite` to the
+/// first frame.
 typedef struct CmdFrame CmdFrame;
 struct CmdFrame {
-  CmdOrigin origin;    ///< State at entry.
-  VisualState visual;  ///< Visual-mode state (active/start/mode are diffed).
-  bool keytyped;       ///< KeyTyped
-  uint64_t captures;   ///< Capture counter.
-  uint64_t id;         ///< Identifies this frame (see `composite.frame`).
-  bool follow;         ///< mc_following() ("q=")
-  bool consumers;      ///< Capture is skipped if there are no consumers (for performance).
-  Timestamp reg_ts;    ///< Max register timestamp (to detect a per-cursor register write).
-  CmdAtom staged;      ///< Atom staged in this frame (`keys=NULL`: none).
-  size_t payload_start;  ///< Payload slice of key stream (`SIZE_MAX`: none):
-  size_t payload_end;    ///< `typed.keys[payload_start..payload_end)`
-  CmdFrame *parent;    ///< Enclosing frame (nested normal_execute()); NULL at toplevel.
+  CmdOrigin origin;     ///< State at entry.
+  CmdAtom staged;       ///< Atom staged in this frame (`keys=NULL`: none).
+  CmdFrame *parent;     ///< Enclosing frame (nested normal_execute()); NULL at toplevel.
+  VisualState visual;   ///< Visual-mode state (active/start/mode are diffed).
+
+  bool keytyped;        ///< KeyTyped
+  unsigned keyclass;    ///< atom_key_class() of the cmd char, before its `nchar`.
+  int ex_normal;        ///< If higher than `root_frame().ex_normal`, a cmd fed this (:norm, feed).
+  uint64_t captures;    ///< `atom_captures` at entry.
+  uint64_t global_ops;  ///< `global_ops` at entry.
+  uint64_t beeps;       ///< `did_beep` at entry.
+  uint64_t id;          ///< Identifies this frame (see `composite.frame`).
+  bool follow;          ///< Follow-mode: updated until cursor-move happens (sticky) in this frame.
+  bool consumers;       ///< Capture is skipped if there are no consumers (for performance).
+  Timestamp reg_ts;     ///< Max register timestamp (to detect a per-cursor register write).
+  size_t payload_start;  ///< Payload slice (SIZE_MAX: none): typed.keys[payload_start..payload_end)
+  size_t payload_end;
+
+  //
+  // Toplevel command state: root_frame() only.
+  //
+  uint64_t redo_frame;  ///< Frame whose redobuf (potentially) defines the atom. 0: none.
+  char *cmdline;        ///< The ":" payload captured at cmdline accept. NULL: none.
+                        ///< Note: search payloads ("/pat<CR>") travel on `cmdarg.searchbuf`.
 };
 
 #include "input_cmdatom.h.generated.h"

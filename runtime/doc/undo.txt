@@ -14,7 +14,8 @@ The basics are explained in section |02.5| of the user manual.
 1. Undo and redo commands				*undo-commands*
 
 <Undo>		or					*undo* *<Undo>* *u*
-u			Undo [count] changes.
+u			Undo [count] changes. The cursor returns to its
+			original position.
 
 							*:u* *:un* *:undo*
 :u[ndo]			Undo one change.

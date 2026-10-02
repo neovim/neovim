@@ -41,4 +41,22 @@ describe('matchparen', function()
       {1:-- INSERT --}        |
     ]])
   end)
+
+  it('skips treesitter strings in another window', function()
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'print(")")' })
+    n.exec_lua(function()
+      vim.treesitter.start(0, 'lua')
+    end)
+    api.nvim_win_set_cursor(0, { 1, 5 })
+    local win = api.nvim_get_current_win()
+    command('new')
+    eq(
+      { { 1, 6, 1 }, { 1, 10, 1 } },
+      n.exec_lua(function(target_win)
+        require('nvim.matchparen').highlight_matching_pair(target_win)
+        local match = vim.fn.getmatches(target_win)[1]
+        return { match.pos1, match.pos2 }
+      end, win)
+    )
+  end)
 end)

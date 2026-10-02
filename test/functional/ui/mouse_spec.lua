@@ -54,6 +54,30 @@ describe('ui/mouse/input', function()
       })
     end)
 
+    it('middle click in Visual selection yanks, then puts', function()
+      command('let g:loaded_clipboard_provider = 1') -- Avoid clipboard.
+      feed('<LeftMouse><0,1>')
+      eq({ 2, 0 }, api.nvim_win_get_cursor(0))
+      feed('viw')
+      eq('v', fn.mode())
+      eq({ 2, 4 }, api.nvim_win_get_cursor(0))
+      feed('"a') -- User typed register "a.
+      feed('<MiddleMouse><3,0>')
+      eq('mouse', fn.getreg('a'))
+      eq('mouse', fn.getreg('"'))
+      eq('tesmouseting', api.nvim_get_current_line())
+    end)
+
+    it('shift-click search and CTRL-T pop execute within the click', function()
+      fn.setline(1, { 'foo bar', 'x foo y' })
+      feed('gg0')
+      feed('<S-LeftMouse><0,0>') -- "*": search for the shift-clicked word.
+      eq({ 2, 2 }, api.nvim_win_get_cursor(0))
+      eq('', api.nvim_get_vvar('errmsg'))
+      feed('<C-RightMouse><0,0>') -- "CTRL-T": empty tag stack raises E73.
+      eq('E73: Tag stack empty', api.nvim_get_vvar('errmsg'))
+    end)
+
     it("in external ui works with unset 'mouse'", function()
       api.nvim_set_option_value('mouse', '', {})
       feed('<LeftMouse><2,1>')
@@ -74,7 +98,7 @@ describe('ui/mouse/input', function()
       feed('<LeftRelease><0,0>')
       screen:expect({
         any = {
-          '{17:testin}%^g',
+          '{17:testin^g}',
           'VISUAL',
         },
       })
@@ -89,7 +113,7 @@ describe('ui/mouse/input', function()
       feed('<LeftRelease><0,0>')
       screen:expect({
         any = {
-          '%^t{17:esting}',
+          '{17:^testing}',
           'VISUAL LINE',
         },
       })
@@ -106,7 +130,7 @@ describe('ui/mouse/input', function()
       feed('<LeftRelease><0,0>')
       screen:expect({
         any = {
-          '%^testing',
+          '{17:^t}esting',
           'VISUAL BLOCK',
         },
       })
@@ -612,7 +636,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           'testing',
-          'mo{17:us}%^e',
+          'mo{17:us^e}',
           'support and selection',
           'VISUAL',
         },
@@ -622,14 +646,14 @@ describe('ui/mouse/input', function()
         any = {
           'testing',
           'mo{17:use}',
-          '{17:su}%^pport and selection',
+          '{17:su^p}port and selection',
           'VISUAL',
         },
       })
       feed('<LeftDrag><0,0>')
       screen:expect({
         any = {
-          '%^t{17:esting}',
+          '{17:^testing}',
           '{17:mou}se ',
           'support and selection',
           'VISUAL',
@@ -686,7 +710,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           '{17:testing}',
-          '{17:m}%^ouse',
+          '{17:m^o}use',
           'support and selection',
           'VISUAL',
         },
@@ -697,7 +721,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           '{17:testing}',
-          '{17:m}%^ouse',
+          '{17:m^o}use',
           'support and selection',
           'VISUAL',
         },
@@ -707,7 +731,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           '{17:testing}',
-          '{17:m}%^ouse',
+          '{17:m^o}use',
           'support and selection',
           'VISUAL',
         },
@@ -717,7 +741,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           '{17:testing}',
-          '{17:m}%^ouse',
+          '{17:m^o}use',
           'support and selection',
           'VISUAL',
         },
@@ -727,7 +751,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           '{17:testing}',
-          '{17:m}%^ouse',
+          '{17:m^o}use',
           'support and selection',
           'VISUAL',
         },
@@ -771,7 +795,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           '{24: %+ foo }{5: %+ bar }{2:          }{24:X}',
-          '{17:this}%^ is bar{1:%$}',
+          '{17:this^ }is bar{1:%$}',
           'VISUAL',
         },
       })
@@ -802,7 +826,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           '{17:foo}{100:%$}',
-          '{17:bar}{1:%^%$}',
+          '{17:bar}{100:^$}',
           'VISUAL',
         },
       })
@@ -816,7 +840,7 @@ describe('ui/mouse/input', function()
         any = {
           'testing',
           'mouse',
-          '{17:suppor}%^t and selection',
+          '{17:suppor^t} and selection',
           'VISUAL',
         },
       })
@@ -824,7 +848,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           'testing',
-          '%^m{17:ouse}',
+          '{17:^mouse}',
           '{17:support} and selection',
           'VISUAL',
         },
@@ -832,7 +856,7 @@ describe('ui/mouse/input', function()
       feed('<LeftDrag><4,0>')
       screen:expect({
         any = {
-          '%^t{17:esting}',
+          '{17:^testing}',
           '{17:mouse}',
           '{17:support} and selection',
           'VISUAL',
@@ -843,7 +867,7 @@ describe('ui/mouse/input', function()
         any = {
           'testing',
           'mouse',
-          '{17:support and selectio}%^n',
+          '{17:support and selectio^n}',
           'VISUAL',
         },
       })
@@ -859,7 +883,7 @@ describe('ui/mouse/input', function()
         any = {
           'testing',
           'mouse',
-          '{17:su}%^p{17:port and selection}',
+          '{17:su^pport and selection}',
           'VISUAL LINE',
         },
       })
@@ -867,7 +891,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           'testing',
-          '%^m{17:ouse}',
+          '{17:^mouse}',
           '{17:support and selection}',
           'VISUAL LINE',
         },
@@ -875,7 +899,7 @@ describe('ui/mouse/input', function()
       feed('<LeftDrag><4,0>')
       screen:expect({
         any = {
-          '{17:test}%^i{17:ng}',
+          '{17:test^ing}',
           '{17:mouse}',
           '{17:support and selection}',
           'VISUAL LINE',
@@ -886,7 +910,7 @@ describe('ui/mouse/input', function()
         any = {
           'testing',
           'mouse',
-          '{17:support and se}%^l{17:ection}',
+          '{17:support and se^lection}',
           'VISUAL LINE',
         },
       })
@@ -904,7 +928,7 @@ describe('ui/mouse/input', function()
         any = {
           'testing',
           'mouse',
-          'su%^pport and selection',
+          'su{17:^p}port and selection',
           'VISUAL BLOCK',
         },
       })
@@ -912,7 +936,7 @@ describe('ui/mouse/input', function()
       screen:expect({
         any = {
           'testing',
-          '%^m{17:ou}se',
+          '{17:^mou}se',
           '{17:sup}port and selection',
           'VISUAL BLOCK',
         },
@@ -920,7 +944,7 @@ describe('ui/mouse/input', function()
       feed('<LeftDrag><4,0>')
       screen:expect({
         any = {
-          'te{17:st}%^ing',
+          'te{17:st^i}ng',
           'mo{17:use}',
           'su{17:ppo}rt and selection',
           'VISUAL BLOCK',
@@ -931,7 +955,7 @@ describe('ui/mouse/input', function()
         any = {
           'testing',
           'mouse',
-          'su{17:pport and se}%^lection',
+          'su{17:pport and se^l}ection',
           'VISUAL BLOCK',
         },
       })
@@ -951,15 +975,25 @@ describe('ui/mouse/input', function()
         any = {
           '{17:testing}',
           '{17:mouse}',
-          '{17:su}^pport and selection',
+          '{17:su^p}port and selection',
           'VISUAL',
         },
       })
     end)
 
-    it('ctrl + left click will search for a tag', function()
-      api.nvim_set_option_value('tags', './non-existent-tags-file', {})
+    it('ctrl + left click places a multicursor', function()
+      command('hi MCursor guifg=Black guibg=LightGrey')
       feed('<C-LeftMouse><0,0>')
+      -- A cursor at the click; the primary cursor did not move.
+      screen:expect({
+        any = { '{17:t}esting', 'support and selectio^n' },
+      })
+      feed('q<BS>') -- remove all cursors
+    end)
+
+    it('g + left click will search for a tag', function()
+      api.nvim_set_option_value('tags', './non-existent-tags-file', {})
+      feed('g<LeftMouse><0,0>')
       screen:expect({
         any = {
           '{9:E433: No tags file}',

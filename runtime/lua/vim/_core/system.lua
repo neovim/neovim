@@ -103,7 +103,7 @@ end
 ---
 --- @param signal integer|string Signal to send to the process. See |luv-constants|.
 function SystemObj:kill(signal)
-  self._state.handle:kill(signal)
+  assert(self._state.handle):kill(signal)
 end
 
 --- @package
@@ -147,6 +147,8 @@ function SystemObj:wait(timeout)
     end, nil, true)
   end
 
+  -- TODO: A short timeout can leave result nil even after sending SIGKILL.
+  ---@diagnostic disable-next-line: return-type-mismatch
   return state.result
 end
 
@@ -207,7 +209,7 @@ function SystemObj:is_closing()
   return handle == nil or handle:is_closing() or false
 end
 
---- @param output? fun(err: string?, data: string?)|false
+--- @param output? fun(err: string?, data: string?)|boolean
 --- @param text? boolean
 --- @return uv.uv_stream_t? pipe
 --- @return integer? child_fd
@@ -225,6 +227,8 @@ local function setup_output(output, text)
     handler = output
   else
     bucket = {}
+    --- @param err string?
+    --- @param data string?
     handler = function(err, data)
       if err then
         error(err)
@@ -237,6 +241,7 @@ local function setup_output(output, text)
     end
   end
 
+  --- @diagnostic disable-next-line:missing-fields,param-type-mismatch luvit/luv#827
   local pipe_fd = assert(uv.pipe({ nonblock = true }, {}))
   local pipe = assert(uv.new_pipe(false))
   pipe:open(pipe_fd.read)
@@ -268,6 +273,7 @@ local function setup_input(input)
     towrite = input
   end
 
+  --- @diagnostic disable-next-line:missing-fields,param-type-mismatch luvit/luv#827
   local pipe_fd = assert(uv.pipe({}, { nonblock = true }))
   local pipe = assert(uv.new_pipe(false))
   pipe:open(pipe_fd.write)
@@ -310,11 +316,14 @@ end
 
 local is_win = vim.fn.has('win32') == 1
 
+--- @class (private) vim.SystemSpawnOpts : uv.spawn.options
+--- @field stdio [integer?, integer?, integer?]
+
 --- @param cmd string
---- @param opts uv.spawn.options
+--- @param opts vim.SystemSpawnOpts
 --- @param on_exit fun(code: integer, signal: integer)
 --- @param on_error fun()
---- @return uv.uv_process_t?, integer?
+--- @return uv.uv_process_t, integer
 local function spawn(cmd, opts, on_exit, on_error)
   if is_win then
     local cmd1 = vim.fn.exepath(cmd)
@@ -327,9 +336,9 @@ local function spawn(cmd, opts, on_exit, on_error)
   local handle, pid_or_err = uv.spawn(cmd, opts, on_exit)
   -- close child stdio fd:s regardless of error
   for i = 1, 3 do
-    if type(opts.stdio[i]) == 'number' then
-      --- @diagnostic disable-next-line:param-type-mismatch
-      uv.fs_close(opts.stdio[i])
+    local fd = opts.stdio[i]
+    if fd then
+      uv.fs_close(fd)
     end
   end
 
@@ -423,7 +432,10 @@ end
 --- @param on_exit? fun(out: vim.SystemCompleted)
 --- @return vim.SystemObj
 local function run(cmd, opts, on_exit)
-  vim.validate('cmd', cmd, 'table')
+  vim.validate('cmd', cmd, function(v)
+    return type(v) == 'table' and type(v[1]) == 'string'
+  end, 'non-empty list of strings')
+  --- @cast cmd string[] & { [1]: string }
   vim.validate('opts', opts, 'table', true)
   vim.validate('on_exit', on_exit, 'function', true)
 
@@ -445,13 +457,11 @@ local function run(cmd, opts, on_exit)
     stderr_data = stderr_data,
   }
 
-  --- @diagnostic disable-next-line:missing-fields
   state.handle, state.pid = spawn(cmd[1], {
     args = vim.list_slice(cmd, 2),
     -- local function spawn() will close these
     stdio = { stdin_child_fd, stdout_child_fd, stderr_child_fd },
     cwd = opts.cwd,
-    --- @diagnostic disable-next-line:assign-type-mismatch
     env = setup_env(opts.env, opts.clear_env),
     detached = opts.detach,
     hide = true,

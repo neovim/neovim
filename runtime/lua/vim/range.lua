@@ -113,7 +113,8 @@ function M.new(...)
     if start.buf ~= end_.buf then
       error('start and end positions must belong to the same buffer')
     end
-    start_row, start_col, end_row, end_col, buf = start[1], start[2], end_[1], end_[2], start.buf
+    start_row, start_col, end_row, end_col, buf =
+      start.row, start.col, end_.row, end_.col, start.buf
   elseif nargs == 5 then
     ---@type integer, integer, integer, integer, integer
     buf, start_row, start_col, end_row, end_col = ...
@@ -152,6 +153,7 @@ local function to_inclusive_pos(buf, row, col)
     col = col + vim.str_utf_start(line, col) - 1
   elseif col == 0 and row > 0 then
     row = row - 1
+    line = util.get_line(buf, row)
     col = #line > 0 and #line + vim.str_utf_start(line, #line) - 1 or 0
   end
 
@@ -225,8 +227,8 @@ function M.has(outer, inner)
 
   if getmetatable(inner) == vim.pos then
     ---@cast inner -vim.Range
-    return util.cmp_pos.le(outer[1], outer[2], inner[1], inner[2])
-      and util.cmp_pos.ge(outer[3], outer[4], inner[1], inner[2])
+    return util.cmp_pos.le(outer[1], outer[2], inner.row, inner.col)
+      and util.cmp_pos.ge(outer[3], outer[4], inner.row, inner.col)
   end
   ---@cast inner -vim.Pos
 
@@ -270,8 +272,8 @@ function M.intersect(r1, r2)
   local r2_inclusive_end_row, r2_inclusive_end_col = to_inclusive_pos(r2.buf, r2[3], r2[4])
 
   if
-    util.cmp_pos.le(r1_inclusive_end_row, r1_inclusive_end_col, r2[1], r2[2])
-    or util.cmp_pos.ge(r1[1], r1[2], r2_inclusive_end_row, r2_inclusive_end_col)
+    util.cmp_pos.lt(r1_inclusive_end_row, r1_inclusive_end_col, r2[1], r2[2])
+    or util.cmp_pos.gt(r1[1], r1[2], r2_inclusive_end_row, r2_inclusive_end_col)
   then
     return nil
   end
@@ -464,7 +466,6 @@ setmetatable(M, {
     return M.new(...)
   end,
 })
----@cast M +fun(start: vim.Pos, end_: vim.Pos): vim.Range
----@cast M +fun(buf: integer, start_row: integer, start_col: integer, end_row: integer, end_col: integer): vim.Range
+---@cast M vim.Range & (fun(start: vim.Pos, end_: vim.Pos): vim.Range) & (fun(buf: integer, start_row: integer, start_col: integer, end_row: integer, end_col: integer): vim.Range)
 
 return M

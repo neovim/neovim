@@ -24,7 +24,6 @@ describe('cmdwin', function()
     eq('wipe', api.nvim_get_option_value('bufhidden', { buf = 0 }))
     eq(false, api.nvim_get_option_value('swapfile', { buf = 0 }))
     eq(true, api.nvim_get_option_value('buflisted', { buf = 0 })) -- #40431
-    eq(true, api.nvim_get_option_value('winfixbuf', { win = 0 }))
 
     -- <CR> executes the cmdline
     feed('ilet g:cmdwin_result = 42<Esc>')
@@ -45,6 +44,27 @@ describe('cmdwin', function()
     eq('', fn.getcmdwintype())
     eq(0, #fn.win_findbuf(cmdwin_buf)) -- All cmdwin windows are closed.
     eq(1, #api.nvim_list_wins()) -- Back to the single original window.
+  end)
+
+  it('treats buffer-change as cmdwin-exit', function()
+    feed('q:')
+    local cmdwin_buf = api.nvim_get_current_buf()
+    feed(':enew<CR>') -- this is typed into the cmdline, not the cmdwin (so it applies to the cmdwin)
+
+    eq('', fn.getcmdwintype()) -- Cleanup has run
+    eq(0, #fn.win_findbuf(cmdwin_buf)) -- All cmdwin windows are closed.
+    eq(2, #api.nvim_list_wins()) -- The two plain windows
+
+    feed('q:')
+    eq(':', fn.getcmdwintype()) -- cmdwin can reopen (internal state is correct)
+    cmdwin_buf = api.nvim_get_current_buf()
+
+    feed(':tabedit<CR>')
+    feed(':tabonly<CR>') -- closes the cmdwin indirectly
+
+    eq('', fn.getcmdwintype()) -- Cleanup has run
+    eq(0, #fn.win_findbuf(cmdwin_buf)) -- All cmdwin windows are closed.
+    eq(1, #api.nvim_list_wins()) -- The one plain tab window
   end)
 
   it('<CR> executes when cmdwin was moved to another tabpage #40484', function()
@@ -96,9 +116,9 @@ describe('cmdwin', function()
     eq(':', fn.getcmdtype())
   end)
 
-  it('history entry or current cmdline with control chars', function()
+  it('history entry or current cmdline with control chars or 0x80 byte', function()
     local firstbuf = api.nvim_get_current_buf()
-    local cmdline = 'normal! \023\022ifoo\nbar\027' -- Ctrl-W Ctrl-V ifoo\nbar Esc
+    local cmdline = 'normal! \023\022ifoo\nbar…\027' -- Ctrl-W Ctrl-V ifoo\nbar… Esc
     local bufline = cmdline:gsub('\n', '\0')
     fn.histadd(':', cmdline)
     feed('q:')
@@ -115,7 +135,7 @@ describe('cmdwin', function()
     eq({ bufline, bufline }, api.nvim_buf_get_lines(0, 0, -1, false))
     feed('<CR>')
     eq({ firstbuf, firstbuf }, fn.tabpagebuflist())
-    eq({ 'foo', 'bar' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    eq({ 'foo', 'bar…' }, api.nvim_buf_get_lines(0, 0, -1, false))
   end)
 
   it('async API calls work while cmdwin is open #40312', function()
@@ -136,13 +156,14 @@ describe('cmdwin', function()
 
   it('E1292 cannot nest cmdwin', function()
     feed('q:')
+    local cmdwin_buf = api.nvim_get_current_buf()
     eq(':', fn.getcmdwintype())
     feed('q:')
     -- Still just one cmdwin.
     eq(':', fn.getcmdwintype())
     local nwin = 0
     for _, w in ipairs(api.nvim_list_wins()) do
-      if api.nvim_get_option_value('winfixbuf', { win = w }) then
+      if api.nvim_win_get_buf(w) == cmdwin_buf then
         nwin = nwin + 1
       end
     end

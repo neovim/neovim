@@ -94,11 +94,12 @@ function M.get_lines(buf, rows)
   end
 
   -- Get the data from the file.
-  local success, data = pcall(vim.fn.readblob, vim.api.nvim_buf_get_name(buf))
+  local success, data = pcall(vim.fn.readblob, api.nvim_buf_get_name(buf))
   if not success then
     return row_line
   end
 
+  --- @cast data string
   local need = vim.tbl_count(row_line)
   local row = 0
   for line in string.gmatch(data, '([^\n]*)\n?') do

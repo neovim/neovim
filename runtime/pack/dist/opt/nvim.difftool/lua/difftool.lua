@@ -28,9 +28,9 @@ local highlight_groups = {
 }
 
 local layout = {
-  group = nil,
-  left_win = nil,
-  right_win = nil,
+  group = nil, --- @type integer?
+  left_win = nil, --- @type integer?
+  right_win = nil, --- @type integer?
 }
 
 local util = require('vim._core.util')
@@ -95,12 +95,12 @@ end
 local function diff_files(left_file, right_file, with_qf)
   setup_layout(with_qf or false)
 
-  util.edit_in(layout.left_win, left_file)
-  util.edit_in(layout.right_win, right_file)
+  util.edit_in(assert(layout.left_win), left_file)
+  util.edit_in(assert(layout.right_win), right_file)
 
   vim.cmd('diffoff!')
-  vim.api.nvim_win_call(layout.left_win, vim.cmd.diffthis)
-  vim.api.nvim_win_call(layout.right_win, vim.cmd.diffthis)
+  vim.api.nvim_win_call(assert(layout.left_win), vim.cmd.diffthis)
+  vim.api.nvim_win_call(assert(layout.right_win), vim.cmd.diffthis)
 end
 
 --- Diff two directories using external `diff` command
@@ -176,7 +176,7 @@ local function diff_dirs_builtin(left_dir, right_dir, opt)
 
   --- @param file1 string
   --- @param file2 string
-  --- @param chunk_size number
+  --- @param chunk_size integer
   --- @param chunk_cache table<string, any>
   --- @return number similarity ratio (0 to 1)
   local function calculate_similarity(file1, file2, chunk_size, chunk_cache)
@@ -219,6 +219,8 @@ local function diff_dirs_builtin(left_dir, right_dir, opt)
   --- @type table<string, string>
   local right_only = {}
 
+  --- @param dir_path string
+  --- @param is_left boolean
   local function process_files_in_directory(dir_path, is_left)
     local files = vim.fs.find(function(name, path)
       local rel_path = vim.fs.relpath(dir_path, vim.fs.joinpath(path, name))
@@ -261,7 +263,7 @@ local function diff_dirs_builtin(left_dir, right_dir, opt)
   -- Detect possible renames
   if opt.rename.detect then
     for left_rel, left_path in pairs(left_only) do
-      ---@type {similarity: number, path: string?, rel: string}
+      ---@type {similarity: number, path: string?, rel: string?}
       local best_match = { similarity = opt.rename.similarity, path = nil }
 
       for right_rel, right_path in pairs(right_only) do
@@ -369,13 +371,12 @@ local function diff_dirs(left_dir, right_dir, opt)
     nr = '$',
     title = 'DiffTool',
     items = qf_entries,
-    ---@param info {id: number, start_idx: number, end_idx: number}
+    ---@param info {id: integer, start_idx: integer, end_idx: integer}
     quickfixtextfunc = function(info)
-      --- @type table[]
-      local items = vim.fn.getqflist({ id = info.id, items = 1 }).items
+      local items = assert(vim.fn.getqflist({ id = info.id, items = 1 }).items)
       local out = {}
       for item = info.start_idx, info.end_idx do
-        local entry = items[item]
+        local entry = assert(items[item])
         table.insert(out, entry.text .. ' ' .. entry.user_data.rel)
       end
       return out
@@ -429,14 +430,14 @@ function M.open(left, right, opt)
   layout.group = vim.api.nvim_create_augroup('nvim.difftool.events', { clear = true })
   local hl_id = vim.api.nvim_create_namespace('nvim.difftool.hl')
 
+  --- @param bufnr? integer
   local function get_diff_entry(bufnr)
-    --- @type {idx: number, items: table[], size: number}
     local qf_info = vim.fn.getqflist({ idx = 0, items = 1, size = 1 })
     if qf_info.size == 0 then
       return false
     end
 
-    local entry = qf_info.items[qf_info.idx]
+    local entry = assert(qf_info.items)[assert(qf_info.idx)]
     if
       not entry
       or not entry.user_data

@@ -71,7 +71,9 @@
 #include "nvim/lua/treesitter.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
+#include "nvim/mapping.h"
 #include "nvim/mark.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -199,6 +201,7 @@ static void early_init(mparm_T *paramp)
   init_normal_cmds();   // Init the table of Normal mode commands.
   runtime_init();
   highlight_init();
+  mc_init();
 
 #ifdef MSWIN
   OSVERSIONINFO ovi;
@@ -794,7 +797,7 @@ void getout(int exitval)
           bufref_T bufref;
 
           set_bufref(&bufref, buf);
-          apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false, buf);
+          apply_autocmds_win(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false, buf, wp);
           if (bufref_valid(&bufref)) {
             buf_set_changedtick(buf, -1);  // note that we did it already
           }

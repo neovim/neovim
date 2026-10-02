@@ -33,8 +33,8 @@ Capability.enable('diagnostics', true)
 
 local DEFAULT_CLIENT_ID = -1
 
----@param severity lsp.DiagnosticSeverity
----@return vim.diagnostic.Severity
+---@param severity lsp.DiagnosticSeverity?
+---@return vim.diagnostic.Severity?
 local function severity_lsp_to_vim(severity)
   if type(severity) == 'string' then
     return protocol.DiagnosticSeverity[severity] --[[@as vim.diagnostic.Severity]]
@@ -116,8 +116,7 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
         string.format('Unsupported Markup message from LSP client %d', client_id),
         lsp.log_levels.ERROR
       )
-      --- @diagnostic disable-next-line: undefined-field,no-unknown
-      message = diagnostic.message.value
+      message = message.value
     end
     local line = buf_lines and buf_lines[start.line + 1] or ''
     local end_line = line
@@ -295,12 +294,12 @@ function M.on_diagnostic(error, result, ctx)
   if error ~= nil then
     if error.code == protocol.ErrorCodes.ServerCancelled then
       if error.data == nil or error.data.retriggerRequest ~= false then
-        local client = assert(lsp.get_client_by_id(ctx.client_id))
+        local client = assert(lsp.get_client_by_id(client_id))
         ---@diagnostic disable-next-line: param-type-mismatch
         client:request(ctx.method, ctx.params, nil, ctx.bufnr)
       end
     else
-      vim.lsp.log.error('diagnostics', error)
+      lsp.log.error('diagnostics', error)
     end
     return
   end
@@ -354,7 +353,7 @@ end
 ---@package
 ---@param client_id integer Client ID to refresh
 function Diagnostics:refresh(client_id)
-  local client = vim.lsp.get_client_by_id(client_id)
+  local client = lsp.get_client_by_id(client_id)
 
   local method = 'textDocument/diagnostic'
   local clients = { client }
@@ -368,8 +367,8 @@ function Diagnostics:refresh(client_id)
 
   local state = self.client_state[client_id]
   if client and state then
-    ---@param cap lsp.DiagnosticRegistrationOptions
     client:_provider_foreach(method, function(cap)
+      --- @cast cap lsp.DiagnosticRegistrationOptions
       local key = result_id_key(cap.identifier)
       ---@type lsp.DocumentDiagnosticParams
       local params = {
@@ -383,13 +382,14 @@ function Diagnostics:refresh(client_id)
 end
 
 --- |lsp-handler| for the method `workspace/diagnostic/refresh`
+---@internal
+---@param err lsp.ResponseError?
 ---@param ctx lsp.HandlerContext
----@private
 function M.on_refresh(err, _, ctx)
   if err then
     return vim.NIL
   end
-  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  local client = lsp.get_client_by_id(ctx.client_id)
   if client == nil then
     return vim.NIL
   end
@@ -413,6 +413,7 @@ end
 
 --- Enable pull diagnostics for a buffer from a client
 ---@package
+---@param client_id integer
 function Diagnostics:on_attach(client_id)
   local state = self.client_state[client_id]
 
@@ -428,6 +429,7 @@ end
 
 --- Disable pull diagnostics for a buffer from a client
 ---@package
+---@param client_id integer
 function Diagnostics:on_detach(client_id)
   local state = self.client_state[client_id]
   if state then
@@ -437,6 +439,7 @@ function Diagnostics:on_detach(client_id)
 end
 
 ---@private
+---@param client_id integer
 function Diagnostics:on_close(client_id)
   local state = self.client_state[client_id]
   if state and state.pull_kind == 'document' then
@@ -445,6 +448,7 @@ function Diagnostics:on_close(client_id)
 end
 
 ---@private
+---@param client_id integer
 function Diagnostics:on_change(client_id)
   local state = self.client_state[client_id]
   if state and state.pull_kind == 'document' then
@@ -521,8 +525,8 @@ function M._workspace_diagnostics(opts)
   end
 
   for _, client in ipairs(clients) do
-    ---@param cap lsp.DiagnosticRegistrationOptions
     client:_provider_foreach('workspace/diagnostic', function(cap)
+      --- @cast cap lsp.DiagnosticRegistrationOptions
       --- @type lsp.WorkspaceDiagnosticParams
       local params = {
         identifier = cap.identifier,

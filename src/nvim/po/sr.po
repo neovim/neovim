@@ -6809,10 +6809,6 @@ msgstr "E471: Потребан је аргумент"
 msgid "E10: \\ should be followed by /, ? or &"
 msgstr "E10: Иза \\ треба да је /, ? или &"
 
-msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
-msgstr ""
-"E11: Неважеће у прозору командне линије; <CR> извршава, CTRL-C отказује"
-
 msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
 msgstr ""
 "E12: Постоји забрана за команду у exrc/vimrc у текућој претрази "

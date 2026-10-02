@@ -1033,4 +1033,20 @@ func Test_backupcopy_auto_restrictive_umask()
 	\ systemlist('ls -i Xumaskfile')[0]->matchstr('^\s*\zs\d\+'))
 endfunc
 
+" Test for :write when a BufWritePre autocmd changes to a directory that does
+" not contain the file: the short file name is dropped and the full name must
+" be used.
+func Test_write_BufWritePre_cd_away()
+  call mkdir('Xcdaway/other', 'pR')
+  let save_cwd = getcwd()
+  defer chdir(save_cwd)
+  cd Xcdaway
+  new file.txt
+  call setline(1, 'hello')
+  autocmd BufWritePre <buffer> cd other
+  write
+  call assert_equal(['hello'], readfile('../file.txt'))
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

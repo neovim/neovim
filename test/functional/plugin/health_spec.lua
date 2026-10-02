@@ -14,6 +14,7 @@ local source = n.source
 local assert_alive = n.assert_alive
 local fn = n.fn
 local api = n.api
+local retry = t.retry
 
 describe(':checkhealth', function()
   it('detects invalid $VIMRUNTIME', function()
@@ -38,7 +39,9 @@ describe(':checkhealth', function()
     -- Do this after startup, otherwise it just breaks $VIMRUNTIME.
     command("let $VIM='zub'")
     command('checkhealth vim.health')
-    matches('ERROR $VIM .* zub', curbuf_contents())
+    retry(nil, 10000, function()
+      matches('ERROR $VIM .* zub', curbuf_contents())
+    end)
   end)
 
   it('getcompletion()', function()
@@ -155,6 +158,36 @@ describe('vim.health', function()
   end)
 
   describe(':checkhealth', function()
+    it('does not block on vim.health subprocesses', function()
+      exec_lua(function()
+        local system = vim.system
+        vim.system = function(cmd, opts, on_exit)
+          if cmd[1] == 'git' and cmd[2] == 'ls-remote' then
+            _G.resolve_health_system = function()
+              vim.system = system
+              on_exit({ code = 1, signal = 0, stdout = '', stderr = 'failed' })
+            end
+            return
+          end
+          return system(cmd, opts, on_exit)
+        end
+      end)
+
+      command('checkhealth vim.health')
+      eq('function', exec_lua('return type(_G.resolve_health_system)'))
+      eq(true, api.nvim_get_option_value('modifiable', { buf = 0 }))
+
+      command('let g:healthcheck_responsive = v:true')
+      eq(true, exec_lua('return vim.g.healthcheck_responsive'))
+      exec_lua('_G.resolve_health_system()')
+
+      retry(nil, 5000, function()
+        eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
+      end)
+      eq('checkhealth', api.nvim_get_option_value('filetype', { buf = 0 }))
+      matches('vim%.health:', curbuf_contents())
+    end)
+
     it('report_xx() renders correctly', function()
       command('checkhealth full_render')
       n.expect([[
@@ -205,6 +238,9 @@ describe('vim.health', function()
 
     it('concatenates multiple reports', function()
       command('checkhealth success1 success2 test_plug')
+      retry(nil, 5000, function()
+        eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
+      end)
       n.expect([[
         ==============================================================================
         test_plug:                                                                  ✅
@@ -267,6 +303,10 @@ describe('vim.health', function()
         Bar = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGrey },
       })
       command('checkhealth foo success1')
+      -- Wait for the filetype plugin before changing window options.
+      retry(nil, 5000, function()
+        eq('checkhealth', api.nvim_get_option_value('filetype', { buf = 0 }))
+      end)
       command('set nofoldenable nowrap laststatus=0')
       screen:expect {
         grid = [[

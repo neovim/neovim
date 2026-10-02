@@ -47,6 +47,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/runtime.h"
 #include "nvim/types_defs.h"
+#include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
@@ -398,7 +399,9 @@ bool check_changed_any(bool hidden, bool unload)
         && msg_didany) {
       int save = no_wait_return;
       no_wait_return = false;
-      wait_return(false);
+      if (!ui_has(kUIMessages)) {
+        wait_return(false);
+      }
       no_wait_return = save;
     }
   }

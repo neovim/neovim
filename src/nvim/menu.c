@@ -701,10 +701,10 @@ static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
         tv_dict_add_nr(impl, S_LEN("enabled"),
                        (menu->enabled & (1 << bit)) ? 1 : 0);
         tv_dict_add_nr(impl, S_LEN("noremap"),
-                       (menu->noremap[bit] & REMAP_NONE) ? 1 : 0);
+                       (menu->noremap[bit] == REMAP_NONE) ? 1 : 0);
         tv_dict_add_nr(impl, S_LEN("sid"),
-                       (menu->noremap[bit] & REMAP_SCRIPT) ? 1 : 0);
-        tv_dict_add_dict(commands, menu_mode_chars[bit], 1, impl);
+                       (menu->noremap[bit] == REMAP_SCRIPT) ? 1 : 0);
+        tv_dict_add_dict(commands, menu_mode_chars[bit], strlen(menu_mode_chars[bit]), impl);
       }
     }
   } else {

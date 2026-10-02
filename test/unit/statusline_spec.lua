@@ -35,8 +35,7 @@ describe('build_stl_str_hl', function()
 
     return stl.build_stl_str_hl(
       globals.curwin,
-      output_buffer,
-      buffer_byte_size,
+      t.ffi.new('CharBuf', { output_buffer, buffer_byte_size }),
       to_cstr(pat),
       -1,
       0,
@@ -494,6 +493,51 @@ describe('build_stl_str_hl', function()
     '%.15(hidden%<%)%f%<',
     'test/unit/buff>',
     { file_name = 'test/unit/buffer_spec.lua' }
+  )
+
+  statusline_test(
+    'hides auto-hiding item group with only empty normal items',
+    29,
+    'visible: %(pre-%h%f-post%), hidden: %(pre-%h%w-post%)',
+    'visible: pre-X-post, hidden: ',
+    { file_name = 'X' }
+  )
+
+  statusline_test(
+    'hides auto-hiding item group with expression evaluating to empty string',
+    29,
+    "visible: %(pre-%{'X'}-post%), hidden: %(pre-%{''}-post%)",
+    'visible: pre-X-post, hidden: '
+  )
+
+  statusline_test(
+    'hides auto-hiding item group with re-evaluated expression evaluating to empty string',
+    29,
+    "visible: %(pre-%{%'%1*X%*'%}-post%), hidden: %(pre-%{%''%}-post%)",
+    'visible: pre-X-post, hidden: '
+  )
+
+  statusline_test(
+    'hides auto-hiding item group with re-evaluated expression evaluating to only empty normal items',
+    29,
+    "visible: %(pre-%{%'%h%f'%}-post%), hidden: %(pre-%{%'%h%w'%}-post%)",
+    'visible: pre-X-post, hidden: ',
+    { file_name = 'X' }
+  )
+
+  statusline_test(
+    'hides auto-hiding item group with nested re-evaluated expressions evaluating to empty string',
+    29,
+    "visible: %(pre-%{%'%{%''%1*X%*''%'..nr2char(125)%}-post%), hidden: %(pre-%{%'%{%''''%'..nr2char(125)%}-post%)",
+    'visible: pre-X-post, hidden: '
+  )
+
+  statusline_test(
+    'hides auto-hiding item group with nested re-evaluated expressions evaluating to only empty normal items',
+    29,
+    "visible: %(pre-%{%'%h%{%''%f''%'..nr2char(125)%}-post%), hidden: %(pre-%{%'%h%{%''%w''%'..nr2char(125)%}-post%)",
+    'visible: pre-X-post, hidden: ',
+    { file_name = 'X' }
   )
 
   -- stl item testing

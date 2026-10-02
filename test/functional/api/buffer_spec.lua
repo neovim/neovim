@@ -2420,6 +2420,15 @@ describe('api/buf', function()
       eq(cwd .. '/' .. link .. '/', t.fix_slashes(api.nvim_buf_get_name(0)))
     end)
 
+    it('allows URI buffer names that differ by a trailing slash', function()
+      api.nvim_buf_set_name(0, 'test://example')
+      local trailing_slash = api.nvim_create_buf(true, false)
+      api.nvim_buf_set_name(trailing_slash, 'test://example/')
+
+      eq('test://example', api.nvim_buf_get_name(0))
+      eq('test://example/', api.nvim_buf_get_name(trailing_slash))
+    end)
+
     describe("with 'autochdir'", function()
       local topdir
       local oldbuf

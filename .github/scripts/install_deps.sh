@@ -49,8 +49,8 @@ if [[ $OS == Linux ]]; then
     fi
   fi
 elif [[ $OS == Darwin ]]; then
-  brew update --quiet
   if [[ -n $TEST ]]; then
+    brew untap aws/tap
     brew install cpanminus fish fswatch
 
     npm install -g neovim

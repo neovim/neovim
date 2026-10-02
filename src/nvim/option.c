@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,6 +72,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
+#include "nvim/input_cmdatom.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/log.h"
@@ -78,6 +80,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/mapping.h"
 #include "nvim/mbyte.h"
+#include "nvim/mcursor.h"
 #include "nvim/memfile.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -102,7 +105,6 @@
 #include "nvim/regexp_defs.h"
 #include "nvim/runtime.h"
 #include "nvim/spell.h"
-#include "nvim/spellfile.h"
 #include "nvim/spellsuggest.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
@@ -1333,8 +1335,7 @@ const char *find_option_end(const char *arg, OptIndex *opt_idxp)
 /// Get new option value from argp. Allocated Object must be freed by caller.
 /// Can unset local value of an option when ":set {option}<" is used.
 Object get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T prefix, char **argp,
-                         int nextchar, set_op_T op, uint32_t flags, void *varp,
-                         Object *oldval_override, char *errbuf, const size_t errbuflen,
+                         int nextchar, set_op_T op, void *varp, Object *oldval_override,
                          const char **errmsg)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -1468,8 +1469,8 @@ Object get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T prefix, c
   return newval;
 }
 
-static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *errbuf,
-                              size_t errbuflen, const char **errmsg)
+static const char *do_one_set_option(int opt_flags, char **argp, bool *did_show,
+                                     const CharBuf *errbuf)
 {
   // 1: nothing, 0: "no", 2: "inv" in front of name
   set_prefix_T prefix = get_option_prefix(argp);
@@ -1483,10 +1484,9 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
   if (opt_idx != kOptInvalid) {
     assert(option_end >= arg);
   } else if (is_tty_option(arg)) {  // Silently ignore TTY options.
-    return;
+    return NULL;
   } else {                          // Invalid option name, skip.
-    *errmsg = e_unknown_option;
-    return;
+    return e_unknown_option;
   }
 
   // Remember character after option name.
@@ -1509,8 +1509,9 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
   // pointer to variable for current option
   void *varp = get_varp_scope(&(options[opt_idx]), opt_flags);
 
-  if (validate_opt_idx(curwin, opt_idx, opt_flags, flags, prefix, errmsg) == FAIL) {
-    return;
+  const char *errmsg = NULL;
+  if (validate_opt_idx(curwin, opt_idx, opt_flags, flags, prefix, &errmsg) == FAIL) {
+    return errmsg;
   }
 
   if (vim_strchr("?=:!&<", nextchar) != NULL) {
@@ -1525,8 +1526,7 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
     }
     if (vim_strchr("?!&<", nextchar) != NULL
         && (*argp)[1] != NUL && !ascii_iswhite((*argp)[1])) {
-      *errmsg = e_trailing;
-      return;
+      return e_trailing;
     }
   }
 
@@ -1556,36 +1556,33 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
     }
 
     if (nextchar != '?' && nextchar != NUL && !ascii_iswhite(afterchar)) {
-      *errmsg = e_trailing;
+      return e_trailing;
     }
-    return;
+    return NULL;
   }
 
   if (option_has_type(opt_idx, kObjectTypeBoolean)) {
     if (vim_strchr("=:", nextchar) != NULL) {
-      *errmsg = e_invarg;
-      return;
+      return e_invarg;
     }
 
     if (vim_strchr("!&<", nextchar) == NULL && nextchar != NUL && !ascii_iswhite(afterchar)) {
-      *errmsg = e_trailing;
-      return;
+      return e_trailing;
     }
   } else {
     if (vim_strchr("=:&<", nextchar) == NULL) {
-      *errmsg = e_invarg;
-      return;
+      return e_invarg;
     }
   }
 
-  Object newval = get_option_newval(opt_idx, opt_flags, prefix, argp, nextchar, op, flags, varp,
-                                    NULL, errbuf, errbuflen, errmsg);
+  Object newval = get_option_newval(opt_idx, opt_flags, prefix, argp, nextchar, op, varp,
+                                    NULL, &errmsg);
 
-  if (newval.type == kObjectTypeNil || *errmsg != NULL) {
-    return;
+  if (newval.type == kObjectTypeNil || errmsg != NULL) {
+    return errmsg;
   }
 
-  *errmsg = set_option(opt_idx, newval, opt_flags, 0, false, op == OP_NONE, errbuf, errbuflen);
+  return set_option(opt_idx, newval, opt_flags, 0, false, op == OP_NONE, errbuf);
 }
 
 /// Parse 'arg' for option settings.
@@ -1632,10 +1629,8 @@ int do_set(char *arg, int opt_flags)
         }
       } else {
         char *startarg = arg;             // remember for error message
-        const char *errmsg = NULL;
-        char errbuf[ERR_BUFLEN];
-
-        do_one_set_option(opt_flags, &arg, &did_show, errbuf, sizeof(errbuf), &errmsg);
+        const CharBuf errbuf = { (char[ERR_BUFLEN]){ 0 }, ERR_BUFLEN };
+        const char *errmsg = do_one_set_option(opt_flags, &arg, &did_show, &errbuf);
 
         // Advance to next argument.
         // - skip until a blank found, taking care of backslashes
@@ -1834,12 +1829,13 @@ static char *option_expand(OptIndex opt_idx, const char *val)
 /// option values.
 static void didset_options(void)
 {
-  // initialize the table for 'iskeyword' et.al.
-  init_chartab();
+  // initialize the tables for 'iskeyword' et.al.
+  buf_init_isk_chartab(curbuf);
+  init_isf_chartab();
+  init_isi_chartab();
 
   didset_string_options();
 
-  spell_check_msm();
   spell_check_sps();
   compile_cap_prog(curwin->w_s);
   did_set_spell_option();
@@ -1857,10 +1853,10 @@ static void didset_options2(void)
   highlight_changed();
 
   // Parse default for 'fillchars'.
-  set_chars_option(curwin, curwin->w_p_fcs, kFillchars, true, NULL, 0);
+  set_chars_option(curwin, curwin->w_p_fcs, kFillchars, true, NULL);
 
   // Parse default for 'listchars'.
-  set_chars_option(curwin, curwin->w_p_lcs, kListchars, true, NULL, 0);
+  set_chars_option(curwin, curwin->w_p_lcs, kListchars, true, NULL);
 
   // Parse default for 'wildmode'.
   check_opt_wim();
@@ -1906,7 +1902,7 @@ void check_options(void)
 /// @param  opt_idx    Option index in options[] table.
 /// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 ///
-/// @return  True if option was set from a modeline or in secure mode, false if it wasn't.
+/// @return  True if the option value came from a modeline, secure mode, or the sandbox.
 int was_set_insecurely(win_T *const wp, OptIndex opt_idx, int opt_flags)
 {
   assert(opt_idx != kOptInvalid);
@@ -2095,10 +2091,10 @@ void set_option_sctx(OptIndex opt_idx, int opt_flags, sctx_T script_ctx)
 
 /// Execute OptionSet autocmd now (not deferred).
 void apply_optionset_autocmd_now(OptIndex opt_idx, int opt_flags, Object oldval, Object oldval_g,
-                                 Object oldval_l, Object newval, const char *errmsg)
+                                 Object oldval_l, Object newval)
 {
-  // Don't do this while starting up, failure or recursively.
-  if (starting || errmsg != NULL || *get_vim_var_str(VV_OPTION_TYPE) != NUL) {
+  // Don't do this while starting up or recursively.
+  if (starting || *get_vim_var_str(VV_OPTION_TYPE) != NUL) {
     return;
   }
 
@@ -2141,22 +2137,22 @@ void apply_optionset_autocmd_now(OptIndex opt_idx, int opt_flags, Object oldval,
 
 /// For 'modified', the event is deferred.
 static void apply_optionset_autocmd(OptIndex opt_idx, int opt_flags, Object oldval, Object oldval_g,
-                                    Object oldval_l, Object newval, const char *errmsg)
+                                    Object oldval_l, Object newval)
 {
-  if (starting || errmsg != NULL) {
+  if (starting) {
     return;
   }
   if (opt_idx == kOptModified) {
     aucmd_defer_modified(curbuf, newval.data.boolean);
     return;
   }
-  apply_optionset_autocmd_now(opt_idx, opt_flags, oldval, oldval_g, oldval_l, newval, errmsg);
+  apply_optionset_autocmd_now(opt_idx, opt_flags, oldval, oldval_g, oldval_l, newval);
 }
 
 /// Process the updated 'arabic' option value.
 static const char *did_set_arabic(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   const char *errmsg = NULL;
 
   if (win->w_p_arab) {
@@ -2189,7 +2185,8 @@ static const char *did_set_arabic(optset_T *args)
     p_deco = true;
 
     // Force-set the necessary keymap for arabic.
-    errmsg = set_option_value(kOptKeymap, STATIC_CSTR_AS_OBJ("arabic"), OPT_LOCAL);
+    errmsg = set_option_value(kOptKeymap, STATIC_CSTR_AS_OBJ("arabic"), OPT_LOCAL, true,
+                              args->os_errbuf);
   } else {
     // 'arabic' is reset, handle various sub-settings.
     if (!p_tbidi) {
@@ -2225,10 +2222,8 @@ static const char *did_set_autochdir(optset_T *args FUNC_ATTR_UNUSED)
 /// Process the updated 'binary' option value.
 static const char *did_set_binary(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
-
   // when 'bin' is set also set some other options
-  set_options_bin((int)args->os_oldval.data.boolean, buf->b_p_bin, args->os_flags);
+  set_options_bin((int)args->os_oldval.data.boolean, args->os_buf->b_p_bin, args->os_flags);
   redraw_titles();
 
   return NULL;
@@ -2237,7 +2232,7 @@ static const char *did_set_binary(optset_T *args)
 /// Process the updated 'buflisted' option value.
 static const char *did_set_buflisted(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
 
   // when 'buflisted' changes, trigger autocommands
   if (args->os_oldval.data.boolean != buf->b_p_bl) {
@@ -2271,7 +2266,7 @@ static const char *did_set_cmdheight(optset_T *args)
 /// Process the updated 'diff' option value.
 static const char *did_set_diff(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   // May add or remove the buffer from the list of diff buffers.
   diff_buf_adjust(win);
   if (foldmethodIsDiff(win)) {
@@ -2292,11 +2287,27 @@ static const char *did_set_eof_eol_fixeol_bomb(optset_T *args FUNC_ATTR_UNUSED)
 /// Process the updated 'equalalways' option value.
 static const char *did_set_equalalways(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
   if (p_ea && !args->os_oldval.data.boolean) {
-    win_equal(win, false, 0);
+    win_equal(args->os_win, false, 0);
   }
 
+  return NULL;
+}
+
+/// Process the new 'foldenable' option value.
+static const char *did_set_foldenable(optset_T *args)
+{
+  win_T *win = args->os_win;
+  if (args->os_varp == &win->w_p_fen && args->os_oldval.data.boolean != win->w_p_fen
+      && foldmethodIsDiff(win) && win->w_p_scb) {
+    // Adjust 'foldenable' in diff-synced windows without recursive setters.
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp != win && foldmethodIsDiff(wp) && wp->w_p_scb) {
+        wp->w_p_fen = win->w_p_fen;
+        changed_window_setting(wp);
+      }
+    }
+  }
   return NULL;
 }
 
@@ -2310,17 +2321,25 @@ static const char *did_set_foldlevel(optset_T *args FUNC_ATTR_UNUSED)
 /// Process the new 'foldminlines' option value.
 static const char *did_set_foldminlines(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
-  foldUpdateAll(win);
+  foldUpdateAll(args->os_win);
   return NULL;
 }
 
 /// Process the new 'foldnestmax' option value.
 static const char *did_set_foldnestmax(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   if (foldmethodIsSyntax(win) || foldmethodIsIndent(win)) {
     foldUpdateAll(win);
+  }
+  return NULL;
+}
+
+/// Multicursor: handle updates to 'follow' option.
+static const char *did_set_follow(optset_T *args)
+{
+  if (args->os_buf == curbuf) {
+    atom_follow_changed();
   }
   return NULL;
 }
@@ -2449,9 +2468,8 @@ static const char *did_set_lines_or_columns(optset_T *args)
 /// Process the updated 'lisp' option value.
 static const char *did_set_lisp(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
   // When 'lisp' option changes include/exclude '-' in keyword characters.
-  buf_init_chartab(buf, false);          // ignore errors
+  buf_init_isk_chartab(args->os_buf);          // ignore errors
   return NULL;
 }
 
@@ -2467,7 +2485,7 @@ static const char *did_set_modifiable(optset_T *args FUNC_ATTR_UNUSED)
 /// Process the updated 'modified' option value.
 static const char *did_set_modified(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   if (!args->os_newval.data.boolean) {
     save_file_ff(buf);  // Buffer is unchanged
   }
@@ -2479,7 +2497,7 @@ static const char *did_set_modified(optset_T *args)
 /// Process the updated 'number' or 'relativenumber' option value.
 static const char *did_set_number_relativenumber(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   if (*win->w_p_stc != NUL) {
     // When 'relativenumber'/'number' is changed and 'statuscolumn' is set, reset width.
     win->w_nrwidth_line_count = 0;
@@ -2491,8 +2509,7 @@ static const char *did_set_number_relativenumber(optset_T *args)
 /// Process the new 'numberwidth' option value.
 static const char *did_set_numberwidth(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
-  win->w_nrwidth_line_count = 0;  // trigger a redraw
+  args->os_win->w_nrwidth_line_count = 0;  // trigger a redraw
 
   return NULL;
 }
@@ -2626,23 +2643,20 @@ static const char *did_set_paste(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
-/// Process the updated 'previewwindow' option value.
-static const char *did_set_previewwindow(optset_T *args)
+/// Validate the 'previewwindow' option.
+static const char *validate_previewwindow(const optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
-
-  if (!win->w_p_pvw) {
+  if ((args->os_flags & OPT_GLOBAL) || !args->os_newval.data.boolean) {
     return NULL;
   }
-
-  // There can be only one window with 'previewwindow' set.
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_p_pvw && wp != win) {
-      win->w_p_pvw = false;
+  win_T *win = args->os_win;
+  tabpage_T *tab = win == curwin ? curtab : win_find_tabpage(win);
+  // There can be only one preview window in a tab.
+  FOR_ALL_WINDOWS_IN_TAB(wp, tab) {
+    if (wp != win && wp->w_p_pvw) {
       return e_preview_window_already_exists;
     }
   }
-
   return NULL;
 }
 
@@ -2660,7 +2674,7 @@ static const char *did_set_pumblend(optset_T *args FUNC_ATTR_UNUSED)
 /// Process the updated 'readonly' option value.
 static const char *did_set_readonly(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
 
   // when 'readonly' is reset globally, also reset readonlymode
   if (!buf->b_p_ro && (args->os_flags & OPT_LOCAL) == 0) {
@@ -2680,7 +2694,7 @@ static const char *did_set_readonly(optset_T *args)
 /// Process the new 'scrollback' option value.
 static const char *did_set_scrollback(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   OptInt old_value = args->os_oldval.data.integer;
   OptInt value = args->os_newval.data.integer;
 
@@ -2694,7 +2708,7 @@ static const char *did_set_scrollback(optset_T *args)
 /// Process the updated 'scrollbind' option value.
 static const char *did_set_scrollbind(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
 
   // when 'scrollbind' is set: snapshot the current position to avoid a jump
   // at the end of normal_cmd()
@@ -2709,8 +2723,8 @@ static const char *did_set_scrollbind(optset_T *args)
 /// Process the new 'shiftwidth' or the 'tabstop' option value.
 static const char *did_set_shiftwidth_tabstop(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
-  win_T *win = (win_T *)args->os_win;
+  buf_T *buf = args->os_buf;
+  win_T *win = args->os_win;
   OptInt *pp = (OptInt *)args->os_varp;
 
   if (foldmethodIsIndent(win)) {
@@ -2736,7 +2750,7 @@ static const char *did_set_showtabline(optset_T *args FUNC_ATTR_UNUSED)
 /// Process the updated 'smoothscroll' option value.
 static const char *did_set_smoothscroll(optset_T *args FUNC_ATTR_UNUSED)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   if (!win->w_p_sms) {
     win->w_skipcol = 0;
   }
@@ -2747,7 +2761,7 @@ static const char *did_set_smoothscroll(optset_T *args FUNC_ATTR_UNUSED)
 /// Process the updated 'spell' option value.
 static const char *did_set_spell(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   if (win->w_p_spell) {
     return parse_spelllang(win);
   }
@@ -2758,7 +2772,7 @@ static const char *did_set_spell(optset_T *args)
 /// Process the updated 'swapfile' option value.
 static const char *did_set_swapfile(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   // when 'swf' is set, create swapfile, when reset remove swapfile
   if (buf->b_p_swf && p_uc) {
     ml_open_file(buf);                     // create the swap file
@@ -2803,7 +2817,7 @@ static const char *did_set_titlelen(optset_T *args)
 /// Process the updated 'undofile' option value.
 static const char *did_set_undofile(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
 
   // Only take action when the option was set.
   if (!buf->b_p_udf && !p_udf) {
@@ -2854,7 +2868,7 @@ const char *did_set_buflocal_undolevels(buf_T *buf, OptInt value, OptInt old_val
 /// Process the new 'undolevels' option value.
 static const char *did_set_undolevels(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   OptInt *pp = (OptInt *)args->os_varp;
 
   if (pp == &p_ul) {                  // global 'undolevels'
@@ -2879,10 +2893,10 @@ static const char *did_set_updatecount(optset_T *args)
   return NULL;
 }
 
-/// Process the new 'wildchar' / 'wildcharm' option value.
-static const char *did_set_wildchar(optset_T *args)
+/// Validate the 'wildchar' or 'wildcharm' option.
+static const char *validate_wildchar(const optset_T *args)
 {
-  OptInt c = *(OptInt *)args->os_varp;
+  OptInt c = args->os_newval.data.integer;
 
   // Don't allow key values that wouldn't work as wildchar.
   if (c == Ctrl_C || c == '\n' || c == '\r' || c == K_KENTER) {
@@ -2895,7 +2909,7 @@ static const char *did_set_wildchar(optset_T *args)
 /// Process the new 'winblend' option value.
 static const char *did_set_winblend(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   OptInt old_value = args->os_oldval.data.integer;
   OptInt value = args->os_newval.data.integer;
 
@@ -2944,7 +2958,7 @@ static const char *did_set_winwidth(optset_T *args)
 /// Process the updated 'wrap' option value.
 static const char *did_set_wrap(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   // Set w_leftcol or w_skipcol to zero.
   if (win->w_p_wrap) {
     win->w_leftcol = 0;
@@ -2959,14 +2973,13 @@ static const char *did_set_wrap(optset_T *args)
 /// be used if args->os_varp is the same as p_chi, else 'lhistory'.
 static const char *did_set_xhistory(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
   bool is_p_chi = (OptInt *)args->os_varp == &p_chi;
   OptInt *arg = is_p_chi ? &p_chi : (OptInt *)args->os_varp;
 
   if (is_p_chi) {
     qf_resize_stack((int)(*arg));
   } else {
-    ll_resize_stack(win, (int)(*arg));
+    ll_resize_stack(args->os_win, (int)(*arg));
   }
 
   return NULL;
@@ -3012,16 +3025,30 @@ static void do_spelllang_source(win_T *win)
   }
 }
 
+/// Format an option error. Without a buffer, return a non-NULL empty message.
+const char *opt_error(const CharBuf *errbuf, const char *fmt, ...)
+  FUNC_ATTR_PRINTF(2, 3)
+{
+  if (errbuf == NULL) {
+    return "";
+  }
+  va_list arglist;
+  va_start(arglist, fmt);
+  vim_vsnprintf(errbuf->data, errbuf->size, _(fmt), arglist);
+  va_end(arglist);
+  return errbuf->data;
+}
+
 /// Check the bounds of numeric options.
 ///
 /// @param          opt_idx    Index in options[] table. Must not be kOptInvalid.
 /// @param[in,out]  newval     Pointer to new option value. Will be set to bound checked value.
-/// @param[out]     errbuf     Buffer for error message. Cannot be NULL.
-/// @param          errbuflen  Length of error buffer.
+/// @param          win       Target window.
+/// @param[out]     errbuf     Buffer for error message, or NULL if not needed.
 ///
 /// @return Error message, if any.
-static const char *check_num_option_bounds(OptIndex opt_idx, OptInt *newval, char *errbuf,
-                                           size_t errbuflen)
+static const char *check_num_option_bounds(OptIndex opt_idx, OptInt *newval, win_T *win,
+                                           const CharBuf *errbuf)
   FUNC_ATTR_NONNULL_ARG(3)
 {
   const char *errmsg = NULL;
@@ -3029,9 +3056,7 @@ static const char *check_num_option_bounds(OptIndex opt_idx, OptInt *newval, cha
   switch (opt_idx) {
   case kOptLines:
     if (*newval < min_rows_for_all_tabpages() && full_screen) {
-      vim_snprintf(errbuf, errbuflen, _("E593: Need at least %d lines"),
-                   min_rows_for_all_tabpages());
-      errmsg = errbuf;
+      errmsg = opt_error(errbuf, N_("E593: Need at least %d lines"), min_rows_for_all_tabpages());
       *newval = min_rows_for_all_tabpages();
     }
     // True max size is defined by check_screensize().
@@ -3039,8 +3064,7 @@ static const char *check_num_option_bounds(OptIndex opt_idx, OptInt *newval, cha
     break;
   case kOptColumns:
     if (*newval < MIN_COLUMNS && full_screen) {
-      vim_snprintf(errbuf, errbuflen, _("E594: Need at least %d columns"), MIN_COLUMNS);
-      errmsg = errbuf;
+      errmsg = opt_error(errbuf, N_("E594: Need at least %d columns"), MIN_COLUMNS);
       *newval = MIN_COLUMNS;
     }
     // True max size is defined by check_screensize().
@@ -3056,12 +3080,12 @@ static const char *check_num_option_bounds(OptIndex opt_idx, OptInt *newval, cha
     }
     break;
   case kOptScroll:
-    if ((*newval <= 0 || (*newval > curwin->w_view_height && curwin->w_view_height > 0))
+    if ((*newval <= 0 || (*newval > win->w_view_height && win->w_view_height > 0))
         && full_screen) {
       if (*newval != 0) {
         errmsg = e_scroll;
       }
-      *newval = win_default_scroll(curwin);
+      *newval = win_default_scroll(win);
     }
     break;
   default:
@@ -3075,12 +3099,11 @@ static const char *check_num_option_bounds(OptIndex opt_idx, OptInt *newval, cha
 ///
 /// @param          opt_idx    Index in options[] table. Must not be kOptInvalid.
 /// @param[in,out]  newval     Pointer to new option value. Will be set to bound checked value.
-/// @param[out]     errbuf     Buffer for error message. Cannot be NULL.
-/// @param          errbuflen  Length of error buffer.
+/// @param[out]     errbuf     Buffer for error message, or NULL if not needed.
 ///
 /// @return Error message, if any.
-static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, char *errbuf,
-                                       size_t errbuflen)
+static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, win_T *win,
+                                       const CharBuf *errbuf)
 {
   OptInt value = *newval;
 
@@ -3241,7 +3264,7 @@ static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, char *e
     break;
   }
 
-  return check_num_option_bounds(opt_idx, newval, errbuf, errbuflen);
+  return check_num_option_bounds(opt_idx, newval, win, errbuf);
 }
 
 /// Called after an option changed: check if something needs to be redrawn.
@@ -3824,7 +3847,8 @@ Object optval_from_obj(OptIndex opt_idx, Object o, set_op_T op, bool *error)
         GA_APPEND(char *, &ga, xstrdup(item.data.string.data));
       }
     }
-    str = ga_concat_strings(&ga, ",");
+    // A bare flag list is concatenated with no separator, as in the Dict branch below.
+    str = ga_concat_strings(&ga, (is_flaglist && !is_comma) ? "" : ",");
     GA_DEEP_CLEAR_PTR(&ga);
   } else {  // kObjectTypeDict
     garray_T ga;
@@ -4038,17 +4062,17 @@ static bool is_option_local_value_unset(OptIndex opt_idx)
 ///                                SID_NONE: Don't set script ID.
 /// @param       direct          Don't process side-effects.
 /// @param       value_replaced  Value was replaced completely.
+/// @param       value_untrusted Value comes from a restricted context or retains untrusted content.
 /// @param[out]  errbuf          Buffer for error message.
-/// @param       errbuflen       Length of error buffer.
 ///
 /// @return  NULL on success, an untranslated error message on error.
 static const char *did_set_option(OptIndex opt_idx, void *varp, Object old_value, Object new_value,
                                   int opt_flags, scid_T set_sid, const bool direct,
-                                  const bool value_replaced, char *errbuf, size_t errbuflen)
+                                  const bool value_replaced, const bool value_untrusted,
+                                  const CharBuf *errbuf)
 {
   vimoption_T *opt = &options[opt_idx];
   const char *errmsg = NULL;
-  bool restore_chartab = false;
   bool value_changed = false;
   bool value_checked = false;
 
@@ -4060,19 +4084,13 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, Object old_value
     .os_newval = new_value,
     .os_value_checked = false,
     .os_value_changed = false,
-    .os_restore_chartab = false,
     .os_errbuf = errbuf,
-    .os_errbuflen = errbuflen,
     .os_buf = curbuf,
     .os_win = curwin,
   };
 
   if (direct) {
     // Don't do any extra processing if setting directly.
-  }
-  // Disallow changing immutable options.
-  else if (opt->immutable && !option_equal(old_value, new_value)) {
-    errmsg = e_unsupportedoption;
   }
   // Disallow changing some options from secure mode.
   else if ((secure || sandbox != 0) && (opt->flags & kOptFlagSecure)) {
@@ -4091,8 +4109,6 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, Object old_value
     // os_value_checked field.
     value_checked = did_set_cb_args.os_value_checked;
     // The 'isident', 'iskeyword', 'isprint' and 'isfname' options may change the character table.
-    // On failure, this needs to be restored.
-    restore_chartab = did_set_cb_args.os_restore_chartab;
   }
 
   // If option is hidden or if an error is detected, restore the previous value and don't do any
@@ -4101,9 +4117,6 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, Object old_value
     set_option_varp(opt_idx, varp, old_value);
     optval_free(old_value);
     // When resetting some values, need to act on it.
-    if (restore_chartab) {
-      buf_init_chartab(curbuf, true);
-    }
 
     return errmsg;
   }
@@ -4189,9 +4202,9 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, Object old_value
 
     uint32_t *flagsp = insecure_flag(curwin, opt_idx, opt_flags);
     uint32_t *flagsp_local = scope_both ? insecure_flag(curwin, opt_idx, OPT_LOCAL) : NULL;
-    // When an option is set in the sandbox, from a modeline or in secure mode set the
-    // kOptFlagInsecure flag.  Otherwise, if a new value is stored reset the flag.
-    if (!value_checked && (secure || sandbox != 0 || (opt_flags & OPT_MODELINE))) {
+    // Persist trust separately from the temporary secure mode used for side effects.
+    // Only a complete, trusted replacement can clear an existing untrusted flag.
+    if (!value_checked && value_untrusted) {
       *flagsp |= kOptFlagInsecure;
       if (flagsp_local != NULL) {
         *flagsp_local |= kOptFlagInsecure;
@@ -4207,12 +4220,15 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, Object old_value
   return errmsg;
 }
 
-/// Validates an option value (internal scalar/:set-style form).
+/// Validates an option value (internal scalar/:set-style form) without applying side effects.
+/// Some option-specific checks still live in did_set callbacks and are not covered here.
 ///
 /// @param  opt_idx         Index in options[] table. Must not be kOptInvalid.
 /// @param  newval[in,out]  New option value. Might be modified.
-static const char *validate_option_value(const OptIndex opt_idx, Object *newval, int opt_flags,
-                                         char *errbuf, size_t errbuflen)
+/// @param  buf             Target buffer.
+/// @param  win             Target window, used for defaults and window-dependent bounds.
+const char *validate_option_value(const OptIndex opt_idx, Object *newval, int opt_flags, buf_T *buf,
+                                  win_T *win, const CharBuf *errbuf)
 {
   const char *errmsg = NULL;
   vimoption_T *opt = &options[opt_idx];
@@ -4231,7 +4247,9 @@ static const char *validate_option_value(const OptIndex opt_idx, Object *newval,
     } else {
       // Unset the local value of a global-local option; for other options, an unset local value
       // means the global value.
-      *newval = option_is_global_local(opt_idx) ? UNSET : get_option_value(opt_idx, OPT_GLOBAL);
+      void *varp = get_varp_scope_from(opt, OPT_GLOBAL, buf, win);
+      *newval = option_is_global_local(opt_idx) ? UNSET : optval_own(opt_idx,
+                                                                     opt_from_varp(opt_idx, varp));
     }
   } else if (newval->type == kObjectTypeLuaRef) {
     // A callback option accepts a funcref; scalar validation doesn't apply.
@@ -4239,24 +4257,55 @@ static const char *validate_option_value(const OptIndex opt_idx, Object *newval,
   } else if (!option_has_type(opt_idx, optval_type(*newval))) {
     char *rep = optval_to_cstr(*newval, true);
     const char *type_str = optval_type_name(opt->type);
-    snprintf(errbuf, IOSIZE, _("Invalid value for option '%s': expected %s, got %s %s"),
-             opt->fullname, type_str, optval_type_name(optval_type(*newval)), rep);
+    errmsg = opt_error(errbuf, N_("Invalid value for option '%s': expected %s, got %s %s"),
+                       opt->fullname, type_str, optval_type_name(optval_type(*newval)), rep);
     xfree(rep);
-    errmsg = errbuf;
-  } else if ((opt->flags & kOptFlagFunc) && newval->data.string.size > 0) {
-    // Callback option: the string must parse to a valid function reference or lambda. Validate
-    // here (before storing) so an invalid value leaves the old callback intact.
-    Callback cb = CALLBACK_NONE;
-    if (option_set_callback_func(newval->data.string.data, &cb) == FAIL) {
-      errmsg = e_invarg;
-    }
-    callback_free(&cb);
   } else if (newval->type == kObjectTypeInteger) {
     // Validate and bound check num option values.
-    errmsg = validate_num_option(opt_idx, &newval->data.integer, errbuf, errbuflen);
+    errmsg = validate_num_option(opt_idx, &newval->data.integer, win, errbuf);
+  }
+  if (errmsg != NULL) {
+    return errmsg;
   }
 
-  return errmsg;
+  // Disallow changing immutable options.
+  if (opt->immutable) {
+    Object oldval = opt_from_varp(opt_idx, get_varp_scope_from(opt, opt_flags, buf, win));
+    bool unchanged = option_equal(oldval, *newval);
+    optval_free_read(opt_idx, oldval);
+    if (!unchanged) {
+      return e_unsupportedoption;
+    }
+  }
+  if (newval->type == kObjectTypeString && opt->schema != NULL) {
+    errmsg = opt_strings_check(newval->data.string.data, opt->schema, errbuf);
+    if (errmsg != NULL) {
+      return errmsg;
+    }
+  }
+  if (newval->type != kObjectTypeUnset && opt->opt_validate_cb != NULL) {
+    const bool scope_both = !(opt_flags & (OPT_LOCAL | OPT_GLOBAL));
+    // Match set_option(): setting both scopes of a global-local option resets its local value.
+    void *varp = scope_both && option_is_global_local(opt_idx)
+                 ? opt->var : get_varp_scope_from(opt, opt_flags, buf, win);
+    const optset_T args = {
+      .os_varp = varp,
+      .os_idx = opt_idx,
+      .os_flags = opt_flags,
+      .os_oldval = opt_from_varp(opt_idx, varp),
+      .os_newval = *newval,
+      .os_value_checked = false,
+      .os_value_changed = false,
+      .os_restore_chartab = false,
+      .os_errbuf = errbuf,
+      .os_buf = buf,
+      .os_win = win,
+    };
+    errmsg = opt->opt_validate_cb(&args);
+    optval_free_read(opt_idx, args.os_oldval);
+    return errmsg;
+  }
+  return NULL;
 }
 
 /// Set the value of an option using an Object.
@@ -4270,35 +4319,45 @@ static const char *validate_option_value(const OptIndex opt_idx, Object *newval,
 /// @param       direct          Don't process side-effects.
 /// @param       value_replaced  Value was replaced completely.
 /// @param[out]  errbuf          Buffer for error message.
-/// @param       errbuflen       Length of error buffer.
 ///
 /// @return  NULL on success, an untranslated error message on error.
 static const char *set_option(const OptIndex opt_idx, Object value, int opt_flags, scid_T set_sid,
-                              const bool direct, const bool value_replaced, char *errbuf,
-                              size_t errbuflen)
+                              const bool direct, const bool value_replaced, const CharBuf *errbuf)
 {
   assert(opt_idx != kOptInvalid);
 
   const char *errmsg = NULL;
 
   // Every set path for a dict option (":set", the API, Vimscript, a merge) funnels through here as a
-  // ":set" string. Validate it once.
-  if (value.type == kObjectTypeString && is_dict_option(opt_idx)) {
-    errmsg = opt_strings_check(value.data.string.data, opt_dict_schema(opt_idx)->schema, errbuf,
-                               errbuflen);
-    if (errmsg != NULL) {
+  // ":set" string.
+  if (!direct) {
+    // Callback parsing can execute Vimscript, so reject restricted assignments first.
+    if ((secure || sandbox != 0) && (options[opt_idx].flags & kOptFlagSecure)) {
       optval_free(value);
-      return errmsg;
+      return e_secure;
     }
+
+    errmsg = validate_option_value(opt_idx, &value, opt_flags, curbuf, curwin, errbuf);
+
+    if (errmsg == NULL && value.type == kObjectTypeString
+        && (options[opt_idx].flags & kOptFlagFunc) && value.data.string.size > 0) {
+      // Callback option: the string must parse to a valid function reference or lambda.
+      // Parsing can evaluate Vimscript, so keep it off the dry-run path. Check before storing
+      // so an invalid value leaves the old callback intact.
+      Callback cb = CALLBACK_NONE;
+      if (option_set_callback_func(value.data.string.data, &cb) == FAIL) {
+        errmsg = e_invarg;
+      }
+      callback_free(&cb);
+    }
+  } else if (value.type == kObjectTypeString && is_dict_option(opt_idx)) {
+    // Internal direct setters also require valid dict schemas.
+    errmsg = opt_strings_check(value.data.string.data, opt_dict_schema(opt_idx)->schema, errbuf);
   }
 
-  if (!direct) {
-    errmsg = validate_option_value(opt_idx, &value, opt_flags, errbuf, errbuflen);
-
-    if (errmsg != NULL) {
-      optval_free(value);
-      return errmsg;
-    }
+  if (errmsg != NULL) {
+    optval_free(value);
+    return errmsg;
   }
 
 #ifdef BACKSLASH_IN_FILENAME
@@ -4363,13 +4422,16 @@ static const char *set_option(const OptIndex opt_idx, Object value, int opt_flag
                        : optval_snapshot(old_value);
   }
 
-  uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
   const int secure_saved = secure;
 
-  // When an option is set in the sandbox, from a modeline or in secure mode, then deal with side
-  // effects in secure mode. Also when the value was set with the kOptFlagInsecure flag and is not
-  // completely replaced.
-  if ((opt_flags & OPT_MODELINE) || sandbox != 0 || (!value_replaced && (*p & kOptFlagInsecure))) {
+  // Use secure mode for sandbox, modeline, and secure-mode assignments, and for partial
+  // changes to insecure values. Full replacements inherit only the current context's
+  // restrictions. Keep value trust separate from temporary secure mode; did_set_option()
+  // accounts for callback safety checks when updating the stored trust flag.
+  const bool value_untrusted = secure || sandbox != 0 || (opt_flags & OPT_MODELINE)
+                               || (!value_replaced && was_set_insecurely(curwin, opt_idx,
+                                                                         opt_flags));
+  if (!secure && value_untrusted) {
     secure = 1;
   }
 
@@ -4386,14 +4448,14 @@ static const char *set_option(const OptIndex opt_idx, Object value, int opt_flag
   }
   // Process any side effects.
   errmsg = did_set_option(opt_idx, varp, old_value, value, opt_flags, set_sid, direct,
-                          value_replaced, errbuf, errbuflen);
+                          value_replaced, value_untrusted, errbuf);
 
   secure = secure_saved;
 
   if (errmsg == NULL && !direct) {
     if (!starting) {
       apply_optionset_autocmd(opt_idx, opt_flags, saved_used_value, saved_old_global_value,
-                              saved_old_local_value, saved_new_value, errmsg);
+                              saved_old_local_value, saved_new_value);
     }
     if (opt->flags & kOptFlagUIOption) {
       ui_call_option_set(cstr_as_string(opt->fullname), saved_new_value);
@@ -4422,14 +4484,12 @@ static const char *set_option(const OptIndex opt_idx, Object value, int opt_flag
 ///                      SID_NONE: Don't set script ID.
 void set_option_direct(OptIndex opt_idx, Object value, int opt_flags, scid_T set_sid)
 {
-  static char errbuf[IOSIZE];
-
   if (is_option_hidden(opt_idx)) {
     return;
   }
 
   const char *errmsg = set_option(opt_idx, copy_object(value, NULL), opt_flags, set_sid, true, true,
-                                  errbuf, sizeof(errbuf));
+                                  NULL);
   assert(errmsg == NULL);
   (void)errmsg;  // ignore unused warning
 }
@@ -4480,13 +4540,15 @@ void set_option_direct_for(OptIndex opt_idx, Object value, int opt_flags, scid_T
 /// @param      opt_idx    Index in options[] table. Must not be kOptInvalid.
 /// @param[in]  value      Option value. If NIL, the option value is cleared.
 /// @param[in]  opt_flags  Flags: OPT_LOCAL, OPT_GLOBAL, or 0 (both).
+/// @param      value_replaced  Value was replaced completely.
+/// @param[out] errbuf     Buffer for error message, or NULL if not needed.
 ///
-/// @return  NULL on success, an untranslated error message on error.
-const char *set_option_value(const OptIndex opt_idx, const Object value, int opt_flags)
+/// @return  NULL on success, an error message (possibly in errbuf) on error.
+const char *set_option_value(const OptIndex opt_idx, const Object value, int opt_flags,
+                             const bool value_replaced, const CharBuf *errbuf)
 {
   assert(opt_idx != kOptInvalid);
 
-  static char errbuf[IOSIZE];
   uint32_t flags = options[opt_idx].flags;
 
   // Disallow changing some options in the sandbox
@@ -4494,8 +4556,7 @@ const char *set_option_value(const OptIndex opt_idx, const Object value, int opt
     return _(e_sandbox);
   }
 
-  return set_option(opt_idx, copy_object(value, NULL), opt_flags, 0, false, true, errbuf,
-                    sizeof(errbuf));
+  return set_option(opt_idx, copy_object(value, NULL), opt_flags, 0, false, value_replaced, errbuf);
 }
 
 /// Unset the local value of a global-local option.
@@ -4506,35 +4567,7 @@ const char *set_option_value(const OptIndex opt_idx, const Object value, int opt
 static inline const char *unset_option_local_value(const OptIndex opt_idx)
 {
   assert(option_is_global_local(opt_idx));
-  return set_option_value(opt_idx, UNSET, OPT_LOCAL);
-}
-
-/// Set the value of an option. Supports TTY options, unlike set_option_value().
-///
-/// @param      name       Option name. Used for error messages and for setting TTY options.
-/// @param      opt_idx    Option indx in options[] table. If kOptInvalid, `name` is used to
-///                        check if the option is a TTY option, and an error is shown if it's not.
-///                        If the option is a TTY option, the function fails silently.
-/// @param      value      Option value. If NIL, the option value is cleared.
-/// @param[in]  opt_flags  Flags: OPT_LOCAL, OPT_GLOBAL, or 0 (both).
-///
-/// @return  NULL on success, an untranslated error message on error.
-const char *set_option_value_handle_tty(const char *name, OptIndex opt_idx, const Object value,
-                                        int opt_flags)
-  FUNC_ATTR_NONNULL_ARG(1)
-{
-  static char errbuf[IOSIZE];
-
-  if (opt_idx == kOptInvalid) {
-    if (is_tty_option(name)) {
-      return NULL;  // Fail silently; many old vimrcs set t_xx options.
-    }
-
-    snprintf(errbuf, sizeof(errbuf), _(e_unknown_option2), name);
-    return errbuf;
-  }
-
-  return set_option_value(opt_idx, value, opt_flags);
+  return set_option_value(opt_idx, UNSET, OPT_LOCAL, true, NULL);
 }
 
 /// Call set_option_value() and when an error is returned, report it.
@@ -4544,7 +4577,8 @@ const char *set_option_value_handle_tty(const char *name, OptIndex opt_idx, cons
 /// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 void set_option_value_give_err(const OptIndex opt_idx, Object value, int opt_flags)
 {
-  const char *errmsg = set_option_value(opt_idx, value, opt_flags);
+  const CharBuf errbuf = { (char[IOSIZE]){ 0 }, IOSIZE };
+  const char *errmsg = set_option_value(opt_idx, value, opt_flags, true, &errbuf);
 
   if (errmsg != NULL) {
     emsg(_(errmsg));
@@ -4669,16 +4703,15 @@ Object get_option_value_for(OptIndex opt_idx, int opt_flags, const OptScope scop
 
 /// Set option value for buffer / window.
 ///
-/// @param       name        Option name.
-/// @param       opt_idx     Option index in options[] table.
+/// @param       opt_idx     Option index in options[] table. Must not be kOptInvalid.
 /// @param[in]   value       Option value.
 /// @param[in]   opt_flags   Flags: OPT_LOCAL, OPT_GLOBAL, or 0 (both).
 /// @param       scope       Option scope. See OptScope in option.h.
 /// @param[in]   from        Target buffer/window.
+/// @param       value_replaced  Value was replaced completely, not appended/prepended/removed.
 /// @param[out]  err         Error message, if any.
-void set_option_value_for(const char *name, OptIndex opt_idx, Object value, const int opt_flags,
-                          const OptScope scope, void *const from, Error *err)
-  FUNC_ATTR_NONNULL_ARG(1)
+void set_option_value_for(OptIndex opt_idx, Object value, const int opt_flags, const OptScope scope,
+                          void *const from, const bool value_replaced, Error *err)
 {
   // Special case: Tab scope (for NON-CURRENT tab) can't go through the normal "set" path:
   // did_set_cmdheight() mutates globals not managed by use_tabpage()/unuse_tabpage(), which would
@@ -4705,7 +4738,8 @@ void set_option_value_for(const char *name, OptIndex opt_idx, Object value, cons
     return;
   }
 
-  const char *const errmsg = set_option_value_handle_tty(name, opt_idx, value, opt_flags);
+  const CharBuf errbuf = { (char[IOSIZE]){ 0 }, IOSIZE };
+  const char *const errmsg = set_option_value(opt_idx, value, opt_flags, value_replaced, &errbuf);
   if (errmsg) {
     api_set_error(err, kErrorTypeException, "%s", errmsg);
   }
@@ -5463,6 +5497,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(buf->b_p_ff);
   case kOptFiletype:
     return &(buf->b_p_ft);
+  case kOptFollow:
+    return &(buf->b_p_follow);
   case kOptFormatoptions:
     return &(buf->b_p_fo);
   case kOptFormatlistpat:
@@ -5750,8 +5786,8 @@ void didset_window_options(win_T *wp, bool valid_cursor)
   check_colorcolumn(NULL, wp);
   briopt_check(wp);
   fill_culopt_flags(NULL, wp);
-  set_chars_option(wp, wp->w_p_fcs, kFillchars, true, NULL, 0);
-  set_chars_option(wp, wp->w_p_lcs, kListchars, true, NULL, 0);
+  set_chars_option(wp, wp->w_p_fcs, kFillchars, true, NULL);
+  set_chars_option(wp, wp->w_p_lcs, kListchars, true, NULL);
   parse_winhl_opt(NULL, wp);  // sets w_hl_needs_update also for w_p_winbl
   check_blending(wp);
   set_winbar_win(wp, false, valid_cursor);
@@ -5857,6 +5893,8 @@ void buf_copy_options(buf_T *buf, int flags)
       COPY_OPT_SCTX(buf, kBufOptExpandtab);
       buf->b_p_fixeol = p_fixeol;
       COPY_OPT_SCTX(buf, kBufOptFixendofline);
+      buf->b_p_follow = p_follow;
+      COPY_OPT_SCTX(buf, kBufOptFollow);
       buf->b_p_et_nobin = p_et_nobin;
       buf->b_p_et_nopaste = p_et_nopaste;
       buf->b_p_ml = p_ml;
@@ -6047,7 +6085,7 @@ void buf_copy_options(buf_T *buf, int flags)
 
   check_buf_options(buf);           // make sure we don't have NULLs
   if (did_isk) {
-    buf_init_chartab(buf, false);
+    buf_init_isk_chartab(buf);
   }
 }
 
@@ -6836,6 +6874,11 @@ bool can_bs(int what)
     return false;
   }
 
+  // Multicursor replays may join lines only if the primary's own span did.
+  if (what == BS_EOL && !mc_ins_replay_can_join()) {
+    return false;
+  }
+
   // support for number values was removed but we keep '2' since it is used in
   // legacy tests
   if (*p_bs == '2') {
@@ -7145,7 +7188,7 @@ int64_t get_scrolloff_value(win_T *wp)
 /// global value when appropriate.
 int64_t get_scrolloffpad_value(win_T *wp)
 {
-  return wp->w_p_sop == -1 ? p_sop : curwin->w_p_sop;
+  return wp->w_p_sop == -1 ? p_sop : wp->w_p_sop;
 }
 
 /// Return the effective 'sidescrolloff' value for the current window, using the

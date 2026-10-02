@@ -2,7 +2,7 @@
 " Language:     Speedup, plant simulator from AspenTech
 " Maintainer:   Stefan.Schwarzer <s.schwarzer@ndh.net>
 " URL:		http://www.ndh.net/home/sschwarzer/download/spup.vim
-" Last Change:  2012 Feb 03 by Thilo Six
+" Last Change:  2026 Sep 05
 " Filename:     spup.vim
 
 " Bugs
@@ -157,7 +157,7 @@ syn region spupHelp  start="^HELP"hs=e+1  end="^\$ENDHELP"he=s-1 contained
 syn region spupCode  start="^CODE"hs=e+1  end="^\$ENDCODE"he=s-1 contained
 " oneline comments
 if oneline_comments > 3
-    oneline_comments = 2   " default
+    let oneline_comments = 2   " default
 endif
 if oneline_comments == 1
     syn match spupComment  "#[^#]*#\="

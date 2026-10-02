@@ -794,6 +794,21 @@ func Test_list2blob()
   call assert_equal(0z, list2blob(v:_null_list))
 endfunc
 
+func Test_list2blob_large()
+  let values = repeat(range(256), 32)
+  let b = list2blob(values)
+  call assert_equal(values, blob2list(b))
+  call add(b, 42)
+  call assert_equal(42, remove(b, -1))
+  call assert_equal(values, blob2list(b))
+  call assert_equal(range(255, 0, -1), blob2list(list2blob(range(255, 0, -1))))
+
+  call add(values, 256)
+  call assert_fails('call list2blob(values)', 'E1239:')
+  let values[-1] = []
+  call assert_fails('call list2blob(values)', 'E745:')
+endfunc
+
 " The following used to cause an out-of-bounds memory access
 func Test_blob2string()
   let v = '0z' .. repeat('01010101.', 444)
@@ -812,6 +827,10 @@ func Test_blob_repeat()
   call assert_equal(0z, repeat(0z1234, 0))
   call assert_equal(0z1234, repeat(0z1234, 1))
   call assert_equal(0z12341234, repeat(0z1234, 2))
+
+  " Overflow test
+  call assert_fails('call repeat(0z010203040506, 715827883)', 'E1510:')
+  call assert_fails('call repeat(0z12, 4294967297)', 'E1510:')
 endfunc
 
 " Test for blob allocation failure

@@ -108,7 +108,7 @@ describe('vim.hl.range', function()
       ^asdf{10:ghjkl}{100:$}                                                  |
       {10:«口=口»}{100:$}                                                    |
       qwerty{10:uiop}{100:$}                                                 |
-      {10:口口=口口}{1:$}                                                  |
+      {10:口口=口口}{100:$}                                                  |
       zxcvbnm{1:$}                                                    |
                                                                   |
     ]])

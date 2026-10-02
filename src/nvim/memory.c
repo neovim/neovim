@@ -16,7 +16,6 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
 #include "nvim/channel.h"
-#include "nvim/context.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/drawline.h"
 #include "nvim/errors.h"
@@ -31,6 +30,7 @@
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
 #include "nvim/mapping.h"
+#include "nvim/mcursor.h"
 #include "nvim/memfile.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -986,6 +986,7 @@ void free_all_mem(void)
   eval_clear();
   api_extmark_free_all_mem();
   atom_free_all();
+  mc_free_all();
 
   map_destroy(int, &buffer_handles);
   map_destroy(int, &window_handles);

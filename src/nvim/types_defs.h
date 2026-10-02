@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "klib/kvec.h"
@@ -84,5 +85,12 @@ typedef struct {
 } MTDamagePair;
 #define MTDAMAGE_INIT { .old = NULL, .new = NULL, .old_i = 0, .new_i = 0 }
 #define MTDAMAGE_PAIR_INIT { .start = MTDAMAGE_INIT, .end = MTDAMAGE_INIT }
+
+/// Borrowed writable storage. Never allocated or freed by the callee.
+/// Unlike String.size, size is the buffer capacity, not the content length.
+typedef struct {
+  char *data;
+  size_t size;  ///< Total writable bytes, including any space for a terminating NUL.
+} CharBuf;
 
 typedef kvec_t(char) StringBuilder;

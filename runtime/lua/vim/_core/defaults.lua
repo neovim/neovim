@@ -42,7 +42,7 @@ do
         vim.ui.open(current_file)
       end
     else
-      vim.ui.open(cmd.fargs[1])
+      vim.ui.open(assert(cmd.fargs[1]))
     end
   end, {
     desc = 'Open file with system default handler. See :help vim.ui.open()',
@@ -57,8 +57,8 @@ do
   ---
   --- See |v_star-default| and |v_#-default|
   do
+    --- @param forward 0|1
     local function _visual_search(forward)
-      assert(forward == 0 or forward == 1)
       local pos = vim.fn.getpos('.')
       local vpos = vim.fn.getpos('v')
       local mode = vim.fn.mode()
@@ -112,9 +112,14 @@ do
   --- Use normal! <C-L> to prevent inserting raw <C-L> when using i_<C-O>. #17473
   ---
   --- See |CTRL-L-default|
-  vim.keymap.set('n', '<C-L>', '<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>', {
-    desc = ':help CTRL-L-default',
-  })
+  vim.keymap.set(
+    'n',
+    '<C-L>',
+    '<Cmd>nohlsearch<Bar>diffupdate'
+      .. '<Bar>call nvim_buf_clear_namespace(0, nvim_create_namespace("nvim.multicursor"), 0, -1)'
+      .. '<Bar>normal! <C-L><CR>',
+    { desc = ':help CTRL-L-default' }
+  )
 
   --- Set undo points when deleting text in insert mode.
   ---
@@ -129,16 +134,10 @@ do
   --- See |&-default|
   vim.keymap.set('n', '&', ':&&<CR>', { desc = ':help &-default' })
 
-  --- Use Q in Visual mode to execute a macro on each line of the selection. #21422
+  --- Use @ in Visual mode to execute a macro on each line of the selection. #21422
   --- This only make sense in linewise Visual mode. #28287
   ---
-  --- Applies to @x and includes @@ too.
-  vim.keymap.set(
-    'x',
-    'Q',
-    "mode() ==# 'V' ? ':normal! @<C-R>=reg_recorded()<CR><CR>' : 'Q'",
-    { silent = true, expr = true, desc = ':help v_Q-default' }
-  )
+  --- Includes @@ too.
   vim.keymap.set(
     'x',
     '@',
@@ -148,6 +147,7 @@ do
 
   --- Map |gx| to call |vim.ui.open| on the `textDocument/documentLink` or <cfile> at cursor.
   do
+    --- @param uri string
     local function do_open(uri)
       local cmd, err = vim.ui.open(uri)
       local rv = cmd and cmd:wait(1000) or nil
@@ -680,6 +680,7 @@ do
   end)
 
   ---@param ns integer
+  ---@param win integer
   ---@param buf integer
   ---@param count integer
   local function jump_to_prompt(ns, win, buf, count)
@@ -756,9 +757,10 @@ do
     desc = 'Skip the swapfile prompt when the swapfile is owned by a running Nvim process',
   }, function()
     local info = vim.fn.swapinfo(vim.v.swapname)
-    local user = vim.uv.os_get_passwd().username
+    local passwd = vim.uv.os_get_passwd()
+    local user = passwd and passwd.username
     local iswin = 1 == vim.fn.has('win32')
-    if info.error or info.pid <= 0 or (not iswin and info.user ~= user) then
+    if info.error or info.pid <= 0 or (not iswin and (not user or info.user ~= user)) then
       vim.v.swapchoice = '' -- Show the prompt.
       return
     end
@@ -920,6 +922,7 @@ do
   --- @param sync boolean When true (a TTY is present at startup), also send a
   --- DSR probe and synchronously wait so 'background' is set before user config,
   --- warning (E1568) if the terminal never answers the DSR.
+  --- @param chan integer
   local function detect_background(sync, chan)
     -- Re-create (clear) the handler's augroup on each call so only the
     -- most-recently-attached TUI's handler remains.
@@ -991,10 +994,9 @@ do
     end
   end
 
-  --- If the TUI (term_has_truecolor) was able to determine that the host
-  --- terminal supports truecolor, enable 'termguicolors'. Otherwise, query the
-  --- terminal (using both XTGETTCAP and SGR + DECRQSS). If the terminal's
-  --- response indicates that it does support truecolor enable 'termguicolors',
+  --- If the TUI (term_has_truecolor) detected that the host terminal supports truecolor, enable
+  --- 'termguicolors'. Otherwise, query the terminal (using both XTGETTCAP and SGR + DECRQSS). If
+  --- the terminal's response indicates that it does support truecolor enable 'termguicolors',
   --- but only if the user has not already disabled it.
   ---
   --- @param ui table<string,any> The attached TTY UI (see |nvim_list_uis()|).
@@ -1052,7 +1054,7 @@ do
         end
 
         -- The returned SGR sequence should begin with 48:2
-        local sgr = assert(attrs[#attrs]):match('^48:2:([%d:]+)$')
+        local sgr = attrs[#attrs]:match('^48:2:([%d:]+)$')
         if not sgr then
           return
         end
@@ -1088,6 +1090,7 @@ do
     end
 
     detect_termguicolors(tty)
+    require('vim._core.mcursor').detect(tty) -- Kitty multicursor protocol.
 
     -- Show progress bars in supporting terminals
     nvim_on('Progress', vim.api.nvim_create_augroup('nvim.progress'), {
@@ -1130,9 +1133,8 @@ do
         return
       end
 
-      -- 'termguicolors': enable when the attaching UI reports truecolor (or the
-      -- terminal query confirms it), unless the user set it. Never disabled here.
-      detect_termguicolors(ui)
+      detect_termguicolors(ui) -- 'termguicolors'
+      require('vim._core.mcursor').detect(ui) -- Kitty multicursor protocol.
 
       -- 'background': (re)query OSC 11. The persistent handler also reacts to
       -- runtime theme changes (mode 2031 -> TUI re-queries -> |TermResponse|);

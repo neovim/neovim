@@ -1,5 +1,15 @@
 --- @diagnostic disable:no-unknown
 
+--- @class (private) vim._inspector.Extmark
+--- @field id integer
+--- @field row integer
+--- @field col integer
+--- @field end_row integer
+--- @field end_col integer
+--- @field opts vim.api.keyset.extmark_details & { hl_group_link?: string }
+--- @field ns_id integer
+--- @field ns string
+
 --- @class vim._inspector.Filter
 --- @inlinedoc
 ---
@@ -56,6 +66,8 @@ function vim.inspect_pos(buf, row, col, filter)
     row, col = cursor[1] - 1, cursor[2]
   end
   buf = vim._resolve_bufnr(buf)
+  ---@cast row integer
+  ---@cast col integer
 
   local results = {
     treesitter = {}, --- @type table[]
@@ -68,6 +80,8 @@ function vim.inspect_pos(buf, row, col, filter)
   }
 
   -- resolve hl links
+  --- @generic T: { hl_group?: string, hl_group_link?: string }
+  --- @param data T
   local function resolve_hl(data)
     if data.hl_group then
       local hlid = vim.api.nvim_get_hl_id_by_name(data.hl_group)
@@ -79,7 +93,7 @@ function vim.inspect_pos(buf, row, col, filter)
 
   -- treesitter
   if filter.treesitter then
-    for _, capture in pairs(vim.treesitter.get_captures_at_pos(buf, row, col)) do
+    for _, capture in pairs(vim.treesitter.get_captures(buf, { row, col })) do
       --- @diagnostic disable-next-line: inject-field
       capture.hl_group = '@' .. capture.capture .. '.' .. capture.lang
       results.treesitter[#results.treesitter + 1] = resolve_hl(capture)
@@ -103,8 +117,9 @@ function vim.inspect_pos(buf, row, col, filter)
   end
 
   --- Convert an extmark tuple into a table
+  --- @param extmark vim.api.keyset.get_extmark_item
   local function to_map(extmark)
-    local opts = resolve_hl(extmark[4])
+    local opts = resolve_hl(assert(extmark[4]))
     return {
       id = extmark[1],
       row = extmark[2],
@@ -119,16 +134,17 @@ function vim.inspect_pos(buf, row, col, filter)
 
   --- Exclude end_col and unpaired marks from the overlapping marks, unless
   --- filter.extmarks == 'all' (a highlight is drawn until end_col - 1).
+  --- @param extmark vim._inspector.Extmark
   local function exclude_end_col(extmark)
     return filter.extmarks == 'all' or row < extmark.end_row or col < extmark.end_col
   end
 
   -- All overlapping extmarks at this position:
-  local extmarks = vim.api.nvim_buf_get_extmarks(buf, -1, { row, col }, { row, col }, {
+  local marks = vim.api.nvim_buf_get_extmarks(buf, -1, { row, col }, { row, col }, {
     details = true,
     overlap = true,
   })
-  extmarks = vim.tbl_map(to_map, extmarks)
+  local extmarks = vim.tbl_map(to_map, marks)
   extmarks = vim.tbl_filter(exclude_end_col, extmarks)
 
   if filter.semantic_tokens then
@@ -140,7 +156,7 @@ function vim.inspect_pos(buf, row, col, filter)
   if filter.extmarks then
     results.extmarks = vim.tbl_filter(function(extmark)
       return extmark.ns:find('nvim.lsp.semantic_tokens') ~= 1
-        and (filter.extmarks == 'all' or extmark.opts.hl_group)
+        and (filter.extmarks == 'all' or extmark.opts.hl_group ~= nil)
     end, extmarks)
   end
 
@@ -170,6 +186,8 @@ function vim.show_pos(buf, row, col, filter)
 
   local lines = { {} }
 
+  ---@param str string
+  ---@param hl? string
   local function append(str, hl)
     table.insert(lines[#lines], { str, hl })
   end
@@ -178,6 +196,8 @@ function vim.show_pos(buf, row, col, filter)
     table.insert(lines, {})
   end
 
+  --- @param data { hl_group: string, hl_group_link: string }
+  --- @param comment? string
   local function item(data, comment)
     append('  - ')
     append(data.hl_group, data.hl_group)

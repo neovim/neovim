@@ -833,6 +833,12 @@ compilation error message.
 Failed to execute a Lua debug command string. {error} contains the runtime
 error message and traceback.
 
+							*E5117*  >
+  Lua mapping no longer exists
+
+Replayed keys (|.|, |CmdAtom| `keys`, or keys captured by |vim.on_key()|)
+referenced a Lua-callback mapping that was deleted or redefined since.
+
 ==============================================================================
 Messages						*messages*
 

@@ -21,7 +21,7 @@ local RSC = {}
 local NSC = {}
 
 --- Writes to error buffer.
----@param ... string Will be concatenated before being written
+---@param ... string|number Will be concatenated before being written
 local function err_message(...)
   vim.notify(table.concat(vim.iter({ ... }):flatten():totable()), vim.log.levels.ERROR)
   api.nvim_command('redraw')
@@ -44,6 +44,7 @@ local function show_message_notification(params, ctx)
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
+---@diagnostic disable-next-line: deprecated
 RCS['workspace/executeCommand'] = function(_, _, _)
   -- Error handling is done implicitly by wrapping all handlers; see end of this file
 end
@@ -101,7 +102,8 @@ end
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showMessageRequest
 ---@param params lsp.ShowMessageRequestParams
 RSC['window/showMessageRequest'] = function(_, params, ctx)
-  if next(params.actions or {}) then
+  local actions = params.actions
+  if actions and next(actions) then
     local co, is_main = coroutine.running()
     if co and not is_main then
       local opts = {
@@ -113,26 +115,28 @@ RSC['window/showMessageRequest'] = function(_, params, ctx)
           return (action.title:gsub('\r\n', '\\r\\n'):gsub('\n', '\\n'))
         end,
       }
-      vim.ui.select(params.actions, opts, function(choice)
+      vim.ui.select(actions, opts, function(choice)
         -- schedule to ensure resume doesn't happen _before_ yield with
         -- default synchronous vim.ui.select
         vim.schedule(function()
           coroutine.resume(co, choice or vim.NIL)
         end)
       end)
+      -- The coroutine.running() check above guards this yield.
+      ---@diagnostic disable-next-line: await-in-sync
       return coroutine.yield()
     else
       local option_strings = { params.message, '\nRequest Actions:' }
-      for i, action in ipairs(params.actions) do
+      for i, action in ipairs(actions) do
         local title = action.title:gsub('\r\n', '\\r\\n')
         title = title:gsub('\n', '\\n')
         table.insert(option_strings, string.format('%d. %s', i, title))
       end
       local choice = vim.fn.inputlist(option_strings)
-      if choice < 1 or choice > #params.actions then
+      if choice < 1 or choice > #actions then
         return vim.NIL
       else
-        return params.actions[choice]
+        return actions[choice]
       end
     end
   else
@@ -259,11 +263,13 @@ NSC['textDocument/publishDiagnostics'] = function(...)
 end
 
 --- @private
+---@diagnostic disable-next-line: deprecated
 RCS['textDocument/diagnostic'] = function(...)
   return vim.lsp.diagnostic.on_diagnostic(...)
 end
 
 --- @private
+---@diagnostic disable-next-line: deprecated
 RCS['textDocument/inlayHint'] = function(...)
   return vim.lsp.inlay_hint.on_inlayhint(...)
 end
@@ -304,6 +310,7 @@ end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
+---@diagnostic disable-next-line: deprecated
 RCS['textDocument/documentSymbol'] = response_to_list(
   util.symbols_to_items,
   'document symbols',
@@ -315,12 +322,14 @@ RCS['textDocument/documentSymbol'] = response_to_list(
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_symbol
+---@diagnostic disable-next-line: deprecated
 RCS['workspace/symbol'] = response_to_list(util.symbols_to_items, 'symbols', function(ctx)
   return string.format("Symbols matching '%s'", ctx.params.query)
 end)
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rename
+---@diagnostic disable-next-line: deprecated
 RCS['textDocument/rename'] = function(_, result, ctx)
   if not result then
     vim.notify("Language server couldn't provide rename result", vim.log.levels.INFO)
@@ -332,26 +341,29 @@ end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rangeFormatting
+---@diagnostic disable-next-line: deprecated
 RCS['textDocument/rangeFormatting'] = function(_, result, ctx)
   if not result then
     return
   end
   local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
-  util.apply_text_edits(result, ctx.bufnr, client.offset_encoding)
+  util.apply_text_edits(result, assert(ctx.bufnr), client.offset_encoding)
 end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
+---@diagnostic disable-next-line: deprecated
 RCS['textDocument/formatting'] = function(_, result, ctx)
   if not result then
     return
   end
   local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
-  util.apply_text_edits(result, ctx.bufnr, client.offset_encoding)
+  util.apply_text_edits(result, assert(ctx.bufnr), client.offset_encoding)
 end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
+---@diagnostic disable-next-line: deprecated
 RCS['textDocument/completion'] = function(_, result, _)
   if vim.tbl_isempty(result or {}) then
     return
@@ -495,6 +507,7 @@ RCS['textDocument/signatureHelp'] = M.signature_help
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentHighlight
+---@diagnostic disable-next-line: deprecated
 RCS['textDocument/documentHighlight'] = function(_, result, ctx)
   if not result then
     return
@@ -504,7 +517,7 @@ RCS['textDocument/documentHighlight'] = function(_, result, ctx)
   if not client then
     return
   end
-  util.buf_highlight_references(ctx.bufnr, result, client.offset_encoding)
+  util.buf_highlight_references(assert(ctx.bufnr), result, client.offset_encoding)
 end
 
 --- Displays call hierarchy in the quickfix window.
@@ -513,7 +526,7 @@ end
 --- @overload fun(direction:'from'): fun(_, result: lsp.CallHierarchyIncomingCall[]?)
 --- @overload fun(direction:'to'): fun(_, result: lsp.CallHierarchyOutgoingCall[]?)
 local function make_call_hierarchy_handler(direction)
-  --- @param result lsp.CallHierarchyIncomingCall[]|lsp.CallHierarchyOutgoingCall[]
+  --- @param result lsp.CallHierarchyIncomingCall[]|lsp.CallHierarchyOutgoingCall[]|nil
   --- @param ctx lsp.HandlerContext
   return function(_, result, ctx)
     if not result then
@@ -526,7 +539,7 @@ local function make_call_hierarchy_handler(direction)
       local filename = nil
       local bufnr = nil
       if direction == 'from' then
-        filename = assert(vim.uri_to_fname(call_hierarchy_item.uri))
+        filename = vim.uri_to_fname(call_hierarchy_item.uri)
       else
         bufnr = ctx.bufnr
       end
@@ -547,19 +560,23 @@ end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#callHierarchy_incomingCalls
+---@diagnostic disable-next-line: deprecated
 RCS['callHierarchy/incomingCalls'] = make_call_hierarchy_handler('from')
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#callHierarchy_outgoingCalls
+---@diagnostic disable-next-line: deprecated
 RCS['callHierarchy/outgoingCalls'] = make_call_hierarchy_handler('to')
 
 --- Displays type hierarchy in the quickfix window.
 local function make_type_hierarchy_handler()
-  --- @param result lsp.TypeHierarchyItem[]
+  --- @param result lsp.TypeHierarchyItem[]?
+  --- @param ctx lsp.HandlerContext
   return function(_, result, ctx, _)
     if not result then
       return
     end
+    --- @param item lsp.TypeHierarchyItem
     local function format_item(item)
       if not item.detail or #item.detail == 0 then
         return item.name
@@ -569,9 +586,10 @@ local function make_type_hierarchy_handler()
     local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
     local items = {}
     for _, type_hierarchy_item in pairs(result) do
-      local pos = vim.pos.lsp(ctx.bufnr, type_hierarchy_item.range.start, client.offset_encoding)
+      local pos =
+        vim.pos.lsp(assert(ctx.bufnr), type_hierarchy_item.range.start, client.offset_encoding)
       table.insert(items, {
-        filename = assert(vim.uri_to_fname(type_hierarchy_item.uri)),
+        filename = vim.uri_to_fname(type_hierarchy_item.uri),
         text = format_item(type_hierarchy_item),
         lnum = pos.row + 1,
         col = pos.col + 1,
@@ -584,10 +602,12 @@ end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#typeHierarchy_incomingCalls
+---@diagnostic disable-next-line: deprecated
 RCS['typeHierarchy/subtypes'] = make_type_hierarchy_handler()
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#typeHierarchy_outgoingCalls
+---@diagnostic disable-next-line: deprecated
 RCS['typeHierarchy/supertypes'] = make_type_hierarchy_handler()
 
 --- @see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_logMessage
@@ -651,12 +671,7 @@ RSC['window/showDocument'] = function(_, params, ctx)
     return vim.NIL
   end
 
-  local location = {
-    uri = uri,
-    range = params.selection,
-  }
-
-  local success = util.show_document(location, client.offset_encoding, {
+  local success = util._show_document(uri, params.selection, client.offset_encoding, {
     reuse_win = true,
     focus = params.takeFocus,
   })
@@ -673,6 +688,11 @@ RSC['workspace/diagnostic/refresh'] = function(err, result, ctx)
   return vim.lsp.diagnostic.on_refresh(err, result, ctx)
 end
 
+---@see https://microsoft.github.io/language-server-protocol/specification/#workspace_foldingRange_refresh
+RSC['workspace/foldingRange/refresh'] = function(err, result, ctx)
+  return vim.lsp._folding_range.on_refresh(err, result, ctx)
+end
+
 ---@see https://microsoft.github.io/language-server-protocol/specification/#workspace_inlayHint_refresh
 RSC['workspace/inlayHint/refresh'] = function(err, result, ctx)
   return vim.lsp.inlay_hint.on_refresh(err, result, ctx)
@@ -685,6 +705,7 @@ end
 
 --- @nodoc
 --- @type table<string, lsp.Handler>
+---@diagnostic disable-next-line: deprecated
 M = vim.tbl_extend('force', M, RSC, NSC, RCS)
 
 -- Add boilerplate error validation and logging for all of these.

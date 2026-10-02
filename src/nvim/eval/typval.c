@@ -3274,6 +3274,8 @@ void f_list2blob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
+  ga_grow(&blob->bv_ga, tv_list_len(l));
+
   TV_LIST_ITER_CONST(l, li, {
     bool error = false;
     varnumber_T n = tv_get_number_chk(TV_LIST_ITEM_TV(li), &error);
@@ -3284,7 +3286,7 @@ void f_list2blob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       ga_clear(&blob->bv_ga);
       return;
     }
-    ga_append(&blob->bv_ga, (uint8_t)n);
+    ((uint8_t *)blob->bv_ga.ga_data)[blob->bv_ga.ga_len++] = (uint8_t)n;
   });
 }
 
@@ -4801,4 +4803,19 @@ bool tv2bool(const typval_T *const tv)
     break;
   }
   return false;
+}
+
+/// Check that repeating "slen" items "n" times, does not
+/// overflow the int used for the resulting length.
+int check_repeat_count(varnumber_T slen, varnumber_T n)
+{
+  // Use a division so that the multiplication cannot overflow.
+  if (n <= (varnumber_T)INT_MAX / slen) {
+    return OK;
+  }
+
+  char buf[NUMBUFLEN];
+  vim_snprintf(buf, sizeof(buf), "%" PRId64, (int64_t)n);
+  semsg(_(e_val_too_large), buf);
+  return FAIL;
 }

@@ -6367,10 +6367,6 @@ msgstr "E471: Tá gá le hargóint"
 msgid "E10: \\ should be followed by /, ? or &"
 msgstr "E10: Ba chóir /, ? nó & a chur i ndiaidh \\"
 
-msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
-msgstr ""
-"E11: Neamhbhailí i bhfuinneog líne na n-orduithe; <CR>=rith, CTRL-C=scoir"
-
 msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
 msgstr ""
 "E12: Ní cheadaítear ordú ó exrc/vimrc sa chomhadlann reatha ná ó chuardach "

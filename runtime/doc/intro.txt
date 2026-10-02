@@ -386,7 +386,7 @@ a command that takes an argument, such as |f| or |m|, the timeout set with
         *CTRL-\_CTRL-G* *i_CTRL-\_CTRL-G* *c_CTRL-\_CTRL-G* *v_CTRL-\_CTRL-G*
 CTRL-\ CTRL-G works the same as |CTRL-\_CTRL-N| for backward compatibility.
 
-                                *:exm* *:exmode* *gQ* *mode-Ex* *Ex-mode* *Ex* *EX* *E501*
+                                *:exm* *:exmode* *mode-Ex* *Ex-mode* *Ex* *EX* *E501*
 :exm[ode]
 [count]q:               Switch to Ex mode.  This is like the |cmdwin| except
                         it stays open, in Insert-mode, so can you keep

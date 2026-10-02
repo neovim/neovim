@@ -7,7 +7,7 @@
 local M = {}
 
 --- @class vim._core.cmdwin.State
---- @field type string   ':', '/', '?'
+--- @field type ':'|'/'|'?'
 --- @field win integer   cmdwin window id
 --- @field buf integer   cmdwin buffer id
 --- @field caller_win integer  Window to return-to on close
@@ -15,13 +15,15 @@ local M = {}
 --- @type vim._core.cmdwin.State?
 local state = nil
 
+--- @type table<string, boolean>
 local cmdwin_types = { [':'] = true, ['/'] = true, ['?'] = true }
 
 --- Fills the cmdwin buffer with the cmdline history.
 --- @return boolean filled  Whether any lines were written.
+--- @param buf integer
+--- @param type ':'|'/'|'?'
 local function fill_history(buf, type)
-  local histname = type == ':' and 'cmd' or (type == '/' or type == '?') and 'search' or nil
-  assert(histname, 'cmdwin: unknown type: ' .. tostring(type))
+  local histname = type == ':' and 'cmd' or 'search'
   local n = vim.fn.histnr(histname)
   if n <= 0 then -- May be -1 if history is empty.
     return false
@@ -43,7 +45,7 @@ end
 
 --- Open the command-line window.
 ---
---- @param type? string  ':', '/', '?'. Default ':'.
+--- @param type? ':'|'/'|'?' Default ':'.
 --- @param init_line? string  Pre-fill the last line (the "live" cmdline).
 --- @param init_col? integer  1-based cursor column in the last line.
 function M.open(type, init_line, init_col)
@@ -75,7 +77,6 @@ function M.open(type, init_line, init_col)
   vim.bo[buf].bufhidden = 'wipe'
   vim.bo[buf].swapfile = false
   vim.bo[buf].buflisted = true -- #40431
-  vim.wo[win][0].winfixbuf = true
   vim.wo[win][0].foldenable = false
   vim.wo[win][0].scrollbind = false
   -- Show cmdwin-char via 'statuscolumn'.
@@ -127,11 +128,27 @@ function M.open(type, init_line, init_col)
     end,
   })
 
+  -- Clean up when the cmdwin is swapped to another buffer
+  vim.api.nvim_create_autocmd({ 'BufWinLeave' }, {
+    buffer = buf,
+    nested = true,
+    callback = function()
+      if state == nil then
+        return
+      end
+      -- We're the last cmdwin buffer (see BufWinLeave), so cleanup.
+      -- But don't delete the buffer, as the BufWinLeave code handles it.
+      M._cleanup { delbuf = false }
+      return true
+    end,
+  })
+
   vim.api.nvim_exec_autocmds('CmdwinEnter', { pattern = type, modeline = false })
 end
 
 --- @private
-function M._cleanup()
+--- @param opts? {delbuf?: boolean}
+function M._cleanup(opts)
   if state == nil then
     return
   end
@@ -139,10 +156,14 @@ function M._cleanup()
   state = nil
   pcall(vim.api.nvim__cmdwin_set, '', 0) -- Clear the C-side globals.
   pcall(vim.api.nvim_exec_autocmds, 'CmdwinLeave', { pattern = s.type, modeline = false })
-  if vim.api.nvim_buf_is_valid(s.buf) then
+  if (opts == nil or opts.delbuf ~= false) and vim.api.nvim_buf_is_valid(s.buf) then
     pcall(vim.api.nvim_buf_delete, s.buf, { force = true })
   end
-  if vim.api.nvim_win_is_valid(s.caller_win) then
+  -- Only return to caller_win for the current tabpage; avoid changing the current tab during an autocmd.
+  if
+    vim.api.nvim_win_is_valid(s.caller_win)
+    and vim.api.nvim_win_get_tabpage(s.caller_win) == vim.api.nvim_get_current_tabpage()
+  then
     pcall(vim.api.nvim_set_current_win, s.caller_win)
   end
 end
@@ -154,7 +175,7 @@ function M.win()
 end
 
 --- Closes the cmdwin and returns its current line and type.
---- @return string line, string type
+--- @return string line, ':'|'/'|'?' type
 local function _close()
   local line = vim.api.nvim_get_current_line()
   local type = assert(state).type
@@ -169,7 +190,7 @@ function M.confirm()
   end
   local line, type = _close()
   line = line:gsub('%z', '\n'):gsub('(%c)', '\022%1') -- Escape control characters.
-  vim.api.nvim_feedkeys(type .. line .. vim.keycode('<CR>'), 'nt', false)
+  vim.api.nvim_feedkeys(type .. line .. '\r', 'nt', true)
 end
 
 --- Cancel: close the cmdwin and re-enter cmdline mode with the line pre-filled (no execute).
@@ -179,7 +200,7 @@ function M.cancel()
   end
   local line, type = _close()
   line = line:gsub('%z', '\n'):gsub('(%c)', '\022%1') -- Escape control characters.
-  vim.api.nvim_feedkeys(type .. line, 'nt', false)
+  vim.api.nvim_feedkeys(type .. line, 'nt', true)
 end
 
 return M

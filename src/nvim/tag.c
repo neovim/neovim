@@ -3061,11 +3061,11 @@ int expand_tags(bool tagnames, char *pat, int *num_file, char ***file)
   int extra_flag = tagnames ? TAG_NAMES : 0;
   if (pat[0] == '/') {
     ret = find_tags(pat + 1, num_file, file,
-                    TAG_REGEXP | extra_flag | TAG_VERBOSE | TAG_NO_TAGFUNC,
+                    TAG_REGEXP | extra_flag | TAG_VERBOSE,
                     TAG_MANY, curbuf->b_ffname);
   } else {
     ret = find_tags(pat, num_file, file,
-                    TAG_REGEXP | extra_flag | TAG_VERBOSE | TAG_NO_TAGFUNC | TAG_NOIC,
+                    TAG_REGEXP | extra_flag | TAG_VERBOSE | TAG_NOIC,
                     TAG_MANY, curbuf->b_ffname);
   }
   if (ret == OK && !tagnames) {

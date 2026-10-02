@@ -686,10 +686,35 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
   uint8_t initial = (cmd >> 8) & 0xFF;
   uint8_t command = cmd & 0xFF;
 
-  // Currently unused
-  (void)intermediate;
-
   switch (command) {
+  case 'q':
+    if (initial == '>' && intermediate == ' ') {
+      // Kitty multiple-cursors protocol query response:
+      //   CSI > shape;shape;… SP q
+      MAXSIZE_TEMP_ARRAY(args, 2);
+      ADD_C(args, STATIC_CSTR_AS_OBJ("termresponse"));
+
+      StringBuilder response = KV_INITIAL_VALUE;
+      kv_concat(response, "\x1b[>");
+      for (size_t i = 0; i < nparams; i++) {
+        int arg;
+        if (termkey_interpret_csi_param(params[i], &arg, NULL, NULL) != TERMKEY_RES_KEY) {
+          kv_destroy(response);
+          return;
+        }
+        kv_printf(response, "%d", arg);
+        if (i < nparams - 1) {
+          kv_push(response, ';');
+        }
+      }
+      kv_concat(response, " q");
+      ADD_C(args, STRING_OBJ(cbuf_as_string(response.items, response.size)));
+
+      // Forward to the client (TermResponse).
+      rpc_send_event(ui_client_channel_id, "nvim_ui_term_event", args);
+      kv_destroy(response);
+    }
+    break;
   case 'u':
     switch (initial) {
     case '?':

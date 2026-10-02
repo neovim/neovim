@@ -13,10 +13,8 @@ describe(':grep', function()
       return
     end
 
-    n.command([[set grepprg=grep\ -r]])
-    -- Change to test directory so that the test does not run too long.
-    n.command('cd test')
-    n.feed(':grep a **/*<cr>')
+    n.command('set grepprg=grep')
+    n.feed(':grep N test/functional/fixtures/bigfile.txt<cr>')
     n.feed('<cr>') -- Press ENTER
     ok(eval('len(getqflist())') > 9000) -- IT'S OVER 9000!!1
   end)

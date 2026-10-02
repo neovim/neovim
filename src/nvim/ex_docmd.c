@@ -1478,9 +1478,12 @@ bool cmd_has_expr_args(cmdidx_T cmdidx)
 /// @param[out] eap Ex command arguments
 /// @param[out] cmod Command modifiers
 /// @param[out] errormsg Error message, if any
+/// @param skipmods Skip modifiers, nextcmd, register and count. Keep leading
+///                 whitespace of the arguments.
 ///
 /// @return Success or failure
-bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **errormsg)
+bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **errormsg,
+                   bool skipmods)
 {
   char *after_modifier = NULL;
   bool retval = false;
@@ -1504,7 +1507,7 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **er
 
   char *orig_cmd = eap->cmd;
   // If parse command modifiers failed but modifiers were passed, continue
-  int result = parse_command_modifiers(eap, errormsg, cmod, false);
+  int result = skipmods ? OK : parse_command_modifiers(eap, errormsg, cmod, false);
   after_modifier = eap->cmd;
   if (result == FAIL && after_modifier == orig_cmd) {
     goto end;
@@ -1564,9 +1567,14 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **er
   if (!IS_USER_CMDIDX(eap->cmdidx)) {
     eap->argt = cmdnames[(int)eap->cmdidx].cmd_argt;
   }
-  // Skip to start of argument.
-  // Don't do this for the ":!" command, because ":!! -l" needs the space.
-  eap->arg = eap->cmdidx == CMD_bang ? p : skipwhite(p);
+  if (skipmods) {
+    // Only skip the space before the arguments, the rest belongs to them.
+    eap->arg = p + (*p == ' ');
+  } else {
+    // Skip to start of argument.
+    // Don't do this for the ":!" command, because ":!! -l" needs the space.
+    eap->arg = eap->cmdidx == CMD_bang ? p : skipwhite(p);
+  }
 
   // Don't treat ":r! filter" like a bang
   if (eap->cmdidx == CMD_read && eap->forceit) {
@@ -1575,9 +1583,9 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **er
 
   // Check for '|' to separate commands and '"' to start comments.
   // Don't do this for ":read !cmd" and ":write !cmd".
-  if ((eap->argt & EX_TRLBAR)) {
+  if (!skipmods && (eap->argt & EX_TRLBAR)) {
     separate_nextcmd(eap);
-  } else if (cmd_has_expr_args(eap->cmdidx)) {
+  } else if (!skipmods && cmd_has_expr_args(eap->cmdidx)) {
     // For commands without EX_TRLBAR, check for '|' separator
     // by skipping over expressions (including string literals)
     char *arg = eap->arg;
@@ -1612,9 +1620,11 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **er
   }
 
   // Parse register and count
-  parse_register(eap);
-  if (parse_count(eap, errormsg, false) == FAIL) {
-    goto end;
+  if (!skipmods) {
+    parse_register(eap);
+    if (parse_count(eap, errormsg, false) == FAIL) {
+      goto end;
+    }
   }
 
   // Remove leading whitespace and colon from next command
@@ -1879,6 +1889,13 @@ static bool skip_cmd(const exarg_T *eap)
     case CMD_finally:
     case CMD_endtry:
     case CMD_function:
+      break;
+
+    // commands that read a block of lines
+    case CMD_append:
+    case CMD_change:
+    case CMD_insert:
+    case CMD_loadkeymap:
       break;
 
     // Commands that handle '|' themselves.  Check: A command should
@@ -3205,6 +3222,11 @@ int modifier_len(char *cmd)
     p = skipwhite(skipdigits(cmd + 1));
   }
   for (int i = 0; i < (int)ARRAY_SIZE(cmdmods); i++) {
+    // cmdmod_info_tab[] is sorted by name: once the first letter is past
+    // the command's first letter no later entry can match.
+    if (cmdmods[i].name[0] > *p) {
+      break;
+    }
     int j;
     for (j = 0; p[j] != NUL; j++) {
       if (p[j] != cmdmods[i].name[j]) {
@@ -4725,7 +4747,7 @@ bool before_quit_autocmds(win_T *wp, bool quit_all, bool forceit)
   if (*get_vim_var_str(VV_EXITREASON) == NUL) {
     set_vim_var_string(VV_EXITREASON, S_LEN("quit"));
   }
-  apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, wp->w_buffer);
+  apply_autocmds_win(EVENT_QUITPRE, NULL, NULL, false, wp->w_buffer, wp);
 
   // Bail out when autocommands closed the window.
   // Refuse to quit when the buffer in the last window is being closed (can
@@ -5165,9 +5187,11 @@ static void ex_pclose(exarg_T *eap)
 /// Close window "win" and take care of handling closing the last window for a
 /// modified buffer.
 ///
-/// @param tp  NULL or the tab page "win" is in
+/// @param tp  NULL or the tab page "win" is in, if different from "curtab"
 void ex_win_close(int forceit, win_T *win, tabpage_T *tp)
 {
+  assert(tp == NULL || tp != curtab);
+
   // Never close the autocommand window.
   if (is_ctx_win(win)) {
     emsg(_(e_autocmd_close));
@@ -5276,6 +5300,8 @@ static void ex_tabonly(exarg_T *eap)
 /// Close the current tab page.
 void tabpage_close(int forceit)
 {
+  int done = 0;
+
   if (window_layout_locked(CMD_tabclose)) {
     return;
   }
@@ -5286,9 +5312,13 @@ void tabpage_close(int forceit)
 
   // First close all the windows but the current one.  If that worked then
   // close the last window in this tab, that will close it.
-  while (curwin->w_floating) {
+  while (curwin->w_floating && ++done < 1000) {
     ex_win_close(forceit, curwin, NULL);
   }
+  if (done == 1000) {
+    return;
+  }
+
   if (!ONE_WINDOW) {
     close_others(true, forceit, true);
   }
@@ -5311,6 +5341,8 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
   int done = 0;
   char prev_idx[NUMBUFLEN];
 
+  assert(tp != curtab);
+
   if (window_layout_locked(CMD_SIZE)) {
     return;
   }
@@ -5323,12 +5355,20 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
   while (++done < 1000) {
     snprintf(prev_idx, sizeof(prev_idx), "%i", tabpage_index(tp));
     win_T *wp = tp->tp_lastwin;
+
+    // Autocommands (including TabClosedPre above) may change the current tab page,
+    // abort a `:tabonly` (etc) if we're now on the tab we're trying to close
+    if (tp == curtab) {
+      done = 1000;
+      break;
+    }
     ex_win_close(forceit, wp, tp);
 
     // Autocommands may delete the tab page under our fingers.
     if (!valid_tabpage(tp)) {
       break;
     }
+
     // We may fail to close a window with a modified buffer.
     if (tp->tp_lastwin == wp) {
       done = 1000;
@@ -7074,7 +7114,7 @@ void update_topline_cursor(void)
   update_curswant();
 }
 
-/// Save the current State and go to Normal mode.
+/// Save the current State (editor-mode) and go to Normal mode.
 void save_current_state(save_state_T *sst)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -7124,6 +7164,8 @@ void restore_current_state(save_state_T *sst)
   ui_cursor_shape();  // may show different cursor shape
 }
 
+/// True while evaluating an `<expr>` mapping.
+/// Buffer changes are not allowed, except for internal-only dummy buffers.
 bool expr_map_locked(void)
 {
   return expr_map_lock > 0 && !(curbuf->b_flags & BF_DUMMY);

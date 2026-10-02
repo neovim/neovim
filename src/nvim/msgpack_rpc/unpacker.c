@@ -542,7 +542,7 @@ String unpack_string(const char **data, size_t *size)
   if (result || (tok.type != MPACK_TOKEN_STR && tok.type != MPACK_TOKEN_BIN)) {
     return (String)STRING_INIT;
   }
-  if (*size < tok.length) {
+  if (size2 < tok.length) {
     // result = MPACK_EOF;
     return (String)STRING_INIT;
   }
@@ -636,7 +636,7 @@ bool unpack_keydict(void *retval, FieldHashfn hashy, AdditionalDataBuilder *ad, 
       *error = arena_printf(NULL, "has empty key").data;
       return false;
     }
-    KeySetLink *field = hashy(key.data, key.size);
+    const KeySetLink *field = hashy(key.data, key.size);
 
     if (!field) {
       int status = unpack_skip(data, size);

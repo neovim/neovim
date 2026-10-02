@@ -3531,6 +3531,26 @@ func s:Tagfunc(t,f,o)
   return []
 endfunc
 
+" A match from an included file shows the file by its name under the current
+" directory, without the "./" of the include line.
+func Test_complete_included_file_name()
+  CheckRunVimInTerminal
+  call mkdir('Xincl/sub', 'pR')
+  call writefile(['let included_word = 1'], 'Xincl/sub/inc.vim')
+  call writefile(['source ./sub/inc.vim', ''], 'Xincl/main.vim')
+  let lines =<< trim END
+    setlocal include=^\\s*source\\s\\+ complete=i completeopt=menuone,noselect
+  END
+  call writefile(lines, 'Xincl/setup.vim')
+  let buf = RunVimInTerminal('-S Xincl/setup.vim Xincl/main.vim',
+        \ {'rows': 8, 'cols': 120})
+  call term_sendkeys(buf, "Goincluded_\<C-N>")
+  call WaitForAssert({-> assert_match('included_word\s\+Xincl/sub/inc.vim\s',
+        \ term_getline(buf, 4))})
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
 " This was using freed memory, since 'complete' was in a wiped out buffer.
 " Also using a window that was closed.
 func Test_tagfunc_wipes_out_buffer()
@@ -6897,6 +6917,49 @@ func Test_complete_info_auto()
   bwipe!
 endfunc
 
+" A completion asked for while 'autocompletedelay' runs is not given the
+" implicit "noselect" of autocompletion.
+func Test_complete_asked_for_during_delay()
+  call Ntest_override("char_avail", 1)
+  new
+  func! AutoOmni(findstart, base)
+    if a:findstart
+      return 4
+    endif
+    return ['alpha', 'alphabet']
+  endfunc
+  func! Selected()
+    let g:selected = complete_info(['selected']).selected
+    return ''
+  endfunc
+  setlocal omnifunc=AutoOmni
+  setlocal complete=o
+  setlocal completeopt=menuone
+  setlocal autocomplete
+  call setline(1, '    al')
+
+  " CTRL-X CTRL-O before the delay expires: the first match is selected,
+  " and taken.
+  set autocompletedelay=100
+  call feedkeys("A\<C-X>\<C-O>\<C-R>=Selected()\<CR>\<Esc>", 'tx')
+  call assert_equal(0, g:selected)
+  call assert_equal('    alpha', getline(1))
+
+  " What autocompletion puts up on its own selects nothing, so the word is
+  " left as it was.
+  set autocompletedelay&
+  call setline(1, '    al')
+  call feedkeys("A\<C-R>=Selected()\<CR>\<Esc>", 'tx')
+  call assert_equal(-1, g:selected)
+  call assert_equal('    al', getline(1))
+
+  call Ntest_override("ALL", 0)
+  unlet g:selected
+  delfunc AutoOmni
+  delfunc Selected
+  bwipe!
+endfunc
+
 func Test_complete_fuzzy_resort()
   new
   set completeopt=menu,menuone,noselect,fuzzy
@@ -6912,6 +6975,82 @@ func Test_complete_fuzzy_resort()
 
   bwipe!
   set completeopt&
+endfunc
+
+" Test for 'complete' F{func} callbacks when using ":setglobal"
+func Test_complete_cpt_func_setglobal()
+  func! CptSetglobalOne(findstart, base)
+    if a:findstart
+      return col('.') - 1
+    endif
+    return ['one']
+  endfunc
+  func! CptSetglobalTwo(findstart, base)
+    if a:findstart
+      return col('.') - 1
+    endif
+    return ['two']
+  endfunc
+
+  new
+  setlocal complete=FCptSetglobalOne
+  " ":setglobal" does not change the buffer-local value
+  setglobal complete=t,FCptSetglobalTwo
+  exe "normal! i\<C-N>\<Esc>"
+  call assert_equal('one', getline(1))
+
+  " A new buffer uses the global value, the callbacks must match it
+  new
+  exe "normal! i\<C-N>\<Esc>"
+  call assert_equal('two', getline(1))
+  bwipe!
+  bwipe!
+
+  " When the global value has more entries than the buffer-local one, the
+  " callback array used to be indexed out of bounds
+  new
+  setlocal complete=.
+  setglobal complete=FCptSetglobalTwo,FCptSetglobalTwo,FCptSetglobalTwo,FCptSetglobalTwo,FCptSetglobalTwo,FCptSetglobalTwo,FCptSetglobalTwo,FCptSetglobalTwo
+  new
+  exe "normal! i\<C-N>\<Esc>"
+  call assert_equal('two', getline(1))
+  bwipe!
+  bwipe!
+
+  " ":setlocal" does not change the callbacks cached for the global value
+  new
+  setlocal complete=FCptSetglobalOne
+  new
+  exe "normal! i\<C-N>\<Esc>"
+  call assert_equal('two', getline(1))
+  bwipe!
+  bwipe!
+
+  set complete&
+  delfunc CptSetglobalOne
+  delfunc CptSetglobalTwo
+endfunc
+
+
+" change the completion value while being triggered
+func Test_complete_cpt_func_changes_complete()
+  func! CptChange(findstart, base)
+    if a:findstart
+      set complete=.
+      return col('.') - 1
+    endif
+    return ['changed']
+  endfunc
+
+  new
+  call setline(1, ['alpha', ''])
+  setlocal complete=FCptChange,FCptChange,FCptChange
+  exe "normal! Gi\<C-N>\<Esc>"
+  call assert_equal('alpha', getline(2))
+
+  set complete&
+  delfunc CptChange
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

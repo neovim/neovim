@@ -243,6 +243,8 @@ local function cterm_to_hex(colorstr)
       cterm_color_cache = cterm_16_to_hex
     end
   end
+  -- EmmyLua retains the failed lookup narrowing after the cache is updated.
+  ---@diagnostic disable-next-line: return-type-mismatch
   return cterm_color_cache[color]
 end
 
@@ -290,7 +292,7 @@ local function _style_line_insert(style_line, col, field, val)
   if style_line[col] == nil then
     style_line[col] = { {}, {}, {}, {} }
   end
-  table.insert(style_line[col][field], val)
+  table.insert(assert(style_line[col][field]), val)
 end
 
 --- @param style_line vim.tohtml.line
@@ -351,7 +353,8 @@ local function styletable_insert_conceal(
     return
   end
   if state.opt.conceallevel == 1 and conceal_text == '' then
-    conceal_text = vim.opt_local.listchars:get().conceal or ' '
+    local listchars = vim.opt_local.listchars:get() --[[@as table<string,string>]]
+    conceal_text = listchars.conceal or ' '
   end
   local hlid = register_hl(state, hl_group)
   if vim.wo[state.winid].conceallevel ~= 3 then
@@ -413,7 +416,8 @@ local function styletable_diff(state)
     local style_line = styletable[row]
     local filler = vim.fn.diff_filler(row)
     if filler ~= 0 then
-      local fill = (vim.opt_local.fillchars:get().diff or '-')
+      local fillchars = vim.opt_local.fillchars:get() --[[@as table<string,string>]]
+      local fill = fillchars.diff or '-'
       table.insert(
         style_line.virt_lines,
         { { fill:rep(state.width), register_hl(state, 'DiffDelete') } }
@@ -465,8 +469,7 @@ local function styletable_treesitter(state)
       query:iter_captures(root, buf_highlighter.bufnr, state.start - 1, state.end_)
     do
       local srow, scol, erow, ecol = node:range()
-      --- @diagnostic disable-next-line: invisible
-      local c = q._query.captures[capture]
+      local c = query.captures[capture]
       if c ~= nil then
         local hlid = register_hl(state, '@' .. c .. '.' .. tree:lang())
         if metadata.conceal and state.opt.conceallevel ~= 0 then
@@ -638,11 +641,17 @@ local function styletable_folds(state)
       local hlid = register_hl(state, 'Folded')
       ---TODO(altermo): Is there a way to get highlighted foldtext?
       local foldtext = vim.fn.foldtextresult(row)
-      foldtext = foldtext .. (vim.opt.fillchars:get().fold or '·'):rep(state.width - #foldtext)
+      local fillchars = vim.opt.fillchars:get() --[[@as table<string,string>]]
+      foldtext = foldtext .. (fillchars.fold or '·'):rep(state.width - #foldtext)
       table.insert(styletable[row].virt_lines, { { foldtext, hlid } })
     end
   end
-  if has_folded and type(({ pcall(vim.api.nvim_eval, vim.o.foldtext) })[2]) == 'table' then
+  local foldtext = vim.o.foldtext
+  local foldtext_fn = type(foldtext) == 'function' and foldtext
+    or function()
+      return vim.api.nvim_eval(foldtext)
+    end
+  if has_folded and type(({ pcall(foldtext_fn) })[2]) == 'table' then
     notify('foldtext returning a table with highlights is not supported, HTML may be incorrect')
   end
 end
@@ -677,6 +686,10 @@ end
 local function styletable_match(state)
   for _, match in ipairs(vim.fn.getmatches(state.winid)) do
     local hlid = register_hl(state, match.group)
+    --- @param srow integer
+    --- @param scol integer
+    --- @param erow integer
+    --- @param ecol integer
     local function range(srow, scol, erow, ecol)
       if match.group == 'Conceal' and state.opt.conceallevel ~= 0 then
         styletable_insert_conceal(state, srow, scol, erow, ecol, match.conceal or '', hlid)
@@ -817,12 +830,14 @@ local function styletable_listchars(state)
   if not state.opt.list then
     return
   end
+  --- @param str string
+  --- @param i integer
+  --- @param j? integer
   --- @return string
   local function utf8_sub(str, i, j)
     return vim.fn.strcharpart(str, i - 1, j and j - i + 1 or nil)
   end
-  --- @type table<string,string>
-  local listchars = vim.opt_local.listchars:get()
+  local listchars = vim.opt_local.listchars:get() --[[@as table<string,string>]]
   local ids = setmetatable({}, {
     __index = function(t, k)
       rawset(t, k, register_hl(state, k))
@@ -1286,9 +1301,9 @@ end
 --- @param title? string
 --- @return vim.tohtml.state.global
 local function opt_to_global_state(opt, title)
-  local fonts = {}
+  local fonts = {} --- @type string[]
   if opt.font then
-    fonts = type(opt.font) == 'string' and { opt.font } or opt.font --[[@as (string[])]]
+    fonts = (type(opt.font) == 'string' and { opt.font } or opt.font) --[[@as string[] ]]
     for i, v in pairs(fonts) do
       fonts[i] = ('"%s"'):format(v)
     end
@@ -1338,16 +1353,7 @@ local styletable_funcs = {
 local function state_generate_style(state)
   vim._with({ win = state.winid }, function()
     for _, fn in ipairs(styletable_funcs) do
-      --- @type string?
-      local cond
-      if type(fn) == 'table' then
-        cond = fn[2] --[[@as string]]
-        --- @type function
-        fn = fn[1]
-      end
-      if not cond or cond(state) then
-        fn(state)
-      end
+      fn(state)
     end
   end)
 end

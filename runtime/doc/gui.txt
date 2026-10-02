@@ -171,7 +171,7 @@ Normal Mode: >
                  cursor                       window
   ---------------------------------------------------------------------------
   <LeftMouse>     yes          end              yes
-  <C-LeftMouse>   yes          end              yes    "CTRL-]" (2)
+  <C-LeftMouse>   no        no change           no     toggle multicursor
   <S-LeftMouse>   yes       no change           yes    "*" (2)
   <LeftDrag>      yes     start or extend (1)   no
   <LeftRelease>   yes     start or extend (1)   no
@@ -189,7 +189,7 @@ Insert or Replace Mode: >
                  cursor                       window
   ---------------------------------------------------------------------------
   <LeftMouse>     yes     (cannot be active)    yes
-  <C-LeftMouse>   yes     (cannot be active)    yes    "CTRL-O^]" (2)
+  <C-LeftMouse>   no      (cannot be active)    no     no-op
   <S-LeftMouse>   yes     (cannot be active)    yes    "CTRL-O*" (2)
   <LeftDrag>      yes     start or extend (1)   no     like CTRL-O (1)
   <LeftRelease>   yes     start or extend (1)   no     like CTRL-O (1)

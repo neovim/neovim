@@ -1767,15 +1767,23 @@ static idx_T read_tree_node(FILE *fd, uint8_t *byts, idx_T *idxs, int maxidx, id
           // byte, the condition index shifted up 8 bits, the flags
           // shifted up 24 bits.
           if (c == BY_FLAGS) {
-            c = getc(fd) << 24;                         // <pflags>
+            int n = getc(fd);                           // <pflags>
+            if (n < 0) {
+              return SP_TRUNCERROR;
+            }
+            c = n << 24;
           } else {
             c = 0;
           }
 
-          c |= getc(fd);                                // <affixID>
+          int n = getc(fd);                             // <affixID>
+          if (n < 0) {
+            return SP_TRUNCERROR;
+          }
+          c |= n;
 
-          int n = get2c(fd);                                // <prefcondnr>
-          if (n >= maxprefcondnr) {
+          n = get2c(fd);                                // <prefcondnr>
+          if (n < 0 || n >= maxprefcondnr) {
             return SP_FORMERROR;
           }
           c |= (n << 8);
@@ -1785,14 +1793,29 @@ static idx_T read_tree_node(FILE *fd, uint8_t *byts, idx_T *idxs, int maxidx, id
                     // that and prefix ID above the region.
           int c2 = c;
           c = getc(fd);                                 // <flags>
+          if (c < 0) {
+            return SP_TRUNCERROR;
+          }
           if (c2 == BY_FLAGS2) {
-            c = (getc(fd) << 8) + c;                    // <flags2>
+            int n = getc(fd);                           // <flags2>
+            if (n < 0) {
+              return SP_TRUNCERROR;
+            }
+            c = (n << 8) + c;
           }
           if (c & WF_REGION) {
-            c = (getc(fd) << 16) + c;                   // <region>
+            int n = getc(fd);                           // <region>
+            if (n < 0) {
+              return SP_TRUNCERROR;
+            }
+            c = (n << 16) + c;
           }
           if (c & WF_AFX) {
-            c = (int)((unsigned)getc(fd) << 24) + c;  // <affixID>
+            int n = getc(fd);                           // <affixID>
+            if (n < 0) {
+              return SP_TRUNCERROR;
+            }
+            c = (int)((unsigned)n << 24) + c;
           }
         }
 
@@ -1872,16 +1895,16 @@ static void spell_reload_one(char *fname, bool added_word)
 #define CONDIT_AFF      8       // word already has an affix
 
 // Tunable parameters for when the tree is compressed.  Filled from the
-// 'mkspellmem' option.
+// 'mkspellmem' option at the start of each spell-file build.
 static int compress_start = 30000;     // memory / SBLOCKSIZE
 static int compress_inc = 100;         // memory / SBLOCKSIZE
 static int compress_added = 500000;    // word count
 
 // Check the 'mkspellmem' option.  Return FAIL if it's wrong.
-// Sets "sps_flags".
-int spell_check_msm(void)
+// Updates the compression settings only when "apply" is true.
+int spell_check_msm(char *value, bool apply)
 {
-  char *p = p_msm;
+  char *p = value;
 
   if (!ascii_isdigit(*p)) {
     return FAIL;
@@ -1912,9 +1935,11 @@ int spell_check_msm(void)
     return FAIL;
   }
 
-  compress_start = start;
-  compress_inc = incr;
-  compress_added = added;
+  if (apply) {
+    compress_start = start;
+    compress_inc = incr;
+    compress_added = added;
+  }
   return OK;
 }
 
@@ -5232,6 +5257,9 @@ static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool
   afffile_T *(afile[MAXREGIONS]);
   bool error = false;
   spellinfo_T spin;
+
+  // Only spell-file generation needs the derived 'mkspellmem' limits.
+  spell_check_msm(p_msm, true);
 
   CLEAR_FIELD(spin);
   spin.si_verbose = !added_word;

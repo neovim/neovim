@@ -48,6 +48,7 @@ function M.show(ns)
     api.nvim_echo({ { ('No extmarks in this buffer for namespace "%s"'):format(ns) } }, false, {})
     return true
   end
+  --- @type [string, string?][]
   local chunks = { { ('%6s %5s  %4s %s'):format('id', 'line', 'col', 'text'), 'Title' } }
   for _, m in ipairs(extmarks) do
     local text = api.nvim_buf_get_lines(0, m[2], m[2] + 1, false)[1] or ''
@@ -62,10 +63,11 @@ end
 --- @param lnum integer
 --- @return string
 local function mark_line(lnum)
-  if lnum > api.nvim_buf_line_count(0) then
+  local line = lnum > 0 and api.nvim_buf_get_lines(0, lnum - 1, lnum, false)[1]
+  if not line then
     return '-invalid-'
   end
-  local text = api.nvim_buf_get_lines(0, lnum - 1, lnum, false)[1]:gsub('^%s+', '')
+  local text = line:gsub('^%s+', '')
   local limit = vim.o.columns - 15
   if vim.fn.strdisplaywidth(text) < limit then
     return text
@@ -93,7 +95,7 @@ function M.ex_marks(args)
   end
 
   local curbuf = api.nvim_get_current_buf()
-  local marks = {} ---@type table<string,{mark:string, pos:integer[], file?:string}>
+  local marks = {} ---@type table<string, vim.fn.getmarklist.ret.item>
   for _, list in ipairs({ vim.fn.getmarklist(curbuf), vim.fn.getmarklist() }) do
     for _, m in ipairs(list) do
       marks[m.mark:sub(2)] = m
@@ -113,7 +115,7 @@ function M.ex_marks(args)
 
   --- The "file/text" column: the text at the mark if it is in the current buffer (highlighted
   --- as "Directory", like C show_one_mark()), else the file name.
-  --- @param m {pos:integer[], file?:string}
+  --- @param m vim.fn.getmarklist.ret.item
   --- @return string text, string? hl
   local function displayname(m)
     if m.pos[1] == curbuf then

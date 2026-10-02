@@ -310,10 +310,16 @@ describe(':mksession', function()
     os.remove(tmpfile)
   end)
 
-  it('fires SessionWritePre autocmd', function()
-    command('autocmd SessionWritePre * let g:session_write_pre = 1')
-    command('mksession ' .. session_file)
-    eq(1, api.nvim_eval('g:session_write_pre'))
+  it('fires session write autocmds only for :mksession', function()
+    command('let g:session_write_events = []')
+    command("autocmd SessionWritePre * call add(g:session_write_events, 'pre')")
+    command("autocmd SessionWritePost * call add(g:session_write_events, 'post')")
+    for _, cmd in ipairs({ 'mkview', 'mkvimrc', 'mkexrc' }) do
+      command(cmd .. '! ' .. session_file)
+      eq({}, api.nvim_eval('g:session_write_events'), cmd)
+    end
+    command('mksession! ' .. session_file)
+    eq({ 'pre', 'post' }, api.nvim_eval('g:session_write_events'))
   end)
 
   it('SessionWritePre handles editing buffer contents', function()

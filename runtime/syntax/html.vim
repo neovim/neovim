@@ -3,9 +3,7 @@
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainers: Jorge Maldonado Ventura <jorgesumle@freakspot.net>
 "			Claudio Fleiner <claudio@fleiner.com>
-" Last Change:		2023 Nov 28
-" 2024 Jul 30 by Vim Project: increase syn-sync-minlines to 250
-" 2025 May 10 by Vim Project: update comment
+" Last Change:		2026 Sep 12
 
 " See :help html.vim for some comments and a description of the options
 
@@ -49,7 +47,7 @@ syn keyword htmlTagName contained input isindex kbd li link map menu
 syn keyword htmlTagName contained meta ol option param pre p samp span
 syn keyword htmlTagName contained select small strike sub sup
 syn keyword htmlTagName contained table td textarea th tr tt ul var xmp
-syn match   htmlTagName contained "\<\%(b\|i\|u\|h[1-6]\|em\|strong\|head\|body\|title\)\>"
+syn keyword htmlTagName contained b i u em strong head body title h1 h2 h3 h4 h5 h6
 
 " new html 4.0 tags
 syn keyword htmlTagName contained abbr acronym bdo button col colgroup
@@ -80,15 +78,13 @@ syn keyword htmlArg contained align alink alt archive background bgcolor
 syn keyword htmlArg contained border bordercolor cellpadding
 syn keyword htmlArg contained cellspacing checked class clear code codebase color
 syn keyword htmlArg contained cols colspan content coords enctype face
-syn keyword htmlArg contained gutter height hspace id
+syn keyword htmlArg contained gutter height href hspace id
 syn keyword htmlArg contained link lowsrc marginheight
 syn keyword htmlArg contained marginwidth maxlength method name prompt
-syn keyword htmlArg contained rel rev rows rowspan scrolling selected shape
-syn keyword htmlArg contained size src start target text type url
+syn keyword htmlArg contained rel rev role rows rowspan scrolling selected shape
+syn keyword htmlArg contained size src start target text title type url
 syn keyword htmlArg contained usemap ismap valign value vlink vspace width wrap
-syn match   htmlArg contained "\<\%(http-equiv\|href\|title\)="me=e-1
-
-syn keyword htmlArg contained role
+syn match   htmlArg contained "\<http-equiv="me=e-1
 
 " ARIA attributes {{{1
 let s:aria =<< trim END
@@ -165,11 +161,11 @@ syn match   htmlArg	contained "\<z-index\>"
 syn keyword htmlTagName contained marquee
 
 " html 4.0 arg names
-syn match   htmlArg contained "\<\%(accept-charset\|label\)\>"
+syn match   htmlArg contained "\<accept-charset\>"
 syn keyword htmlArg contained abbr accept accesskey axis char charoff charset
 syn keyword htmlArg contained cite classid codetype compact data datetime
 syn keyword htmlArg contained declare defer dir disabled for frame
-syn keyword htmlArg contained headers hreflang lang language longdesc
+syn keyword htmlArg contained headers hreflang label lang language longdesc
 syn keyword htmlArg contained multiple nohref nowrap object profile readonly
 syn keyword htmlArg contained rules scheme scope span standby style
 syn keyword htmlArg contained summary tabindex valuetype version
@@ -209,7 +205,7 @@ else
   syn match htmlCommentNested contained "<!-->\@!"
   syn match htmlCommentError  contained "[^><!]"
 endif
-syn region htmlComment	start=+<!DOCTYPE+	end=+>+ keepend
+syn region htmlDoctype	start=+<!DOCTYPE+	end=+>+ keepend
 
 " server-parsed commands
 syn region htmlPreProc start=+<!--#+ end=+-->+ contains=htmlPreStmt,htmlPreError,htmlPreAttr
@@ -222,7 +218,7 @@ syn match htmlPreProcAttrName contained "\%(expr\|errmsg\|sizefmt\|timefmt\|var\
 
 if !exists("html_no_rendering")
   " rendering
-  syn cluster htmlTop contains=@Spell,htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,htmlLink,javaScript,@htmlPreproc
+  syn cluster htmlTop contains=@Spell,htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,htmlLink,javaScript,htmlVbScript,@htmlPreproc
 
   syn region htmlStrike start="<del\>" end="</del\_s*>"me=s-1 contains=@htmlTop
   syn region htmlStrike start="<s\>" end="</s\_s*>"me=s-1 contains=@htmlTop
@@ -257,15 +253,15 @@ if !exists("html_no_rendering")
   syn region htmlItalicUnderlineBold contained start="<strong\>" end="</strong\_s*>"me=s-1 contains=@htmlTop
 
   syn match htmlLeadingSpace "^\s\+" contained
-  syn region htmlLink start="<a\>\_[^>]*\<href\>" end="</a\_s*>"me=s-1 contains=@Spell,htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,htmlLeadingSpace,javaScript,@htmlPreproc
+  syn region htmlLink start="<a\>\_[^>]*\<href\>" end="</a\_s*>"me=s-1 contains=@Spell,htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,htmlLeadingSpace,javaScript,htmlVbScript,@htmlPreproc
   syn region htmlH1 start="<h1\>" end="</h1\_s*>"me=s-1 contains=@htmlTop
   syn region htmlH2 start="<h2\>" end="</h2\_s*>"me=s-1 contains=@htmlTop
   syn region htmlH3 start="<h3\>" end="</h3\_s*>"me=s-1 contains=@htmlTop
   syn region htmlH4 start="<h4\>" end="</h4\_s*>"me=s-1 contains=@htmlTop
   syn region htmlH5 start="<h5\>" end="</h5\_s*>"me=s-1 contains=@htmlTop
   syn region htmlH6 start="<h6\>" end="</h6\_s*>"me=s-1 contains=@htmlTop
-  syn region htmlHead start="<head\>" end="</head\_s*>"me=s-1 end="<body\>"me=s-1 end="<h[1-6]\>"me=s-1 contains=htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,htmlLink,htmlTitle,javaScript,cssStyle,@htmlPreproc
-  syn region htmlTitle start="<title\>" end="</title\_s*>"me=s-1 contains=htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,javaScript,@htmlPreproc
+  syn region htmlHead start="<head\>" end="</head\_s*>"me=s-1 end="<body\>"me=s-1 end="<h[1-6]\>"me=s-1 contains=htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,htmlLink,htmlTitle,javaScript,htmlVbScript,cssStyle,@htmlPreproc
+  syn region htmlTitle start="<title\>" end="</title\_s*>"me=s-1 contains=htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,javaScript,htmlVbScript,@htmlPreproc
 endif
 
 syn keyword htmlTagName		contained noscript
@@ -299,7 +295,7 @@ if main_syntax != 'java' || exists("java_vb")
   " VB SCRIPT
   syn include @htmlVbScript syntax/vb.vim
   unlet b:current_syntax
-  syn region  javaScript start=+<script \_[^>]*language *=\_[^>]*vbscript\_[^>]*>+ keepend end=+</script\_[^>]*>+me=s-1 contains=@htmlVbScript,htmlCssStyleComment,htmlScriptTag,@htmlPreproc
+  syn region  htmlVbScript start=+<script \_[^>]*language *=\_[^>]*vbscript\_[^>]*>+ keepend end=+</script\_[^>]*>+me=s-1 contains=@htmlVbScript,htmlCssStyleComment,htmlScriptTag,@htmlPreproc
 endif
 
 syn cluster htmlJavaScript	add=@htmlPreproc
@@ -316,13 +312,17 @@ if main_syntax != 'java' || exists("java_css")
 endif
 
 if main_syntax == "html"
-  " synchronizing (does not always work if a comment includes legal
-  " html tags, but doing it right would mean to always start
-  " at the first line, which is too slow)
-  syn sync match htmlHighlight groupthere NONE "<[/a-zA-Z]"
-  syn sync match htmlHighlight groupthere javaScript "<script"
+  syn sync clear
   syn sync match htmlHighlightSkip "^.*['\"].*$"
-  exe "syn sync minlines=" . get(g:, 'html_minlines', 250)
+  syn sync match htmlHighlight grouphere  htmlComment  "<!--"
+  syn sync match htmlHighlight groupthere NONE         "--!\=\s*>"
+  syn sync match htmlHighlight groupthere NONE         "</script\>"
+  syn sync match htmlHighlight groupthere javaScript   "<script\>"
+  syn sync match htmlHighlight groupthere htmlVbScript "<script \_[^>]*language *=\_[^>]*vbscript"
+  syn sync match htmlHighlight groupthere NONE         "</style\>"
+  syn sync match htmlHighlight groupthere cssStyle     "<style\>"
+  exe "syn sync minlines=" .. get(g:, 'html_minlines', 250)
+  exe "syn sync maxlines=" .. get(g:, 'html_maxlines', 500)
 endif
 
 " Folding
@@ -391,6 +391,7 @@ hi def link htmlPreProcAttrError   Error
 hi def link htmlString		   String
 hi def link htmlStatement	   Statement
 hi def link htmlComment		   Comment
+hi def link htmlDoctype		   htmlComment
 hi def link htmlCommentNested	   htmlError
 hi def link htmlCommentError	   htmlError
 hi def link htmlTagError	   htmlError

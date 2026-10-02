@@ -607,6 +607,18 @@ function M.repeated_read_cmd(...)
   return table.concat(data)
 end
 
+--- Projects the named fields of `t` (a nil field stays absent).
+--- @param t table<string,any>
+--- @param ... string Field names.
+--- @return table<string,any>
+function M.pick(t, ...)
+  local r = {} --- @type table<string,any>
+  for _, f in ipairs({ ... }) do
+    r[f] = t[f]
+  end
+  return r
+end
+
 --- @generic T
 --- @param orig T
 --- @return T

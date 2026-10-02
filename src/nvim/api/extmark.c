@@ -1251,6 +1251,7 @@ void nvim__ns_set(Integer ns_id, Dict(ns_opts) *opts, Error *err)
 
       win_T *wp = find_window_by_handle((Window)win, err);
       if (!wp) {
+        set_destroy(ptr_t, &windows);
         return;
       }
 

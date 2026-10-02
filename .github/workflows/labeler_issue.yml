@@ -21,6 +21,7 @@ jobs:
               'api',
               'image',
               'lsp',
+              'multicursor',
               'treesitter',
               'ui',
               'ui2'
@@ -36,6 +37,9 @@ jobs:
             // Special cases.
             if (titleSplit.includes('vim.pack')) {
               labels.add('packages')
+            }
+            if (titleSplit.includes('cmdatom')) {
+              labels.add('multicursor')
             }
 
             if (labels.size !== 0) {

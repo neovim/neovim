@@ -64,7 +64,10 @@ bool path_equal(const char *s1, const char *s2, PathCmpFlags flags)
   assert(!(flags & kPathCmpLiteral) || flags == kPathCmpLiteral);
 
   if (flags == kPathCmpLiteral) {
-    return path_cmp(p_fic, s1, s2, MAXPATHL) == 0;
+    const bool is_url = path_with_url(s1) || path_with_url(s2);
+    // URI comparison is scheme-agnostic, so a trailing slash is significant.
+    return (!is_url || strlen(s1) == strlen(s2))
+           && path_cmp(p_fic, s1, s2, MAXPATHL) == 0;
   }
 
   if (flags & kPathCmpExpand) {
@@ -165,6 +168,7 @@ const char *invocation_path_tail(const char *invocation, size_t *len)
     int l = utfc_ptr2len(p);
     if (vim_ispathsep_nocolon(*p)) {
       tail = p + 1;  // Now tail points one past the separator.
+      tail_end = tail;
     } else if (*p == '\\' && inquote) {
       p++;
     } else if (*p == '"') {

@@ -8,6 +8,10 @@
 "		Dean, Adam Kenneth <adam.ken.dean@hpe.com>
 " Last Change:	2026 Mar 31
 " SSH Version:	10.1p1
+" 2026 Sep 19 by Vim project: Add UseKeychain keyword #21339
+" 2026 Sep 27 by Vim project: update secure keywords  #21376
+" 2026 Sep 28 by Vim project: fix typo #21390
+" 2026 Sep 28 by Vim project: update syntax file #21387
 "
 
 " Setup
@@ -16,7 +20,7 @@ if exists("b:current_syntax")
   finish
 endif
 
-setlocal iskeyword=_,-,a-z,A-Z,48-57
+syn iskeyword _,-,a-z,A-Z,48-57
 
 
 " case on
@@ -38,21 +42,17 @@ syn keyword sshconfigYesNo force autoask none
 syn keyword sshconfigCipher 3des blowfish
 
 syn keyword sshconfigCiphers 3des-cbc
-syn keyword sshconfigCiphers blowfish-cbc
-syn keyword sshconfigCiphers cast128-cbc
-syn keyword sshconfigCiphers arcfour
-syn keyword sshconfigCiphers arcfour128
-syn keyword sshconfigCiphers arcfour256
+syn keyword sshconfigCiphersDeprecated blowfish-cbc cast128-cbc arcfour arcfour128 arcfour256
 syn keyword sshconfigCiphers aes128-cbc
 syn keyword sshconfigCiphers aes192-cbc
 syn keyword sshconfigCiphers aes256-cbc
-syn match sshconfigCiphers "\<rijndael-cbc@lysator\.liu.se\>"
+syn match   sshconfigCiphersDeprecated "\<rijndael-cbc@lysator\.liu\.se\>"
 syn keyword sshconfigCiphers aes128-ctr
 syn keyword sshconfigCiphers aes192-ctr
 syn keyword sshconfigCiphers aes256-ctr
-syn match sshconfigCiphers "\<aes128-gcm@openssh\.com\>"
-syn match sshconfigCiphers "\<aes256-gcm@openssh\.com\>"
-syn match sshconfigCiphers "\<chacha20-poly1305@openssh\.com\>"
+syn match   sshconfigCiphers "\<aes128-gcm@openssh\.com\>"
+syn match   sshconfigCiphers "\<aes256-gcm@openssh\.com\>"
+syn match   sshconfigCiphers "\<chacha20-poly1305@openssh\.com\>"
 
 syn keyword sshconfigMAC hmac-sha1
 syn keyword sshconfigMAC hmac-sha1-96
@@ -60,7 +60,7 @@ syn keyword sshconfigMAC hmac-sha2-256
 syn keyword sshconfigMAC hmac-sha2-512
 syn keyword sshconfigMAC hmac-md5
 syn keyword sshconfigMAC hmac-md5-96
-syn match   sshconfigMAC "\<hmac-ripemd160\%(@openssh\.com\)\?\>"
+syn match   sshconfigMACDeprecated "\<hmac-ripemd160\%(@openssh\.com\)\?\>"
 syn match   sshconfigMAC "\<umac-64@openssh\.com\>"
 syn match   sshconfigMAC "\<umac-128@openssh\.com\>"
 syn match   sshconfigMAC "\<hmac-sha1-etm@openssh\.com\>"
@@ -69,30 +69,32 @@ syn match   sshconfigMAC "\<hmac-sha2-256-etm@openssh\.com\>"
 syn match   sshconfigMAC "\<hmac-sha2-512-etm@openssh\.com\>"
 syn match   sshconfigMAC "\<hmac-md5-etm@openssh\.com\>"
 syn match   sshconfigMAC "\<hmac-md5-96-etm@openssh\.com\>"
-syn match   sshconfigMAC "\<hmac-ripemd160-etm@openssh\.com\>"
+syn match   sshconfigMACDeprecated "\<hmac-ripemd160-etm@openssh\.com\>"
 syn match   sshconfigMAC "\<umac-64-etm@openssh\.com\>"
 syn match   sshconfigMAC "\<umac-128-etm@openssh\.com\>"
 
+syn keyword sshconfigHostKeyAlgo ssh-mldsa44-ed25519
+syn keyword sshconfigHostKeyAlgo ssh-mldsa44-ed25519-cert
 syn keyword sshconfigHostKeyAlgo ssh-ed25519
-syn match sshconfigHostKeyAlgo "\<ssh-ed25519-cert-v01@openssh\.com\>"
-syn match sshconfigHostKeyAlgo "\<sk-ssh-ed25519@openssh\.com\>"
-syn match sshconfigHostKeyAlgo "\<sk-ssh-ed25519-cert-v01@openssh\.com\>"
+syn match   sshconfigHostKeyAlgo "\<ssh-ed25519-cert-v01@openssh\.com\>"
+syn match   sshconfigHostKeyAlgo "\<sk-ssh-ed25519@openssh\.com\>"
+syn match   sshconfigHostKeyAlgo "\<sk-ssh-ed25519-cert-v01@openssh\.com\>"
 syn keyword sshconfigHostKeyAlgo ssh-rsa
 syn keyword sshconfigHostKeyAlgo rsa-sha2-256
 syn keyword sshconfigHostKeyAlgo rsa-sha2-512
-syn keyword sshconfigHostKeyAlgo ssh-dss
+syn keyword sshconfigHostKeyAlgoDeprecated ssh-dss
 syn keyword sshconfigHostKeyAlgo ecdsa-sha2-nistp256
 syn keyword sshconfigHostKeyAlgo ecdsa-sha2-nistp384
 syn keyword sshconfigHostKeyAlgo ecdsa-sha2-nistp521
-syn match sshconfigHostKeyAlgo "\<sk-ecdsa-sha2-nistp256@openssh\.com\>"
-syn match sshconfigHostKeyAlgo "\<ssh-rsa-cert-v01@openssh\.com\>"
-syn match sshconfigHostKeyAlgo "\<rsa-sha2-256-cert-v01@openssh\.com\>"
-syn match sshconfigHostKeyAlgo "\<rsa-sha2-512-cert-v01@openssh\.com\>"
-syn match sshconfigHostKeyAlgo "\<ssh-dss-cert-v01@openssh\.com\>"
-syn match sshconfigHostKeyAlgo "\<ecdsa-sha2-nistp256-cert-v01@openssh\.com\>"
-syn match sshconfigHostKeyAlgo "\<ecdsa-sha2-nistp384-cert-v01@openssh\.com\>"
-syn match sshconfigHostKeyAlgo "\<ecdsa-sha2-nistp521-cert-v01@openssh\.com\>"
-syn match sshconfigHostKeyAlgo "\<sk-ecdsa-sha2-nistp256-cert-v01@openssh\.com\>"
+syn match   sshconfigHostKeyAlgo "\<\%(webauthn-\)\?sk-ecdsa-sha2-nistp256@openssh\.com\>"
+syn match   sshconfigHostKeyAlgo "\<ssh-rsa-cert-v01@openssh\.com\>"
+syn match   sshconfigHostKeyAlgo "\<rsa-sha2-256-cert-v01@openssh\.com\>"
+syn match   sshconfigHostKeyAlgo "\<rsa-sha2-512-cert-v01@openssh\.com\>"
+syn match   sshconfigHostKeyAlgoDeprecated "\<ssh-dss-cert-v01@openssh\.com\>"
+syn match   sshconfigHostKeyAlgo "\<ecdsa-sha2-nistp256-cert-v01@openssh\.com\>"
+syn match   sshconfigHostKeyAlgo "\<ecdsa-sha2-nistp384-cert-v01@openssh\.com\>"
+syn match   sshconfigHostKeyAlgo "\<ecdsa-sha2-nistp521-cert-v01@openssh\.com\>"
+syn match   sshconfigHostKeyAlgo "\<\%(webauthn-\)\?sk-ecdsa-sha2-nistp256-cert-v01@openssh\.com\>"
 
 syn keyword sshconfigPreferredAuth hostbased publickey password gssapi-with-mic
 syn keyword sshconfigPreferredAuth keyboard-interactive
@@ -119,9 +121,8 @@ syn keyword sshconfigKexAlgo diffie-hellman-group14-sha256
 syn keyword sshconfigKexAlgo ecdh-sha2-nistp256
 syn keyword sshconfigKexAlgo ecdh-sha2-nistp384
 syn keyword sshconfigKexAlgo ecdh-sha2-nistp521
-syn match sshconfigKexAlgo "\<curve25519-sha256\%(@libssh\.org\)\?\>"
-syn match sshconfigKexAlgo "\<sntrup761x25519-sha512@openssh\.com\>"
-syn keyword sshconfigKexAlgo sntrup761x25519-sha512
+syn match   sshconfigKexAlgo "\<curve25519-sha256\%(@libssh\.org\)\?\>"
+syn match   sshconfigKexAlgo "\<sntrup761x25519-sha512\%(@openssh\.com\)\?\>"
 syn keyword sshconfigKexAlgo mlkem768x25519-sha256
 
 syn keyword sshconfigTunnel	point-to-point ethernet
@@ -157,7 +158,6 @@ syn keyword sshconfigKeyword CanonicalizeMaxDots
 syn keyword sshconfigKeyword CanonicalizePermittedCNAMEs
 syn keyword sshconfigKeyword CASignatureAlgorithms
 syn keyword sshconfigKeyword CertificateFile
-syn keyword sshconfigKeyword ChallengeResponseAuthentication
 syn keyword sshconfigKeyword ChannelTimeout
 syn keyword sshconfigKeyword CheckHostIP
 syn keyword sshconfigKeyword Ciphers
@@ -246,6 +246,7 @@ syn keyword sshconfigKeyword Tunnel
 syn keyword sshconfigKeyword TunnelDevice
 syn keyword sshconfigKeyword UpdateHostKeys
 syn keyword sshconfigKeyword UseBlacklistedKeys
+syn keyword sshconfigKeyword UseKeychain
 syn keyword sshconfigKeyword User
 syn keyword sshconfigKeyword UserKnownHostsFile
 syn keyword sshconfigKeyword VerifyHostKeyDNS
@@ -256,7 +257,8 @@ syn keyword sshconfigKeyword XAuthLocation
 
 " Deprecated/ignored/remove/unsupported keywords
 
-syn keyword sshConfigDeprecated Cipher
+syn keyword sshconfigDeprecated ChallengeResponseAuthentication
+syn keyword sshconfigDeprecated Cipher
 syn keyword sshconfigDeprecated GSSAPIClientIdentity
 syn keyword sshconfigDeprecated GSSAPIKeyExchange
 syn keyword sshconfigDeprecated GSSAPIRenewalForcesRekey
@@ -280,8 +282,11 @@ hi def link sshconfigConstant       Constant
 hi def link sshconfigYesNo          Boolean
 hi def link sshconfigCipher         sshconfigDeprecated
 hi def link sshconfigCiphers        sshconfigEnum
+hi def link sshconfigCiphersDeprecated sshconfigDeprecated
 hi def link sshconfigMAC            sshconfigEnum
+hi def link sshconfigMACDeprecated  sshconfigDeprecated
 hi def link sshconfigHostKeyAlgo    sshconfigEnum
+hi def link sshconfigHostKeyAlgoDeprecated sshconfigDeprecated
 hi def link sshconfigLogLevel       sshconfigEnum
 hi def link sshconfigSysLogFacility sshconfigEnum
 hi def link sshconfigAddressFamily  sshconfigEnum

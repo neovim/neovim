@@ -152,12 +152,18 @@ function M.check_targets()
   end
 end
 
+--- @param redraw_msg boolean
+--- @param event string
+--- @param ... any
 local function ui_callback(redraw_msg, event, ...)
   local handler = M.msg[event] or M.cmd[event] --[[@as function]]
   M.check_targets()
   handler(...)
   -- Cmdline mode, non-fast message and non-empty showcmd require an immediate redraw.
-  if M.cmd[event] or redraw_msg or (event == 'msg_showcmd' and select(1, ...)[1]) then
+  if
+    (M.cmd[event] or redraw_msg or (event == 'msg_showcmd' and select(1, ...)[1]))
+    and event ~= 'cmdline_hide'
+  then
     M.redrawing = true
     api.nvim__redraw({
       flush = handler ~= M.cmd.cmdline_hide or nil,
@@ -169,6 +175,9 @@ local function ui_callback(redraw_msg, event, ...)
 end
 local scheduled_ui_callback = vim.schedule_wrap(ui_callback)
 
+--- @param name string
+--- @param value any
+--- @param new_name string
 local function validate_old_cfg(name, value, new_name)
   if value ~= nil then
     error(
@@ -181,6 +190,17 @@ local function validate_old_cfg(name, value, new_name)
 end
 
 ---@nodoc
+---@class (private) vim._core.ui2.Opts
+---@field enable? boolean
+---@field pager_char? string
+---@field msg? {
+---   targets?: 'cmd'|'msg'|'pager'|table<string,'cmd'|'msg'|'pager'>,
+---   dialog?: { height?: number },
+---   msg?: { height?: number, timeout?: integer },
+---   pager?: { height?: number },
+---   cmd?: { height?: integer },
+--- }
+---@param opts? vim._core.ui2.Opts
 function M.enable(opts)
   opts = opts or {}
   vim.validate('opts', opts, 'table', true)
@@ -188,11 +208,13 @@ function M.enable(opts)
   validate_old_cfg('pager_char', opts.pager_char, 'pager')
   validate_old_cfg('msg.msg.timeout', (msg.msg or {}).timeout, 'timeout')
   validate_old_cfg('msg.cmd.height', (msg.cmd or {}).height, 'maxheight')
+  -- The deep merge preserves the required defaults in M.cfg.
+  ---@diagnostic disable-next-line: assign-type-mismatch
   M.cfg = vim.tbl_deep_extend('keep', opts, M.cfg)
   M.cfg.msg.targets = type(M.cfg.msg.targets) == 'table' and M.cfg.msg.targets
     or { default = M.cfg.msg.targets }
   M.cfg.msg.targets.default = M.cfg.msg.targets.default or 'cmd'
-  if #vim.api.nvim_list_uis() == 0 then
+  if #api.nvim_list_uis() == 0 then
     return -- Don't prevent stdout messaging when no UIs are attached.
   end
 
@@ -229,6 +251,7 @@ function M.enable(opts)
   -- dependent on some option values. Reconfigure windows when option value
   -- has changed and after VimEnter when the user configured value is known.
   -- TODO: Reconsider what is needed when this module is enabled by default early in startup.
+  --- @param value integer
   local function check_cmdheight(value)
     M.check_targets()
     -- 'cmdheight' set; (un)hide cmdline window and set its height.
@@ -240,6 +263,7 @@ function M.enable(opts)
   if vim.v.vim_did_enter == 0 then
     vim.schedule(function()
       check_cmdheight(vim.o.cmdheight)
+      M.msg.on_option_changed()
     end)
   end
 

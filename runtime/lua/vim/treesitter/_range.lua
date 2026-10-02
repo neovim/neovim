@@ -80,6 +80,8 @@ function M.intersection(r1, r2)
   if #r1 == 4 or #r2 == 4 then
     local rs = M.cmp_pos.le(r1[1], r1[2], r2[1], r2[2]) and r2 or r1
     local re = M.cmp_pos.ge(r1[3], r1[4], r2[3], r2[4]) and r2 or r1
+    -- This branch implements the Range4 overload.
+    ---@diagnostic disable-next-line: return-type-mismatch
     return { rs[1], rs[2], re[3], re[4] }
   end
 
@@ -95,6 +97,8 @@ function M.unpack4(r)
     return r[1], 0, r[2], 0
   end
   local off_1 = #r == 6 and 1 or 0
+  -- EmmyLua does not narrow tuple fields from the range length.
+  ---@diagnostic disable-next-line: return-type-mismatch
   return r[1], r[2], r[3 + off_1], r[4 + off_1]
 end
 
@@ -164,6 +168,8 @@ function M.add_bytes(source, range)
     return range --[[@as Range6]]
   end
 
+  -- EmmyLua incorrectly makes range nullable after the table check.
+  ---@cast range -nil
   local start_row, start_col, end_row, end_col = M.unpack4(range)
   -- TODO(vigoux): proper byte computation here, and account for EOL ?
   local start_byte = get_offset(source, start_row) + start_col
@@ -182,6 +188,18 @@ function M.visual_select(range)
     end_col = #vim.fn.getline(end_row + 1) + 1
   end
 
+  if vim.o.selection == 'exclusive' then
+    end_col = end_col + 1
+  end
+
+  if not vim.fn.mode():find('^[vV\22]') then
+    -- Operator-pending: select directly, not via "gv", to keep the user's '< '> (|omap-info|).
+    api.nvim_win_set_cursor(0, { start_row + 1, start_col })
+    vim.cmd.normal({ 'v', bang = true })
+    api.nvim_win_set_cursor(0, { end_row + 1, end_col - 1 })
+    return
+  end
+
   if vim.fn.visualmode() ~= 'v' then
     -- Reset visualmode() to 'v'
     vim.cmd.normal({ 'v\27', bang = true })
@@ -192,10 +210,6 @@ function M.visual_select(range)
   local cursor_col, cursor_row = vim.fn.col('.'), vim.fn.line('.')
   if M.cmp_pos.gt(visual_row, visual_col, cursor_row, cursor_col) then
     cursor_other_end_of_selection = true
-  end
-
-  if vim.o.selection == 'exclusive' then
-    end_col = end_col + 1
   end
 
   vim.fn.setpos("'<", { 0, start_row + 1, start_col + 1, 0 })

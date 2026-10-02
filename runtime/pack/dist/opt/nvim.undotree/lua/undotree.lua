@@ -49,12 +49,27 @@ local function treefy(ent, _tree, _last)
   return tree
 end
 
---- @class (private) vim.undotree.graph_line
---- @field kind 'node'|'remove'|'branch'|'remove+branch'|'nochange_remove'
+--- @class (private) vim.undotree.graph_line.base
 --- @field index integer
 --- @field node_count integer
---- @field node integer|integer[]
---- @field index2 integer? -- for branch-index in `remove+branch`
+
+--- @class (private) vim.undotree.graph_line.node: vim.undotree.graph_line.base
+--- @field kind 'node'|'remove'|'nochange_remove'
+--- @field node integer
+
+--- @class (private) vim.undotree.graph_line.branch: vim.undotree.graph_line.base
+--- @field kind 'branch'
+--- @field node integer[]
+
+--- @class (private) vim.undotree.graph_line.remove_branch: vim.undotree.graph_line.base
+--- @field kind 'remove+branch'
+--- @field node integer
+--- @field index2 integer
+
+--- @alias vim.undotree.graph_line
+--- | vim.undotree.graph_line.node
+--- | vim.undotree.graph_line.branch
+--- | vim.undotree.graph_line.remove_branch
 
 --- @param tree vim.undotree.tree
 --- @return vim.undotree.graph_line[]
@@ -62,7 +77,6 @@ local function tree_to_graph_lines(tree)
   --- @type vim.undotree.graph_line[]
   local graph_lines = {}
 
-  assert(tree[0], "tree doesn't have 0-th node")
   --- @type (integer[]|integer)[]
   local nodes = { 0 }
 
@@ -120,6 +134,7 @@ local function tree_to_graph_lines(tree)
 
       table.remove(nodes, index)
       if #node == 2 then
+        --- @cast node [integer, integer]
         table.insert(nodes, index, math.min(unpack(node)))
         table.insert(nodes, index, math.max(unpack(node)))
       elseif #node > 2 then
@@ -131,9 +146,10 @@ local function tree_to_graph_lines(tree)
   end
 
   for k, v in ipairs(graph_lines) do
-    if v.kind == 'remove' and (graph_lines[k + 1] or {}).kind == 'branch' then
+    local next_line = graph_lines[k + 1]
+    if v.kind == 'remove' and next_line and next_line.kind == 'branch' then
       v.kind = 'remove+branch'
-      v.index2 = graph_lines[k + 1].index
+      v.index2 = next_line.index
       table.remove(graph_lines, k + 1)
     end
   end
@@ -181,19 +197,22 @@ local function buf_apply_graph_lines(tree, graph_lines, buf, meta, find_seq)
     --- @type string?
     local line
     if v.kind == 'node' then
+      -- Work around tagged union narrowing: EmmyLuaLs/emmylua-analyzer-rust#1241.
+      local seq = v.node --[[@as integer]]
       line = ('| '):rep(v.index - 1)
         .. '*'
         .. (' |'):rep(v.node_count - v.index)
         .. '    '
-        .. v.node
+        .. seq
         .. '    ('
-        .. undo_fmt_time(tree[v.node].time)
+        .. undo_fmt_time(tree[seq].time)
         .. ')'
     elseif v.kind == 'remove' then
       line = ('| '):rep(v.index - 1) .. (' /'):rep(v.node_count - v.index)
     elseif v.kind == 'branch' then
       line = ('| '):rep(v.index - 1) .. '|\\' .. (' \\'):rep(v.node_count - v.index)
     elseif v.kind == 'remove+branch' then
+      assert(v.index2)
       if v.index2 < v.index then
         line = ('| '):rep(v.index2 - 1)
           .. '|\\'
@@ -269,7 +288,7 @@ local function draw(inbuf, outbuf)
 
   vim.schedule(function()
     if vim.api.nvim_win_is_valid(vim.b[outbuf].nvim_is_undotree) then
-      vim.api.nvim_win_set_cursor(vim.b[outbuf].nvim_is_undotree, { curseq_line, 0 })
+      vim.api.nvim_win_set_cursor(vim.b[outbuf].nvim_is_undotree, { assert(curseq_line), 0 })
     end
   end)
 

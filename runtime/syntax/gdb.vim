@@ -2,8 +2,10 @@
 " Language:		GDB command files
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Claudio Fleiner <claudio@fleiner.com>
-" Last Change:		2026 Feb 08
+" Last Change:		2026 Sep 04
 " Contributors:		Simon Sobisch
+
+" GNU gdb (GDB) 17.2
 
 " WARNING: the group names are NOT stable and may change at any time
 
@@ -59,9 +61,17 @@ syn keyword gdbCommand contained del[ete] del d nextgroup=@gdbBreakpointNumbers,
 syn keyword gdbCommand contained dis[able] disa dis nextgroup=@gdbBreakpointNumbers,gdbDisableArgs skipwhite
   syn keyword gdbDisableArgs contained breakpoints nextgroup=@gdbBreakpointNumbers skipwhite
   syn keyword gdbDisableArgs contained display frame-filter mem pretty-printer probes type-printer unwinder xmethod
+  " GDB 15
+  syn keyword gdbDisableArgs contained missing-d[ebug-handler]
+  " GDB 16
+  syn keyword gdbDisableArgs contained missing-o[bjfile-handler]
 syn keyword gdbCommand contained dp[rintf]
-syn keyword gdbCommand contained e[nable] en nextgroup=gdbEnableArgs skipwhite
+syn keyword gdbCommand contained en[able] en nextgroup=gdbEnableArgs skipwhite
   syn keyword gdbEnableArgs contained display frame-filter mem pretty-printer probes type-printer unwinder xmethod
+  " GDB 15
+  syn keyword gdbEnableArgs contained missing-d[ebug-handler]
+  " GDB 16
+  syn keyword gdbEnableArgs contained missing-o[bjfile-handler]
   syn keyword gdbEnableArgs contained delete once nextgroup=@gdbBreakpointNumbers skipwhite
   syn keyword gdbEnableArgs contained count nextgroup=gdbBreakpointCount skipwhite
   syn keyword gdbEnableArgs contained breakpoints nextgroup=gdbEnableBreakpointArgs,@gdbBreakpointNumbers skipwhite
@@ -93,7 +103,7 @@ syn keyword gdbCommand contained app[end] nextgroup=gdbAppendArgs skipwhite
   syn keyword gdbAppendArgs contained b[inary] nextgroup=gdbAppendBinaryArgs skipwhite
   syn keyword gdbAppendBinaryArgs contained m[emory] v[alue] nextgroup=gdbAppendBinaryArgs skipwhite
   syn keyword gdbAppendArgs contained m[emory] v[alue]
-syn keyword gdbCommand contained ca[ll]
+syn keyword gdbCommand contained cal[l]
 syn keyword gdbCommand contained disas[semble]
 syn keyword gdbCommand contained disp[lay] nextgroup=gdbFormat skipwhite
 syn keyword gdbCommand contained du[mp] nextgroup=gdbDumpArgs skipwhite
@@ -104,7 +114,7 @@ syn keyword gdbCommand contained du[mp] nextgroup=gdbDumpArgs skipwhite
 syn keyword gdbCommand contained explore nextgroup=gdbExploreArgs skipwhite
   syn keyword gdbExploreArgs contained t[ype] v[alue]
 syn keyword gdbCommand contained find
-syn keyword gdbCommand contained in[it-if-undefined]
+syn keyword gdbCommand contained ini[t-if-undefined]
 syn keyword gdbCommand contained mem
 syn keyword gdbCommand contained memo[ry-tag] nextgroup=gdbMemoryTagArgs skipwhite
   syn keyword gdbMemoryTagArgs contained c[heck]
@@ -113,7 +123,7 @@ syn keyword gdbCommand contained memo[ry-tag] nextgroup=gdbMemoryTagArgs skipwhi
   syn keyword gdbMemoryTagArgs contained s[et-allocation-tag]
   syn keyword gdbMemoryTagArgs contained w[ith-logical-tag]
 syn keyword gdbCommand contained ou[tput]
-syn keyword gdbCommand contained pr[int] ins[pect] p nextgroup=gdbPrintFormat skipwhite
+syn keyword gdbCommand contained print ins[pect] p nextgroup=gdbPrintFormat skipwhite
   syn match   gdbPrintFormat contained "/1\=[oxdutfaicsz]\="
 syn keyword gdbCommand contained print-[object] po
 syn keyword gdbCommand contained printf
@@ -171,12 +181,12 @@ syn keyword gdbCommand contained set nextgroup=gdbSetArgs skipwhite
 
   syn keyword gdbSetArgs contained ag[ent] con[firm] ed[iting] ob[server] pa[gination] remotec[ache] remotef[low] ve[rbose] wr[ite] nextgroup=gdbSetBooleanValue skipwhite
   syn keyword gdbSetArgs contained hei[ght] wi[dth] nextgroup=gdbSetUIntegerValue skipwhite
-  syn keyword gdbSetArgs contained an[notate] compl[aints] wa[tchdog] nextgroup=gdbSetZIntegerValue skipwhite
+  syn keyword gdbSetArgs contained an[notate] compl[aints] wat[chdog] nextgroup=gdbSetZIntegerValue skipwhite
   syn keyword gdbSetArgs contained remotet[imeout] remotea[ddresssize] nextgroup=gdbSetZUIntegerUnlimitedValue skipwhite
   syn keyword gdbSetArgs contained cha[rset] " [charset]
   syn keyword gdbSetArgs contained end[ian] nextgroup=gdbSetEndianValue skipwhite
     syn keyword gdbSetEndianValue contained auto big little
-  syn keyword gdbSetArgs contained dir[ectories] nextgroup=gdbSetOptionalFilenameValue skipwhite
+  syn keyword gdbSetArgs contained directo[ries] nextgroup=gdbSetOptionalFilenameValue skipwhite
   syn keyword gdbSetArgs contained la[nguage] nextgroup=gdbSetLanguageValue skipwhite
     syn keyword gdbSetLanguageValue contained ada asm auto c d fortran go local minimal modula-2 objective-c opencl pascal rust
     syn keyword gdbSetLanguageValue contained unknown
@@ -192,7 +202,7 @@ syn keyword gdbCommand contained set nextgroup=gdbSetArgs skipwhite
   syn keyword gdbSetArgs contained rad[ix]
   syn keyword gdbSetArgs contained os[abi] nextgroup=gdbSetOsabiValue skipwhite
     syn keyword gdbSetOsabiValue contained auto default none
-  syn keyword gdbSetArgs contained pro[mpt] nextgroup=gdbSetStringValue skipwhite
+  syn keyword gdbSetArgs contained prom[pt] nextgroup=gdbSetStringValue skipwhite
   syn keyword gdbSetArgs contained remotelogb[ase] nextgroup=gdbSetRemotelogbaseValue skipwhite
     syn keyword gdbSetRemotelogbaseValue contained hex octal ascii
   syn keyword gdbSetArgs contained remotelogf[ile] nextgroup=gdbSetFilenameValue skipwhite
@@ -219,6 +229,8 @@ syn keyword gdbCommand contained set nextgroup=gdbSetArgs skipwhite
       syn keyword gdbSetArmFallbackModeValue contained arm auto thumb
     syn keyword gdbSetArmArgs contained force-mode nextgroup=gdbSetArmForceModeValue skipwhite
       syn keyword gdbSetArmForceModeValue contained arm auto thumb
+    " GDB 13
+    syn keyword gdbSetArmArgs contained unwind-secure-frames nextgroup=gdbSetBooleanValue skipwhite
   syn keyword gdbSetArgs contained bac[ktrace] nextgroup=gdbSetBacktraceArgs skipwhite
     syn keyword gdbSetBacktraceArgs contained l[imit] nextgroup=gdbSetUIntegerValue skipwhite
     syn keyword gdbSetBacktraceArgs contained past-e[ntry] nextgroup=gdbSetBooleanValue skipwhite
@@ -264,6 +276,7 @@ syn keyword gdbCommand contained set nextgroup=gdbSetArgs skipwhite
     syn keyword gdbSetMipsArgs contained mask-address nextgroup=gdbSetAutoBooleanValue skipwhite
   syn keyword gdbSetArgs contained mipsf[pu] nextgroup=gdbSetMipsfpuValue skipwhite
     syn keyword gdbSetMipsfpuValue contained auto double none single 1 0 yes no on off
+  " NOTE: removed in GDB 16
   syn keyword gdbSetArgs contained mp[x] nextgroup=gdbSetMpxArgs skipwhite
     syn keyword gdbSetMpxArgs contained bound
   syn keyword gdbSetArgs contained po[werpc] nextgroup=gdbSetPowerpcArgs skipwhite
@@ -280,6 +293,10 @@ syn keyword gdbCommand contained set nextgroup=gdbSetArgs skipwhite
     syn keyword gdbSetPrintArgs contained array nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetPrintArgs contained array-indexes nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetPrintArgs contained asm-demangle nextgroup=gdbSetBooleanValue skipwhite
+    " GDB 14
+    syn keyword gdbSetPrintArgs contained characters nextgroup=gdbSetPrintCharactersValue skipwhite
+      syn keyword gdbSetPrintCharactersValue contained elements unlimited
+      syn match   gdbSetPrintCharactersValue contained "\<\d\+\>"
     syn keyword gdbSetPrintArgs contained entry-values nextgroup=gdbSetPrintEntryValuesValue skipwhite
       syn keyword gdbSetPrintEntryValuesValue contained both compact default if-needed no only preferred
     syn keyword gdbSetPrintArgs contained frame-arguments nextgroup=gdbSetPrintFrameArgumentsValue skipwhite
@@ -290,6 +307,8 @@ syn keyword gdbCommand contained set nextgroup=gdbSetArgs skipwhite
     syn keyword gdbSetPrintArgs contained max-depth nextgroup=gdbSetZUIntegerUnlimitedValue skipwhite
     syn keyword gdbSetPrintArgs contained max-symbolic-offset nextgroup=gdbSetUIntegerValue skipwhite
     syn keyword gdbSetPrintArgs contained memory-tag-violations nextgroup=gdbSetBooleanValue skipwhite
+    " GDB 13
+    syn keyword gdbSetPrintArgs contained nibbles nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetPrintArgs contained null-stop nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetPrintArgs contained pascal_static-members nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetPrintArgs contained raw-frame-arguments nextgroup=gdbSetBooleanValue skipwhite
@@ -316,6 +335,8 @@ syn keyword gdbCommand contained set nextgroup=gdbSetArgs skipwhite
         syn keyword gdbSetRecordBtraceCpuArgs contained auto none
       syn keyword gdbSetRecordBtraceArgs contained pt nextgroup=gdbSetRecordBtracePtArgs skipwhite
         syn keyword gdbSetRecordBtracePtArgs contained buffer-size nextgroup=gdbSetUIntegerValue skipwhite
+        " GDB 16
+        syn keyword gdbSetRecordBtracePtArgs contained event-tracing nextgroup=gdbSetBooleanValue skipwhite
       syn keyword gdbSetRecordBtraceArgs contained replay-memory-access nextgroup=gdbSetRecordBtraceReplayMemoryAccessValue skipwhite
         syn keyword gdbSetRecordBtraceReplayMemoryAccessValue contained read-only read-write
     syn keyword gdbSetRecordArgs contained full nextgroup=gdbSetRecordFullArgs skipwhite
@@ -325,6 +346,8 @@ syn keyword gdbCommand contained set nextgroup=gdbSetArgs skipwhite
     syn keyword gdbSetRecordArgs contained function-call-history-size nextgroup=gdbSetUIntegerValue skipwhite
     syn keyword gdbSetRecordArgs contained instruction-history-size nextgroup=gdbSetUIntegerValue skipwhite
   syn keyword gdbSetArgs contained ri[scv] nextgroup=gdbSetRiscvArgs skipwhite
+    " GDB 17
+    syn keyword gdbSetRiscvArgs contained numeric-register-names nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetRiscvArgs contained use-compressed-breakpoints nextgroup=gdbSetAutoBooleanValue skipwhite
   syn keyword gdbSetArgs contained se[rial] nextgroup=gdbSetSerialArgs skipwhite
     syn keyword gdbSetSerialArgs contained baud nextgroup=gdbSetZIntegerValue skipwhite
@@ -336,30 +359,30 @@ syn keyword gdbCommand contained set nextgroup=gdbSetArgs skipwhite
   syn keyword gdbSetArgs contained sou[rce] nextgroup=gdbSetSourceArgs skipwhite
     syn keyword gdbSetSourceArgs contained open
   syn keyword gdbSetArgs contained sty[le] nextgroup=gdbSetStyleArgs skipwhite
-    syn keyword gdbSetStyleArgs contained address nextgroup=gdbSetStyleAddressArgs skipwhite
-      syn keyword gdbSetStyleAddressArgs contained background foreground intensity
+    syn keyword gdbSetStyleAttributeArgs contained background foreground nextgroup=gdbSetStyleColorValue skipwhite
+    syn keyword gdbSetStyleAttributeArgs contained intensity nextgroup=gdbSetStyleIntensityValue skipwhite
+      syn keyword gdbSetStyleColorValue contained black blue cyan green magenta none red white yellow
+      " GDB 17
+      syn match   gdbSetStyleColorValue contained "\<\d\+\>"
+      syn match   gdbSetStyleColorValue contained "#\x\{6}"
+      syn keyword gdbSetStyleIntensityValue contained bold dim normal
+    syn keyword gdbSetStyleBorderAttributeArgs contained background foreground nextgroup=gdbSetStyleColorValue skipwhite
+
+    syn keyword gdbSetStyleArgs contained address filename function highlight metadata title variable version nextgroup=gdbSetStyleAttributeArgs skipwhite
+    " GDB 16
+    syn keyword gdbSetStyleArgs contained command line-number nextgroup=gdbSetStyleAttributeArgs skipwhite
     syn keyword gdbSetStyleArgs contained disassembler nextgroup=gdbSetStyleDissassemblerArgs skipwhite
       syn keyword gdbSetStyleDissassemblerArgs contained enabled nextgroup=gdbSetBooleanValue skipwhite
-    syn keyword gdbSetStyleArgs contained enabled nextgroup=gdbSetAutoBooleanValue skipwhite
-    syn keyword gdbSetStyleArgs contained filename nextgroup=gdbSetStyleFilenameArgs skipwhite
-      syn keyword gdbSetStyleFilenameArgs contained background foreground intensity
-    syn keyword gdbSetStyleArgs contained function nextgroup=gdbSetStyleFunctionArgs skipwhite
-      syn keyword gdbSetStyleFunctionArgs contained background foreground intensity
-    syn keyword gdbSetStyleArgs contained highlight nextgroup=gdbSetStyleHighlightArgs skipwhite
-      syn keyword gdbSetStyleHighlightArgs contained background foreground intensity
-    syn keyword gdbSetStyleArgs contained metadata nextgroup=gdbSetStyleMetadataArgs skipwhite
-      syn keyword gdbSetStyleMetadataArgs contained background foreground intensity
+      " GDB 13
+      syn keyword gdbSetStyleDissassemblerArgs contained address comment immediate mnemonic register symbol nextgroup=gdbSetStyleAttributeArgs skipwhite
+    syn keyword gdbSetStyleArgs contained enabled nextgroup=gdbSetBooleanValue skipwhite
+    " GDB 17
+    syn keyword gdbSetStyleArgs contained emoji nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetStyleArgs contained error-prefix warning-prefix nextgroup=gdbSetStringValue skipwhite
     syn keyword gdbSetStyleArgs contained sources nextgroup=gdbSetBooleanValue skipwhite
-    syn keyword gdbSetStyleArgs contained title nextgroup=gdbSetStyleTitleArgs skipwhite
-      syn keyword gdbSetStyleTitleArgs contained background foreground intensity
-    syn keyword gdbSetStyleArgs contained tui-active-border nextgroup=gdbSetStyleTuiActiveBorderArgs skipwhite
-      syn keyword gdbSetStyleTuiActiveBorderArgs contained background foreground intensity
-    syn keyword gdbSetStyleArgs contained tui-border nextgroup=gdbSetStyleTuiBorderArgs skipwhite
-      syn keyword gdbSetStyleTuiBorderArgs contained background foreground intensity
-    syn keyword gdbSetStyleArgs contained variable nextgroup=gdbSetStyleVariableArgs skipwhite
-      syn keyword gdbSetStyleVariableArgs contained background foreground intensity
-    syn keyword gdbSetStyleArgs contained version nextgroup=gdbSetStyleVersionArgs skipwhite
-      syn keyword gdbSetStyleVersionArgs contained background foreground intensity
+    syn keyword gdbSetStyleArgs contained tui-active-border tui-border nextgroup=gdbSetStyleBorderAttributeArgs skipwhite
+    " GDB 13
+    syn keyword gdbSetStyleArgs contained tui-current-position nextgroup=gdbSetBooleanValue skipwhite
   syn keyword gdbSetArgs contained tc[p] nextgroup=gdbSetTcpArgs skipwhite
     syn keyword gdbSetTcpArgs contained auto-retry nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetTcpArgs contained connect-timeout nextgroup=gdbSetUIntegerValue skipwhite
@@ -372,8 +395,12 @@ syn keyword gdbCommand contained set nextgroup=gdbSetArgs skipwhite
     syn keyword gdbSetTuiArgs contained border-mode nextgroup=gdbSetTuiBorderModeValue skipwhite
       syn keyword gdbSetTuiBorderModeValue contained normal standout reverse half half-standout bold bold-standout
     syn keyword gdbSetTuiArgs contained compact-source
+    " GDB 14
+    syn keyword gdbSetTuiArgs contained mouse-events nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetTuiArgs contained tab-width nextgroup=gdbSetZUIntegerValue skipwhite
 
+  " GDB 14
+  syn keyword gdbSetArgs contained al[ways-read-ctf] nextgroup=gdbSetBooleanValue skipwhite
   syn keyword gdbSetArgs contained auto-c[onnect-native-target] nextgroup=gdbSetBooleanValue skipwhite
   syn keyword gdbSetArgs contained auto-l[oad] nextgroup=gdbSetAutoloadValue,gdbSetAutoloadArgs skipwhite
     syn keyword gdbSetAutoloadValue contained no off 0
@@ -402,13 +429,18 @@ syn keyword gdbCommand contained set nextgroup=gdbSetArgs skipwhite
   syn keyword gdbSetArgs contained data-directory nextgroup=gdbSetFilenameValue skipwhite
   syn keyword gdbSetArgs contained debug nextgroup=gdbSetDebugArgs skipwhite
     syn keyword gdbSetDebugArgs contained arch bpf expression microblaze mips overload record serial target varobj xtensa nextgroup=gdbSetZUIntegerValue skipwhite
-    syn keyword gdbSetDebugArgs contained aarch64 arc arm csky displaced frame infrun hppa jit nios2 notification observer or1k parser nextgroup=gdbSetBooleanValue skipwhite
+    syn keyword gdbSetDebugArgs contained aarch64 arc arm csky displaced frame infrun hppa jit notification observer or1k parser nextgroup=gdbSetBooleanValue skipwhite
+    " NOTE: removed in GDB 16
+    syn keyword gdbSetDebugArgs contained nios2 nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetDebugArgs contained riscv nextgroup=gdbSetDebugRiscvArgs skipwhite
       syn keyword gdbSetDebugRiscvArgs contained breakpoints gdbarch infcall unwinder nextgroup=gdbSetZUIntegerValue skipwhite
     syn keyword gdbSetDebugArgs contained skip symfile threads timestamp xml nextgroup=gdbSetBooleanValue skipwhite
+    " NOTE: removed in GDB 13
     syn keyword gdbSetDebugArgs contained aix-solib nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetDebugArgs contained auto-load nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetDebugArgs contained bfd-cache nextgroup=gdbSetBooleanValue skipwhite
+    " GDB 14
+    syn keyword gdbSetDebugArgs contained breakpoint nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetDebugArgs contained check-physname nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetDebugArgs contained coff-pe-read nextgroup=gdbSetZUIntegerValue skipwhite
     syn keyword gdbSetDebugArgs contained compile nextgroup=gdbSetBooleanValue skipwhite
@@ -421,6 +453,8 @@ syn keyword gdbCommand contained set nextgroup=gdbSetArgs skipwhite
     syn keyword gdbSetDebugArgs contained event-loop nextgroup=gdbSetDebugEventLoopValue skipwhite
       syn keyword gdbSetDebugEventLoopValue contained all all-except-ui off
     syn keyword gdbSetDebugArgs contained fortran-array-slicing nextgroup=gdbSetBooleanValue skipwhite
+    " GDB 13
+    syn keyword gdbSetDebugArgs contained infcall nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetDebugArgs contained index-cache nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetDebugArgs contained libthread-db nextgroup=gdbSetZUIntegerValue skipwhite
     syn keyword gdbSetDebugArgs contained linux-namespaces nextgroup=gdbSetBooleanValue skipwhite
@@ -432,16 +466,23 @@ syn keyword gdbCommand contained set nextgroup=gdbSetArgs skipwhite
     syn keyword gdbSetDebugArgs contained remote nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetDebugArgs contained remote-packet-max-chars nextgroup=gdbSetZUIntegerUnlimitedValue skipwhite
     syn keyword gdbSetDebugArgs contained separate-debug-file nextgroup=gdbSetBooleanValue skipwhite
+    " GDB 13
+    syn keyword gdbSetDebugArgs contained solib nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetDebugArgs contained solib-dsbt nextgroup=gdbSetZUIntegerValue skipwhite
+    " NOTE: removed in GDB 13
     syn keyword gdbSetDebugArgs contained solib-frv nextgroup=gdbSetZUIntegerValue skipwhite
     syn keyword gdbSetDebugArgs contained stap-expression nextgroup=gdbSetZUIntegerValue skipwhite
     syn keyword gdbSetDebugArgs contained symbol-lookup nextgroup=gdbSetZUIntegerValue skipwhite
     syn keyword gdbSetDebugArgs contained symtab-create nextgroup=gdbSetZUIntegerValue skipwhite
+    " GDB 13
+    syn keyword gdbSetDebugArgs contained tui nextgroup=gdbSetBooleanValue skipwhite
   syn keyword gdbSetArgs contained debug-[file-directory] nextgroup=gdbSetOptionalFilenameValue skipwhite
   syn keyword gdbSetArgs contained def[ault-collect] nextgroup=gdbSetStringValue skipwhite
   syn keyword gdbSetArgs contained dem[angle-style] nextgroup=gdbSetDemangleStyleValue skipwhite
     syn keyword gdbSetDemangleStyleValue contained auto dlang gnat gnu-v3 java none rust
   syn keyword gdbSetArgs contained det[ach-on-fork] nextgroup=gdbSetBooleanValue skipwhite
+  " GDB 15
+  syn keyword gdbSetArgs contained direct-[call-timeout] nextgroup=gdbSetUIntegerValue skipwhite
   syn keyword gdbSetArgs contained disab[le-randomization] nextgroup=gdbSetBooleanValue skipwhite
   syn keyword gdbSetArgs contained disassemble-[next-line] nextgroup=gdbSetAutoBooleanValue skipwhite
   syn keyword gdbSetArgs contained disassembler[-options] nextgroup=gdbSetStringNoEscapeValue skipwhite
@@ -479,9 +520,11 @@ syn keyword gdbCommand contained set nextgroup=gdbSetArgs skipwhite
       syn keyword gdbSetFrameFilterPriorityValue contained global progspace
   syn keyword gdbSetArgs contained ho[st-charset] " [charset]
   syn keyword gdbSetArgs contained heu[ristic-fence-post] nextgroup=gdbSetZIntegerValue skipwhite
-  syn keyword gdbSetArgs contained ind[ex-cache] nextgroup=gdbSetIndexCacheArgs skipwhite
+  syn keyword gdbSetArgs contained inde[x-cache] nextgroup=gdbSetIndexCacheArgs skipwhite
     syn keyword gdbSetIndexCacheArgs contained directory nextgroup=gdbSetFilenameValue skipwhite
     syn keyword gdbSetIndexCacheArgs contained enabled nextgroup=gdbSetBooleanValue skipwhite
+  " GDB 15
+  syn keyword gdbSetArgs contained indi[rect-call-timeout] nextgroup=gdbSetUIntegerValue skipwhite
   syn keyword gdbSetArgs contained inf[erior-tty] nextgroup=gdbSetOptionalFilenameValue skipwhite
   syn keyword gdbSetArgs contained inp[ut-radix]
   syn keyword gdbSetArgs contained int[eractive-mode] nextgroup=gdbSetAutoBooleanValue skipwhite
@@ -505,105 +548,124 @@ syn keyword gdbCommand contained set nextgroup=gdbSetArgs skipwhite
   syn keyword gdbSetArgs contained ov[erload-resolution] nextgroup=gdbSetBooleanValue skipwhite
   syn keyword gdbSetArgs contained ran[ge-stepping] nextgroup=gdbSetBooleanValue skipwhite
   " TODO: remote protocol specific variables?
+  " GDB 14
   syn keyword gdbSetArgs contained remote nextgroup=gdbSetRemoteArgs skipwhite
-    syn keyword gdbSetRemoteArgs contained TracepointSource-packet
+    syn keyword gdbSetRemoteArgs contained TracepointSource-packet nextgroup=gdbSetAutoBooleanValue skipwhite
     syn keyword gdbSetRemoteArgs contained Z-packet nextgroup=gdbSetAutoBooleanValue skipwhite
-    syn keyword gdbSetRemoteArgs contained access-watchpoint-packet
-    syn keyword gdbSetRemoteArgs contained agent-packet
-    syn keyword gdbSetRemoteArgs contained allow-packet
-    syn keyword gdbSetRemoteArgs contained attach-packet
-    syn keyword gdbSetRemoteArgs contained binary-download-packet
-    syn keyword gdbSetRemoteArgs contained X-packet
-    syn keyword gdbSetRemoteArgs contained breakpoint-commands-packet
-    syn keyword gdbSetRemoteArgs contained btrace-conf-bts-size-packet
-    syn keyword gdbSetRemoteArgs contained btrace-conf-pt-size-packet
-    syn keyword gdbSetRemoteArgs contained catch-syscalls-packet
-    syn keyword gdbSetRemoteArgs contained conditional-breakpoints-packet
-    syn keyword gdbSetRemoteArgs contained conditional-tracepoints-packet
-    syn keyword gdbSetRemoteArgs contained ctrl-c-packet
-    syn keyword gdbSetRemoteArgs contained disable-btrace-packet
-    syn keyword gdbSetRemoteArgs contained disable-randomization-packet
-    syn keyword gdbSetRemoteArgs contained enable-btrace-bts-packet
-    syn keyword gdbSetRemoteArgs contained enable-btrace-pt-packet
-    syn keyword gdbSetRemoteArgs contained environment-hex-encoded-packet
-    syn keyword gdbSetRemoteArgs contained environment-reset-packet
-    syn keyword gdbSetRemoteArgs contained environment-unset-packet
-    syn keyword gdbSetRemoteArgs contained exec-event-feature-packet
+    syn keyword gdbSetRemoteArgs contained access-watchpoint-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained agent-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained allow-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained attach-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained binary-download-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained X-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    " GDB 16
+    syn keyword gdbSetRemoteArgs contained binary-upload-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained breakpoint-commands-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained btrace-conf-bts-size-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    " GDB 16
+    syn keyword gdbSetRemoteArgs contained btrace-conf-pt-event-tracing-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained btrace-conf-pt-ptwrite-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained btrace-conf-pt-size-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained catch-syscalls-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained conditional-breakpoints-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained conditional-tracepoints-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained ctrl-c-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained disable-btrace-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained disable-randomization-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained enable-btrace-bts-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained enable-btrace-pt-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained environment-hex-encoded-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained environment-reset-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained environment-unset-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    " GDB 16
+    syn keyword gdbSetRemoteArgs contained error-message-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained exec-event-feature-packet nextgroup=gdbSetAutoBooleanValue skipwhite
     syn keyword gdbSetRemoteArgs contained exec-file nextgroup=gdbSetStringNoEscapeValue skipwhite
-    syn keyword gdbSetRemoteArgs contained fast-tracepoints-packet
-    syn keyword gdbSetRemoteArgs contained fetch-register-packet
-    syn keyword gdbSetRemoteArgs contained p-packet
-    syn keyword gdbSetRemoteArgs contained fork-event-feature-packet
-    syn keyword gdbSetRemoteArgs contained get-thread-information-block-address-packet
-    syn keyword gdbSetRemoteArgs contained get-thread-local-storage-address-packet
+    syn keyword gdbSetRemoteArgs contained fast-tracepoints-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained fetch-register-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained p-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained fork-event-feature-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained get-thread-information-block-address-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained get-thread-local-storage-address-packet nextgroup=gdbSetAutoBooleanValue skipwhite
     syn keyword gdbSetRemoteArgs contained hardware-breakpoint-limit nextgroup=gdbSetZUIntegerUnlimitedValue skipwhite
-    syn keyword gdbSetRemoteArgs contained hardware-breakpoint-packet
+    syn keyword gdbSetRemoteArgs contained hardware-breakpoint-packet nextgroup=gdbSetAutoBooleanValue skipwhite
     syn keyword gdbSetRemoteArgs contained hardware-watchpoint-length-limit nextgroup=gdbSetZUIntegerUnlimitedValue skipwhite
     syn keyword gdbSetRemoteArgs contained hardware-watchpoint-limit nextgroup=gdbSetZUIntegerUnlimitedValue skipwhite
-    syn keyword gdbSetRemoteArgs contained hostio-close-packet
-    syn keyword gdbSetRemoteArgs contained hostio-fstat-packet
-    syn keyword gdbSetRemoteArgs contained hostio-open-packet
-    syn keyword gdbSetRemoteArgs contained hostio-pread-packet
-    syn keyword gdbSetRemoteArgs contained hostio-pwrite-packet
-    syn keyword gdbSetRemoteArgs contained hostio-readlink-packet
-    syn keyword gdbSetRemoteArgs contained hostio-setfs-packet
-    syn keyword gdbSetRemoteArgs contained hostio-unlink-packet
-    syn keyword gdbSetRemoteArgs contained hwbreak-feature-packet
-    syn keyword gdbSetRemoteArgs contained install-in-trace-packet
-    syn keyword gdbSetRemoteArgs contained interrupt-on-connect
+    syn keyword gdbSetRemoteArgs contained hostio-close-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained hostio-fstat-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    " GDB 17
+    syn keyword gdbSetRemoteArgs contained hostio-lstat-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained hostio-open-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained hostio-pread-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained hostio-pwrite-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained hostio-readlink-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained hostio-setfs-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    " GDB 16
+    syn keyword gdbSetRemoteArgs contained hostio-stat-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained hostio-unlink-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained hwbreak-feature-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained install-in-trace-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained interrupt-on-connect nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbSetRemoteArgs contained interrupt-sequence nextgroup=gdbSetRemoteInterruptSequenceValue skipwhite
       syn keyword gdbSetRemoteInterruptSequenceValue contained BREAK BREAK-g Ctrl-C
-    syn keyword gdbSetRemoteArgs contained kill-packet
-    syn keyword gdbSetRemoteArgs contained library-info-packet
-    syn keyword gdbSetRemoteArgs contained library-info-svr4-packet
-    syn keyword gdbSetRemoteArgs contained memory-map-packet
-    syn keyword gdbSetRemoteArgs contained memory-read-packet-size
-    syn keyword gdbSetRemoteArgs contained memory-tagging-feature-packet
-    syn keyword gdbSetRemoteArgs contained memory-write-packet-size
-    syn keyword gdbSetRemoteArgs contained multiprocess-feature-packet
-    syn keyword gdbSetRemoteArgs contained no-resumed-stop-reply-packet
-    syn keyword gdbSetRemoteArgs contained noack-packet
-    syn keyword gdbSetRemoteArgs contained osdata-packet
-    syn keyword gdbSetRemoteArgs contained pass-signals-packet
-    syn keyword gdbSetRemoteArgs contained pid-to-exec-file-packet
-    syn keyword gdbSetRemoteArgs contained program-signals-packet
-    syn keyword gdbSetRemoteArgs contained query-attached-packet
-    syn keyword gdbSetRemoteArgs contained read-aux-vector-packet
-    syn keyword gdbSetRemoteArgs contained read-btrace-conf-packet
-    syn keyword gdbSetRemoteArgs contained read-btrace-packet
-    syn keyword gdbSetRemoteArgs contained read-fdpic-loadmap-packet
-    syn keyword gdbSetRemoteArgs contained read-sdata-object-packet
-    syn keyword gdbSetRemoteArgs contained read-siginfo-object-packet
-    syn keyword gdbSetRemoteArgs contained read-watchpoint-packet
-    syn keyword gdbSetRemoteArgs contained reverse-continue-packet
-    syn keyword gdbSetRemoteArgs contained reverse-step-packet
-    syn keyword gdbSetRemoteArgs contained run-packet
-    syn keyword gdbSetRemoteArgs contained search-memory-packet
-    syn keyword gdbSetRemoteArgs contained set-register-packet
-    syn keyword gdbSetRemoteArgs contained P-packet
-    syn keyword gdbSetRemoteArgs contained set-working-dir-packet
-    syn keyword gdbSetRemoteArgs contained software-breakpoint-packet
-    syn keyword gdbSetRemoteArgs contained startup-with-shell-packet
-    syn keyword gdbSetRemoteArgs contained static-tracepoints-packet
-    syn keyword gdbSetRemoteArgs contained supported-packets-packet
-    syn keyword gdbSetRemoteArgs contained swbreak-feature-packet
-    syn keyword gdbSetRemoteArgs contained symbol-lookup-packet
-    syn keyword gdbSetRemoteArgs contained system-call-allowed
-    syn keyword gdbSetRemoteArgs contained target-features-packet
-    syn keyword gdbSetRemoteArgs contained thread-events-packet
-    syn keyword gdbSetRemoteArgs contained threads-packet
-    syn keyword gdbSetRemoteArgs contained trace-buffer-size-packet
-    syn keyword gdbSetRemoteArgs contained trace-status-packet
-    syn keyword gdbSetRemoteArgs contained traceframe-info-packet
-    syn keyword gdbSetRemoteArgs contained unwind-info-block-packet
-    syn keyword gdbSetRemoteArgs contained verbose-resume-packet
-    syn keyword gdbSetRemoteArgs contained verbose-resume-supported-packet
-    syn keyword gdbSetRemoteArgs contained vfork-event-feature-packet
-    syn keyword gdbSetRemoteArgs contained write-siginfo-object-packet
-    syn keyword gdbSetRemoteArgs contained write-watchpoint-packet
+    syn keyword gdbSetRemoteArgs contained kill-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained library-info-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained library-info-svr4-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained memory-map-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    " GDB 14
+    syn keyword gdbSetRemoteArgs contained memory-read-packet-size nextgroup=gdbSetRemotePacketSizeValue skipwhite
+    syn keyword gdbSetRemoteArgs contained memory-write-packet-size nextgroup=gdbSetRemotePacketSizeValue skipwhite
+      syn keyword gdbSetRemotePacketSizeValue contained fixed limit
+      syn match   gdbSetRemotePacketSizeValue contained "\<\d\+\>"
+    " GDB 15
+    syn keyword gdbSetRemoteArgs contained memory-tagging-address-check-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained memory-tagging-feature-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained multiprocess-feature-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained no-resumed-stop-reply-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained noack-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained osdata-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained pass-signals-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained pid-to-exec-file-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained program-signals-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained query-attached-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained read-aux-vector-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained read-btrace-conf-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained read-btrace-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained read-fdpic-loadmap-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained read-sdata-object-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained read-siginfo-object-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained read-watchpoint-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained reverse-continue-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained reverse-step-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained run-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained search-memory-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained set-register-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained P-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained set-working-dir-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained software-breakpoint-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained startup-with-shell-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained static-tracepoints-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained supported-packets-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained swbreak-feature-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained symbol-lookup-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained system-call-allowed nextgroup=gdbSetZIntegerValue skipwhite
+    syn keyword gdbSetRemoteArgs contained target-features-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained thread-events-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    " GDB 15
+    syn keyword gdbSetRemoteArgs contained thread-options-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained threads-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained trace-buffer-size-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained trace-status-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained traceframe-info-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained unwind-info-block-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained verbose-resume-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained verbose-resume-supported-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained vfork-event-feature-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained write-siginfo-object-packet nextgroup=gdbSetAutoBooleanValue skipwhite
+    syn keyword gdbSetRemoteArgs contained write-watchpoint-packet nextgroup=gdbSetAutoBooleanValue skipwhite
   syn keyword gdbSetArgs contained remote-[mips64-transfers-32bit-regs] nextgroup=gdbSetBooleanValue skipwhite
   syn keyword gdbSetArgs contained schedule-[multiple] nextgroup=gdbSetBooleanValue skipwhite
-  syn keyword gdbSetArgs contained schedule[r-locking] nextgroup=gdbSetSchedulerLockingValue skipwhite
+  syn keyword gdbSetArgs contained scheduler[-locking] nextgroup=gdbSetSchedulerLockingValue skipwhite
     syn keyword gdbSetSchedulerLockingValue contained on off replay step
   syn keyword gdbSetArgs contained scr[ipt-extension] nextgroup=gdbSetScriptExtensionValue skipwhite
     syn keyword gdbSetScriptExtensionValue contained off soft strict
@@ -628,13 +690,19 @@ syn keyword gdbCommand contained set nextgroup=gdbSetArgs skipwhite
   syn keyword gdbSetArgs contained trace-s[top-notes] nextgroup=gdbSetStringValue skipwhite
   syn keyword gdbSetArgs contained trace-u[ser] nextgroup=gdbSetStringValue skipwhite
   syn keyword gdbSetArgs contained tru[st-readonly-sections] nextgroup=gdbSetBooleanValue skipwhite
-  syn keyword gdbSetArgs contained unwind-[on-terminating-exception] nextgroup=gdbSetBooleanValue skipwhite
+  " GDB 15
+  syn keyword gdbSetArgs contained unwind-on-s[ignal] nextgroup=gdbSetBooleanValue skipwhite
+  syn keyword gdbSetArgs contained unwind-on-te[rminating-exception] nextgroup=gdbSetBooleanValue skipwhite
+  syn keyword gdbSetArgs contained unwind-on-ti[meout] nextgroup=gdbSetBooleanValue skipwhite
   syn keyword gdbSetArgs contained unwindo[nsignal] nextgroup=gdbSetBooleanValue skipwhite
   syn keyword gdbSetArgs contained use-c[oredump-filter] nextgroup=gdbSetBooleanValue skipwhite
   syn keyword gdbSetArgs contained use-d[eprecated-index-sections] nextgroup=gdbSetBooleanValue skipwhite
   syn keyword gdbSetArgs contained vars[ize-limit] nextgroup=gdbSetZUIntegerUnlimitedValue skipwhite
+  " GDB 16
+  syn keyword gdbSetArgs contained war[n-language-frame-mismatch] nextgroup=gdbSetBooleanValue skipwhite
   " }}}3
 
+syn keyword gdbCommand contained tt[y] nextgroup=gdbSetOptionalFilenameValue skipwhite
 syn keyword gdbCommand contained und[isplay]
 syn keyword gdbCommand contained wha[tis]
 syn match gdbWith contained "\<\%(wit\%[h]\|w\)\>" nextgroup=gdbSetArgs skipwhite
@@ -647,7 +715,7 @@ syn match   gdbFormat contained "/\%(-\=\d*\)\=[bhwg]\=[oxdutfaicsz]\="
 syn keyword gdbCommand contained add-symbol-file
 syn keyword gdbCommand contained add-symbol-file-[from-memory]
 syn keyword gdbCommand contained cd
-syn keyword gdbCommand contained co[re-file]
+syn keyword gdbCommand contained cor[e-file]
 syn keyword gdbCommand contained dir[ectory]
 syn keyword gdbCommand contained ed[it]
 syn keyword gdbCommand contained exe[c-file]
@@ -674,8 +742,13 @@ syn keyword gdbCommand contained mai[ntenance] mt nextgroup=gdbMaintenanceArgs s
   syn keyword gdbMaintenanceArgs contained agent-printf
   syn keyword gdbMaintenanceArgs contained btrace nextgroup=gdbMaintenanceBtraceArgs skipwhite
     syn keyword gdbMaintenanceBtraceArgs contained clear clear-packet-history packet-history
+  " GDB 17
+  syn keyword gdbMaintenanceArgs contained canonicalize
   syn keyword gdbMaintenanceArgs contained check nextgroup=gdbMaintenanceCheckArgs skipwhite
     syn keyword gdbMaintenanceCheckArgs contained libthread-db xml-descriptions
+    " GDB 17
+    syn keyword gdbMaintenanceCheckArgs contained psymtabs symtabs
+  " NOTE: renamed in GDB 17 - 'maintenance check {psymtabs,symtabs}'
   syn keyword gdbMaintenanceArgs contained check-psymtabs
   syn keyword gdbMaintenanceArgs contained check-symtabs
   syn keyword gdbMaintenanceArgs contained cplus cp nextgroup=gdbMaintenanceCplusArgs skipwhite
@@ -686,9 +759,20 @@ syn keyword gdbCommand contained mai[ntenance] mt nextgroup=gdbMaintenanceArgs s
   syn keyword gdbMaintenanceArgs contained expand-symtabs
   syn keyword gdbMaintenanceArgs contained flush nextgroup=gdbMaintenanceFlushArgs skipwhite
     syn keyword gdbMaintenanceFlushArgs contained dcache register-cache source-cache symbol-cache
+  " GDB 16
+  syn keyword gdbMaintenanceArgs contained frame-unwinder nextgroup=gdbMaintenanceFrameUnwinderArgs skipwhite
+    syn keyword gdbMaintenanceFrameUnwinderArgs contained disable enable
+  " GDB 14
+  syn keyword gdbMaintenanceArgs contained ignore-probes
   syn keyword gdbMaintenanceArgs contained info i nextgroup=gdbMaintenanceInfoArgs skipwhite
     syn keyword gdbMaintenanceInfoArgs contained bfds breakpoints btrace jit line-table program-spaces psymtabs sections selftests
     syn keyword gdbMaintenanceInfoArgs contained symtabs target-sections
+    " GDB 14
+    syn keyword gdbMaintenanceInfoArgs contained frame-unwinders screen
+    " GDB 15
+    syn keyword gdbMaintenanceInfoArgs contained linux-lwps
+    " GDB 16
+    syn keyword gdbMaintenanceInfoArgs contained blocks inline-frames
   syn keyword gdbMaintenanceArgs contained internal-error
   syn keyword gdbMaintenanceArgs contained internal-warning
   syn keyword gdbMaintenanceArgs contained packet
@@ -699,6 +783,10 @@ syn keyword gdbCommand contained mai[ntenance] mt nextgroup=gdbMaintenanceArgs s
     syn keyword gdbMaintenancePrintArgs contained msymbols objfiles psymbols raw-registers reggroups register-groups registers
     syn keyword gdbMaintenancePrintArgs contained remote-registers statistics symbol-cache symbol-cache-statistics symbols
     syn keyword gdbMaintenancePrintArgs contained target-stack type unwind user-registers xml-tdesc
+    " GDB 13
+    syn keyword gdbMaintenancePrintArgs contained frame-id
+    " GDB 14
+    syn keyword gdbMaintenancePrintArgs contained record-instruction
   syn keyword gdbMaintenanceArgs contained selftest
   syn keyword gdbMaintenanceArgs contained set nextgroup=gdbMaintenanceSetArgs skipwhite
     syn keyword gdbMaintenanceSetArgs contained ada nextgroup=gdbMaintenanceSetAdaArgs skipwhite
@@ -710,19 +798,33 @@ syn keyword gdbCommand contained mai[ntenance] mt nextgroup=gdbMaintenanceArgs s
         syn keyword gdbMaintenanceSetBtracePtArgs contained skip-pad nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbMaintenanceSetArgs contained catch-demangler-crashes nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbMaintenanceSetArgs contained check-libthread-db nextgroup=gdbSetBooleanValue skipwhite
+    " GDB 14
+    syn keyword gdbMaintenanceSetArgs contained debuginfod nextgroup=gdbMaintenanceSetDebuginfodArgs skipwhite
+      syn keyword gdbMaintenanceSetDebuginfodArgs contained download-sections nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbMaintenanceSetArgs contained demangler-warning nextgroup=gdbMaintenanceSetDemanglerWarningArgs skipwhite
       syn keyword gdbMaintenanceSetDemanglerWarningArgs contained quit nextgroup=@gdbSetAskBooleanValue skipwhite
     syn keyword gdbMaintenanceSetArgs contained dwarf nextgroup=gdbMaintenanceSetDwarfArgs skipwhite
-      syn keyword gdbMaintenanceSetDwarfArgs contained always-disassemble unwinders nextgroup=gdbSetBooleanValue skipwhite
+      syn keyword gdbMaintenanceSetDwarfArgs contained always-disassemble nextgroup=gdbSetBooleanValue skipwhite
+      " NOTE: removed in GDB 16
+      syn keyword gdbMaintenanceSetDwarfArgs contained unwinders nextgroup=gdbSetBooleanValue skipwhite
       syn keyword gdbMaintenanceSetDwarfArgs contained max-cache-age nextgroup=gdbSetZIntegerValue skipwhite
+      " GDB 15
+      syn keyword gdbMaintenanceSetDwarfArgs contained synchronous nextgroup=gdbSetBooleanValue skipwhite
+    " GDB 17
+    syn keyword gdbMaintenanceSetArgs contained force-internal-tls-address-lookup nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbMaintenanceSetArgs contained gnu-source-highlight nextgroup=gdbMaintenanceSetGnuSourceHighlightArgs skipwhite
       syn keyword gdbMaintenanceSetGnuSourceHighlightArgs contained enabled nextgroup=gdbSetBooleanValue skipwhite
+    " GDB 13
+    syn keyword gdbMaintenanceSetArgs contained ignore-prologue-end-flag nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbMaintenanceSetArgs contained internal-error nextgroup=gdbMaintenanceSetInternalErrorArgs skipwhite
       syn keyword gdbMaintenanceSetInternalErrorArgs contained backtrace nextgroup=gdbSetBooleanValue skipwhite
       syn keyword gdbMaintenanceSetInternalErrorArgs contained corefile quit nextgroup=@gdbSetAskBooleanValue skipwhite
     syn keyword gdbMaintenanceSetArgs contained internal-warning nextgroup=gdbMaintenanceSetInternalWarningArgs skipwhite
       syn keyword gdbMaintenanceSetInternalWarningArgs contained backtrace nextgroup=gdbSetBooleanValue skipwhite
       syn keyword gdbMaintenanceSetInternalWarningArgs contained corefile quit nextgroup=@gdbSetAskBooleanValue skipwhite
+    " GDB 13
+    syn keyword gdbMaintenanceSetArgs contained libopcodes-styling nextgroup=gdbMaintenanceSetLibopcodesStylingArgs skipwhite
+      syn keyword gdbMaintenanceSetLibopcodesStylingArgs contained enabled nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbMaintenanceSetArgs contained per-command nextgroup=gdbMaintenanceSetPerCommandArgs skipwhite
       syn keyword gdbMaintenanceSetPerCommandArgs contained space symtab time nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbMaintenanceSetArgs contained profile nextgroup=gdbSetBooleanValue skipwhite
@@ -746,6 +848,8 @@ syn keyword gdbCommand contained mai[ntenance] mt nextgroup=gdbMaintenanceArgs s
       syn keyword gdbMaintenanceSetTestSettingsArgs contained zinteger nextgroup=gdbSetZIntegerValue skipwhite
       syn keyword gdbMaintenanceSetTestSettingsArgs contained zuinteger nextgroup=gdbSetZUIntegerValue skipwhite
       syn keyword gdbMaintenanceSetTestSettingsArgs contained zuinteger-unlimited nextgroup=gdbSetZUIntegerUnlimitedValue skipwhite
+    " GDB 14
+    syn keyword gdbMaintenanceSetArgs contained tui-left-margin-verbose nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbMaintenanceSetArgs contained tui-resize-message nextgroup=gdbSetBooleanValue skipwhite
     syn keyword gdbMaintenanceSetArgs contained worker-threads nextgroup=gdbSetZUIntegerUnlimitedValue skipwhite
   syn keyword gdbMaintenanceArgs contained show nextgroup=gdbMaintenanceShowArgs,gdbMaintenanceSetArgs skipwhite
@@ -756,6 +860,8 @@ syn keyword gdbCommand contained mai[ntenance] mt nextgroup=gdbMaintenanceArgs s
   syn keyword gdbMaintenanceArgs contained time
   syn keyword gdbMaintenanceArgs contained translate-address
   syn keyword gdbMaintenanceArgs contained undeprecate
+  " GDB 14
+  syn keyword gdbMaintenanceArgs contained wait-for-index-cache
   syn keyword gdbMaintenanceArgs contained with
 
 " obscure {{{2
@@ -800,9 +906,9 @@ syn match   gdbCommand contained "\<\%(python-interactive\|pi\)\s*$"
 " }}}
 
 syn keyword gdbCommand contained rec[ord] rec nextgroup=gdbRecordArgs skipwhite
-  syn keyword gdbRecordArgs contained b[trace] nextgroup=gdbRecordBtraceArgs skipwhite
+  syn keyword gdbRecordArgs contained btr[ace] b nextgroup=gdbRecordBtraceArgs skipwhite
     syn keyword gdbRecordBtraceArgs contained bts pt
-  syn keyword gdbRecordArgs contained bts d[elete] ful[l] pt sa[ve] st[op]
+  syn keyword gdbRecordArgs contained bts dele[te] del d ful[l] pt sa[ve] st[op] s
   syn keyword gdbRecordArgs contained ful[l] nextgroup=gdbRecordFullArgs skipwhite
     syn keyword gdbRecordFullArgs contained r[estore]
   syn keyword gdbRecordArgs contained g[oto] nextgroup=gdbRecordGotoArgs skipwhite
@@ -843,8 +949,8 @@ syn keyword gdbCommand contained step s
 syn keyword gdbCommand contained stepi si
 syn keyword gdbCommand contained taa[s]
 syn keyword gdbCommand contained tar[get] nextgroup=gdbTargetArgs skipwhite
-  syn keyword gdbTargetArgs contained c[ore] e[xec] extended-remote n[ative] record-b[trace] record-c[ore] record-f[ull] rem[ote]
-  syn keyword gdbTargetArgs contained t[file]
+  syn keyword gdbTargetArgs contained co[re] ctf exe[c] ext[ended-remote] n[ative] record-b[trace] record-c[ore]
+  syn keyword gdbTargetArgs contained record-f[ull] rem[ote] t[file]
 syn keyword gdbCommand contained tas[k] nextgroup=gdbTaskArgs skipwhite
   syn keyword gdbTaskArgs contained a[pply] nextgroup=gdbTaskApplyArgs skipwhite
     syn keyword gdbTaskApplyArgs contained a[ll]
@@ -872,8 +978,16 @@ syn keyword gdbCommand contained up
 syn keyword gdbCommand contained info inf i nextgroup=gdbInfoArgs skipwhite
   syn keyword gdbInfoArgs contained ad[dress] al[l-registers] ar[gs] aux[v] bo[okmarks] br[eakpoints] b ch[eckpoints] cl[asses]
   syn keyword gdbInfoArgs contained com[mon] con[nections] cop[ying] dc[ache] di[splay] exc[eptions] ext[ensions] fi[les] fl[oat]
-  syn keyword gdbInfoArgs contained frame-[filter] fu[nctions] gu[ile] gu in[feriors] io[_registers] li[ne] lo[cals] macro macros
-  syn keyword gdbInfoArgs contained m[em] modules o[s] pre[tty-printer] prog[ram] rec[ord] rec reg[isters] r sc[ope] sel[ectors]
+  syn keyword gdbInfoArgs contained frame-[filter] fu[nctions] gu[ile] gu in[feriors] io[_registers] line lo[cals] macro macros
+  syn keyword gdbInfoArgs contained me[m] modules o[s] pre[tty-printer] prog[ram] rec[ord] rec reg[isters] r sc[ope] sel[ectors]
+  " GDB 14
+  syn keyword gdbInfoArgs contained mai[n]
+  " GDB 15
+  syn keyword gdbInfoArgs contained missing-d[ebug-handlers]
+  " GDB 16
+  syn keyword gdbInfoArgs contained missing-o[bjfile-handlers]
+  " GDB 17
+  syn keyword gdbInfoArgs contained link[er-namespaces]
   syn keyword gdbInfoArgs contained sh[aredlibrary] dll si[gnals] handle sk[ip] source sources stac[k] s
   syn keyword gdbInfoArgs contained stat[ic-tracepoint-markers] sy[mbol] tar[get] tas[ks] te[rminal] th[reads] tp tr[acepoints]
   syn keyword gdbInfoArgs contained tv[ariables] type-[printers] types u[nwinder] va[riables] ve[ctor] vt[bl] war[ranty]
@@ -902,6 +1016,8 @@ syn keyword gdbCommand contained mac[ro] nextgroup=gdbMacroArgs skipwhite
 " TODO: disallow set values
 syn keyword gdbCommand contained sho[w] nextgroup=@gdbShowArgs skipwhite
   syn keyword gdbShowArgs contained commands configuration convenience conv copying paths user values warranty version
+  " GDB 16
+  syn keyword gdbShowArgs contained jit-reader-directory
   syn keyword gdbShowArgs contained index-cache nextgroup=gdbShowIndexCacheArgs skipwhite
     " stats is only available in a show command
     syn keyword gdbShowIndexCacheArgs contained directory enabled stats
@@ -945,8 +1061,7 @@ syn keyword gdbCommand contained mak[e]
 syn keyword gdbCommand contained new[-ui]
 syn keyword gdbCommand contained ov[erlay] ov ovly nextgroup=gdbOverlayArgs skipwhite
   syn keyword gdbOverlayArgs contained a[uto] li[st-overlays] lo[ad-target] man[ual] map[-overlay] o[ff] u[nmap-overlay]
-" TODO: pi completes as pipe ignoring pi (python-interactive)
-"     : sh region
+" TODO: sh region
 syn keyword gdbCommand contained pip[e]
 syn match   gdbCommand contained "|"
 syn keyword gdbCommand contained qui[t] exi[t] q
@@ -963,15 +1078,23 @@ syn region  gdbWhile contained matchgroup=gdbCommand start="\<whi\%[le]\>" end="
 syn keyword gdbCommand contained loop_b[reak] loop_c[ontinue] containedin=gdbWhile
 
 " text-user-interface {{{2
+" NOTE: moved in GDB 13 - 'tui {focus,layout,refresh,winheight}'
 syn match   gdbCommand contained "[<>+-]"
 syn keyword gdbCommand contained foc[us] fs
 syn keyword gdbCommand contained la[yout] nextgroup=gdbLayoutArgs skipwhite
   syn keyword gdbLayoutArgs contained a[sm] n[ext] p[rev] r[egs] sp[lit] sr[c]
 syn keyword gdbCommand contained ref[resh]
 syn keyword gdbCommand contained tu[i] nextgroup=gdbTuiArgs skipwhite
-  syn keyword gdbTuiArgs contained d[isable] e[nable] n[ew-layout] r[eg]
+  syn keyword gdbTuiArgs contained d[isable] e[nable] n[ew-layout] reg
+  " GDB 13
+  syn keyword gdbTuiArgs contained f[ocus] ref[resh]
+  syn keyword gdbTuiArgs contained l[ayout] nextgroup=gdbLayoutArgs skipwhite
+  syn keyword gdbTuiArgs contained w[indow] nextgroup=gdbTuiWindowArgs skipwhite
+    syn keyword gdbTuiWindowArgs contained h[eight] w[idth] nextgroup=gdbWindowName skipwhite
 syn keyword gdbCommand contained upd[ate]
-syn keyword gdbCommand contained win[height] wh nextgroup=gdbWindowName skipwhite
+syn keyword gdbCommand contained winh[eight] wh nextgroup=gdbWindowName skipwhite
+" GDB 13
+syn keyword gdbCommand contained winw[idth] nextgroup=gdbWindowName skipwhite
   syn keyword gdbWindowName contained a[sm] c[md] sr[c] st[atus] r[egs]
 
 " tracepoints {{{2
@@ -979,7 +1102,7 @@ syn keyword gdbCommand contained ac[tions]
 syn keyword gdbCommand contained col[lect]
 syn keyword gdbCommand contained end
 syn keyword gdbCommand contained pas[scount]
-syn keyword gdbCommand contained t[dump]
+syn keyword gdbCommand contained td[ump]
 syn keyword gdbCommand contained tev[al]
 syn keyword gdbCommand contained tfi[nd] nextgroup=gdbTfindArgs skipwhite
   syn keyword gdbTfindArgs contained e[nd] l[ine] n[one] o[utside] p[c] r[ange] s[tart] t[racepoint]
@@ -995,7 +1118,12 @@ syn keyword gdbCommand contained add-i[nferior]
 syn keyword gdbCommand contained clo[ne-inferior]
 syn keyword gdbCommand contained ev[al]
 syn keyword gdbCommand contained fl[ash-erase]
-syn keyword gdbCommand contained fu[nction]
+syn keyword gdbCommand contained fu[nction] nextgroup=gdbFunctionArgs skipwhite
+  syn keyword gdbFunctionArgs contained _ci[mag] _cr[eal] _i[svoid] _m[emeq] _r[egex] _stre[q] _strl[en]
+  syn keyword gdbFunctionArgs contained _gdb_setting _gdb_setting_[str] _gdb_maint_setting _gdb_maint_setting_[str]
+  syn keyword gdbFunctionArgs contained _as[_string] _caller_i[s] _caller_m[atches] _any_caller_i[s] _any_caller_m[atches]
+  " GDB 14
+  syn keyword gdbFunctionArgs contained _sh[ell]
 syn keyword gdbCommand contained jit-reader-l[oad]
 syn keyword gdbCommand contained jit-reader-u[nload]
 syn keyword gdbCommand contained remove-i[nferiors]
@@ -1450,6 +1578,7 @@ hi def link gdbEnableBreakpointArgs			gdbEnableArgs
 hi def link gdbExploreArgs				gdbCommandArgs
 hi def link gdbFrameArgs				gdbCommandArgs
 hi def link gdbFrameApplyArgs				gdbCommandArgs
+hi def link gdbFunctionArgs				gdbCommandArgs
 hi def link gdbInfoArgs					gdbCommandArgs
 hi def link gdbInfoAutoLoadArgs				gdbInfoArgs
 hi def link gdbInfoFrameArgs				gdbInfoArgs
@@ -1465,6 +1594,7 @@ hi def link gdbMaintenanceBtraceArgs			gdbCommandArgs
 hi def link gdbMaintenanceCheckArgs			gdbCommandArgs
 hi def link gdbMaintenanceCplusArgs			gdbCommandArgs
 hi def link gdbMaintenanceFlushArgs			gdbCommandArgs
+hi def link gdbMaintenanceFrameUnwinderArgs		gdbCommandArgs
 hi def link gdbMaintenanceInfoArgs			gdbCommandArgs
 hi def link gdbMaintenancePrintArgs			gdbCommandArgs
 hi def link gdbMaintenancePrintArcArgs			gdbCommandArgs
@@ -1472,12 +1602,14 @@ hi def link gdbMaintenanceSetArgs			gdbCommandArgs
 hi def link gdbMaintenanceSetAdaArgs			gdbCommandArgs
 hi def link gdbMaintenanceSetBtraceArgs			gdbCommandArgs
 hi def link gdbMaintenanceSetBtracePtArgs		gdbCommandArgs
+hi def link gdbMaintenanceSetDebuginfodArgs		gdbCommandArgs
 hi def link gdbMaintenanceSetDemanglerWarningArgs	gdbCommandArgs
 hi def link gdbMaintenanceSetDwarfArgs			gdbCommandArgs
 hi def link gdbMaintenanceSetGnuSourceHighlightArgs	gdbCommandArgs
 hi def link gdbMaintenanceSetInternalErrorArgs		gdbCommandArgs
 hi def link gdbMaintenanceSetInternalErrorArgs		gdbCommandArgs
 hi def link gdbMaintenanceSetInternalWarningArgs	gdbCommandArgs
+hi def link gdbMaintenanceSetLibopcodesStylingArgs	gdbCommandArgs
 hi def link gdbMaintenanceSetPerCommandArgs		gdbCommandArgs
 hi def link gdbMaintenanceSetSelftestArgs		gdbCommandArgs
 hi def link gdbMaintenanceSetTestSettingsArgs		gdbCommandArgs
@@ -1530,17 +1662,9 @@ hi def link gdbSetSerialArgs				gdbCommandArgs
 hi def link gdbSetShArgs				gdbCommandArgs
 hi def link gdbSetSourceArgs				gdbCommandArgs
 hi def link gdbSetStyleArgs				gdbCommandArgs
-hi def link gdbSetStyleAddressArgs			gdbSetStyleArgs
+hi def link gdbSetStyleAttributeArgs			gdbSetStyleArgs
+hi def link gdbSetStyleBorderAttributeArgs		gdbSetStyleArgs
 hi def link gdbSetStyleDissassemblerArgs		gdbSetStyleArgs
-hi def link gdbSetStyleFilenameArgs			gdbSetStyleArgs
-hi def link gdbSetStyleFunctionArgs			gdbSetStyleArgs
-hi def link gdbSetStyleHighlightArgs			gdbSetStyleArgs
-hi def link gdbSetStyleMetadataArgs			gdbSetStyleArgs
-hi def link gdbSetStyleTitleArgs			gdbSetStyleArgs
-hi def link gdbSetStyleTuiActiveBorderArgs		gdbSetStyleArgs
-hi def link gdbSetStyleTuiBorderArgs			gdbSetStyleArgs
-hi def link gdbSetStyleVariableArgs			gdbSetStyleArgs
-hi def link gdbSetStyleVersionArgs			gdbSetStyleArgs
 hi def link gdbSetTuiArgs				gdbCommandArgs
 hi def link gdbSetTcpArgs				gdbCommandArgs
 hi def link gdbSetTdescArgs				gdbCommandArgs
@@ -1555,6 +1679,7 @@ hi def link gdbTfindArgs				gdbCommandArgs
 hi def link gdbThreadArgs				gdbCommandArgs
 hi def link gdbThreadApplyArgs				gdbThreadArgs
 hi def link gdbTuiArgs					gdbCommandArgs
+hi def link gdbTuiWindowArgs				gdbTuiArgs
 hi def link gdbUnsetArgs				gdbCommandArgs
 hi def link gdbUnsetTdescArgs				gdbUnsetArgs
 hi def link gdbWatchOption				gdbCommandArgs
@@ -1609,16 +1734,20 @@ hi def link gdbSetOsabiValue			      gdbSetValue
 hi def link gdbSetPowerpcVectorAbiValue		      gdbSetValue
 hi def link gdbSetPrintEntryValuesValue		      gdbSetValue
 hi def link gdbSetPrintFrameArgumentsValue	      gdbSetValue
+hi def link gdbSetPrintCharactersValue		      gdbSetValue
 hi def link gdbSetPrintFrameInfoValue		      gdbSetValue
 hi def link gdbSetPythonPrintStackValue		      gdbSetValue
 hi def link gdbSetRecordBtraceReplayMemoryAccessValue gdbSetValue
 hi def link gdbSetRemoteInterruptSequenceValue	      gdbSetValue
+hi def link gdbSetRemotePacketSizeValue		      gdbSetValue
 hi def link gdbSetRemotelogbaseValue		      gdbSetValue
 hi def link gdbSetSchedulerLockingValue		      gdbSetValue
 hi def link gdbSetScriptExtensionValue		      gdbSetValue
 hi def link gdbSetSerialParityValue		      gdbSetValue
 hi def link gdbSetShCallingConventionValue	      gdbSetValue
 hi def link gdbSetStructConventionValue		      gdbSetValue
+hi def link gdbSetStyleColorValue		      gdbSetValue
+hi def link gdbSetStyleIntensityValue		      gdbSetValue
 hi def link gdbSetSymbolLoadingValue		      gdbSetValue
 hi def link gdbSetTargetFileSystemKindValue	      gdbSetValue
 hi def link gdbSetTuiBorderKindValue		      gdbSetValue

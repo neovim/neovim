@@ -1220,12 +1220,16 @@ describe('vim.pack', function()
     it('is not affected by special environment variables', function()
       fn.setenv('GIT_WORK_TREE', t.paths.test_source_path)
       fn.setenv('GIT_DIR', vim.fs.joinpath(t.paths.test_source_path, '.git'))
+      local index_path = vim.fs.joinpath(repo_get_path('defbranch'), '.git', 'index')
+      local index = fn.readblob(index_path)
+      fn.setenv('GIT_INDEX_FILE', index_path)
       local ref_environ = fn.environ()
 
       vim_pack_add({ repos_src.basic })
       eq('basic main', exec_lua('return require("basic")'))
 
       eq(ref_environ, fn.environ())
+      eq(index, fn.readblob(index_path))
     end)
 
     it('validates input', function()
@@ -1658,6 +1662,7 @@ describe('vim.pack', function()
           -- Should not be affected by special environment variables
           fn.setenv('GIT_WORK_TREE', t.paths.test_source_path)
           fn.setenv('GIT_DIR', vim.fs.joinpath(t.paths.test_source_path, '.git'))
+          fn.setenv('GIT_INDEX_FILE', vim.fs.joinpath(repo_get_path('defbranch'), '.git', 'index'))
           api.nvim_win_set_cursor(0, pos)
           exec_lua(function()
             vim.lsp.buf.hover()
@@ -1680,6 +1685,7 @@ describe('vim.pack', function()
 
           exec_lua('vim.uv.os_unsetenv("GIT_WORK_TREE")')
           exec_lua('vim.uv.os_unsetenv("GIT_DIR")')
+          exec_lua('vim.uv.os_unsetenv("GIT_INDEX_FILE")')
         end
 
         assert_hover({ 14, 0 }, 'Commit from `main` to be removed')
@@ -2173,6 +2179,9 @@ describe('vim.pack', function()
     it('is not affected by special environment variables', function()
       fn.setenv('GIT_WORK_TREE', t.paths.test_source_path)
       fn.setenv('GIT_DIR', vim.fs.joinpath(t.paths.test_source_path, '.git'))
+      local index_path = vim.fs.joinpath(repo_get_path('defbranch'), '.git', 'index')
+      local index = fn.readblob(index_path)
+      fn.setenv('GIT_INDEX_FILE', index_path)
       local ref_environ = fn.environ()
 
       vim_pack_add({ repos_src.fetch })
@@ -2180,6 +2189,7 @@ describe('vim.pack', function()
       pack_assert_content('fetch', 'return "fetch new 2"')
 
       eq(ref_environ, fn.environ())
+      eq(index, fn.readblob(index_path))
     end)
 
     it('works with out of sync lockfile', function()

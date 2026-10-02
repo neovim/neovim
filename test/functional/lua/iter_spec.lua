@@ -322,6 +322,16 @@ describe('vim.iter', function()
 
     do
       local q = { 4, 3, 2, 1 }
+      local function positive(x)
+        return x > 0
+      end
+
+      eq({ 4, 3, 2, 1 }, vim.iter(q):take(positive):totable())
+      eq({ 1, 2, 3, 4 }, vim.iter(q):rev():take(positive):totable())
+    end
+
+    do
+      local q = { 4, 3, 2, 1 }
       eq({ 1, 2, 3 }, vim.iter(q):rev():take(3):totable())
       eq({ 2, 3, 4 }, vim.iter(q):take(3):rev():totable())
     end

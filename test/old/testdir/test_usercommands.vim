@@ -875,4 +875,42 @@ func Test_command_list_0()
   delcommand VeryMuchLongerCommand
 endfunc
 
+" Test for a block of ":command" or ":autocmd" in a block that is not
+" executed: the lines up to the "}" are skipped, not parsed as commands.
+func Test_command_block_skipped()
+  throw 'Skipped: Vim9 script is N/A'
+  let lines =<< trim END
+    vim9script
+    def Something(s: string)
+      echo s
+    enddef
+    if 0
+      command! -bar -nargs=? Xfoo {
+        Something(<q-args>)
+      }
+    endif
+    if 0
+      autocmd BufRead *.xyz {
+        Something(<q-args>)
+      }
+    endif
+    while 0
+      command! Xbar {
+        Something('x')
+      }
+    endwhile
+    g:skipped = 'all three'
+  END
+  call writefile(lines, 'Xcmdblock.vim', 'D')
+
+  let g:skipped = ''
+  source Xcmdblock.vim
+  call assert_equal('all three', g:skipped)
+  call assert_equal(0, exists(':Xfoo'))
+  call assert_equal(0, exists(':Xbar'))
+  call assert_notmatch('xyz', execute('autocmd BufRead'))
+
+  unlet g:skipped
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

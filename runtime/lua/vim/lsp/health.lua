@@ -23,7 +23,7 @@ end
 local function check_log()
   local log = vim.lsp.log
   local current_log_level = log.get_level()
-  local log_level_string = log.levels[current_log_level] ---@type string
+  local log_level_string = assert(log.levels[current_log_level])
   report_info(string.format('LSP log level: %s', log_level_string))
 
   if current_log_level < log.levels.WARN then
@@ -85,7 +85,7 @@ end
 --- @param f function
 --- @return string
 local function func_tostring(f)
-  local info = debug.getinfo(f, 'S')
+  local info = assert(debug.getinfo(f, 'S'))
   return ('<function %s:%s>'):format(info.source, info.linedefined)
 end
 
@@ -157,7 +157,7 @@ local function check_watcher()
     return
   end
 
-  local watchfunc = assert(vim.lsp._watchfiles._watchfunc)
+  local watchfunc = vim.lsp._watchfiles._watchfunc
   local watchfunc_name --- @type string
   if watchfunc == vim._watch.watch then
     watchfunc_name = 'libuv-watch'
@@ -166,8 +166,8 @@ local function check_watcher()
   elseif watchfunc == vim._watch.inotify then
     watchfunc_name = 'inotify'
   else
-    local nm = debug.getinfo(watchfunc, 'S').source
-    watchfunc_name = string.format('Custom (%s)', nm)
+    local info = assert(debug.getinfo(watchfunc, 'S'))
+    watchfunc_name = string.format('Custom (%s)', info.source)
   end
 
   report_info('Filewatch backend: ' .. watchfunc_name)

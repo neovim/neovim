@@ -40,9 +40,9 @@ function vim.api.nvim__cmdwin_set(type, buf) end
 --- @param index integer Completion candidate index
 --- @param opts vim.api.keyset.complete_set? Optional parameters.
 --- - info: (string) info text.
---- @return table<string,number> # Dict containing these keys:
---- - winid: (number) floating window id
---- - bufnr: (number) buffer id in floating window
+--- @return table<string,integer> # Dict containing these keys:
+--- - winid: (integer) floating window id
+--- - bufnr: (integer) buffer id in floating window
 function vim.api.nvim__complete_set(index, opts) end
 
 --- WARNING: This feature is experimental/unstable.
@@ -118,6 +118,12 @@ function vim.api.nvim__inspect_cell(grid, row, col) end
 --- For testing. The condition in schar_cache_clear_if_full is hard to
 --- reach, so this function can be used to force a cache clear in a test.
 function vim.api.nvim__invalidate_glyph_cache() end
+
+--- WARNING: This feature is experimental/unstable.
+---
+--- Returns true if a multicursor cascade is in-progress.
+--- @return boolean
+function vim.api.nvim__mcursor_cascading() end
 
 --- WARNING: This feature is experimental/unstable.
 ---
@@ -963,13 +969,14 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- - callback (`function|string?`) Lua function (or Vimscript function name, if string)
 ---   called when the event(s) is triggered. Lua callback can return `lua-truthy` to delete
 ---   the autocommand. Callback receives one argument, a table with keys: [event-args]()
----     - buf: (`number`) [<abuf>]
+---     - buf: (`integer`) [<abuf>]
 ---     - data: (`any`) Arbitrary data passed from [nvim_exec_autocmds()] [event-data]()
 ---     - event: (`vim.api.keyset.events`) Name of the triggered event `autocmd-events`
 ---     - file: (`string`) [<afile>] (not expanded to a full path)
----     - group: (`number?`) Group id, if any
----     - id: (`number`) Autocommand id
+---     - group: (`integer?`) Group id, if any
+---     - id: (`integer`) Autocommand id
 ---     - match: (`string`) [<amatch>] (expanded to a full path)
+---     - win: (`integer`) id of the window for the event, see `window-ID`
 --- - command (string?) Vim command executed on event. Not allowed with {callback}.
 --- - desc (`string?`) Description (for documentation and troubleshooting).
 --- - group (`string|integer?`) Group name or id to match against.
@@ -1884,7 +1891,7 @@ function vim.api.nvim_out_write(str) end
 ---
 --- @param str string Command line string to parse. Cannot contain "\n".
 --- @param opts vim.api.keyset.empty? Optional parameters. Reserved for future use.
---- @return vim.api.keyset.cmd # Dict containing command information, with these keys:
+--- @return vim.api.keyset.cmd_ret # Dict containing command information, with these keys:
 --- - cmd: (string) Command name.
 --- - range: (array) (optional) Command range ([<line1>] [<line2>]).
 ---                  Omitted if command doesn't accept a range.
@@ -2302,8 +2309,8 @@ function vim.api.nvim_set_option(name, value) end
 --- @param value any New option value
 --- @param opts vim.api.keyset.option? Optional parameters
 --- - buf: Buffer number. Used for setting buffer local option.
---- - dry_run: (`boolean?`, default: false) If true, then the
----   option value won't be set.
+--- - dry_run: (`boolean?`, default: false) If true, validates the
+---   option value without setting it.
 --- - operation: One of "set", "append", "prepend", or "remove".
 ---   Corresponds to `:set=`, `:set+=`, `:set^=`, and `:set-=`.
 ---   Default is "set".

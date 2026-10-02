@@ -735,3 +735,25 @@ describe('autoload/msgpack.vim', function()
     end)
   end)
 end)
+
+describe('autoload/msgpack.vim in an eastern timezone', function()
+  setup(function()
+    clear({
+      -- msgpack#strptime() prefers a Python implementation and only falls back to the
+      -- Vimscript one, which is the one under test, when no provider answers.
+      args = { '-u', 'NORC', '--cmd', 'let g:loaded_python3_provider = 0' },
+      -- POSIX TZ signs are inverted: GMT-14 is UTC+14, the easternmost offset.
+      env = { TZ = 'GMT-14' },
+    })
+  end)
+
+  describe('function msgpack#strptime', function()
+    it('works east of UTC+12 #7625', function()
+      eq(0, nvim_eval('has("python3")'))
+      for _, v in ipairs({ 0, 10, 100000, 204, 1000000000 }) do
+        local time = nvim_eval(('strftime("%%Y-%%m-%%dT%%H:%%M:%%S", %d)'):format(v))
+        eq(v, nvim_eval(('msgpack#strptime("%%Y-%%m-%%dT%%H:%%M:%%S", "%s")'):format(time)))
+      end
+    end)
+  end)
+end)

@@ -21,9 +21,14 @@ string(REPLACE "#undef HAVE_WORKING_O_NOFOLLOW" "#define HAVE_WORKING_O_NOFOLLOW
 string(REPLACE "#undef ICONV_CONST" "#define ICONV_CONST const" CONFIG_CONTENT "${CONFIG_CONTENT}")
 string(REPLACE "#undef WORDS_LITTLEENDIAN" "#define WORDS_LITTLEENDIAN 1" CONFIG_CONTENT "${CONFIG_CONTENT}")
 string(REPLACE "#undef HAVE_DECL_STRERROR_R" "#define HAVE_DECL_STRERROR_R 0" CONFIG_CONTENT "${CONFIG_CONTENT}")
+string(REPLACE "#undef HAVE_STDBOOL_H" "#define HAVE_STDBOOL_H 1" CONFIG_CONTENT "${CONFIG_CONTENT}")
 string(REPLACE "#undef mode_t" "#define mode_t int" CONFIG_CONTENT "${CONFIG_CONTENT}")
 string(REPLACE "#undef ssize_t" "#include <BaseTsd.h>\n#define ssize_t SSIZE_T" CONFIG_CONTENT "${CONFIG_CONTENT}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/config.h" "${CONFIG_CONTENT}")
+
+# Gnulib replacement headers require config.h first, but lib/iconv.c includes
+# system headers before it.
+add_compile_options("/FI${CMAKE_CURRENT_BINARY_DIR}/config.h")
 
 set(BROKEN_WCHAR_H 0)
 set(HAVE_VISIBILITY 0)
@@ -56,6 +61,7 @@ foreach(HEADER_TEMPLATE ${HEADER_TEMPLATES})
   string(REPLACE "/* The definition of _GL_WARN_ON_USE is copied here.  */" "#include \"warn-on-use.h\"" HEADER_CONTENT "${HEADER_CONTENT}")
   string(REPLACE "/* The definitions of _GL_FUNCDECL_RPL etc. are copied here.  */" "#include \"c++defs.h\"" HEADER_CONTENT "${HEADER_CONTENT}")
   string(REPLACE "@GNULIB_LSTAT@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "@GNULIB_MEMEQ@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
   string(REPLACE "@GNULIB_SIGACTION@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
   string(REPLACE "@GNULIB_SIGPROCMASK@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
   string(REPLACE "@HAVE_ISWCNTRL@" "1" HEADER_CONTENT "${HEADER_CONTENT}")

@@ -9,7 +9,7 @@ local M = {
   erow = 0, -- Buffer row at which the current cmdline ends; messages appended here in block mode.
   level = 0, -- Current cmdline level; 0 when inactive.
   wmnumode = 0, -- wildmenumode() when not using the pum, dialog position adjusted when toggled.
-  -- Non-zero for entered expanded cmdline, incremented for each message emitted as a result of entered command to move and open messages in the pager.
+  --- @type integer Non-zero for entered expanded cmdline, incremented for each message emitted as a result of entered command to move and open messages in the pager.
   expand = 0,
 }
 
@@ -59,21 +59,23 @@ local function set_text(content, prompt, hl_id)
   api.nvim_buf_set_lines(ui.bufs.cmd, M.srow, -1, false, lines)
 
   -- Highlight prompt, or parse and highlight line starting with ':' as Vimscript.
+  local firstline = assert(lines[1])
   if promptlen > 0 and hl_id > 0 then
     local opts = { invalidate = true, undo_restore = false, end_col = promptlen, hl_group = hl_id }
     opts.end_line = M.erow
     api.nvim_buf_set_extmark(ui.bufs.cmd, ui.ns, M.srow, 0, opts)
-  elseif lines[1]:sub(1, 1) == ':' then
-    local parser = vim.treesitter.get_string_parser(lines[1], 'vim')
+  elseif firstline:sub(1, 1) == ':' then
+    local parser = vim.treesitter.get_string_parser(firstline, 'vim')
     parser:parse(true)
     parser:for_each_tree(function(tstree, tree)
       local query = tstree and vim.treesitter.query.get(tree:lang(), 'highlights')
       if query then
-        for capture, node in query:iter_captures(tstree:root(), lines[1]) do
+        for capture, node in query:iter_captures(tstree:root(), firstline) do
           local _, start_col, _, end_col = node:range()
-          if query.captures[capture]:sub(1, 1) ~= '_' then
+          local name = assert(query.captures[capture])
+          if name:sub(1, 1) ~= '_' then
             local opts = { invalidate = true, undo_restore = false, end_col = end_col }
-            opts.hl_group = ('@%s.%s'):format(query.captures[capture], query.lang)
+            opts.hl_group = ('@%s.%s'):format(name, query.lang)
             api.nvim_buf_set_extmark(ui.bufs.cmd, ui.ns, M.srow, start_col, opts)
           end
         end

@@ -20,6 +20,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
+#include "nvim/channel.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
@@ -116,7 +117,7 @@ typedef struct {
     } \
   }
 
-/// Pushes cmdmod_T as a table (Lua type: `vim.api.keyset.cmd_mods`) onto the stack.
+/// Pushes cmdmod_T as a table (Lua type: `vim.api.keyset.cmd_mods_ret`) onto the stack.
 static void nlua_push_cmdmod(lua_State *lstate, const cmdmod_T *cmod)
 {
   lua_newtable(lstate);
@@ -314,21 +315,40 @@ void nlua_error(lua_State *const lstate, const char *const msg)
   lua_pop(lstate, 1);
 }
 
-/// Like lua_pcall, but use debug.traceback as errfunc.
+/// Dummy errfunc used if `_G.debug.traceback` is broken: returns the error object unchanged.
+static int nlua_no_traceback(lua_State *lstate)
+{
+  return 1;
+}
+
+/// Like lua_pcall, but use `debug.traceback` as errfunc. Called by most Lua entrypoints (`:lua`,
+/// `luaeval()`, `v:lua`, API calls, …). Not used by `pcall()` itself.
 ///
 /// @param lstate Lua interpreter state
 /// @param[in] nargs Number of arguments expected by the function being called.
 /// @param[in] nresults Number of results the function returns.
 int nlua_pcall(lua_State *lstate, int nargs, int nresults)
 {
+  // Detect broken `_G.debug` (by user code). #41504
   lua_getglobal(lstate, "debug");
-  lua_getfield(lstate, -1, "traceback");
-  lua_remove(lstate, -2);
+  if (lua_istable(lstate, -1)) {
+    lua_getfield(lstate, -1, "traceback");
+    lua_remove(lstate, -2);
+  }
+  bool no_traceback = !lua_isfunction(lstate, -1);  // `_G.debug.traceback` is a function?
+  if (no_traceback) {
+    lua_pop(lstate, 1);
+    lua_pushcfunction(lstate, nlua_no_traceback);
+  }
   lua_insert(lstate, -2 - nargs);
   int pre_top = lua_gettop(lstate);
   int status = lua_pcall(lstate, nargs, nresults, -2 - nargs);
   if (status) {
     lua_remove(lstate, -2);
+    if (no_traceback && status == LUA_ERRRUN && lua_isstring(lstate, -1)) {
+      lua_pushliteral(lstate, "\nNo traceback: debug.traceback is not a function");
+      lua_concat(lstate, 2);
+    }
   } else {
     if (nresults == LUA_MULTRET) {
       nresults = lua_gettop(lstate) - (pre_top - nargs - 1);
@@ -1098,12 +1118,18 @@ static void nlua_common_free_all_mem(lua_State *lstate)
 
 static void nlua_print_event(void **argv)
 {
-  HlMessage msg = KV_INITIAL_VALUE;
-  HlMessageChunk chunk = { { .data = argv[0], .size = (size_t)(intptr_t)argv[1] - 1 }, 0 };
-  kv_push(msg, chunk);
-  bool needs_clear = false;
   msg_ext_no_fast();
-  msg_multihl(NIL, msg, "lua_print", true, false, NULL, &needs_clear);
+  if (msg_use_printf() && on_print.type == kCallbackNone) {
+    msg_start();  // flush incomplete message
+    printf("%.*s\n", (int)(intptr_t)argv[1] - 1, (char *)argv[0]);
+    xfree(argv[0]);
+  } else {
+    HlMessage msg = KV_INITIAL_VALUE;
+    HlMessageChunk chunk = { { .data = argv[0], .size = (size_t)(intptr_t)argv[1] - 1 }, 0 };
+    kv_push(msg, chunk);
+    bool needs_clear = false;
+    msg_multihl(NIL, msg, "lua_print", true, false, NULL, &needs_clear);
+  }
 }
 
 /// Implements Lua print() as a Nvim message.
@@ -1112,12 +1138,6 @@ static void nlua_print_event(void **argv)
 static int nlua_print(lua_State *const lstate)
   FUNC_ATTR_NONNULL_ALL
 {
-#define PRINT_ERROR(msg) \
-  do { \
-    errmsg = msg; \
-    errmsg_len = sizeof(msg) - 1; \
-    goto nlua_print_error; \
-  } while (0)
   const int nargs = lua_gettop(lstate);
   lua_getglobal(lstate, "tostring");
   const char *errmsg = NULL;
@@ -1129,22 +1149,21 @@ static int nlua_print(lua_State *const lstate)
     lua_pushvalue(lstate, -1);  // tostring
     lua_pushvalue(lstate, curargidx);  // arg
     // Do not use nlua_pcall here to avoid duplicate stack trace information
-    if (lua_pcall(lstate, 1, 1, 0)) {
-      errmsg = lua_tolstring(lstate, -1, &errmsg_len);
+    if (lua_pcall(lstate, 1, 1, 0) || lua_type(lstate, -1) != LUA_TSTRING) {
+      // NB: this might try tostring once more to print a weird error from
+      // a __tostring methamethod but we stop after that.
+      errmsg = nlua_get_error(lstate, &errmsg_len);
       goto nlua_print_error;
     }
+
     size_t len;
     const char *const s = lua_tolstring(lstate, -1, &len);
-    if (s == NULL) {
-      PRINT_ERROR("<Unknown error: lua_tolstring returned NULL for tostring result>");
-    }
     ga_concat_len(&msg_ga, s, len);
     if (curargidx < nargs) {
       ga_append(&msg_ga, ' ');
     }
     lua_pop(lstate, 1);
   }
-#undef PRINT_ERROR
   ga_append(&msg_ga, NUL);
 
   lua_getfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");

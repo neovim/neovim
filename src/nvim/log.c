@@ -261,6 +261,7 @@ void log_callstack_to_file(FILE *log_file, const char *const func_name, const in
   //    addr2line -e /path/to/exe -f -p 0x123 0x456 ...
 
   do_log_to_file(log_file, LOGLVL_DBG, NULL, func_name, line_num, true, "trace:");
+  // NOLINTNEXTLINE(bugprone-command-processor): this function is never called by default
   FILE *fp = popen(cmdbuf, "r");
   assert(fp);
   char linebuf[IOSIZE];

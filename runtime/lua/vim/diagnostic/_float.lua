@@ -5,6 +5,8 @@ local store = require('vim.diagnostic._store')
 --- @class (private) vim.diagnostic._float
 local M = {}
 
+local float_ns = api.nvim_create_namespace('nvim.diagnostic.float')
+
 local severity = vim.diagnostic.severity
 
 --- @type table<vim.diagnostic.Severity, string>
@@ -25,7 +27,7 @@ local function resolve_float_opts(opts, bufnr)
   -- with its `opts` table. We create a dedicated options table (`float_opts`) that inherits
   -- missing keys from the global configuration (`global_diagnostic_options.float`), which can
   -- be a table or a function.
-  local global_opts = assert(vim.diagnostic.config())
+  local global_opts = vim.diagnostic.config()
   local float_opts = global_opts.float
   local resolved_float_opts = type(float_opts) == 'table' and float_opts
     or (type(float_opts) == 'function' and float_opts(opts.namespace, bufnr) or {})
@@ -40,14 +42,14 @@ function M.open(opts, ...)
   -- Support old (bufnr, opts) signature
   local bufnr --- @type integer?
   if opts == nil or type(opts) == 'number' then
-    bufnr = opts
+    bufnr = opts --[[@as integer?]]
     opts = ... --- @type vim.diagnostic.Opts.Float
   else
     vim.validate('opts', opts, 'table', true)
   end
 
   opts = opts or {}
-  bufnr = vim._resolve_bufnr(bufnr or opts.bufnr)
+  bufnr = vim._resolve_bufnr((bufnr or opts.bufnr) --[[@as integer?]])
   local global_opts --- @type vim.diagnostic.Opts
   opts, global_opts = resolve_float_opts(opts, bufnr)
 
@@ -263,19 +265,31 @@ function M.open(opts, ...)
     end
   end, { buf = float_bufnr, remap = false })
 
-  --- @diagnostic disable-next-line: deprecated
-  local add_highlight = api.nvim_buf_add_highlight
-
+  -- The preview may trim empty lines or reuse an older buffer, so highlight ranges
+  -- can extend past its contents. Use strict = false to tolerate this.
   for i, hl in ipairs(highlights) do
     local line = lines[i]
     local prefix_len = hl.prefix and hl.prefix.length or 0
     local suffix_len = hl.suffix and hl.suffix.length or 0
-    if prefix_len > 0 then
-      add_highlight(float_bufnr, -1, hl.prefix.hlname, i - 1, 0, prefix_len)
+    if hl.prefix and prefix_len > 0 then
+      api.nvim_buf_set_extmark(float_bufnr, float_ns, i - 1, 0, {
+        hl_group = hl.prefix.hlname,
+        end_col = prefix_len,
+        strict = false,
+      })
     end
-    add_highlight(float_bufnr, -1, hl.hlname, i - 1, prefix_len, #line - suffix_len)
-    if suffix_len > 0 then
-      add_highlight(float_bufnr, -1, hl.suffix.hlname, i - 1, #line - suffix_len, -1)
+    api.nvim_buf_set_extmark(float_bufnr, float_ns, i - 1, prefix_len, {
+      hl_group = hl.hlname,
+      end_col = #line - suffix_len,
+      strict = false,
+    })
+    if hl.suffix and suffix_len > 0 then
+      api.nvim_buf_set_extmark(float_bufnr, float_ns, i - 1, #line - suffix_len, {
+        hl_group = hl.suffix.hlname,
+        end_row = i,
+        end_col = 0,
+        strict = false,
+      })
     end
   end
 

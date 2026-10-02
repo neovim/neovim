@@ -118,16 +118,19 @@
 --- ```
 
 local M = {}
+local async = require('vim.async') --- @type vim.async._core
 
 local s_output = {} ---@type string[]
 local check_summary = { warn = 0, error = 0 }
 
--- From a path return a list [{name}, {func}, {type}] representing a healthcheck
+--- From a path return a list [{name}, {func}, {type}] representing a healthcheck
+--- @param path string
+--- @return [string, string, 'l'|'v']
 local function filepath_to_healthcheck(path)
   path = vim.fs.abspath(vim.fs.normalize(path))
   local name --- @type string
   local func --- @type string
-  local filetype --- @type string
+  local filetype --- @type 'l'|'v'
   if path:find('vim$') then
     name = vim.fs.basename(path):gsub('%.vim$', '')
     func = 'health#' .. name .. '#check'
@@ -135,12 +138,14 @@ local function filepath_to_healthcheck(path)
   else
     local rtp_lua = vim
       .iter(vim.api.nvim_get_runtime_file('lua/', true))
-      :map(function(rtp_lua)
-        return vim.fs.abspath(vim.fs.normalize(rtp_lua))
+      :map(function(dir)
+        return vim.fs.abspath(vim.fs.normalize(dir))
       end)
-      :find(function(rtp_lua)
-        return vim.fs.relpath(rtp_lua, path)
+      :find(function(dir)
+        return vim.fs.relpath(dir, path)
       end)
+    -- The healthcheck path came from nvim_get_runtime_file(), so a runtime directory must match.
+    assert(rtp_lua)
     -- "/path/to/rtp/lua/foo/bar/health.lua" => "foo/bar/health.lua"
     -- "/another/rtp/lua/baz/health/init.lua" => "baz/health/init.lua"
     local subpath = path:gsub('^' .. vim.pesc(rtp_lua), ''):gsub('^/+', '')
@@ -151,7 +156,7 @@ local function filepath_to_healthcheck(path)
       -- */health/init.lua
       name = vim.fs.dirname(vim.fs.dirname(subpath))
     end
-    name = assert(name:gsub('/', '.')) --[[@as string]]
+    name = name:gsub('/', '.')
 
     func = 'require("' .. name .. '.health").check()'
     filetype = 'l'
@@ -160,9 +165,9 @@ local function filepath_to_healthcheck(path)
 end
 
 --- @param plugin_names string
---- @return table<any,string[]> { {name, func, type}, ... } representing healthchecks
+--- @return [string, string, 'l'|'v'|''][] { {name, func, type}, ... } representing healthchecks
 local function get_healthcheck_list(plugin_names)
-  local healthchecks = {} --- @type table<any,string[]>
+  local healthchecks = {} --- @type [string, string, 'l'|'v'|''][]
   local plugin_names_list = vim.split(plugin_names, ' ')
   for _, p in pairs(plugin_names_list) do
     -- support vim/lsp/health{/init/}.lua as :checkhealth vim.lsp
@@ -198,10 +203,10 @@ local function get_healthcheck_list(plugin_names)
 end
 
 --- @param plugin_names string
---- @return table<string, string[]> {name: [func, type], ..} representing healthchecks
+--- @return table<string, [string, 'l'|'v'|'']> {name: [func, type], ..} representing healthchecks
 local function get_healthcheck(plugin_names)
   local health_list = get_healthcheck_list(plugin_names)
-  local healthchecks = {} --- @type table<string, string[]>
+  local healthchecks = {} --- @type table<string, [string, 'l'|'v'|'']>
   for _, c in pairs(health_list) do
     if c[1] ~= 'vim' then
       healthchecks[c[1]] = { c[2], c[3] }
@@ -314,6 +319,8 @@ function M.error(msg, ...)
   check_summary['error'] = check_summary['error'] + 1
 end
 
+---@param path string
+---@return string
 local path2name = function(path)
   if vim.fs.ext(path) == 'lua' then
     -- Lua: transform "../lua/vim/lsp/health.lua" into "vim.lsp"
@@ -340,13 +347,12 @@ end
 local PATTERNS = { '/autoload/health/*.vim', '/lua/**/**/health.lua', '/lua/**/**/health/init.lua' }
 --- :checkhealth completion function used by cmdexpand.c get_healthcheck_names()
 M._complete = function()
-  local unique = vim ---@type table<string,boolean>
-    ---@param pattern string
+  ---@type table<string,boolean>
+  local unique = vim
     .iter(vim.tbl_map(function(pattern)
       return vim.tbl_map(path2name, vim.api.nvim_get_runtime_file(pattern, true))
     end, PATTERNS))
     :flatten()
-    ---@param t table<string,boolean>
     :fold({}, function(t, name)
       t[name] = true -- Remove duplicates
       return t
@@ -457,66 +463,7 @@ function M._check(eap)
     return a < b
   end)
 
-  local total_checks = #names
-  local progress_msg = progress_report(total_checks)
-  local check_idx = 1
-  for _, name in ipairs(names) do
-    local value = healthchecks[name]
-    progress_msg('running', check_idx, 'checking %s', name)
-    local func = value[1]
-    local type = value[2]
-    s_output = {}
-    check_summary = { warn = 0, error = 0 }
-
-    if func == '' then
-      M.error('No healthcheck found for "' .. name .. '" plugin.')
-    end
-    if type == 'v' then
-      vim.fn.call(func, {})
-    else
-      local f = assert(loadstring(func))
-      local ok, output = pcall(f) ---@type boolean, string
-      if not ok then
-        M.error(
-          string.format('Failed to run healthcheck for "%s" plugin. Exception:\n%s\n', name, output)
-        )
-      end
-    end
-    -- in the event the healthcheck doesn't return anything
-    -- (the plugin author should avoid this possibility)
-    if next(s_output) == nil then
-      s_output = {}
-      M.error('The healthcheck report for "' .. name .. '" plugin is empty.')
-    end
-
-    local report = get_summary()
-    local replen = vim.fn.strwidth(report)
-    local header = {
-      string.rep('=', 78),
-      -- Example: `foo.health: [ …] 1 ⚠️  5 ❌`
-      ('%s: %s%s'):format(name, (' '):rep(76 - name:len() - replen), report),
-      '',
-    }
-
-    -- remove empty line after header from report_start
-    if s_output[1] == '' then
-      local tmp = {} ---@type string[]
-      for i = 2, #s_output do
-        tmp[#tmp + 1] = s_output[i]
-      end
-      s_output = {}
-      for _, v in ipairs(tmp) do
-        s_output[#s_output + 1] = v
-      end
-    end
-    s_output[#s_output + 1] = ''
-    s_output = vim.list_extend(header, s_output)
-    vim.api.nvim_buf_set_lines(0, check_idx == 1 and 0 or -1, -1, true, s_output)
-
-    check_idx = check_idx + 1
-  end
-
-  progress_msg('success', nil, 'checks done')
+  local task --- @type vim.async.Task<nil>
 
   -- Quit with 'q' inside healthcheck buffers.
   vim._with({ buf = bufnr }, function()
@@ -525,6 +472,7 @@ function M._check(eap)
       or vim.fn.maparg('q', 'n', false, false) == ''
     then
       vim.keymap.set('n', 'q', function()
+        task:close()
         if not pcall(vim.cmd.close) then
           vim.cmd.bdelete()
         end
@@ -532,9 +480,101 @@ function M._check(eap)
     end
   end)
 
-  -- Once we're done writing checks, set nomodifiable.
-  vim.bo[bufnr].modifiable = false
-  vim.cmd.setfiletype('checkhealth')
+  task = async.run('checkhealth', function()
+    local total_checks = #names
+    local progress_msg = progress_report(total_checks)
+    local check_idx = 1
+    for _, name in ipairs(names) do
+      local value = healthchecks[name]
+      progress_msg('running', check_idx, 'checking %s', name)
+      local func = value[1]
+      local type = value[2]
+      s_output = {}
+      check_summary = { warn = 0, error = 0 }
+
+      if func == '' then
+        M.error('No healthcheck found for "' .. name .. '" plugin.')
+      end
+      if type == 'v' then
+        vim.fn.call(func, {})
+      else
+        local f = assert(loadstring(func))
+        --- @diagnostic disable-next-line: assign-type-mismatch
+        local ok, output = async.pawait(async.run(name, f)) ---@type boolean, string
+        async.await(vim.schedule)
+        if not ok then
+          M.error(
+            string.format(
+              'Failed to run healthcheck for "%s" plugin. Exception:\n%s\n',
+              name,
+              output
+            )
+          )
+        end
+      end
+      -- in the event the healthcheck doesn't return anything
+      -- (the plugin author should avoid this possibility)
+      if next(s_output) == nil then
+        s_output = {}
+        M.error('The healthcheck report for "' .. name .. '" plugin is empty.')
+      end
+
+      local report = get_summary()
+      local replen = vim.fn.strwidth(report)
+      local header = {
+        string.rep('=', 78),
+        -- Example: `foo.health: [ …] 1 ⚠️  5 ❌`
+        ('%s: %s%s'):format(name, (' '):rep(76 - name:len() - replen), report),
+        '',
+      }
+
+      -- remove empty line after header from report_start
+      if s_output[1] == '' then
+        local tmp = {} ---@type string[]
+        for i = 2, #s_output do
+          tmp[#tmp + 1] = s_output[i]
+        end
+        s_output = {}
+        for _, v in ipairs(tmp) do
+          s_output[#s_output + 1] = v
+        end
+      end
+      s_output[#s_output + 1] = ''
+      s_output = vim.list_extend(header, s_output)
+
+      if not vim.api.nvim_buf_is_valid(bufnr) then
+        return
+      end
+      vim.api.nvim_buf_set_lines(bufnr, check_idx == 1 and 0 or -1, -1, true, s_output)
+
+      check_idx = check_idx + 1
+    end
+
+    progress_msg('success', nil, 'checks done')
+
+    if not vim.api.nvim_buf_is_valid(bufnr) then
+      return
+    end
+    -- Once we're done writing checks, set nomodifiable.
+    vim.bo[bufnr].modifiable = false
+    vim._with({ buf = bufnr }, function()
+      vim.cmd.setfiletype('checkhealth')
+    end)
+  end)
+
+  local cancel_autocmd = vim.api.nvim_create_autocmd('BufUnload', {
+    buffer = bufnr,
+    once = true,
+    callback = function()
+      task:close()
+    end,
+  })
+  task:on_complete(function(err)
+    pcall(vim.api.nvim_del_autocmd, cancel_autocmd)
+    if err and err ~= 'closed' then
+      error(task:traceback(err), 0)
+    end
+  end)
 end
 
 return M

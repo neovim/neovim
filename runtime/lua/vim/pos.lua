@@ -160,10 +160,6 @@ function M.lsp(buf, pos, position_encoding)
   validate('pos', pos, 'table')
   validate('position_encoding', position_encoding, 'string')
 
-  if buf == 0 then
-    buf = api.nvim_get_current_buf()
-  end
-
   local row, col = util.from_lsp(buf, pos, position_encoding)
   return M.new(buf, row, col)
 end
@@ -208,9 +204,6 @@ function M.cursor(buf, pos)
 
   if pos then
     validate('buf', buf, 'number')
-    if buf == 0 then
-      buf = api.nvim_get_current_buf()
-    end
   else
     local win = buf
     validate('win', win, 'number', true)
@@ -264,10 +257,6 @@ function M.mark(buf, lnum, col)
   validate('lnum', lnum, 'number')
   validate('col', col, 'number')
 
-  if buf == 0 then
-    buf = api.nvim_get_current_buf()
-  end
-
   return M.new(buf, util.from_mark(lnum, col))
 end
 
@@ -301,10 +290,6 @@ function M.extmark(buf, row, col)
   validate('buf', buf, 'number')
   validate('row', row, 'number')
   validate('col', col, 'number')
-
-  if buf == 0 then
-    buf = api.nvim_get_current_buf()
-  end
 
   return M.new(buf, row, col)
 end
@@ -345,8 +330,9 @@ function M.offset(buf, offset)
 
   local lnum = vim.list.bisect(
     setmetatable({}, {
-      __index = function(_, lnum)
-        return api.nvim_buf_get_offset(buf, lnum - 1)
+      --- @param idx integer
+      __index = function(_, idx)
+        return api.nvim_buf_get_offset(buf, idx - 1)
       end,
     }),
     offset,
@@ -364,6 +350,6 @@ setmetatable(M, {
     return M.new(...)
   end,
 })
----@cast M +fun(buf: integer, row: integer, col: integer): vim.Pos
+---@cast M vim.Pos & fun(buf: integer, row: integer, col: integer): vim.Pos
 
 return M

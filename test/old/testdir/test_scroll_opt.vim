@@ -1744,6 +1744,60 @@ func Test_scrolloffpad_paging_to_eof()
   bwipe!
 endfunc
 
+func Test_scrolloffpad_ctrl_d_at_eof()
+  new
+  setlocal scroll=6
+  call setline(1, map(range(1, 80), 'printf("line %d", v:val)'))
+
+  for height in [11, 12]
+    execute 'resize ' .. height
+    for so in [1, 999]
+      let &l:scrolloff = so
+      for sop in [0, 1]
+        let &l:scrolloffpad = sop
+        for endcmd in ['ggG', 'ggGzb']
+          let context = printf('height=%d so=%d sop=%d %s',
+                \ height, so, sop, endcmd)
+          execute 'normal! ' .. endcmd
+          let view_before = winsaveview()
+
+          call assert_beeps('execute "normal! \<C-D>"')
+          call assert_equal(view_before, winsaveview(), context)
+        endfor
+      endfor
+    endfor
+  endfor
+
+  bwipe!
+endfunc
+
+func Test_scrolloffpad_ctrl_e_at_eof()
+  new
+  call setline(1, map(range(1, 80), 'printf("line %d", v:val)'))
+
+  for height in [11, 12]
+    execute 'resize ' .. height
+    for so in [1, 999]
+      let &l:scrolloff = so
+      for sop in [0, 1]
+        let &l:scrolloffpad = sop
+        for endcmd in ['ggG', 'ggGzb']
+          let context = printf('height=%d so=%d sop=%d %s',
+                \ height, so, sop, endcmd)
+          execute 'normal! ' .. endcmd
+          let expected_view = winsaveview()
+          let expected_view.topline += 1
+
+          execute "normal! \<C-E>"
+          call assert_equal(expected_view, winsaveview(), context)
+        endfor
+      endfor
+    endfor
+  endfor
+
+  bwipe!
+endfunc
+
 func Test_scrolloffpad_autocmd_append_at_eof()
   let states = {}
   for sop in [0, 1]
@@ -2217,6 +2271,43 @@ func Test_smoothscroll_textoff_showbreak()
   call assert_equal('running', status)
   call assert_true(filereadable(donefile))
   call StopVimInTerminal(buf)
+endfunc
+
+" comp_botline() reuses the line heights computed for the previous redraw.
+" Changing an option that affects the displayed height of a line must
+" invalidate that cache.  Check that scrolling after such a change gives the
+" same result as setting the option before scrolling.
+func Test_botline_cache_invalidated_on_option_change()
+  " Resizing the height of a vertically split window pushes the reclaimed
+  " lines into 'cmdheight'; save and restore it so the following tests run
+  " with a full-height screen.
+  let save_cmdheight = &cmdheight
+  vnew
+  vertical resize 40
+  resize 10
+  setlocal scrolloff=0
+  let lines = map(range(1, 400), {_, v -> printf('%4d ', v) .. repeat('word ', 30)})
+
+  for opt in ['number', 'breakindent', 'foldcolumn=4', 'list', 'nowrap']
+    " Reference: option set before scrolling, so no stale cache is possible.
+    call setline(1, lines)
+    setlocal wrap nonumber nobreakindent nolist foldcolumn=0
+    exe 'setlocal ' .. opt
+    normal! 120Gzt
+    redraw
+    let expected = getwininfo(win_getid())[0].botline
+
+    " Same option applied after scrolling, when the cache is populated.
+    setlocal wrap nonumber nobreakindent nolist foldcolumn=0
+    normal! 120Gzt
+    redraw
+    exe 'setlocal ' .. opt
+    redraw
+    call assert_equal(expected, getwininfo(win_getid())[0].botline, 'setlocal ' .. opt)
+  endfor
+
+  bwipe!
+  let &cmdheight = save_cmdheight
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -420,6 +420,11 @@ void ml_setname(buf_T *buf)
       break;
     }
     char *fname = findswapname(buf, &dirp, mfp->mf_fname, &found_existing_dir);
+    // autocmd may have freed mfp if findswapname creates different swapfile name
+    if (buf->b_ml.ml_mfp != mfp) {
+      xfree(fname);
+      return;
+    }
     // alloc's fname
     if (dirp == NULL) {             // out of memory
       break;
@@ -510,6 +515,11 @@ void ml_open_file(buf_T *buf)
     // and creating it, another Vim creates the file.  In that case the
     // creation will fail and we will use another directory.
     char *fname = findswapname(buf, &dirp, NULL, &found_existing_dir);
+    // autocmd may have freed mfp, grr!
+    if (buf->b_ml.ml_mfp != mfp) {
+      xfree(fname);
+      return;
+    }
     if (dirp == NULL) {
       break;        // out of memory
     }
@@ -1873,6 +1883,27 @@ colnr_T ml_get_buf_len(buf_T *buf, linenr_T lnum)
 
   assert(buf->b_ml.ml_line_textlen > 0);
   return buf->b_ml.ml_line_textlen - 1;
+}
+
+/// Gets the charwise NL-joined text of range [start, end), 1-based lnum, 0-based col, end col
+/// exclusive, as an allocated String ("" if empty). Line range must be valid (start <= end); cols
+/// clamp to line-length.
+String ml_region_text(buf_T *buf, pos_T start, pos_T end)
+  FUNC_ATTR_NONNULL_ALL
+{
+  StringBuilder sb = KV_INITIAL_VALUE;
+  for (linenr_T lnum = start.lnum; lnum <= end.lnum; lnum++) {
+    char *line = ml_get_buf(buf, lnum);
+    colnr_T len = ml_get_buf_len(buf, lnum);
+    colnr_T from = lnum == start.lnum ? MIN(start.col, len) : 0;
+    colnr_T to = lnum == end.lnum ? MIN(end.col, len) : len;
+    kv_concat_len(sb, line + from, (size_t)(to - from));
+    if (lnum < end.lnum) {
+      kv_push(sb, NL);
+    }
+  }
+  kv_push(sb, NUL);
+  return cbuf_as_string(sb.items, kv_size(sb) - 1);
 }
 
 /// @return  codepoint at pos. pos must be either valid or have col set to MAXCOL!
@@ -3831,7 +3862,6 @@ enum {
 static void ml_updatechunk(buf_T *buf, linenr_T line, int len, int updtype)
 {
   static buf_T *ml_upd_lastbuf = NULL;
-  static linenr_T ml_upd_lastline;
   static linenr_T ml_upd_lastcurline;
   static int ml_upd_lastcurix;
 
@@ -3848,6 +3878,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, int len, int updtype)
     buf->b_ml.ml_usedchunks = 1;
     buf->b_ml.ml_chunksize[0].mlcs_numlines = 1;
     buf->b_ml.ml_chunksize[0].mlcs_totalsize = 1;
+    ml_upd_lastbuf = NULL;          // invalidate resume cache
   }
 
   if (updtype == ML_CHNK_UPDLINE && buf->b_ml.ml_line_count == 1) {
@@ -3855,25 +3886,22 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, int len, int updtype)
     buf->b_ml.ml_usedchunks = 1;
     buf->b_ml.ml_chunksize[0].mlcs_numlines = 1;
     buf->b_ml.ml_chunksize[0].mlcs_totalsize = buf->b_ml.ml_line_textlen;
+    ml_upd_lastbuf = NULL;          // invalidate resume cache
     return;
   }
 
   // Find chunk that our line belongs to, curline will be at start of the
   // chunk.
-  if (buf != ml_upd_lastbuf || line != ml_upd_lastline + 1
-      || updtype != ML_CHNK_ADDLINE) {
-    for (curline = 1, curix = 0;
-         curix < buf->b_ml.ml_usedchunks - 1
-         && line >= curline +
-         buf->b_ml.ml_chunksize[curix].mlcs_numlines;
-         curix++) {
-      curline += buf->b_ml.ml_chunksize[curix].mlcs_numlines;
-    }
-  } else if (curix < buf->b_ml.ml_usedchunks - 1
-             && line >= curline + buf->b_ml.ml_chunksize[curix].mlcs_numlines) {
-    // Adjust cached curix & curline
+  // The scan resumes at the cached chunk while ml_upd_lastbuf is set: the
+  // chunks have not moved since the last call.
+  if (buf != ml_upd_lastbuf || line < curline) {
+    curline = 1;
+    curix = 0;
+  }
+  for (; curix < buf->b_ml.ml_usedchunks - 1
+       && line >= curline + buf->b_ml.ml_chunksize[curix].mlcs_numlines;
+       curix++) {
     curline += buf->b_ml.ml_chunksize[curix].mlcs_numlines;
-    curix++;
   }
   chunksize_T *curchnk = buf->b_ml.ml_chunksize + curix;
 
@@ -3970,13 +3998,13 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, int len, int updtype)
     }
   } else if (updtype == ML_CHNK_DELLINE) {
     curchnk->mlcs_numlines--;
-    ml_upd_lastbuf = NULL;       // Force recalc of curix & curline
     if (curix < (buf->b_ml.ml_usedchunks - 1)
         && (curchnk->mlcs_numlines + curchnk[1].mlcs_numlines)
         <= MLCS_MINL) {
       curix++;
       curchnk = buf->b_ml.ml_chunksize + curix;
     } else if (curix == 0 && curchnk->mlcs_numlines <= 0) {
+      ml_upd_lastbuf = NULL;   // Force recalc of curix & curline
       buf->b_ml.ml_usedchunks--;
       memmove(buf->b_ml.ml_chunksize, buf->b_ml.ml_chunksize + 1,
               (size_t)buf->b_ml.ml_usedchunks * sizeof(chunksize_T));
@@ -3985,10 +4013,15 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, int len, int updtype)
                               && (curchnk->mlcs_numlines +
                                   curchnk[-1].mlcs_numlines)
                               > MLCS_MINL)) {
+      // The chunks are left as they are, the cached position stays valid.
+      ml_upd_lastbuf = buf;
+      ml_upd_lastcurline = curline;
+      ml_upd_lastcurix = curix;
       return;
     }
 
     // Collapse chunks
+    ml_upd_lastbuf = NULL;   // Force recalc of curix & curline
     curchnk[-1].mlcs_numlines += curchnk->mlcs_numlines;
     curchnk[-1].mlcs_totalsize += curchnk->mlcs_totalsize;
     buf->b_ml.ml_usedchunks--;
@@ -4000,7 +4033,6 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, int len, int updtype)
     return;
   }
   ml_upd_lastbuf = buf;
-  ml_upd_lastline = line;
   ml_upd_lastcurline = curline;
   ml_upd_lastcurix = curix;
 }

@@ -88,10 +88,8 @@ local http_methods = {
 --- @return { close: fun() } # Object with `close()` method which cancels the request.
 function M.request(method, url, opts, on_response)
   if type(url) ~= 'string' then
-    ---@diagnostic disable-next-line: cast-local-type
-    on_response = opts
-    ---@diagnostic disable-next-line: no-unknown
-    opts = url
+    on_response = opts --[[@as vim.net.request.ResponseFunc?]]
+    opts = url --[[@as vim.net.request.Opts?]]
     url = method
     method = 'GET'
   end
@@ -107,6 +105,7 @@ function M.request(method, url, opts, on_response)
     return (b == nil and true) or (type(b) == 'string' and not b:match('^@'))
   end, true, 'body should be string and not start with @')
   vim.validate('on_response', on_response, 'function', true)
+  ---@cast on_response vim.net.request.ResponseFunc?
 
   local retry = opts.retry or 3
 
@@ -152,6 +151,7 @@ function M.request(method, url, opts, on_response)
 
   local system_opts = opts.body and { stdin = opts.body } or {}
   local job = vim.system(args, system_opts, function(res)
+    --- @cast res.stdout -?
     ---@type string?, vim.net.request.Response?
     local err, response = nil, nil
     if res.signal ~= 0 then

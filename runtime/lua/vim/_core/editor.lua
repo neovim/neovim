@@ -21,6 +21,7 @@ for k, v in pairs({
   secure = true,
   snippet = true,
   pack = true,
+  async = true,
   _watch = true,
   net = true,
   pos = true,
@@ -196,11 +197,12 @@ local utfs = {
 
 -- Gets process info from the `ps` command.
 -- Used by nvim_get_proc() as a fallback.
+--- @param pid integer
 function vim._os_proc_info(pid)
   if pid == nil or pid <= 0 or type(pid) ~= 'number' then
     error('invalid pid')
   end
-  local cmd = { 'ps', '-p', pid, '-o', 'comm=' }
+  local cmd = { 'ps', '-p', tostring(pid), '-o', 'comm=' }
   local r = vim.system(cmd):wait()
   local name = assert(r.stdout)
   if r.code == 1 and vim.trim(name) == '' then
@@ -208,7 +210,7 @@ function vim._os_proc_info(pid)
   elseif r.code ~= 0 then
     error('command failed: ' .. vim.fn.string(cmd))
   end
-  local ppid_string = assert(vim.system({ 'ps', '-p', pid, '-o', 'ppid=' }):wait().stdout)
+  local ppid_string = assert(vim.system({ 'ps', '-p', tostring(pid), '-o', 'ppid=' }):wait().stdout)
   -- Remove trailing whitespace.
   name = vim.trim(name):gsub('^.*/', '')
   local ppid = tointeger(ppid_string) or -1
@@ -221,41 +223,33 @@ end
 
 -- Gets process children from the `pgrep` command.
 -- Used by nvim_get_proc_children() as a fallback.
+--- @param ppid integer
 function vim._os_proc_children(ppid)
   if ppid == nil or ppid <= 0 or type(ppid) ~= 'number' then
     error('invalid ppid')
   end
-  local cmd = { 'pgrep', '-P', ppid }
+  local cmd = { 'pgrep', '-P', tostring(ppid) }
   local r = vim.system(cmd):wait()
-  if r.code == 1 and vim.trim(r.stdout) == '' then
+  local stdout = assert(r.stdout)
+  if r.code == 1 and vim.trim(stdout) == '' then
     return {} -- Process not found.
   elseif r.code ~= 0 then
     error('command failed: ' .. vim.fn.string(cmd))
   end
   local children = {} --- @type integer[]
-  for s in r.stdout:gmatch('%S+') do
+  for s in stdout:gmatch('%S+') do
     children[#children + 1] = tointeger(s)
   end
   return children
 end
 
---- @nodoc
---- @class vim.inspect.Opts
---- @field depth? integer
---- @field newline? string
---- @field process? fun(item:any, path: string[]): any
-
---- Gets a human-readable representation of the given object.
----
----@see |vim.print()|
----@see https://github.com/kikito/inspect.lua
----@see https://github.com/mpeterv/vinspect
----@return string
----@overload fun(x: any, opts?: vim.inspect.Opts): string
-vim.inspect = vim.inspect
-
 do
-  local startpos, tdots, tick, got_line1, undo_started, trailing_nl = nil, 0, 0, false, false, false
+  local startpos --- @type integer[]?
+  local tdots = 0
+  local tick = 0
+  local got_line1 = false
+  local undo_started = false
+  local trailing_nl = false
 
   --- Paste handler, invoked by |nvim_paste()|.
   ---
@@ -305,7 +299,7 @@ do
       if not got_line1 then
         got_line1 = (#lines > 1)
         -- Escape control characters
-        local line1 = lines[1]:gsub('(%c)', '\022%1')
+        local line1 = assert(lines[1]):gsub('(%c)', '\022%1')
         -- nvim_input() is affected by mappings,
         -- so use nvim_feedkeys() with "n" flag to ignore mappings.
         -- "t" flag is also needed so the pasted text is saved in cmdline history.
@@ -328,7 +322,8 @@ do
       end
       --- @type integer, integer
       local row, col = unpack(vim.api.nvim_win_get_cursor(0))
-      local bufline = vim.api.nvim_buf_get_lines(0, row - 1, row, true)[1]
+      -- The cursor row is always in the buffer.
+      local bufline = assert(vim.api.nvim_buf_get_lines(0, row - 1, row, true)[1])
       local firstline = lines[1]
       firstline = bufline:sub(1, col) .. firstline
       lines[1] = firstline
@@ -423,6 +418,7 @@ vim.fn = setmetatable({}, {
         error(string.format('Tried to call API function with vim.fn: use vim.api.%s instead', key))
       end
     else
+      --- @param ... any
       _fn = function(...)
         return vim.call(key, ...)
       end
@@ -433,8 +429,10 @@ vim.fn = setmetatable({}, {
 })
 
 --- @private
+--- @param viml_func_name string
+--- @return function
 vim.funcref = function(viml_func_name)
-  return vim.fn[viml_func_name]
+  return vim.fn[viml_func_name] --[[@as function]]
 end
 
 --- Executes Vimscript (|Ex-command|s).
@@ -492,9 +490,8 @@ vim.cmd = setmetatable({}, {
   --- @param t table<string,function>
   __index = function(t, cmd)
     t[cmd] = function(...)
-      local opts --- @type vim.api.keyset.cmd
+      local opts --- @type vim.api.keyset.cmd & { [integer]: any }
       if select('#', ...) == 1 and type(select(1, ...)) == 'table' then
-        --- @type vim.api.keyset.cmd
         opts = select(1, ...)
 
         -- Move indexed positions in opts to opt.args
@@ -505,7 +502,6 @@ vim.cmd = setmetatable({}, {
               break
             end
             opts.args[i] = opts[i]
-            --- @diagnostic disable-next-line: no-unknown
             opts[i] = nil
           end
         end
@@ -536,10 +532,13 @@ do
   local function make_dict_accessor(scope, handle)
     vim.validate('scope', scope, 'string')
     local mt = {}
-    function mt:__newindex(k, v)
+    --- @param k string
+    --- @param v any
+    function mt.__newindex(_, k, v)
       return vim._setvar(scope, handle or 0, k, v)
     end
-    function mt:__index(k)
+    --- @param k string|integer
+    function mt.__index(_, k)
       if handle == nil and type(k) == 'number' then
         return make_dict_accessor(scope, k)
       end
@@ -562,9 +561,9 @@ end
 --- position (for example, |linewise| visual selection) is returned as |v:maxcol| (big number).
 ---
 ---@param bufnr integer Buffer number, or 0 for current buffer
----@param pos1 integer[]|string Start of region as a (line, column) tuple or |getpos()|-compatible string
----@param pos2 integer[]|string End of region as a (line, column) tuple or |getpos()|-compatible string
----@param regtype string [setreg()]-style selection type
+---@param pos1 [integer, integer]|string Start of region as a (line, column) tuple or |getpos()|-compatible string
+---@param pos2 [integer, integer]|string End of region as a (line, column) tuple or |getpos()|-compatible string
+---@param regtype string # [setreg()]-style selection type
 ---@param inclusive boolean Controls whether the ending column is inclusive (see also 'selection').
 ---@return table region Dict of the form `{linenr = {startcol,endcol}}`. `endcol` is exclusive, and
 ---whole lines are returned as `{startcol,endcol} = {0,-1}`.
@@ -601,7 +600,7 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   -- in case of block selection, columns need to be adjusted for non-ASCII characters
   -- TODO: handle double-width characters
   if regtype:byte() == 22 then
-    local bufline = vim.api.nvim_buf_get_lines(bufnr, pos1[1], pos1[1] + 1, true)[1]
+    local bufline = assert(vim.api.nvim_buf_get_lines(bufnr, pos1[1], pos1[1] + 1, true)[1])
     pos1[2] = vim.str_utfindex(bufline, 'utf-32', pos1[2])
   end
 
@@ -613,7 +612,7 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
       c1 = pos1[2]
       c2 = c1 + vim._assert_integer(regtype:sub(2))
       -- and adjust for non-ASCII characters
-      local bufline = vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1]
+      local bufline = assert(vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1])
       local utflen = vim.str_utfindex(bufline, 'utf-32', #bufline)
       if c1 <= utflen then
         c1 = vim.str_byteindex(bufline, 'utf-32', c1)
@@ -631,7 +630,7 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
     else
       c1 = (l == pos1[1]) and pos1[2] or 0
       if inclusive and l == pos2[1] then
-        local bufline = vim.api.nvim_buf_get_lines(bufnr, pos2[1], pos2[1] + 1, true)[1]
+        local bufline = assert(vim.api.nvim_buf_get_lines(bufnr, pos2[1], pos2[1] + 1, true)[1])
         pos2[2] = vim.fn.byteidx(bufline, vim.fn.charidx(bufline, pos2[2]) + 1)
       end
       c2 = (l == pos2[1]) and pos2[2] or -1
@@ -761,6 +760,8 @@ end
 
 --- Executes the on_key callbacks.
 ---@private
+---@param buf string
+---@param typed_buf string
 function vim._on_key(buf, typed_buf)
   local failed = {} ---@type [integer, string][]
   local discard = false
@@ -769,7 +770,7 @@ function vim._on_key(buf, typed_buf)
     --- @type boolean, any
     local ok, rv = xpcall(function()
       return fn(buf, typed_buf)
-    end, debug.traceback)
+    end, type(debug.traceback) == 'function' and debug.traceback or tostring)
     if ok and rv ~= nil then
       if type(rv) == 'string' and #rv == 0 then
         discard = true
@@ -904,7 +905,7 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
   end
 
   if not index then
-    index = math.huge
+    index = vim._maxint
     strict_indexing = false
   end
 
@@ -927,7 +928,7 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
 
   if encoding == 'utf-8' then
     local len = #s
-    return index <= len and index or (strict_indexing and error('index out of range') or len)
+    return (index <= len and index or (strict_indexing and error('index out of range') or len)) --[[@as integer]]
   end
   local col32, col16 = vim._str_utfindex(s, index) --[[@as integer?,integer?]]
   local col = encoding == 'utf-16' and col16 or col32
@@ -948,6 +949,7 @@ end
 --- 2. Can we get it to return things from global namespace even with `print(` in front.
 ---
 --- @param pat string
+--- @param env? table<string,any>
 --- @return any[], integer
 function vim._expand_pat(pat, env)
   env = env or _G
@@ -1062,6 +1064,8 @@ function vim._expand_pat(pat, env)
     end
   end
   ---@param acc table<string,any>
+  ---@param k string
+  ---@param v any
   local function _fold_to_map(acc, k, v)
     acc[k] = (v or true)
     return acc
@@ -1099,7 +1103,7 @@ function vim._expand_pat(pat, env)
     local vars = vim.fn.getcompletion(prefix .. match_part, type) --- @type string[]
     insert_keys(vim
       .iter(vars)
-      :map(function(s) ---@param s string
+      :map(function(s)
         s = s:gsub('[()]+$', '') -- strip '(' and ')' for function completions
         return s:sub(#prefix + 1) -- strip the prefix, e.g., 'g:foo' => 'foo'
       end)
@@ -1119,10 +1123,12 @@ function vim._expand_pat(pat, env)
       return true
     end
     if vim.bo == final_env then
+      --- @param option vim.api.keyset.get_option_info
       filter = function(_, option)
         return option.scope == 'buf'
       end
     elseif vim.wo == final_env then
+      --- @param option vim.api.keyset.get_option_info
       filter = function(_, option)
         return option.scope == 'win'
       end
@@ -1133,10 +1139,10 @@ function vim._expand_pat(pat, env)
     insert_keys(vim.iter(options):filter(filter):fold({}, _fold_to_map))
   end
 
-  keys = vim.tbl_keys(keys)
-  table.sort(keys)
+  local matches = vim.tbl_keys(keys)
+  table.sort(matches)
 
-  return keys, #prefix_match_pat
+  return matches, #prefix_match_pat
 end
 
 --- @param lua_string string
@@ -1314,9 +1320,12 @@ function vim.keycode(keys, info)
   end
 end
 
+--- @param rcid integer
 --- @param server_addr string
 --- @param connect_error string
+--- @param args string[]
 function vim._cs_remote(rcid, server_addr, connect_error, args)
+  --- @param consequence string
   --- @return string
   local function connection_failure_errmsg(consequence)
     local explanation --- @type string
@@ -1334,7 +1343,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
   local f_silent = false
   local f_tab = false
 
-  local subcmd = string.sub(args[1], 10)
+  local subcmd = assert(args[1]):sub(10)
   if subcmd == 'tab' then
     f_tab = true
   elseif subcmd == 'silent' then
@@ -1388,6 +1397,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
 end
 
 do
+  --- @param msg string
   local function truncated_echo(msg)
     -- Truncate message to avoid hit-enter-prompt
     vim.api.nvim_echo({ { msg, 'WarningMsg' } }, true, { _truncate = true })
@@ -1395,6 +1405,7 @@ do
 
   local notified = false
 
+  --- @param msg string
   function vim._truncated_echo_once(msg)
     if not notified then
       truncated_echo(msg)
@@ -1439,8 +1450,8 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
     -- Show a warning only if feature is hard-deprecated (see MAINTAIN.md).
     -- Example: if removal `version` is 0.12 (soft-deprecated since 0.10-dev), show warnings
     -- starting at 0.11, including 0.11-dev.
-    local major, minor = version:match('(%d+)%.(%d+)')
-    major, minor = tointeger(major), tointeger(minor)
+    local major_str, minor_str = version:match('(%d+)%.(%d+)')
+    local major, minor = vim._assert_integer(major_str), vim._assert_integer(minor_str)
     local nvim_major = 0 --- Current Nvim major version.
 
     -- We can't "subtract" from a major version, so:

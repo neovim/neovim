@@ -8,12 +8,15 @@
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
+#include "nvim/macros_defs.h"
 #include "nvim/mapping_defs.h"  // IWYU pragma: keep
 #include "nvim/option_defs.h"  // IWYU pragma: keep
 #include "nvim/regexp_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
 #include "mapping.h.generated.h"
+
+EXTERN int repeat_luamap INIT( = 0);  ///< Lua-mapping id for dot-repeat. 0: none.
 
 /// Used for the first argument of do_map()
 enum {

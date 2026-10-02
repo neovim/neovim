@@ -104,6 +104,7 @@ local api = vim.api
 --- vim.env.FOO = 'bar'
 --- print(vim.env.TERM)
 --- ```
+--- @type table<string, string?>
 vim.env = setmetatable({}, {
   __index = function(_, k)
     local v = vim.fn.getenv(k)
@@ -118,10 +119,13 @@ vim.env = setmetatable({}, {
   end,
 })
 
+--- @param bufnr? integer
+--- @return vim.bo
 local function new_buf_opt_accessor(bufnr)
   return setmetatable({}, {
     __index = function(_, k)
       if bufnr == nil and type(k) == 'number' then
+        --- @cast k integer
         return new_buf_opt_accessor(k)
       end
       return api.nvim_get_option_value(k, { buf = bufnr or 0 })
@@ -133,6 +137,9 @@ local function new_buf_opt_accessor(bufnr)
   })
 end
 
+--- @param winid? integer
+--- @param bufnr? integer
+--- @return vim.wo
 local function new_win_opt_accessor(winid, bufnr)
   -- TODO(lewis6991): allow passing both buf and win to nvim_get_option_value
   if bufnr ~= nil and bufnr ~= 0 then
@@ -142,6 +149,7 @@ local function new_win_opt_accessor(winid, bufnr)
   return setmetatable({}, {
     __index = function(_, k)
       if bufnr == nil and type(k) == 'number' then
+        --- @cast k integer
         if winid == nil then
           return new_win_opt_accessor(k)
         else
@@ -265,10 +273,17 @@ vim.bo = new_buf_opt_accessor()
 --- ```
 vim.wo = new_win_opt_accessor()
 
+--- @param scope? 'local'|'global'
+--- @return table<string,vim.Option>
 local function create_option_accessor(scope)
   --- @diagnostic disable-next-line: no-unknown
   local option_mt
 
+  --- @generic T
+  --- @param name string
+  --- @param value T
+  --- @param op_count integer
+  --- @return vim.Option & { _name: string, _value: T, _op_count: integer }
   local function make_option(name, value, op_count)
     if type(value) == 'table' and getmetatable(value) == option_mt then
       assert(name == value._name, "must be the same value, otherwise that's weird.")
@@ -295,7 +310,7 @@ local function create_option_accessor(scope)
     end,
 
     append = function(self, right)
-      vim.api.nvim_set_option_value(self._name, right, { operation = 'append', scope = scope })
+      api.nvim_set_option_value(self._name, right, { operation = 'append', scope = scope })
     end,
 
     __infix = function(self, right, operation)
@@ -315,7 +330,7 @@ local function create_option_accessor(scope)
       end
       return make_option(
         self._name,
-        vim.api.nvim_set_option_value(
+        api.nvim_set_option_value(
           self._name,
           right,
           { operation = operation, scope = scope, dry_run = true }
@@ -329,7 +344,7 @@ local function create_option_accessor(scope)
     end,
 
     prepend = function(self, right)
-      vim.api.nvim_set_option_value(self._name, right, { operation = 'prepend', scope = scope })
+      api.nvim_set_option_value(self._name, right, { operation = 'prepend', scope = scope })
     end,
 
     __pow = function(self, right)
@@ -337,7 +352,7 @@ local function create_option_accessor(scope)
     end,
 
     remove = function(self, right)
-      vim.api.nvim_set_option_value(self._name, right, { operation = 'remove', scope = scope })
+      api.nvim_set_option_value(self._name, right, { operation = 'remove', scope = scope })
     end,
 
     __sub = function(self, right)
@@ -478,7 +493,8 @@ local Option = {} -- luacheck: no unused
 ---     print("J is enabled!")
 --- end
 --- ```
----@return string|integer|boolean|nil value of option
+---@return string|integer|boolean|string[]|table<string,string|boolean>|nil value of option
+---@diagnostic disable-next-line: unused used for gen_vimdoc
 function Option:get() end
 
 --- Append a value to string-style options. See |:set+=|
@@ -490,7 +506,7 @@ function Option:get() end
 --- vim.opt.formatoptions = vim.opt.formatoptions + 'j'
 --- ```
 ---@param value string Value to append
----@diagnostic disable-next-line:unused-local used for gen_vimdoc
+---@diagnostic disable-next-line:unused used for gen_vimdoc
 function Option:append(value) end -- luacheck: no unused
 
 --- Prepend a value to string-style options. See |:set^=|
@@ -502,7 +518,7 @@ function Option:append(value) end -- luacheck: no unused
 --- vim.opt.wildignore = vim.opt.wildignore ^ '*.o'
 --- ```
 ---@param value string Value to prepend
----@diagnostic disable-next-line:unused-local used for gen_vimdoc
+---@diagnostic disable-next-line:unused used for gen_vimdoc
 function Option:prepend(value) end -- luacheck: no unused
 
 --- Remove a value from string-style options. See |:set-=|
@@ -514,7 +530,7 @@ function Option:prepend(value) end -- luacheck: no unused
 --- vim.opt.wildignore = vim.opt.wildignore - '*.pyc'
 --- ```
 ---@param value string Value to remove
----@diagnostic disable-next-line:unused-local used for gen_vimdoc
+---@diagnostic disable-next-line:unused used for gen_vimdoc
 function Option:remove(value) end -- luacheck: no unused
 
 --- @nodoc

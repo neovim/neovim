@@ -37,12 +37,16 @@ func Test_version()
   call assert_true(has('patch-6.9.999'))
   call assert_true(has('patch-7.1.999'))
   call assert_true(has('patch-7.4.123'))
-  call assert_true(has('patch-7.4.123 ')) " Traling space can be allowed.
+  call assert_true(has('patch-7.4.123 ')) " Trailing space can be allowed.
+  call assert_true(has('patch-9.1.0'))
+  call assert_true(has('patch-9.1.0000'))
+  call assert_true(has('patch-9.2.0'))
+  call assert_true(has('patch-9.2.0000'))
 
   call assert_false(has('patch-7'))
   call assert_false(has('patch-7.4'))
   call assert_false(has('patch-7.4.'))
-  call assert_false(has('patch-9.1.0'))
+  call assert_false(has('patch-9.3.0'))
   call assert_false(has('patch-9.9.1'))
 
   call assert_false(has('patch-abc'))

@@ -174,6 +174,10 @@ describe('TUI :detach', function()
       nvim_set .. ' laststatus=2 background=dark',
     }, { env = env_notermguicolors, cols = opts.cols })
     tt.override_screen_expect_for_conpty(screen)
+    -- The child's `--listen` socket is created asynchronously wrt its PTY output.
+    t.retry(nil, 2000, function()
+      assert(vim.uv.fs_stat(child_server))
+    end)
   end
 
   it('does not stop server', function()
@@ -1257,17 +1261,19 @@ describe('TUI', function()
     ]])
   end)
 
-  it('interprets leading <Esc> byte as ALT modifier in normal-mode', function()
+  it('interprets leading ESC byte as ALT modifier in normal-mode', function()
     local keys = 'dfghjkl'
     for c in keys:gmatch('.') do
       feed_data(':nnoremap <a-' .. c .. '> ialt-' .. c .. '<cr><esc>\r')
       feed_data('\027' .. c)
     end
+    feed_data(':nnoremap <a-esc> ialt-esc<esc>\r')
+    feed_data('\027\027')
     screen:expect([[
       alt-j                                             |
       alt-k                                             |
       alt-l                                             |
-      ^                                                  |
+      alt-es^c                                           |
       {3:[No Name] [+]                                     }|
                                                         |
       {5:-- TERMINAL --}                                    |
@@ -1297,7 +1303,7 @@ describe('TUI', function()
     ]])
   end)
 
-  it('interprets <Esc> encoded with kitty keyboard protocol', function()
+  it('interprets ESC encoded with kitty keyboard protocol', function()
     child_session:request(
       'nvim_exec2',
       [[
@@ -1328,13 +1334,13 @@ describe('TUI', function()
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
-    -- <Esc>; should be recognized as <M-;> when <M-;> is mapped
+    -- ESC+; should be recognized as <M-;> when <M-;> is mapped
     feed_data('\027;')
     screen:expect_unchanged()
     expect_child_buf_lines({ 'ESCsemicolonCtrlEscSuperEscESC' })
   end)
 
-  it('interprets <Esc><Nul> as <M-C-Space> #17198', function()
+  it('interprets ESC NUL as <M-C-Space> #17198', function()
     t.skip(is_os('win'), 'FIXME: does not work on Windows')
     feed_data('i\022\027\000')
     screen:expect([[
@@ -1344,6 +1350,19 @@ describe('TUI', function()
       {5:-- INSERT --}                                      |
       {5:-- TERMINAL --}                                    |
     ]])
+  end)
+
+  it('does not interpret ESC preceding repeat/release event as ALT #41763', function()
+    child_session:request('nvim_command', 'noremap <M-Esc> <Nop>')
+    child_session:request('nvim_command', 'noremap! <M-Esc> <Nop>')
+    feed_data('i\015')
+    wait_for_mode('niI')
+    feed_data('\027\027[27;1:3u') -- ESC, ESC release
+    wait_for_mode('i')
+    feed_data('\015')
+    wait_for_mode('niI')
+    feed_data('\027\027[27;1:2u\027[27;1:3u') -- ESC, ESC repeat, ESC release
+    wait_for_mode('n')
   end)
 
   it("split sequences work within 'ttimeoutlen' time", function()
@@ -2123,7 +2142,7 @@ describe('TUI', function()
     screen:expect([[
       this{108: is line 1}                                    |
       {108:this is line 2}                                    |
-      {108:line}^ 3 is here                                    |
+      {108:line^ }3 is here                                    |
                                                         |
       {3:[No Name] [+]                                     }|
       {5:-- SELECT --}                                      |
@@ -2734,7 +2753,7 @@ describe('TUI', function()
     child_session:request('nvim_set_hl', 0, 'Visual', { undercurl = true })
     feed_data('ifoobar\027V')
     screen:expect([[
-      {114:fooba}^r                                            |
+      {114:fooba^r}                                            |
       {100:~                                                 }|*3
       {3:[No Name] [+]                                     }|
       {5:-- VISUAL LINE --}                                 |
@@ -2742,7 +2761,7 @@ describe('TUI', function()
     ]])
     child_session:request('nvim_set_hl', 0, 'Visual', { underdouble = true })
     screen:expect([[
-      {115:fooba}^r                                            |
+      {115:fooba^r}                                            |
       {100:~                                                 }|*3
       {3:[No Name] [+]                                     }|
       {5:-- VISUAL LINE --}                                 |
@@ -3212,6 +3231,22 @@ describe('TUI', function()
     end)
   end)
 
+  it('TermResponse on kitty-multiple-cursors protocol query', function()
+    child_exec_lua([[
+      _G.termresponse = nil
+      vim.api.nvim_create_autocmd('TermResponse', {
+        once = true,
+        callback = function(ev)
+          _G.termresponse = ev.data.sequence
+        end,
+      })
+    ]])
+    feed_data('\027[>1;2;3;29;30;40;100;101 q')
+    retry(nil, nil, function()
+      eq('\027[>1;2;3;29;30;40;100;101 q', child_exec_lua('return _G.termresponse'))
+    end)
+  end)
+
   it('TermResponse works with vim.wait() from another autocommand #32706', function()
     child_exec_lua([[
       _G.termresponse = nil
@@ -3666,15 +3701,13 @@ describe('TUI', function()
     local chan = api.nvim_get_option_value('channel', { buf = 0 })
     local pid = fn.jobpid(chan)
     fn.chanclose(chan)
-    retry(nil, 2000, function()
-      eq(vim.NIL, api.nvim_get_proc(pid))
-    end)
     -- On Windows the console terminates the child with STATUS_CONTROL_C_EXIT (-1073741510).
     screen:expect({
       any = is_os('win') and '%[Process exited %-?%d+%]' or '%[Process exited 1%]',
     })
     -- Closing stdin must skip the DA1 wait.
     t.assert_nolog('timed out waiting for DA1 response', testlog, 100)
+    eq(vim.NIL, api.nvim_get_proc(pid))
   end)
 end)
 

@@ -452,6 +452,26 @@ void ui_refresh(void)
     eq({}, result)
   end)
 
+  it('supports builtin predicate has-parent?', function()
+    insert([[
+      int x = 123;
+      enum C { y = 124 };]])
+
+    local result = exec_lua(
+      get_query_result,
+      [[((number_literal) @literal (#has-parent? @literal "init_declarator"))]]
+    )
+    eq({ { 'literal', 'number_literal', { 0, 8, 0, 11 }, '123' } }, result)
+
+    -- The root node has no parent: the predicate does not match, rather than
+    -- erroring on the nil parent.
+    result = exec_lua(
+      get_query_result,
+      [[((translation_unit) @root (#has-parent? @root "translation_unit"))]]
+    )
+    eq({}, result)
+  end)
+
   it('allows loading query with escaped quotes and capture them `#{lua,vim}-match`?', function()
     insert('char* astring = "Hello World!";')
 
@@ -863,9 +883,9 @@ void ui_refresh(void)
         local query0 = vim.treesitter.query.parse('c', query)
         local match_preds = query0._match_predicates
         local called = 0
-        function query0:_match_predicates(...)
+        function query0._match_predicates(...)
           called = called + 1
-          return match_preds(self, ...)
+          return match_preds(...)
         end
         local parser = vim.treesitter.get_parser(0, 'c')
         local root = parser:parse()[1]:root()

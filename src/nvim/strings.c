@@ -1784,6 +1784,13 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
                         va_arg(ap, const char *)));
 
           if (!str_arg) {
+#ifdef ENABLE_ASAN_UBSAN
+            // this is only for vsnprintf() emulation, v:_null_string handled in tv_str()
+            if (!tvs) {
+              __sanitizer_print_stack_trace();
+              __sanitizer_report_error_summary("SUMMARY: NULL argument passed to %s");
+            }
+#endif
             str_arg = "[NULL]";
             str_arg_l = 6;
           } else if (!precision_specified) {

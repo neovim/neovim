@@ -134,6 +134,7 @@ Some can be auto-bumped by `scripts/bump_deps.lua`.
       - [our bundled documentation](https://github.com/neovim/neovim/blob/master/runtime/doc/luvref.txt) with [the upstream documentation](https://github.com/luvit/luv/blob/master/docs/docs.md).
 * [gettext](https://ftp.gnu.org/pub/gnu/gettext/)
 * [libiconv](https://ftp.gnu.org/pub/gnu/libiconv)
+    * Requires a PR to update the [Zig package](https://github.com/allyourcodebase/libiconv) first.
 * [lua-compat](https://github.com/keplerproject/lua-compat-5.3)
 * [tree-sitter](https://github.com/tree-sitter/tree-sitter)
 * [treesitter parsers](https://github.com/neovim/neovim/blob/7e97c773e3ba78fcddbb2a0b9b0d572c8210c83e/cmake.deps/deps.txt#L47-L62)
@@ -153,6 +154,8 @@ the sources manually:
 * `src/xdiff/`: [xdiff](https://github.com/git/git/tree/master/xdiff)
 * `src/cjson/`: [lua-cjson](https://github.com/openresty/lua-cjson)
 * `src/klib/`: [Klib](https://github.com/attractivechaos/klib)
+* `src/lpeg/`: [Lpeg](https://www.inf.puc-rio.br/~roberto/lpeg/)
+    * Apply the patch from `src/lpeg/README.md` when syncing with upstream.
 * `runtime/lua/vim/inspect.lua`: [inspect.lua](https://github.com/kikito/inspect.lua)
 * `src/nvim/tui/terminfo_defs.h`: terminfo definitions
     * Run `scripts/update_terminfo.sh` to update these definitions.

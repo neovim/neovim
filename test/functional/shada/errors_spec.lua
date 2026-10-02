@@ -404,6 +404,15 @@ describe('ShaDa error handling', function()
     )
   end)
 
+  it('fails on history item with truncated string', function()
+    -- The string header declares five bytes, but only four follow it.
+    wshada('\004\000\007\146\000\165AAAA')
+    eq(
+      'Vim(rshada):E575: Error while reading ShaDa file: history entry at position 0 has wrong history string type',
+      t.pcall_err(nvim_command, sdrcmd())
+    )
+  end)
+
   it('fails on history item with second item with zero byte', function()
     wshada('\004\000\007\146\000\196\003ab\000')
     eq(

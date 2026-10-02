@@ -941,7 +941,7 @@ endfunc
 " Test for errors with z command
 func Test_normal_z_error()
   call assert_beeps('normal! z2p')
-  call assert_beeps('normal! zq')
+  call assert_beeps('normal! zK')
   call assert_beeps('normal! cz1')
 endfunc
 
@@ -2802,6 +2802,7 @@ func Test_normal33_g_cmd2()
 endfunc
 
 func Test_normal_ex_substitute()
+  throw 'Skipped: Nvim "gQ" restores multicursors (not Ex-mode)'
   " This was hanging on the substitute prompt.
   new
   call setline(1, 'a')
