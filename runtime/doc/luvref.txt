@@ -156,7 +156,7 @@ represent options. For example: >lua
 
 However, luv also superficially exposes libuv constants in a Lua table at
 `uv.constants` where its keys are uppercase constant names and their
-associated values are integers defined internally by libuv. The values from
+associated values are numbers defined internally by libuv. The values from
 this table may be supported as function arguments, but their use may not
 change the output type. For example: >lua
     -- signal start with integer input
@@ -167,6 +167,194 @@ change the output type. For example: >lua
 
 The uppercase constants defined in `uv.constants` that have associated
 lowercase option strings are listed below.
+
+==============================================================================
+Address Families                                        *luv-address-families*
+
+uv.constants.AF_APPLETALK                          *uv.constants.AF_APPLETALK*
+    (integer)
+
+uv.constants.AF_ATMPVC                                *uv.constants.AF_ATMPVC*
+    (integer)
+
+uv.constants.AF_AX25                                    *uv.constants.AF_AX25*
+    (integer)
+
+uv.constants.AF_INET                                    *uv.constants.AF_INET*
+    (integer)
+
+uv.constants.AF_INET6                                  *uv.constants.AF_INET6*
+    (integer)
+
+uv.constants.AF_IPX                                      *uv.constants.AF_IPX*
+    (integer)
+
+uv.constants.AF_NETLINK                              *uv.constants.AF_NETLINK*
+    (integer)
+
+uv.constants.AF_PACKET                                *uv.constants.AF_PACKET*
+    (integer)
+
+uv.constants.AF_UNIX                                    *uv.constants.AF_UNIX*
+    (integer)
+
+uv.constants.AF_X25                                      *uv.constants.AF_X25*
+    (integer)
+
+
+==============================================================================
+Signals                                                          *luv-signals*
+
+uv.constants.SIGABRT                                    *uv.constants.SIGABRT*
+    (integer)
+
+uv.constants.SIGALRM                                    *uv.constants.SIGALRM*
+    (integer)
+
+uv.constants.SIGBREAK                                  *uv.constants.SIGBREAK*
+    (integer)
+
+uv.constants.SIGBUS                                      *uv.constants.SIGBUS*
+    (integer)
+
+uv.constants.SIGCHLD                                    *uv.constants.SIGCHLD*
+    (integer)
+
+uv.constants.SIGCONT                                    *uv.constants.SIGCONT*
+    (integer)
+
+uv.constants.SIGFPE                                      *uv.constants.SIGFPE*
+    (integer)
+
+uv.constants.SIGHUP                                      *uv.constants.SIGHUP*
+    (integer)
+
+uv.constants.SIGILL                                      *uv.constants.SIGILL*
+    (integer)
+
+uv.constants.SIGINT                                      *uv.constants.SIGINT*
+    (integer)
+
+uv.constants.SIGIO                                        *uv.constants.SIGIO*
+    (integer)
+
+uv.constants.SIGIOT                                      *uv.constants.SIGIOT*
+    (integer)
+
+uv.constants.SIGKILL                                    *uv.constants.SIGKILL*
+    (integer)
+
+uv.constants.SIGLOST                                    *uv.constants.SIGLOST*
+    (integer)
+
+uv.constants.SIGPIPE                                    *uv.constants.SIGPIPE*
+    (integer)
+
+uv.constants.SIGPOLL                                    *uv.constants.SIGPOLL*
+    (integer)
+
+uv.constants.SIGPROF                                    *uv.constants.SIGPROF*
+    (integer)
+
+uv.constants.SIGPWR                                      *uv.constants.SIGPWR*
+    (integer)
+
+uv.constants.SIGQUIT                                    *uv.constants.SIGQUIT*
+    (integer)
+
+uv.constants.SIGSEGV                                    *uv.constants.SIGSEGV*
+    (integer)
+
+uv.constants.SIGSTKFLT                                *uv.constants.SIGSTKFLT*
+    (integer)
+
+uv.constants.SIGSTOP                                    *uv.constants.SIGSTOP*
+    (integer)
+
+uv.constants.SIGSYS                                      *uv.constants.SIGSYS*
+    (integer)
+
+uv.constants.SIGTERM                                    *uv.constants.SIGTERM*
+    (integer)
+
+uv.constants.SIGTRAP                                    *uv.constants.SIGTRAP*
+    (integer)
+
+uv.constants.SIGTSTP                                    *uv.constants.SIGTSTP*
+    (integer)
+
+uv.constants.SIGTTIN                                    *uv.constants.SIGTTIN*
+    (integer)
+
+uv.constants.SIGTTOU                                    *uv.constants.SIGTTOU*
+    (integer)
+
+uv.constants.SIGURG                                      *uv.constants.SIGURG*
+    (integer)
+
+uv.constants.SIGUSR1                                    *uv.constants.SIGUSR1*
+    (integer)
+
+uv.constants.SIGUSR2                                    *uv.constants.SIGUSR2*
+    (integer)
+
+uv.constants.SIGVTALRM                                *uv.constants.SIGVTALRM*
+    (integer)
+
+uv.constants.SIGWINCH                                  *uv.constants.SIGWINCH*
+    (integer)
+
+uv.constants.SIGXCPU                                    *uv.constants.SIGXCPU*
+    (integer)
+
+uv.constants.SIGXFSZ                                    *uv.constants.SIGXFSZ*
+    (integer)
+
+
+==============================================================================
+Socket Types                                                *luv-socket-types*
+
+uv.constants.SOCK_DGRAM                              *uv.constants.SOCK_DGRAM*
+    (integer)
+
+uv.constants.SOCK_RAW                                  *uv.constants.SOCK_RAW*
+    (integer)
+
+uv.constants.SOCK_RDM                                  *uv.constants.SOCK_RDM*
+    (integer)
+
+uv.constants.SOCK_SEQPACKET                      *uv.constants.SOCK_SEQPACKET*
+    (integer)
+
+uv.constants.SOCK_STREAM                            *uv.constants.SOCK_STREAM*
+    (integer)
+
+
+==============================================================================
+TTY Modes                                                      *luv-tty-modes*
+
+uv.constants.TTY_MODE_IO                            *uv.constants.TTY_MODE_IO*
+    (integer)
+
+uv.constants.TTY_MODE_NORMAL                    *uv.constants.TTY_MODE_NORMAL*
+    (integer)
+
+uv.constants.TTY_MODE_RAW                          *uv.constants.TTY_MODE_RAW*
+    (integer)
+
+uv.constants.TTY_MODE_RAW_VT                    *uv.constants.TTY_MODE_RAW_VT*
+    (integer)
+
+
+==============================================================================
+FS Modification Times                              *luv-fs-modification-times*
+
+uv.constants.FS_UTIME_NOW                          *uv.constants.FS_UTIME_NOW*
+    (number)
+
+uv.constants.FS_UTIME_OMIT                        *uv.constants.FS_UTIME_OMIT*
+    (number)
+
 
 ==============================================================================
 Error Handling                                   *luv-error-handling* *uv.errno*
@@ -468,6 +656,14 @@ uv.uv_req_t                                           *uv.uv_req_t* *uv_req_t*
       • {get_type}  (`fun(self: uv.uv_req_t): string, integer`) See
                     |uv_req_t:get_type()|.
 
+uv.uv_write_t                                     *uv.uv_write_t* *uv_write_t*
+    Extends: |uv.uv_req_t|
+
+
+    Fields: ~
+      • {nwritten}  (`fun(self: uv.uv_write_t): integer`) See
+                    |uv_write_t:nwritten()|.
+
 
 uv.cancel({req})                                                 *uv.cancel()*
     Cancel a pending request. Fails if the request is executing or has
@@ -494,6 +690,22 @@ uv.req_get_type({req})                                     *uv.req_get_type()*
         (`string`) type
         (`integer`) enum
 
+uv.write_nwritten({req})                                 *uv.write_nwritten()*
+    Returns the number of bytes written by a `uv_write_t` request. Only valid
+    when called from within the write callback (`uv_write_cb`).
+
+    This is primarily useful when a write has been cancelled with
+    `uv.cancel()` and the callback receives an `ECANCELED` error, to determine
+    how many bytes were actually written before the cancellation took effect.
+
+    Raises an error if `req` is not a write request (`uv_write_t`).
+
+    Parameters: ~
+      • {req}  (`uv.uv_write_t`)
+
+    Return: ~
+        (`integer`) nwritten
+
 uv_req_t:cancel()                                          *uv_req_t:cancel()*
     Cancel a pending request. Fails if the request is executing or has
     finished executing. Only cancellation of `uv_fs_t`, `uv_getaddrinfo_t`,
@@ -512,6 +724,19 @@ uv_req_t:get_type()                                      *uv_req_t:get_type()*
     Return (multiple): ~
         (`string`) type
         (`integer`) enum
+
+uv_write_t:nwritten()                                  *uv_write_t:nwritten()*
+    Returns the number of bytes written by a `uv_write_t` request. Only valid
+    when called from within the write callback (`uv_write_cb`).
+
+    This is primarily useful when a write has been cancelled with
+    `uv.cancel()` and the callback receives an `ECANCELED` error, to determine
+    how many bytes were actually written before the cancellation took effect.
+
+    Raises an error if `req` is not a write request (`uv_write_t`).
+
+    Return: ~
+        (`integer`) nwritten
 
 
 ==============================================================================
@@ -1542,6 +1767,7 @@ uv.signal_start({signal}, {signame}, {callback})           *uv.signal_start()*
     Start the handle with the given callback, watching for the given signal.
 
     See |luv-constants| for supported `signame` input and output values.
+    String `signame` values are case-insensitive.
 
     Parameters: ~
       • {signal}    (`uv.uv_signal_t`)
@@ -1558,6 +1784,7 @@ uv.signal_start_oneshot({signal}, {signame}, {callback})  *uv.signal_start_onesh
     the moment the signal is received.
 
     See |luv-constants| for supported `signame` input and output values.
+    String `signame` values are case-insensitive.
 
     Parameters: ~
       • {signal}    (`uv.uv_signal_t`)
@@ -1584,6 +1811,7 @@ uv_signal_t:start({signame}, {callback})                 *uv_signal_t:start()*
     Start the handle with the given callback, watching for the given signal.
 
     See |luv-constants| for supported `signame` input and output values.
+    String `signame` values are case-insensitive.
 
     Parameters: ~
       • {signame}   (`string|integer`)
@@ -1599,6 +1827,7 @@ uv_signal_t:start_oneshot({signame}, {callback})  *uv_signal_t:start_oneshot()*
     the moment the signal is received.
 
     See |luv-constants| for supported `signame` input and output values.
+    String `signame` values are case-insensitive.
 
     Parameters: ~
       • {signame}   (`string|integer`)
@@ -1624,50 +1853,57 @@ uv_signal_t:stop()                                        *uv_signal_t:stop()*
 uv.spawn.options                                            *uv.spawn.options*
 
     Fields: ~
-      • {args}      (`string[]?`) Command line arguments as a list of strings.
-                    The first string should not be the path to the program,
-                    since that is already provided via `path`. On Windows,
-                    this uses CreateProcess which concatenates the arguments
-                    into a string. This can cause some strange errors (see
-                    `options.verbatim` below for Windows).
-      • {cwd}       (`string?`) Set the current working directory for the
-                    sub-process.
-      • {detached}  (`boolean?`) If true, spawn the child process in a
-                    detached state - this will make it a process group leader,
-                    and will effectively enable the child to keep running
-                    after the parent exits. Note that the child process will
-                    still keep the parent's event loop alive unless the parent
-                    process calls `uv.unref()` on the child's process handle.
-      • {env}       (`string[]?`) Set environment variables for the new
-                    process. Each entry should be a string in the form of
-                    `NAME=VALUE`.
-      • {gid}       (`string?`) Set the child process' group id.
-      • {hide}      (`boolean?`) If true, hide the subprocess console window
-                    that would normally be created. This option is only
-                    meaningful on Windows systems. On Unix it is silently
-                    ignored.
-      • {stdio}     (`table<integer, integer|uv.uv_stream_t?>?`) Set the file
-                    descriptors that will be made available to the child
-                    process. The convention is that the first entries are
-                    stdin, stdout, and stderr.
+      • {args}          (`string[]?`) Command line arguments as a list of
+                        strings. The first string should not be the path to
+                        the program, since that is already provided via
+                        `path`. On Windows, this uses CreateProcess which
+                        concatenates the arguments into a string. This can
+                        cause some strange errors (see `options.verbatim`
+                        below for Windows).
+      • {cwd}           (`string?`) Set the current working directory for the
+                        sub-process.
+      • {detached}      (`boolean?`) If true, spawn the child process in a
+                        detached state - this will make it a process group
+                        leader, and will effectively enable the child to keep
+                        running after the parent exits. Note that the child
+                        process will still keep the parent's event loop alive
+                        unless the parent process calls `uv.unref()` on the
+                        child's process handle.
+      • {env}           (`string[]?`) Set environment variables for the new
+                        process. Each entry should be a string in the form of
+                        `NAME=VALUE`.
+      • {gid}           (`integer?`) Set the child process' group id.
+      • {hide}          (`boolean?`) If true, hide the subprocess console
+                        window that would normally be created. This option is
+                        only meaningful on Windows systems. On Unix it is
+                        silently ignored.
+      • {hide_console}  (`boolean?`) Hide the subprocess console window on
+                        Windows.
+      • {hide_gui}      (`boolean?`) Hide the subprocess GUI window on
+                        Windows.
+      • {stdio}         (`table<integer, integer|uv.uv_stream_t?>?`) Set the
+                        file descriptors that will be made available to the
+                        child process. The convention is that the first
+                        entries are stdin, stdout, and stderr.
 
-                    The entries can take many shapes.
-                    • If `integer`, then the child process inherits that same
-                      zero-indexed fd from the parent process.
-                    • If `uv_stream_t` handles are passed in, those are used
-                      as a read-write pipe or inherited stream depending if
-                      the stream has a valid fd.
-                    • If `nil`, means to ignore that fd in the child process.
+                        The entries can take many shapes.
+                        • If `integer`, then the child process inherits that
+                          same zero-indexed fd from the parent process.
+                        • If `uv_stream_t` handles are passed in, those are
+                          used as a read-write pipe or inherited stream
+                          depending if the stream has a valid fd.
+                        • If `nil`, means to ignore that fd in the child
+                          process.
 
-                    Note: On Windows, file descriptors after the third are
-                    available to the child process only if the child processes
-                    uses the MSVCRT runtime.
-      • {uid}       (`string?`) Set the child process' user id.
-      • {verbatim}  (`boolean?`) If true, do not wrap any arguments in quotes,
-                    or perform any other escaping, when converting the
-                    argument list into a command line string. This option is
-                    only meaningful on Windows systems. On Unix it is silently
-                    ignored.
+                        Note: On Windows, file descriptors after the third are
+                        available to the child process only if the child
+                        processes uses the MSVCRT runtime.
+      • {uid}           (`integer?`) Set the child process' user id.
+      • {verbatim}      (`boolean?`) If true, do not wrap any arguments in
+                        quotes, or perform any other escaping, when converting
+                        the argument list into a command line string. This
+                        option is only meaningful on Windows systems. On Unix
+                        it is silently ignored.
 
 uv.uv_process_t                               *uv.uv_process_t* *uv_process_t*
     Extends: |uv.uv_handle_t|
@@ -1795,7 +2031,7 @@ uv.spawn({path}, {options}, {on_exit})                            *uv.spawn()*
     Parameters: ~
       • {path}     (`string`)
       • {options}  (`uv.spawn.options`)
-      • {on_exit}  (`fun(code: integer, signal: integer)`)
+      • {on_exit}  (`fun(code: integer, signal: integer)?`)
 
     Return (multiple): ~
         (`uv.uv_process_t?`) handle
@@ -2273,11 +2509,11 @@ uv.uv_tcp_t                                           *uv.uv_tcp_t* *uv_tcp_t*
     TCP handles are used to represent both TCP streams and servers.
 
     Fields: ~
-      • {bind}                  (`fun(self: uv.uv_tcp_t, host: string, port: integer, flags: { ipv6only: boolean }?): 0?, string?, uv.error_name?`)
+      • {bind}                  (`fun(self: uv.uv_tcp_t, host: string, port: integer, flags: { ipv6only: boolean? }?): 0?, string?, uv.error_name?`)
                                 See |uv_tcp_t:bind()|.
       • {close_reset}           (`fun(self: uv.uv_tcp_t, callback: fun()?): 0?, string?, uv.error_name?`)
                                 See |uv_tcp_t:close_reset()|.
-      • {connect}               (`fun(self: uv.uv_tcp_t, host: string, port: integer, callback: fun(err: string?)): uv.uv_connect_t?, string?, uv.error_name?`)
+      • {connect}               (`fun(self: uv.uv_tcp_t, host: string, port: integer, callback: fun(err: string?)?): uv.uv_connect_t?, string?, uv.error_name?`)
                                 See |uv_tcp_t:connect()|.
       • {getpeername}           (`fun(self: uv.uv_tcp_t): uv.socketinfo?, string?, uv.error_name?`)
                                 See |uv_tcp_t:getpeername()|.
@@ -2345,8 +2581,8 @@ uv.socketpair({socktype}, {protocol}, {flags1}, {flags2})    *uv.socketpair()*
     Parameters: ~
       • {socktype}  (`string|integer?`)
       • {protocol}  (`string|integer?`)
-      • {flags1}    (`{ nonblock: boolean }?`)
-      • {flags2}    (`{ nonblock: boolean }?`)
+      • {flags1}    (`{ nonblock: boolean? }?`)
+      • {flags2}    (`{ nonblock: boolean? }?`)
 
     Return (multiple): ~
         (`[integer, integer]?`) fds
@@ -2370,7 +2606,7 @@ uv.tcp_bind({tcp}, {host}, {port}, {flags})                    *uv.tcp_bind()*
       • {tcp}    (`uv.uv_tcp_t`)
       • {host}   (`string`)
       • {port}   (`integer`)
-      • {flags}  (`{ ipv6only: boolean }?`)
+      • {flags}  (`{ ipv6only: boolean? }?`)
 
     Return (multiple): ~
         (`0?`) success
@@ -2404,7 +2640,7 @@ uv.tcp_connect({tcp}, {host}, {port}, {callback})           *uv.tcp_connect()*
       • {tcp}       (`uv.uv_tcp_t`)
       • {host}      (`string`)
       • {port}      (`integer`)
-      • {callback}  (`fun(err: string?)`)
+      • {callback}  (`fun(err: string?)?`)
 
     Return (multiple): ~
         (`uv.uv_connect_t?`) connect
@@ -2516,7 +2752,7 @@ uv_tcp_t:bind({host}, {port}, {flags})                       *uv_tcp_t:bind()*
     Parameters: ~
       • {host}   (`string`)
       • {port}   (`integer`)
-      • {flags}  (`{ ipv6only: boolean }?`)
+      • {flags}  (`{ ipv6only: boolean? }?`)
 
     Return (multiple): ~
         (`0?`) success
@@ -2548,7 +2784,7 @@ uv_tcp_t:connect({host}, {port}, {callback})              *uv_tcp_t:connect()*
     Parameters: ~
       • {host}      (`string`)
       • {port}      (`integer`)
-      • {callback}  (`fun(err: string?)`)
+      • {callback}  (`fun(err: string?)?`)
 
     Return (multiple): ~
         (`uv.uv_connect_t?`) connect
@@ -2729,8 +2965,8 @@ uv.pipe({read_flags}, {write_flags})                               *uv.pipe()*
 <
 
     Parameters: ~
-      • {read_flags}   (`{ nonblock: boolean }?`)
-      • {write_flags}  (`{ nonblock: boolean }?`)
+      • {read_flags}   (`{ nonblock: boolean? }?`)
+      • {write_flags}  (`{ nonblock: boolean? }?`)
 
     Return (multiple): ~
         (`uv.pipe.fds?`) fds
@@ -3221,7 +3457,7 @@ uv.uv_udp_t                                           *uv.uv_udp_t* *uv_udp_t*
     Fields: ~
       • {bind}                     (`fun(self: uv.uv_udp_t, host: string, port: number, flags: uv.udp_bind.flags?): 0?, string?, uv.error_name?`)
                                    See |uv_udp_t:bind()|.
-      • {connect}                  (`fun(self: uv.uv_udp_t, host: string, port: integer): 0?, string?, uv.error_name?`)
+      • {connect}                  (`fun(self: uv.uv_udp_t, host: string?, port: integer?): 0?, string?, uv.error_name?`)
                                    See |uv_udp_t:connect()|.
       • {get_send_queue_count}     (`fun(self: uv.uv_udp_t): integer`) See
                                    |uv_udp_t:get_send_queue_count()|.
@@ -3237,7 +3473,7 @@ uv.uv_udp_t                                           *uv.uv_udp_t* *uv_udp_t*
                                    See |uv_udp_t:recv_start()|.
       • {recv_stop}                (`fun(self: uv.uv_udp_t): 0?, string?, uv.error_name?`)
                                    See |uv_udp_t:recv_stop()|.
-      • {send}                     (`fun(self: uv.uv_udp_t, data: uv.buffer, host: string, port: integer, callback: fun(err: string?)): uv.uv_udp_send_t?, string?, uv.error_name?`)
+      • {send}                     (`fun(self: uv.uv_udp_t, data: uv.buffer, host: string?, port: integer?, callback: fun(err: string?)?): 0?, string?, uv.error_name?`)
                                    See |uv_udp_t:send()|.
       • {set_broadcast}            (`fun(self: uv.uv_udp_t, on: boolean): 0?, string?, uv.error_name?`)
                                    See |uv_udp_t:set_broadcast()|.
@@ -3253,9 +3489,9 @@ uv.uv_udp_t                                           *uv.uv_udp_t* *uv_udp_t*
                                    See |uv_udp_t:set_source_membership()|.
       • {set_ttl}                  (`fun(self: uv.uv_udp_t, ttl: integer): 0?, string?, uv.error_name?`)
                                    See |uv_udp_t:set_ttl()|.
-      • {try_send}                 (`fun(self: uv.uv_udp_t, data: uv.buffer, host: string, port: integer): integer?, string?, uv.error_name?`)
+      • {try_send}                 (`fun(self: uv.uv_udp_t, data: uv.buffer, host: string?, port: integer?): integer?, string?, uv.error_name?`)
                                    See |uv_udp_t:try_send()|.
-      • {try_send2}                (`fun(self: uv.uv_udp_t, messages: table<integer, { data: uv.buffer, addr: { ip: string, port: integer } }>, flags: 0, port: integer): integer?, string?, uv.error_name?`)
+      • {try_send2}                (`fun(self: uv.uv_udp_t, messages: table<integer, { data: uv.buffer, addr: { ip: string, port: integer }? }>, flags: 0): integer?, string?, uv.error_name?`)
                                    See |uv_udp_t:try_send2()|.
 
 
@@ -3276,7 +3512,7 @@ uv.new_udp({flags})                                             *uv.new_udp()*
     parameter when calling `uv_udp_init_ex`.
 
     Parameters: ~
-      • {flags}  (`{ family: string?, mmsgs: integer? }?`)
+      • {flags}  (`string|integer|{ family: string|integer?, mmsgs: integer? }?`)
 
     Return (multiple): ~
         (`uv.uv_udp_t?`) udp
@@ -3325,16 +3561,19 @@ uv.udp_bind({udp}, {host}, {port}, {flags})                    *uv.udp_bind()*
 
 uv.udp_connect({udp}, {host}, {port})                       *uv.udp_connect()*
     Associate the UDP handle to a remote address and port, so every message
-    sent by this handle is automatically sent to that destination. Calling
-    this function with a NULL addr disconnects the handle. Trying to call
-    `uv.udp_connect()` on an already connected handle will result in an
-    `EISCONN` error. Trying to disconnect a handle that is not connected will
-    return an `ENOTCONN` error.
+    sent by this handle is automatically sent to that destination.
+
+    `host` and `port` must be provided together. Pass explicit `nil` for both
+    to disconnect the handle.
+
+    Trying to call `uv.udp_connect()` on an already connected handle will
+    result in an `EISCONN` error. Trying to disconnect a handle that is not
+    connected will return an `ENOTCONN` error.
 
     Parameters: ~
       • {udp}   (`uv.uv_udp_t`)
-      • {host}  (`string`)
-      • {port}  (`integer`)
+      • {host}  (`string?`)
+      • {port}  (`integer?`)
 
     Return (multiple): ~
         (`0?`) success
@@ -3437,15 +3676,18 @@ uv.udp_send({udp}, {data}, {host}, {port}, {callback})         *uv.udp_send()*
     with `uv.udp_bind()` it will be bound to `0.0.0.0` (the "all interfaces"
     IPv4 address) and a random port number.
 
+    `host` and `port` must be provided together. For a connected socket, pass
+    explicit `nil` for both.
+
     Parameters: ~
       • {udp}       (`uv.uv_udp_t`)
       • {data}      (`uv.buffer`)
-      • {host}      (`string`)
-      • {port}      (`integer`)
-      • {callback}  (`fun(err: string?)`)
+      • {host}      (`string?`)
+      • {port}      (`integer?`)
+      • {callback}  (`fun(err: string?)?`)
 
     Return (multiple): ~
-        (`uv.uv_udp_send_t?`) send
+        (`0?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
@@ -3552,18 +3794,21 @@ uv.udp_try_send({udp}, {data}, {host}, {port})             *uv.udp_try_send()*
     Same as `uv.udp_send()`, but won't queue a send request if it can't be
     completed immediately.
 
+    `host` and `port` must be provided together. For a connected socket, pass
+    explicit `nil` for both.
+
     Parameters: ~
       • {udp}   (`uv.uv_udp_t`)
       • {data}  (`uv.buffer`)
-      • {host}  (`string`)
-      • {port}  (`integer`)
+      • {host}  (`string?`)
+      • {port}  (`integer?`)
 
     Return (multiple): ~
         (`integer?`) bytes_sent
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.udp_try_send2({udp}, {messages}, {flags}, {port})      *uv.udp_try_send2()*
+uv.udp_try_send2({udp}, {messages}, {flags})              *uv.udp_try_send2()*
     Like `uv.udp_try_send()`, but can send multiple datagrams. Lightweight
     abstraction around `sendmmsg(2)`, with a `sendmsg(2)` fallback loop for
     platforms that do not support the former. The `udp` handle must be fully
@@ -3595,9 +3840,8 @@ uv.udp_try_send2({udp}, {messages}, {flags}, {port})      *uv.udp_try_send2()*
 
     Parameters: ~
       • {udp}       (`uv.uv_udp_t`)
-      • {messages}  (`table<integer, { data: uv.buffer, addr: { ip: string, port: integer } }>`)
+      • {messages}  (`table<integer, { data: uv.buffer, addr: { ip: string, port: integer }? }>`)
       • {flags}     (`0`)
-      • {port}      (`integer`)
 
     Return (multiple): ~
         (`integer?`) messages_sent
@@ -3645,15 +3889,18 @@ uv_udp_t:bind({host}, {port}, {flags})                       *uv_udp_t:bind()*
 
 uv_udp_t:connect({host}, {port})                          *uv_udp_t:connect()*
     Associate the UDP handle to a remote address and port, so every message
-    sent by this handle is automatically sent to that destination. Calling
-    this function with a NULL addr disconnects the handle. Trying to call
-    `uv.udp_connect()` on an already connected handle will result in an
-    `EISCONN` error. Trying to disconnect a handle that is not connected will
-    return an `ENOTCONN` error.
+    sent by this handle is automatically sent to that destination.
+
+    `host` and `port` must be provided together. Pass explicit `nil` for both
+    to disconnect the handle.
+
+    Trying to call `uv.udp_connect()` on an already connected handle will
+    result in an `EISCONN` error. Trying to disconnect a handle that is not
+    connected will return an `ENOTCONN` error.
 
     Parameters: ~
-      • {host}  (`string`)
-      • {port}  (`integer`)
+      • {host}  (`string?`)
+      • {port}  (`integer?`)
 
     Return (multiple): ~
         (`0?`) success
@@ -3739,14 +3986,17 @@ uv_udp_t:send({data}, {host}, {port}, {callback})            *uv_udp_t:send()*
     with `uv.udp_bind()` it will be bound to `0.0.0.0` (the "all interfaces"
     IPv4 address) and a random port number.
 
+    `host` and `port` must be provided together. For a connected socket, pass
+    explicit `nil` for both.
+
     Parameters: ~
       • {data}      (`uv.buffer`)
-      • {host}      (`string`)
-      • {port}      (`integer`)
-      • {callback}  (`fun(err: string?)`)
+      • {host}      (`string?`)
+      • {port}      (`integer?`)
+      • {callback}  (`fun(err: string?)?`)
 
     Return (multiple): ~
-        (`uv.uv_udp_send_t?`) send
+        (`0?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
@@ -3846,17 +4096,20 @@ uv_udp_t:try_send({data}, {host}, {port})                *uv_udp_t:try_send()*
     Same as `uv.udp_send()`, but won't queue a send request if it can't be
     completed immediately.
 
+    `host` and `port` must be provided together. For a connected socket, pass
+    explicit `nil` for both.
+
     Parameters: ~
       • {data}  (`uv.buffer`)
-      • {host}  (`string`)
-      • {port}  (`integer`)
+      • {host}  (`string?`)
+      • {port}  (`integer?`)
 
     Return (multiple): ~
         (`integer?`) bytes_sent
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv_udp_t:try_send2({messages}, {flags}, {port})         *uv_udp_t:try_send2()*
+uv_udp_t:try_send2({messages}, {flags})                 *uv_udp_t:try_send2()*
     Like `uv.udp_try_send()`, but can send multiple datagrams. Lightweight
     abstraction around `sendmmsg(2)`, with a `sendmsg(2)` fallback loop for
     platforms that do not support the former. The `udp` handle must be fully
@@ -3887,9 +4140,8 @@ uv_udp_t:try_send2({messages}, {flags}, {port})         *uv_udp_t:try_send2()*
 <
 
     Parameters: ~
-      • {messages}  (`table<integer, { data: uv.buffer, addr: { ip: string, port: integer } }>`)
+      • {messages}  (`table<integer, { data: uv.buffer, addr: { ip: string, port: integer }? }>`)
       • {flags}     (`0`)
-      • {port}      (`integer`)
 
     Return (multiple): ~
         (`integer?`) messages_sent
@@ -4177,7 +4429,7 @@ uv.fs_stat.result                                          *uv.fs_stat.result*
       • {nlink}      (`integer`)
       • {rdev}       (`integer`)
       • {size}       (`integer`)
-      • {type}       (`string`)
+      • {type}       (`string?`)
       • {uid}        (`integer`)
 
 uv.fs_stat.result.time                                *uv.fs_stat.result.time*
@@ -4203,115 +4455,128 @@ uv.luv_dir_t                                                    *uv.luv_dir_t*
 
 
     Fields: ~
-      • {closedir}  (`fun(self: uv.luv_dir_t): boolean?, string?, uv.error_name?`)
+      • {closedir}  (`fun(self: uv.luv_dir_t, callback: nil?): boolean?, string?, uv.error_name?`)
                     See |luv_dir_t:closedir()|.
-      • {readdir}   (`fun(self: uv.luv_dir_t): table<integer, { name: string, type: string  }>?, string?, uv.error_name?`)
+      • {readdir}   (`fun(self: uv.luv_dir_t, callback: nil?): table<integer, { name: string, type: string? }>?, string?, uv.error_name?`)
                     See |luv_dir_t:readdir()|.
 
 
-luv_dir_t:closedir()                                    *luv_dir_t:closedir()*
+luv_dir_t:closedir({callback})                          *luv_dir_t:closedir()*
     Closes a directory stream returned by a successful `uv.fs_opendir()` call.
 
+    Parameters: ~
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
+
     Overloads: ~
-      • `fun(dir: uv.luv_dir_t, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(self: uv.luv_dir_t, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-luv_dir_t:readdir()                                      *luv_dir_t:readdir()*
+luv_dir_t:readdir({callback})                            *luv_dir_t:readdir()*
     Iterates over the directory stream `luv_dir_t` returned by a successful
     `uv.fs_opendir()` call. A table of data tables is returned where the
     number of entries `n` is equal to or less than the `entries` parameter
     used in the associated `uv.fs_opendir()` call.
 
+    Parameters: ~
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
+
     Overloads: ~
-      • `fun(dir: uv.luv_dir_t, callback: fun(err: string?, entries: table<integer, { name: string, type: string }>?)): uv.uv_fs_t`
+      • `fun(self: uv.luv_dir_t, callback: fun(err: string?, entries: table<integer, { name: string, type: string? }>?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
-        (`table<integer, { name: string, type: string  }>?`) entries
+        (`table<integer, { name: string, type: string? }>?`) entries
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_access({path}, {mode})                                  *uv.fs_access()*
+uv.fs_access({path}, {mode}, {callback})                      *uv.fs_access()*
     Equivalent to `access(2)` on Unix. Windows uses `GetFileAttributesW()`.
     Access `mode` can be an integer or a string containing `"R"` or `"W"` or
     `"X"`. Returns `true` or `false` indicating access permission.
 
     Parameters: ~
-      • {path}  (`string`)
-      • {mode}  (`string`) (a combination of the `'r'`, `'w'` and `'x'`
-                characters denoting the symbolic mode as per `chmod(1)`)
+      • {path}      (`string`)
+      • {mode}      (`string|integer`) (a combination of the `'r'`, `'w'` and
+                    `'x'` characters denoting the symbolic mode as per
+                    `chmod(1)`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, mode: string, callback: fun(err: string?, permission: boolean?)): uv.uv_fs_t`
+      • `fun(path: string, mode: string|integer, callback: fun(err: string?, permission: boolean?)): uv.uv_fs_t`
 
     Return (multiple): ~
         (`boolean?`) permission
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_chmod({path}, {mode})                                    *uv.fs_chmod()*
+uv.fs_chmod({path}, {mode}, {callback})                        *uv.fs_chmod()*
     Equivalent to `chmod(2)`.
 
     Parameters: ~
-      • {path}  (`string`)
-      • {mode}  (`integer`) (octal `chmod(1)` mode, e.g. `tonumber('644', 8)`)
+      • {path}      (`string`)
+      • {mode}      (`integer`) (octal `chmod(1)` mode, e.g.
+                    `tonumber('644', 8)`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, mode: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(path: string, mode: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_chown({path}, {uid}, {gid})                              *uv.fs_chown()*
+uv.fs_chown({path}, {uid}, {gid}, {callback})                  *uv.fs_chown()*
     Equivalent to `chown(2)`.
 
     Parameters: ~
-      • {path}  (`string`)
-      • {uid}   (`integer`)
-      • {gid}   (`integer`)
+      • {path}      (`string`)
+      • {uid}       (`integer`)
+      • {gid}       (`integer`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, uid: integer, gid: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(path: string, uid: integer, gid: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_close({fd})                                              *uv.fs_close()*
+uv.fs_close({fd}, {callback})                                  *uv.fs_close()*
     Equivalent to `close(2)`.
 
     Parameters: ~
-      • {fd}  (`integer`)
+      • {fd}        (`integer`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(fd: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(fd: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_closedir({dir})                                       *uv.fs_closedir()*
+uv.fs_closedir({dir}, {callback})                           *uv.fs_closedir()*
     Closes a directory stream returned by a successful `uv.fs_opendir()` call.
 
     Parameters: ~
-      • {dir}  (`uv.luv_dir_t`)
+      • {dir}       (`uv.luv_dir_t`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(dir: uv.luv_dir_t, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(dir: uv.luv_dir_t, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_copyfile({path}, {new_path}, {flags})                 *uv.fs_copyfile()*
+uv.fs_copyfile({path}, {new_path}, {flags}, {callback})     *uv.fs_copyfile()*
     Copies a file from path to new_path. If the `flags` parameter is omitted,
     then the 3rd parameter will be treated as the `callback`.
 
@@ -4319,104 +4584,112 @@ uv.fs_copyfile({path}, {new_path}, {flags})                 *uv.fs_copyfile()*
       • {path}      (`string`)
       • {new_path}  (`string`)
       • {flags}     (`integer|uv.fs_copyfile.flags?`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, new_path: string, flags: integer|uv.fs_copyfile.flags?, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(path: string, new_path: string, flags: integer|uv.fs_copyfile.flags?, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
+      • `fun(path: string, new_path: string, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_fchmod({fd}, {mode})                                    *uv.fs_fchmod()*
+uv.fs_fchmod({fd}, {mode}, {callback})                        *uv.fs_fchmod()*
     Equivalent to `fchmod(2)`.
 
     Parameters: ~
-      • {fd}    (`integer`)
-      • {mode}  (`integer`)
+      • {fd}        (`integer`)
+      • {mode}      (`integer`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(fd: integer, mode: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(fd: integer, mode: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_fchown({fd}, {uid}, {gid})                              *uv.fs_fchown()*
+uv.fs_fchown({fd}, {uid}, {gid}, {callback})                  *uv.fs_fchown()*
     Equivalent to `fchown(2)`.
 
     Parameters: ~
-      • {fd}   (`integer`)
-      • {uid}  (`integer`)
-      • {gid}  (`integer`)
+      • {fd}        (`integer`)
+      • {uid}       (`integer`)
+      • {gid}       (`integer`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(fd: integer, uid: integer, gid: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(fd: integer, uid: integer, gid: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_fdatasync({fd})                                      *uv.fs_fdatasync()*
+uv.fs_fdatasync({fd}, {callback})                          *uv.fs_fdatasync()*
     Equivalent to `fdatasync(2)`.
 
     Parameters: ~
-      • {fd}  (`integer`)
+      • {fd}        (`integer`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(fd: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(fd: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_fstat({fd})                                              *uv.fs_fstat()*
+uv.fs_fstat({fd}, {callback})                                  *uv.fs_fstat()*
     Equivalent to `fstat(2)`.
 
     Parameters: ~
-      • {fd}  (`integer`)
+      • {fd}        (`integer`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(fd: integer, callback: fun(err: string?, stat: uv.fs_stat.result?)): uv.uv_fs_t`
+      • `fun(fd: integer, callback: fun(err: string?, stat: uv.fs_stat.result?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`uv.fs_stat.result?`) stat
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_fsync({fd})                                              *uv.fs_fsync()*
+uv.fs_fsync({fd}, {callback})                                  *uv.fs_fsync()*
     Equivalent to `fsync(2)`.
 
     Parameters: ~
-      • {fd}  (`integer`)
+      • {fd}        (`integer`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(fd: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(fd: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_ftruncate({fd}, {offset})                            *uv.fs_ftruncate()*
+uv.fs_ftruncate({fd}, {offset}, {callback})                *uv.fs_ftruncate()*
     Equivalent to `ftruncate(2)`.
 
     Parameters: ~
-      • {fd}      (`integer`)
-      • {offset}  (`integer`)
+      • {fd}        (`integer`)
+      • {offset}    (`integer`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(fd: integer, offset: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(fd: integer, offset: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_futime({fd}, {atime}, {mtime})                          *uv.fs_futime()*
+uv.fs_futime({fd}, {atime}, {mtime}, {callback})              *uv.fs_futime()*
     Equivalent to `futimes(3)`.
 
     See |luv-constants| for supported FS Modification Time constants.
@@ -4428,64 +4701,68 @@ uv.fs_futime({fd}, {atime}, {mtime})                          *uv.fs_futime()*
     mtime leaves the timestamp untouched.
 
     Parameters: ~
-      • {fd}     (`integer`)
-      • {atime}  (`number|string?`)
-      • {mtime}  (`number|string?`)
+      • {fd}        (`integer`)
+      • {atime}     (`number|string?`)
+      • {mtime}     (`number|string?`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(fd: integer, atime: number|string?, mtime: number|string?, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(fd: integer, atime: number|string?, mtime: number|string?, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_lchown({fd}, {uid}, {gid})                              *uv.fs_lchown()*
+uv.fs_lchown({path}, {uid}, {gid}, {callback})                *uv.fs_lchown()*
     Equivalent to `lchown(2)`.
 
     Parameters: ~
-      • {fd}   (`integer`)
-      • {uid}  (`integer`)
-      • {gid}  (`integer`)
+      • {path}      (`string`)
+      • {uid}       (`integer`)
+      • {gid}       (`integer`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(fd: integer, uid: integer, gid: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(path: string, uid: integer, gid: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_link({path}, {new_path})                                  *uv.fs_link()*
+uv.fs_link({path}, {new_path}, {callback})                      *uv.fs_link()*
     Equivalent to `link(2)`.
 
     Parameters: ~
       • {path}      (`string`)
       • {new_path}  (`string`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, new_path: string, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(path: string, new_path: string, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_lstat({path})                                            *uv.fs_lstat()*
+uv.fs_lstat({path}, {callback})                                *uv.fs_lstat()*
     Equivalent to `lstat(2)`.
 
     Parameters: ~
-      • {path}  (`string`)
+      • {path}      (`string`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, callback: fun(err: string?, stat: uv.fs_stat.result?)): uv.uv_fs_t`
+      • `fun(path: string, callback: fun(err: string?, stat: uv.fs_stat.result?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`uv.fs_stat.result?`) stat
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_lutime({path}, {atime}, {mtime})                        *uv.fs_lutime()*
+uv.fs_lutime({path}, {atime}, {mtime}, {callback})            *uv.fs_lutime()*
     Equivalent to `lutimes(3)`.
 
     See |luv-constants| for supported FS Modification Time constants.
@@ -4497,62 +4774,67 @@ uv.fs_lutime({path}, {atime}, {mtime})                        *uv.fs_lutime()*
     mtime leaves the timestamp untouched.
 
     Parameters: ~
-      • {path}   (`string`)
-      • {atime}  (`number|string?`)
-      • {mtime}  (`number|string?`)
+      • {path}      (`string`)
+      • {atime}     (`number|string?`)
+      • {mtime}     (`number|string?`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, atime: number|string?, mtime: number|string?, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(path: string, atime: number|string?, mtime: number|string?, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_mkdir({path}, {mode})                                    *uv.fs_mkdir()*
+uv.fs_mkdir({path}, {mode}, {callback})                        *uv.fs_mkdir()*
     Equivalent to `mkdir(2)`.
 
     Parameters: ~
-      • {path}  (`string`)
-      • {mode}  (`integer`) (octal `chmod(1)` mode, e.g. `tonumber('755', 8)`)
+      • {path}      (`string`)
+      • {mode}      (`integer`) (octal `chmod(1)` mode, e.g.
+                    `tonumber('755', 8)`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, mode: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(path: string, mode: integer, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_mkdtemp({template})                                    *uv.fs_mkdtemp()*
+uv.fs_mkdtemp({template}, {callback})                        *uv.fs_mkdtemp()*
     Equivalent to `mkdtemp(3)`.
 
     Parameters: ~
       • {template}  (`string`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(template: string, callback: fun(err: string?, path: string?)): uv.uv_fs_t`
+      • `fun(template: string, callback: fun(err: string?, path: string?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`string?`) path
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_mkstemp({template})                                    *uv.fs_mkstemp()*
+uv.fs_mkstemp({template}, {callback})                        *uv.fs_mkstemp()*
     Equivalent to `mkstemp(3)`. Returns a temporary file handle and filename.
 
     Parameters: ~
       • {template}  (`string`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(template: string, callback: uv.fs_mkstemp.callback): uv.uv_fs_t`
+      • `fun(template: string, callback: uv.fs_mkstemp.callback): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`integer?`) fd
         (`string`) path_or_err
         (`uv.error_name?`) err_name
 
-uv.fs_open({path}, {flags}, {mode})                             *uv.fs_open()*
+uv.fs_open({path}, {flags}, {mode}, {callback})                 *uv.fs_open()*
     Equivalent to `open(2)`. Access `flags` may be an integer or one of:
     `"r"`, `"rs"`, `"sr"`, `"r+"`, `"rs+"`, `"sr+"`, `"w"`, `"wx"`, `"xw"`,
     `"w+"`, `"wx+"`, `"xw+"`, `"a"`, `"ax"`, `"xa"`, `"a+"`, `"ax+"`, or
@@ -4561,13 +4843,14 @@ uv.fs_open({path}, {flags}, {mode})                             *uv.fs_open()*
     flags are not supported.
 
     Parameters: ~
-      • {path}   (`string`)
-      • {flags}  (`string|integer`)
-      • {mode}   (`integer`) (octal `chmod(1)` mode, e.g.
-                 `tonumber('644', 8)`)
+      • {path}      (`string`)
+      • {flags}     (`string|integer`)
+      • {mode}      (`integer`) (octal `chmod(1)` mode, e.g.
+                    `tonumber('644', 8)`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, flags: string|integer, mode: integer, callback: fun(err: string?, fd: integer?)): uv.uv_fs_t`
+      • `fun(path: string, flags: string|integer, mode: integer, callback: fun(err: string?, fd: integer?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`integer?`) fd
@@ -4581,18 +4864,18 @@ uv.fs_opendir({path}, {callback}, {entries})                 *uv.fs_opendir()*
 
     Parameters: ~
       • {path}      (`string`)
-      • {callback}  (`nil`) (async if provided, sync if `nil`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
       • {entries}   (`integer?`)
 
     Overloads: ~
-      • `fun(path: string, callback: fun(err: string?, dir: uv.luv_dir_t?), entries: integer?): uv.uv_fs_t`
+      • `fun(path: string, callback: fun(err: string?, dir: uv.luv_dir_t?), entries: integer?): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`uv.luv_dir_t?`) dir
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_read({fd}, {size}, {offset})                              *uv.fs_read()*
+uv.fs_read({fd}, {size}, {offset}, {callback})                  *uv.fs_read()*
     Equivalent to `preadv(2)`. Returns any data. An empty string indicates
     EOF.
 
@@ -4603,86 +4886,93 @@ uv.fs_read({fd}, {size}, {offset})                              *uv.fs_read()*
     by the read.
 
     Parameters: ~
-      • {fd}      (`integer`)
-      • {size}    (`integer`)
-      • {offset}  (`integer?`)
+      • {fd}        (`integer`)
+      • {size}      (`integer`)
+      • {offset}    (`integer?`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(fd: integer, size: integer, offset: integer?, callback: fun(err: string?, data: string?)): uv.uv_fs_t`
+      • `fun(fd: integer, size: integer, offset: integer?, callback: fun(err: string?, data: string?)): uv.uv_fs_t?, string?, uv.error_name?`
+      • `fun(fd: integer, size: integer, callback: fun(err: string?, data: string?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`string?`) data
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_readdir({dir})                                         *uv.fs_readdir()*
+uv.fs_readdir({dir}, {callback})                             *uv.fs_readdir()*
     Iterates over the directory stream `luv_dir_t` returned by a successful
     `uv.fs_opendir()` call. A table of data tables is returned where the
     number of entries `n` is equal to or less than the `entries` parameter
     used in the associated `uv.fs_opendir()` call.
 
     Parameters: ~
-      • {dir}  (`uv.luv_dir_t`)
+      • {dir}       (`uv.luv_dir_t`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(dir: uv.luv_dir_t, callback: fun(err: string?, entries: table<integer, { name: string, type: string }>?)): uv.uv_fs_t`
+      • `fun(dir: uv.luv_dir_t, callback: fun(err: string?, entries: table<integer, { name: string, type: string? }>?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
-        (`table<integer, { name: string, type: string  }>?`) entries
+        (`table<integer, { name: string, type: string? }>?`) entries
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_readlink({path})                                      *uv.fs_readlink()*
+uv.fs_readlink({path}, {callback})                          *uv.fs_readlink()*
     Equivalent to `readlink(2)`.
 
     Parameters: ~
-      • {path}  (`string`)
+      • {path}      (`string`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, callback: fun(err: string?, path: string?)): uv.uv_fs_t`
+      • `fun(path: string, callback: fun(err: string?, path: string?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`string?`) path
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_realpath({path})                                      *uv.fs_realpath()*
+uv.fs_realpath({path}, {callback})                          *uv.fs_realpath()*
     Equivalent to `realpath(3)`.
 
     Parameters: ~
-      • {path}  (`string`)
+      • {path}      (`string`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, callback: fun(err: string?, path: string?)): uv.uv_fs_t`
+      • `fun(path: string, callback: fun(err: string?, path: string?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`string?`) path
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_rename({path}, {new_path})                              *uv.fs_rename()*
+uv.fs_rename({path}, {new_path}, {callback})                  *uv.fs_rename()*
     Equivalent to `rename(2)`.
 
     Parameters: ~
       • {path}      (`string`)
       • {new_path}  (`string`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, new_path: string, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(path: string, new_path: string, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_rmdir({path})                                            *uv.fs_rmdir()*
+uv.fs_rmdir({path}, {callback})                                *uv.fs_rmdir()*
     Equivalent to `rmdir(2)`.
 
     Parameters: ~
-      • {path}  (`string`)
+      • {path}      (`string`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(path: string, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
@@ -4720,10 +5010,10 @@ uv.fs_scandir_next({fs})                                *uv.fs_scandir_next()*
 
     Return (multiple): ~
         (`string?`) name
-        (`string`) type_or_err
+        (`string?`) type_or_err
         (`uv.error_name?`) err_name
 
-uv.fs_sendfile({out_fd}, {in_fd}, {in_offset}, {size})      *uv.fs_sendfile()*
+uv.fs_sendfile({out_fd}, {in_fd}, {in_offset}, {size}, {callback})  *uv.fs_sendfile()*
     Limited equivalent to `sendfile(2)`. Returns the number of bytes written.
 
     Parameters: ~
@@ -4731,44 +5021,47 @@ uv.fs_sendfile({out_fd}, {in_fd}, {in_offset}, {size})      *uv.fs_sendfile()*
       • {in_fd}      (`integer`)
       • {in_offset}  (`integer`)
       • {size}       (`integer`)
+      • {callback}   (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(out_fd: integer, in_fd: integer, in_offset: integer, size: integer, callback: fun(err: string?, bytes: integer?)): uv.uv_fs_t`
+      • `fun(out_fd: integer, in_fd: integer, in_offset: integer, size: integer, callback: fun(err: string?, bytes: integer?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`integer?`) bytes
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_stat({path})                                              *uv.fs_stat()*
+uv.fs_stat({path}, {callback})                                  *uv.fs_stat()*
     Equivalent to `stat(2)`.
 
     Parameters: ~
-      • {path}  (`string`)
+      • {path}      (`string`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, callback: fun(err: string?, stat: uv.fs_stat.result?)): uv.uv_fs_t`
+      • `fun(path: string, callback: fun(err: string?, stat: uv.fs_stat.result?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`uv.fs_stat.result?`) stat
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_statfs({path})                                          *uv.fs_statfs()*
+uv.fs_statfs({path}, {callback})                              *uv.fs_statfs()*
     Equivalent to `statfs(2)`.
 
     Parameters: ~
-      • {path}  (`string`)
+      • {path}      (`string`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, callback: fun(err: string?, stat: uv.fs_statfs.result?)): uv.uv_fs_t`
+      • `fun(path: string, callback: fun(err: string?, stat: uv.fs_statfs.result?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`uv.fs_statfs.result?`) stat
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_symlink({path}, {new_path}, {flags})                   *uv.fs_symlink()*
+uv.fs_symlink({path}, {new_path}, {flags}, {callback})       *uv.fs_symlink()*
     Equivalent to `symlink(2)`. If the `flags` parameter is omitted, then the
     3rd parameter will be treated as the `callback`.
 
@@ -4776,30 +5069,33 @@ uv.fs_symlink({path}, {new_path}, {flags})                   *uv.fs_symlink()*
       • {path}      (`string`)
       • {new_path}  (`string`)
       • {flags}     (`integer|{ dir: boolean?, junction: boolean? }?`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, new_path: string, flags: integer|{ dir: boolean?, junction: boolean? }?, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(path: string, new_path: string, flags: integer|{ dir: boolean?, junction: boolean? }?, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
+      • `fun(path: string, new_path: string, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_unlink({path})                                          *uv.fs_unlink()*
+uv.fs_unlink({path}, {callback})                              *uv.fs_unlink()*
     Equivalent to `unlink(2)`.
 
     Parameters: ~
-      • {path}  (`string`)
+      • {path}      (`string`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(path: string, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_utime({path}, {atime}, {mtime})                          *uv.fs_utime()*
+uv.fs_utime({path}, {atime}, {mtime}, {callback})              *uv.fs_utime()*
     Equivalent to `utime(2)`.
 
     See |luv-constants| for supported FS Modification Time constants.
@@ -4811,19 +5107,20 @@ uv.fs_utime({path}, {atime}, {mtime})                          *uv.fs_utime()*
     mtime leaves the timestamp untouched.
 
     Parameters: ~
-      • {path}   (`string`)
-      • {atime}  (`number|string?`)
-      • {mtime}  (`number|string?`)
+      • {path}      (`string`)
+      • {atime}     (`number|string?`)
+      • {mtime}     (`number|string?`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(path: string, atime: number|string?, mtime: number|string?, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t`
+      • `fun(path: string, atime: number|string?, mtime: number|string?, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`boolean?`) success
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.fs_write({fd}, {data}, {offset})                            *uv.fs_write()*
+uv.fs_write({fd}, {data}, {offset}, {callback})                *uv.fs_write()*
     Equivalent to `pwritev(2)`. Returns the number of bytes written.
 
     If `offset` is nil or omitted, it will default to `-1`, which indicates
@@ -4833,12 +5130,14 @@ uv.fs_write({fd}, {data}, {offset})                            *uv.fs_write()*
     by the write.
 
     Parameters: ~
-      • {fd}      (`integer`)
-      • {data}    (`uv.buffer`)
-      • {offset}  (`integer?`)
+      • {fd}        (`integer`)
+      • {data}      (`uv.buffer`)
+      • {offset}    (`integer?`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(fd: integer, data: uv.buffer, offset: integer?, callback: fun(err: string?, bytes: integer?)): uv.uv_fs_t`
+      • `fun(fd: integer, data: uv.buffer, offset: integer?, callback: fun(err: string?, bytes: integer?)): uv.uv_fs_t?, string?, uv.error_name?`
+      • `fun(fd: integer, data: uv.buffer, callback: fun(err: string?, bytes: integer?)): uv.uv_fs_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`integer?`) bytes_written
@@ -4944,7 +5243,7 @@ uv.getnameinfo.address                                *uv.getnameinfo.address*
       • {port}    (`integer?`)
 
 
-uv.getaddrinfo({host}, {service}, {hints})                  *uv.getaddrinfo()*
+uv.getaddrinfo({node}, {service}, {hints}, {callback})      *uv.getaddrinfo()*
     Equivalent to `getaddrinfo(3)`. Either `node` or `service` may be `nil`
     but not both.
 
@@ -4959,25 +5258,27 @@ uv.getaddrinfo({host}, {service}, {hints})                  *uv.getaddrinfo()*
     `"ip"`, `"icmp"`, `"tcp"`, `"udp"`, etc.
 
     Parameters: ~
-      • {host}     (`string?`)
-      • {service}  (`string?`)
-      • {hints}    (`uv.getaddrinfo.hints?`)
+      • {node}      (`string?`)
+      • {service}   (`string?`)
+      • {hints}     (`uv.getaddrinfo.hints?`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(host: string?, service: string?, hints: uv.getaddrinfo.hints?, callback: fun(err: string?, addresses: table<integer, uv.address>?)): uv.uv_getaddrinfo_t?, string?, uv.error_name?`
+      • `fun(node: string?, service: string?, hints: uv.getaddrinfo.hints?, callback: fun(err: string?, addresses: table<integer, uv.address>?)): uv.uv_getaddrinfo_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`table<integer, uv.address>?`) addresses
         (`string?`) err
         (`uv.error_name?`) err_name
 
-uv.getnameinfo({address})                                   *uv.getnameinfo()*
+uv.getnameinfo({address}, {callback})                       *uv.getnameinfo()*
     Equivalent to `getnameinfo(3)`.
 
     See |luv-constants| for supported address `family` input values.
 
     Parameters: ~
-      • {address}  (`uv.getnameinfo.address`)
+      • {address}   (`uv.getnameinfo.address`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
       • `fun(address: uv.getnameinfo.address, callback: uv.getnameinfo.callback): uv.uv_getnameinfo_t?, string?, uv.error_name?`
@@ -5022,7 +5323,7 @@ uv.luv_thread_t                                              *uv.luv_thread_t*
                        See |luv_thread_t:getpriority()|.
       • {join}         (`fun(self: uv.luv_thread_t): boolean?, string?, uv.error_name?`)
                        See |luv_thread_t:join()|.
-      • {setaffinity}  (`fun(self: uv.luv_thread_t, affinity: table<integer, boolean>, get_old_affinity: boolean?): table<integer, boolean>?, string?, uv.error_name?`)
+      • {setaffinity}  (`fun(self: uv.luv_thread_t, affinity: table<integer, boolean>, get_old_affinity: boolean?): table<integer, boolean>|boolean?, string?, uv.error_name?`)
                        See |luv_thread_t:setaffinity()|.
       • {setpriority}  (`fun(self: uv.luv_thread_t, priority: integer): boolean?, string?, uv.error_name?`)
                        See |luv_thread_t:setpriority()|.
@@ -5143,7 +5444,7 @@ luv_thread_t:setaffinity({affinity}, {get_old_affinity})  *luv_thread_t:setaffin
       • {get_old_affinity}  (`boolean?`)
 
     Return (multiple): ~
-        (`table<integer, boolean>?`) affinity
+        (`table<integer, boolean>|boolean?`) affinity_or_success
         (`string?`) err
         (`uv.error_name?`) err_name
 
@@ -5195,9 +5496,12 @@ uv.new_thread({options}, {entry}, {...})                     *uv.new_thread()*
     the thread end of life before Lua state close.
 
     Parameters: ~
-      • {options}  (`{ stack_size: integer? }?`)
+      • {options}  (`{ stack_size: integer? }`)
       • {entry}    (`function|string`)
       • {...}      (`uv.threadargs`) passed to `entry`
+
+    Overloads: ~
+      • `fun(entry: function|string, ...: uv.threadargs): uv.luv_thread_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`uv.luv_thread_t?`) thread
@@ -5367,7 +5671,7 @@ uv.thread_setaffinity({thread}, {affinity}, {get_old_affinity})  *uv.thread_seta
       • {get_old_affinity}  (`boolean?`)
 
     Return (multiple): ~
-        (`table<integer, boolean>?`) affinity
+        (`table<integer, boolean>|boolean?`) affinity_or_success
         (`string?`) err
         (`uv.error_name?`) err_name
 
@@ -5693,7 +5997,8 @@ uv.interface_addresses()                            *uv.interface_addresses()*
     See |luv-constants| for supported address `family` output values.
 
     Return (multiple): ~
-        (`table<string, uv.interface_addresses.addresses>?`) addresses
+        (`table<string, table<integer, uv.interface_addresses.addresses>>?`)
+        addresses
         (`string?`) err
         (`uv.error_name?`) err_name
 
@@ -5710,8 +6015,10 @@ uv.os_environ()                                              *uv.os_environ()*
     with their corresponding values. Warning: This function is not
     thread-safe.
 
-    Return: ~
-        (`table`)
+    Return (multiple): ~
+        (`table<string, string>?`) env
+        (`string?`) err
+        (`uv.error_name?`) err_name
 
 uv.os_get_passwd()                                        *uv.os_get_passwd()*
     Gets a subset of the password file entry for the current effective uid
@@ -5743,8 +6050,10 @@ uv.os_getenv({name}, {size})                                  *uv.os_getenv()*
 uv.os_gethostname()                                      *uv.os_gethostname()*
     Returns the hostname.
 
-    Return: ~
-        (`string`)
+    Return (multiple): ~
+        (`string?`) hostname
+        (`string?`) err
+        (`uv.error_name?`) err_name
 
 uv.os_getpid()                                                *uv.os_getpid()*
     Returns the current process ID.
@@ -5814,8 +6123,10 @@ uv.os_tmpdir()                                                *uv.os_tmpdir()*
 uv.os_uname()                                                  *uv.os_uname()*
     Returns system information.
 
-    Return: ~
-        (`uv.os_uname.info`) info
+    Return (multiple): ~
+        (`uv.os_uname.info?`) info
+        (`string?`) err
+        (`uv.error_name?`) err_name
 
 uv.os_unsetenv({name})                                      *uv.os_unsetenv()*
     Unsets the environmental variable specified by `name`. Warning: This
@@ -5841,7 +6152,7 @@ uv.print_all_handles()                                *uv.print_all_handles()*
     Warning: This function is meant for ad hoc debugging, there are no API/ABI
     stability guarantees.
 
-uv.random({len}, {flags})                                        *uv.random()*
+uv.random({len}, {flags}, {callback})                            *uv.random()*
     Fills a string of length `len` with cryptographically strong random bytes
     acquired from the system CSPRNG. `flags` is reserved for future extension
     and must currently be `nil` or `0` or `{}`.
@@ -5855,8 +6166,9 @@ uv.random({len}, {flags})                                        *uv.random()*
     low on entropy.
 
     Parameters: ~
-      • {len}    (`integer`)
-      • {flags}  (`0`)
+      • {len}       (`integer`)
+      • {flags}     (`0`)
+      • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
       • `fun`
@@ -5929,8 +6241,8 @@ uv.metrics_info.info                                    *uv.metrics_info.info*
 
     Fields: ~
       • {events}          (`integer`)
-      • {events_waiting}  (`number`)
-      • {loop_count}      (`number`)
+      • {events_waiting}  (`integer`)
+      • {loop_count}      (`integer`)
 
 
 uv.metrics_idle_time()                                *uv.metrics_idle_time()*
@@ -5953,8 +6265,10 @@ uv.metrics_info()                                          *uv.metrics_info()*
     `uv.new_prepare`, `uv.prepare_start`) in order to make sure there are no
     inconsistencies with the metrics counters.
 
-    Return: ~
-        (`uv.metrics_info.info`) info
+    Return (multiple): ~
+        (`uv.metrics_info.info?`) info
+        (`string?`) err
+        (`uv.error_name?`) err_name
 
 
 ==============================================================================
@@ -6025,10 +6339,6 @@ uv.uv_work_t                                        *uv.uv_work_t* *uv_work_t*
     Extends: |uv.uv_req_t|
 
 
-uv.uv_write_t                                     *uv.uv_write_t* *uv_write_t*
-    Extends: |uv.uv_req_t|
-
-
 uv.utf16_length_as_wtf8({utf16})                   *uv.utf16_length_as_wtf8()*
     Get the length (in bytes) of a UTF-16 (or UCS-2) string `utf16` value
     after converting it to WTF-8.
@@ -6047,8 +6357,10 @@ uv.utf16_to_wtf8({utf16})                                 *uv.utf16_to_wtf8()*
     Parameters: ~
       • {utf16}  (`string`)
 
-    Return: ~
-        (`string`)
+    Return (multiple): ~
+        (`string?`) wtf8
+        (`string?`) err
+        (`uv.error_name?`) err_name
 
 uv.wtf8_length_as_utf16({wtf8})                    *uv.wtf8_length_as_utf16()*
     Get the length (in UTF-16 code units) of a WTF-8 `wtf8` value after

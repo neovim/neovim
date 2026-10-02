@@ -959,7 +959,7 @@ function M.mkdir(path, opts)
 end
 
 --- @param path string Path to remove
---- @param ty string type of path
+--- @param ty string? type of path
 --- @param recursive? boolean
 --- @param force? boolean
 local function rm(path, ty, recursive, force)
