@@ -2009,7 +2009,7 @@ nvim_exec2({src}, {opts})                                       *nvim_exec2()*
     Return: ~
         (`table<string,any>`) Dict containing information about execution,
         with these keys:
-        • output: (string|nil) Output if `opts.output` is true.
+        • output: (string) Captured output, present only if `opts.output` is true.
 
     See also: ~
       • |execute()|

@@ -50,7 +50,7 @@
 ///                     all (non-error, non-shell |:!|) output.
 /// @param[out] err Error details (Vim error), if any
 /// @return Dict containing information about execution, with these keys:
-///       - output: (string|nil) Output if `opts.output` is true.
+///       - output: (string) Captured output, present only if `opts.output` is true.
 Dict nvim_exec2(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *err)
   FUNC_API_SINCE(11) FUNC_API_RET_ALLOC
 {
