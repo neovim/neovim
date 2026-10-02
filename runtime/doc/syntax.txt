@@ -202,6 +202,7 @@ String		a string constant: "this is a string"
 Character	a character constant: 'c', '\n'
 Number		a number constant: 234, 0xff
 Boolean		a boolean constant: TRUE, false
+Regexp		a regular expression constant: /ab*c/
 Float		a floating point constant: 2.3e10
 
 Identifier	any variable name

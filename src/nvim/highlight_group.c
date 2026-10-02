@@ -205,6 +205,7 @@ static const char *highlight_init_both[] = {
   "default link Character      Constant",
   "default link Number         Constant",
   "default link Boolean        Constant",
+  "default link Regexp         Constant",
   "default link Float          Number",
   "default link Conditional    Statement",
   "default link Repeat         Statement",
