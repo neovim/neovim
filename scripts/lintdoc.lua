@@ -18,5 +18,6 @@ vim.cmd [[ helptags ALL ]]
 
 require('src.gen.gen_help_html').run_validate(nil, _G.arg[1] ~= nil)
 require('src.gen.gen_help_html').test_gen()
+require('src.gen.gen_help_html').check_deprecated()
 
 print('lintdoc PASSED.')
