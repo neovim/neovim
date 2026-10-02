@@ -127,4 +127,22 @@ function M.uri_to_bufnr(uri)
   return vim.fn.bufadd(M.uri_to_fname(uri))
 end
 
+---@class vim.uri.NvimUri
+---@field action string URI action
+---@field file string File path
+---@field line? integer Line number
+---@field column? integer Column number
+---@field server? string Server address to connect to
+
+---Parses a nvim:// URI into its components.
+---
+---Format: `nvim://open?file={path}[&line={n}] [&column={n}] [&server={addr}]`
+---
+---@param uri string The nvim:// URI to parse
+---@return vim.uri.NvimUri? parsed The parsed URI components, or nil if invalid
+---@return string? err Error message if parsing failed
+function M.parse_nvim(uri)
+  return require('vim._core.uri').parse(uri)
+end
+
 return M
