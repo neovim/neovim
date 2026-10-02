@@ -390,3 +390,17 @@ function_specs_for('remote#define#FunctionOnChannel', true, channel)
 function_specs_for('remote#define#FunctionOnChannel', false, channel)
 function_specs_for('remote#define#FunctionOnHost', true, host, register)
 function_specs_for('remote#define#FunctionOnHost', false, host, register)
+
+describe('remote#define#request', function()
+  before_each(clear)
+
+  it('does not block later notifications when the request fails', function()
+    local chan = eval([[jobstart([v:progpath, '--clean', '--embed', '--headless'], #{rpc: 1})]])
+    t.matches(
+      'Key not found: nope',
+      t.pcall_err(n.fn['remote#define#request'], chan, 'nvim_get_var', 'nope')
+    )
+    n.fn['remote#define#notify'](chan, 'nvim_set_var', 'after', 1)
+    eq(1, n.fn.rpcrequest(chan, 'nvim_eval', 'get(g:, "after", 0)'))
+  end)
+end)

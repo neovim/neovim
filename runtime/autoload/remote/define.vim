@@ -193,14 +193,17 @@ endfunction
 
 function! remote#define#request(chan, ...)
   let s:busy[a:chan] = get(s:busy, a:chan, 0)+1
-  let val = call('rpcrequest', [a:chan]+a:000)
-  let s:busy[a:chan] -= 1
-  if s:busy[a:chan] == 0
-    for msg in get(s:pending_notifications, a:chan, [])
-      call call('rpcnotify', [a:chan] + msg)
-    endfor
-    let s:pending_notifications[a:chan] = []
-  endif
+  try
+    let val = call('rpcrequest', [a:chan]+a:000)
+  finally
+    let s:busy[a:chan] -= 1
+    if s:busy[a:chan] == 0
+      for msg in get(s:pending_notifications, a:chan, [])
+        call call('rpcnotify', [a:chan] + msg)
+      endfor
+      let s:pending_notifications[a:chan] = []
+    endif
+  endtry
   return val
 endfunction
 
