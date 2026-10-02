@@ -37,6 +37,29 @@ local matches = t.matches
 local skip = t.skip
 local is_os = t.is_os
 
+local function get_child_env(envname, env)
+  return exec_lua(
+    [[
+    local envname, env = ...
+    local join = function(s) return vim.fn.join(s, '') end
+    local stdout = {}
+    local stderr = {}
+    local opt = {
+      env = env,
+      stdout_buffered = true,
+      stderr_buffered = true,
+      on_stderr = function(chan, data, name) stderr = data end,
+      on_stdout = function(chan, data, name) stdout = data end,
+    }
+    local j1 = vim.fn.jobstart({ vim.v.progpath, '-es', '-V1',('+echo "%s="..getenv("%s")'):format(envname, envname), '+qa!' }, opt)
+    vim.fn.jobwait({ j1 }, 10000)
+    return join({ join(stdout), join(stderr) })
+  ]],
+    envname,
+    env
+  )
+end
+
 describe('jobs', function()
   local channel
 
@@ -813,29 +836,6 @@ describe('jobs', function()
   end)
 
   it('jobstart() environment: $NVIM, $NVIM_LISTEN_ADDRESS #11009', function()
-    local function get_child_env(envname, env)
-      return exec_lua(
-        [[
-        local envname, env = ...
-        local join = function(s) return vim.fn.join(s, '') end
-        local stdout = {}
-        local stderr = {}
-        local opt = {
-          env = env,
-          stdout_buffered = true,
-          stderr_buffered = true,
-          on_stderr = function(chan, data, name) stderr = data end,
-          on_stdout = function(chan, data, name) stdout = data end,
-        }
-        local j1 = vim.fn.jobstart({ vim.v.progpath, '-es', '-V1',('+echo "%s="..getenv("%s")'):format(envname, envname), '+qa!' }, opt)
-        vim.fn.jobwait({ j1 }, 10000)
-        return join({ join(stdout), join(stderr) })
-      ]],
-        envname,
-        env
-      )
-    end
-
     local addr = eval('v:servername')
     ok((addr):len() > 0)
     -- $NVIM is _not_ defined in the top-level Nvim process.
@@ -854,6 +854,37 @@ describe('jobs', function()
       get_child_env('NVIM_LOG_FILE', { NVIM_LOG_FILE = 'Xtest_jobstart_env' })
     )
     os.remove('Xtest_jobstart_env')
+  end)
+
+  it('jobstart() sets empty $NVIM if server startup fails #27962', function()
+    skip(is_os('win'), '$XDG_RUNTIME_DIR does not determine Windows pipe paths')
+
+    local logfile = 'Xtest_jobstart-env-log'
+    finally(function()
+      os.remove(logfile)
+    end)
+    clear {
+      args_rm = { '--listen' },
+      env = {
+        NVIM_LOG_FILE = logfile,
+        XDG_RUNTIME_DIR = '/non-existent-dir/subdir//',
+      },
+    }
+
+    eq('', eval('v:servername'))
+    local result = exec_lua(
+      [[
+      local stdout = {}
+      local job = vim.fn.jobstart({ ..., 'NVIM' }, {
+        stdout_buffered = true,
+        on_stdout = function(_, data) stdout = data end,
+      })
+      return { vim.fn.jobwait({ job }, 10000)[1], table.concat(stdout) }
+    ]],
+      testprg('printenv-test')
+    )
+    eq(0, result[1])
+    eq('', result[2])
   end)
 
   describe('jobwait()', function()
