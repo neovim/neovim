@@ -108,6 +108,7 @@
 \*SigUSR1\*
 \*TerminalOpen\*
 \*TerminalWinOpen\*
+\*WSL\*
 \*X11\*
 \*XLFD\*
 \*\(job\|sound\|term\|test_gui\)_[_a-zA-Z0-9]\+()\*
@@ -132,3 +133,4 @@
 \*terminal-\(api\|bufname\|nospecial\)\*
 \*v:none\*
 \*v:sizeof[a-z]\+\*
+\*win32-compiling\*
