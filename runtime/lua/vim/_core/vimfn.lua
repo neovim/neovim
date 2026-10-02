@@ -8,13 +8,13 @@ local M = {}
 --- Returns the hostname of the machine.
 --- @return string
 function M.f_hostname()
-  return vim.uv.os_gethostname()
+  return vim.uv.os_gethostname() or ''
 end
 
 --- Returns all environment variables as a dictionary.
 --- @return table<string, string>
 function M.f_environ()
-  local env = vim.uv.os_environ() ---@type table<string, string>
+  local env = vim.uv.os_environ() or {} ---@type table<string, string>
   if vim.fn.has('win32') == 1 then -- Vim/legacy behavior: force uppercase keys on Windows. #39443
     local upper = {} --- @type table<string, string>
     for k, v in pairs(env) do

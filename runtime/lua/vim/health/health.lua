@@ -263,7 +263,7 @@ local function check_limits()
   end
 
   -- Linux inotify limits filewatchers (LSP, vim._watch). Exhausting them reports ENOSPC ("no space on device").
-  if vim.uv.os_uname().sysname == 'Linux' then
+  if assert(vim.uv.os_uname()).sysname == 'Linux' then
     local watches = read_int('/proc/sys/fs/inotify/max_user_watches')
     local instances = read_int('/proc/sys/fs/inotify/max_user_instances')
     if watches and watches < 8192 then
@@ -814,7 +814,7 @@ local function check_sysinfo()
     check_stable_version(nvim_version)
   end
 
-  local os_info = vim.uv.os_uname()
+  local os_info = assert(vim.uv.os_uname())
   local os_string = os_info.sysname .. ' ' .. os_info.release
   local terminal = detect_terminal()
   local term_env = vim.env.TERM or 'unknown'
