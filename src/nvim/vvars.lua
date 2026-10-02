@@ -202,6 +202,10 @@ M.vars = {
         cmdtype          Type of cmdline, |cmdline-char|.
         col              Column count of popup menu on |CompleteChanged|,
                          relative to screen.
+        complete_leader  What |CompleteChanged| is filtering by.  Not the
+                         same as reading the line: a match may be shown
+                         in the buffer in its place, and "longest" fills
+                         it with the common prefix.
         complete_type    See |complete_info_mode|
         complete_word    The selected word, or empty if completion
                          was abandoned/discarded.
