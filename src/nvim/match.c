@@ -3,12 +3,17 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "nvim/api/extmark.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
+#include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
 #include "nvim/eval/funcs.h"
@@ -16,13 +21,16 @@
 #include "nvim/eval/window.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/extmark.h"
 #include "nvim/fold.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
+#include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/macros_defs.h"
+#include "nvim/marktree.h"
 #include "nvim/match.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
@@ -40,6 +48,38 @@
 #include "match.c.generated.h"
 
 #define SEARCH_HL_PRIORITY 0
+
+/// Inject matchaddpos highlights into DecorState for the line.
+/// @return true if any decoration was injected.
+bool matchaddpos_decor(win_T *wp, linenr_T lnum)
+{
+  bool added = false;
+  int row = lnum - 1;
+  for (matchitem_T *cur = wp->w_match_head; cur != NULL; cur = cur->mit_next) {
+    if (cur->mit_pos_array == NULL
+        || (cur->mit_toplnum > 0 && (lnum < cur->mit_toplnum || lnum >= cur->mit_botlnum))) {
+      continue;
+    }
+    DecorSignHighlight sh = DECOR_SIGN_HIGHLIGHT_INIT;
+    sh.hl_id = cur->mit_hlg_id;
+    sh.priority = (DecorPriority)MAX(cur->mit_priority, 0);
+    if (cur->mit_conceal_char) {
+      sh.flags |= kSHConceal;
+      sh.text[0] = schar_from_char(cur->mit_conceal_char);
+    }
+    for (int i = 0; i < cur->mit_pos_count; i++) {
+      llpos_T *pos = &cur->mit_pos_array[i];
+      if (pos->lnum != lnum || pos->lnum <= 0) {
+        continue;
+      }
+      colnr_T sc = pos->col == 0 ? 0 : pos->col - 1;
+      colnr_T ec = pos->col == 0 ? MAXCOL : sc + (pos->len == 0 ? 1 : pos->len);
+      decor_range_add_sh(&decor_state, row, sc, row, ec, &sh, false, 0, 0, 0);
+      added = true;
+    }
+  }
+  return added;
+}
 
 /// Add match to the match list of window "wp".
 /// If "pat" is not NULL the pattern will be highlighted with the group "grp"
@@ -296,6 +336,10 @@ void init_search_hl(win_T *wp, match_T *search_hl)
   // match
   matchitem_T *cur = wp->w_match_head;
   while (cur != NULL) {
+    if (cur->mit_pos_array != NULL) {
+      cur = cur->mit_next;
+      continue;
+    }
     cur->mit_hl.rm = cur->mit_match;
     if (cur->mit_hlg_id == 0) {
       cur->mit_hl.attr = 0;
@@ -315,60 +359,6 @@ void init_search_hl(win_T *wp, match_T *search_hl)
   search_hl->attr = win_hl_attr(wp, HLF_L);
 
   // time limit is set at the toplevel, for all windows
-}
-
-/// @param shl       points to a match. Fill on match.
-/// @param posmatch  match item with positions
-/// @param mincol    minimal column for a match
-///
-/// @return one on match, otherwise return zero.
-static int next_search_hl_pos(match_T *shl, linenr_T lnum, matchitem_T *match, colnr_T mincol)
-  FUNC_ATTR_NONNULL_ALL
-{
-  int found = -1;
-
-  shl->lnum = 0;
-  for (int i = match->mit_pos_cur; i < match->mit_pos_count; i++) {
-    llpos_T *pos = &match->mit_pos_array[i];
-
-    if (pos->lnum == 0) {
-      break;
-    }
-    if (pos->len == 0 && pos->col < mincol) {
-      continue;
-    }
-    if (pos->lnum == lnum) {
-      if (found >= 0) {
-        // if this match comes before the one at "found" then swap them
-        if (pos->col < match->mit_pos_array[found].col) {
-          llpos_T tmp = *pos;
-
-          *pos = match->mit_pos_array[found];
-          match->mit_pos_array[found] = tmp;
-        }
-      } else {
-        found = i;
-      }
-    }
-  }
-  match->mit_pos_cur = 0;
-  if (found >= 0) {
-    colnr_T start = match->mit_pos_array[found].col == 0
-                    ? 0 : match->mit_pos_array[found].col - 1;
-    colnr_T end = match->mit_pos_array[found].col == 0
-                  ? MAXCOL : start + match->mit_pos_array[found].len;
-
-    shl->lnum = lnum;
-    shl->rm.startpos[0].lnum = 0;
-    shl->rm.startpos[0].col = start;
-    shl->rm.endpos[0].lnum = 0;
-    shl->rm.endpos[0].col = end;
-    shl->is_addpos = true;
-    shl->has_cursor = false;
-    match->mit_pos_cur = found + 1;
-    return 1;
-  }
-  return 0;
 }
 
 /// Search for a next 'hlsearch' or match.
@@ -465,8 +455,6 @@ static void next_search_hl(win_T *win, match_T *search_hl, match_T *shl, linenr_
         got_int = false;  // avoid the "Type :quit to exit Vim" message
         break;
       }
-    } else if (cur != NULL) {
-      nmatched = next_search_hl_pos(shl, lnum, cur, matchcol);
     }
     if (nmatched == 0) {
       shl->lnum = 0;                    // no match found
@@ -512,17 +500,10 @@ void prepare_search_hl(win_T *wp, match_T *search_hl, linenr_T lnum)
           }
         }
       }
-      if (cur != NULL) {
-        cur->mit_pos_cur = 0;
-      }
-      bool pos_inprogress = true;  // mark that a position match search is
-                                   // in progress
       int n = 0;
-      while (shl->first_lnum < lnum && (shl->rm.regprog != NULL
-                                        || (cur != NULL && pos_inprogress))) {
+      while (shl->first_lnum < lnum && shl->rm.regprog != NULL) {
         next_search_hl(wp, search_hl, shl, shl->first_lnum, (colnr_T)n,
                        shl == search_hl ? NULL : cur);
-        pos_inprogress = !(cur == NULL || cur->mit_pos_cur == 0);
         if (shl->lnum != 0) {
           shl->first_lnum = shl->lnum
                             + shl->rm.endpos[0].lnum
@@ -581,11 +562,7 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char **lin
     shl->startcol = MAXCOL;
     shl->endcol = MAXCOL;
     shl->attr_cur = 0;
-    shl->is_addpos = false;
     shl->has_cursor = false;
-    if (cur != NULL) {
-      cur->mit_pos_cur = 0;
-    }
     next_search_hl(wp, search_hl, shl, lnum, mincol,
                    shl == search_hl ? NULL : cur);
 
@@ -660,13 +637,7 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char **line, match_T
     } else {
       shl = &cur->mit_hl;
     }
-    if (cur != NULL) {
-      cur->mit_pos_cur = 0;
-    }
-    bool pos_inprogress = true;  // mark that a position match search is
-                                 // in progress
-    while (shl->rm.regprog != NULL
-           || (cur != NULL && pos_inprogress)) {
+    while (shl->rm.regprog != NULL) {
       if (shl->startcol != MAXCOL
           && col >= shl->startcol
           && col < shl->endcol) {
@@ -700,7 +671,6 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char **line, match_T
 
         next_search_hl(wp, search_hl, shl, lnum, col,
                        shl == search_hl ? NULL : cur);
-        pos_inprogress = !(cur == NULL || cur->mit_pos_cur == 0);
 
         // Need to get the line again, a multi-line regexp
         // may have made it invalid.
@@ -784,16 +754,14 @@ bool get_prevcol_hl_flag(win_T *wp, match_T *search_hl, colnr_T curcol)
   // Highlight a character after the end of the line if the match started
   // at the end of the line or when the match continues in the next line
   // (match includes the line break).
-  if (!search_hl->is_addpos && (prevcol == search_hl->startcol
-                                || (prevcol > search_hl->startcol
-                                    && search_hl->endcol == MAXCOL))) {
+  if (prevcol == search_hl->startcol
+      || (prevcol > search_hl->startcol && search_hl->endcol == MAXCOL)) {
     return true;
   }
   matchitem_T *cur = wp->w_match_head;  // points to the match list
   while (cur != NULL) {
-    if (!cur->mit_hl.is_addpos && (prevcol == cur->mit_hl.startcol
-                                   || (prevcol > cur->mit_hl.startcol
-                                       && cur->mit_hl.endcol == MAXCOL))) {
+    if (prevcol == cur->mit_hl.startcol
+        || (prevcol > cur->mit_hl.startcol && cur->mit_hl.endcol == MAXCOL)) {
       return true;
     }
     cur = cur->mit_next;
@@ -819,8 +787,7 @@ void get_search_match_hl(win_T *wp, match_T *search_hl, colnr_T col, int *char_a
     } else {
       shl = &cur->mit_hl;
     }
-    if (col - 1 == shl->startcol
-        && (shl == search_hl || !shl->is_addpos)) {
+    if (col - 1 == shl->startcol) {
       *char_attr = shl->attr;
     }
     if (shl != search_hl && cur != NULL) {
