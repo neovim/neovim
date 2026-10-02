@@ -3119,6 +3119,7 @@ static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, win_T *
   case kOptHelpheight:
   case kOptTitlelen:
   case kOptUpdatecount:
+  case kOptProfiledumpinterval:
   case kOptReport:
   case kOptUpdatetime:
   case kOptSidescroll:

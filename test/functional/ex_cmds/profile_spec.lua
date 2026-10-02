@@ -7,10 +7,14 @@ require('os')
 local eval = n.eval
 local command = n.command
 local eq, neq = t.eq, t.neq
+local finally = t.finally
+local fn = n.fn
+local nvim_prog = n.nvim_prog
 local tempfile = t.tmpname(false)
 local source = n.source
 local matches = t.matches
 local read_file = t.read_file
+local write_file = t.write_file
 
 local function assert_file_exists(filepath)
   neq(nil, uv.fs_stat(filepath).uid)
@@ -25,7 +29,7 @@ describe(':profile', function()
 
   after_each(function()
     n.expect_exit(command, 'qall!')
-    if uv.fs_stat(tempfile).uid ~= nil then
+    if uv.fs_stat(tempfile) ~= nil then
       -- Delete the tempfile. We just need the name, ignoring any race conditions.
       os.remove(tempfile)
     end
@@ -60,6 +64,58 @@ describe(':profile', function()
       profile = read_file(tempfile)
       matches('Called 2 time', profile)
       command('profile stop')
+    end)
+  end)
+
+  describe('eager dump', function()
+    local function start_busy_profile(profile_options)
+      local script = t.tmpname(false)
+      write_file(
+        script,
+        ([=[
+          %s
+
+          function! Busy()
+            let g:profile_test = 0
+            while 1
+              let g:profile_test += 1
+            endwhile
+          endfunction
+
+          profile start %s
+          profile func Busy
+          call Busy()
+        ]=]):format(profile_options or '', tempfile)
+      )
+
+      local job = fn.jobstart(
+        { nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '-S', script },
+        { clear_env = true, env = { PATH = fn.getenv('PATH') } }
+      )
+      finally(function()
+        pcall(fn.jobstop, job)
+        pcall(fn.jobwait, { job }, 5000)
+        os.remove(script)
+      end)
+      return job
+    end
+
+    it('writes the profile while profiling is still running', function()
+      eq(1000, eval('&profiledumpinterval'))
+      local job = start_busy_profile()
+
+      uv.sleep(1100)
+      eq(-1, fn.jobwait({ job }, 0)[1])
+      assert_file_exists(tempfile)
+      matches('FUNCTION  Busy()', read_file(tempfile))
+    end)
+
+    it("can be disabled with 'profiledumpinterval'", function()
+      local job = start_busy_profile('set profiledumpinterval=0')
+
+      uv.sleep(100)
+      eq(-1, fn.jobwait({ job }, 0)[1])
+      assert_file_exists_not(tempfile)
     end)
   end)
 
