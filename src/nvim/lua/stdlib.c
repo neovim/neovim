@@ -29,6 +29,7 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
+#include "nvim/ex_getln.h"
 #include "nvim/fold.h"
 #include "nvim/globals.h"
 #include "nvim/keycodes.h"
@@ -43,6 +44,7 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/normal.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
@@ -556,6 +558,33 @@ static int nlua_iconv(lua_State *lstate)
   return 1;
 }
 
+// Internal snippet helper. Positions are zero-based, end-exclusive byte offsets.
+static int nlua_select_range(lua_State *lstate)
+{
+  if (text_locked()) {
+    return luaL_error(lstate, "cannot select a range while text is locked");
+  }
+  if (!(State & (MODE_NORMAL | MODE_INSERT))) {
+    return luaL_error(lstate, "cannot select a range in this mode");
+  }
+  pos_T positions[2];
+  for (int i = 0; i < 2; i++) {
+    lua_Integer row = luaL_checkinteger(lstate, 2 * i + 1);
+    lua_Integer col = luaL_checkinteger(lstate, 2 * i + 2);
+    luaL_argcheck(lstate, row >= 0 && row < curbuf->b_ml.ml_line_count, 2 * i + 1,
+                  "row out of range");
+    luaL_argcheck(lstate, col >= 0 && col <= (lua_Integer)strlen(ml_get((linenr_T)row + 1)),
+                  2 * i + 2, "column out of range");
+    char *line = ml_get((linenr_T)row + 1);
+    luaL_argcheck(lstate, utf_head_off(line, line + col) == 0, 2 * i + 2,
+                  "column is inside a character");
+    positions[i] = (pos_T){ .lnum = (linenr_T)row + 1, .col = (colnr_T)col };
+  }
+  luaL_argcheck(lstate, lt(positions[0], positions[1]), 3, "range must be nonempty");
+  select_range(positions[0], positions[1]);
+  return 0;
+}
+
 // Update foldlevels (e.g., by evaluating 'foldexpr') for the given line range in the given window,
 // without invoking other side effects. Unlike `zx`, it does not close manually opened folds and
 // does not open folds under the cursor.
@@ -744,6 +773,8 @@ static void nlua_state_add_internal(lua_State *const lstate)
   // _updatefolds
   lua_pushcfunction(lstate, &nlua_foldupdate);
   lua_setfield(lstate, -2, "_foldupdate");
+  lua_pushcfunction(lstate, &nlua_select_range);
+  lua_setfield(lstate, -2, "_select_range");
 
   lua_pushcfunction(lstate, &nlua_with);
   lua_setfield(lstate, -2, "_with_c");
