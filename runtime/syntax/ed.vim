@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	ed(1)
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2026 Jul 30
+" Last Change:	2026 Aug 27
 
 if exists("b:current_syntax")
   finish
@@ -52,7 +52,7 @@ syn match  edAddress_Pattern_Flag  contained
       \ nextgroup=@edAddressModifier,edAddressSeparator,@edCommand
 
 syn match   edRegex_BracketExpression  contained
-      \ "\[\^\=\]\=\%(\[:.\{-}:\]\|\[\..\{-}\.\]\|\[=.\{-}=\]\|[^]]\)*\]"
+      \ /\[\^\=\]\=\%(\[:.\{-}:\]\|\[\..\{-}\.\]\|\[=.\{-}=\]\|[^]]\)*\]/
       \ contains=NONE
       \ transparent
 syn match   edRegex_SlashEscape        contained
@@ -522,6 +522,7 @@ syn sync fromstart
 hi def link edAddress				  Constant
 hi def link edAddressModifier_Offset		  Special
 hi def link edAddressModifier_Count		  Special
+hi def link edAddress_Pattern			  Regexp
 hi def link edAddress_Pattern_Flag		  Special
 
 " commands (addresses)
@@ -587,6 +588,7 @@ hi def link edCommand_ShellEscape_Arg_Command_FilenameEscape	  Special
 hi def link edCommand_ShellEscape_Arg_Command_BackslashEscape	  Special
 hi def link edCommand_ShellEscape_Arg_Previous			  Constant
 
+hi def link edCommand_Substitute_Arg_Regexp			  Regexp
 hi def link edCommand_Substitute_Arg_Replacement_Escape		  Special
 hi def link edCommand_Substitute_Arg_Replacement_Newline	  Special
 hi def link edCommand_Substitute_Arg_Replacement_Match		  Special
@@ -594,9 +596,13 @@ hi def link edCommand_Substitute_Arg_Replacement_Repeat		  Special
 hi def link edCommand_Substitute_Arg_Flag			  Special
 hi def link edCommand_Substitute_Arg_Count			  Special
 
+hi def link edCommand_Global_Arg_Regexp				  Regexp
 hi def link edCommand_Global_Arg_Regexp_Flag			  Special
+hi def link edCommand_InteractiveGlobal_Arg_Regexp		  Regexp
 hi def link edCommand_InteractiveGlobal_Arg_Regexp_Flag		  Special
+hi def link edCommand_GlobalNotMatched_Arg_Regexp		  Regexp
 hi def link edCommand_GlobalNotMatched_Arg_Regexp_Flag		  Special
+hi def link edCommand_InteractiveGlobalNotMatched_Arg_Regexp	  Regexp
 hi def link edCommand_InteractiveGlobalNotMatched_Arg_Regexp_Flag Special
 
 " line continuation
