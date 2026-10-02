@@ -12,7 +12,7 @@ pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compi
     }
     test_step.addPrefixedDirectoryArg("-P", b.graph.path(.install_prefix, ""));
     // TODO(bfredl): investigate parallel test groups like in cmake
-    test_step.addArg(b.fmt("-X{s}/Xdg_dir", .{b.install_path}));
+    test_step.addPrefixedDirectoryArg("-X", b.graph.path(.install_prefix, "Xdg_dir"));
     test_step.addArg("-v");
     test_step.addArg(b.fmt("--helper=./test/{s}/preload.lua", .{kind}));
     test_step.addPrefixedFileArg("--lpath=", config_dir.path(b, "?.lua")); // FULING: not a real file but works anyway?
@@ -22,7 +22,8 @@ pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compi
     const env = test_step.getEnvMap();
     try env.put("NVIM_TEST", "1");
     if (env.get("NVIM_LOG_FILE") == null) {
-        try env.put("NVIM_LOG_FILE", b.fmt("{s}/nvim.log", .{b.install_path}));
+        return error.NotImplemented;
+        // try env.put("NVIM_LOG_FILE", b.fmt("{s}/nvim.log", .{b.install_path}));
     }
 
     _ = env.swapRemove("NVIM");

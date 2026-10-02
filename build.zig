@@ -84,12 +84,12 @@ pub fn build(b: *std.Build) !void {
     } else null;
 
     // without cross_compiling we like to reuse libluv etc at the same optimize level
-    const optimize_host = if (cross_compiling) .ReleaseSafe else optimize;
+    const optimize_host = if (cross_compiling) .safe else optimize;
 
     const use_unibilium = b.option(bool, "unibilium", "use unibilium") orelse true;
 
-    // puc lua 5.1 is not ReleaseSafe "safe"
-    const optimize_lua = if (optimize == .Debug or optimize == .ReleaseSafe) .ReleaseSmall else optimize;
+    // puc lua 5.1 is not Optimize.safe "safe"
+    const optimize_lua = if (optimize == .debug or optimize == .safe) .small else optimize;
 
     const use_luajit = b.option(bool, "luajit", "use luajit") orelse !is_wasm;
     const lualib_name = if (use_luajit) "luajit" else "lua5.1";
@@ -114,7 +114,7 @@ pub fn build(b: *std.Build) !void {
     });
     const ziglua_host = if (cross_compiling) b.dependency("zlua", .{
         .target = target_host,
-        .optimize = .ReleaseSmall,
+        .optimize = .small,
         .lang = if (host_use_luajit) E.luajit else E.lua51,
         .system_lua = sys_opts.lua,
         .shared = false,
@@ -136,7 +136,7 @@ pub fn build(b: *std.Build) !void {
     if (!sys_opts.uv) {
         // NOTE: libuv on Windows depends on Windows SDK when compiled with .Debug mode
         // https://github.com/neovim/neovim/issues/36889
-        const optimize_uv = if (optimize == .Debug and target.result.os.tag == .windows) .ReleaseSafe else optimize;
+        const optimize_uv = if (optimize == .debug and target.result.os.tag == .windows) .safe else optimize;
         if (b.lazyDependency("libuv", .{ .target = target, .optimize = optimize_uv })) |dep| {
             libuv = dep.artifact("uv");
 
@@ -181,7 +181,7 @@ pub fn build(b: *std.Build) !void {
     }) else null;
 
     // TODO(bfredl): fix upstream bugs with UBSAN
-    const optimize_ts = .ReleaseFast;
+    const optimize_ts = .fast;
     const treesitter = if (sys_opts.tree_sitter) null else b.lazyDependency("treesitter", .{
         .target = target,
         .optimize = optimize_ts,
@@ -619,7 +619,6 @@ pub fn build(b: *std.Build) !void {
         emcc.addArg("-Wl,--no-whole-archive");
 
         const merged_subdir = "wasm-runtime-merged";
-        const merged_path = b.getInstallPath(.prefix, merged_subdir);
         const install_static_runtime = b.addInstallDirectory(.{
             .source_dir = b.path("runtime"),
             .install_dir = .prefix,
@@ -657,8 +656,11 @@ pub fn build(b: *std.Build) !void {
             "-sASSERTIONS=1",
             "-pthread",
             "-sSHARED_MEMORY=1",
-            b.fmt("--preload-file={s}@/runtime", .{merged_path}),
         });
+
+        emcc.addPrefixedDirectoryArg("--preload-file=", b.graph.path(.install_prefix, "runtime"));
+        // TODO: what does @ mean?
+        // b.fmt("--preload-file={s}@/runtime", .{merged_path}),
 
         emcc.addArg("-o");
         const nvim_js = emcc.addOutputFileArg("nvim.js");
