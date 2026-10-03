@@ -36,6 +36,10 @@
 /// this size afterward
 #define INPUT_BUFFER_SIZE 256
 
+/// Time to wait for the rest of a terminal response, which may arrive in pieces (e.g. over SSH)
+/// with pauses longer than 'ttimeoutlen'.
+#define TERM_RESPONSE_TIMEOUT_MS 1000
+
 static const struct kitty_key_map_entry {
   int key;
   const char *name;
@@ -470,19 +474,29 @@ static void tk_getkeys(TermInput *input, bool force)
   }
 
   if (result != TERMKEY_RES_AGAIN) {
+    // Nothing is pending: stop a timer left from an earlier sequence.
+    uv_timer_stop(&input->timer_handle);
     return;
   }
   // else: Partial keypress event was found in the buffer, but it does not
   // yet contain all the bytes required. `key` structure indicates what
   // termkey_getkey_force() would return.
 
-  if (input->ttimeout && input->ttimeoutlen >= 0) {
-    // Stop the current timer if already running
-    uv_timer_stop(&input->timer_handle);
-    uv_timer_start(&input->timer_handle, tinput_timer_cb, (uint64_t)input->ttimeoutlen, 0);
-  } else {
-    tk_getkeys(input, true);
+  // Stop the current timer if already running
+  uv_timer_stop(&input->timer_handle);
+  uv_timer_start(&input->timer_handle, tinput_timer_cb, tinput_wait_time(input), 0);
+}
+
+/// Time in ms to wait for more input to complete a sequence.
+static uint64_t tinput_wait_time(TermInput *input)
+{
+  // If 'ttimeout' is not set, use 0 to still process the input that was read (e.g. the ESC \ that
+  // ends a terminal response) first.
+  int64_t ms = input->ttimeout ? input->ttimeoutlen : 0;
+  if (termkey_response_pending(input->tk)) {
+    ms = MAX(ms, TERM_RESPONSE_TIMEOUT_MS);
   }
+  return (uint64_t)MAX(ms, 0);
 }
 
 static void tinput_timer_cb(uv_timer_t *handle)
@@ -909,13 +923,9 @@ static size_t tinput_read_cb(RStream *stream, const char *buf, size_t count_, vo
   // An incomplete sequence was found. Leave it in the raw buffer and wait for
   // the next input.
   if (consumed < count_) {
-    // If 'ttimeout' is not set, start the timer with a timeout of 0 to process
-    // the next input.
-    int64_t ms = input->ttimeout
-                 ? (input->ttimeoutlen >= 0 ? input->ttimeoutlen : 0) : 0;
     // Stop the current timer if already running
     uv_timer_stop(&input->timer_handle);
-    uv_timer_start(&input->timer_handle, tinput_timer_cb, (uint32_t)ms, 0);
+    uv_timer_start(&input->timer_handle, tinput_timer_cb, tinput_wait_time(input), 0);
   }
 
   return consumed;
