@@ -186,6 +186,8 @@ describe('vim.net._ssh', function()
         fi
         PID_FILE=]=] .. string.format('%q', fake_tunnel_pid) .. [=[
 
+        ARGS_FILE=]=] .. string.format('%q', fake_bin_dir .. '/tunnel.args') .. [=[
+
         if [[ "$ARGS" == *"uname -s && uname -m"* ]]; then
       ]=] .. (behavior.uname or [=[
           echo "Linux"
@@ -203,6 +205,7 @@ describe('vim.net._ssh', function()
             echo "FAIL: tunnel script not fed to sh -s" >&2
             exit 1
           fi
+          printf '%s' "$ARGS" > "$ARGS_FILE"
       ]=] .. (behavior.tunnel or [=[
           SOCK=$(echo "$ARGS" | grep -oE '\-L [^:]+' | cut -d' ' -f2)
           sleep 60 &
@@ -327,6 +330,24 @@ describe('vim.net._ssh', function()
       ]])
 
       assert(sock:match('_remote_nvim%.sock$'))
+    end)
+
+    it('serves each session from a fresh private remote directory', function()
+      skip(is_os('win'), 'remote-ssh engine is POSIX-only')
+      setup_fake_ssh()
+      local function remote_dir()
+        n.exec_lua([[
+          local _, _, teardown = require('vim.net._ssh').start('user@test-server')
+          teardown()
+        ]])
+        local args = t.read_file(fake_bin_dir .. '/tunnel.args')
+        t.matches('mkdir %-m 700 "%$dir"', args)
+        return args:match(':(/tmp/nvim%-remote%.%x+)/nvim%.sock ')
+      end
+
+      local dir1, dir2 = remote_dir(), remote_dir()
+      assert(dir1 and dir2, 'remote socket path not found')
+      assert(dir1 ~= dir2, 'remote socket directory reused across sessions')
     end)
   end)
 end)

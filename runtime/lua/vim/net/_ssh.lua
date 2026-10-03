@@ -495,12 +495,24 @@ function M.start(uri_str)
 
   local local_sock = vim.fn.tempname() .. '_remote_nvim.sock'
 
-  local remote_cmd = [[
-    rm -f /tmp/nvim-remote.sock
-    NVIM_APPNAME=nvim-remote ~/.local/bin/nvim --headless --listen /tmp/nvim-remote.sock &
+  -- Fresh private dir per session: `mkdir` fails if it exists,
+  -- so nobody can plant a socket
+  local token = assert(vim.uv.random(8)):gsub('.', function(c)
+    return ('%02x'):format(c:byte())
+  end)
+  local remote_dir = '/tmp/nvim-remote.' .. token
+  local remote_sock = remote_dir .. '/nvim.sock'
+
+  local remote_cmd = string.format(
+    [[
+    dir='%s'
+    sock="$dir/nvim.sock"
+    mkdir -m 700 "$dir" || exit 1
+    NVIM_PID=
+    trap 'kill $NVIM_PID 2>/dev/null; rm -rf "$dir"' EXIT
+    NVIM_APPNAME=nvim-remote ~/.local/bin/nvim --headless --listen "$sock" </dev/null &
     NVIM_PID=$!
-    trap 'kill $NVIM_PID 2>/dev/null; rm -f /tmp/nvim-remote.sock' EXIT
-    while [ ! -S /tmp/nvim-remote.sock ]; do
+    while [ ! -S "$sock" ]; do
       if ! kill -0 $NVIM_PID 2>/dev/null; then
         echo "NVIM_CRASHED"
         exit 1
@@ -509,12 +521,14 @@ function M.start(uri_str)
     done
     echo "NVIM_READY"
     wait $NVIM_PID
-  ]]
+  ]],
+    remote_dir
+  )
 
   notify('Establishing SSH tunnel...')
   log().debug('start: local_sock', local_sock)
   local tunnel = run_script(uri, remote_cmd, {
-    ssh_args = { '-L', local_sock .. ':/tmp/nvim-remote.sock' },
+    ssh_args = { '-L', local_sock .. ':' .. remote_sock },
     wait_until = function(stdout)
       return stdout:match('NVIM_READY') ~= nil
     end,

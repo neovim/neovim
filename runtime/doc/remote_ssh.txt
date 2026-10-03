@@ -68,6 +68,7 @@ Remote (Target):
 - Linux (x86_64, aarch64) or macOS (arm64, x86_64).
 - `tar`, `curl` to download and extract the Nvim release.
 - A POSIX `sh`; the login shell itself may be any shell.
+- A writable `/tmp` for the server socket.
 
 ==============================================================================
 4. Remote Environment                                     *remote-ssh-configs*
