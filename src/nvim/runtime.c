@@ -1327,6 +1327,35 @@ static bool add_opt_pack_plugins(int num_fnames, char **fnames, bool all, void *
   return num_fnames > 0;
 }
 
+/// Add an optional package whose directory is already known, without searching 'packpath'.
+void runtime_pack_add(char *path, bool load, Error *err)
+{
+  if (!os_isdir(path)) {
+    api_set_error(err, kErrorTypeValidation, "Package directory does not exist: %s", path);
+    return;
+  }
+
+  char *fname = fix_fname(path);
+  if (fname == NULL) {
+    api_set_error(err, kErrorTypeException, "Cannot resolve package directory: %s", path);
+    return;
+  }
+
+  // add_pack_dir_to_rtp() expects four ancestors: site/pack/group/opt/name.
+  size_t depth = 0;
+  for (const char *p = get_past_head(fname); *p != NUL; p++) {
+    depth += vim_ispathsep_nocolon(*p);
+  }
+  if (depth < 4 || *path_tail(fname) == NUL) {
+    api_set_error(err, kErrorTypeValidation, "Expected a package directory: %s", path);
+    xfree(fname);
+    return;
+  }
+  add_opt_pack_plugins(1, &fname, true, load ? &APP_BOTH : &APP_ADD_DIR);
+  update_runtime_search_path_thread(false);
+  xfree(fname);
+}
+
 /// Add all packages in the "start" directory to 'runtimepath'.
 void add_pack_start_dirs(void)
 {
