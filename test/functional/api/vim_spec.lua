@@ -3062,6 +3062,23 @@ describe('API', function()
       eq({ mode = 'r', blocking = true }, api.nvim_get_mode())
     end)
 
+    it('exits after UI detached even if an error occurs during exit', function()
+      -- Not --headless: a server that lost its UI is not headless. #42097
+      clear({ args_rm = { '--headless' } })
+      api.nvim_ui_attach(80, 20, {})
+      api.nvim_ui_detach()
+      -- Unparseable ShaDa file: the ShaDa write at exit reads it (to merge) and emits
+      -- an error while exiting. There is no UI left to press <Enter> on the resulting
+      -- hit-enter prompt, so nvim must not wait for it.
+      local fname = 'Xtest-corrupt.shada'
+      t.write_file(fname, 'x')
+      command('set shadafile=' .. fname)
+      api.nvim_input(':qall!<CR>')
+      -- Without the fix this never exits (blocked in wait_return()); fail fast instead of hanging.
+      n.expect_exit(2000, function() end)
+      os.remove(fname)
+    end)
+
     it('during getchar() returns blocking=false', function()
       api.nvim_input(':let g:test_input = nr2char(getchar())<CR>')
       -- Events are enabled during getchar(), RPC calls are *not* blocked. #5384
