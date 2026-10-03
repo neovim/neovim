@@ -196,6 +196,12 @@ describe('vim.net._ssh', function()
           exit 0
         fi
 
+        if [[ "$ARGS" == *"-O cancel -L"* ]]; then
+          touch ]=] .. string.format('%q', fake_bin_dir .. '/forward.cancelled') .. [=[
+
+          exit 0
+        fi
+
         if [[ "$ARGS" == *"-L"* ]]; then
           if [[ "$ARGS" != *"ControlMaster"* ]]; then
             echo "FAIL: Multiplexing flags missing!" >&2
@@ -330,6 +336,35 @@ describe('vim.net._ssh', function()
       ]])
 
       assert(sock:match('_remote_nvim%.sock$'))
+    end)
+
+    it('fails when ssh exits before the remote Nvim is ready', function()
+      skip(is_os('win'), 'remote-ssh engine is POSIX-only')
+      setup_fake_ssh({
+        tunnel = [[
+          echo "channel 0: open failed: administratively prohibited" >&2
+          exit 255
+        ]],
+      })
+      t.matches(
+        'SSH tunnel exited before the remote Nvim was ready: channel 0: open failed',
+        t.pcall_err(n.exec_lua, [[require('vim.net._ssh').start('user@test-server')]])
+      )
+      eq(true, vim.uv.fs_stat(fake_bin_dir .. '/forward.cancelled') ~= nil)
+    end)
+
+    it('fails when the remote Nvim crashes during startup', function()
+      skip(is_os('win'), 'remote-ssh engine is POSIX-only')
+      setup_fake_ssh({
+        tunnel = [[
+          echo "NVIM_CRASHED"
+          exit 1
+        ]],
+      })
+      t.matches(
+        'Remote Nvim crashed during startup',
+        t.pcall_err(n.exec_lua, [[require('vim.net._ssh').start('user@test-server')]])
+      )
     end)
 
     it('serves each session from a fresh private remote directory', function()

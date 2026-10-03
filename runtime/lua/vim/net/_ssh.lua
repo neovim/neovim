@@ -530,19 +530,27 @@ function M.start(uri_str)
     remote_dir
   )
 
+  local forward = local_sock .. ':' .. remote_sock
+
   notify('Establishing SSH tunnel...')
   log().debug('start: local_sock', local_sock)
   local tunnel = run_script(uri, remote_cmd, {
-    ssh_args = { '-L', local_sock .. ':' .. remote_sock },
+    ssh_args = { '-L', forward },
     wait_until = function(stdout)
       return stdout:match('NVIM_READY') ~= nil
     end,
   })
   log().debug('start: tunnel stdout', tunnel.stdout, 'stderr', tunnel.stderr)
 
-  if tunnel.stdout:match('NVIM_CRASHED') then
-    log().error('Remote Nvim crashed during startup', tunnel.stderr)
-    error('Remote Nvim crashed during startup')
+  -- no NVIM_READY means the tunnel already exited
+  if not tunnel.stdout:match('NVIM_READY') then
+    -- the forward lives in the ssh master, which outlives this session
+    vim.system(get_ssh_cmd(uri, { ssh_args = { '-O', 'cancel', '-L', forward } })):wait()
+    local msg = tunnel.stdout:match('NVIM_CRASHED') and 'Remote Nvim crashed during startup'
+      or 'SSH tunnel exited before the remote Nvim was ready'
+    log().error(msg, 'code', tunnel.code, 'stderr', tunnel.stderr)
+    local detail = vim.trim(tunnel.stderr)
+    error(detail ~= '' and (msg .. ': ' .. detail) or msg)
   end
 
   notify('Connected to ' .. uri_str)
