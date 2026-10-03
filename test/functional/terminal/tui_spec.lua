@@ -1423,6 +1423,13 @@ describe('TUI', function()
     ]])
   end)
 
+  it("terminal response is not typed as keys with 'nottimeout' #29047", function()
+    poke_both_eventloop() -- Make sure startup requests have finished.
+    child_session:request('nvim_command', 'set nottimeout | echo "nottimeout"')
+    screen:expect({ any = 'nottimeout' }) -- The TUI has received the option.
+    poke_both_eventloop()
+  end)
+
   it('accepts ASCII control sequences', function()
     feed_data('i')
     feed_data('\022\007') -- ctrl+g
