@@ -113,13 +113,14 @@ fn addLintcClintStep(
 ) *std.Build.Step {
     const lintc_clint = b.step("lintc-clint", "Lint C source with clint");
     const exclusions = [_][]const u8{ "src/nvim/tui/terminfo_defs.h", "src/xxd/xxd.c" };
-    const nvim_path = b.getInstallPath(.bin, nvim_exe_install.artifact.out_filename);
+    // const nvim_path = b.getInstallPath(.bin, nvim_exe_install.artifact.out_filename);
 
     outer: for (lint_sources.items) |file| {
         for (exclusions) |exclusion| {
             if (std.mem.endsWith(u8, file, exclusion)) continue :outer;
         }
-        const run = b.addSystemCommand(&.{nvim_path});
+        // TODO: see above
+        const run = b.addRunArtifact(nvim_exe_install.artifact);
         run.step.dependOn(&nvim_exe_install.step);
         run.addArgs(&.{ "-u", "NONE", "-l" });
         run.addFileArg(b.path("src/clint.lua"));
