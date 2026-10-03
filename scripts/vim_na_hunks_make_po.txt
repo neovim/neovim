@@ -1,6 +1,8 @@
 ^\$([_A-Z]\+)\.pot:
 ^MO\(CONVERTED\|FILES\) = \\$
+^PO_VIM_[_A-Z]\+ = \\$
 ^clean:
+^first_time:
 ^g\?vim\.desktop:
 ^pl\.cp1250\.po:
 ^uninstall:
