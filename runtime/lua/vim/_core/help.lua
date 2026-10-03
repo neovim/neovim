@@ -553,11 +553,17 @@ function M.gen_tags(dir, include_index_tag)
     -- Resolve once for traversal and relpath(), avoiding getcwd() for every file.
     -- Keep directory for messages and the VIMRUNTIME comparison.
     local absdir = vim.fs.abspath(directory)
-    local files = vim.fs.find(function(name, _)
-      return helpfile_lang(name) ~= nil
+    local files = vim.fs.find(function(name, path)
+      if helpfile_lang(name) == nil then
+        return false
+      end
+      local stat = vim.uv.fs_stat(vim.fs.joinpath(path, name))
+      if stat == nil then
+        return false
+      end
+      return stat.type == 'file'
     end, {
       path = absdir,
-      type = 'file',
       follow = true,
       limit = math.huge,
     })
