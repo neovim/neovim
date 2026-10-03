@@ -1,6 +1,6 @@
 # NOTE: Also update the find_package() call if bumping the minimum.
-LIBUV_URL https://github.com/libuv/libuv/archive/v1.52.1.tar.gz
-LIBUV_SHA256 478baf2599bfbc882c355288c9cb6f92e0e7dda435fa04031fa5b607cf3f414c
+LIBUV_URL https://github.com/libuv/libuv/archive/v1.53.0.tar.gz
+LIBUV_SHA256 279f3f67a24bb9921fe999ca6cd5e332fade8d515873ef9ba054b70e70a31d9e
 
 LUAJIT_URL https://github.com/luajit/luajit/archive/24c20c94e7db195b640854619577441f9b4bc6be.tar.gz
 LUAJIT_SHA256 178c656b62bb796e536a23f1d3bb09e1824e4dd28eaf2a4758b295ac328e32e6
@@ -11,8 +11,8 @@ LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
 UNIBILIUM_URL https://github.com/neovim/unibilium/archive/v2.1.4.tar.gz
 UNIBILIUM_SHA256 7360907bcf79ba49f6fc4a504767ff86e93ab9018477026fcc70d5ab77e1f2c1
 
-LUV_URL https://github.com/luvit/luv/archive/1.52.1-0.tar.gz
-LUV_SHA256 e8b8774b31d24be4fcf2b021b90599ecccc8e476c61efcc59c3c10cab813a885
+LUV_URL https://github.com/luvit/luv/archive/1.53.0-0.tar.gz
+LUV_SHA256 bd393b5918f320c79a2c6405e3abebe01c024557c32b9fb9006bee20ce71e19e
 
 LUA_COMPAT53_URL https://github.com/lunarmodules/lua-compat-5.3/archive/v0.13.tar.gz
 LUA_COMPAT53_SHA256 f5dc30e7b1fda856ee4d392be457642c1f0c259264a9b9bfbcb680302ce88fc2
