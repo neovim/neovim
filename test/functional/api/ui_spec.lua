@@ -28,11 +28,12 @@ describe('nvim_ui_attach()', function()
   end)
 
   it('does not crash on self-attach', function()
-    local ok = exec_lua(function()
+    local rv = exec_lua(function()
       local chan = vim.fn.sockconnect('pipe', vim.v.servername, { rpc = true })
-      return pcall(vim.fn.rpcrequest, chan, 'nvim_ui_attach', 80, 24, { ext_linegrid = true })
+      return { pcall(vim.fn.rpcrequest, chan, 'nvim_ui_attach', 80, 24, { ext_linegrid = true }) }
     end)
-    eq(false, ok)
+    eq(false, rv[1])
+    t.matches('failed to parse redraw event$', rv[2])
     assert_alive()
   end)
 
