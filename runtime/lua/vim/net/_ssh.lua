@@ -510,6 +510,7 @@ function M.start(uri_str)
     mkdir -m 700 "$dir" || exit 1
     NVIM_PID=
     trap 'kill $NVIM_PID 2>/dev/null; rm -rf "$dir"' EXIT
+    trap 'exit 1' HUP INT TERM PIPE
     NVIM_APPNAME=nvim-remote ~/.local/bin/nvim --headless --listen "$sock" </dev/null &
     NVIM_PID=$!
     while [ ! -S "$sock" ]; do
@@ -520,7 +521,11 @@ function M.start(uri_str)
       sleep 0.1
     done
     echo "NVIM_READY"
-    wait $NVIM_PID
+    # no pty, so no SIGHUP on disconnect: a failed heartbeat write triggers the EXIT trap
+    while kill -0 $NVIM_PID 2>/dev/null; do
+      sleep 1
+      printf '\n' 2>/dev/null || exit 1
+    done
   ]],
     remote_dir
   )
