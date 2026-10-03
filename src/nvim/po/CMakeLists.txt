@@ -15,6 +15,7 @@ mark_as_advanced(
 if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
   set(LANGUAGES
     af
+    az
     ca
     cs
     da
