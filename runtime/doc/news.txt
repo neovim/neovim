@@ -532,6 +532,8 @@ VIMSCRIPT
 • |v:startreason| indicates whether Nvim started normally or by |:restart|.
 • |v:starttime| is the process start time (nanoseconds since UNIX epoch).
 • |v:useractive| indicates user activity.
+• |state()| returns "l" when text is locked (|textlock|), e.g. in an
+  |:map-<expr>| mapping.
 • |serverlist()| with `info=true` returns details for each server (own + peers).
 • These Vimscript functions may be called from |api-fast| context (e.g.
   |vim.uv| timer/handle callbacks): |keytrans()|, |char2nr()|, |nr2char()|,
