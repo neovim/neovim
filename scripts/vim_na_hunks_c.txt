@@ -48,6 +48,7 @@
 ^l\?alloc[a-zA-Z0-9_]\+(size_t
 ^mch_create_pty_channel(
 ^mch_job_[a-z]\+(
+^mch_libcall(
 ^mch_[_a-z]\+_job(job_T
 ^mem_[a-zA-Z0-9_]\+(
 ^parse_argument_types(
