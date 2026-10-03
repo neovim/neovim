@@ -116,42 +116,44 @@ local function clear_extmarks(bufnr, namespace)
   end
 end
 
+--- @type table<integer, table<string, fun()>>
+local pending_shows = {}
+
+-- Handlers can only draw on a loaded buffer, so defer showing until it is read.
+local pending_augroup = api.nvim_create_augroup('nvim.diagnostic.pending_show')
+nvim_on('BufRead', pending_augroup, function(ev)
+  local shows = pending_shows[ev.buf]
+  pending_shows[ev.buf] = nil
+  for _, show in pairs(shows or {}) do
+    show()
+  end
+end)
+nvim_on('BufWipeout', pending_augroup, function(ev)
+  pending_shows[ev.buf] = nil
+end)
+
+--- @param handler string
+--- @param namespace integer
+--- @param bufnr integer
+local function cancel_pending_show(handler, namespace, bufnr)
+  local shows = pending_shows[bufnr]
+  if shows then
+    shows[handler .. ':' .. namespace] = nil
+  end
+end
+
+--- @param handler string
+--- @param namespace integer
 --- @param bufnr integer
 --- @param fn fun()
---- @return integer?
-local function once_buf_loaded(bufnr, fn)
+local function show_once_loaded(handler, namespace, bufnr, fn)
+  cancel_pending_show(handler, namespace, bufnr)
   if api.nvim_buf_is_loaded(bufnr) then
     fn()
   else
-    return nvim_on('BufRead', nil, { buf = bufnr, once = true }, function()
-      fn()
-    end)
+    pending_shows[bufnr] = pending_shows[bufnr] or {}
+    pending_shows[bufnr][handler .. ':' .. namespace] = fn
   end
-end
-
---- @param autocmd_key string
---- @param ns vim.diagnostic.NS
-local function cleanup_show_autocmd(autocmd_key, ns)
-  if ns.user_data[autocmd_key] then
-    api.nvim_del_autocmd(ns.user_data[autocmd_key])
-    --- @type integer?
-    ns.user_data[autocmd_key] = nil
-  end
-end
-
---- @param autocmd_key string
---- @param ns vim.diagnostic.NS
---- @param bufnr integer
---- @param fn fun()
-local function show_once_loaded(autocmd_key, ns, bufnr, fn)
-  cleanup_show_autocmd(autocmd_key, ns)
-
-  --- @type integer?
-  ns.user_data[autocmd_key] = once_buf_loaded(bufnr, function()
-    --- @type integer?
-    ns.user_data[autocmd_key] = nil
-    fn()
-  end)
 end
 
 --- @param priority integer
@@ -193,7 +195,7 @@ function M.signs.show(namespace, bufnr, diagnostics, opts)
 
   local sopts = opts and opts.signs or {}
   local ns = diagnostic.get_namespace(namespace)
-  show_once_loaded('sign_show_autocmd', ns, bufnr, function()
+  show_once_loaded('signs', namespace, bufnr, function()
     -- 10 is the default sign priority when none is explicitly specified
     local priority = sopts.priority or 10
     local get_priority = severity_to_extmark_priority(priority, opts)
@@ -237,7 +239,7 @@ end
 --- @param bufnr integer
 function M.signs.hide(namespace, bufnr)
   local ns = diagnostic.get_namespace(namespace)
-  cleanup_show_autocmd('sign_show_autocmd', ns)
+  cancel_pending_show('signs', namespace, bufnr)
   if ns.user_data.sign_ns and api.nvim_buf_is_valid(bufnr) then
     api.nvim_buf_clear_namespace(bufnr, ns.user_data.sign_ns, 0, -1)
   end
@@ -258,7 +260,7 @@ function M.underline.show(namespace, bufnr, diagnostics, opts)
   bufnr = vim._resolve_bufnr(bufnr)
 
   local ns = diagnostic.get_namespace(namespace)
-  show_once_loaded('underline_show_autocmd', ns, bufnr, function()
+  show_once_loaded('underline', namespace, bufnr, function()
     if not ns.user_data.underline_ns then
       ns.user_data.underline_ns =
         api.nvim_create_namespace(string.format('nvim.%s.diagnostic.underline', ns.name))
@@ -305,7 +307,7 @@ end
 --- @param bufnr integer
 function M.underline.hide(namespace, bufnr)
   local ns = diagnostic.get_namespace(namespace)
-  cleanup_show_autocmd('underline_show_autocmd', ns)
+  cancel_pending_show('underline', namespace, bufnr)
   if ns.user_data.underline_ns then
     clear_extmarks(bufnr, ns.user_data.underline_ns)
   end
@@ -445,7 +447,7 @@ function M.virtual_text.show(namespace, bufnr, diagnostics, opts)
   local vopts = opts and opts.virtual_text or {}
 
   local ns = diagnostic.get_namespace(namespace)
-  show_once_loaded('virtual_text_show_autocmd', ns, bufnr, function()
+  show_once_loaded('virtual_text', namespace, bufnr, function()
     if vopts.format then
       diagnostics = diagnostic_shared.reformat_diagnostics(vopts.format, diagnostics)
     end
@@ -496,7 +498,7 @@ end
 --- @param bufnr integer
 function M.virtual_text.hide(namespace, bufnr)
   local ns = diagnostic.get_namespace(namespace)
-  cleanup_show_autocmd('virtual_text_show_autocmd', ns)
+  cancel_pending_show('virtual_text', namespace, bufnr)
   if ns.user_data.virt_text_ns then
     clear_extmarks(bufnr, ns.user_data.virt_text_ns)
     if api.nvim_buf_is_valid(bufnr) then
@@ -712,7 +714,7 @@ function M.virtual_lines.show(namespace, bufnr, diagnostics, opts)
   local vopts = opts and opts.virtual_lines or {}
 
   local ns = diagnostic.get_namespace(namespace)
-  show_once_loaded('virtual_lines_show_autocmd', ns, bufnr, function()
+  show_once_loaded('virtual_lines', namespace, bufnr, function()
     if not ns.user_data.virt_lines_ns then
       ns.user_data.virt_lines_ns =
         api.nvim_create_namespace(string.format('nvim.%s.diagnostic.virtual_lines', ns.name))
@@ -755,7 +757,7 @@ end
 --- @param bufnr integer
 function M.virtual_lines.hide(namespace, bufnr)
   local ns = diagnostic.get_namespace(namespace)
-  cleanup_show_autocmd('virtual_lines_show_autocmd', ns)
+  cancel_pending_show('virtual_lines', namespace, bufnr)
   if ns.user_data.virt_lines_ns then
     clear_extmarks(bufnr, ns.user_data.virt_lines_ns)
     if api.nvim_buf_is_valid(bufnr) then

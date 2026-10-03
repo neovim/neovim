@@ -2647,6 +2647,40 @@ describe('vim.diagnostic', function()
       )
     end)
 
+    it('shows diagnostics once an unloaded buffer loads', function()
+      eq(
+        1,
+        exec_lua(function()
+          local path = vim.fn.tempname()
+          vim.fn.writefile({ 'one' }, path)
+          local bufnr = vim.fn.bufadd(path)
+          vim.diagnostic.set(_G.diagnostic_ns, bufnr, { _G.make_error('Old', 0, 0, 0, 0) })
+          vim.diagnostic.set(_G.diagnostic_ns, bufnr, { _G.make_error('New', 0, 0, 0, 0) })
+          vim.diagnostic.set(
+            _G.diagnostic_ns,
+            _G.diagnostic_bufnr,
+            { _G.make_error('Other', 0, 0, 0, 0) }
+          )
+          vim.fn.bufload(bufnr)
+          return #vim.api.nvim_buf_get_extmarks(bufnr, -1, 0, -1, { type = 'sign' })
+        end)
+      )
+    end)
+
+    it("doesn't error after bwipeout of an unloaded buffer", function()
+      exec_lua(function()
+        local bufnr = vim.fn.bufadd(vim.fn.tempname())
+        vim.diagnostic.set(_G.diagnostic_ns, bufnr, { _G.make_error('Error', 0, 0, 0, 0) })
+        vim.cmd.bwipeout(bufnr)
+        vim.diagnostic.set(
+          _G.diagnostic_ns,
+          _G.diagnostic_bufnr,
+          { _G.make_error('Error', 0, 0, 0, 0) }
+        )
+        vim.diagnostic.hide(_G.diagnostic_ns, bufnr)
+      end)
+    end)
+
     it('can perform updates after insert_leave', function()
       exec_lua(function()
         vim.diagnostic.config({ virtual_text = true })
