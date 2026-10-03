@@ -52,8 +52,10 @@ Buffer nvim_win_get_buf(Window win, Error *err)
 /// Note: As a side-effect, this executes |BufEnter| and |BufLeave| autocommands.
 /// @param win   |window-ID|, or 0 for current window
 /// @param buf   Buffer id
+/// @param opts  Optional parameters.
+///                - noautocmd: Block all autocommands for the duration of the call. See |:noautocmd|.
 /// @param[out] err Error details, if any
-void nvim_win_set_buf(Window win, Buffer buf, Error *err)
+void nvim_win_set_buf(Window win, Buffer buf, Dict(win_set_buf) *opts, Error *err)
   FUNC_API_SINCE(5)
   FUNC_API_TEXTLOCK
 {
@@ -66,9 +68,15 @@ void nvim_win_set_buf(Window win, Buffer buf, Error *err)
     return;
   }
 
+  if (opts->noautocmd) {
+    block_autocmds();
+  }
   // 'winfixbuf' on the cmdwin window prevents replacing its buffer; no
   // separate cmdwin guard needed.
   win_set_buf(w, b, err);
+  if (opts->noautocmd) {
+    unblock_autocmds();
+  }
 }
 
 /// Gets the (1,0)-indexed, buffer-relative cursor position for a given window

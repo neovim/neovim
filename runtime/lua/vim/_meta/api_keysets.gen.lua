@@ -503,6 +503,9 @@ error('Cannot require a meta file')
 --- @class vim.api.keyset.win_resize
 --- @field anchor? string
 
+--- @class vim.api.keyset.win_set_buf
+--- @field noautocmd? boolean
+
 --- @class vim.api.keyset.win_text_height
 --- @field end_row? integer
 --- @field end_vcol? integer
