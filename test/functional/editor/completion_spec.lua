@@ -1,6 +1,5 @@
 local t = require('test.testutil')
 local describe, it, before_each, finally = t.describe, t.it, t.before_each, t.finally
-local pcall_err = t.pcall_err
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
@@ -1935,20 +1934,6 @@ describe('completion', function()
     eq({ 'A', 'B', 'C', 'sub1/', 'sub2/' }, fn.getcompletion('find ', 'cmdline'))
   end)
 
-  it('complete-items commit_chars', function()
-    exec_lua(function()
-      _G.Omnifunc = function(findstart, _)
-        return findstart == 1 and 0 or { { word = 'foobar', commit_chars = '(' } }
-      end
-      vim.bo.omnifunc = 'v:lua.Omnifunc'
-    end)
-    n.command('set completeopt=menuone,noinsert')
-    feed('i<C-x><C-o>')
-    poke_eventloop()
-    feed('(')
-    eq('foobar(', n.api.nvim_get_current_line())
-  end)
-
   it('complete_info() reports equal, preselect and commit_chars', function()
     command('set completeopt=menuone,noinsert')
     source([[
@@ -1971,5 +1956,126 @@ describe('completion', function()
     eq(1, items[2].preselect)
     eq('(', items[3].commit_chars)
     eq({ nil, nil, nil }, { items[4].equal, items[4].preselect, items[4].commit_chars })
+  end)
+
+  describe('complete-items "commit_chars" "startcol" "filter_text"', function()
+    before_each(function()
+      command('set completeopt=menu,menuone,noinsert')
+    end)
+
+    --- @param what 'items'|'matches'
+    local function words(what)
+      return vim.tbl_map(function(m)
+        return m.word
+      end, fn.complete_info({ what })[what])
+    end
+
+    --- Completes from `back` bytes before the cursor.
+    --- @param items table[]
+    --- @param back? integer
+    local function offer(items, back)
+      exec_lua(function()
+        _G.items = items
+        vim.keymap.set('i', '<F5>', function()
+          vim.fn.complete(vim.fn.col('.') - (back or 0), _G.items)
+        end)
+      end)
+    end
+
+    it('complete-items commit_chars', function()
+      exec_lua(function()
+        _G.Omnifunc = function(findstart, _)
+          return findstart == 1 and 0 or { { word = 'foobar', commit_chars = '(' } }
+        end
+        vim.bo.omnifunc = 'v:lua.Omnifunc'
+      end)
+      feed('i<C-x><C-o>(')
+      eq('foobar(', n.api.nvim_get_current_line())
+    end)
+
+    it('is filtered by "filter_text" rather than by what it inserts', function()
+      offer({
+        { word = 'os.path.join', filter_text = 'join' },
+        { word = 'os.path.split', filter_text = 'split' },
+      })
+      feed('i<F5>jo')
+      eq({ 'os.path.join' }, words('matches'))
+      feed('<C-l>')
+      eq('joi', api.nvim_get_current_line())
+      feed('<C-y>')
+      eq('os.path.join', api.nvim_get_current_line())
+    end)
+
+    it('is filtered from its "startcol" once something is typed', function()
+      command('set completeopt+=fuzzy')
+      offer({ { word = 'zzz' }, { word = '->member', startcol = 2, filter_text = '.member' } }, 2)
+      feed('ip.mb<F5>')
+      eq({ 'zzz', '->member' }, words('matches'))
+      feed('e')
+      eq({ '->member' }, words('matches'))
+    end)
+
+    it('replaces from a "startcol" past the completion column', function()
+      command('set completeopt=menu,menuone')
+      offer({ { word = 'eld2', startcol = 7 } }, 3)
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'obj.fie', 'obj.fie' })
+      feed('A<F5>')
+      eq('obj.field2', api.nvim_get_current_line())
+      feed('<Esc>j$.')
+      eq({ 'obj.field2', 'obj.field2' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    end)
+
+    it('applies a "startcol" range to a "word" spanning lines', function()
+      command('set completeopt=menu,menuone')
+      -- A multi-line "filter_text" is dropped.
+      offer({
+        { word = 'A\nB', startcol = 4, filter_text = '-ab' },
+        { word = 'X', startcol = 4, filter_text = '-a\nb' },
+      })
+      feed('ifoo-<F5>')
+      eq({ 'A\nB' }, words('items'))
+      eq({ 'foo-ab' }, api.nvim_buf_get_lines(0, 0, -1, true))
+      feed('<C-y>')
+      eq({ 'fooA', 'B' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    end)
+
+    it('puts the typed text back unless accepted', function()
+      command('set completeopt=menu,menuone')
+      exec_lua(function()
+        vim.api.nvim_create_autocmd('CompleteDone', {
+          callback = function()
+            _G.done = { vim.v.event.reason, vim.v.event.complete_word }
+          end,
+        })
+      end)
+      offer({ { word = 'BAR', startcol = 4, filter_text = '-bar' } })
+      api.nvim_buf_set_lines(0, 0, -1, true, { '', '' })
+      feed('ifoo-<F5>')
+      eq('foo-bar', api.nvim_get_current_line())
+      feed('<Esc>j.')
+      eq({ 'foo-', 'foo-' }, api.nvim_buf_get_lines(0, 0, -1, true))
+      eq({ 'discard', '' }, exec_lua('return _G.done'))
+
+      api.nvim_buf_set_lines(0, 0, -1, true, { '' })
+      feed('ifoo-<F5><C-y>')
+      eq('fooBAR', api.nvim_get_current_line())
+      eq({ 'accept', 'BAR' }, exec_lua('return _G.done'))
+      feed('<Esc>')
+
+      -- Without a menu any key accepts.
+      command('set completeopt=menu')
+      api.nvim_buf_set_lines(0, 0, -1, true, { '' })
+      feed('ifoo-<F5> ')
+      eq('fooBAR ', api.nvim_get_current_line())
+      feed('<Esc>')
+
+      command('set completeopt=menu,menuone')
+      offer({ { word = 'X', filter_text = 'Join' } }, 2)
+      api.nvim_buf_set_lines(0, 0, -1, true, { '' })
+      feed('ijo<F5>')
+      eq('Join', api.nvim_get_current_line())
+      feed('<Esc>')
+      eq('jo', api.nvim_get_current_line())
+    end)
   end)
 end)
