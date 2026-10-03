@@ -92,6 +92,7 @@ src/logfile.c
 src/mysign
 src/po/ko.po
 src/po/pl.po
+src/po/tojavascript.vim
 src/po/vim.pot
 src/po/zh_CN.cp936.po
 src/po/zh_CN.po

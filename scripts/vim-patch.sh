@@ -859,6 +859,7 @@ is_na_patch() {
   local NA_HUNKS_C="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_c.txt"
   local NA_HUNKS_H="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_h.txt"
   local NA_HUNKS_HELP="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_help.txt"
+  local NA_HUNKS_MAKE_PO="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_make_po.txt"
   local NA_HUNKS_VIM="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_vim.txt"
 
   local FILES_REMAINING HUNKS HUNK_NUM_FINAL
@@ -916,11 +917,7 @@ is_na_patch() {
           "$patch" -- "${file}")
         if test -n "$HUNKS"; then
           # shellcheck disable=SC2016
-          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv \
-            -e '^\$([_A-Z]\+)\.pot:' \
-            -e '^clean:' \
-            -e '^g\?vim\.desktop:' \
-            )
+          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_MAKE_PO")
           test "$HUNK_NUM_FINAL" -ne 0 && return 1
         fi
         ;;
