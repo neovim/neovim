@@ -657,8 +657,8 @@ bool vim_isIDp(const char *const p)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   const int len = utf_ptr2len(p);
-  if (len == 1 && (uint8_t)(*p) >= 0x80) {
-    return false;
+  if (len == 0 || (len == 1 && (uint8_t)(*p) >= 0x80)) {
+    return false;  // NUL or illegal byte.
   }
   for (int i = 0; i < len; i++) {
     if (!vim_isIDc((uint8_t)p[i])) {

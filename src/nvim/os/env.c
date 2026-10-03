@@ -59,6 +59,17 @@ void env_init(void)
   nvim_testing = os_env_exists("NVIM_TEST", false);
 }
 
+/// Checks that `name` can be an env var name: not empty, and (Windows) valid UTF-8, which libuv
+/// needs to convert it to UTF-16.
+static bool env_name_valid(const char *name)
+{
+#ifdef MSWIN
+  return name[0] != NUL && utf_valid_string(name, NULL);
+#else
+  return name[0] != NUL;
+#endif
+}
+
 /// Like getenv(), but returns NULL if the variable is empty.
 /// Result must be freed by the caller.
 /// @see os_env_exists
@@ -67,7 +78,7 @@ char *os_getenv(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
   char *e = NULL;
-  if (name[0] == NUL) {
+  if (!env_name_valid(name)) {
     return NULL;
   }
   int r = 0;
@@ -107,7 +118,7 @@ end:
 char *os_getenv_buf(const char *const name, char *const buf, const size_t bufsize)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (name[0] == NUL) {
+  if (!env_name_valid(name)) {
     return NULL;
   }
 
@@ -153,7 +164,7 @@ char *os_getenv_noalloc(const char *name)
 bool os_env_exists(const char *name, bool nonempty)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (name[0] == NUL) {
+  if (!env_name_valid(name)) {
     return false;
   }
   // Use a tiny buffer because we don't care about the value: if uv_os_getenv()
@@ -174,7 +185,7 @@ bool os_env_exists(const char *name, bool nonempty)
 int os_setenv(const char *name, const char *value, int overwrite)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (name[0] == NUL) {
+  if (!env_name_valid(name)) {
     return -1;
   }
 #ifdef MSWIN
@@ -211,7 +222,7 @@ int os_setenv(const char *name, const char *value, int overwrite)
 int os_unsetenv(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (name[0] == NUL) {
+  if (!env_name_valid(name)) {
     return -1;
   }
   int r = uv_os_unsetenv(name);
