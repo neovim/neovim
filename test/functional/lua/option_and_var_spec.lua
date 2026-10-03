@@ -878,6 +878,51 @@ describe('lua stdlib', function()
           eq('*.c', wildignore[1])
         end)
 
+        it('preserves escaped commas when copying errorformat #19949', function()
+          local global = eval('&g:errorformat')
+          exec_lua('vim.opt_local.errorformat = vim.opt_global.errorformat:get()')
+          eq(global, eval('&l:errorformat'))
+
+          local formats = { [[%f\, line %l: %m]], '%f:%l:%m' }
+          eq(
+            formats,
+            exec_lua(function(formats)
+              vim.opt_global.errorformat = formats
+              return vim.opt_global.errorformat:get()
+            end, formats)
+          )
+          exec_lua('vim.opt_local.errorformat = vim.opt_global.errorformat:get()')
+          eq(table.concat(formats, ','), eval('&l:errorformat'))
+          local items = fn.getqflist({
+            lines = { 'test.c, line 12: message', 'test.c:34:another message' },
+            efm = eval('&l:errorformat'),
+          }).items
+          eq({ 12, 34 }, { items[1].lnum, items[2].lnum })
+          eq({ 'message', 'another message' }, { items[1].text, items[2].text })
+          eq({ 1, 1 }, { items[1].valid, items[2].valid })
+        end)
+
+        for _, option in ipairs({ 'path', 'runtimepath' }) do
+          it('keeps decoded comma-containing ' .. option .. ' entries usable as paths', function()
+            local dir = t.tmpname(false) .. ',comma'
+            fn.mkdir(dir, 'p')
+            t.finally(function()
+              rmdir(dir)
+            end)
+            eq(
+              'directory',
+              exec_lua(function(name, path)
+                local saved = vim.o[name]
+                vim.o[name] = path:gsub(',', [[\,]])
+                local value = vim.opt[name]:get()[1]
+                local stat = vim.uv.fs_stat(value)
+                vim.o[name] = saved
+                return stat and stat.type
+              end, option, dir)
+            )
+          end)
+        end
+
         it('works for array list type options', function()
           eq_exec_lua({ eol = '~', space = '-' }, function()
             vim.opt.listchars = { 'eol:~', 'space:-' }
