@@ -16,7 +16,9 @@ headless server.
 
 The remote-ssh feature uses `ssh` to connect to a remote system. It:
 - Detects the remote architecture.
-- Bootstraps the Nvim binary in `~/.local/bin/nvim` and `~/.local/share/nvim-remote`.
+- Installs the Nvim release matching the local version (the current nightly
+  for prerelease builds) under `~/.local/share/nvim-remote/releases/`,
+  leaving any Nvim already installed on the remote host untouched.
 - Starts the remote Nvim with `NVIM_APPNAME=nvim-remote`, keeping remote
   state separate from any local Nvim installation on the remote host.
 - Initiates a headless Nvim server and connects your local UI via a Unix
@@ -80,7 +82,7 @@ the remote host. See |$NVIM_APPNAME|.
 Remote paths used:
   - Config: `~/.config/nvim-remote/`
   - Data:   `~/.local/share/nvim-remote/`
-  - Binary: `~/.local/bin/nvim`
+  - Binary: `~/.local/share/nvim-remote/releases/{version}/bin/nvim`
 
 The data directory persists across connections for fast reconnects. On
 teardown, only the headless process and SSH mux socket are cleaned up.

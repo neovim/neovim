@@ -224,7 +224,9 @@ describe('vim.net._ssh', function()
       ]=]) .. [=[
         fi
 
-        if [[ "$ARGS" == *"TARGET_VER"* ]]; then
+        if [[ "$ARGS" == *"releases/download/"* ]]; then
+          printf '%s' "$ARGS" > ]=] .. string.format('%q', fake_bin_dir .. '/install.args') .. [=[
+
       ]=] .. (behavior.installer or [=[
           echo "Installing Neovim..." >&2
           exit 0
@@ -336,6 +338,29 @@ describe('vim.net._ssh', function()
       ]])
 
       assert(sock:match('_remote_nvim%.sock$'))
+    end)
+
+    it('installs the matching release privately and runs it', function()
+      skip(is_os('win'), 'remote-ssh engine is POSIX-only')
+      setup_fake_ssh()
+      local release = n.exec_lua([[
+        local _, _, teardown = require('vim.net._ssh').start('user@test-server')
+        teardown()
+        local v = vim.version()
+        local base = ('v%d.%d.%d'):format(v.major, v.minor, v.patch)
+        return v.prerelease and ('nightly-' .. base) or base
+      ]])
+      local install = t.read_file(fake_bin_dir .. '/install.args')
+      local tag = release:match('^nightly') and 'nightly' or release
+      t.matches('releases/download/' .. vim.pesc(tag) .. '/nvim%-linux%-x86_64%.tar%.gz', install)
+      t.matches('dest="%$HOME"/%.local/share/nvim%-remote/releases/' .. vim.pesc(release), install)
+      eq(nil, install:find('.local/bin', 1, true))
+      t.matches(
+        '"%$HOME"/%.local/share/nvim%-remote/releases/'
+          .. vim.pesc(release)
+          .. '/bin/nvim %-%-headless',
+        t.read_file(fake_bin_dir .. '/tunnel.args')
+      )
     end)
 
     it('fails when ssh exits before the remote Nvim is ready', function()

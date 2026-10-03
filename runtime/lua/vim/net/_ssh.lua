@@ -420,10 +420,19 @@ function M.get_system_info(uri)
   return os, arch
 end
 
+--- Installs the matching Nvim release on the remote host, unless present.
+--- Uses a per-version dir, never touching the user's own Nvim.
+---
+---@param uri {host:string, user?:string, port?:string}
+---@param os string
+---@param arch string
+---@return string nvim Remote path of the `nvim` binary, as a shell word.
 local function check_and_install(uri, os, arch)
-  local ver = vim.version() --[[@as vim.Version]]
-  local nvim_version = 'v' .. tostring(ver)
-  local is_nightly = ver.prerelease and true or false
+  local ver = vim.version()
+  local base = ('v%d.%d.%d'):format(ver.major, ver.minor, ver.patch)
+  -- prereleases: install the current nightly, once per version
+  local tag = ver.prerelease and 'nightly' or base
+  local install_name = ver.prerelease and ('nightly-' .. base) or base
 
   local os_map = { linux = 'linux', darwin = 'macos' }
   local arch_map = { x86_64 = 'x86_64', aarch64 = 'arm64', arm64 = 'arm64' }
@@ -434,51 +443,46 @@ local function check_and_install(uri, os, arch)
     error(string.format('Unsupported OS/Arch combination: %s/%s', os, arch))
   end
 
-  local release_file = string.format('nvim-%s-%s.tar.gz', target_os, target_arch)
-  local release_url =
-    string.format('https://github.com/neovim/neovim/releases/latest/download/%s', release_file)
-  if is_nightly then
-    release_url =
-      string.format('https://github.com/neovim/neovim/releases/download/nightly/%s', release_file)
-  end
+  local release_name = string.format('nvim-%s-%s', target_os, target_arch)
+  local release_url = string.format(
+    'https://github.com/neovim/neovim/releases/download/%s/%s.tar.gz',
+    tag,
+    release_name
+  )
+  local dest = '"$HOME"/.local/share/nvim-remote/releases/' .. install_name
 
   local remote_script = string.format(
     [[
     set -eu
-    TARGET_VER="%s"
-    INSTALL_DIR="$HOME/.local/share/nvim-remote"
-    BIN_DIR="$HOME/.local/bin"
-
-    mkdir -p "$BIN_DIR"
-    mkdir -p "$INSTALL_DIR"
-
-    if [ -x "$BIN_DIR/nvim" ]; then
-      CURRENT_VER=$("$BIN_DIR/nvim" -v | head -n1 | sed 's/^NVIM //')
-      if [ "$CURRENT_VER" = "$TARGET_VER" ]; then
-        exit 0
-      fi
+    dest=%s
+    if [ -x "$dest/bin/nvim" ]; then
+      exit 0
     fi
 
-    echo "Installing Nvim $TARGET_VER..." >&2
-    cd "$INSTALL_DIR"
-    curl -fL -o nvim.tar.gz "%s"
-    tar -xzf nvim.tar.gz
-    rm -f nvim.tar.gz
-    ln -sf "$INSTALL_DIR/nvim-%s-%s/bin/nvim" "$BIN_DIR/nvim"
+    echo "Installing Nvim %s..." >&2
+    mkdir -p "${dest%%/*}"
+    tmp=$(mktemp -d "$dest.XXXXXX")
+    trap 'rm -rf "$tmp"' EXIT
+    curl -fsSL -o "$tmp/nvim.tar.gz" '%s'
+    tar -xzf "$tmp/nvim.tar.gz" -C "$tmp"
+    # atomic rename; keep a concurrent install that finished first
+    [ -e "$dest" ] || mv "$tmp/%s" "$dest"
   ]],
-    nvim_version,
+    dest,
+    install_name,
     release_url,
-    target_os,
-    target_arch
+    release_name
   )
 
-  log().debug('check_and_install: target_ver', nvim_version, 'os', target_os, 'arch', target_arch)
+  log().debug('check_and_install: install', install_name, 'os', target_os, 'arch', target_arch)
 
   local obj = run_script(uri, remote_script)
   log().debug('check_and_install: code', obj.code, 'stdout', obj.stdout, 'stderr', obj.stderr)
   if obj.code ~= 0 then
     error('Installation failed: ' .. (obj.stderr ~= '' and obj.stderr or obj.stdout))
   end
+
+  return dest .. '/bin/nvim'
 end
 
 --- @param uri_str string
@@ -491,7 +495,7 @@ function M.start(uri_str)
   local os, arch = M.get_system_info(uri)
 
   notify('Checking remote Nvim install...')
-  check_and_install(uri, os, arch)
+  local nvim = check_and_install(uri, os, arch)
 
   local local_sock = vim.fn.tempname() .. '_remote_nvim.sock'
 
@@ -511,7 +515,7 @@ function M.start(uri_str)
     NVIM_PID=
     trap 'kill $NVIM_PID 2>/dev/null; rm -rf "$dir"' EXIT
     trap 'exit 1' HUP INT TERM PIPE
-    NVIM_APPNAME=nvim-remote ~/.local/bin/nvim --headless --listen "$sock" </dev/null &
+    NVIM_APPNAME=nvim-remote %s --headless --listen "$sock" </dev/null &
     NVIM_PID=$!
     while [ ! -S "$sock" ]; do
       if ! kill -0 $NVIM_PID 2>/dev/null; then
@@ -527,7 +531,8 @@ function M.start(uri_str)
       printf '\n' 2>/dev/null || exit 1
     done
   ]],
-    remote_dir
+    remote_dir,
+    nvim
   )
 
   local forward = local_sock .. ':' .. remote_sock
