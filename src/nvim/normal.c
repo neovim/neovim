@@ -6676,16 +6676,20 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
   }
 
   // When all lines were selected and deleted do_put() leaves an empty
-  // line that needs to be deleted now.
-  if (empty && *ml_get(curbuf->b_ml.ml_line_count) == NUL) {
-    ml_delete_flags(curbuf->b_ml.ml_line_count, ML_DEL_MESSAGE);
-    deleted_lines(curbuf->b_ml.ml_line_count + 1, 1);
+  // line that needs to be deleted now.  When the put failed the buffer is
+  // still empty and there is nothing to delete.
+  if (empty && !(curbuf->b_ml.ml_flags & ML_EMPTY)
+      && *ml_get(curbuf->b_ml.ml_line_count) == NUL) {
+    pos_T cursor = curwin->w_cursor;
+    curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+    del_lines(1, true);
 
     // If the cursor was in that line, move it to the end of the last
     // line.
-    if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
-      curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+    if (cursor.lnum > curbuf->b_ml.ml_line_count) {
       coladvance(curwin, MAXCOL);
+    } else {
+      curwin->w_cursor = cursor;
     }
   }
   auto_format(false, true);
