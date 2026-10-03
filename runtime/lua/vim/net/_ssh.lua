@@ -367,6 +367,19 @@ local function get_ssh_cmd(ssh_uri, opts)
   return ssh_cmd
 end
 
+--- Runs `script` via `sh -s` over stdin, so the remote login shell never re-parses it
+---
+---@param uri {host:string, user?:string, port?:string}
+---@param script string POSIX shell script.
+---@param opts? { ssh_args?: string[], wait_until?: fun(stdout: string, stderr: string): boolean }
+---@return vim.SystemRunWaitResult
+local function run_script(uri, script, opts)
+  opts = opts or {}
+  local ssh_cmd = get_ssh_cmd(uri, { ssh_args = opts.ssh_args, remote_cmd = { 'sh', '-s' } })
+  log().debug('run_script: running', ssh_cmd)
+  return core_system().run_wait(ssh_cmd, { stdin = script }, opts.wait_until, 300000)
+end
+
 --- Gets the operating system and architecture from the remote system.
 ---
 ---@param uri {host:string, user?:string, port?:string}
@@ -375,7 +388,7 @@ function M.get_system_info(uri)
   local ssh_cmd = get_ssh_cmd(uri, { remote_cmd = { 'uname -s && uname -m' } })
   log().debug('get_system_info: running', ssh_cmd)
 
-  local obj = core_system().run_wait(ssh_cmd, nil, 300000)
+  local obj = core_system().run_wait(ssh_cmd, nil, nil, 300000)
   log().debug('get_system_info: code', obj.code, 'stdout', obj.stdout, 'stderr', obj.stderr)
   if obj.code ~= 0 then
     error(
@@ -431,7 +444,7 @@ local function check_and_install(uri, os, arch)
 
   local remote_script = string.format(
     [[
-    set -euo pipefail
+    set -eu
     TARGET_VER="%s"
     INSTALL_DIR="$HOME/.local/share/nvim-remote"
     BIN_DIR="$HOME/.local/bin"
@@ -448,7 +461,9 @@ local function check_and_install(uri, os, arch)
 
     echo "Installing Nvim $TARGET_VER..." >&2
     cd "$INSTALL_DIR"
-    curl -fL "%s" | tar -xzf -
+    curl -fL -o nvim.tar.gz "%s"
+    tar -xzf nvim.tar.gz
+    rm -f nvim.tar.gz
     ln -sf "$INSTALL_DIR/nvim-%s-%s/bin/nvim" "$BIN_DIR/nvim"
   ]],
     nvim_version,
@@ -457,10 +472,9 @@ local function check_and_install(uri, os, arch)
     target_arch
   )
 
-  local ssh_cmd = get_ssh_cmd(uri, { remote_cmd = { remote_script } })
   log().debug('check_and_install: target_ver', nvim_version, 'os', target_os, 'arch', target_arch)
 
-  local obj = core_system().run_wait(ssh_cmd, nil, 300000)
+  local obj = run_script(uri, remote_script)
   log().debug('check_and_install: code', obj.code, 'stdout', obj.stdout, 'stderr', obj.stderr)
   if obj.code ~= 0 then
     error('Installation failed: ' .. (obj.stderr ~= '' and obj.stderr or obj.stdout))
@@ -497,16 +511,14 @@ function M.start(uri_str)
     wait $NVIM_PID
   ]]
 
-  local ssh_cmd = get_ssh_cmd(uri, {
-    ssh_args = { '-L', local_sock .. ':/tmp/nvim-remote.sock' },
-    remote_cmd = { 'bash', '-c', remote_cmd },
-  })
-
   notify('Establishing SSH tunnel...')
   log().debug('start: local_sock', local_sock)
-  local tunnel = core_system().run_wait(ssh_cmd, function(stdout)
-    return stdout:match('NVIM_READY') ~= nil
-  end, 300000)
+  local tunnel = run_script(uri, remote_cmd, {
+    ssh_args = { '-L', local_sock .. ':/tmp/nvim-remote.sock' },
+    wait_until = function(stdout)
+      return stdout:match('NVIM_READY') ~= nil
+    end,
+  })
   log().debug('start: tunnel stdout', tunnel.stdout, 'stderr', tunnel.stderr)
 
   if tunnel.stdout:match('NVIM_CRASHED') then

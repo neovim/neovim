@@ -120,6 +120,7 @@ describe('vim.system', function()
       local ok, err = pcall(function()
         res = require('vim._core.system').run_wait(
           { 'bash', '-c', 'echo READY; sleep 10' },
+          nil,
           function(stdout)
             return stdout:match('READY') ~= nil
           end,
@@ -142,6 +143,17 @@ describe('vim.system', function()
         error(err)
       end
     end)
+  end)
+
+  it('run_wait() writes stdin', function()
+    t.skip(t.is_os('win'), 'shell command is POSIX-only')
+
+    eq(
+      'hello',
+      exec_lua(function()
+        return require('vim._core.system').run_wait({ 'cat' }, { stdin = 'hello' }, nil, 10000).stdout
+      end)
+    )
   end)
 
   it('SystemObj:wait() does not process non-fast events #27292', function()

@@ -223,15 +223,17 @@ end
 --- long-lived commands such as `ssh -L ...`, which print a readiness marker and then keep running.
 ---
 --- @param cmd string[] Command to execute.
+--- @param opts? { stdin?: string } `stdin` is written to the process, then closed.
 --- @param wait_until? fun(stdout: string, stderr: string): boolean Predicate checked after output.
 --- @param timeout? integer Time limit in ms.
 --- @return vim.SystemRunWaitResult
-function M.run_wait(cmd, wait_until, timeout)
+function M.run_wait(cmd, opts, wait_until, timeout)
   vim.validate('cmd', cmd, 'table')
+  vim.validate('opts', opts, 'table', true)
   vim.validate('wait_until', wait_until, 'function', true)
   vim.validate('timeout', timeout, 'number', true)
 
-  local obj = vim.system(cmd, { text = true }) --[[@as vim.SystemRunWaitResult]]
+  local obj = vim.system(cmd, { text = true, stdin = opts and opts.stdin }) --[[@as vim.SystemRunWaitResult]]
   local state = obj._state
 
   local function stdout()

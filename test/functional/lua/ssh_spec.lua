@@ -181,6 +181,9 @@ describe('vim.net._ssh', function()
       script = t.dedent([=[
         #!/usr/bin/env bash
         ARGS="$*"
+        if [[ "$ARGS" == *" sh -s" ]]; then
+          ARGS="$ARGS $(cat)"
+        fi
         PID_FILE=]=] .. string.format('%q', fake_tunnel_pid) .. [=[
 
         if [[ "$ARGS" == *"uname -s && uname -m"* ]]; then
@@ -194,6 +197,10 @@ describe('vim.net._ssh', function()
         if [[ "$ARGS" == *"-L"* ]]; then
           if [[ "$ARGS" != *"ControlMaster"* ]]; then
             echo "FAIL: Multiplexing flags missing!" >&2
+            exit 1
+          fi
+          if [[ "$ARGS" != *"sh -s"*"NVIM_READY"* ]]; then
+            echo "FAIL: tunnel script not fed to sh -s" >&2
             exit 1
           fi
       ]=] .. (behavior.tunnel or [=[
