@@ -899,6 +899,11 @@ describe('Buffer highlighting', function()
   end)
 
   it('and virtual text use the same namespace counter', function()
+    -- ensure lazy (mcursor) namespaces are registered
+    api.nvim_create_namespace('nvim.multicursor')
+    api.nvim_create_namespace('nvim.multicursor.cursor')
+    api.nvim_create_namespace('nvim.multicursor.visual')
+
     local base = vim.iter(api.nvim_get_namespaces()):fold(0, function(acc, _, v)
       return math.max(acc, v)
     end)

@@ -88,6 +88,7 @@ typedef struct {
   int col_last;
   int current;
   int current_hl_eol;  ///< "current" limited to ranges with "hl_eol"
+  int current_above_search;  ///< attr for ranges from namespaces that render above search/area hl
   int eol_col;
 
   int conceal;
