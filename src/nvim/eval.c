@@ -5569,7 +5569,7 @@ int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp, bool c
 int get_env_len(const char **arg)
 {
   const char *p;
-  for (p = *arg; vim_isIDc((uint8_t)(*p)); p++) {}
+  for (p = *arg; vim_isIDp(p); p += utf_ptr2len(p)) {}
   if (p == *arg) {  // No name found.
     return 0;
   }
