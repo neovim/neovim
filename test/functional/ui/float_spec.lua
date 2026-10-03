@@ -1122,6 +1122,39 @@ describe('float window', function()
     end)
   end)
 
+  it("'winblend' blends with a float below #14624", function()
+    local screen = Screen.new(20, 3)
+    screen:add_extra_attr_ids({
+      [100] = { background = Screen.colors.Plum1, foreground = Screen.colors.Black },
+      [101] = { foreground = Screen.colors.Black },
+      [102] = { background = tonumber('0xffddff'), foreground = Screen.colors.Black },
+      [103] = { background = tonumber('0xffddff'), foreground = tonumber('0x7f5d7f') },
+    })
+    insert(('0'):rep(15))
+    local buf = api.nvim_create_buf(false, true)
+    api.nvim_buf_set_lines(buf, 0, -1, true, { ('1'):rep(5) })
+    local float = api.nvim_open_win(buf, false, { relative = 'editor', width = 10, height = 1, row = 0, col = 2 })
+    -- Half over the float, half over the window.
+    local win = api.nvim_open_win(
+      api.nvim_create_buf(false, true),
+      false,
+      { relative = 'editor', width = 6, height = 1, row = 0, col = 9, zindex = 60 }
+    )
+    api.nvim_set_option_value('winblend', 100, { win = win })
+    screen:expect([[
+      00{4:11111  }{100:   }{101:00^0}     |
+      {1:~                   }|
+                          |
+    ]])
+    -- With a float below that blends too.
+    api.nvim_set_option_value('winblend', 50, { win = float })
+    screen:expect([[
+      00{102:11111}{103:00000}{101:00^0}     |
+      {1:~                   }|
+                          |
+    ]])
+  end)
+
   it('placed relative to tabline and laststatus', function()
     local screen = Screen.new(20, 10)
     screen:add_extra_attr_ids({ [100] = { bold = true, foreground = Screen.colors.Magenta } })
