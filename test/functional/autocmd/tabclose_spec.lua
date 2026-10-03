@@ -7,9 +7,55 @@ local command = n.command
 local eval = n.eval
 local exec = n.exec
 local exec_capture = n.exec_capture
+local api = n.api
 
 describe('TabClosed', function()
   before_each(clear)
+
+  for _, floating in ipairs({ false, true }) do
+    it('keeps other tabs after nested :tabclose, float=' .. tostring(floating), function()
+      command('tabnew')
+      local remaining_tabs = api.nvim_list_tabpages()
+      command('tabnew | split')
+      if floating then
+        api.nvim_open_win(
+          0,
+          true,
+          { relative = 'editor', row = 0, col = 0, width = 10, height = 2 }
+        )
+      end
+      command('autocmd WinClosed * ++once 3tabclose')
+      command('tabclose')
+      eq(remaining_tabs, api.nvim_list_tabpages())
+    end)
+  end
+
+  it('preserves windows in another tab after WinClosed closes the tab', function()
+    command('tabnew | split')
+    local remaining_tabs = api.nvim_list_tabpages()
+    local remaining_wins = api.nvim_list_wins()
+    command('tabnew | split')
+    command('autocmd WinClosed * ++once 3tabclose')
+    command('tabclose')
+    eq(remaining_tabs, api.nvim_list_tabpages())
+    eq(remaining_wins, api.nvim_list_wins())
+  end)
+
+  it('repeats TabClosedPre after WinClosed switches away from the tab', function()
+    command('tabnew | tabnew | split')
+    local tabs = api.nvim_list_tabpages()
+    exec([[
+      let g:closed_pre = []
+      autocmd TabClosedPre * call add(g:closed_pre, nvim_get_current_tabpage())
+      autocmd WinClosed * ++once tabprevious
+      tabclose
+    ]])
+    eq(tabs, api.nvim_list_tabpages())
+    eq({ tabs[3] }, eval('g:closed_pre'))
+    command('tabnext 3 | only | close')
+    eq({ tabs[1], tabs[2] }, api.nvim_list_tabpages())
+    eq({ tabs[3], tabs[3] }, eval('g:closed_pre'))
+  end)
 
   describe('au TabClosed', function()
     describe('with * as <afile>', function()
