@@ -2321,6 +2321,8 @@ get({opts})                                         *vim.lsp.completion.get()*
 
     Parameters: ~
       • {opts}  (`table?`) A table with the following fields:
+                • {client_id}? (`integer|integer[]`) Only request from these
+                  clients. Defaults to all clients with completion enabled.
                 • {ctx}? (`lsp.CompletionContext`) Completion context.
                   Defaults to a trigger kind of `invoked`.
 

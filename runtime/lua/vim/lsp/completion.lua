@@ -1380,6 +1380,7 @@ end
 --- @inlinedoc
 --- @class vim.lsp.completion.get.Opts
 --- @field ctx? lsp.CompletionContext Completion context. Defaults to a trigger kind of `invoked`.
+--- @field client_id? integer|integer[] Only request from these clients. Defaults to all clients with completion enabled.
 
 --- Triggers LSP completion once in the current buffer, if LSP completion is enabled
 --- (see |lsp-attach| |lsp-completion|).
@@ -1401,6 +1402,13 @@ function M.get(opts)
   local ctx = opts.ctx or { triggerKind = protocol.CompletionTriggerKind.Invoked }
   local bufnr = api.nvim_get_current_buf()
   local clients = (buf_handles[bufnr] or {}).clients or {}
+  if opts.client_id then
+    local ids = type(opts.client_id) == 'table' and opts.client_id or { opts.client_id }
+    --- @cast ids integer[]
+    clients = vim.tbl_filter(function(client)
+      return vim.list_contains(ids, client.id)
+    end, clients)
+  end
 
   trigger(bufnr, clients, ctx)
 end

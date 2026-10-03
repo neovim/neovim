@@ -1087,6 +1087,27 @@ describe('vim.lsp.completion: protocol', function()
     end)
   end)
 
+  it('requests only from the given clients', function()
+    local id1 = create_server('dummy1', { isIncomplete = false, items = { { label = 'hello' } } })
+    local id2 = create_server('dummy2', { isIncomplete = false, items = { { label = 'hallo' } } })
+    local id3 = create_server('dummy3', { isIncomplete = false, items = { { label = 'hola' } } })
+    feed('ih')
+
+    for _, case in ipairs({ { id2, { 'hallo' } }, { { id1, id3 }, { 'hello', 'hola' } } }) do
+      exec_lua(function()
+        vim.lsp.completion.get({ client_id = case[1] })
+      end)
+      assert_matches(function(matches)
+        eq(
+          case[2],
+          vim.tbl_map(function(m)
+            return m.word
+          end, matches)
+        )
+      end)
+    end
+  end)
+
   it('insert char triggers clients matching trigger characters', function()
     create_server('dummy1', {
       isIncomplete = false,
