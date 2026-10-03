@@ -2909,8 +2909,8 @@ vim.wo.foldtext = vim.o.foldtext
 vim.wo.fdt = vim.wo.foldtext
 
 --- Enables `multicursor` follow-mode: cursor-relative motions performed
---- by the primary cursor, cascade to all cursors `mcursor`.  Toggled by
---- `q=` (buffer-local).
+--- by the primary cursor, cascade to all cursors.  Toggled by `q=`
+--- (buffer-local).
 ---
 --- @type boolean
 vim.o.follow = false

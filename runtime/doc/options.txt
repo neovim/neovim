@@ -3195,8 +3195,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 'follow'		boolean	(default off)
 			local to buffer
 	Enables |multicursor| follow-mode: cursor-relative motions performed
-	by the primary cursor, cascade to all cursors |mcursor|.  Toggled by
-	|q=| (buffer-local).
+	by the primary cursor, cascade to all cursors.  Toggled by |q=|
+	(buffer-local).
 
 						*'formatexpr'* *'fex'*
 'formatexpr' 'fex'	string	(default "")

@@ -402,6 +402,12 @@ describe('multicursor', function()
       clear_cursors()
       feed('$zqb')
       eq(0, ncursors())
+      -- Screen-line motion: each row of a wrapped line, as displayed ('linebreak').
+      clear_cursors()
+      command('setlocal linebreak')
+      cursors({ 'aaaaaaa bbbbbbb ccccccc ddddddd eeeeeee fffffff ggggggg hhhhhhh' }, '')
+      feed('zqgj')
+      eq({ { 0, 0 }, { 0, 24 }, { 0, 48 } }, anchors())
       -- A step that stays ("ti" before an "i") retries from the next char.
       clear_cursors()
       cursors({ '#include <limits.h>' }, '')
@@ -535,9 +541,9 @@ describe('multicursor', function()
       eq({ 1, 2 }, api.nvim_win_get_cursor(0))
       feed('gvcX<Esc>')
       eq({ 'x X', 'y X', 'z foo' }, get_lines())
-      clear_cursors()
+      clear_cursors() -- The session end keeps the primary's '< '> (its "gv" selection).
       feed('<Esc>')
-      eq({ 'V', 1, 2 }, { fn.visualmode(), fn.line("'<"), fn.line("'>") })
+      eq({ 'v', 1, 1 }, { fn.visualmode(), fn.line("'<"), fn.line("'>") })
 
       -- Not supported: textobjects, non-motions ("zqx"), non-repeatable ("label" plugin).
       clear_cursors()
