@@ -86,9 +86,9 @@ hi StatusLine guifg=#ffff00 guibg=#a9a9a9 guisp=NONE gui=NONE ctermfg=226 ctermb
 hi StatusLineNC guifg=#ffffff guibg=#000000 guisp=NONE gui=NONE ctermfg=231 ctermbg=16 cterm=NONE term=bold,underline
 hi StatusLineTerm guifg=#ffffff guibg=#006400 guisp=NONE gui=NONE ctermfg=231 ctermbg=22 cterm=NONE term=bold,reverse
 hi StatusLineTermNC guifg=#ffffff guibg=#0000ff guisp=NONE gui=NONE ctermfg=231 ctermbg=21 cterm=NONE term=bold,underline
-hi TabLine guifg=#000000 guibg=#a9a9a9 guisp=NONE gui=underline ctermfg=16 ctermbg=248 cterm=underline term=bold,underline
+hi TabLine guifg=#000000 guibg=#a9a9a9 guisp=NONE gui=underline,nocombine ctermfg=16 ctermbg=248 cterm=underline,nocombine term=bold,underline
 hi TabLineFill guifg=NONE guibg=NONE guisp=NONE gui=reverse ctermfg=NONE ctermbg=NONE cterm=reverse term=NONE
-hi TabLineSel guifg=#000000 guibg=#ffffff guisp=NONE gui=bold ctermfg=16 ctermbg=231 cterm=bold term=bold,reverse
+hi TabLineSel guifg=#000000 guibg=#ffffff guisp=NONE gui=bold,nocombine ctermfg=16 ctermbg=231 cterm=bold,nocombine term=bold,reverse
 hi Tag guifg=#006400 guibg=NONE guisp=NONE gui=NONE ctermfg=22 ctermbg=NONE cterm=NONE term=NONE
 hi Title guifg=#a020f0 guibg=NONE guisp=NONE gui=bold ctermfg=129 ctermbg=NONE cterm=bold term=NONE
 hi TitleBar guifg=#000000 guibg=#ececec guisp=NONE gui=NONE ctermfg=16 ctermbg=255 cterm=NONE term=NONE
@@ -159,9 +159,9 @@ if s:t_Co >= 16
   hi StatusLineNC ctermfg=white ctermbg=black cterm=NONE
   hi StatusLineTerm ctermfg=white ctermbg=darkgreen cterm=NONE
   hi StatusLineTermNC ctermfg=white ctermbg=blue cterm=NONE
-  hi TabLine ctermfg=black ctermbg=grey cterm=underline
+  hi TabLine ctermfg=black ctermbg=grey cterm=underline,nocombine
   hi TabLineFill ctermfg=NONE ctermbg=NONE cterm=reverse
-  hi TabLineSel ctermfg=black ctermbg=white cterm=bold
+  hi TabLineSel ctermfg=black ctermbg=white cterm=bold,nocombine
   hi Tag ctermfg=darkgreen ctermbg=NONE cterm=NONE
   hi Title ctermfg=darkmagenta ctermbg=NONE cterm=bold
   hi TitleBar ctermfg=black ctermbg=white cterm=NONE

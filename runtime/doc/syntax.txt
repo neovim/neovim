@@ -5514,10 +5514,12 @@ StatusLineTermNC
 		Status line of non-current |terminal| windows.
 							*hl-TabLine*
 TabLine		Tabpages line, not active tabpage label.
+		Combined with |hl-TabLineFill|.
 							*hl-TabLineFill*
 TabLineFill	Tabpages line, where there are no labels.
 							*hl-TabLineSel*
 TabLineSel	Tabpages line, active tabpage label.
+		Combined with |hl-TabLineFill|.
 							*hl-Title*
 Title		Titles for output from ":set all", ":autocmd" etc.
 							*hl-Visual*

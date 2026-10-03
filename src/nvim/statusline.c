@@ -583,8 +583,8 @@ static void ui_ext_tabline_update(void)
 void draw_tabline(void)
 {
   win_T *wp;
-  int attr_nosel = HL_ATTR(HLF_TP);
   int attr_fill = HL_ATTR(HLF_TPF);
+  int attr_nosel = hl_combine_attr(attr_fill, HL_ATTR(HLF_TP));
   bool use_sep_chars = (t_colors < 8);
 
   if (default_grid.chars == NULL) {
@@ -639,14 +639,14 @@ void draw_tabline(void)
       }
 
       if (tp->tp_topframe == topframe) {
-        attr = win_hl_attr(cwp, HLF_TPS);
+        attr = hl_combine_attr(attr_fill, win_hl_attr(cwp, HLF_TPS));
       }
       if (use_sep_chars && col > 0) {
         grid_line_put_schar(col++, schar_from_ascii('|'), attr);
       }
 
       if (tp->tp_topframe != topframe) {
-        attr = win_hl_attr(cwp, HLF_TP);
+        attr = hl_combine_attr(attr_fill, win_hl_attr(cwp, HLF_TP));
       }
 
       grid_line_put_schar(col++, schar_from_ascii(' '), attr);
