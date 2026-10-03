@@ -296,6 +296,24 @@ describe('filetype.lua', function()
     eq('gitconfig', api.nvim_get_option_value('filetype', {}))
   end)
 
+  it('triggers FileType when re-editing a directory buffer #42160', function()
+    clear({
+      args = {
+        '--clean',
+        '--cmd',
+        'let g:loaded_nvim_dir_plugin = 1 | let g:loaded_netrwPlugin = 1',
+        '--cmd',
+        'let g:n = 0 | autocmd FileType directory let g:n += 1',
+        'Xfiletype/',
+      },
+    })
+    eq('directory', api.nvim_get_option_value('filetype', {}))
+    eq(1, api.nvim_get_var('n'))
+    command('edit')
+    eq(2, api.nvim_get_var('n'))
+    t.matches('directoryDirectory', n.exec_capture('syntax list'))
+  end)
+
   it('works with :doautocmd BufRead #31306', function()
     clear({ args = { '--clean' } })
     eq('', api.nvim_get_option_value('filetype', {}))
