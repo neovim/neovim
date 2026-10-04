@@ -974,6 +974,7 @@ is_na_patch() {
           '-I^EXTERN char e_cannot_use_a_return_type_with_new' \
           '-I^EXTERN char e_dictionary_not_set' \
           '-I^EXTERN char e_dictnull' \
+          '-I^EXTERN char e_failed_to_source_defaults' \
           '-I^EXTERN char e_gethostbyname_in_channel_' \
           '-I^EXTERN char e_invalid_identifier_in_defineannotype' \
           '-I\sINIT\(= .+"E[0-9]+: (Abstract|Const|Class|Enum|Final|Interface|Public|Static|Type) ' \
@@ -984,6 +985,7 @@ is_na_patch() {
           '-I\sINIT\(= .+"E649: Invalid identifier name in defineAnnoType' \
           '-I\sINIT\(= .+"E1016: Cannot declare .* variable: ' \
           '-I\sINIT\(= .+"E1103: Dictionary not set' \
+          '-I\sINIT\(= .+"E1187: .*defaults\.vim' \
           '-I\sINIT\(= .+"E1365: Cannot use a return type with the \\"new\\" function"' \
           '-I\sINIT\(= .+"E1370: Cannot define a .+ as static' \
           '-I\sINIT\(= .+"E15[0-9]+: Cannot use .*listener_add in a .* listener callback"' \
@@ -1027,6 +1029,7 @@ is_na_patch() {
           '-I = skip_type\(.+\);$' \
           '-Icheck_typval_type\(.+\)' \
           '-Icrypt_get_method_nr\(.+\)' \
+          '-Ie_failed_to_source_defaults' \
           '-Imsg\(.*".*GTK.*"\)' \
           '-I\spopup_set_firstline\(.+\);' \
           '-I\sredraw_tabpanel =' \
