@@ -103,6 +103,8 @@ typedef struct {
 /// The boundary:
 /// - literal text is previewed
 /// - non-literal keys (mc_ins_keys_nonliteral) have per-cursor effects, so flush (early commit).
+/// - an untracked edit is only in preview: capture cannot replay it, so preview is
+///   committed and capture restarts (like a non-captured cursor-move).
 static struct {
   CmdOrigin origin;  ///< State at session start: the session's atoms diff against it.
   kvec_t(uint32_t) regions;  ///< Per-cursor preview regions (`mc_session_ns`).
@@ -112,6 +114,7 @@ static struct {
   size_t done_len;  ///< Bytes of the capture already consumed by replayed spans; tail is pending.
   uint32_t region;  ///< Primary cursor's inserted text.
   const char *vsel;  ///< Supplants the capture's "1v" (see `InsSession.vsel`).
+  bool untracked;   ///< Pending span holds an edit capture cannot replay.
 } mc_ins_span;
 
 /// Editor state when the mc session started, which every cursor replays against.
@@ -584,6 +587,7 @@ void mc_ins_cascade_start(bool cascade, CmdOrigin origin, uint64_t root_frame, c
   mc_ins_span.done_len = 0;
   mc_ins_span.origin = origin;
   mc_ins_span.region = 0;
+  mc_ins_span.untracked = false;
   mc_ins_regions_clear();
 
   if (mc_ins_span.active) {
@@ -794,7 +798,8 @@ static bool mc_ins_keys_nonliteral(const char *keys, size_t len)
 }
 
 /// Capture restarted mid insert-session (stop_arrow(), after a non-captured cursor-move: mouse,
-/// <PageUp>, …). The previews stay; rebase and continue the insert-cascade.
+/// <PageUp>, …; or an untracked edit). previews stay, as committed text; rebase and continue
+/// insert-cascade.
 void mc_ins_cascade_restart(void)
 {
   if (!mc_ins_span.active || mc_replaying() || !(State & MODE_INSERT)
@@ -804,7 +809,20 @@ void mc_ins_cascade_restart(void)
   String ins = redo_keys(NULL);
   mc_ins_span.done_len = ins.size;
   api_free_string(ins);
+  mc_ins_span.untracked = false;
   mc_ins_preview_rebase();
+}
+
+/// An uncaptured key (K_EVENT/K_COMMAND/K_LUA: an API edit, a scheduled callback, a paste) edited
+/// buffer. Pending keys cannot reproduce it, so commit preview instead.
+void mc_ins_untracked_edit(void)
+{
+  // Not during completion: it rewrites pending keys to account for its own edits (and
+  // nvim_select_popupmenu_item() may be called from such a key).
+  if (!mc_ins_span.active || mc_replaying() || ins_compl_active() || pum_visible()) {
+    return;
+  }
+  mc_ins_span.untracked = true;
 }
 
 /// True during a span replay. The replay's synthetic <Esc> does not end the primary insert-session,
@@ -909,6 +927,11 @@ void mc_ins_cascade(void)
     }
     if (update) {
       mc_ins_preview_set(&text);
+      if (mc_ins_span.untracked) {
+        // preview now holds untracked edit: commit it, so session-end replay cannot
+        // delete what it cannot reproduce.
+        mc_ins_cascade_restart();
+      }
     }
     api_free_string(text);
   }
@@ -939,6 +962,7 @@ static void mc_ins_span_flush(const String *ins, bool commit)
   kv_push(keys, NUL);
   char *text = commit && dlen > 1 ? xmemdupz(ins->data + mc_ins_span.done_len, dlen - 1) : NULL;
   mc_ins_span.done_len = ins->size;
+  mc_ins_span.untracked = false;  // pending tail is resolved.
   mc_ins_span_push(keys.items, text);
   if (!commit) {
     mc_ins_preview_rebase();
