@@ -626,10 +626,13 @@ list_missing_vimpatches() {
   VIM_VERSION_0_DATE=2018-05-17:15:00:00Z
 
   local extended_format=$1; shift
+
+  # XXX(@janlazo): Delimiter "%x00" required to detect tagged commits
+  # https://git-scm.com/docs/git-log#Documentation/git-log.txt-x00
   if [[ "$extended_format" == 1 ]]; then
-    git_log_format="%s"
+    git_log_format="%H%x00%d%x00: %s"
   else
-    git_log_format=""
+    git_log_format="%H%x00%(decorate:prefix=,suffix=,tag=)"
   fi
 
   # Massage arguments for git-log.
@@ -649,20 +652,15 @@ list_missing_vimpatches() {
     git_log_args+=("$i")
   done
 
-  missing_numbers=$(_git -C "${VIM_SOURCE_DIR}" log --decorate-refs='refs/tags/*' --reverse --since="${VIM_VERSION_0_DATE}" --no-walk --tags --format='%(decorate:prefix=,suffix=,tag=)' "${git_log_args[@]}" |
+  missing_numbers=$(_git -C "${VIM_SOURCE_DIR}" log --decorate-refs='refs/tags/*' --reverse --since="${VIM_VERSION_0_DATE}" --no-walk --tags --format='%(decorate:prefix=,suffix=,tag=)' |
     grep -v -F -f <(list_vimpatch_numbers) |
-    sed -E 's/,.*$//')
-  missing_hashes=$(_git -C "${VIM_SOURCE_DIR}" log --decorate-refs='refs/tags/*' --reverse --since="${VIM_VERSION_0_DATE}" --format='%H%D' "${git_log_args[@]}" |
+    grep -oE 'v[0-9]+\.[0-9]+\.[0-9]{4}')
+  missing_hashes=$(_git -C "${VIM_SOURCE_DIR}" log --decorate-refs='refs/tags/*' --reverse --since="${VIM_VERSION_0_DATE}" --format='%H%D' |
     grep -v -e 'tag:' |
     grep -v -f <(list_vimpatch_hashes | sed -E 's/(.*)/^\1/'))
-  if test -n "${git_log_format}"; then
-    (echo "${missing_numbers}"; echo "${missing_hashes}") |
-      _git --no-pager -C "${VIM_SOURCE_DIR}" log --decorate-refs='refs/tags/*' --reverse --no-walk --stdin --format="%H%x00%d%x00: ${git_log_format}" |
-      awk -F '\0' '{ print $2 ? $2$3 : $1$3 }'
-  else
-    echo "${missing_numbers}"
-    echo "${missing_hashes}"
-  fi
+  (echo "${missing_numbers}"; echo "${missing_hashes}") |
+    _git --no-pager -C "${VIM_SOURCE_DIR}" log --decorate-refs='refs/tags/*' --reverse --no-walk --stdin --format="${git_log_format}" "${git_log_args[@]}" |
+    awk -F '\0' '{ print $2 ? $2$3 : $1$3 }'
 }
 
 # Prints a human-formatted list of Vim commits, with instructional messages.
