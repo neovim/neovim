@@ -5655,32 +5655,56 @@ describe('decorations: inline virtual text', function()
   end)
 
   it('before a space with linebreak', function()
-    screen:try_resize(50, 6)
+    screen:try_resize(50, 12)
     exec([[
       setlocal linebreak showbreak=+ breakindent breakindentopt=shift:2
       call setline(1, repeat('a', 50) .. ' ' .. repeat('c', 45))
       normal! $
     ]])
     api.nvim_buf_set_extmark(0, ns, 0, 50, { virt_text = { { ('b'):rep(10) } }, virt_text_pos = 'inline' })
-    screen:expect {
-      grid = [[
+    screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
         {1:+}bbbbbbbbbb                                     |
         {1:+}cccccccccccccccccccccccccccccccccccccccccccc^c  |
-      {1:~                                                 }|*2
+      {1:~                                                 }|*8
                                                         |
-    ]],
-    }
+    ]])
     feed('05x$')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbb|
         {1:+}bbbbb                                          |
         {1:+}cccccccccccccccccccccccccccccccccccccccccccc^c  |
+      {1:~                                                 }|*8
+                                                        |
+    ]])
+    exec([[
+      call append(0, repeat('a', 50) .. ' ' .. repeat('c', 45))
+      normal! gg$
+    ]])
+    api.nvim_buf_set_extmark(0, ns, 0, 50, { virt_text = { { ('b'):rep(160) } }, virt_text_pos = 'inline' })
+    screen:expect([[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+        {1:+}bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|*3
+        {1:+}bbbbbbbbbbbbbbbbbbb                            |
+        {1:+}cccccccccccccccccccccccccccccccccccccccccccc^c  |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbb|
+        {1:+}bbbbb                                          |
+        {1:+}ccccccccccccccccccccccccccccccccccccccccccccc  |
       {1:~                                                 }|*2
                                                         |
-    ]],
-    }
+    ]])
+    feed('015x$')
+    screen:expect([[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbb|
+        {1:+}bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|*3
+        {1:+}bbbb                                           |
+        {1:+}cccccccccccccccccccccccccccccccccccccccccccc^c  |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbb|
+        {1:+}bbbbb                                          |
+        {1:+}ccccccccccccccccccccccccccccccccccccccccccccc  |
+      {1:~                                                 }|*2
+                                                        |
+    ]])
   end)
 
   it('is counted when linebreak decides if a word fits', function()
