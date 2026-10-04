@@ -843,6 +843,21 @@ func Test_diffpatch()
   bwipe!
 endfunc
 
+" FIXME: test fails, the Xresult file can't be read
+func No_Test_diffpatch_restricted()
+  let lines =<< trim END
+    call assert_fails('diffpatch NoSuchDiff', 'E145:')
+
+    call writefile(v:errors, 'Xresult')
+    qa!
+  END
+  call writefile(lines, 'Xrestricted', 'D')
+  if RunVim([], [], '-Z --clean -S Xrestricted')
+    call assert_equal([], readfile('Xresult'))
+  endif
+  call delete('Xresult')
+endfunc
+
 func Test_diff_too_many_buffers()
   for i in range(1, 8)
     exe "new Xtest" . i
