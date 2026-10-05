@@ -129,6 +129,98 @@ describe('luacats parser', function()
     end)
   end
 
+  it('keeps annotation text in field descriptions', function()
+    local classes = parser.parse_str(
+      dedent([[
+        --- @class Options
+        --- @field text string Use @field name type to document a field.
+        --- @field internal boolean
+      ]]),
+      'options.lua'
+    )
+    eq({
+      {
+        kind = 'field',
+        name = 'text',
+        type = 'string',
+        desc = 'Use @field name type to document a field.',
+      },
+      { kind = 'field', name = 'internal', type = 'boolean' },
+    }, classes.Options.fields)
+  end)
+
+  it('preserves source section order and handle methods', function()
+    local classes, funs, _, _, _, sections = parser.parse_str(
+      dedent([[
+        --- # Base handle
+        --- Handle functions apply to all handles.
+
+        --- @class Handle
+        local handle = {}
+
+        --- ## Closing a handle
+        --- Close the handle.
+        function handle:close() end
+
+        --- # Timer handle
+        --- Timers inherit handle operations.
+        --- @class Timer: Handle
+        local timer = {}
+
+        --- Start the timer.
+        --- @param timeout integer
+        function timer:start(timeout) end
+
+        --- # Additional handle operations
+        --- Timers also support closing.
+      ]]),
+      'handles.lua',
+      { sections = true }
+    )
+
+    eq(
+      { 'Base handle', 'Timer handle', 'Additional handle operations' },
+      { sections[1].name, sections[2].name, sections[3].name }
+    )
+    eq({ 'Handle functions apply to all handles.' }, sections[1].briefs)
+    eq('Timers inherit handle operations.', sections[2].classes.Timer.desc)
+    eq({ 'Timers also support closing.' }, sections[3].briefs)
+    eq('Handle', classes.Timer.parent)
+    eq({ 'close', 'start' }, { funs[1].name, funs[2].name })
+    eq('## Closing a handle\nClose the handle.', funs[1].desc)
+    eq('Handle', sections[1].funs[1].params[1].type)
+    eq('Timer', sections[2].funs[1].params[1].type)
+    eq('timeout', sections[2].funs[1].params[2].name)
+    eq(true, sections[2].classes.Timer == classes.Timer)
+    eq(true, sections[2].funs[1] == funs[2])
+  end)
+
+  it('keeps constants and described error names in their source sections', function()
+    local _, _, _, _, _, sections = parser.parse_str(
+      dedent([[
+        --- # Signals
+        --- @type integer
+        uv.constants.SIGTERM = nil
+
+        --- # Errors
+        --- @alias uv.error_name
+        --- | 'ENOENT' # no such file or directory.
+        --- | 'EACCES' # permission denied.
+      ]]),
+      'constants.lua',
+      { sections = true }
+    )
+
+    local signal = sections[1].funs[1]
+    eq('uv.constants.SIGTERM', signal.name)
+    eq({ { type = 'integer' } }, signal.type)
+    eq(true, signal.table)
+    eq(
+      { '- `ENOENT`: no such file or directory.\n- `EACCES`: permission denied.' },
+      sections[2].briefs
+    )
+  end)
+
   it('supports @return_cast annotations', function()
     local _, funs = parser.parse_str(
       dedent([[
@@ -283,6 +375,7 @@ describe('luacats parser', function()
     eq('vim.MyClass', classes['vim.MyClass'].name)
     eq({
       classvar = 'MyClass',
+      member_sep = '.',
       desc = 'Dot member.',
       kind = 'field',
       name = 'dot_member',
@@ -290,6 +383,7 @@ describe('luacats parser', function()
     }, classes['vim.MyClass'].fields[1])
     eq({
       classvar = 'MyClass',
+      member_sep = ':',
       desc = 'Colon member.',
       kind = 'field',
       name = 'colon_member',
@@ -326,6 +420,7 @@ describe('luacats parser', function()
 
     eq({
       classvar = 'Helper',
+      member_sep = '.',
       desc = 'Helper field.',
       kind = 'field',
       name = 'field',

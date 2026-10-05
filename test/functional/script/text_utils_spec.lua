@@ -59,5 +59,33 @@ describe('md_to_vimdoc', function()
     '',
   }, 0, 10, 78)
 
+  test('renders bold notes and block quotes as prose', {
+    '> **Note:** Handle functions also apply.',
+  }, {
+    'Note: Handle functions also apply.',
+    '',
+  })
+
+  test('keeps URL links separate from help tag definitions', {
+    'See [poll(2)](https://example.com/poll).',
+    '',
+    '[poll-section]()',
+  }, {
+    'See poll(2) (https://example.com/poll).',
+    '',
+    '                                                        *poll-section*',
+    '',
+  })
+
+  test('renders a separator without showing reference definitions', {
+    '---',
+    '',
+    '[libuv]: https://libuv.org/',
+  }, {
+    string.rep('-', 70),
+    '',
+    '',
+  })
+
   test('inline 1', { '(`string`)' }, { '(`string`)', '' })
 end)
