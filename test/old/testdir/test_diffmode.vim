@@ -1014,6 +1014,9 @@ func VerifyInternal(buf, dumpfile, extra)
 endfunc
 
 func Test_diff_screen()
+  if has('bsd')
+    CheckExecutable gdiff
+  endif
   if has('osxdarwin') && system('diff --version') =~ '^Apple diff'
     throw 'Skipped: unified diff does not work properly on this macOS version'
   endif
@@ -1026,7 +1029,8 @@ func Test_diff_screen()
       func UnifiedDiffExpr()
         " Prepend some text to check diff type detection
         call writefile(['warning', '  message'], v:fname_out)
-        silent exe '!diff -U0 ' .. v:fname_in .. ' ' .. v:fname_new .. '>>' .. v:fname_out
+        let diff = has('bsd') ? 'gdiff' : 'diff'
+        silent exe $'!{diff} -U0 {v:fname_in} {v:fname_new}>>{v:fname_out}'
       endfunc
       func SetupUnified()
         set diffexpr=UnifiedDiffExpr()
