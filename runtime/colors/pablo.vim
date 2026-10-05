@@ -86,9 +86,9 @@ hi SpellRare guifg=#ffff00 guibg=NONE guisp=#ffff00 gui=undercurl ctermfg=226 ct
 hi Statement guifg=#c0c000 guibg=NONE guisp=NONE gui=bold ctermfg=142 ctermbg=NONE cterm=bold term=NONE
 hi StatusLine guifg=#ffff00 guibg=#0000ee guisp=NONE gui=NONE ctermfg=226 ctermbg=20 cterm=NONE term=bold,reverse
 hi StatusLineNC guifg=#000000 guibg=#ffffff guisp=NONE gui=NONE ctermfg=16 ctermbg=231 cterm=NONE term=bold,underline
-hi TabLine guifg=#ffffff guibg=#7f7f7f guisp=NONE gui=NONE ctermfg=231 ctermbg=102 cterm=NONE term=bold,underline
+hi TabLine guifg=#ffffff guibg=#7f7f7f guisp=NONE gui=nocombine ctermfg=231 ctermbg=102 cterm=nocombine term=bold,underline
 hi TabLineFill guifg=NONE guibg=#000000 guisp=NONE gui=reverse ctermfg=NONE ctermbg=16 cterm=reverse term=NONE
-hi TabLineSel guifg=#ffffff guibg=#000000 guisp=NONE gui=bold ctermfg=231 ctermbg=16 cterm=bold term=bold,reverse
+hi TabLineSel guifg=#ffffff guibg=#000000 guisp=NONE gui=bold,nocombine ctermfg=231 ctermbg=16 cterm=bold,nocombine term=bold,reverse
 hi Title guifg=#ff00ff guibg=NONE guisp=NONE gui=bold ctermfg=225 ctermbg=NONE cterm=bold term=NONE
 hi TitleBar guifg=#ffffff guibg=#3c3c3c guisp=NONE gui=NONE ctermfg=231 ctermbg=237 cterm=NONE term=NONE
 hi TitleBarNC guifg=#e5e5e5 guibg=#2c2c2c guisp=NONE gui=NONE ctermfg=254 ctermbg=236 cterm=NONE term=NONE
@@ -157,9 +157,9 @@ if s:t_Co >= 16
   hi Statement ctermfg=darkyellow ctermbg=NONE cterm=bold
   hi StatusLine ctermfg=yellow ctermbg=darkblue cterm=NONE
   hi StatusLineNC ctermfg=black ctermbg=white cterm=NONE
-  hi TabLine ctermfg=white ctermbg=darkgrey cterm=NONE
+  hi TabLine ctermfg=white ctermbg=darkgrey cterm=nocombine
   hi TabLineFill ctermfg=NONE ctermbg=black cterm=reverse
-  hi TabLineSel ctermfg=white ctermbg=black cterm=bold
+  hi TabLineSel ctermfg=white ctermbg=black cterm=bold,nocombine
   hi Title ctermfg=magenta ctermbg=NONE cterm=bold
   hi TitleBar ctermfg=white ctermbg=black cterm=NONE
   hi TitleBarNC ctermfg=grey ctermbg=black cterm=NONE

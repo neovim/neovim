@@ -90,9 +90,9 @@ hi StatusLineNC guifg=#ffffff guibg=#a8a8a8 guisp=NONE gui=NONE ctermfg=231 cter
 hi StatusLineTerm guifg=#000000 guibg=#90ee90 guisp=NONE gui=bold ctermfg=16 ctermbg=120 cterm=bold term=bold,reverse
 hi StatusLineTermNC guifg=#dadada guibg=#006400 guisp=NONE gui=NONE ctermfg=253 ctermbg=22 cterm=NONE term=bold,underline
 hi StorageClass guifg=#ff0000 guibg=NONE guisp=NONE gui=bold ctermfg=196 ctermbg=NONE cterm=bold term=bold
-hi TabLine guifg=#000000 guibg=#dadada guisp=NONE gui=underline ctermfg=16 ctermbg=253 cterm=underline term=bold,underline
+hi TabLine guifg=#000000 guibg=#dadada guisp=NONE gui=underline,nocombine ctermfg=16 ctermbg=253 cterm=underline,nocombine term=bold,underline
 hi TabLineFill guifg=NONE guibg=NONE guisp=NONE gui=reverse ctermfg=NONE ctermbg=NONE cterm=reverse term=NONE
-hi TabLineSel guifg=#000000 guibg=#ffffff guisp=NONE gui=bold ctermfg=16 ctermbg=231 cterm=bold term=bold,reverse
+hi TabLineSel guifg=#000000 guibg=#ffffff guisp=NONE gui=bold,nocombine ctermfg=16 ctermbg=231 cterm=bold,nocombine term=bold,reverse
 hi Title guifg=#006400 guibg=NONE guisp=NONE gui=bold ctermfg=22 ctermbg=NONE cterm=bold term=NONE
 hi TitleBar guifg=#000000 guibg=#ececec guisp=NONE gui=NONE ctermfg=16 ctermbg=255 cterm=NONE term=NONE
 hi TitleBarNC guifg=#767676 guibg=#f5f5f5 guisp=NONE gui=NONE ctermfg=243 ctermbg=255 cterm=NONE term=NONE
@@ -164,9 +164,9 @@ if s:t_Co >= 16
   hi StatusLineTerm ctermfg=black ctermbg=green cterm=bold
   hi StatusLineTermNC ctermfg=grey ctermbg=darkgreen cterm=NONE
   hi StorageClass ctermfg=red ctermbg=NONE cterm=bold
-  hi TabLine ctermfg=black ctermbg=grey cterm=underline
+  hi TabLine ctermfg=black ctermbg=grey cterm=underline,nocombine
   hi TabLineFill ctermfg=NONE ctermbg=NONE cterm=reverse
-  hi TabLineSel ctermfg=black ctermbg=white cterm=bold
+  hi TabLineSel ctermfg=black ctermbg=white cterm=bold,nocombine
   hi Title ctermfg=darkgreen ctermbg=NONE cterm=bold
   hi TitleBar ctermfg=black ctermbg=white cterm=NONE
   hi TitleBarNC ctermfg=darkgrey ctermbg=white cterm=NONE

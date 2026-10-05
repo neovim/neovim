@@ -107,9 +107,9 @@ hi SpellRare guifg=#ff00ff guibg=NONE guisp=#ff00ff gui=undercurl ctermfg=201 ct
 hi Statement guifg=#aa4444 guibg=NONE guisp=NONE gui=bold ctermfg=131 ctermbg=NONE cterm=bold term=NONE
 hi StatusLine guifg=#000000 guibg=#00ffff guisp=NONE gui=bold ctermfg=16 ctermbg=51 cterm=bold term=bold,reverse
 hi StatusLineNC guifg=#000000 guibg=#00cdcd guisp=NONE gui=NONE ctermfg=16 ctermbg=44 cterm=NONE term=bold,underline
-hi TabLine guifg=#000000 guibg=#008b8b guisp=NONE gui=NONE ctermfg=16 ctermbg=30 cterm=NONE term=bold,underline
+hi TabLine guifg=#000000 guibg=#008b8b guisp=NONE gui=nocombine ctermfg=16 ctermbg=30 cterm=nocombine term=bold,underline
 hi TabLineFill guifg=NONE guibg=#000000 guisp=NONE gui=reverse ctermfg=NONE ctermbg=16 cterm=reverse term=NONE
-hi TabLineSel guifg=#00ffff guibg=#000000 guisp=NONE gui=bold ctermfg=51 ctermbg=16 cterm=bold term=bold,reverse
+hi TabLineSel guifg=#00ffff guibg=#000000 guisp=NONE gui=bold,nocombine ctermfg=51 ctermbg=16 cterm=bold,nocombine term=bold,reverse
 hi Terminal guifg=#00ffff guibg=#000000 guisp=NONE gui=NONE ctermfg=51 ctermbg=16 cterm=NONE term=NONE
 hi Title guifg=#ff00ff guibg=NONE guisp=NONE gui=bold ctermfg=201 ctermbg=NONE cterm=bold term=NONE
 hi TitleBar guifg=#00ffff guibg=#3c3c3c guisp=NONE gui=NONE ctermfg=51 ctermbg=237 cterm=NONE term=NONE
@@ -181,9 +181,9 @@ if s:t_Co >= 16
   hi Statement ctermfg=darkred ctermbg=NONE cterm=bold
   hi StatusLine ctermfg=black ctermbg=cyan cterm=bold
   hi StatusLineNC ctermfg=black ctermbg=darkcyan cterm=NONE
-  hi TabLine ctermfg=black ctermbg=darkcyan cterm=NONE
+  hi TabLine ctermfg=black ctermbg=darkcyan cterm=nocombine
   hi TabLineFill ctermfg=NONE ctermbg=black cterm=reverse
-  hi TabLineSel ctermfg=cyan ctermbg=black cterm=bold
+  hi TabLineSel ctermfg=cyan ctermbg=black cterm=bold,nocombine
   hi Terminal ctermfg=cyan ctermbg=black cterm=NONE
   hi Title ctermfg=magenta ctermbg=NONE cterm=bold
   hi TitleBar ctermfg=cyan ctermbg=black cterm=NONE
@@ -255,9 +255,9 @@ if s:t_Co >= 8
   hi Statement ctermfg=darkred ctermbg=NONE cterm=NONE
   hi StatusLine ctermfg=darkcyan ctermbg=NONE cterm=bold,reverse
   hi StatusLineNC ctermfg=black ctermbg=darkcyan cterm=NONE
-  hi TabLine ctermfg=black ctermbg=darkcyan cterm=NONE
+  hi TabLine ctermfg=black ctermbg=darkcyan cterm=nocombine
   hi TabLineFill ctermfg=NONE ctermbg=NONE cterm=reverse
-  hi TabLineSel ctermfg=darkcyan ctermbg=NONE cterm=NONE
+  hi TabLineSel ctermfg=darkcyan ctermbg=NONE cterm=NONE,nocombine
   hi Terminal ctermfg=darkcyan ctermbg=NONE cterm=NONE
   hi Title ctermfg=darkmagenta ctermbg=NONE cterm=NONE
   hi TitleBar ctermfg=cyan ctermbg=black cterm=NONE

@@ -242,7 +242,7 @@ if s:t_Co >= 8
   hi Structure ctermfg=darkgreen ctermbg=NONE cterm=bold
   hi TabLine ctermfg=grey ctermbg=black cterm=reverse
   hi TabLineFill ctermfg=grey ctermbg=black cterm=reverse
-  hi TabLineSel ctermfg=black ctermbg=darkyellow cterm=NONE
+  hi TabLineSel ctermfg=black ctermbg=darkyellow cterm=nocombine
   hi Title ctermfg=darkyellow ctermbg=NONE cterm=bold
   hi TitleBar ctermfg=white ctermbg=black cterm=NONE
   hi TitleBarNC ctermfg=grey ctermbg=black cterm=NONE
