@@ -649,6 +649,10 @@ static int nlua_with(lua_State *L)
     CtxSwitch cs = { 0 };
     bool switched = true;
 
+    if (win) {
+      buf = NULL;  // `win` already implies its buffer.
+    }
+
     if (win || buf || keepcwd) {
       CtxSwitchFlags dirs = keepcwd ? kCtxKeepDirs : kCtxKeepCwd;
       tabpage_T *tab = win ? win_find_tabpage(win) : NULL;

@@ -1601,6 +1601,18 @@ describe('vim._with', function()
     matches('Can not set both `buf` and `win`', out)
   end)
 
+  it('works with `buf` and `win` showing the same buffer', function()
+    local out = exec_lua [[
+      local cur_buf = api.nvim_get_current_buf()
+      local out = {}
+      vim._with({ buf = 0, win = 0 }, function()
+        out = { api.nvim_get_current_buf() == cur_buf }
+      end)
+      return out
+    ]]
+    eq({ true }, out)
+  end)
+
   it('works with several contexts at once', function()
     local out = exec_lua [[
       local other_buf, cur_buf = setup_buffers()
