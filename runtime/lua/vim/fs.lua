@@ -417,7 +417,8 @@ end
 --- Stop searching when this directory is reached. The directory itself is not searched.
 --- @field stop? string
 ---
---- Find only items of the given type. If omitted, all items that match {names} are included.
+--- Find only items of the given type. If omitted, all items that match `names` are included.
+--- With `follow`, a symlink has the type of its target.
 --- @field type? string
 ---
 --- Stop searching after this many matches. Use `math.huge` for "unlimited".
@@ -460,7 +461,7 @@ end
 ---             Must be base names, paths and globs are not supported when {names} is a string or a table.
 ---             If {names} is a function, it is called for each traversed item with args:
 ---             - name: base name of the current item
----             - path: full path of the current item
+---             - path: full path of the directory containing the current item
 ---
 ---             The function should return `true` if the given item is considered a match.
 ---
@@ -508,6 +509,9 @@ function M.find(names, opts)
       test = function(p)
         local t = {}
         for name, type, err in M.dir(p, { err = true }) do
+          if type == 'link' and opts.follow then
+            type = (uv.fs_stat(M.joinpath(p, name)) or {}).type or type
+          end
           if err ~= nil then
             table.insert(errors, err)
           elseif (not opts.type or opts.type == type) and names(name, p) then
@@ -563,6 +567,9 @@ function M.find(names, opts)
       end
 
       for other, type_, err in M.dir(dir, { err = true }) do
+        if type_ == 'link' and opts.follow then
+          type_ = (uv.fs_stat(M.joinpath(dir, other)) or {}).type or type_
+        end
         if err ~= nil then
           table.insert(errors, err)
         else
@@ -584,11 +591,8 @@ function M.find(names, opts)
             end
           end
 
-          if type_ == 'directory' or (type_ == 'link' and opts.follow) then
-            local f = M.joinpath(dir, other)
-            if type_ == 'directory' or (uv.fs_stat(f) or {}).type == 'directory' then
-              dirs[#dirs + 1] = f
-            end
+          if type_ == 'directory' then
+            dirs[#dirs + 1] = M.joinpath(dir, other)
           end
         end
       end

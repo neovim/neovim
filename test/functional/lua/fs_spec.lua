@@ -395,11 +395,14 @@ describe('vim.fs', function()
       t.write_file(root .. '/real/target', '')
       -- Directory symlink: follow=true descends into it, follow=false does not.
       vim.uv.fs_symlink(root .. '/real', root .. '/lnk', { junction = true, dir = true })
+      -- follow=true matches if symlink target has type=file. #42204
+      mkdir(root .. '/other')
+      vim.uv.fs_symlink(root .. '/real/target', root .. '/other/target')
 
-      local function find(follow)
+      local function find(follow, type_)
         local r = vim.fs.find('target', {
           path = root,
-          type = 'file',
+          type = type_ or 'file',
           limit = math.huge,
           follow = follow,
         })
@@ -407,8 +410,17 @@ describe('vim.fs', function()
         return r
       end
 
-      eq({ root .. '/lnk/target', root .. '/real/target' }, find(true))
+      eq({ root .. '/lnk/target', root .. '/other/target', root .. '/real/target' }, find(true))
       eq({ root .. '/real/target' }, find(false))
+      eq({ root .. '/other/target' }, find(false, 'link'))
+
+      local function find_up(follow)
+        return vim.fs.find(function(name)
+          return name == 'target'
+        end, { path = root .. '/other', upward = true, type = 'file', follow = follow })
+      end
+      eq({ root .. '/other/target' }, find_up(true))
+      eq({}, find_up(false))
     end)
 
     it('follow=true handles symlink loop', function()
