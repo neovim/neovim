@@ -4782,3 +4782,4 @@ function uv.wtf8_to_utf16(wtf8) end
 --- @class uv.uv_udp_send_t : uv.uv_req_t
 
 --- @class uv.uv_work_t : uv.uv_req_t
+
