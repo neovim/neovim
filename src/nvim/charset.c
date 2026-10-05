@@ -638,34 +638,13 @@ int vim_strnsize(const char *s, int len)
 }
 
 /// Checks that `c` is an identifier character, as decided by the 'isident' option.
-/// Chars >= 256 never are. To check multibyte chars use vim_isIDp().
+/// Chars >= 256 never are.
 ///
 /// @param  c  character to check
 bool vim_isIDc(int c)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return c > 0 && c < 0x100 && GET_CHARTAB(isi_chartab, c);
-}
-
-/// Like vim_isIDc(), for the (multibyte) character at `p`: true if it is valid UTF-8 and all of its
-/// bytes are in 'isident'.
-///
-/// Examples:
-/// - "あ" (E3 81 82) is contained by "128-167,224-235"
-/// - "é" (C3 A9) is not contained by "192-255"
-bool vim_isIDp(const char *const p)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
-{
-  const int len = utf_ptr2len(p);
-  if (len == 0 || (len == 1 && (uint8_t)(*p) >= 0x80)) {
-    return false;  // NUL or illegal byte.
-  }
-  for (int i = 0; i < len; i++) {
-    if (!vim_isIDc((uint8_t)p[i])) {
-      return false;
-    }
-  }
-  return true;
 }
 
 /// Check that "c" is a keyword character:

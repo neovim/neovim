@@ -3867,19 +3867,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |option-backslash| about including spaces and backslashes.
 
 						*'isident'* *'isi'*
-'isident' 'isi'		string	(default for Windows:
-                                           "@,48-57,_,128-167,224-235"
-                                otherwise: "@,48-57,_,192-255")
+'isident' 'isi'		string	(default "@,48-57,_,192-255")
 			global
 	The characters given by this option are included in identifiers.
-	Identifiers are used in recognizing environment variables and after a
-	match of the 'define' option.  It is also used for "\i" in a
-	|pattern|.  See 'isfname' for a description of the format of this
-	option.  For '@' only characters up to 255 are used.
-	Careful: If you change this option, it might break expanding
-	environment variables.  E.g., when '/' is included and Vim tries to
-	expand "$HOME/.local/state/nvim/shada/main.shada".  Maybe you should
-	change 'iskeyword' instead.
+	Identifiers are used after a match of the 'define' option.  It is also
+	used for "\i" in a |pattern|.  See 'isfname' for a description of the
+	format of this option.  For '@' only characters up to 255 are used.
+
+	Does not affect environment variable names |expr-env|.
 
 						*'iskeyword'* *'isk'*
 'iskeyword' 'isk'	string	(default "@,48-57,_,192-255")

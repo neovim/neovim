@@ -13,17 +13,14 @@ local eval = n.eval
 local setenv = n.fn.setenv
 
 describe('vim.fn.environ()', function()
-  it("$VAR reads a non-ASCII (multibyte) name if ALL bytes are in 'isident'", function()
+  it("$VAR reads (multibyte) envvar, irrespective of 'isident'", function()
     -- Decoy envvar "\195" (the first byte of "é"): $é must not read it. (Windows can't set it.)
-    clear({ env = { ['é'] = 'x', ['\195'] = not t.is_os('win') and 'bad' or nil } })
-    -- "é" is C3 A9: 0xA9 (169) is not in "192-255", so "$é" is not recognized.
-    command('set isident=@,48-57,_,192-255')
-    command("cgetexpr ['$é:1:text']") -- Quickfix expands $VAR in filenames.
-    eq('$é', n.fn.bufname(n.fn.getqflist()[1].bufnr))
-    command('set isident+=128-191')
+    clear({ env = { ['é'] = 'x', ['aあ'] = 'y', ['\195'] = not t.is_os('win') and 'bad' or nil } })
+    command('set isident=') -- Does not matter.
     eq('x', eval('$é'))
-    command("cgetexpr ['$é:1:text']")
-    eq('x', n.fn.bufname(n.fn.getqflist()[1].bufnr))
+    eq('y', eval('$aあ'))
+    command("cgetexpr ['$é/$aあ-z:1:text']") -- Quickfix expands $VAR in filenames.
+    eq('x/y-z', n.fn.bufname(n.fn.getqflist()[1].bufnr))
   end)
 
   it('exists() handles empty env variable', function()

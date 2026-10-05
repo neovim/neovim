@@ -437,6 +437,7 @@ Options:
 - 'guicursor'   works in the terminal (TUI)
 - 'inccommand'  shows interactive results for |:substitute|-like commands
                 and |:command-preview| commands
+- 'isident'     does not affect environment variable name parsing. |expr-env|
 - 'jumpoptions'
     - "view" tries to restore |mark-view| when moving through the |jumplist|,
       |changelist|, |alternate-file|, and |mark-motions|.

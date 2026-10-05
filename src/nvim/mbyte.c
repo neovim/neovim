@@ -1190,6 +1190,15 @@ bool utf_iscomposing_legacy(int c)
   return prop->category == UTF8PROC_CATEGORY_MN || prop->category == UTF8PROC_CATEGORY_ME;
 }
 
+/// Checks that `c` is alphanumeric per Unicode (letter, mark or number, category L*, M*, N*), in
+/// any script: "é", "あ", "٣". Marks keep a decomposed letter whole ("e" + U+0301).
+bool utf_isalnum(int c)
+  FUNC_ATTR_PURE
+{
+  const utf8proc_property_t *prop = utf8proc_get_property(c);
+  return prop->category >= UTF8PROC_CATEGORY_LU && prop->category <= UTF8PROC_CATEGORY_NO;
+}
+
 #ifdef __SSE2__
 
 # include <emmintrin.h>

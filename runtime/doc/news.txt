@@ -546,6 +546,8 @@ CHANGED FEATURES                                                 *news-changed*
 
 These existing features changed their behavior.
 
+• Environment variable name (`$NAME`) validity is no longer controlled by
+  'isident'.
 • `nvim_exec_autocmds({buf=…})` runs in the context of the target buffer.
 • |SessionLoadPost| is no longer included in views saved by |:mkview|.
 • |OptionSet| is no longer triggered during startup by automatic

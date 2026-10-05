@@ -311,11 +311,12 @@ static void set_init_expand_env(void)
     if (opt->flags & kOptFlagNoDefExp) {
       continue;
     }
-    char *p;
+    char *p = NULL;
     if ((opt->flags & kOptFlagGettext) && opt->var != NULL) {
       p = _(*(char **)opt->var);
-    } else {
-      p = option_expand(opt_idx, NULL);
+    } else if (opt->flags & kOptFlagExpand) {
+      // Expand the default, not the value.
+      p = option_expand(opt_idx, opt->def_val.data.string.data);
     }
     if (p != NULL) {
       Object ov = CSTR_TO_OBJ(p);

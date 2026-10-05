@@ -5568,15 +5568,9 @@ int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp, bool c
 /// @return  0 for error.
 int get_env_len(const char **arg)
 {
-  const char *p;
-  for (p = *arg; vim_isIDp(p); p += utf_ptr2len(p)) {}
-  if (p == *arg) {  // No name found.
-    return 0;
-  }
-
-  int len = (int)(p - *arg);
-  *arg = p;
-  return len;
+  const size_t len = env_name_len(*arg);
+  *arg += len;
+  return (int)len;
 }
 
 /// Get the length of the name of a function or internal variable.
