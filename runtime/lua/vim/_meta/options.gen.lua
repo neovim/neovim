@@ -3721,14 +3721,11 @@ vim.go.isfname = vim.o.isfname
 vim.go.isf = vim.go.isfname
 
 --- The characters given by this option are included in identifiers.
---- Identifiers are used in recognizing environment variables and after a
---- match of the 'define' option.  It is also used for "\i" in a
---- `pattern`.  See 'isfname' for a description of the format of this
---- option.  For '@' only characters up to 255 are used.
---- Careful: If you change this option, it might break expanding
---- environment variables.  E.g., when '/' is included and Vim tries to
---- expand "$HOME/.local/state/nvim/shada/main.shada".  Maybe you should
---- change 'iskeyword' instead.
+--- Identifiers are used after a match of the 'define' option.  It is also
+--- used for "\i" in a `pattern`.  See 'isfname' for a description of the
+--- format of this option.  For '@' only characters up to 255 are used.
+---
+--- Does not affect environment variable names `expr-env`.
 ---
 --- @type string
 vim.o.isident = "@,48-57,_,192-255"

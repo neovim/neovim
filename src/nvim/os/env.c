@@ -70,6 +70,33 @@ static bool env_name_valid(const char *name)
 #endif
 }
 
+/// Gets the length (bytes) of the env var name at `p`.
+///
+/// Valid characters: ASCII letters/digits/"_", Unicode letters/marks/numbers. Same on all platforms
+/// (not controlled by 'isident').
+///
+/// Example: "aあ-b" => 4 bytes ("aあ").
+size_t env_name_len(const char *p)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+{
+  const char *s = p;
+  while (true) {
+    if ((uint8_t)(*s) < 0x80) {
+      if (!ASCII_ISALNUM(*s) && *s != '_') {
+        break;
+      }
+      s++;
+      continue;
+    }
+    const int len = utf_ptr2len(s);
+    if (len == 1 || !utf_isalnum(utf_ptr2char(s))) {
+      break;  // Illegal byte, or not a letter/mark/number.
+    }
+    s += len;
+  }
+  return (size_t)(s - p);
+}
+
 /// Like getenv(), but returns NULL if the variable is empty.
 /// Result must be freed by the caller.
 /// @see os_env_exists
@@ -604,7 +631,7 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
 
 #ifdef UNIX
         // Unix has ${var-name} type environment vars
-        if (*tail == '{' && !vim_isIDc('{')) {
+        if (*tail == '{') {
           tail++;               // ignore '{'
           while (c-- > 0 && *tail != NUL && *tail != '}') {
             *var++ = *tail++;
@@ -612,16 +639,10 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
         } else
 #endif
         {
-          while (vim_isIDp(tail)) {
-            const int len = utf_ptr2len(tail);
-            if (len > c) {
-              break;
-            }
-            memcpy(var, tail, (size_t)len);
-            var += len;
-            tail += len;
-            c -= len;
-          }
+          const size_t len = MIN(env_name_len(tail), (size_t)MAX(c, 0));
+          memcpy(var, tail, len);
+          var += len;
+          tail += len;
         }
 
 #ifdef UNIX
