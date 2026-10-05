@@ -1344,7 +1344,7 @@ void recover_names(char *fname, bool skip_curbuf, list_T *ret_list)
     // Advance dirp to next directory name.
     dir_name.size = copy_option_part(&dirp, dir_name.data, 31000, ",");
 
-    if (dir_name.data[0] == '.' && dir_name.data[1] == NUL) {     // check current dir
+    if (strcmp(dir_name.data, ".") == 0) {     // check current dir
       if (fname == NULL) {
         names[0] = xmemdupz(S_LEN("*.sw?"));
         // For Unix names starting with a dot are special.  MS-Windows
@@ -3328,8 +3328,7 @@ char *makeswapname(char *fname, char *ffname, buf_T *buf, char *dir_name)
   }
 
   // Prepend a '.' to the swapfile name for the current directory.
-  char *r = modname(fname_res, ".swp",
-                    dir_name[0] == '.' && dir_name[1] == NUL);
+  char *r = modname(fname_res, ".swp", strcmp(dir_name, ".") == 0);
   if (r == NULL) {          // out of memory
     return NULL;
   }
@@ -3357,7 +3356,7 @@ char *get_file_in_dir(char *fname, char *dname)
     retval = cbuf_to_string(fname, (size_t)(tail.data - fname) + tail.size);
   } else {
     size_t dname_len = strlen(dname);
-    if (dname[0] == '.' && vim_ispathsep(dname[1])) {
+    if (dname[0] == '.' && path_is_sep(dname[1])) {
       if (tail.data == fname) {  // no path before file name
         retval = concat_fnames(cbuf_as_string(dname + 2, dname_len - 2), tail, true);
       } else {

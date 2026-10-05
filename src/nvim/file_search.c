@@ -293,8 +293,7 @@ void *vim_findfile_init(char *path, char *filename, size_t filenamelen, char *st
 
   // Store information on starting dir now if path is relative.
   // If path is absolute, we do that later.
-  if (path[0] == '.'
-      && (vim_ispathsep(path[1]) || path[1] == NUL)
+  if (path_with_component(path, ".")
       && (!tagfile || vim_strchr(p_cpo, kCpoDottag) == NULL)
       && rel_fname != NULL) {
     size_t len = (size_t)(path_tail(rel_fname) - rel_fname);
@@ -311,9 +310,8 @@ void *vim_findfile_init(char *path, char *filename, size_t filenamelen, char *st
       path++;
     }
   } else if (*path == NUL || !vim_isAbsName(path)) {
-#ifdef BACKSLASH_IN_FILENAME
     // "c:dir" needs "c:" to be expanded, otherwise use current dir
-    if (*path != NUL && path[1] == ':') {
+    if (path_has_drive_letter(path)) {
       char drive[3];
 
       drive[0] = path[0];
@@ -323,9 +321,7 @@ void *vim_findfile_init(char *path, char *filename, size_t filenamelen, char *st
         goto error_return;
       }
       path += 2;
-    } else
-#endif
-    if (os_dirname(ff_expand_buffer.data, MAXPATHL) == FAIL) {
+    } else if (os_dirname(ff_expand_buffer.data, MAXPATHL) == FAIL) {
       goto error_return;
     }
     ff_expand_buffer.size = strlen(ff_expand_buffer.data);
@@ -419,7 +415,7 @@ void *vim_findfile_init(char *path, char *filename, size_t filenamelen, char *st
           ff_expand_buffer.data[ff_expand_buffer.size++] = FF_MAX_STAR_STAR_EXPAND;
         }
         wc_part = errpt;
-        if (*wc_part != NUL && !vim_ispathsep(*wc_part)) {
+        if (*wc_part != NUL && !path_is_sep(*wc_part)) {
           semsg(_(
                  "E343: Invalid path: '**[number]' must be at the end of the path or be followed by '%s'."),
                 PATHSEPSTR);
@@ -776,7 +772,7 @@ char *vim_findfile(void *search_ctx_arg)
           // pushing every directory returned from expand_wildcards()
           // on the stack again for further search.
           while (*rest_of_wildcards.data
-                 && !vim_ispathsep(*rest_of_wildcards.data)) {
+                 && !path_is_sep(*rest_of_wildcards.data)) {
             if (file_path.size + 1 >= MAXPATHL) {
               ff_free_stack_element(stackp);
               goto fail;
@@ -786,7 +782,7 @@ char *vim_findfile(void *search_ctx_arg)
           }
 
           file_path.data[file_path.size] = NUL;
-          if (vim_ispathsep(*rest_of_wildcards.data)) {
+          if (path_is_sep(*rest_of_wildcards.data)) {
             rest_of_wildcards.data++;
             rest_of_wildcards.size--;
           }
@@ -969,10 +965,10 @@ char *vim_findfile(void *search_ctx_arg)
       }
 
       // cut of last dir
-      while (path_end > search_ctx->ffsc_start_dir.data && vim_ispathsep(*path_end)) {
+      while (path_end > search_ctx->ffsc_start_dir.data && path_is_sep(*path_end)) {
         path_end--;
       }
-      while (path_end > search_ctx->ffsc_start_dir.data && !vim_ispathsep(path_end[-1])) {
+      while (path_end > search_ctx->ffsc_start_dir.data && !path_is_sep(path_end[-1])) {
         path_end--;
       }
       *path_end = NUL;
@@ -1314,7 +1310,7 @@ static void ff_clear(ff_search_ctx_T *search_ctx)
 static bool ff_path_in_stoplist(char *path, size_t path_len, String *stopdirs_v)
 {
   // eat up trailing path separators, except the first
-  while (path_len > 1 && vim_ispathsep(path[path_len - 1])) {
+  while (path_len > 1 && path_is_sep(path[path_len - 1])) {
     path_len--;
   }
 
@@ -1329,7 +1325,7 @@ static bool ff_path_in_stoplist(char *path, size_t path_len, String *stopdirs_v)
     // '/home/r' would also match '/home/rks'
     if (path_cmp(p_fic, stopdirs_v[i].data, path, path_len) == 0
         && (stopdirs_v[i].size <= path_len
-            || vim_ispathsep(stopdirs_v[i].data[path_len]))) {
+            || path_is_sep(stopdirs_v[i].data[path_len]))) {
       return true;
     }
   }
@@ -1456,22 +1452,13 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
     }
   }
 
-  bool rel_to_curdir = ((*file_to_find)[0] == '.'
-                        && ((*file_to_find)[1] == NUL
-                            || vim_ispathsep((*file_to_find)[1])
-                            || ((*file_to_find)[1] == '.'
-                                && ((*file_to_find)[2] == NUL
-                                    || vim_ispathsep((*file_to_find)[2])))));
+  bool rel_to_curdir = path_with_component(*file_to_find, ".")
+                       || path_with_component(*file_to_find, "..");
   if (vim_isAbsName(*file_to_find)
       // "..", "../path", "." and "./path": don't use the path_option
       || rel_to_curdir
-#ifdef MSWIN
-      // handle "\tmp" as absolute path
-      || vim_ispathsep((*file_to_find)[0])
       // handle "c:name" as absolute path
-      || ((*file_to_find)[0] != NUL && (*file_to_find)[1] == ':')
-#endif
-      ) {
+      || path_has_drive_letter(*file_to_find)) {
     // Absolute path, no need to use "path_option".
     // If this is not a first call, return NULL.  We already returned a
     // filename on the first call.
@@ -1642,7 +1629,7 @@ char *file_name_at_cursor(int options, int count, linenr_T *file_lnum)
 char *file_name_in_line(char *line, int col, int options, int count, char *rel_fname,
                         linenr_T *file_lnum)
 {
-  // search forward for what could be the start of a file name
+  // search forward for what could be the start of a filepath/url
   char *ptr = line + col;
   while (*ptr != NUL && !vim_isfilec((uint8_t)(*ptr))) {
     MB_PTR_ADV(ptr);
@@ -1654,40 +1641,46 @@ char *file_name_in_line(char *line, int col, int options, int count, char *rel_f
     return NULL;
   }
 
-  size_t len;
-  bool in_type = true;
-  bool is_url = false;
+  char *colon = NULL;
 
-  // Search backward for first char of the file name.
-  // Go one char back to ":" before "//", or to the drive letter before ":\" (even if ":"
-  // is not in 'isfname').
+  // Search backward for what could be the start of a filepath/url.
+  // If drive letter or url are allowed, skip ":" (even if it is not in 'isfname').
   while (ptr > line) {
-    if ((len = (size_t)(utf_head_off(line, ptr - 1))) > 0) {
-      ptr -= len + 1;
-    } else if (vim_isfilec((uint8_t)ptr[-1]) || ((options & FNAME_HYP) && path_is_url(ptr - 1))) {
-      ptr--;
+    int i = utf_head_off(line, ptr - 1) + 1;
+    if (vim_isfilec((uint8_t)ptr[-i])) {
+      ptr -= i;
+    } else if (ptr[-1] == ':') {
+      if (ptr - line <= 1) {  // line starting with ":"
+        break;
+      }
+      if (path_has_drive_letter(ptr - 2) || (options & FNAME_HYP)) {
+        ptr--;
+      } else {
+        break;
+      }
+      if (colon == NULL) {
+        colon = ptr;
+      }
     } else {
       break;
     }
   }
 
-  // Search forward for the last char of the file name.
-  // Also allow ":/" when ':' is not in 'isfname'.
-  // TODO(justinmk): Check for driveletter "x:/" at start, regardless of 'isfname'.
-  len = path_has_drive_letter(ptr, strlen(ptr)) ? 2 : 0;
-  while (vim_isfilec((uint8_t)ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
-         || ((options & FNAME_HYP) && path_is_url(ptr + len))
-         || (is_url && vim_strchr(":?&=", (uint8_t)ptr[len]) != NULL)) {
-    // After type:// we also include :, ?, & and = as valid characters, so that
-    // http://google.com:8080?q=this&that=ok works.
-    if ((ptr[len] >= 'A' && ptr[len] <= 'Z') || (ptr[len] >= 'a' && ptr[len] <= 'z')) {
-      if (in_type && path_is_url(ptr + len + 1)) {
-        is_url = true;
-      }
-    } else {
-      in_type = false;
-    }
+  bool is_url = (options & FNAME_HYP) && path_with_url(ptr);
+  size_t len = 0;
+  if (!is_url && colon) {
+    assert(colon > line);
+    ptr = path_has_drive_letter(colon - 1) ? colon - 1 : colon + 1;
+    len = ptr < colon ? 2 : 0;
+  } else if (path_has_drive_letter(ptr)) {
+    len = 2;
+  }
 
+  // Search forward for the last char of the filepath/url.
+  // If url is allowed, we also include :, ?, & and = as valid characters, so that
+  // http://google.com:8080?q=this&that=ok works.
+  while (vim_isfilec((uint8_t)ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
+         || (is_url && vim_strchr(":?&=", (uint8_t)ptr[len]) != NULL)) {
     if (ptr[len] == '\\' && ptr[len + 1] == ' ') {
       // Skip over the "\" in "\ ".
       len++;
@@ -1769,8 +1762,8 @@ char *find_file_name_in_path(char *ptr, size_t len, int options, long count, cha
   }
 
   if ((options & FNAME_HYP) && len > 6 && strncmp(ptr, "file:/",
-                                                  6) == 0 && !vim_ispathsep(ptr[6])) {
-    size_t off = path_has_drive_letter(ptr + 6, len - 6) ? 6 : 5;
+                                                  6) == 0 && !path_is_sep(ptr[6])) {
+    size_t off = path_has_drive_letter(ptr + 6) ? 6 : 5;
     ptr += off;
     len -= off;
   }

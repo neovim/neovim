@@ -25,16 +25,14 @@
 
 /// Checks if an address string looks like a TCP endpoint, and returns the end of the host part.
 ///
+/// @note On Windows, the supported named pipe path never contains ":" ("//./pipe/<name>").
+///       Drive-letter paths will simply fail to parse, as do Unix paths containing a colon.
+///
 /// @param address Address string
 /// @return pointer to the end of the host part of the address, or NULL if it is not a TCP address
 char *socket_address_tcp_host_end(const char *address)
 {
   if (address == NULL) {
-    return NULL;
-  }
-
-  // Windows drive letter path: "X:/..." is a local path, not TCP.
-  if (ASCII_ISALPHA((uint8_t)address[0]) && address[1] == ':' && address[2] == '/') {
     return NULL;
   }
 
