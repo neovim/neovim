@@ -1014,6 +1014,10 @@ func VerifyInternal(buf, dumpfile, extra)
 endfunc
 
 func Test_diff_screen()
+  if has('osx') && !empty($CI) && system('uname -m') =~# 'arm64'
+    throw 'Skipped: FIXME: This test fails on M1 Mac on GitHub Actions'
+  endif
+
   let g:test_is_flaky = 1
   CheckScreendump
   CheckFeature menu
