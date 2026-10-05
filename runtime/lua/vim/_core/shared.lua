@@ -1553,8 +1553,7 @@ end
 --- Notes:
 --- - Context `{ buf = buf }` has no guarantees about current window when
 ---   inside context.
---- - Context `{ buf = buf, win = win }` is yet not allowed, but this seems
----   to be an implementation detail.
+--- - Context `{ buf = buf, win = win }` requires `win` to show `buf`.
 --- - There should be no way to revert currently set `context.sandbox = true`
 ---   (like with nested `vim._with()` calls). Otherwise it kind of breaks the
 ---   whole purpose of sandbox execution.
