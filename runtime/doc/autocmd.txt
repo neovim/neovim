@@ -701,6 +701,7 @@ DiffUpdated			After diffs have been updated.  Depending on
 				what kind of diff is being used (internal or
 				external) this can be triggered on every
 				change or when doing |:diffupdate|.
+				It is not allowed to change the window layout.
 
 							*DirChanged*
 DirChanged			After the |current-directory| was changed.

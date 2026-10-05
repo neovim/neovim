@@ -3462,6 +3462,37 @@ func Test_diff_cursorbind_after_undo()
   %bw!
 endfunc
 
+func Test_diffupdated_close_window_fails()
+  new
+  only
+  call setline(1, ['one', 'two', 'three'])
+  let w1 = win_getid()
+  vnew
+  call setline(1, ['one', 'Two', 'three'])
+  windo diffthis
+  call win_gotoid(w1)
+
+  augroup TestDiffUpdated
+    autocmd!
+    autocmd DiffUpdated * bw!
+  augroup END
+
+  try
+  diffupdate
+  catch
+  endtry
+
+  augroup TestDiffUpdated
+    autocmd!
+  augroup END
+  augroup! TestDiffUpdated
+
+  call assert_equal(2, winnr('$'))
+
+  diffoff!
+  %bw!
+endfunc
+
 " Redrawing folds scans the diff block list.  The scan is resumed from a
 " remembered position (the "finger") when the line number does not move
 " backwards, so make sure it yields exactly the same folds as a full scan

@@ -592,6 +592,8 @@ These existing features changed their behavior.
   lua. Printing is done to stdout, and empty lines are not stripped.
   No translation of special characters is done, so escape sequences
   can be used when printing to a terminal.
+• It is no longer allowed to change the window layout during a |DiffUpdated|
+  autocommand.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
