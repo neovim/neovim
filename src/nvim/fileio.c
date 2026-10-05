@@ -2717,7 +2717,9 @@ static int rename_with_tmp(const char *const from, const char *const to)
         }
         // Strange, the second step failed.  Try moving the
         // file back and return failure.
-        os_rename(tempname, from);
+        if (os_rename(tempname, from) != OK) {
+          ELOG("failed to restore %s, file is at: %s", from, tempname);
+        }
         return -1;
       }
       // If it fails for one temp name it will most likely fail
