@@ -7,6 +7,7 @@ local command = n.command
 local clear = n.clear
 local exec_lua = n.exec_lua
 local eq = t.eq
+local eq_partial = t.eq_partial
 local neq = t.neq
 local matches = t.matches
 local retry = t.retry
@@ -1028,22 +1029,21 @@ describe('vim.diagnostic', function()
 
   describe('get_next()', function()
     it('can find the next pos with only one namespace', function()
-      eq(
-        { 1, 1 },
+      eq_partial(
+        { lnum = 1, col = 1 },
         exec_lua(function()
           vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
             _G.make_error('Diagnostic #1', 1, 1, 1, 1),
           })
           vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
-          local next = vim.diagnostic.get_next()
-          return { next.lnum, next.col }
+          return vim.diagnostic.get_next()
         end)
       )
     end)
 
     it('can find next pos with two errors', function()
-      eq(
-        { 4, 4 },
+      eq_partial(
+        { lnum = 4, col = 4 },
         exec_lua(function()
           vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
             _G.make_error('Diagnostic #1', 1, 1, 1, 1),
@@ -1051,23 +1051,21 @@ describe('vim.diagnostic', function()
           })
           vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
           vim.api.nvim_win_set_cursor(0, { 3, 1 })
-          local next = vim.diagnostic.get_next({ namespace = _G.diagnostic_ns })
-          return { next.lnum, next.col }
+          return vim.diagnostic.get_next({ namespace = _G.diagnostic_ns })
         end)
       )
     end)
 
     it('can cycle when position is past error', function()
-      eq(
-        { 1, 1 },
+      eq_partial(
+        { lnum = 1, col = 1 },
         exec_lua(function()
           vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
             _G.make_error('Diagnostic #1', 1, 1, 1, 1),
           })
           vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
           vim.api.nvim_win_set_cursor(0, { 3, 1 })
-          local next = vim.diagnostic.get_next({ namespace = _G.diagnostic_ns })
-          return { next.lnum, next.col }
+          return vim.diagnostic.get_next({ namespace = _G.diagnostic_ns })
         end)
       )
     end)
@@ -1088,23 +1086,22 @@ describe('vim.diagnostic', function()
     end)
 
     it('can cycle even from the last line', function()
-      eq(
-        { 4, 4 },
+      eq_partial(
+        { lnum = 4, col = 4 },
         exec_lua(function()
           vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
             _G.make_error('Diagnostic #2', 4, 4, 4, 4),
           })
           vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
           vim.api.nvim_win_set_cursor(0, { vim.api.nvim_buf_line_count(0), 1 })
-          local prev = vim.diagnostic.get_prev({ namespace = _G.diagnostic_ns })
-          return { prev.lnum, prev.col }
+          return vim.diagnostic.get_prev({ namespace = _G.diagnostic_ns })
         end)
       )
     end)
 
     it('works with diagnostics past the end of the line #16349', function()
-      eq(
-        { 4, 0 },
+      eq_partial(
+        { lnum = 4, col = 0 },
         exec_lua(function()
           vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
             _G.make_error('Diagnostic #1', 3, 9001, 3, 9001),
@@ -1113,15 +1110,14 @@ describe('vim.diagnostic', function()
           vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
           vim.api.nvim_win_set_cursor(0, { 1, 1 })
           vim.diagnostic.jump({ count = 1 })
-          local next = vim.diagnostic.get_next({ namespace = _G.diagnostic_ns })
-          return { next.lnum, next.col }
+          return vim.diagnostic.get_next({ namespace = _G.diagnostic_ns })
         end)
       )
     end)
 
     it('works with diagnostics before the start of the line', function()
-      eq(
-        { 4, 0 },
+      eq_partial(
+        { lnum = 4, col = 0 },
         exec_lua(function()
           vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
             _G.make_error('Diagnostic #1', 3, 9001, 3, 9001),
@@ -1130,8 +1126,7 @@ describe('vim.diagnostic', function()
           vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
           vim.api.nvim_win_set_cursor(0, { 1, 1 })
           vim.diagnostic.jump({ count = 1 })
-          local next = vim.diagnostic.get_next({ namespace = _G.diagnostic_ns })
-          return { next.lnum, next.col }
+          return vim.diagnostic.get_next({ namespace = _G.diagnostic_ns })
         end)
       )
     end)
@@ -1236,23 +1231,22 @@ describe('vim.diagnostic', function()
 
   describe('get_prev()', function()
     it('can find the previous diagnostic with only one namespace', function()
-      eq(
-        { 1, 1 },
+      eq_partial(
+        { lnum = 1, col = 1 },
         exec_lua(function()
           vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
             _G.make_error('Diagnostic #1', 1, 1, 1, 1),
           })
           vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
           vim.api.nvim_win_set_cursor(0, { 3, 1 })
-          local prev = vim.diagnostic.get_prev()
-          return { prev.lnum, prev.col }
+          return vim.diagnostic.get_prev()
         end)
       )
     end)
 
     it('can find the previous diagnostic with two errors', function()
-      eq(
-        { 1, 1 },
+      eq_partial(
+        { lnum = 1, col = 1 },
         exec_lua(function()
           vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
             _G.make_error('Diagnostic #1', 1, 1, 1, 1),
@@ -1260,23 +1254,21 @@ describe('vim.diagnostic', function()
           })
           vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
           vim.api.nvim_win_set_cursor(0, { 3, 1 })
-          local prev = vim.diagnostic.get_prev({ namespace = _G.diagnostic_ns })
-          return { prev.lnum, prev.col }
+          return vim.diagnostic.get_prev({ namespace = _G.diagnostic_ns })
         end)
       )
     end)
 
     it('can cycle when position is past error', function()
-      eq(
-        { 4, 4 },
+      eq_partial(
+        { lnum = 4, col = 4 },
         exec_lua(function()
           vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
             _G.make_error('Diagnostic #2', 4, 4, 4, 4),
           })
           vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
           vim.api.nvim_win_set_cursor(0, { 3, 1 })
-          local prev = vim.diagnostic.get_prev({ namespace = _G.diagnostic_ns })
-          return { prev.lnum, prev.col }
+          return vim.diagnostic.get_prev({ namespace = _G.diagnostic_ns })
         end)
       )
     end)

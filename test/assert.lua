@@ -54,6 +54,59 @@ function M.eq(expected, actual, context)
   )
 end
 
+--- Checks the supplied fields recursively, ignoring other record fields.
+--- Lists must have the same length and order; their records may have extra fields.
+--- Does not check the non-existence of a field.
+---
+--- Examples:
+--- ```lua
+--- local result = { id = 1, opts = { enabled = false, priority = 10 } }
+--- eq_partial({ opts = { enabled = false } }, result) -- Passes.
+--- eq(nil, result.missing) -- Check that a field is absent.
+---
+--- eq_partial({ { id = 1 } }, { { id = 1, name = 'test' } }) -- Passes.
+--- eq_partial({ { id = 1 } }, { { id = 1 }, { id = 2 } }) -- Fails: extra list item.
+--- ```
+---
+--- @param expected any
+--- @param actual any
+--- @param context? any
+--- @return any
+function M.eq_partial(expected, actual, context)
+  local seen = {} --- @type table<table, table<table, boolean>>
+  local prefix = context ~= nil and tostring(context) .. ': ' or ''
+
+  --- @param want any
+  --- @param got any
+  --- @param path string
+  local function compare(want, got, path)
+    if type(want) ~= 'table' or type(got) ~= 'table' or next(want) == nil then
+      M.eq(want, got, prefix .. path)
+      return
+    end
+
+    if vim.islist(want) then
+      assert_value(vim.islist(got), got, prefix .. path, 'Expected a list.\nActual:\n' .. fmt(got))
+      M.eq(#want, #got, prefix .. path .. ' (length)')
+    end
+
+    if seen[want] and seen[want][got] then
+      return
+    end
+    seen[want] = seen[want] or {}
+    seen[want][got] = true
+
+    for key, value in pairs(want) do
+      local field = type(key) == 'string' and key:match('^[%a_][%w_]*$') and '.' .. key
+        or '[' .. fmt(key) .. ']'
+      compare(value, got[key], path .. field)
+    end
+  end
+
+  compare(expected, actual, 'actual')
+  return actual
+end
+
 --- @param expected any
 --- @param actual any
 --- @param context? any

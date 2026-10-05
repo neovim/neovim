@@ -35,29 +35,34 @@ local mode_bits_map = {
 }
 
 describe('nvim_get_keymap', function()
+  local function keymap_info(overrides)
+    return vim.tbl_extend('force', {
+      script = 0,
+      silent = 0,
+      expr = 0,
+      replace_keycodes = 0,
+      sid = 0,
+      scriptversion = 1,
+      buf = 0,
+      buffer = 0, -- deprecated
+      nowait = 0,
+      abbr = 0,
+      noremap = 1,
+      lnum = 0,
+    }, overrides)
+  end
+
   before_each(clear)
 
   -- Basic mapping and table to be used to describe results
   local foo_bar_string = 'nnoremap foo bar'
-  local foo_bar_map_table = {
+  local foo_bar_map_table = keymap_info({
     lhs = 'foo',
     lhsraw = 'foo',
-    script = 0,
-    silent = 0,
     rhs = 'bar',
-    expr = 0,
-    replace_keycodes = 0,
-    sid = 0,
-    scriptversion = 1,
-    buf = 0,
-    buffer = 0, -- deprecated
-    nowait = 0,
     mode = 'n',
     mode_bits = 0x01,
-    abbr = 0,
-    noremap = 1,
-    lnum = 0,
-  }
+  })
 
   it('returns empty list when no map', function()
     eq({}, api.nvim_get_keymap('n'))
@@ -308,22 +313,8 @@ describe('nvim_get_keymap', function()
   end)
 
   it("works correctly despite 'cpoptions'", function()
-    local cpo_table = {
-      script = 0,
-      silent = 0,
-      expr = 0,
-      replace_keycodes = 0,
-      sid = 0,
-      scriptversion = 1,
-      buf = 0,
-      buffer = 0, -- deprecated
-      nowait = 0,
-      abbr = 0,
-      noremap = 1,
-      lnum = 0,
-    }
     local function cpomap(lhs, rhs, mode)
-      local ret = shallowcopy(cpo_table)
+      local ret = keymap_info({})
       local lhsraw = api.nvim_eval(('"%s"'):format(lhs:gsub('\\', '\\\\'):gsub('<', '\\<*')))
       local lhsrawalt = api.nvim_eval(('"%s"'):format(lhs:gsub('\\', '\\\\'):gsub('<', '\\<')))
       ret.lhs = lhs
@@ -376,25 +367,13 @@ describe('nvim_get_keymap', function()
   end)
 
   it('always uses space for space and bar for bar', function()
-    local space_table = {
+    local space_table = keymap_info({
       lhs = '|   |',
       lhsraw = '|   |',
       rhs = '|    |',
       mode = 'n',
       mode_bits = 0x01,
-      abbr = 0,
-      script = 0,
-      silent = 0,
-      expr = 0,
-      replace_keycodes = 0,
-      sid = 0,
-      scriptversion = 1,
-      buf = 0,
-      buffer = 0, -- deprecated
-      nowait = 0,
-      noremap = 1,
-      lnum = 0,
-    }
+    })
     command('nnoremap \\|<Char-0x20><Char-32><Space><Bar> \\|<Char-0x20><Char-32><Space> <Bar>')
     eq({ space_table }, api.nvim_get_keymap('n'))
   end)
@@ -429,92 +408,58 @@ describe('nvim_get_keymap', function()
 
     local mapargs = api.nvim_get_keymap('n')
     mapargs[1].callback = nil
-    eq({
-      lhs = 'asdf',
-      lhsraw = 'asdf',
-      script = 0,
-      silent = 0,
-      expr = 0,
-      replace_keycodes = 0,
-      sid = sid_lua,
-      scriptversion = 1,
-      buf = 0,
-      buffer = 0, -- deprecated
-      nowait = 0,
-      mode = 'n',
-      mode_bits = 0x01,
-      abbr = 0,
-      noremap = 0,
-      lnum = 0,
-    }, mapargs[1])
+    eq(
+      keymap_info({
+        lhs = 'asdf',
+        lhsraw = 'asdf',
+        sid = sid_lua,
+        mode = 'n',
+        mode_bits = 0x01,
+        noremap = 0,
+      }),
+      mapargs[1]
+    )
   end)
 
   it('can handle map descriptions', function()
     api.nvim_set_keymap('n', 'lhs', 'rhs', { desc = 'map description' })
-    eq({
-      lhs = 'lhs',
-      lhsraw = 'lhs',
-      rhs = 'rhs',
-      script = 0,
-      silent = 0,
-      expr = 0,
-      replace_keycodes = 0,
-      sid = sid_api_client,
-      scriptversion = 1,
-      buf = 0,
-      buffer = 0, -- deprecated
-      nowait = 0,
-      mode = 'n',
-      mode_bits = 0x01,
-      abbr = 0,
-      noremap = 0,
-      lnum = 0,
-      desc = 'map description',
-    }, api.nvim_get_keymap('n')[1])
+    eq(
+      keymap_info({
+        lhs = 'lhs',
+        lhsraw = 'lhs',
+        rhs = 'rhs',
+        sid = sid_api_client,
+        mode = 'n',
+        mode_bits = 0x01,
+        noremap = 0,
+        desc = 'map description',
+      }),
+      api.nvim_get_keymap('n')[1]
+    )
   end)
 
   it('can get abbreviations', function()
     command('inoreabbr foo bar')
     command('cnoreabbr <buffer> foo baz')
 
-    local mapargs_i = {
+    local mapargs_i = keymap_info({
       abbr = 1,
-      buf = 0,
-      buffer = 0, -- deprecated
-      expr = 0,
-      replace_keycodes = 0,
       lhs = 'foo',
       lhsraw = 'foo',
-      lnum = 0,
       mode = 'i',
       mode_bits = 0x10,
-      noremap = 1,
-      nowait = 0,
       rhs = 'bar',
-      script = 0,
-      scriptversion = 1,
-      sid = 0,
-      silent = 0,
-    }
-    local mapargs_c = {
+    })
+    local mapargs_c = keymap_info({
       abbr = 1,
       buf = 1,
       buffer = 1, -- deprecated
-      expr = 0,
-      replace_keycodes = 0,
       lhs = 'foo',
       lhsraw = 'foo',
-      lnum = 0,
       mode = 'c',
       mode_bits = 0x08,
-      noremap = 1,
-      nowait = 0,
       rhs = 'baz',
-      script = 0,
-      scriptversion = 1,
-      sid = 0,
-      silent = 0,
-    }
+    })
 
     local curbuf = api.nvim_get_current_buf()
 

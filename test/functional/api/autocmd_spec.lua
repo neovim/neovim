@@ -5,6 +5,7 @@ local describe, it, before_each, pending = t.describe, t.it, t.before_each, t.pe
 local clear = n.clear
 local command = n.command
 local eq = t.eq
+local eq_partial = t.eq_partial
 local neq = t.neq
 local exec_lua = n.exec_lua
 local matches = t.matches
@@ -969,9 +970,7 @@ describe('autocmd api', function()
           group = 'GroupOne',
         }
 
-        eq(1, #aus)
-        eq([[:echo "GroupOne:1"]], aus[1].command)
-        eq('GroupOne', aus[1].group_name)
+        eq_partial({ { command = [[:echo "GroupOne:1"]], group_name = 'GroupOne' } }, aus)
       end)
 
       it('returns only the group specified, multiple values', function()
@@ -980,11 +979,10 @@ describe('autocmd api', function()
           group = 'GroupTwo',
         }
 
-        eq(2, #aus)
-        eq([[:echo "GroupTwo:2"]], aus[1].command)
-        eq('GroupTwo', aus[1].group_name)
-        eq([[:echo "GroupTwo:3"]], aus[2].command)
-        eq('GroupTwo', aus[2].group_name)
+        eq_partial({
+          { command = [[:echo "GroupTwo:2"]], group_name = 'GroupTwo' },
+          { command = [[:echo "GroupTwo:3"]], group_name = 'GroupTwo' },
+        }, aus)
       end)
     end)
 

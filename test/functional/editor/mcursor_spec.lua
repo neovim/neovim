@@ -12,6 +12,7 @@ local command = n.command
 local feed = n.feed
 local fn = n.fn
 local eq = t.eq
+local eq_partial = t.eq_partial
 local api = n.api
 local get_lines = t_atom.get_lines
 local k = t_atom.k
@@ -19,7 +20,6 @@ local atoms_start = t_atom.atoms_start
 local atoms = t_atom.atoms
 local atoms_tail = t_atom.atoms_tail
 local atom_last = t_atom.atom_last
-local subatoms = t_atom.subatoms
 
 --- Clears the buffer mcursors like the default CTRL-L mapping (test-harness "mapclear" removed it).
 local function clear_cursors()
@@ -454,7 +454,7 @@ describe('multicursor', function()
       feed('3lQ2G01q=')
       atoms_start()
       feed('zqw')
-      eq({ { type = 'operator', keys = 'zqw' } }, atoms_tail(1, 'type', 'keys'))
+      eq_partial({ type = 'operator', keys = 'zqw' }, atom_last())
       eq(
         { { 0, 3 }, { 1, 0 }, { 1, 3 }, { 2, 0 }, { 2, 3 }, { 3, 0 }, { 3, 3 }, { 3, 4 } },
         anchors()
@@ -1674,15 +1674,12 @@ describe('multicursor', function()
       feed('<Esc>')
       eq({ 'Xaaaa', 'Xbbbb', 'Xcccc' }, get_lines())
       local ev = atom_last()
-      eq(
-        { type = 'mapping', lhs = k('iX<Esc>'), changed = true },
-        t.pick(atom_last(), 'type', 'lhs', 'changed')
-      )
-      eq({
+      eq_partial({ type = 'mapping', lhs = k('iX<Esc>'), changed = true }, atom_last())
+      eq_partial({
         { type = 'motion', keys = '^' },
         { type = 'insert', keys = k('1i<Esc>') },
         { type = 'insert', keys = k('iX<Esc>') },
-      }, subatoms(ev, 'type', 'keys'))
+      }, ev.atoms)
     end)
 
     it('session survives all cursors deduping away mid-session', function()
@@ -2258,7 +2255,7 @@ describe('multicursor', function()
       ]])
       feed('d')
       eq({ 'aaaa', 'bbbb', 'cccc' }, get_lines())
-      eq({ { type = 'visual' } }, atoms_tail(1, 'type'))
+      eq_partial({ type = 'visual' }, atom_last())
       -- Mapping that starts the selection: same.
       feed('gL')
       screen:expect([[
@@ -2969,21 +2966,18 @@ describe('multicursor', function()
       -- The mapping is the atom: exactly one CmdAtom event. Never re-resolved.
       local evs = atoms()
       eq(1, #evs)
-      eq({ type = 'mapping', lhs = 'gj', keys = k('1i<Esc>i<NL><Esc>k$'), changed = true }, {
-        type = evs[1].type,
-        lhs = evs[1].lhs,
-        keys = evs[1].keys,
-        changed = evs[1].changed,
-      })
+      eq_partial(
+        { type = 'mapping', lhs = 'gj', keys = k('1i<Esc>i<NL><Esc>k$'), changed = true },
+        evs[1]
+      )
       -- `atoms` is non-empty iff the atom is a composite of more than one command;
-      eq({
+      eq_partial({
         -- Spans display as "insert" (cascade-internal type).
         { type = 'insert', keys = k('1i<Esc>') },
         { type = 'insert', keys = k('i<NL><Esc>') },
-        { type = 'motion', keys = 'k' },
+        { type = 'motion', keys = 'k', cmd = 'k', changed = false },
         { type = 'motion', keys = '$' },
-      }, subatoms(evs[1], 'type', 'keys'))
-      eq({ 'k', false }, { evs[1].atoms[3].cmd, evs[1].atoms[3].changed })
+      }, evs[1].atoms)
       -- The mapping's motions (k$) cascade too, even without "q=", because the mapping edits.
       feed('x')
       eq({ 'aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff' }, get_lines())
@@ -3003,11 +2997,7 @@ describe('multicursor', function()
       feed('<Esc>')
       local evs = atoms()
       eq(1, #evs)
-      eq({ type = 'insert', text = 'XY', keys = k('1iXY<Esc>') }, {
-        type = evs[#evs].type,
-        text = evs[#evs].text,
-        keys = evs[#evs].keys,
-      })
+      eq_partial({ type = 'insert', text = 'XY', keys = k('1iXY<Esc>') }, evs[#evs])
       -- Session marks (preview regions, trackers) do not leak: a second session adds none.
       local function session_marks()
         return n.exec_lua([[
@@ -3527,14 +3517,14 @@ describe('multicursor', function()
       eq(6, fn.col('.'))
       -- Exactly one type=operator atom.
       eq(1, #atoms())
-      eq({
+      eq_partial({
         type = 'operator',
         keys = 'g@il',
         lhs = 'gmil',
         operator = 'g@',
         changed = false,
         moved = true,
-      }, t.pick(atom_last(), 'type', 'keys', 'lhs', 'operator', 'changed', 'moved'))
+      }, atom_last())
     end)
 
     it('cursors placed inside the opfunc are live for the next typed cascade', function()
@@ -3581,7 +3571,7 @@ describe('multicursor', function()
         -- The emitted atom carries the resolution plus the getchar()'d payload; the cascade
         -- itself re-runs `lhs` (the edit is invisible, so nothing was queued for it).
         local ev = atoms()[#atoms()]
-        eq({ lhs = 'ds)', keys = ':call DelSurround()\n)' }, { lhs = ev.lhs, keys = ev.keys })
+        eq_partial({ lhs = 'ds)', keys = ':call DelSurround()\n)' }, ev)
 
         -- Same for a mapping that produces NO capturable keys at all (kKeyOpaque):
         -- "<Cmd>" (K_COMMAND) and a Lua callback (K_LUA). Both are real user

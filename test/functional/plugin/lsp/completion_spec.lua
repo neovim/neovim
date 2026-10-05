@@ -6,6 +6,7 @@ local n = require('test.functional.testnvim')()
 local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local clear = n.clear
 local eq = t.eq
+local eq_partial = t.eq_partial
 local neq = t.neq
 local exec_lua = n.exec_lua
 local feed = n.feed
@@ -14,13 +15,15 @@ local Screen = require('test.functional.ui.screen')
 
 local create_server_definition = t_lsp.create_server_definition
 
---- Extract only abbr/word from a list of completion items for assertion
----@param items table
----@return table
-local function extract_word_abbr(items)
-  return vim.tbl_map(function(x)
-    return { abbr = x.abbr, word = x.word }
-  end, items)
+local function completion_match(overrides)
+  return vim.tbl_extend('force', {
+    abbr_hlgroup = '',
+    dup = 1,
+    empty = 1,
+    icase = 1,
+    info = '',
+    menu = '',
+  }, overrides)
 end
 
 --- Convert completion results.
@@ -156,7 +159,7 @@ describe('vim.lsp.completion: item conversion', function()
       { abbr = 'zoocar_long', word = 'foobar' },
     }
     local result = complete('|', completion_list)
-    eq(expected, extract_word_abbr(result.items))
+    eq_partial(expected, result.items)
   end)
 
   local word_sorter = function(a, b)
@@ -176,10 +179,10 @@ describe('vim.lsp.completion: item conversion', function()
     local expected = {
       { abbr = 'foo', word = 'foo' },
     }
-    local got = extract_word_abbr(result.items)
+    local got = result.items
     table.sort(expected, word_sorter)
     table.sort(got, word_sorter)
-    eq(expected, got)
+    eq_partial(expected, got)
   end)
 
   it('generate "■" symbol with highlight group for CompletionItemKind.Color', function()
@@ -187,14 +190,10 @@ describe('vim.lsp.completion: item conversion', function()
       { label = 'text-red-300', kind = 16, documentation = 'color: rgb(252, 165, 165)' },
     }
     local result = complete('|', completion_list)
-    result = vim.tbl_map(function(x)
-      return {
-        word = x.word,
-        kind_hlgroup = x.kind_hlgroup,
-        kind = x.kind,
-      }
-    end, result.items)
-    eq({ { word = 'text-red-300', kind_hlgroup = '@lsp.color.fca5a5', kind = '■' } }, result)
+    eq_partial(
+      { { word = 'text-red-300', kind_hlgroup = '@lsp.color.fca5a5', kind = '■' } },
+      result.items
+    )
   end)
 
   it('uses labelDetails for abbr and menu', function()
@@ -226,10 +225,10 @@ describe('vim.lsp.completion: item conversion', function()
   ---@param items lsp.CompletionItem[]
   ---@param expected table[]
   local assert_completion_matches = function(prefix, items, expected)
-    local got = extract_word_abbr(complete(prefix .. '|', items).items)
+    local got = complete(prefix .. '|', items).items
     table.sort(expected, word_sorter)
     table.sort(got, word_sorter)
-    eq(expected, got)
+    eq_partial(expected, got)
   end
 
   it('uses filterText as word if label/newText would not match', function()
@@ -471,10 +470,10 @@ describe('vim.lsp.completion: item conversion', function()
       { label = ' bar', insertText = '->bar', filterText = 'bar', sortText = '2' },
     }
     local result = complete('wp.|', completion_list, 0, 2)
-    eq({
+    eq_partial({
       { abbr = ' foo', word = '->foo' },
       { abbr = ' bar', word = '->bar' },
-    }, extract_word_abbr(result.items))
+    }, result.items)
   end)
 
   it('trims trailing newline or tab from textEdit and insertText', function()
@@ -501,10 +500,10 @@ describe('vim.lsp.completion: item conversion', function()
         insertText = 'ansible.builtin.copy:\n	',
       },
     }
-    eq({
+    eq_partial({
       { abbr = 'ansible.builtin.lineinfile', word = 'ansible.builtin.lineinfile:' },
       { abbr = 'ansible.builtin.copy', word = 'ansible.builtin.copy:' },
-    }, extract_word_abbr(complete('|', items).items))
+    }, complete('|', items).items)
   end)
 
   it('handles multiword textEdits', function()
@@ -525,7 +524,7 @@ describe('vim.lsp.completion: item conversion', function()
         },
       },
     }
-    eq({ { abbr = 'abc', word = 'abc: Abc' } }, extract_word_abbr(complete('|', items).items))
+    eq_partial({ { abbr = 'abc', word = 'abc: Abc' } }, complete('|', items).items)
   end)
 
   it('prefers wordlike components for snippets', function()
@@ -595,7 +594,7 @@ describe('vim.lsp.completion: item conversion', function()
       { abbr = 'insert', word = 'insert' },
       { abbr = 'new', word = 'new' },
     }
-    eq(expected, extract_word_abbr(complete('|', completion_list).items))
+    eq_partial(expected, complete('|', completion_list).items)
   end)
 
   it('uses correct start boundary', function()
@@ -621,17 +620,7 @@ describe('vim.lsp.completion: item conversion', function()
       },
     }
     local expected = {
-      {
-        abbr = ' this_thread',
-        dup = 1,
-        empty = 1,
-        icase = 1,
-        info = '',
-        kind = 'Module',
-        menu = '',
-        abbr_hlgroup = '',
-        word = 'this_thread',
-      },
+      completion_match({ abbr = ' this_thread', kind = 'Module', word = 'this_thread' }),
     }
     local result = complete('  std::this|', completion_list)
     eq(7, result.server_start_boundary)
@@ -679,17 +668,11 @@ describe('vim.lsp.completion: item conversion', function()
         },
       },
     }
-    local expected = {
+    local expected = completion_match({
       abbr = ' this_thread',
-      dup = 1,
-      empty = 1,
-      icase = 1,
-      info = '',
       kind = 'Module',
-      menu = '',
-      abbr_hlgroup = '',
       word = 'this_thread',
-    }
+    })
     local result = complete('  std::this|is', completion_list)
     eq(1, #result.items)
     local item = result.items[1]
@@ -1004,15 +987,9 @@ describe('vim.lsp.completion: protocol', function()
 
     assert_matches(function(matches)
       eq({
-        {
+        completion_match({
           abbr = 'hello',
-          dup = 1,
-          empty = 1,
-          icase = 1,
-          info = '',
           kind = 'Unknown',
-          menu = '',
-          abbr_hlgroup = '',
           user_data = {
             nvim = {
               lsp = {
@@ -1024,15 +1001,10 @@ describe('vim.lsp.completion: protocol', function()
             },
           },
           word = 'hello',
-        },
-        {
+        }),
+        completion_match({
           abbr = 'hercules',
-          dup = 1,
-          empty = 1,
-          icase = 1,
-          info = '',
           kind = 'Unknown',
-          menu = '',
           abbr_hlgroup = 'DiagnosticDeprecated',
           user_data = {
             nvim = {
@@ -1045,15 +1017,10 @@ describe('vim.lsp.completion: protocol', function()
             },
           },
           word = 'hercules',
-        },
-        {
+        }),
+        completion_match({
           abbr = 'hero',
-          dup = 1,
-          empty = 1,
-          icase = 1,
-          info = '',
           kind = 'Unknown',
-          menu = '',
           abbr_hlgroup = 'DiagnosticDeprecated',
           user_data = {
             nvim = {
@@ -1066,7 +1033,7 @@ describe('vim.lsp.completion: protocol', function()
             },
           },
           word = 'hero',
-        },
+        }),
       }, matches)
     end)
   end)
