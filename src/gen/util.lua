@@ -136,6 +136,7 @@ local function parse_md(text)
     list_item = true,
     section = true,
     document = true,
+    block_quote = true,
     fenced_code_block = true,
     fenced_code_block_delimiter = true,
   }
@@ -145,7 +146,7 @@ local function parse_md(text)
   local function extract(node)
     local ntype = node:type()
 
-    if ntype:match('^%p$') or contains(ntype, { 'block_continuation' }) then
+    if ntype:match('^%p$') or contains(ntype, { 'block_continuation', 'block_quote_marker' }) then
       return
     end
 
@@ -238,12 +239,21 @@ local function render_md(node, start_indent, indent, text_width, level, is_list)
     parts[#parts + 1] = node.text
   elseif ntype == 'atx_heading' then
     parts[#parts + 1] = ('*%s*'):format(node.heading_content.text)
+  elseif ntype == 'thematic_break' then
+    parts[#parts + 1] = string.rep('-', text_width - indent) .. '\n'
+  elseif ntype == 'link_reference_definition' then
+    -- Definitions are metadata, not rendered prose.
   elseif ntype == 'html_tag' then
     error('html_tag: ' .. node.text)
   elseif ntype == 'inline_link' then
-    -- Markdown links with empty URLs, e.g. [lsp-buftypes](), are converted
-    -- to vim help tags, e.g. *lsp-buftypes*.
-    vim.list_extend(parts, { '*', node[1].text, '*' })
+    local label = node[1].text
+    local destination = node[2] and node[2].text
+    if destination then
+      parts[#parts + 1] = label .. ' (' .. destination .. ')'
+    else
+      -- Links with empty URLs, e.g. [lsp-buftypes](), define help tags.
+      vim.list_extend(parts, { '*', label, '*' })
+    end
   elseif ntype == 'shortcut_link' then
     if node[1].text:find('^<.*>$') then
       parts[#parts + 1] = node[1].text
@@ -256,6 +266,8 @@ local function render_md(node, start_indent, indent, text_width, level, is_list)
     parts[#parts + 1] = node.text
   elseif ntype == 'emphasis' then
     parts[#parts + 1] = node.text:sub(2, -2)
+  elseif ntype == 'strong_emphasis' then
+    parts[#parts + 1] = node.text:sub(3, -3)
   elseif ntype == 'code_span' then
     vim.list_extend(parts, { '`', node.text:sub(2, -2):gsub(' ', NBSP), '`' })
   elseif ntype == 'inline' then
