@@ -1590,15 +1590,20 @@ describe('vim._with', function()
     eq({ 7, 10 }, out)
   end)
 
-  it('can not work with conflicting `buf` and `win`', function()
+  it('`buf` and `win`: error if conflicting, else switches to `win` #42239', function()
     local out = exec_lua [[
       local other_buf, cur_buf = setup_buffers()
       local other_win, cur_win = setup_windows()
       assert(api.nvim_win_get_buf(other_win) ~= other_buf)
       local _, err = pcall(vim._with, { buf = other_buf, win = other_win }, function() end)
-      return err
+      local buf = api.nvim_win_get_buf(other_win)
+      local got = vim._with({ buf = buf, win = other_win }, function()
+        return { api.nvim_get_current_win() == other_win, api.nvim_get_current_buf() == buf }
+      end)
+      return { err, got }
     ]]
-    matches('Can not set both `buf` and `win`', out)
+    matches('Can not set both `buf` and `win`', out[1])
+    eq({ true, true }, out[2])
   end)
 
   it('works with several contexts at once', function()
