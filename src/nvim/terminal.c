@@ -506,6 +506,10 @@ static bool term_may_alloc_scrollback(Terminal *term, buf_T *buf)
 Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   FUNC_ATTR_NONNULL_ALL
 {
+  // If win has zero size (hidden float, 'cmdheight'), use the pty_proc_init() default.
+  opts.width = opts.width ? opts.width : 80;
+  opts.height = opts.height ? opts.height : 24;
+
   // Create a new terminal instance and configure it
   Terminal *term = xcalloc(1, sizeof(Terminal));
   term->opts = opts;

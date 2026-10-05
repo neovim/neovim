@@ -4897,6 +4897,25 @@ describe('API', function()
                                                                                                             |*33
       ]])
     end)
+
+    it('in a zero-size window #42232', function()
+      n.exec_lua(function()
+        -- 'cmdheight' takes all rows, so the bordered float gets no text rows.
+        vim.o.cmdheight = vim.o.lines
+        vim.api.nvim_open_win(0, true, {
+          relative = 'editor',
+          row = 10,
+          col = 10,
+          width = 10,
+          height = 10,
+          hide = true,
+          border = 'rounded',
+        })
+        assert(vim.fn.winheight(0) == 0)
+        vim.api.nvim_open_term(0, {})
+      end)
+      assert_alive()
+    end)
   end)
 
   describe('nvim_del_mark', function()
