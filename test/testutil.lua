@@ -1,3 +1,4 @@
+---@type test.assert
 local test_assert = require('test.assert')
 ---@type test.harness
 local harness = require('test.harness')
@@ -110,6 +111,9 @@ local check_logs_useless_lines = {
 
 function M.eq(expected, actual, context)
   return test_assert.eq(expected, actual, context)
+end
+function M.eq_partial(expected, actual, context)
+  return test_assert.eq_partial(expected, actual, context)
 end
 function M.neq(expected, actual, context)
   return test_assert.neq(expected, actual, context)

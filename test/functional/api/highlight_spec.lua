@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 
 local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, eq, neq = n.clear, t.eq, t.neq
+local eq_partial = t.eq_partial
 local command = n.command
 local exec_capture = n.exec_capture
 local api = n.api
@@ -25,12 +26,6 @@ describe('API: set highlight', function()
     italic = true,
   }
   local highlight2_config = {
-    ctermbg = highlight_color.ctermbg,
-    ctermfg = highlight_color.ctermfg,
-    underline = true,
-    reverse = true,
-  }
-  local highlight2_result = {
     ctermbg = highlight_color.ctermbg,
     ctermfg = highlight_color.ctermfg,
     underline = true,
@@ -63,47 +58,11 @@ describe('API: set highlight', function()
       nocombine = true,
     },
   }
-  local highlight3_result_gui = {
-    bg = highlight_color.bg,
-    fg = highlight_color.fg,
-    bold = true,
-    italic = true,
-    reverse = true,
-    underdashed = true,
-    strikethrough = true,
-    altfont = true,
-    dim = true,
-    blink = true,
-    conceal = true,
-    overline = true,
-  }
-  local highlight3_result_cterm = {
-    ctermbg = highlight_color.ctermbg,
-    ctermfg = highlight_color.ctermfg,
-    italic = true,
-    reverse = true,
-    strikethrough = true,
-    altfont = true,
-    dim = true,
-    blink = true,
-    conceal = true,
-    overline = true,
-    nocombine = true,
-  }
 
   local function get_ns()
     local ns = api.nvim_create_namespace('Test_set_hl')
     api.nvim_set_hl_ns(ns)
     return ns
-  end
-
-  ---@param expect table<string, any>
-  ---@param result table<string, any>
-  ---@param cterm? boolean
-  local function match(expect, result, cterm)
-    for k, v in pairs(expect) do
-      eq(v, cterm and result.cterm[k] or result[k])
-    end
   end
 
   before_each(clear)
@@ -125,13 +84,13 @@ describe('API: set highlight', function()
   it('can set gui highlight', function()
     local ns = get_ns()
     api.nvim_set_hl(ns, 'Test_hl', highlight1)
-    match(highlight1, api.nvim_get_hl(ns, { name = 'Test_hl' }))
+    eq_partial(highlight1, api.nvim_get_hl(ns, { name = 'Test_hl' }))
   end)
 
   it('can set cterm highlight', function()
     local ns = get_ns()
     api.nvim_set_hl(ns, 'Test_hl', highlight2_config)
-    match(highlight2_result, api.nvim_get_hl(ns, { name = 'Test_hl' }))
+    eq_partial(highlight2_config, api.nvim_get_hl(ns, { name = 'Test_hl' }))
   end)
 
   it('can set empty cterm attr', function()
@@ -143,7 +102,7 @@ describe('API: set highlight', function()
   it('cterm attr defaults to gui attr', function()
     local ns = get_ns()
     api.nvim_set_hl(ns, 'Test_hl', highlight1)
-    match({
+    eq_partial({
       bold = true,
       italic = true,
     }, api.nvim_get_hl(ns, { name = 'Test_hl' }))
@@ -152,8 +111,7 @@ describe('API: set highlight', function()
   it('can overwrite attr for cterm #test', function()
     local ns = get_ns()
     api.nvim_set_hl(ns, 'Test_hl', highlight3_config)
-    match(highlight3_result_gui, api.nvim_get_hl(ns, { name = 'Test_hl' }))
-    match(highlight3_result_cterm, api.nvim_get_hl(ns, { name = 'Test_hl' }), true)
+    eq_partial(highlight3_config, api.nvim_get_hl(ns, { name = 'Test_hl' }))
   end)
 
   it('only allows one underline attribute #22371', function()
@@ -167,8 +125,7 @@ describe('API: set highlight', function()
       },
     })
     local result = api.nvim_get_hl(ns, { name = 'Test_hl' })
-    match({ undercurl = true }, result, true)
-    match({ underdotted = true }, result)
+    eq_partial({ underdotted = true, cterm = { undercurl = true } }, result)
   end)
 
   it('can set all underline cterm attributes #31385', function()
@@ -176,7 +133,7 @@ describe('API: set highlight', function()
     local attrs = { 'underline', 'undercurl', 'underdouble', 'underdotted', 'underdashed' }
     for _, attr in ipairs(attrs) do
       api.nvim_set_hl(ns, 'Test_' .. attr, { cterm = { [attr] = true } })
-      match({ [attr] = true }, api.nvim_get_hl(ns, { name = 'Test_' .. attr }), true)
+      eq_partial({ cterm = { [attr] = true } }, api.nvim_get_hl(ns, { name = 'Test_' .. attr }))
     end
   end)
 
@@ -276,9 +233,7 @@ describe('API: set highlight', function()
     api.nvim_set_hl(0, 'TestGroup', { fg = '#ff0000', bg = '#0000ff', bold = true })
     api.nvim_set_hl(0, 'TestGroup', { bg = '#00ff00', update = true })
     local hl = api.nvim_get_hl(0, { name = 'TestGroup' })
-    eq(tonumber('0xff0000'), hl.fg)
-    eq(tonumber('0x00ff00'), hl.bg)
-    eq(true, hl.bold)
+    eq_partial({ fg = tonumber('0xff0000'), bg = tonumber('0x00ff00'), bold = true }, hl)
 
     api.nvim_set_hl(0, 'TestGroup', { bold = false, update = true })
     hl = api.nvim_get_hl(0, { name = 'TestGroup' })
@@ -330,9 +285,7 @@ describe('API: set highlight', function()
     api.nvim_set_hl(0, 'TestGroup', { underdouble = true, fg = '#ff0000', bold = true })
     api.nvim_set_hl(0, 'TestGroup', { fg = '#00ff00', update = true })
     hl = api.nvim_get_hl(0, { name = 'TestGroup' })
-    eq(true, hl.underdouble)
-    eq(true, hl.bold)
-    eq(65280, hl.fg)
+    eq_partial({ underdouble = true, bold = true, fg = 65280 }, hl)
 
     api.nvim_set_hl(0, 'TestGroup', { underdashed = true, update = true })
     hl = api.nvim_get_hl(0, { name = 'TestGroup' })

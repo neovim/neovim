@@ -5,6 +5,7 @@ local Screen = require('test.functional.ui.screen')
 local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, api = n.clear, n.api
 local eq = t.eq
+local eq_partial = t.eq_partial
 local command = n.command
 
 describe('ui/cursor', function()
@@ -16,194 +17,84 @@ describe('ui/cursor', function()
   end)
 
   it("'guicursor' is published as a UI event", function()
+    local function cursor_mode(overrides)
+      return vim.tbl_extend('force', {
+        blinkoff = 0,
+        blinkon = 0,
+        blinkwait = 0,
+        cell_percentage = 0,
+        cursor_shape = 'block',
+        hl_id = 0,
+        id_lm = 0,
+        attr = {},
+        attr_lm = {},
+      }, overrides)
+    end
+
     local expected_mode_info = {
-      [1] = {
-        blinkoff = 0,
-        blinkon = 0,
-        blinkwait = 0,
-        cell_percentage = 0,
-        cursor_shape = 'block',
-        name = 'normal',
-        hl_id = 0,
-        id_lm = 0,
-        attr = {},
-        attr_lm = {},
-        mouse_shape = 0,
-        short_name = 'n',
-      },
-      [2] = {
-        blinkoff = 0,
-        blinkon = 0,
-        blinkwait = 0,
-        cell_percentage = 0,
-        cursor_shape = 'block',
-        name = 'visual',
-        hl_id = 0,
-        id_lm = 0,
-        attr = {},
-        attr_lm = {},
-        mouse_shape = 0,
-        short_name = 'v',
-      },
-      [3] = {
-        blinkoff = 0,
-        blinkon = 0,
-        blinkwait = 0,
+      [1] = cursor_mode({ name = 'normal', mouse_shape = 0, short_name = 'n' }),
+      [2] = cursor_mode({ name = 'visual', mouse_shape = 0, short_name = 'v' }),
+      [3] = cursor_mode({
         cell_percentage = 25,
         cursor_shape = 'vertical',
         name = 'insert',
-        hl_id = 0,
-        id_lm = 0,
-        attr = {},
-        attr_lm = {},
         mouse_shape = 0,
         short_name = 'i',
-      },
-      [4] = {
-        blinkoff = 0,
-        blinkon = 0,
-        blinkwait = 0,
+      }),
+      [4] = cursor_mode({
         cell_percentage = 20,
         cursor_shape = 'horizontal',
         name = 'replace',
-        hl_id = 0,
-        id_lm = 0,
-        attr = {},
-        attr_lm = {},
         mouse_shape = 0,
         short_name = 'r',
-      },
-      [5] = {
-        blinkoff = 0,
-        blinkon = 0,
-        blinkwait = 0,
-        cell_percentage = 0,
-        cursor_shape = 'block',
-        name = 'cmdline_normal',
-        hl_id = 0,
-        id_lm = 0,
-        attr = {},
-        attr_lm = {},
-        mouse_shape = 0,
-        short_name = 'c',
-      },
-      [6] = {
-        blinkoff = 0,
-        blinkon = 0,
-        blinkwait = 0,
+      }),
+      [5] = cursor_mode({ name = 'cmdline_normal', mouse_shape = 0, short_name = 'c' }),
+      [6] = cursor_mode({
         cell_percentage = 25,
         cursor_shape = 'vertical',
         name = 'cmdline_insert',
-        hl_id = 0,
-        id_lm = 0,
-        attr = {},
-        attr_lm = {},
         mouse_shape = 0,
         short_name = 'ci',
-      },
-      [7] = {
-        blinkoff = 0,
-        blinkon = 0,
-        blinkwait = 0,
+      }),
+      [7] = cursor_mode({
         cell_percentage = 20,
         cursor_shape = 'horizontal',
         name = 'cmdline_replace',
-        hl_id = 0,
-        id_lm = 0,
-        attr = {},
-        attr_lm = {},
         mouse_shape = 0,
         short_name = 'cr',
-      },
-      [8] = {
-        blinkoff = 0,
-        blinkon = 0,
-        blinkwait = 0,
+      }),
+      [8] = cursor_mode({
         cell_percentage = 20,
         cursor_shape = 'horizontal',
         name = 'operator',
-        hl_id = 0,
-        id_lm = 0,
-        attr = {},
-        attr_lm = {},
         mouse_shape = 0,
         short_name = 'o',
-      },
-      [9] = {
-        blinkoff = 0,
-        blinkon = 0,
-        blinkwait = 0,
+      }),
+      [9] = cursor_mode({
         cell_percentage = 25,
         cursor_shape = 'vertical',
         name = 'visual_select',
-        hl_id = 0,
-        id_lm = 0,
-        attr = {},
-        attr_lm = {},
         mouse_shape = 0,
         short_name = 've',
-      },
-      [10] = {
-        name = 'cmdline_hover',
-        mouse_shape = 0,
-        short_name = 'e',
-      },
-      [11] = {
-        name = 'statusline_hover',
-        mouse_shape = 0,
-        short_name = 's',
-      },
-      [12] = {
-        name = 'statusline_drag',
-        mouse_shape = 0,
-        short_name = 'sd',
-      },
-      [13] = {
-        name = 'vsep_hover',
-        mouse_shape = 0,
-        short_name = 'vs',
-      },
-      [14] = {
-        name = 'vsep_drag',
-        mouse_shape = 0,
-        short_name = 'vd',
-      },
-      [15] = {
-        name = 'more',
-        mouse_shape = 0,
-        short_name = 'm',
-      },
-      [16] = {
-        name = 'more_lastline',
-        mouse_shape = 0,
-        short_name = 'ml',
-      },
-      [17] = {
-        blinkoff = 0,
-        blinkon = 0,
-        blinkwait = 0,
-        cell_percentage = 0,
-        cursor_shape = 'block',
-        name = 'showmatch',
-        hl_id = 0,
-        id_lm = 0,
-        attr = {},
-        attr_lm = {},
-        short_name = 'sm',
-      },
-      [18] = {
+      }),
+      [10] = { name = 'cmdline_hover', mouse_shape = 0, short_name = 'e' },
+      [11] = { name = 'statusline_hover', mouse_shape = 0, short_name = 's' },
+      [12] = { name = 'statusline_drag', mouse_shape = 0, short_name = 'sd' },
+      [13] = { name = 'vsep_hover', mouse_shape = 0, short_name = 'vs' },
+      [14] = { name = 'vsep_drag', mouse_shape = 0, short_name = 'vd' },
+      [15] = { name = 'more', mouse_shape = 0, short_name = 'm' },
+      [16] = { name = 'more_lastline', mouse_shape = 0, short_name = 'ml' },
+      [17] = cursor_mode({ name = 'showmatch', short_name = 'sm' }),
+      [18] = cursor_mode({
         blinkoff = 500,
         blinkon = 500,
-        blinkwait = 0,
-        cell_percentage = 0,
-        cursor_shape = 'block',
         name = 'terminal',
         hl_id = 3,
         id_lm = 3,
         attr = { reverse = true },
         attr_lm = { reverse = true },
         short_name = 't',
-      },
+      }),
     }
 
     screen:expect(function()
@@ -328,19 +219,15 @@ describe('ui/cursor', function()
       for _, m in ipairs(screen._mode_info) do
         named[m.name] = m
       end
-      eq('vertical', named.normal.cursor_shape)
-      eq(35, named.normal.cell_percentage)
-      eq('horizontal', named.visual_select.cursor_shape)
-      eq(35, named.visual_select.cell_percentage)
-      eq('vertical', named.operator.cursor_shape)
-      eq(50, named.operator.cell_percentage)
-      eq('block', named.insert.cursor_shape)
-      eq('vertical', named.showmatch.cursor_shape)
-      eq(90, named.cmdline_replace.cell_percentage)
-      eq(171, named.normal.blinkwait)
-      eq(172, named.normal.blinkoff)
-      eq(173, named.normal.blinkon)
-      eq(42, named.showmatch.cell_percentage)
+      eq_partial({
+        normal = { cursor_shape = 'vertical', cell_percentage = 35 },
+        visual_select = { cursor_shape = 'horizontal', cell_percentage = 35 },
+        operator = { cursor_shape = 'vertical', cell_percentage = 50 },
+        insert = { cursor_shape = 'block' },
+        showmatch = { cursor_shape = 'vertical', cell_percentage = 42 },
+        cmdline_replace = { cell_percentage = 90 },
+      }, named)
+      eq_partial({ blinkwait = 171, blinkoff = 172, blinkon = 173 }, named.normal)
     end)
 
     -- If there is no setting for guicursor, it becomes the default setting.
@@ -370,10 +257,7 @@ describe('ui/cursor', function()
       eq(false, screen._cursor_style_enabled)
       for _, m in ipairs(screen._mode_info) do
         if m['cursor_shape'] ~= nil then
-          eq('block', m.cursor_shape)
-          eq(0, m.blinkon)
-          eq(0, m.hl_id)
-          eq(0, m.id_lm)
+          eq_partial({ cursor_shape = 'block', blinkon = 0, hl_id = 0, id_lm = 0 }, m)
         end
       end
     end)
@@ -388,9 +272,7 @@ describe('ui/cursor', function()
 
     command('set all&')
     screen:expect(function()
-      eq('block', screen._mode_info[1].cursor_shape)
-      eq(0, screen._mode_info[1].blinkon)
-      eq(0, screen._mode_info[1].blinkoff)
+      eq_partial({ cursor_shape = 'block', blinkon = 0, blinkoff = 0 }, screen._mode_info[1])
       eq(true, screen._cursor_style_enabled)
     end)
   end)

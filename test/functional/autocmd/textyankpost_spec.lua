@@ -7,6 +7,17 @@ local feed, command, expect = n.feed, n.command, n.expect
 local api, fn, neq = n.api, n.fn, t.neq
 
 describe('TextYankPost', function()
+  local function expect_event(expected)
+    eq(
+      vim.tbl_extend('force', {
+        inclusive = false,
+        regname = '',
+        visual = false,
+      }, expected),
+      eval('g:event')
+    )
+  end
+
   before_each(function()
     clear()
 
@@ -25,52 +36,30 @@ describe('TextYankPost', function()
 
   it('is executed after yank and handles register types', function()
     feed('yy')
-    eq({
-      inclusive = false,
-      operator = 'y',
-      regcontents = { 'foo\nbar' },
-      regname = '',
-      regtype = 'V',
-      visual = false,
-    }, eval('g:event'))
+    expect_event({ operator = 'y', regcontents = { 'foo\nbar' }, regtype = 'V' })
     eq(1, eval('g:count'))
 
     -- v:event is cleared after the autocommand is done
     eq({}, eval('v:event'))
 
     feed('+yw')
-    eq({
-      inclusive = false,
-      operator = 'y',
-      regcontents = { 'baz ' },
-      regname = '',
-      regtype = 'v',
-      visual = false,
-    }, eval('g:event'))
+    expect_event({ operator = 'y', regcontents = { 'baz ' }, regtype = 'v' })
     eq(2, eval('g:count'))
 
     feed('<c-v>eky')
-    eq({
+    expect_event({
       inclusive = true,
       operator = 'y',
       regcontents = { 'foo', 'baz' },
-      regname = '',
       regtype = '\0223', -- ^V + block width
       visual = true,
-    }, eval('g:event'))
+    })
     eq(3, eval('g:count'))
   end)
 
   it('makes v:event immutable', function()
     feed('yy')
-    eq({
-      inclusive = false,
-      operator = 'y',
-      regcontents = { 'foo\nbar' },
-      regname = '',
-      regtype = 'V',
-      visual = false,
-    }, eval('g:event'))
+    expect_event({ operator = 'y', regcontents = { 'foo\nbar' }, regtype = 'V' })
 
     command('set debug=msg')
     -- the regcontents should not be changed without copy.
@@ -94,50 +83,27 @@ describe('TextYankPost', function()
   it('is not invoked recursively', function()
     command('autocmd TextYankPost * normal "+yy')
     feed('yy')
-    eq({
-      inclusive = false,
-      operator = 'y',
-      regcontents = { 'foo\nbar' },
-      regname = '',
-      regtype = 'V',
-      visual = false,
-    }, eval('g:event'))
+    expect_event({ operator = 'y', regcontents = { 'foo\nbar' }, regtype = 'V' })
     eq(1, eval('g:count'))
     eq({ 'foo\nbar' }, fn.getreg('+', 1, 1))
   end)
 
   it('is executed after delete and change', function()
     feed('dw')
-    eq({
-      inclusive = false,
-      operator = 'd',
-      regcontents = { 'foo' },
-      regname = '',
-      regtype = 'v',
-      visual = false,
-    }, eval('g:event'))
+    expect_event({ operator = 'd', regcontents = { 'foo' }, regtype = 'v' })
     eq(1, eval('g:count'))
 
     feed('dd')
-    eq({
-      inclusive = false,
-      operator = 'd',
-      regcontents = { '\nbar' },
-      regname = '',
-      regtype = 'V',
-      visual = false,
-    }, eval('g:event'))
+    expect_event({ operator = 'd', regcontents = { '\nbar' }, regtype = 'V' })
     eq(2, eval('g:count'))
 
     feed('cwspam<esc>')
-    eq({
+    expect_event({
       inclusive = true,
       operator = 'c',
       regcontents = { 'baz' },
-      regname = '',
       regtype = 'v',
-      visual = false,
-    }, eval('g:event'))
+    })
     eq(3, eval('g:count'))
   end)
 
@@ -159,92 +125,65 @@ describe('TextYankPost', function()
 
   it('gives the correct register name', function()
     feed('$"byiw')
-    eq({
+    expect_event({
       inclusive = true,
       operator = 'y',
       regcontents = { 'bar' },
       regname = 'b',
       regtype = 'v',
-      visual = false,
-    }, eval('g:event'))
+    })
 
     feed('"*yy')
-    eq({
+    expect_event({
       inclusive = true,
       operator = 'y',
       regcontents = { 'foo\nbar' },
       regname = '*',
       regtype = 'V',
-      visual = false,
-    }, eval('g:event'))
+    })
 
     command('set clipboard=unnamed')
 
     -- regname still shows the name the user requested
     feed('yy')
-    eq({
+    expect_event({
       inclusive = true,
       operator = 'y',
       regcontents = { 'foo\nbar' },
       regname = '',
       regtype = 'V',
-      visual = false,
-    }, eval('g:event'))
+    })
 
     feed('"*yy')
-    eq({
+    expect_event({
       inclusive = true,
       operator = 'y',
       regcontents = { 'foo\nbar' },
       regname = '*',
       regtype = 'V',
-      visual = false,
-    }, eval('g:event'))
+    })
   end)
 
   it('works with Ex commands', function()
     command('1delete +')
-    eq({
-      inclusive = false,
+    expect_event({
       operator = 'd',
       regcontents = { 'foo\nbar' },
       regname = '+',
       regtype = 'V',
-      visual = false,
-    }, eval('g:event'))
+    })
     eq(1, eval('g:count'))
 
     command('yank')
-    eq({
-      inclusive = false,
-      operator = 'y',
-      regcontents = { 'baz text' },
-      regname = '',
-      regtype = 'V',
-      visual = false,
-    }, eval('g:event'))
+    expect_event({ operator = 'y', regcontents = { 'baz text' }, regtype = 'V' })
     eq(2, eval('g:count'))
 
     command('normal yw')
-    eq({
-      inclusive = false,
-      operator = 'y',
-      regcontents = { 'baz ' },
-      regname = '',
-      regtype = 'v',
-      visual = false,
-    }, eval('g:event'))
+    expect_event({ operator = 'y', regcontents = { 'baz ' }, regtype = 'v' })
     eq(3, eval('g:count'))
 
     command('normal! dd')
-    eq({
-      inclusive = false,
-      operator = 'd',
-      regcontents = { 'baz text' },
-      regname = '',
-      regtype = 'V',
-      visual = false,
-    }, eval('g:event'))
+    expect_event({ operator = 'd', regcontents = { 'baz text' }, regtype = 'V' })
     eq(4, eval('g:count'))
   end)
 

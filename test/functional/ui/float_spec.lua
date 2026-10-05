@@ -9,6 +9,7 @@ local assert_alive = n.assert_alive
 local command, feed_command = n.command, n.feed_command
 local eval = n.eval
 local eq = t.eq
+local eq_partial = t.eq_partial
 local neq = t.neq
 local matches = t.matches
 local expect = n.expect
@@ -1674,22 +1675,7 @@ describe('float window', function()
         hide = false,
       }
       eq(expected, api.nvim_win_get_config(win))
-      eq(
-        true,
-        exec_lua(
-          [[
-        local expected, win = ...
-        local actual = vim.api.nvim_win_get_config(win)
-        for k,v in pairs(expected) do
-          if v ~= actual[k] then
-            error(k)
-          end
-        end
-        return true]],
-          expected,
-          win
-        )
-      )
+      eq_partial(expected, exec_lua('return vim.api.nvim_win_get_config(...)', win))
 
       eq({
         external = false,

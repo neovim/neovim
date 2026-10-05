@@ -84,6 +84,10 @@ describe('matchadd()', function()
 end)
 
 describe('matchaddpos()', function()
+  local function expect_match(pos)
+    eq({ { group = 'PreProc', pos1 = pos, priority = 3, id = 4 } }, fn.getmatches())
+  end
+
   it('errors out on invalid input', function()
     command('hi clear PreProc')
     eq(
@@ -102,90 +106,34 @@ describe('matchaddpos()', function()
   it('works with 0 lnum', function()
     command('hi clear PreProc')
     eq(4, fn.matchaddpos('PreProc', { 1 }, 3, 4))
-    eq({
-      {
-        group = 'PreProc',
-        pos1 = { 1 },
-        priority = 3,
-        id = 4,
-      },
-    }, fn.getmatches())
+    expect_match({ 1 })
     fn.matchdelete(4)
     eq(4, fn.matchaddpos('PreProc', { { 0 }, 1 }, 3, 4))
-    eq({
-      {
-        group = 'PreProc',
-        pos1 = { 1 },
-        priority = 3,
-        id = 4,
-      },
-    }, fn.getmatches())
+    expect_match({ 1 })
     fn.matchdelete(4)
     eq(4, fn.matchaddpos('PreProc', { 0, 1 }, 3, 4))
-    eq({
-      {
-        group = 'PreProc',
-        pos1 = { 1 },
-        priority = 3,
-        id = 4,
-      },
-    }, fn.getmatches())
+    expect_match({ 1 })
   end)
   it('works with negative numbers', function()
     command('hi clear PreProc')
     eq(4, fn.matchaddpos('PreProc', { -10, 1 }, 3, 4))
-    eq({
-      {
-        group = 'PreProc',
-        pos1 = { 1 },
-        priority = 3,
-        id = 4,
-      },
-    }, fn.getmatches())
+    expect_match({ 1 })
     fn.matchdelete(4)
     eq(4, fn.matchaddpos('PreProc', { { -10 }, 1 }, 3, 4))
-    eq({
-      {
-        group = 'PreProc',
-        pos1 = { 1 },
-        priority = 3,
-        id = 4,
-      },
-    }, fn.getmatches())
+    expect_match({ 1 })
     fn.matchdelete(4)
     eq(4, fn.matchaddpos('PreProc', { { 2, -1 }, 1 }, 3, 4))
-    eq({
-      {
-        group = 'PreProc',
-        pos1 = { 1 },
-        priority = 3,
-        id = 4,
-      },
-    }, fn.getmatches())
+    expect_match({ 1 })
     fn.matchdelete(4)
     eq(4, fn.matchaddpos('PreProc', { { 2, 0, -1 }, 1 }, 3, 4))
-    eq({
-      {
-        group = 'PreProc',
-        pos1 = { 1 },
-        priority = 3,
-        id = 4,
-      },
-    }, fn.getmatches())
+    expect_match({ 1 })
   end)
   it('works with zero length', function()
     local screen = Screen.new(40, 5)
     fn.setline(1, 'abcdef')
     command('hi PreProc guifg=Red')
     eq(4, fn.matchaddpos('PreProc', { { 1, 2, 0 } }, 3, 4))
-    eq({
-      {
-        group = 'PreProc',
-        pos1 = { 1, 2, 0 },
-        priority = 3,
-        id = 4,
-      },
-    }, fn.getmatches())
+    expect_match({ 1, 2, 0 })
     screen:expect(
       [[
       ^a{1:b}cdef                                  |

@@ -5229,8 +5229,41 @@ describe('API', function()
   end)
 
   describe('nvim_parse_cmd', function()
+    local function eq_cmd(expected, actual)
+      eq(
+        mergedicts_copy({
+          mods = {
+            browse = false,
+            confirm = false,
+            emsg_silent = false,
+            filter = {
+              pattern = '',
+              force = false,
+            },
+            hide = false,
+            horizontal = false,
+            keepalt = false,
+            keepjumps = false,
+            keepmarks = false,
+            keeppatterns = false,
+            lockmarks = false,
+            noautocmd = false,
+            noswapfile = false,
+            sandbox = false,
+            silent = false,
+            split = '',
+            tab = -1,
+            unsilent = false,
+            verbose = -1,
+            vertical = false,
+          },
+        }, expected),
+        actual
+      )
+    end
+
     it('works', function()
-      eq({
+      eq_cmd({
         cmd = 'echo',
         args = { 'foo' },
         bang = false,
@@ -5241,35 +5274,10 @@ describe('API', function()
         },
         nargs = '*',
         nextcmd = '',
-        mods = {
-          browse = false,
-          confirm = false,
-          emsg_silent = false,
-          filter = {
-            pattern = '',
-            force = false,
-          },
-          hide = false,
-          horizontal = false,
-          keepalt = false,
-          keepjumps = false,
-          keepmarks = false,
-          keeppatterns = false,
-          lockmarks = false,
-          noautocmd = false,
-          noswapfile = false,
-          sandbox = false,
-          silent = false,
-          split = '',
-          tab = -1,
-          unsilent = false,
-          verbose = -1,
-          vertical = false,
-        },
       }, api.nvim_parse_cmd('echo foo', {}))
     end)
     it('works with ranges', function()
-      eq({
+      eq_cmd({
         cmd = 'substitute',
         args = { '/math.random/math.max/' },
         bang = false,
@@ -5281,35 +5289,10 @@ describe('API', function()
         },
         nargs = '*',
         nextcmd = '',
-        mods = {
-          browse = false,
-          confirm = false,
-          emsg_silent = false,
-          filter = {
-            pattern = '',
-            force = false,
-          },
-          hide = false,
-          horizontal = false,
-          keepalt = false,
-          keepjumps = false,
-          keepmarks = false,
-          keeppatterns = false,
-          lockmarks = false,
-          noautocmd = false,
-          noswapfile = false,
-          sandbox = false,
-          silent = false,
-          split = '',
-          tab = -1,
-          unsilent = false,
-          verbose = -1,
-          vertical = false,
-        },
       }, api.nvim_parse_cmd('4,6s/math.random/math.max/', {}))
     end)
     it('works with count', function()
-      eq({
+      eq_cmd({
         cmd = 'buffer',
         args = {},
         bang = false,
@@ -5322,35 +5305,10 @@ describe('API', function()
         },
         nargs = '*',
         nextcmd = '',
-        mods = {
-          browse = false,
-          confirm = false,
-          emsg_silent = false,
-          filter = {
-            pattern = '',
-            force = false,
-          },
-          hide = false,
-          horizontal = false,
-          keepalt = false,
-          keepjumps = false,
-          keepmarks = false,
-          keeppatterns = false,
-          lockmarks = false,
-          noautocmd = false,
-          noswapfile = false,
-          sandbox = false,
-          silent = false,
-          split = '',
-          tab = -1,
-          unsilent = false,
-          verbose = -1,
-          vertical = false,
-        },
       }, api.nvim_parse_cmd('buffer 1', {}))
     end)
     it('works with register', function()
-      eq({
+      eq_cmd({
         cmd = 'put',
         args = {},
         bang = false,
@@ -5362,33 +5320,8 @@ describe('API', function()
         },
         nargs = '0',
         nextcmd = '',
-        mods = {
-          browse = false,
-          confirm = false,
-          emsg_silent = false,
-          filter = {
-            pattern = '',
-            force = false,
-          },
-          hide = false,
-          horizontal = false,
-          keepalt = false,
-          keepjumps = false,
-          keepmarks = false,
-          keeppatterns = false,
-          lockmarks = false,
-          noautocmd = false,
-          noswapfile = false,
-          sandbox = false,
-          silent = false,
-          split = '',
-          tab = -1,
-          unsilent = false,
-          verbose = -1,
-          vertical = false,
-        },
       }, api.nvim_parse_cmd('put +', {}))
-      eq({
+      eq_cmd({
         cmd = 'put',
         args = {},
         bang = false,
@@ -5400,35 +5333,10 @@ describe('API', function()
         },
         nargs = '0',
         nextcmd = '',
-        mods = {
-          browse = false,
-          confirm = false,
-          emsg_silent = false,
-          filter = {
-            pattern = '',
-            force = false,
-          },
-          hide = false,
-          horizontal = false,
-          keepalt = false,
-          keepjumps = false,
-          keepmarks = false,
-          keeppatterns = false,
-          lockmarks = false,
-          noautocmd = false,
-          noswapfile = false,
-          sandbox = false,
-          silent = false,
-          split = '',
-          tab = -1,
-          unsilent = false,
-          verbose = -1,
-          vertical = false,
-        },
       }, api.nvim_parse_cmd('put', {}))
     end)
     it('works with range, count and register', function()
-      eq({
+      eq_cmd({
         cmd = 'delete',
         args = {},
         bang = false,
@@ -5442,35 +5350,10 @@ describe('API', function()
         },
         nargs = '0',
         nextcmd = '',
-        mods = {
-          browse = false,
-          confirm = false,
-          emsg_silent = false,
-          filter = {
-            pattern = '',
-            force = false,
-          },
-          hide = false,
-          horizontal = false,
-          keepalt = false,
-          keepjumps = false,
-          keepmarks = false,
-          keeppatterns = false,
-          lockmarks = false,
-          noautocmd = false,
-          noswapfile = false,
-          sandbox = false,
-          silent = false,
-          split = '',
-          tab = -1,
-          unsilent = false,
-          verbose = -1,
-          vertical = false,
-        },
       }, api.nvim_parse_cmd('1,3delete * 5', {}))
     end)
     it('works with bang', function()
-      eq({
+      eq_cmd({
         cmd = 'write',
         args = {},
         bang = true,
@@ -5481,35 +5364,10 @@ describe('API', function()
         },
         nargs = '?',
         nextcmd = '',
-        mods = {
-          browse = false,
-          confirm = false,
-          emsg_silent = false,
-          filter = {
-            pattern = '',
-            force = false,
-          },
-          hide = false,
-          horizontal = false,
-          keepalt = false,
-          keepjumps = false,
-          keepmarks = false,
-          keeppatterns = false,
-          lockmarks = false,
-          noautocmd = false,
-          noswapfile = false,
-          sandbox = false,
-          silent = false,
-          split = '',
-          tab = -1,
-          unsilent = false,
-          verbose = -1,
-          vertical = false,
-        },
       }, api.nvim_parse_cmd('w!', {}))
     end)
     it('works with modifiers', function()
-      eq(
+      eq_cmd(
         {
           cmd = 'split',
           args = { 'foo.txt' },
@@ -5522,29 +5380,15 @@ describe('API', function()
           nargs = '?',
           nextcmd = '',
           mods = {
-            browse = false,
-            confirm = false,
             emsg_silent = true,
             filter = {
               pattern = 'foo',
-              force = false,
             },
-            hide = false,
             horizontal = true,
-            keepalt = false,
-            keepjumps = false,
-            keepmarks = false,
-            keeppatterns = false,
-            lockmarks = false,
-            noautocmd = false,
-            noswapfile = false,
-            sandbox = false,
             silent = true,
             split = 'topleft',
             tab = 1,
-            unsilent = false,
             verbose = 15,
-            vertical = false,
           },
         },
         api.nvim_parse_cmd(
@@ -5552,7 +5396,7 @@ describe('API', function()
           {}
         )
       )
-      eq(
+      eq_cmd(
         {
           cmd = 'split',
           args = { 'foo.txt' },
@@ -5565,29 +5409,15 @@ describe('API', function()
           nargs = '?',
           nextcmd = '',
           mods = {
-            browse = false,
             confirm = true,
-            emsg_silent = false,
             filter = {
               pattern = 'foo',
               force = true,
             },
-            hide = false,
-            horizontal = false,
-            keepalt = false,
-            keepjumps = false,
-            keepmarks = false,
-            keeppatterns = false,
-            lockmarks = false,
-            noautocmd = false,
-            noswapfile = false,
-            sandbox = false,
-            silent = false,
             split = 'botright',
             tab = 0,
             unsilent = true,
             verbose = 0,
-            vertical = false,
           },
         },
         api.nvim_parse_cmd(
@@ -5598,7 +5428,7 @@ describe('API', function()
     end)
     it('works with user commands', function()
       command('command -bang -nargs=+ -range -addr=lines MyCommand echo foo')
-      eq({
+      eq_cmd({
         cmd = 'MyCommand',
         args = { 'test', 'it' },
         bang = true,
@@ -5610,35 +5440,10 @@ describe('API', function()
         },
         nargs = '+',
         nextcmd = '',
-        mods = {
-          browse = false,
-          confirm = false,
-          emsg_silent = false,
-          filter = {
-            pattern = '',
-            force = false,
-          },
-          hide = false,
-          horizontal = false,
-          keepalt = false,
-          keepjumps = false,
-          keepmarks = false,
-          keeppatterns = false,
-          lockmarks = false,
-          noautocmd = false,
-          noswapfile = false,
-          sandbox = false,
-          silent = false,
-          split = '',
-          tab = -1,
-          unsilent = false,
-          verbose = -1,
-          vertical = false,
-        },
       }, api.nvim_parse_cmd('4,6MyCommand! test it', {}))
     end)
     it('sets nextcmd for bar-separated commands', function()
-      eq({
+      eq_cmd({
         cmd = 'argadd',
         args = { 'a.txt' },
         bang = false,
@@ -5649,31 +5454,6 @@ describe('API', function()
         },
         nargs = '*',
         nextcmd = 'argadd b.txt',
-        mods = {
-          browse = false,
-          confirm = false,
-          emsg_silent = false,
-          filter = {
-            pattern = '',
-            force = false,
-          },
-          hide = false,
-          horizontal = false,
-          keepalt = false,
-          keepjumps = false,
-          keepmarks = false,
-          keeppatterns = false,
-          lockmarks = false,
-          noautocmd = false,
-          noswapfile = false,
-          sandbox = false,
-          silent = false,
-          split = '',
-          tab = -1,
-          unsilent = false,
-          verbose = -1,
-          vertical = false,
-        },
       }, api.nvim_parse_cmd('argadd a.txt | argadd b.txt', {}))
     end)
     it('sets nextcmd after expr-arg commands #36029', function()
@@ -5693,7 +5473,7 @@ describe('API', function()
       eq('', api.nvim_get_vvar('errmsg'))
     end)
     it('parses :map commands with space in RHS', function()
-      eq({
+      eq_cmd({
         addr = 'none',
         args = { 'a', 'b  c' },
         bang = false,
@@ -5702,38 +5482,13 @@ describe('API', function()
           bar = true,
           file = false,
         },
-        mods = {
-          browse = false,
-          confirm = false,
-          emsg_silent = false,
-          filter = {
-            force = false,
-            pattern = '',
-          },
-          hide = false,
-          horizontal = false,
-          keepalt = false,
-          keepjumps = false,
-          keepmarks = false,
-          keeppatterns = false,
-          lockmarks = false,
-          noautocmd = false,
-          noswapfile = false,
-          sandbox = false,
-          silent = false,
-          split = '',
-          tab = -1,
-          unsilent = false,
-          verbose = -1,
-          vertical = false,
-        },
         nargs = '*',
         nextcmd = '',
       }, api.nvim_parse_cmd('map a b  c', {}))
     end)
     it('works for nargs=1', function()
       command('command -nargs=1 MyCommand echo <q-args>')
-      eq({
+      eq_cmd({
         cmd = 'MyCommand',
         args = { 'test it' },
         bang = false,
@@ -5744,31 +5499,6 @@ describe('API', function()
         },
         nargs = '1',
         nextcmd = '',
-        mods = {
-          browse = false,
-          confirm = false,
-          emsg_silent = false,
-          filter = {
-            pattern = '',
-            force = false,
-          },
-          hide = false,
-          horizontal = false,
-          keepalt = false,
-          keepjumps = false,
-          keepmarks = false,
-          keeppatterns = false,
-          lockmarks = false,
-          noautocmd = false,
-          noswapfile = false,
-          sandbox = false,
-          silent = false,
-          split = '',
-          tab = -1,
-          unsilent = false,
-          verbose = -1,
-          vertical = false,
-        },
       }, api.nvim_parse_cmd('MyCommand test it', {}))
     end)
     it('validates command', function()
@@ -5808,7 +5538,7 @@ describe('API', function()
       eq('', fn.getreg('/'))
       eq('', fn.histget('search'))
       feed(':') -- call the API in cmdline mode to test whether it changes search history
-      eq({
+      eq_cmd({
         cmd = 'normal',
         args = { 'x' },
         bang = true,
@@ -5820,31 +5550,6 @@ describe('API', function()
         },
         nargs = '+',
         nextcmd = '',
-        mods = {
-          browse = false,
-          confirm = false,
-          emsg_silent = false,
-          filter = {
-            pattern = '',
-            force = false,
-          },
-          hide = false,
-          horizontal = false,
-          keepalt = false,
-          keepjumps = false,
-          keepmarks = false,
-          keeppatterns = false,
-          lockmarks = false,
-          noautocmd = false,
-          noswapfile = false,
-          sandbox = false,
-          silent = false,
-          split = '',
-          tab = -1,
-          unsilent = false,
-          verbose = -1,
-          vertical = false,
-        },
       }, api.nvim_parse_cmd('+2;/bar/normal! x', {}))
       eq({ 1, 0 }, api.nvim_win_get_cursor(0))
       eq('', fn.getreg('/'))
@@ -5881,7 +5586,7 @@ describe('API', function()
       ]]
       api.nvim_win_set_cursor(0, { 4, 4 })
       local res = api.nvim_parse_cmd('1', {})
-      eq({
+      eq_cmd({
         addr = 'line',
         args = {},
         bang = false,
@@ -5889,31 +5594,6 @@ describe('API', function()
         magic = {
           bar = false,
           file = false,
-        },
-        mods = {
-          browse = false,
-          confirm = false,
-          emsg_silent = false,
-          filter = {
-            force = false,
-            pattern = '',
-          },
-          hide = false,
-          horizontal = false,
-          keepalt = false,
-          keepjumps = false,
-          keepmarks = false,
-          keeppatterns = false,
-          lockmarks = false,
-          noautocmd = false,
-          noswapfile = false,
-          sandbox = false,
-          silent = false,
-          split = '',
-          tab = -1,
-          unsilent = false,
-          verbose = -1,
-          vertical = false,
         },
         nargs = '0',
         nextcmd = '',

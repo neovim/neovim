@@ -13,6 +13,7 @@ local exec = n.exec
 local feed = n.feed
 local fn = n.fn
 local eq = t.eq
+local eq_partial = t.eq_partial
 local api = n.api
 local get_lines = t_atom.get_lines
 local k = t_atom.k
@@ -129,10 +130,7 @@ describe('CmdAtom', function()
       feed('3j')
       eq(4, fn.line('.'))
       local ev = atom_last()
-      eq(
-        { type = 'motion', lhs = 'j', keys = '3gj', count = 3 },
-        pick(ev, 'type', 'lhs', 'keys', 'count')
-      )
+      eq_partial({ type = 'motion', lhs = 'j', keys = '3gj', count = 3 }, ev)
       -- The "," repeat recipe: replaying the KEYS verbatim repeats the count.
       feed('gg')
       n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(ev.keys))
@@ -146,12 +144,12 @@ describe('CmdAtom', function()
       ev = atom_last()
       eq({ type = 'mapping', lhs = k('<F6>') }, pick(ev, 'type', 'count', 'lhs'))
       -- Only the composite carries the mapping's LHS: a subatom is its own input.
-      eq({ keys = '3dl', count = 3, lhs = '3dl' }, pick(ev.atoms[1], 'keys', 'count', 'lhs'))
+      eq_partial({ keys = '3dl', count = 3, lhs = '3dl' }, ev.atoms[1])
       -- "." repeats the mapping's EDIT as ONE atom, labeled "." (not "<F6>").
       local before = #atoms()
       feed('.')
       eq(before + 1, #atoms())
-      eq({ type = 'operator', keys = '3dl', lhs = '.' }, pick(atom_last(), 'type', 'keys', 'lhs'))
+      eq_partial({ type = 'operator', keys = '3dl', lhs = '.' }, atom_last())
     end)
 
     it('Lua mapping (e.g. "]q" default)', function()
@@ -185,14 +183,14 @@ describe('CmdAtom', function()
       command('nnoremap ,c <Cmd>call setline(1, "N" . v:count)<CR>')
       feed('3,c')
       local cmdev = atom_last()
-      eq({
+      eq_partial({
         type = 'excmd',
         lhs = ',c',
         keys = k('3<Cmd>call setline(1, "N" . v:count)<NL>'),
         text = 'call setline(1, "N" . v:count)',
         count = 3,
         changed = true,
-      }, pick(cmdev, 'type', 'lhs', 'keys', 'text', 'count', 'changed'))
+      }, cmdev)
       -- Those keys replay: the count must survive, since "<Cmd>" reads v:count.
       eq('N3', fn.getline(1))
       fn.setline(1, 'reset')
@@ -212,12 +210,12 @@ describe('CmdAtom', function()
       ]])
       feed('2,x')
       cmdev = atom_last()
-      eq({
+      eq_partial({
         type = 'excmd',
         lhs = ',x',
         keys = k('2<Cmd>call setline(1, "E" . v:count1)<NL>'),
         count = 2,
-      }, pick(cmdev, 'type', 'lhs', 'keys', 'count'))
+      }, cmdev)
       fn.setline(1, 'reset')
       n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(cmdev.keys))
       eq('E2', fn.getline(1))
@@ -228,7 +226,7 @@ describe('CmdAtom', function()
       fn.setline(1, { 'aaa bbb' })
       feed('gg0viw,nd')
       eq(' bbb', fn.getline(1))
-      eq({ type = 'visual', keys = 'viwd' }, pick(atom_last(), 'type', 'keys'))
+      eq_partial({ type = 'visual', keys = 'viwd' }, atom_last())
     end)
 
     it('<expr> mapping: EXPRESSION input vs EXECUTION input #41665', function()
@@ -247,13 +245,13 @@ describe('CmdAtom', function()
         -- Placement of [count] should not change the behavior. #41665
         for _, prefix in ipairs({ '2d', 'd2' }) do
           feed(('%ss%s'):format(prefix, input))
-          eq({
+          eq_partial({
             type = 'operator',
             operator = 'd',
             count = 2,
             lhs = k(('ds%s'):format(input)),
             keys = k('2d<Cmd>lua table.insert(_G._log, { "e", 2 })<NL>'),
-          }, pick(atom_last(), 'type', 'operator', 'count', 'lhs', 'keys'))
+          }, atom_last())
         end
         eq({ { 'e', 2 }, { 'e', 2 } }, n.exec_lua('return _G._log'))
       end
@@ -269,9 +267,9 @@ describe('CmdAtom', function()
       for _, keys in ipairs({ '2dseq', 'd2seq' }) do
         feed(keys)
         local ev = atom_last()
-        eq(
+        eq_partial(
           { lhs = 'dseq', keys = k('2d<Cmd>let g:read_input = "e" . getcharstr()<NL>q') },
-          pick(ev, 'lhs', 'keys')
+          ev
         )
         eq('eq', api.nvim_get_var('read_input'))
         api.nvim_set_var('read_input', '')
@@ -332,7 +330,7 @@ describe('CmdAtom', function()
       feed('"z2dw')
       feed('"z2dw')
       evs = atoms()
-      eq({ keys = '"z2dw', count = 2, reg = 'z' }, pick(evs[#evs], 'keys', 'count', 'reg'))
+      eq_partial({ keys = '"z2dw', count = 2, reg = 'z' }, evs[#evs])
       -- Identical occurrences, except `undoseq`: each edit is a new undo state.
       evs[#evs].undoseq, evs[#evs - 1].undoseq = nil, nil
       eq(evs[#evs - 1], evs[#evs])
@@ -350,17 +348,16 @@ describe('CmdAtom', function()
       -- with the user-typed LHS; the resolved keys remain the (replayable) payload.
       local evs = atoms()
       eq(1, #evs)
-      eq(
+      eq_partial(
         { type = 'mapping', lhs = 'gj', keys = k('1i<NL><Esc>k$'), changed = true },
-        pick(evs[1], 'type', 'lhs', 'keys', 'changed')
+        evs[1]
       )
       -- The sub-commands are exposed as subatoms.
-      eq({
+      eq_partial({
         { type = 'insert', keys = k('1i<NL><Esc>') },
-        { type = 'motion', keys = 'k' },
+        { type = 'motion', keys = 'k', cmd = 'k', changed = false },
         { type = 'motion', keys = '$' },
-      }, subatoms(evs[1], 'type', 'keys'))
-      eq({ 'k', false }, { evs[1].atoms[2].cmd, evs[1].atoms[2].changed })
+      }, evs[1].atoms)
       -- A scroll inside a mapping is not a subatom: the composite's keys must stay replayable, so
       -- the scroll is elided.
       fn.setline(1, { 'l1', 'l2', 'l3', 'l4', 'l5', 'l6' })
@@ -368,7 +365,7 @@ describe('CmdAtom', function()
       command('nnoremap gk <C-e>j$')
       feed('gk')
       eq(4, fn.line('.'))
-      eq({ type = 'mapping', lhs = 'gk', keys = 'j$' }, pick(atom_last(), 'type', 'lhs', 'keys'))
+      eq_partial({ type = 'mapping', lhs = 'gk', keys = 'j$' }, atom_last())
       -- A recursive mapping (:nmap gJ gj) does not nest: the inner mapping's commands flatten
       -- into ONE composite labeled with the typed LHS, with the same resolved keys.
       command('nmap gJ gj')
@@ -379,10 +376,7 @@ describe('CmdAtom', function()
       eq({ 'aaa ', 'bbb' }, get_lines())
       evs = atoms()
       eq(before + 1, #evs)
-      eq(
-        { type = 'mapping', lhs = 'gJ', keys = k('1i<NL><Esc>k$') },
-        pick(evs[#evs], 'type', 'lhs', 'keys')
-      )
+      eq_partial({ type = 'mapping', lhs = 'gJ', keys = k('1i<NL><Esc>k$') }, evs[#evs])
     end)
 
     it('Visual-mode mapping spanning Visual/Normal/Insert is one atom', function()
@@ -396,17 +390,14 @@ describe('CmdAtom', function()
       feed('q')
       local evs = atoms()
       eq(1, #evs)
-      eq(
-        { type = 'mapping', lhs = 'q', keys = k('vl<Esc>0l1ix<Esc>l') },
-        pick(evs[1], 'type', 'lhs', 'keys')
-      )
-      eq({
+      eq_partial({ type = 'mapping', lhs = 'q', keys = k('vl<Esc>0l1ix<Esc>l') }, evs[1])
+      eq_partial({
         { type = 'visual', keys = k('vl<Esc>') },
         { type = 'motion', keys = '0' },
         { type = 'motion', keys = 'l' },
         { type = 'insert', keys = k('1ix<Esc>') },
         { type = 'motion', keys = 'l' },
-      }, subatoms(evs[1], 'type', 'keys'))
+      }, evs[1].atoms)
       eq({ 'AxBCD' }, get_lines())
     end)
 
@@ -420,12 +411,9 @@ describe('CmdAtom', function()
       feed('iAB<F2>CD<Esc>')
       local evs = atoms()
       eq(2, #evs)
-      eq({ type = 'insert', keys = k('1iAB<Esc>') }, pick(evs[1], 'type', 'keys'))
+      eq_partial({ type = 'insert', keys = k('1iAB<Esc>') }, evs[1])
       -- `lhs` is the trigger plus the keys typed while the composite ran.
-      eq(
-        { type = 'mapping', lhs = k('<F2>CD<Esc>'), keys = k('ll1iCD<Esc>') },
-        pick(evs[2], 'type', 'lhs', 'keys')
-      )
+      eq_partial({ type = 'mapping', lhs = k('<F2>CD<Esc>'), keys = k('ll1iCD<Esc>') }, evs[2])
       eq({ 'ABaCDbcdefg' }, get_lines())
 
       -- A Normal-mode mapping ending in Insert has the same shape: returning to the starting mode is
@@ -437,10 +425,7 @@ describe('CmdAtom', function()
       feed('<F3>CD<Esc>')
       evs = atoms()
       eq(before + 1, #evs)
-      eq(
-        { type = 'mapping', lhs = k('<F3>CD<Esc>'), keys = k('ll1iCD<Esc>') },
-        pick(evs[#evs], 'type', 'lhs', 'keys')
-      )
+      eq_partial({ type = 'mapping', lhs = k('<F3>CD<Esc>'), keys = k('ll1iCD<Esc>') }, evs[#evs])
       eq({ 'abCDcdefg' }, get_lines())
 
       -- Visual round-trip: selection is pending at mapping end, keeps the composite open.
@@ -453,15 +438,12 @@ describe('CmdAtom', function()
       feed('d')
       evs = atoms()
       eq(before + 1, #evs)
-      eq(
-        { type = 'mapping', lhs = k('<F4>d'), keys = k('vl<Esc>jvld') },
-        pick(evs[#evs], 'type', 'lhs', 'keys')
-      )
-      eq({
+      eq_partial({ type = 'mapping', lhs = k('<F4>d'), keys = k('vl<Esc>jvld') }, evs[#evs])
+      eq_partial({
         { type = 'visual', keys = k('vl<Esc>') },
         { type = 'motion', keys = 'j' },
         { type = 'visual', keys = 'vld' },
-      }, subatoms(evs[#evs], 'type', 'keys'))
+      }, evs[#evs].atoms)
       eq({ 'abcd', 'eh' }, get_lines())
     end)
 
@@ -474,10 +456,7 @@ describe('CmdAtom', function()
       feed(':')
       feed('<F2>')
       -- "x" resolves to its builtin translation "dl"; `lhs` is still the user input.
-      eq(
-        { { type = 'operator', lhs = k('<F2>'), keys = 'dl' } },
-        atoms_tail(1, 'type', 'lhs', 'keys')
-      )
+      eq_partial({ type = 'operator', lhs = k('<F2>'), keys = 'dl' }, atom_last())
       eq({ 'BCD' }, get_lines())
 
       -- A mapping that stays in the cmdline opens no composite: the accepted cmdline is the atom,
@@ -486,10 +465,7 @@ describe('CmdAtom', function()
       local before = #atoms()
       feed(':<F3><CR>')
       eq(before + 1, #atoms())
-      eq(
-        { { type = 'excmd', lhs = ':echo 1\n', keys = ':echo 1\n' } },
-        atoms_tail(1, 'type', 'lhs', 'keys')
-      )
+      eq_partial({ type = 'excmd', lhs = ':echo 1\n', keys = ':echo 1\n' }, atom_last())
     end)
 
     it('Terminal-mode mapping captures Normal-mode tail', function()
@@ -528,7 +504,7 @@ describe('CmdAtom', function()
       eq({ 'a one', 'b (two)' }, get_lines())
       local ev = atom_last()
       -- getchar() payload is appended to `keys`, replayable.
-      eq({ lhs = 'ds)', keys = ':call DelSurround()\n)' }, pick(ev, 'lhs', 'keys'))
+      eq_partial({ lhs = 'ds)', keys = ':call DelSurround()\n)' }, ev)
       feed('2G0f(')
       n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(ev.keys))
       eq({ 'a one', 'b two' }, get_lines())
@@ -545,7 +521,7 @@ describe('CmdAtom', function()
       n.poke_eventloop()
       eq('a oneX', fn.getline(1))
       ev = atom_last()
-      eq({ lhs = k(',sX<CR>'), keys = ':call Suffix()\nX\r' }, pick(ev, 'lhs', 'keys'))
+      eq_partial({ lhs = k(',sX<CR>'), keys = ':call Suffix()\nX\r' }, ev)
       feed('j')
       n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(ev.keys))
       eq('b twoX', fn.getline(2))
@@ -559,9 +535,9 @@ describe('CmdAtom', function()
       n.poke_eventloop()
       eq('here', fn.getline(1))
       ev = atom_last()
-      eq(
+      eq_partial(
         { type = 'operator', operator = 'd', lhs = 'dzhe', keys = 'd:call MiniSneak()\nhe' },
-        pick(ev, 'type', 'operator', 'lhs', 'keys')
+        ev
       )
       feed('j0')
       n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(ev.keys))
@@ -575,10 +551,7 @@ describe('CmdAtom', function()
       feed('d<F2>')
       -- The typed "d" is part of the composite atom.
       eq(before + 1, #atoms())
-      eq(
-        { { type = 'mapping', lhs = k('d<F2>'), keys = k('<Esc>dl') } },
-        atoms_tail(1, 'type', 'lhs', 'keys')
-      )
+      eq_partial({ type = 'mapping', lhs = k('d<F2>'), keys = k('<Esc>dl') }, atom_last())
       eq({ 'bcd' }, get_lines())
 
       -- Burst input ("f(" and the mapping arrive together): "f" peeks for a composing char with
@@ -714,13 +687,10 @@ describe('CmdAtom', function()
       local evs = atoms()
       eq(1, #evs)
       -- Insert keys always embed count ("1i…"). "dw" omits its count.
-      eq(
-        { type = 'insert', count = 1, text = 'XY', keys = k('1iXY<Esc>') },
-        pick(evs[1], 'type', 'count', 'text', 'keys')
-      )
+      eq_partial({ type = 'insert', count = 1, text = 'XY', keys = k('1iXY<Esc>') }, evs[1])
       -- Counted insert: entry cmd + text + <Esc> keys.
       feed('3iZ<Esc>')
-      eq({ type = 'insert', count = 3, text = 'Z' }, pick(atom_last(), 'type', 'count', 'text'))
+      eq_partial({ type = 'insert', count = 3, text = 'Z' }, atom_last())
     end)
 
     it('mapping captures Normal-mode tail #41864', function()
@@ -735,8 +705,8 @@ describe('CmdAtom', function()
       -- Two atoms: (empty) insert session, then the mapping tail ("l").
       local evs = atoms()
       eq(2, #evs)
-      eq({ type = 'insert', keys = k('1i<Esc>') }, pick(evs[1], 'type', 'keys'))
-      eq({ type = 'motion', lhs = k('<Esc>'), keys = 'l' }, pick(evs[2], 'type', 'lhs', 'keys'))
+      eq_partial({ type = 'insert', keys = k('1i<Esc>') }, evs[1])
+      eq_partial({ type = 'motion', lhs = k('<Esc>'), keys = 'l' }, evs[2])
       -- The tail moved the cursor right (column 5), overriding the default leftward "<Esc>".
       eq({ 1, 5 }, api.nvim_win_get_cursor(0))
 
@@ -747,11 +717,8 @@ describe('CmdAtom', function()
       feed('iZZ<Esc>')
       evs = atoms()
       eq(before + 2, #evs)
-      eq(
-        { type = 'insert', keys = k('1iZZ<Esc>'), text = 'ZZ' },
-        pick(evs[#evs - 1], 'type', 'keys', 'text')
-      )
-      eq({ type = 'motion', lhs = k('<Esc>'), keys = 'l' }, pick(evs[#evs], 'type', 'lhs', 'keys'))
+      eq_partial({ type = 'insert', keys = k('1iZZ<Esc>'), text = 'ZZ' }, evs[#evs - 1])
+      eq_partial({ type = 'motion', lhs = k('<Esc>'), keys = 'l' }, evs[#evs])
       eq({ 'echo ZZhi' }, get_lines())
       eq({ 1, 7 }, api.nvim_win_get_cursor(0))
     end)
@@ -766,25 +733,22 @@ describe('CmdAtom', function()
       local evs = atoms()
       eq(2, #evs)
       -- The insert-session (interrupted by the mapping) is a `type=insert` atom.
-      eq(
-        { type = 'insert', keys = k('1i....<Esc>'), text = ('.'):rep(4) },
-        pick(evs[1], 'type', 'keys', 'text')
-      )
+      eq_partial({ type = 'insert', keys = k('1i....<Esc>'), text = ('.'):rep(4) }, evs[1])
       -- The tail of the mapping (which started in insert-mode...) is a `type=mapping` atom.
-      eq({
+      eq_partial({
         type = 'mapping',
         lhs = 'x',
         keys = k('0l1aa..<Esc>1ab  <Esc>h1ic<Esc>'),
-      }, pick(evs[2], 'type', 'lhs', 'keys'))
+      }, evs[2])
       -- Composite subatoms:
-      eq({
+      eq_partial({
         { type = 'motion', keys = '0' },
         { type = 'motion', keys = 'l' },
         { type = 'insert', keys = k('1aa..<Esc>') },
         { type = 'insert', keys = k('1ab  <Esc>') },
         { type = 'motion', keys = 'h' },
         { type = 'insert', keys = k('1ic<Esc>') },
-      }, subatoms(evs[2], 'type', 'keys'))
+      }, evs[2].atoms)
       eq({ ('..a..bc  %sAB'):format(('.'):rep(2)) }, get_lines())
     end)
 
@@ -811,7 +775,7 @@ describe('CmdAtom', function()
       n.exec_lua([[vim.schedule(function() vim.api.nvim_feedkeys('i', 'n', false) end)]])
       n.exec_lua('vim.wait(50)')
       feed('hi<Esc>')
-      eq({ text = 'hi', keys = k('1ihi<Esc>') }, pick(atom_last(), 'text', 'keys'))
+      eq_partial({ text = 'hi', keys = k('1ihi<Esc>') }, atom_last())
       -- ...but with NO typed input within it, the session emits nothing.
       before = #atoms()
       n.exec_lua([[vim.schedule(function() vim.api.nvim_feedkeys('i', 'n', false) end)]])
@@ -852,10 +816,7 @@ describe('CmdAtom', function()
       feed('d')
       -- Publishes with empty `CmdAtom.keys`; the keys that produced it are in `lhs`.
       eq(before + 1, #atoms())
-      eq(
-        { type = 'visual', keys = '', lhs = k('V<C-E>d'), changed = true },
-        pick(atom_last(), 'type', 'keys', 'lhs', 'changed')
-      )
+      eq_partial({ type = 'visual', keys = '', lhs = k('V<C-E>d'), changed = true }, atom_last())
       eq('l3', fn.getline(1)) -- The edit itself deleted both selected lines.
 
       -- "." on the unreplayable operation falls back to equal-size reselect ("1v" + op).
@@ -871,7 +832,7 @@ describe('CmdAtom', function()
       eq('l2', fn.getline(1))
       eq(before + 1, #atoms())
       -- Nothing was translated, so lhs=keys.
-      eq({ type = 'visual', keys = 'Vzzd', lhs = 'Vzzd' }, pick(atom_last(), 'type', 'keys', 'lhs'))
+      eq_partial({ type = 'visual', keys = 'Vzzd', lhs = 'Vzzd' }, atom_last())
       feed('.')
       eq('l3', fn.getline(1))
 
@@ -944,7 +905,7 @@ describe('CmdAtom', function()
       feed('gvd')
       eq(' bbb ccc', fn.getline(1))
       eq(before + 1, #atoms())
-      eq({ type = 'visual', keys = 'gvd', lhs = 'gvd' }, pick(atom_last(), 'type', 'keys', 'lhs'))
+      eq_partial({ type = 'visual', keys = 'gvd', lhs = 'gvd' }, atom_last())
       feed('w.') -- "." containing "gv" replays "1v" fallback at the cursor ("bbb").
       eq('  ccc', fn.getline(1))
       -- Visual-entered Insert. The atom has "gv" (as typed), not redo's "1v" fallback.
@@ -954,7 +915,7 @@ describe('CmdAtom', function()
       feed('gvcX<Esc>')
       eq('X bbb ccc', fn.getline(1))
       eq(before + 1, #atoms())
-      eq({ type = 'visual', keys = k('gvcX<Esc>') }, pick(atom_last(), 'type', 'keys'))
+      eq_partial({ type = 'visual', keys = k('gvcX<Esc>') }, atom_last())
       feed('w.')
       eq('X X ccc', fn.getline(1))
 
@@ -991,7 +952,7 @@ describe('CmdAtom', function()
       api.nvim_buf_set_lines(0, 0, -1, true, { 'one two three', 'four five six' })
       feed('gg0v<M-w>d')
       eq({ ' two three', 'four five six' }, get_lines())
-      eq({ type = 'visual', keys = k('v<Cmd>normal! e<NL>d') }, pick(atom_last(), 'type', 'keys'))
+      eq_partial({ type = 'visual', keys = k('v<Cmd>normal! e<NL>d') }, atom_last())
       feed('j0.')
       eq({ ' two three', ' five six' }, get_lines())
 
@@ -1007,17 +968,14 @@ describe('CmdAtom', function()
       command('normal viwZ')
       feed('d')
       eq({ ' tail' }, get_lines())
-      eq({ type = 'visual', keys = 'viWd' }, pick(atom_last(), 'type', 'keys'))
+      eq_partial({ type = 'visual', keys = 'viWd' }, atom_last())
 
       -- Buffer-editing <Cmd> is captured as itself.
       command('xmap <M-a> <Cmd>call append(1, "X")<CR>')
       api.nvim_buf_set_lines(0, 0, -1, true, { 'ab', 'cd' })
       feed('gg0vl<M-a>d')
       eq({ '', 'X', 'cd' }, get_lines())
-      eq(
-        { type = 'visual', keys = k('vl<Cmd>call append(1, "X")<NL>d') },
-        pick(atom_last(), 'type', 'keys')
-      )
+      eq_partial({ type = 'visual', keys = k('vl<Cmd>call append(1, "X")<NL>d') }, atom_last())
       feed('3gg0.')
       eq({ '', 'X', '' }, get_lines())
 
@@ -1025,7 +983,7 @@ describe('CmdAtom', function()
       api.nvim_buf_set_lines(0, 0, -1, true, { 'ab META x', 'cdef META y' })
       feed('gg0v/META<CR>d')
       eq({ 'ETA x', 'cdef META y' }, get_lines())
-      eq({ type = 'visual', keys = k('v/META<NL>d') }, pick(atom_last(), 'type', 'keys'))
+      eq_partial({ type = 'visual', keys = k('v/META<NL>d') }, atom_last())
       feed('j0.')
       eq({ 'ETA x', 'ETA y' }, get_lines())
 
@@ -1038,10 +996,7 @@ describe('CmdAtom', function()
       api.nvim_buf_set_lines(0, 0, -1, true, { 'foo bar', 'longword bar' })
       feed('gg0v:<C-U>call SelectWord()<CR>d')
       eq({ ' bar', 'longword bar' }, get_lines())
-      eq(
-        { type = 'visual', keys = k('v:<C-U>call SelectWord()<NL>d') },
-        pick(atom_last(), 'type', 'keys')
-      )
+      eq_partial({ type = 'visual', keys = k('v:<C-U>call SelectWord()<NL>d') }, atom_last())
       feed('j0.')
       eq({ ' bar', ' bar' }, get_lines())
 
@@ -1159,9 +1114,9 @@ describe('CmdAtom', function()
       feed('gg0zfa{')
       n.poke_eventloop()
       n.exec_lua('_G.save()')
-      eq(
+      eq_partial(
         { lhs = 'zfa{', keys = 'zfa{', changed = false, operator = 'zf' },
-        pick(n.exec_lua('return _G.saved'), 'lhs', 'keys', 'changed', 'operator')
+        n.exec_lua('return _G.saved')
       )
       feed('zR4gg0') -- open the new fold, move past it
       eq(0, fn.foldlevel(4))
@@ -1184,7 +1139,7 @@ describe('CmdAtom', function()
       feed(k('V<C-e>d'))
       n.poke_eventloop()
       n.exec_lua('_G.save()')
-      eq({ keys = '' }, pick(n.exec_lua('return _G.saved'), 'keys'))
+      eq_partial({ keys = '' }, n.exec_lua('return _G.saved'))
       local before = get_lines()
       n.exec_lua('_G.replay()')
       n.poke_eventloop()
@@ -1457,10 +1412,7 @@ describe('CmdAtom', function()
     feed('gg')
     feed('2:<CR>')
     eq(2, fn.line('.'))
-    eq(
-      { type = 'excmd', keys = k(':.,.+1<NL>'), count = 2, cmd = ':' },
-      pick(atom_last(), 'type', 'keys', 'count', 'cmd')
-    )
+    eq_partial({ type = 'excmd', keys = k(':.,.+1<NL>'), count = 2, cmd = ':' }, atom_last())
     eq({ 'alpha beta', 'gamma delta' }, get_lines()) -- nothing was edited
     -- Scrolls and mouse presses also emit (type "scroll"/"mouse"): emit-only,
     -- never cascaded.
@@ -1495,7 +1447,7 @@ describe('CmdAtom', function()
     feed('yw')
 
     -- A yank emits but does not edit.
-    eq({ operator = 'y', changed = false }, pick(atom_last(), 'operator', 'changed'))
+    eq_partial({ operator = 'y', changed = false }, atom_last())
     feed('3x')
     eq({ 'd,ef' }, get_lines())
     feed('vf,d')
@@ -1512,7 +1464,7 @@ describe('CmdAtom', function()
     -- A visual atom carries the completing operator's fields, and decomposes
     -- into its commands ("v", "f," and the operator).
     local vis = atom_last() -- "vf,d"
-    eq({ type = 'visual', operator = 'd' }, pick(vis, 'type', 'operator'))
+    eq_partial({ type = 'visual', operator = 'd' }, vis)
     eq({
       { keys = 'v', cmd = 'v', changed = false },
       { keys = 'f,', cmd = 'f', cmdarg = ',', changed = false },
@@ -1527,30 +1479,24 @@ describe('CmdAtom', function()
     feed('d/END<CR>')
     eq({ 'END bb' }, get_lines())
     eq({ k('d/END<NL>') }, atoms_tail(1))
-    eq(
-      { operator = 'd', cmd = '/', changed = true },
-      pick(atom_last(), 'operator', 'cmd', 'changed')
-    )
+    eq_partial({ operator = 'd', cmd = '/', changed = true }, atom_last())
 
     -- An operand (mark or register name, target char) is its own field; the second char of a
     -- two-char command NAME ("gJ") composes into `cmd`.
     fn.setline(1, { 'one', 'two' })
     feed('gg0magJ')
     eq({ 'onetwo' }, get_lines()) -- "gJ": join without inserting a space
-    eq({ cmd = 'm', cmdarg = 'a' }, pick(atoms()[#atoms() - 1], 'cmd', 'cmdarg'))
+    eq_partial({ cmd = 'm', cmdarg = 'a' }, atoms()[#atoms() - 1])
     eq({ cmd = 'gJ' }, pick(atom_last(), 'cmd', 'cmdarg'))
     local nrec = #atoms()
     feed('qax') -- the recording register is an operand, not part of the name
     feed('q')
-    eq({ cmd = 'q', cmdarg = 'a' }, pick(atoms()[nrec + 1], 'cmd', 'cmdarg'))
+    eq_partial({ cmd = 'q', cmdarg = 'a' }, atoms()[nrec + 1])
 
     -- Forced motion type ("dvj") is a field.
     fn.setline(1, { 'one', 'two' })
     feed('gg0dvj')
-    eq(
-      { operator = 'd', motionforce = 'v', cmd = 'j' },
-      pick(atom_last(), 'operator', 'motionforce', 'cmd')
-    )
+    eq_partial({ operator = 'd', motionforce = 'v', cmd = 'j' }, atom_last())
   end)
 
   it('"!" operator captures its stuffed cmdline', function()
@@ -1563,10 +1509,7 @@ describe('CmdAtom', function()
     eq({ '0: X', '1: X', '', 'e', 'c', 'd' }, get_lines())
     local bang = atom_last()
     local keys = ('!ip%s\n'):format(prg)
-    eq(
-      { type = 'operator', operator = '!', lhs = keys, keys = keys },
-      pick(bang, 'type', 'operator', 'lhs', 'keys')
-    )
+    eq_partial({ type = 'operator', operator = '!', lhs = keys, keys = keys }, bang)
     -- Replay recomputes the range from the motion: the whole 3-line paragraph is replaced.
     feed('4G')
     n.exec_lua(function(keys)
@@ -1579,16 +1522,10 @@ describe('CmdAtom', function()
     api.nvim_buf_set_lines(0, 0, -1, true, { 'b', 'a', '', 'd', 'c' })
     feed('gg=ip')
     eq({ '0: X', '1: X', '', 'd', 'c' }, get_lines())
-    eq(
-      { type = 'operator', operator = '=', keys = '=ip' },
-      pick(atom_last(), 'type', 'operator', 'keys')
-    )
+    eq_partial({ type = 'operator', operator = '=', keys = '=ip' }, atom_last())
     feed('4Ggqip')
     eq({ '0: X', '1: X', '', '0: X', '1: X' }, get_lines())
-    eq(
-      { type = 'operator', operator = 'gq', keys = 'gqip' },
-      pick(atom_last(), 'type', 'operator', 'keys')
-    )
+    eq_partial({ type = 'operator', operator = 'gq', keys = 'gqip' }, atom_last())
   end)
 
   it('stuffed translations execute within their command (exec_stuffed)', function()
@@ -1603,10 +1540,7 @@ describe('CmdAtom', function()
     eq('aaa ', fn.getreg('-'))
     eq({ 'bbb', 'ddd' }, get_lines())
     -- One atom: the stuffed replay collects into the "."-labeled composite.
-    eq(
-      { type = 'operator', lhs = k('"z.'), keys = '"zdw', reg = 'z' },
-      pick(atom_last(), 'type', 'lhs', 'keys', 'reg')
-    )
+    eq_partial({ type = 'operator', lhs = k('"z.'), keys = '"zdw', reg = 'z' }, atom_last())
     -- i_CTRL-O inside a stuffed translation's insert session ("S" == "cc"): the session resumes
     -- after ONE normal command.
     api.nvim_buf_set_lines(0, 0, -1, true, { 'xxxx', 'yyyy' })
@@ -1622,10 +1556,7 @@ describe('CmdAtom', function()
     api.nvim_buf_set_lines(0, 0, -1, true, { 'abcdefgh', 'ABCDEFGH' })
     feed('gg03r<Tab>')
     eq('            defgh', fn.getline(1))
-    eq(
-      { type = 'insert', lhs = k('3r<Tab>'), keys = k('3R<Tab><Esc>') },
-      pick(atom_last(), 'type', 'lhs', 'keys')
-    )
+    eq_partial({ type = 'insert', lhs = k('3r<Tab>'), keys = k('3R<Tab><Esc>') }, atom_last())
     feed('j0.')
     eq('            DEFGH', fn.getline(2))
     api.nvim_buf_set_lines(0, 0, -1, true, { 'abcdefgh' })
@@ -1641,30 +1572,21 @@ describe('CmdAtom', function()
     command('1s/blue/red/')
     feed('2G&3G2&')
     eq({ 'red a', 'red b', 'red c', 'red d' }, get_lines())
-    eq({ type = 'excmd', lhs = '2&', keys = ':.,.+1s\n' }, pick(atom_last(), 'type', 'lhs', 'keys'))
+    eq_partial({ type = 'excmd', lhs = '2&', keys = ':.,.+1s\n' }, atom_last())
 
     -- Reg "." put re-inserts through edit(), and a mapping's composite labels it.
     api.nvim_buf_set_lines(0, 0, -1, true, { 'one' })
     feed('ggifoo<Esc>')
     feed('$".p')
     eq('fooonefoo', fn.getline(1))
-    eq(
-      { type = 'insert', lhs = k('1afoo<Esc>'), keys = k('1afoo<Esc>') },
-      pick(atom_last(), 'type', 'lhs', 'keys')
-    )
+    eq_partial({ type = 'insert', lhs = k('1afoo<Esc>'), keys = k('1afoo<Esc>') }, atom_last())
     command('nnoremap ,p ".p')
     feed(',p')
-    eq(
-      { type = 'insert', lhs = ',p', keys = k('1afoo<Esc>') },
-      pick(atom_last(), 'type', 'lhs', 'keys')
-    )
+    eq_partial({ type = 'insert', lhs = ',p', keys = k('1afoo<Esc>') }, atom_last())
     -- Typed ":put ." emits typed cmdline payload, not the internal ":put _" translation.
     feed(':put .<CR>')
     eq('foo', fn.getline(2))
-    eq(
-      { type = 'excmd', lhs = ':put .\n', keys = ':put .\n', text = 'put .' },
-      pick(atom_last(), 'type', 'lhs', 'keys', 'text')
-    )
+    eq_partial({ type = 'excmd', lhs = ':put .\n', keys = ':put .\n', text = 'put .' }, atom_last())
   end)
 
   it('fires for user input, not programmatic sources', function()
@@ -1760,7 +1682,7 @@ describe('CmdAtom', function()
     atoms_start()
     -- "." with nothing to repeat stuffs nothing.
     feed('.')
-    eq({ { type = 'normal', keys = '.', lhs = '.' } }, atoms_tail(1, 'type', 'keys', 'lhs'))
+    eq_partial({ type = 'normal', keys = '.', lhs = '.' }, atom_last())
     -- Operators: the atom is the redobuff (count/register included).
     -- "x" is normalized ("translated") to the elemental command "dl".
     atom('x', 'dl', 'x')
@@ -1841,12 +1763,12 @@ describe('CmdAtom', function()
     -- Payload commands: the interactively-typed cmdline completes the
     -- keysequence (not a bare "/" or ":" prefix).
     atom('/beta<CR>', '/beta<NL>')
-    eq({ type = 'motion', text = 'beta' }, pick(atom_last(), 'type', 'text'))
+    eq_partial({ type = 'motion', text = 'beta' }, atom_last())
     atom('?alpha<CR>', '?alpha<NL>')
     atom('2/beta<CR>', '2/beta<NL>')
     -- Ex commands: their own atom kind, the cmdline is the "text" payload.
     atom(':set tw=42<CR>', ':set<Space>tw=42<NL>')
-    eq({ type = 'excmd', text = 'set tw=42' }, pick(atom_last(), 'type', 'text'))
+    eq_partial({ type = 'excmd', text = 'set tw=42' }, atom_last())
     -- A nested cmdline opened by the command's own execution (":normal")
     -- does not hijack the payload.
     atom(':exe "normal! :echo 1\\r"<CR>', ':exe<Space>"normal!<Space>:echo<Space>1<Bslash>r"<NL>')
@@ -1863,10 +1785,7 @@ describe('CmdAtom', function()
     feed(',V')
     eq(before + 1, #atoms())
     feed('<Esc>')
-    eq(
-      { type = 'visual', lhs = k(',V<Esc>'), keys = k('v<Esc>') },
-      pick(atom_last(), 'type', 'lhs', 'keys')
-    )
+    eq_partial({ type = 'visual', lhs = k(',V<Esc>'), keys = k('v<Esc>') }, atom_last())
     -- A mapping whose trailing prefix is completed by TYPED keys ("," + "w")
     -- ends where its own keys stop: each `lhs` owns only what it produced.
     command('set notimeout')
@@ -1906,7 +1825,7 @@ describe('CmdAtom', function()
     -- A typed scroll emits its own (emit-only) atom kind.
     feed('<C-d>')
     eq(total + 5, #atoms())
-    eq({ type = 'scroll', keys = k('<C-D>') }, pick(atom_last(), 'type', 'keys'))
+    eq_partial({ type = 'scroll', keys = k('<C-D>') }, atom_last())
     -- An 'indentexpr' that runs ":normal" opens a nested command-frame mid-operator: "gq" still
     -- pushes its own atom, after the edit.
     exec([[
@@ -1946,13 +1865,13 @@ describe('CmdAtom', function()
     local before = #atoms()
     feed('do')
     eq(before + 1, #atoms())
-    eq({ { type = 'operator', keys = 'do' } }, atoms_tail(1, 'type', 'keys'))
+    eq_partial({ type = 'operator', keys = 'do' }, atom_last())
     eq('b', fn.getline(2))
     feed('2j.') -- Repeats "do" at the next hunk.
     eq('d', fn.getline(4))
     feed('2Gx')
     feed('dp')
-    eq({ { type = 'operator', keys = 'dp' } }, atoms_tail(1, 'type', 'keys'))
+    eq_partial({ type = 'operator', keys = 'dp' }, atom_last())
     eq({ '' }, fn.getbufline(fn.bufnr('#'), 2))
   end)
 
@@ -1964,10 +1883,7 @@ describe('CmdAtom', function()
     feed('ysiw"')
     -- One atom: the mapping captures the operation finished by "iw". `keys` is the redobuff plus
     -- the getchar() payload: a replayed opfunc reads the same wrap char.
-    eq(
-      { type = 'operator', keys = 'g@iw"', lhs = 'ysiw"' },
-      pick(atom_last(), 'type', 'keys', 'lhs')
-    )
+    eq_partial({ type = 'operator', keys = 'g@iw"', lhs = 'ysiw"' }, atom_last())
     eq({ '"alpha" beta' }, get_lines())
   end)
 
@@ -1995,10 +1911,7 @@ describe('CmdAtom', function()
     -- "." repeats it, captured as one "."-labeled operator atom.
     feed('j0w.')
     eq('ccc ', fn.getline(3))
-    eq(
-      { type = 'operator', operator = 'd', lhs = '.' },
-      pick(atom_last(), 'type', 'operator', 'lhs')
-    )
+    eq_partial({ type = 'operator', operator = 'd', lhs = '.' }, atom_last())
 
     -- 'operatorfunc' + Lua textobject: "ghgt". Non-edit, still emits its operator atom.
     n.exec_lua([[
@@ -2034,10 +1947,7 @@ describe('CmdAtom', function()
     feed('gg0grgt')
     eq('XXX nnn', fn.getline(1))
     ev = atom_last()
-    eq(
-      { type = 'operator', operator = 'g@', lhs = 'grgt', changed = true },
-      pick(ev, 'type', 'operator', 'lhs', 'changed')
-    )
+    eq_partial({ type = 'operator', operator = 'g@', lhs = 'grgt', changed = true }, ev)
     t.matches('^g@\128', ev.keys) -- "g@" + K_LUA….
     feed('j0')
     n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(ev.keys))
@@ -2048,10 +1958,7 @@ describe('CmdAtom', function()
     n.exec_lua([[vim.keymap.set('o', 'ge', function() end)]])
     feed('dge')
     eq('XXX ppp', fn.getline(2))
-    eq(
-      { type = 'mapping', lhs = 'dge', changed = false },
-      pick(atom_last(), 'type', 'lhs', 'changed')
-    )
+    eq_partial({ type = 'mapping', lhs = 'dge', changed = false }, atom_last())
     command('set cpo-=E')
   end)
 
@@ -2121,15 +2028,9 @@ describe('CmdAtom', function()
     -- reports the same observed effect as the builtin motion below it.
     feed('gg0]c')
     eq(3, fn.line('.'))
-    eq(
-      { type = 'excmd', moved = true, changed = false, pos = { 1, 0 } },
-      pick(atom_last(), 'type', 'moved', 'changed', 'pos')
-    )
+    eq_partial({ type = 'excmd', moved = true, changed = false, pos = { 1, 0 } }, atom_last())
     feed('gg0w')
-    eq(
-      { type = 'motion', moved = true, changed = false },
-      pick(atom_last(), 'type', 'moved', 'changed')
-    )
+    eq_partial({ type = 'motion', moved = true, changed = false }, atom_last())
     -- A motion that did not move is still a motion; `moved` is the separate question.
     eq(
       { { 'motion', false }, { 'motion', false }, { 'motion', false }, { 'normal', false } },
@@ -2142,10 +2043,7 @@ describe('CmdAtom', function()
 
     -- Register-only operator also moves without changing: a motion carries no `operator`.
     feed('gg0wyb')
-    eq(
-      { moved = true, changed = false, operator = 'y' },
-      pick(atom_last(), 'moved', 'changed', 'operator')
-    )
+    eq_partial({ moved = true, changed = false, operator = 'y' }, atom_last())
 
     -- Switching window is not a cursor-move, even on the SAME buffer: `pos` is per-window.
     command('split')
@@ -2155,17 +2053,17 @@ describe('CmdAtom', function()
     command('wincmd k')
     feed('<C-w>w')
     eq(3, fn.line('.'))
-    eq({ type = 'normal', moved = false }, pick(atom_last(), 'type', 'moved'))
+    eq_partial({ type = 'normal', moved = false }, atom_last())
 
     -- Both are measured on the buffer/window the action STARTED in, so acting
     -- and then navigating away still reports the effect.
     command('nnoremap ]x <Cmd>normal! dd<CR><Cmd>wincmd w<CR>')
     command('nnoremap ]y <Cmd>normal! j<CR><Cmd>wincmd w<CR>')
     feed('gg]x')
-    eq({ changed = true, moved = false }, pick(atom_last(), 'changed', 'moved'))
+    eq_partial({ changed = true, moved = false }, atom_last())
     command('wincmd w')
     feed('gg]y')
-    eq({ changed = false, moved = true }, pick(atom_last(), 'changed', 'moved'))
+    eq_partial({ changed = false, moved = true }, atom_last())
 
     -- Switching buffer is not a cursor-move.
     command('only')
@@ -2175,9 +2073,6 @@ describe('CmdAtom', function()
     feed('3G')
     feed('<C-^>') -- back to `main`, whose cursor is on another line
     eq(main, api.nvim_get_current_buf())
-    eq(
-      { type = 'normal', moved = false, pos = { 3, 0 } },
-      pick(atom_last(), 'type', 'moved', 'pos')
-    )
+    eq_partial({ type = 'normal', moved = false, pos = { 3, 0 } }, atom_last())
   end)
 end)

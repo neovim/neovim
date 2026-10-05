@@ -9,6 +9,7 @@ local api = n.api
 local fn = n.fn
 
 local eq = t.eq
+local eq_partial = t.eq_partial
 local matches = t.matches
 local pcall_err = t.pcall_err
 local exec_lua = n.exec_lua
@@ -1635,24 +1636,14 @@ describe('vim.pack', function()
         -- textDocument/documentSymbol
         exec_lua('vim.pack.update()')
         exec_lua('vim.lsp.buf.document_symbol()')
-        local loclist = vim.tbl_map(function(x) --- @param x table
-          return {
-            lnum = x.lnum, --- @type integer
-            col = x.col, --- @type integer
-            end_lnum = x.end_lnum, --- @type integer
-            end_col = x.end_col, --- @type integer
-            text = x.text, --- @type string
-          }
-        end, fn.getloclist(0))
-        local ref_loclist = {
+        eq_partial({
           { lnum = 1, col = 1, end_lnum = 9, end_col = 1, text = '[Namespace] Error' },
           { lnum = 3, col = 1, end_lnum = 9, end_col = 1, text = '[Module] defbranch' },
           { lnum = 9, col = 1, end_lnum = 22, end_col = 1, text = '[Namespace] Update' },
           { lnum = 11, col = 1, end_lnum = 22, end_col = 1, text = '[Module] fetch' },
           { lnum = 22, col = 1, end_lnum = 31, end_col = 1, text = '[Namespace] Same' },
           { lnum = 24, col = 1, end_lnum = 31, end_col = 1, text = '[Module] semver (not active)' },
-        }
-        eq(ref_loclist, loclist)
+        }, fn.getloclist(0))
 
         n.exec('lclose')
 

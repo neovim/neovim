@@ -29,6 +29,24 @@ if skip(is_os('win')) then
 end
 
 describe('vim.lsp.buf', function()
+  local function eq_qflist(expected, actual)
+    eq(
+      vim.tbl_map(function(entry)
+        return vim.tbl_extend('force', {
+          end_col = 0,
+          end_lnum = 0,
+          module = '',
+          nr = 0,
+          pattern = '',
+          type = '',
+          valid = 1,
+          vcol = 0,
+        }, entry)
+      end, expected),
+      actual
+    )
+  end
+
   local function exec_capture(cmd)
     return exec_lua(function(cmd0)
       return vim.api.nvim_exec2(cmd0, { output = true }).output
@@ -113,24 +131,9 @@ describe('vim.lsp.buf', function()
         return vim.fn.getqflist()
       end)
 
-      local expected = {
-        {
-          bufnr = 1,
-          col = 5,
-          end_col = 0,
-          lnum = 4,
-          end_lnum = 0,
-          module = '',
-          nr = 0,
-          pattern = '',
-          text = 'foo',
-          type = '',
-          valid = 1,
-          vcol = 0,
-        },
-      }
-
-      eq(expected, qflist)
+      eq_qflist({
+        { bufnr = 1, col = 5, lnum = 4, text = 'foo' },
+      }, qflist)
     end)
   end)
 
@@ -193,24 +196,9 @@ describe('vim.lsp.buf', function()
         return vim.fn.getqflist()
       end)
 
-      local expected = {
-        {
-          bufnr = 2,
-          col = 5,
-          end_col = 0,
-          lnum = 4,
-          end_lnum = 0,
-          module = '',
-          nr = 0,
-          pattern = '',
-          text = 'main',
-          type = '',
-          valid = 1,
-          vcol = 0,
-        },
-      }
-
-      eq(expected, qflist)
+      eq_qflist({
+        { bufnr = 2, col = 5, lnum = 4, text = 'main' },
+      }, qflist)
     end)
   end)
 
@@ -336,38 +324,10 @@ describe('vim.lsp.buf', function()
         return vim.fn.getqflist()
       end)
 
-      local expected = {
-        {
-          bufnr = 2,
-          col = 7,
-          end_col = 0,
-          end_lnum = 0,
-          lnum = 4,
-          module = '',
-          nr = 0,
-          pattern = '',
-          text = 'D2',
-          type = '',
-          valid = 1,
-          vcol = 0,
-        },
-        {
-          bufnr = 2,
-          col = 7,
-          end_col = 0,
-          end_lnum = 0,
-          lnum = 3,
-          module = '',
-          nr = 0,
-          pattern = '',
-          text = 'D1',
-          type = '',
-          valid = 1,
-          vcol = 0,
-        },
-      }
-
-      eq(expected, qflist)
+      eq_qflist({
+        { bufnr = 2, col = 7, lnum = 4, text = 'D2' },
+        { bufnr = 2, col = 7, lnum = 3, text = 'D1' },
+      }, qflist)
     end)
 
     it('opens the quickfix list with the right subtypes and details', function()
@@ -427,37 +387,10 @@ describe('vim.lsp.buf', function()
         return vim.fn.getqflist()
       end)
 
-      local expected = {
-        {
-          bufnr = 2,
-          col = 2,
-          end_col = 0,
-          end_lnum = 0,
-          lnum = 4,
-          module = '',
-          nr = 0,
-          pattern = '',
-          text = 'A',
-          type = '',
-          valid = 1,
-          vcol = 0,
-        },
-        {
-          bufnr = 3,
-          col = 2,
-          end_col = 0,
-          end_lnum = 0,
-          lnum = 4,
-          module = '',
-          nr = 0,
-          pattern = '',
-          text = 'MyList$Inner mylist',
-          type = '',
-          valid = 1,
-          vcol = 0,
-        },
-      }
-      eq(expected, qflist)
+      eq_qflist({
+        { bufnr = 2, col = 2, lnum = 4, text = 'A' },
+        { bufnr = 3, col = 2, lnum = 4, text = 'MyList$Inner mylist' },
+      }, qflist)
     end)
   end)
 
@@ -584,38 +517,10 @@ describe('vim.lsp.buf', function()
         return vim.fn.getqflist()
       end)
 
-      local expected = {
-        {
-          bufnr = 2,
-          col = 7,
-          end_col = 0,
-          end_lnum = 0,
-          lnum = 4,
-          module = '',
-          nr = 0,
-          pattern = '',
-          text = 'D2',
-          type = '',
-          valid = 1,
-          vcol = 0,
-        },
-        {
-          bufnr = 2,
-          col = 7,
-          end_col = 0,
-          end_lnum = 0,
-          lnum = 3,
-          module = '',
-          nr = 0,
-          pattern = '',
-          text = 'D1',
-          type = '',
-          valid = 1,
-          vcol = 0,
-        },
-      }
-
-      eq(expected, qflist)
+      eq_qflist({
+        { bufnr = 2, col = 7, lnum = 4, text = 'D2' },
+        { bufnr = 2, col = 7, lnum = 3, text = 'D1' },
+      }, qflist)
     end)
 
     it('opens the quickfix list with the right supertypes and details', function()
@@ -675,37 +580,10 @@ describe('vim.lsp.buf', function()
         return vim.fn.getqflist()
       end)
 
-      local expected = {
-        {
-          bufnr = 2,
-          col = 2,
-          end_col = 0,
-          end_lnum = 0,
-          lnum = 4,
-          module = '',
-          nr = 0,
-          pattern = '',
-          text = 'A',
-          type = '',
-          valid = 1,
-          vcol = 0,
-        },
-        {
-          bufnr = 3,
-          col = 2,
-          end_col = 0,
-          end_lnum = 0,
-          lnum = 4,
-          module = '',
-          nr = 0,
-          pattern = '',
-          text = 'MyList$Inner mylist',
-          type = '',
-          valid = 1,
-          vcol = 0,
-        },
-      }
-      eq(expected, qflist)
+      eq_qflist({
+        { bufnr = 2, col = 2, lnum = 4, text = 'A' },
+        { bufnr = 3, col = 2, lnum = 4, text = 'MyList$Inner mylist' },
+      }, qflist)
     end)
   end)
 

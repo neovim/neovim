@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 
 local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, eq, neq, eval = n.clear, t.eq, t.neq, n.eval
+local eq_partial = t.eq_partial
 local api = n.api
 local curbuf = n.api.nvim_get_current_buf
 local curwin = n.api.nvim_get_current_win
@@ -46,7 +47,7 @@ local function get_result()
   return ret
 end
 
-local function expected_table(option, oldval, oldval_l, oldval_g, newval, scope, cmd, attr)
+local function expected_table(option, oldval, oldval_l, oldval_g, newval, scope, cmd)
   return {
     option = option,
     oldval = oldval,
@@ -55,7 +56,6 @@ local function expected_table(option, oldval, oldval_l, oldval_g, newval, scope,
     newval = newval,
     scope = scope,
     cmd = cmd,
-    attr = attr,
   }
 end
 
@@ -63,28 +63,12 @@ local function expected_combination(...)
   local args = { ... }
   local ret = get_result()
 
-  if not (#args == #ret) then
-    local expecteds = {}
-    for _, v in pairs(args) do
-      table.insert(expecteds, expected_table(unpack(v)))
-    end
-    eq(expecteds, ret)
-    return
-  end
-
+  eq(#args, #ret)
   for i, v in ipairs(args) do
-    local attr = v[8]
-    if not attr then
-      -- remove attr entries
-      ret[i].attr = nil
-    else
-      -- remove attr entries which are not required
-      for k in pairs(ret[i].attr) do
-        if not attr[k] then
-          ret[i].attr[k] = nil
-        end
-      end
+    if v[8] then
+      eq_partial(v[8], ret[i].attr)
     end
+    ret[i].attr = nil
     eq(expected_table(unpack(v)), ret[i])
   end
 end
