@@ -843,6 +843,21 @@ func Test_diffpatch()
   bwipe!
 endfunc
 
+" FIXME: test fails, the Xresult file can't be read
+func No_Test_diffpatch_restricted()
+  let lines =<< trim END
+    call assert_fails('diffpatch NoSuchDiff', 'E145:')
+
+    call writefile(v:errors, 'Xresult')
+    qa!
+  END
+  call writefile(lines, 'Xrestricted', 'D')
+  if RunVim([], [], '-Z --clean -S Xrestricted')
+    call assert_equal([], readfile('Xresult'))
+  endif
+  call delete('Xresult')
+endfunc
+
 func Test_diff_too_many_buffers()
   for i in range(1, 8)
     exe "new Xtest" . i
@@ -999,6 +1014,13 @@ func VerifyInternal(buf, dumpfile, extra)
 endfunc
 
 func Test_diff_screen()
+  if has('bsd')
+    CheckExecutable gdiff
+  endif
+  if has('osxdarwin') && system('diff --version') =~ '^Apple diff'
+    throw 'Skipped: unified diff does not work properly on this macOS version'
+  endif
+
   let g:test_is_flaky = 1
   CheckScreendump
   CheckFeature menu
@@ -1007,7 +1029,8 @@ func Test_diff_screen()
       func UnifiedDiffExpr()
         " Prepend some text to check diff type detection
         call writefile(['warning', '  message'], v:fname_out)
-        silent exe '!diff -U0 ' .. v:fname_in .. ' ' .. v:fname_new .. '>>' .. v:fname_out
+        let diff = has('bsd') ? 'gdiff' : 'diff'
+        silent exe $'!{diff} -U0 {v:fname_in} {v:fname_new}>>{v:fname_out}'
       endfunc
       func SetupUnified()
         set diffexpr=UnifiedDiffExpr()
