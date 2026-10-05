@@ -2765,7 +2765,8 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                  If {names} is a function, it is called for each traversed
                  item with args:
                  • name: base name of the current item
-                 • path: full path of the current item
+                 • path: full path of the directory containing the current
+                   item
 
                  The function should return `true` if the given item is
                  considered a match.
@@ -2779,7 +2780,8 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                  • {stop}? (`string`) Stop searching when this directory is
                    reached. The directory itself is not searched.
                  • {type}? (`string`) Find only items of the given type. If
-                   omitted, all items that match {names} are included.
+                   omitted, all items that match `names` are included. With
+                   `follow`, a symlink has the type of its target.
                  • {upward}? (`boolean`, default: `false`) Search upward
                    through parent directories. Otherwise, search child
                    directories (recursively).
