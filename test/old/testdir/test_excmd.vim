@@ -215,7 +215,7 @@ func Test_append_cmd_skipped()
   call assert_equal('append insert change while', g:skipped)
   call assert_equal(['text'], getline(1, '$'))
 
-  " In Vim9 script :append isn't allowed and doesn't consume followling lines.
+  " In Vim9 script :append isn't allowed and doesn't consume following lines.
   let lines =<< trim END
     vim9script
     if false
