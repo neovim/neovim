@@ -181,7 +181,7 @@ static inline ClusterInfo utf_ClusterInfo_len(StrCharInfo cur, int *size)
         .ptr = (const char *)next,  // one past the end, but caller should check
         .chr = (CharInfo){ .value = -1, .len = 1 },
       },
-      .cells = utf_char2cells(cur.chr.value),
+      .cells = basechar_cells_impl(cur.chr),
     };
   }
 
@@ -192,7 +192,7 @@ static inline ClusterInfo utf_ClusterInfo_len(StrCharInfo cur, int *size)
         .ptr = (char *)next,
         .chr = (CharInfo){ .value = *next, .len = 1 },
       },
-      .cells = utf_char2cells(cur.chr.value),
+      .cells = basechar_cells_impl(cur.chr),
     };
   }
   return utf_ClusterInfo_impl(cur, size);
