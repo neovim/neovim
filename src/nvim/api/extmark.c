@@ -610,11 +610,13 @@ Integer nvim_buf_set_extmark(Buffer buf, Integer ns_id, Integer line, Integer co
       String conceal_str = opts->conceal.data.string;
       hl.flags |= kSHConceal;
       if (conceal_str.size > 0) {
-        int ch;
-        hl.conceal_char = utfc_ptr2schar(conceal_str.data, &ch);
-        VALIDATE(hl.conceal_char && vim_isprintc(ch), "%s", "conceal char must be printable", {
+        StrCharInfo ci = utf_ptr2StrCharInfo(conceal_str.data);
+        ClusterInfo cli = utf_ClusterInfo(ci);
+        // TODO: want macros for "valid 1 or 2 width char"
+        VALIDATE(ci.chr.value >= 0x20 && cli.cells <= 2, "%s", "conceal char must be printable", {
           goto error;
         });
+        hl.conceal_char = schar_from_cluster(ci, cli);
       }
     }
   }
