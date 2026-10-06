@@ -3,25 +3,27 @@
 " Version:		0.4
 " Maintainer:		Janis Papanagnou
 " Previous Maintainer:	NevilleD.ALGOL_68@sgr-a.net
-" Last Change:		2026 Aug 12
+" Last Change:		2026 Sep 14
 
 if exists("b:current_syntax")
   finish
 endif
 
-" Algol68 Final Report, unrevised
+" Algol 68 Final Report, unrevised
 syn keyword algol68PreProc	PRIORITY
 syn keyword algol68Operator	BTB CTB CONJ QUOTE CT CTAB EITHER SIGN
 
 
-" Algol68 Revised Report
+" Algol 68 Revised Report
 syn keyword algol68Boolean	TRUE FALSE
 syn keyword algol68Conditional	IF THEN ELSE ELIF FI
 syn keyword algol68Conditional	CASE IN OUT OUSE ESAC
 syn keyword algol68Constant	NIL SKIP EMPTY
 syn keyword algol68Statement	MODE PROC
 syn keyword algol68Statement	OP PRIO skipwhite nextgroup=algol68DefiningOperator
-syn keyword algol68Label	GOTO 
+" Genie
+syn keyword algol68Statement	ASSERT
+syn keyword algol68Label	GOTO
 syn match   algol68Label	"\<GO TO\>"
 syn keyword algol68Operator	ABS REPR ROUND ENTIER ARG BIN LENG SHORTEN ODD
 syn keyword algol68Operator	SHL SHR ROL ROR UP DOWN LEVEL LWB UPB I RE IM
@@ -37,13 +39,13 @@ syn keyword algol68Operator	IS ISNT OF AT
 syn keyword algol68Operator	SORT ELEMS
 syn keyword algol68Repeat	FOR FROM BY UPTO DOWNTO TO WHILE DO UNTIL OD
 syn keyword algol68Statement	PAR BEGIN END EXIT
-syn keyword algol68Struct	STRUCT
-syn keyword algol68PreProc	VECTOR
 syn match   algol68Type		"\<\%(LONG\|SHORT\)\>"
 syn keyword algol68Type		FLEX HEAP LOC REF
+" Genie
+syn keyword algol68Type		NEW
 syn keyword algol68Type		VOID BOOL INT REAL COMPL CHAR STRING COMPLEX
 syn keyword algol68Type		BITS BYTES FILE CHANNEL PIPE SEMA SOUND
-syn keyword algol68Type		FORMAT STRUCT UNION 
+syn keyword algol68Type		FORMAT STRUCT UNION
 " Genie extensions in addition to ROUND and ENTIER
 syn keyword algol68Operator	FLOOR CEIL NINT TRUNC FRAC FIX
 
@@ -139,14 +141,14 @@ syn region algol68Comment	start="\<CO\>"  end="\<CO\>" contains=algol68Todo,algo
 syn region algol68Comment	start="\<COMMENT\>"  end="\<COMMENT\>" contains=algol68Todo,algol68SpaceError
 syn region algol68PreProc	start="\<PR\>"  end="\<PR\>" contains=algol68Todo,algol68SpaceError
 syn region algol68PreProc	start="\<PRAGMAT\>"  end="\<PRAGMAT\>" contains=algol68Todo,algol68SpaceError
-" algol68r
+" Algol 68 RS
 syn region algol68Comment	start="{"  end="}" contains=algol68Todo,algol68SpaceError
 syn region algol68Comment	start="{{{"  end="}}}" contains=algol68Todo,algol68SpaceError
-
-" ALGOL 68r
 syn keyword algol68PreProc DECS CONTEXT configinfo A68CONFIG KEEP FINISH USE SYSPROCS IOSTATE FORALL
-" ALGOL 68c
-syn keyword algol68PreProc USING ENVIRON FOREACH ASSERT
+syn keyword algol68Type		VECTOR
+
+" Algol 68C
+syn keyword algol68PreProc USING ENVIRON FOREACH
 
 if !exists("algol68_no_preludes")
 
@@ -182,7 +184,7 @@ if !exists("algol68_no_preludes")
 "      I/O on Files (Standard)
   syn match algol68Function "\%(\%([a-z_]\|\l\d\+\)\s\+\)\@8<!\<\%(get\|put\|print\|read\|write\)\%(f\|\s*bin\)\?\>\%(\s*[a-z0-9]\)\@!"
 
-"      I/O on Files (Algol68C)
+"      I/O on Files (Algol 68C)
   syn match algol68Function "\%(\%([a-z_]\|\l\d\+\)\s\+\)\@8<!\<\%(print\|read\)\s*\%(\%(long\s*\)\?long\s*\)\?\%(int\|real\|complex\|bits\)\>\%(\s*[a-z0-9]\)\@!"
   syn match algol68Function "\%(\%([a-z_]\|\l\d\+\)\s\+\)\@8<!\<\%(print\|read\)\s*\%(bool\|char\|string\)\>\%(\s*[a-z0-9]\)\@!"
   syn match algol68Function "\%(\%([a-z_]\|\l\d\+\)\s\+\)\@8<!\<read\s*line\>\%(\s*[a-z0-9]\)\@!"
