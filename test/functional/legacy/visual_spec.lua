@@ -58,4 +58,47 @@ describe('Visual highlight', function()
       {5:-- VISUAL --}                                      |
     ]])
   end)
+
+  -- oldtest: Test_visual_update_lastline()
+  it('with last line of window partially visible', function()
+    screen:try_resize(50, 15)
+    exec([[
+      call setline(1, ['aaa', 'bbb', 'ccc', repeat('d', 500), 'eee'])
+      split
+    ]])
+    local s1 = [[
+      ^aaa                                               |
+      bbb                                               |
+      ccc                                               |
+      dddddddddddddddddddddddddddddddddddddddddddddddddd|*2
+      ddddddddddddddddddddddddddddddddddddddddddddddd{1:@@@}|
+      {3:[No Name] [+]                                     }|
+      aaa                                               |
+      bbb                                               |
+      ccc                                               |
+      dddddddddddddddddddddddddddddddddddddddddddddddddd|*2
+      ddddddddddddddddddddddddddddddddddddddddddddddd{1:@@@}|
+      {2:[No Name] [+]                                     }|
+                                                        |
+    ]]
+    screen:expect(s1)
+    feed('vipo')
+    screen:expect([[
+      {17:^aaa}                                               |
+      {17:bbb}                                               |
+      {17:ccc}                                               |
+      {17:dddddddddddddddddddddddddddddddddddddddddddddddddd}|*2
+      {17:ddddddddddddddddddddddddddddddddddddddddddddddd}{1:@@@}|
+      {3:[No Name] [+]                                     }|
+      {17:aaa}                                               |
+      {17:bbb}                                               |
+      {17:ccc}                                               |
+      {17:dddddddddddddddddddddddddddddddddddddddddddddddddd}|*2
+      {17:ddddddddddddddddddddddddddddddddddddddddddddddd}{1:@@@}|
+      {2:[No Name] [+]                                     }|
+      {5:-- VISUAL LINE --}                                 |
+    ]])
+    feed('<Esc>')
+    screen:expect(s1)
+  end)
 end)

@@ -3146,4 +3146,26 @@ func Test_visual_ended_in_unloaded_buffer()
   %bw!
 endfunc
 
+" Check that visual selection is updated properly with the last line of the
+" window partially visible.
+func Test_visual_update_lastline()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['aaa', 'bbb', 'ccc', repeat('d', 500), 'eee'])
+    split
+  END
+  call writefile(lines, 'XTest_visual_update_lastline', 'D')
+
+  let buf = RunVimInTerminal('-S XTest_visual_update_lastline', {'rows': 15, 'cols': 50})
+  call VerifyScreenDump(buf, 'Test_visual_update_lastline_1', {})
+  call term_sendkeys(buf, 'vipo')
+  call VerifyScreenDump(buf, 'Test_visual_update_lastline_2', {})
+  call term_sendkeys(buf, "\<Esc>")
+  call term_wait(buf, 100)
+  call VerifyScreenDump(buf, 'Test_visual_update_lastline_1', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
