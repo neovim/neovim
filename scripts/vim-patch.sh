@@ -1016,10 +1016,11 @@ is_na_patch() {
           '-I^\s+(&&|\|\|)\s.*defined\(.*FEAT_[^_]' \
           '-IEVENT_TERMINALWINOPEN' \
           '-I^#\s*include\s+<proto/' \
-          '-I^\s+\{"ch_[_a-z]+",.*\sFEARG_[1-9],\s+arg[1-9]+_' \
+          '-I^\s+\{"(ch|popup)_[_a-z]+",.*\sFEARG_[1-9],\s+arg[1-9]_[_a-z]+' \
           '-I^\s+\{"(popup|prop|sound)_[_a-z]+",.*f_(popup|prop|sound)_[_a-z]+\)?},$' \
-          '-I^\s+ret_[a-z]+,\s+(JOB|PROP)_FUNC\(f_.+\)},$' \
+          '-I^\s+ret_[_a-z]+,\s+(JOB|PROP)_FUNC\(f_.+\)},$' \
           '-I^\s*(static)?\s(char(|_u)|hashtab_T|int|void)( \*)?$' \
+          '-I^static\sargcheck_T\sarg[1-9]_[_a-z]+' \
           '-I^static\s(char(|_u)|hashtab_T|int|void)\s\*?[^*]+\(.+\);$' \
           '-I#\s*define.*ex_ni$' \
           '-I[.>]b_p_key' \
