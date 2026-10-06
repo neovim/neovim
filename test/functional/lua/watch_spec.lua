@@ -319,7 +319,7 @@ describe('vim._watch', function()
     end)
   end)
 
-  it('watchdirs() keeps directories watched when only their files match a glob', function()
+  it('watchdirs() tracks directories for matching files until cancelled', function()
     local root_dir = t.tmpname(false)
     n.mkdir_p(root_dir .. '/src')
     t.finally(function()
@@ -329,6 +329,7 @@ describe('vim._watch', function()
       root = vim.fs.normalize(root)
       -- Finish all queued stats before asserting that a directory was not watched.
       local pending_stats = 0
+      local cancel_before_stat
       local fs_stat = vim.uv.fs_stat
       vim.uv.fs_stat = function(path, callback)
         if not callback then
@@ -336,6 +337,10 @@ describe('vim._watch', function()
         end
         pending_stats = pending_stats + 1
         return fs_stat(path, function(...)
+          if cancel_before_stat then
+            cancel_before_stat()
+            cancel_before_stat = nil
+          end
           callback(...)
           pending_stats = pending_stats - 1
         end)
@@ -382,7 +387,19 @@ describe('vim._watch', function()
         return #events == 1 and pending_stats == 0
       end))
       assert(events[1] == root .. '/src/new/file.py')
-      cancel()
+
+      -- Cancel with a directory stat in flight. Its result must not create another watch.
+      cancel_before_stat = cancel
+      vim.fn.mkdir(root .. '/src/new/lib')
+      callbacks[root .. '/src/new'](nil, 'lib', { rename = true })
+      assert(vim.wait(1000, function()
+        return cancel_before_stat == nil and pending_stats == 0
+      end))
+      assert(
+        not callbacks[root .. '/src/new/lib'],
+        'cancelled watcher must not watch new directories'
+      )
+      assert(#events == 1, 'cancelled watcher must not report changes')
     end, root_dir)
   end)
 

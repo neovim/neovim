@@ -48,13 +48,13 @@ M.FileChangeType = {
 --- @field events? vim._watch.FileChangeType[] Defaults to all event types.
 
 --- A path matcher and the directories that could contain matching paths.
---- @class (private) vim._watch.CompiledFilter
+--- @class (internal) vim._watch.CompiledFilter
 --- @field pattern vim.lpeg.Pattern Exact matcher, used to filter events.
 --- Roots guide include traversal: keep these subtrees and their parents within the watched path.
 --- Nonempty roots end in '/'; an entry of '' covers any directory.
 --- @field roots string[]
 
---- @class (private) vim._watch.BackendOpts
+--- @class (internal) vim._watch.BackendOpts
 --- @field include vim._watch.CompiledFilter
 --- @field exclude? vim._watch.CompiledFilter
 --- @field debounce? integer
@@ -369,40 +369,12 @@ local function start_watch(name, backend, path, opts, callback)
   return cancel_all
 end
 
---- Can this directory contain matching paths? Keep ancestors so that matching directories
---- created later can still be discovered. Every nonempty root ends in '/', so '/src/'
---- cannot cover '/src2/'.
---- @param path string
---- @param filter vim._watch.CompiledFilter
---- @return boolean
-local function matches_dir(path, filter)
-  local dir = path:gsub('/$', '') .. '/'
-  for _, root in ipairs(filter.roots) do
-    if vim.startswith(dir, root) or vim.startswith(root, dir) then
-      return true
-    end
-  end
-  return false
-end
-
 --- Decides if `path` should be skipped.
 --- @param path string
 --- @param opts vim._watch.BackendOpts
---- @param directory? boolean Check whether the directory can contain matching paths.
-local function skip(path, opts, directory)
-  if directory then
-    if not matches_dir(path, opts.include) then
-      return true
-    end
-  elseif opts.include.pattern:match(path) == nil then
-    return true
-  end
-
-  if opts.exclude and opts.exclude.pattern:match(path) ~= nil then
-    return true
-  end
-
-  return false
+local function skip(path, opts)
+  return opts.include.pattern:match(path) == nil
+    or (opts.exclude ~= nil and opts.exclude.pattern:match(path) ~= nil)
 end
 
 --- Initializes and starts a |uv_fs_event_t|
@@ -464,166 +436,6 @@ local function watch(path, opts, callback)
     if not is_closing then
       handle:close()
     end
-  end
-end
-
---- Initializes and starts a |uv_fs_event_t| recursively watching every directory underneath the
---- directory at path.
----
---- @param path string The path to watch. Must refer to a directory.
---- @param opts vim._watch.BackendOpts Additional options
---- @param callback vim._watch.Callback Callback for new events
---- @return fun()? cancel Stops all directory watchers; nil if startup failed.
-local function watchdirs(path, opts, callback)
-  local on_error = opts.on_error
-  local debounce = opts.debounce or 500
-  local cancelled = false
-
-  ---@type table<string, uv.uv_fs_event_t> handle by fullpath
-  local handles = {}
-
-  local timer = assert(uv.new_timer())
-
-  --- Map of file path to boolean indicating if the file has been changed
-  --- at some point within the debounce cycle.
-  --- @type table<string, boolean>
-  local filechanges = {}
-
-  local process_changes --- @type fun()
-
-  --- @param filepath string
-  --- @return uv.fs_event_start.callback
-  local function create_on_change(filepath)
-    return function(err, filename, events)
-      if cancelled then
-        return
-      end
-      if err then
-        return on_error(err)
-      end
-
-      local fullpath = vim.fs.joinpath(filepath, filename)
-      if skip(fullpath, opts) then
-        -- An unmatched directory can contain matching descendants. Track its creation/deletion
-        -- even when no event for the directory itself will be reported.
-        if
-          skip(fullpath, opts, true)
-          or not events.rename
-          or (not handles[fullpath] and (uv.fs_stat(fullpath) or {}).type ~= 'directory')
-        then
-          return
-        end
-      end
-
-      if not filechanges[fullpath] then
-        filechanges[fullpath] = events.change or false
-      end
-      timer:start(debounce, 0, process_changes)
-    end
-  end
-
-  process_changes = function()
-    -- Since the callback is debounced it may have also been deleted later on
-    -- so we always need to check the existence of the file:
-    --   stat succeeds, changed=true  -> Changed
-    --   stat succeeds, changed=false -> Created
-    --   stat fails                   -> Removed
-    for fullpath, changed in pairs(filechanges) do
-      uv.fs_stat(fullpath, function(_, stat)
-        if cancelled then
-          return
-        end
-
-        ---@type vim._watch.FileChangeType
-        local change_type
-        if stat then
-          change_type = changed and M.FileChangeType.Changed or M.FileChangeType.Created
-          if stat.type == 'directory' then
-            local handle = handles[fullpath]
-            if not handle then
-              handle = assert(uv.new_fs_event())
-              handles[fullpath] = handle
-              local _, err, errname = handle:start(fullpath, {}, create_on_change(fullpath))
-              if err then
-                handle:close()
-                handles[fullpath] = nil
-                -- The directory may have disappeared since fs_stat().
-                if errname ~= 'ENOENT' then
-                  on_error(err)
-                end
-              end
-            end
-          end
-        else
-          change_type = M.FileChangeType.Deleted
-          local handle = handles[fullpath]
-          if handle then
-            if not handle:is_closing() then
-              handle:close()
-            end
-            handles[fullpath] = nil
-          end
-        end
-
-        if not skip(fullpath, opts) then
-          callback(fullpath, change_type)
-        end
-      end)
-    end
-    filechanges = {}
-  end
-
-  local root_handle = assert(uv.new_fs_event())
-  handles[path] = root_handle
-  local _, start_err = root_handle:start(path, {}, create_on_change(path))
-
-  if start_err then
-    root_handle:close()
-    timer:close()
-    on_error(start_err)
-    return nil
-  end
-
-  --- "640K ought to be enough for anyone"
-  --- Who has folders this deep?
-  local max_depth = 100
-
-  for name, type in
-    vim.fs.dir(path, {
-      depth = max_depth,
-      skip = function(dir)
-        return not skip(vim.fs.joinpath(path, dir), opts, true)
-      end,
-    })
-  do
-    if type == 'directory' then
-      local filepath = vim.fs.joinpath(path, name)
-      if not skip(filepath, opts, true) then
-        local handle = assert(uv.new_fs_event())
-        handles[filepath] = handle
-        local _, err, errname = handle:start(filepath, {}, create_on_change(filepath))
-        if err then
-          handle:close()
-          handles[filepath] = nil
-          -- The directory may have disappeared since it was listed.
-          if errname ~= 'ENOENT' then
-            on_error(err)
-          end
-        end
-      end
-    end
-  end
-
-  return function()
-    cancelled = true
-    for fullpath, handle in pairs(handles) do
-      if not handle:is_closing() then
-        handle:close()
-      end
-      handles[fullpath] = nil
-    end
-    timer:stop()
-    timer:close()
   end
 end
 
@@ -742,7 +554,7 @@ end
 --- @param callback vim._watch.Callback
 --- @return fun() cancel Releases this subscription; the last cancellation stops the backend.
 function M.watchdirs(path, opts, callback)
-  return start_watch('watchdirs', watchdirs, path, opts, callback)
+  return start_watch('watchdirs', require('vim._watchdirs'), path, opts, callback)
 end
 
 --- Recursively watches directories using inotifywait. Compatible subscriptions share a process.
