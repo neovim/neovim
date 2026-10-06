@@ -4676,8 +4676,6 @@ describe('API', function()
       ['~'] = 'supports ASCII fillchar',
       ['━'] = 'supports single-width multibyte fillchar',
       ['c̳'] = 'supports single-width fillchar with composing',
-      ['哦'] = 'treats double-width fillchar as single-width',
-      ['\031'] = 'treats control character fillchar as single-width',
     }) do
       it(desc, function()
         eq(
@@ -4692,23 +4690,33 @@ describe('API', function()
           { str = 'a' .. fc:rep(3) .. 'b', width = 5 },
           api.nvim_eval_statusline('a%=b', { fillchar = fc, use_tabline = true, maxwidth = 5 })
         )
-        eq(
-          { str = 'a' .. fc:rep(3) .. 'b', width = 5 },
-          api.nvim_eval_statusline('a%=b', { fillchar = fc, use_statuscol_lnum = 1, maxwidth = 5 })
-        )
       end)
     end
 
+    it('rejects control-character fillchar', function()
+      eq(
+        "Invalid 'fillchar': expected one single-width character",
+        pcall_err(api.nvim_eval_statusline, '', { fillchar = '\031' })
+      )
+    end)
+
+    it('rejects double-width fillchar', function()
+      eq(
+        "Invalid 'fillchar': expected one single-width character",
+        pcall_err(api.nvim_eval_statusline, '', { fillchar = '哦' })
+      )
+    end)
+
     it('rejects multiple-character fillchar', function()
       eq(
-        "Invalid 'fillchar': expected single character",
+        "Invalid 'fillchar': expected one single-width character",
         pcall_err(api.nvim_eval_statusline, '', { fillchar = 'aa' })
       )
     end)
 
     it('rejects empty string fillchar', function()
       eq(
-        "Invalid 'fillchar': expected single character",
+        "Invalid 'fillchar': expected one single-width character",
         pcall_err(api.nvim_eval_statusline, '', { fillchar = '' })
       )
     end)

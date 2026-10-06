@@ -2200,8 +2200,8 @@ Tuple(Integer, Integer, Buffer, String) nvim_get_mark(String name, Dict(empty) *
 ///
 /// @param str Statusline string (see 'statusline').
 /// @param opts Optional parameters.
-///           - fillchar: (string) Character to fill blank spaces in the statusline (see
-///                                'fillchars'). Treated as single-width even if it isn't.
+///           - fillchar: (string) Single-width character to fill blank spaces
+///                                in the statusline (see 'fillchars').
 ///           - highlights: (boolean) Return highlight information.
 ///           - maxwidth: (number) Maximum width of statusline.
 ///           - use_statuscol_lnum: (number) Evaluate statuscolumn for this line number instead of statusline.
@@ -2241,14 +2241,14 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
   Window window = opts->winid;
 
   if (HAS_KEY(opts, eval_statusline, fillchar)) {
-    VALIDATE_EXP((*opts->fillchar.data != 0
-                  && ((size_t)utfc_ptr2len(opts->fillchar.data) == opts->fillchar.size)),
-                 "fillchar", "single character", NULL, {
+    StrCharInfo ci = utf_ptr2StrCharInfo(opts->fillchar.data);
+    ClusterInfo cli = utf_ClusterInfo(ci);
+
+    VALIDATE_EXP((*ci.ptr != 0 && *cli.next.ptr == NUL && cli.cells == 1),
+                 "fillchar", "one single-width character", NULL, {
       return result;
     });
-    int c;
-    fillchar = utfc_ptr2schar(opts->fillchar.data, &c);
-    // TODO(bfredl): actually check c is single width
+    fillchar = schar_from_cluster(ci, cli);
   }
 
   int use_bools = (int)opts->use_winbar + (int)opts->use_tabline;

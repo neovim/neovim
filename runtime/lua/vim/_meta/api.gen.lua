@@ -1177,8 +1177,8 @@ function vim.api.nvim_eval(expr) end
 ---
 --- @param str string Statusline string (see 'statusline').
 --- @param opts vim.api.keyset.eval_statusline? Optional parameters.
---- - fillchar: (string) Character to fill blank spaces in the statusline (see
----                      'fillchars'). Treated as single-width even if it isn't.
+--- - fillchar: (string) Single-width character to fill blank spaces
+---                      in the statusline (see 'fillchars').
 --- - highlights: (boolean) Return highlight information.
 --- - maxwidth: (number) Maximum width of statusline.
 --- - use_statuscol_lnum: (number) Evaluate statuscolumn for this line number instead of statusline.

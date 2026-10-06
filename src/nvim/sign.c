@@ -357,10 +357,9 @@ size_t describe_sign_text(char *buf, schar_T *sign_text)
 /// "sp" is NULL for signs added through nvim_buf_set_extmark().
 int init_sign_text(sign_T *sp, schar_T *sign_text, char *text)
 {
-  char *s;
   char *endp = text + (int)strlen(text);
 
-  for (s = sp ? text : endp; s + 1 < endp; s++) {
+  for (char *s = sp ? text : endp; s + 1 < endp; s++) {
     if (*s == '\\') {
       // Remove a backslash, so that it is possible to use a space.
       STRMOVE(s, s + 1);
@@ -369,24 +368,24 @@ int init_sign_text(sign_T *sp, schar_T *sign_text, char *text)
   }
   // Count cells and check for non-printable chars
   int cells = 0;
-  for (s = text; s < endp; s += utfc_ptr2len(s)) {
-    int c;
-    sign_text[cells] = utfc_ptr2schar(s, &c);
-    if (!vim_isprintc(c)) {
-      break;
+  StrCharInfo ci = utf_ptr2StrCharInfo(text);
+
+  while (*ci.ptr != NUL) {
+    ClusterInfo cli = utf_ClusterInfo(ci);
+    if (!vim_isprintc(ci.chr.value) || cells + cli.cells > SIGN_WIDTH) {
+      if (sp != NULL) {
+        semsg(_("E239: Invalid sign text: %s"), text);
+      }
+      return FAIL;
     }
-    int width = utf_ptr2cells(s);
-    if (width == 2) {
+
+    sign_text[cells] = schar_from_cluster(ci, cli);
+    assert(cli.cells <= 2);  // need to revisit this if SIGN_WIDTH is ever increased
+    if (cli.cells == 2) {
       sign_text[cells + 1] = 0;
     }
-    cells += width;
-  }
-  // Currently must be empty, one or two display cells
-  if (s != endp || cells > SIGN_WIDTH) {
-    if (sp != NULL) {
-      semsg(_("E239: Invalid sign text: %s"), text);
-    }
-    return FAIL;
+    cells += cli.cells;
+    ci = cli.next;
   }
 
   if (cells < 1) {
