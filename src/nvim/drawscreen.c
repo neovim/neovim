@@ -1933,9 +1933,10 @@ static void win_update(win_T *wp)
 
     // If we know the value of w_botline, use it to restrict the update to
     // the lines that are visible in the window.
+    // Note: w_botline may be partially visible or completely invisible.
     if (wp->w_valid & VALID_BOTLINE) {
-      from = MIN(from, wp->w_botline - 1);
-      to = MIN(to, wp->w_botline - 1);
+      from = MIN(from, wp->w_botline);
+      to = MIN(to, wp->w_botline);
     }
 
     // Find the minimal part to be updated.
