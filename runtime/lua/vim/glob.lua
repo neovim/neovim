@@ -45,6 +45,7 @@ local M = {}
 
 -- Basic patterns for matching glob components
 local letter = m.P(1) - m.S('*?[]{}/\\') -- Any character except special glob characters
+local escape = m.P('\\') * m.C(1) -- Escaped character
 local slash = m.P '/' * m.Cc(m.P '/') -- Path separator with capture
 local notslash = m.P(1) - m.P '/' -- Any character except path separator
 local notcomma = m.P(1) - m.S(',\\') -- Any character except comma and backslash
@@ -199,7 +200,7 @@ local function add_cond(a, b)
 end
 
 --- Expands patterns handling segment boundaries
---- `#` prefix is added for sub-grammar to detect in-segment flag
+--- Pass the in-segment flag separately from the glob text.
 ---
 ---@param a (any[]|vim.lpeg.Pattern[]) Array of patterns
 ---@param b string Tail string
@@ -207,10 +208,7 @@ end
 ---@return vim.lpeg.Pattern #Expanded pattern
 local function expand(a, b, inseg)
   for i = 1, #a do
-    if inseg then
-      a[i] = '#' .. a[i]
-    end
-    a[i] = g:match(a[i] .. b)
+    a[i] = g:match(a[i] .. b, 1, inseg or false)
   end
   local res = a[1]
   for i = 2, #a do
@@ -300,7 +298,7 @@ local opt_tail = re.compile [[
 --- Main grammar for glob pattern matching
 g = {
   'Glob',
-  Glob     = (m.P'#' * m.Cg(m.Cc(true), 'inseg') + m.Cg(m.Cc(false), 'inseg')) *
+  Glob     = m.Cg(m.Carg(1), 'inseg') *
              m.Cf(m.V'Element'^-1 * (slash * m.V'Element')^0 * (slash^-1 * eof), mt.__mul),
   -- Elements handle segments, globstar patterns
   Element  = m.V'DSeg' + m.V'DSEnd' + m.Cf(m.V'Segment' * (slash * m.V'Segment')^0 * (slash * eof + eof^-1), mt.__mul),
@@ -321,7 +319,7 @@ g = {
   Token    = m.V'Ques' + m.V'Class' + m.V'Escape' + m.V'Literal',
   Star     = m.P'*',
   Ques     = m.P'?' * m.Cc(notslash),
-  Escape   = m.P'\\' * m.C(1) / m.P,
+  Escape   = escape / m.P,
   Literal  = m.C(letter^1) / m.P,
 
   -- Branch handling for braced conditions
@@ -369,9 +367,20 @@ g = m.P(g)
 ---@param pattern string The raw glob pattern
 ---@return vim.lpeg.Pattern #An |lua-lpeg| representation of the pattern
 function M.to_lpeg(pattern)
-  local lpeg_pattern = g:match(pattern) --[[@as vim.lpeg.Pattern?]]
+  local lpeg_pattern = g:match(pattern, 1, false) --[[@as vim.lpeg.Pattern?]]
   assert(lpeg_pattern, string.format('Invalid glob: %s', pattern))
   return lpeg_pattern
+end
+
+local literal_prefix = m.Cs((escape / '%1' + letter + m.P('/')) ^ 0)
+
+--- Gets the literal directory before the first wildcard in a valid glob, with a trailing slash.
+--- For example, '/project/src/**/*.lua' gives '/project/src/'. An empty string means any directory.
+--- @internal
+--- @param pattern string
+--- @return string
+function M._get_base(pattern)
+  return literal_prefix:match(pattern):match('^.*/') or ''
 end
 
 return M

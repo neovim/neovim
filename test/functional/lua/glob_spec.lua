@@ -5,8 +5,26 @@ local eq = t.eq
 
 describe('glob', function()
   local match = function(pattern, str)
-    return require('vim.glob').to_lpeg(pattern):match(str) ~= nil
+    local matched = require('vim.glob').to_lpeg(pattern):match(str) ~= nil
+    if matched then
+      -- Pruning by this prefix must never discard a path accepted by the matcher.
+      eq(true, vim.startswith(str, vim.glob._get_base(pattern)), pattern)
+    end
+    return matched
   end
+
+  it('vim.glob._get_base()', function()
+    local base = vim.glob._get_base
+    eq('/project/src/', base('/project/src/**/*.lua'))
+    eq('/project/src/', base('/project/src/file.lua'))
+    eq('/project/src[1]/', base([[\/project\/src\[1\]/**/*.lua]]))
+    eq('/project/', base('/project/src*/**/*.lua'))
+    eq('/project/', base('/project/{src,tests}/**/*.lua'))
+    eq('', base('**/*.lua'))
+    eq('/project/', base('/project/src?/file.lua'))
+    eq('/project/', base('/project/[st]rc/file.lua'))
+    eq('', base('file.lua'))
+  end)
 
   describe('glob matching', function()
     it('should match literal strings', function()
@@ -23,6 +41,12 @@ describe('glob', function()
       eq(false, match('.', 'a'))
       eq(true, match('$', '$'))
       eq(true, match('a,b', 'a,b'))
+      eq(true, match('#generated', '#generated'))
+      eq(false, match('#generated', 'generated'))
+      eq(true, match('#generated/*.lua', '#generated/file.lua'))
+      eq(true, match([[\#generated/*.lua]], '#generated/file.lua'))
+      eq(true, match('{#generated,src}/*.lua', '#generated/file.lua'))
+      eq(true, match('#{generated,src}/*.lua', '#src/file.lua'))
       eq(true, match('/dir', '/dir'))
       eq(true, match('dir/', 'dir/'))
       eq(true, match('dir/subdir', 'dir/subdir'))
