@@ -398,6 +398,42 @@ describe('startup', function()
     eq(('A'):rep(1234) .. '\n' .. ('B'):rep(1234) .. '\n' .. ('C'):rep(1234) .. '\n', out)
   end)
 
+  it('nvim_exec2 can capture Lua print() message with --headless', function()
+    local out = fn.system({
+      nvim_prog,
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--headless',
+      '-c',
+      [[let x = nvim_exec2("lua print 'hello:3'", #{output: v:true})]],
+      '-c',
+      "echomsg 'captured: <'.x.output.'>'",
+      '+q',
+    })
+
+    eq('captured: <hello:3>', out)
+  end)
+
+  it('screenstring() affected by Lua print() message with --headless', function()
+    local out = fn.system({
+      nvim_prog,
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--headless',
+      '-c',
+      'lua print "ö"',
+      '-c',
+      "echomsg 'screen at the time: '..screenstring(24,1)",
+      '+q',
+    })
+
+    eq('ö\nscreen at the time: ö', out)
+  end)
+
   it('pipe at both ends: has("ttyin")==0 has("ttyout")==0', function()
     -- system() puts a pipe at both ends.
     local out = fn.system({

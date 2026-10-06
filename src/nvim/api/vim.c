@@ -900,7 +900,7 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
     msg_no_more = true;
   }
   msg_ext_no_fast();
-  id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &msg_data, &needs_clear);
+  id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &msg_data, &needs_clear, false);
   if (opts->_truncate) {
     msg_no_more = false;
     msg_didany = save_msg_didany;
