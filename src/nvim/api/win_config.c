@@ -1128,7 +1128,7 @@ void parse_border_style(Object style, WinConfig *fconfig, Error *err)
           return;
         });
       }
-      VALIDATE_EXP(!(string.size && mb_string2cells_len(string.data, string.size) > 1),
+      VALIDATE_EXP(!(string.size && mb_string2cells_len(string.data, string.size, false) > 1),
                    "border", "only one-cell chars", NULL, {
         return;
       });

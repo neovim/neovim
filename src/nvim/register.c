@@ -318,7 +318,9 @@ void update_yankreg_width(yankreg_T *reg)
   if (reg->y_type == kMTBlockWise) {
     size_t maxlen = 0;
     for (size_t i = 0; i < reg->y_size; i++) {
-      size_t rowlen = mb_string2cells_len(reg->y_array[i].data, reg->y_array[i].size);
+      // TODO(bfredl): likely false->true as below but the entire shebang needs to be reconsidered.
+      // like shouldn't C0 bytes have `dy_escape_width` width ?
+      size_t rowlen = mb_string2cells_len(reg->y_array[i].data, reg->y_array[i].size, false);
       maxlen = MAX(maxlen, rowlen);
     }
     assert(maxlen <= INT_MAX);
@@ -1813,7 +1815,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
         vcol += incr;
         ci = cli.next;
       }
-      char *ptr = ci.ptr;
+      char *ptr = (char *)ci.ptr;
       bd.textcol = (colnr_T)(ptr - oldp);
 
       shortline = (vcol < col) || (vcol == col && !*ptr);
@@ -2644,26 +2646,13 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
     for (const char *start = str, *end = str + len;
          start < end + extraline;
          start += line_len + 1, lnum++) {
-      int charlen = 0;
-
-      const char *line_end = start;
-      while (line_end < end) {  // find the end of the line
-        if (*line_end == '\n') {
-          break;
-        }
-        if (yank_type == kMTBlockWise) {
-          charlen += utf_ptr2cells_len(line_end, (int)(end - line_end));
-        }
-
-        if (*line_end == NUL) {
-          line_end++;  // registers can have NUL chars
-        } else {
-          line_end += utfc_ptr2len_len(line_end, (int)(end - line_end));
-        }
+      // NB: registers can have NUL chars, so look after \n only!
+      const char *line_end = memchr(start, '\n', (size_t)(end - start));
+      line_len = (size_t)((line_end ? line_end : end) - start);
+      if (yank_type == kMTBlockWise) {
+        size_t charlen = mb_string2cells_len(start, line_len, true);
+        maxlen = MAX(maxlen, (size_t)charlen);
       }
-      assert(line_end - start >= 0);
-      line_len = (size_t)(line_end - start);
-      maxlen = MAX(maxlen, (size_t)charlen);
 
       // When appending, copy the previous line and free it after.
       size_t extra = append ? pp[--lnum].size : 0;

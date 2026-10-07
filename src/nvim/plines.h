@@ -50,7 +50,7 @@ typedef struct {
 /// of 'showbreak'/'breakindent' before "csarg->max_head_vcol".
 /// When "csarg->max_head_vcol" is negative, only count in "head" the size
 /// of 'showbreak'/'breakindent' before where cursor should be placed.
-static inline CharSize win_charsize(CSType cstype, int vcol, char *ptr, int32_t chr,
+static inline CharSize win_charsize(CSType cstype, int vcol, const char *ptr, int32_t chr,
                                     CharsizeArg *csarg, int mb_width)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {

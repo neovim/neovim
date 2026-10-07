@@ -438,29 +438,20 @@ void grid_line_put_schar(int col, schar_T schar, int attr)
 /// @return number of grid cells used
 int grid_line_puts(int col, const char *text, int textlen, int attr)
 {
-  const char *ptr = text;
-  int len = textlen;
-
   assert(grid_line_grid);
+  int len = textlen >= 0 ? textlen : INT_MAX;
 
   int start_col = col;
 
   const int max_col = grid_line_maxcol;
-  while (col < max_col && (len < 0 || (int)(ptr - text) < len) && *ptr != NUL) {
+  StrCharInfo ci = utf_ptr2StrCharInfo_len(text, len);
+  while (col < max_col && len > 0 && *ci.ptr != NUL) {
+    ClusterInfo cli = utf_ClusterInfo_len(ci, &len);
     // check if this is the first byte of a multibyte
-    int mbyte_blen;
-    if (len >= 0) {
-      int maxlen = (int)((text + len) - ptr);
-      mbyte_blen = utfc_ptr2len_len(ptr, maxlen);
-      if (mbyte_blen > maxlen) {
-        mbyte_blen = 1;
-      }
-    } else {
-      mbyte_blen = utfc_ptr2len(ptr);
-    }
+    int mbyte_cells = cli.cells;
     int firstc;
-    schar_T schar = utfc_ptrlen2schar(ptr, mbyte_blen, &firstc);
-    int mbyte_cells = utf_ptr2cells_len(ptr, mbyte_blen);
+    // TODO(bfredl): reintegrating schar:s into the new world is the next step
+    schar_T schar = utfc_ptrlen2schar(ci.ptr, (int)(cli.next.ptr - ci.ptr), &firstc);
     if (mbyte_cells > 2 || schar == 0) {
       mbyte_cells = 1;
       schar = schar_from_char(0xFFFD);
@@ -475,7 +466,7 @@ int grid_line_puts(int col, const char *text, int textlen, int attr)
 
     // When at the start of the text and overwriting the right half of a
     // two-cell character in the same grid, truncate that into a '>'.
-    if (ptr == text && col > grid_line_first && col < grid_line_last
+    if (ci.ptr == text && col > grid_line_first && col < grid_line_last
         && linebuf_char[col] == 0) {
       linebuf_char[col - 1] = schar_from_ascii('>');
     }
@@ -490,7 +481,7 @@ int grid_line_puts(int col, const char *text, int textlen, int attr)
     }
 
     col += mbyte_cells;
-    ptr += mbyte_blen;
+    ci = cli.next;
   }
 
   if (col > start_col) {
