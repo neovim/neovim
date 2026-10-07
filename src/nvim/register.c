@@ -8,6 +8,7 @@
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/clipboard.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
@@ -104,6 +105,7 @@ void set_expr_line(char *new_line)
 {
   xfree(expr_line);
   expr_line = new_line;
+  register_changed('=', kRegChangedExpr, NULL);
 }
 
 /// Get the result of the '=' register expression.
@@ -278,6 +280,7 @@ bool op_reg_set(const char name, const yankreg_T reg, bool is_unnamed)
   if (is_unnamed) {
     y_previous = &y_regs[i];
   }
+  reg_changed_slot(&y_regs[i], kRegChangedShada, NULL);
   return true;
 }
 
@@ -308,6 +311,7 @@ bool op_reg_set_previous(const char name)
   }
 
   y_previous = &y_regs[i];
+  register_changed('"', kRegChangedSetreg, NULL);
   return true;
 }
 
@@ -500,18 +504,7 @@ int do_record(int c)
     tv_dict_add_str(dict, S_LEN("regname"), buf);
     tv_dict_set_keys_readonly(dict);
 
-    // Get the recorded key hits.  K_SPECIAL will be escaped, this
-    // needs to be removed again to put it in a register.  exec_reg then
-    // adds the escaping back later.
-    apply_autocmds(EVENT_RECORDINGLEAVE, NULL, NULL, false, curbuf);
-    restore_v_event(dict, &save_v_event);
-    reg_recorded = reg_recording;
-    reg_recording = 0;
-    if (p_ch == 0 || ui_has(kUIMessages)) {
-      showmode();
-    } else {
-      msg("", 0);
-    }
+    // Fill the register before RecordingLeave, so its handlers see the macro.
     if (p == NULL) {
       retval = FAIL;
     } else {
@@ -521,7 +514,22 @@ int do_record(int c)
 
       retval = stuff_yank(regname, p);
 
+      // stuff_yank() pointed y_previous at the written slot (q" writes "0).
+      yankreg_T *written = y_previous;
       y_previous = old_y_previous;
+      if (retval == OK && regname != '_') {
+        reg_changed_slot(written, kRegChangedRecord, NULL);
+      }
+    }
+
+    apply_autocmds(EVENT_RECORDINGLEAVE, NULL, NULL, false, curbuf);
+    restore_v_event(dict, &save_v_event);
+    reg_recorded = reg_recording;
+    reg_recording = 0;
+    if (p_ch == 0 || ui_has(kUIMessages)) {
+      showmode();
+    } else {
+      msg("", 0);
     }
   }
   return retval;
@@ -969,6 +977,12 @@ bool cmdline_paste_reg(int regname, bool literally_arg, bool remcr)
 /// Shift the delete registers: "9 is cleared, "8 becomes "9, etc.
 void shift_delete_registers(bool y_append)
 {
+  // Skip slots that stay empty.
+  bool was_set[10];
+  for (int n = 2; n < 10; n++) {
+    was_set[n] = !reg_empty(&y_regs[n]);
+  }
+
   free_register(&y_regs[9]);  // free register "9
   for (int n = 9; n > 1; n--) {
     y_regs[n] = y_regs[n - 1];
@@ -977,6 +991,13 @@ void shift_delete_registers(bool y_append)
     y_previous = &y_regs[1];
   }
   y_regs[1].y_array = NULL;  // set register "1 to empty
+
+  // "1 is reported by op_yank_reg().
+  for (int n = 2; n < 10; n++) {
+    if (was_set[n] || !reg_empty(&y_regs[n])) {
+      reg_changed_slot(&y_regs[n], kRegChangedShift, NULL);
+    }
+  }
 }
 
 #ifdef EXITFREE
@@ -1003,6 +1024,89 @@ void free_register(yankreg_T *reg)
     XFREE_CLEAR(reg->y_array);
   }
   *reg = (yankreg_T){ 0 };
+}
+
+// RegisterChanged
+//
+// Each changed register fires one deferred event. The payload describes the
+// write, not the value, so a burst of writes (":g/x/yank A") stays cheap.
+// Handlers read the current value with getreginfo().
+//
+// The unnamed register fires when the register it points at is written, or
+// when setreg() repoints it.
+
+/// Fires RegisterChanged for register "name".
+///
+/// @param name    register name, lowercase
+/// @param reason  mechanism of this write
+/// @param oap     operator arguments, NULL when the write had no operator
+void register_changed(int name, RegisterChangedReason reason, oparg_T *oap)
+{
+  // Skip writes not made by the user: startup (like OptionSet), context load,
+  // and multicursor replay.
+  if (starting || ctx_loading_regs() || mc_replaying()
+      || !has_event(EVENT_REGISTERCHANGED)) {
+    return;
+  }
+  bool has_op = (reason == kRegChangedYank || reason == kRegChangedDelete) && oap != NULL;
+  char name_str[2] = { (char)name, NUL };
+  char op_str[2] = { has_op ? (char)get_op_char(oap->op_type) : NUL, NUL };
+  char points_to_str[2] = { NUL, NUL };
+  if (name == '"' && y_previous != NULL) {
+    points_to_str[0] = (char)get_register_name((int)(y_previous - y_regs));
+  }
+
+  MAXSIZE_TEMP_DICT(data, 5);
+  PUT_C(data, "regname", CSTR_AS_OBJ(name_str));
+  PUT_C(data, "operator", CSTR_AS_OBJ(op_str));
+  PUT_C(data, "visual", BOOLEAN_OBJ(has_op && oap->is_VIsual));
+  PUT_C(data, "reason", CSTR_AS_OBJ(reg_changed_reason_name(reason)));
+  if (points_to_str[0] != NUL) {
+    PUT_C(data, "points_to", CSTR_AS_OBJ(points_to_str));
+  }
+  aucmd_defer(EVENT_REGISTERCHANGED, name_str, NULL, AUGROUP_ALL, curbuf, NULL, &DICT_OBJ(data));
+}
+
+/// Fires RegisterChanged for the y_regs slot "reg", and for the unnamed
+/// register if it points at "reg". Call after the write updates "y_previous".
+/// Note: "add fires "" twice, as op_delete() then repoints "y_previous" to "1.
+static void reg_changed_slot(yankreg_T *reg, RegisterChangedReason reason, oparg_T *oap)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  register_changed(get_register_name((int)(reg - y_regs)), reason, oap);
+  if (reg == y_previous) {
+    register_changed('"', reason, oap);
+  }
+}
+
+/// @return  "reason" as a string for the event data.
+static const char *reg_changed_reason_name(RegisterChangedReason reason)
+{
+  switch (reason) {
+  case kRegChangedYank:
+    return "yank";
+  case kRegChangedDelete:
+    return "delete";
+  case kRegChangedShift:
+    return "shift";
+  case kRegChangedRecord:
+    return "record";
+  case kRegChangedSetreg:
+    return "setreg";
+  case kRegChangedRedir:
+    return "redir";
+  case kRegChangedShada:
+    return "shada";
+  case kRegChangedSearch:
+    return "search";
+  case kRegChangedExpr:
+    return "expr";
+  case kRegChangedCmdline:
+    return "cmdline";
+  case kRegChangedInsert:
+    return "insert";
+  }
+  abort();
 }
 
 /// Copy a block range into a register.
@@ -1046,6 +1150,9 @@ void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
   struct block_def bd;
 
   yankreg_T *curr = reg;  // copy of current register
+  // Every caller passes a slot of y_regs.
+  assert(curr >= y_regs && curr < y_regs + NUM_REGISTERS);
+
   // append to existing contents
   if (append && reg->y_array != NULL) {
     reg = &newreg;
@@ -1195,6 +1302,8 @@ void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
       decl(&curbuf->b_op_end);
     }
   }
+
+  reg_changed_slot(curr, oap->op_type == OP_YANK ? kRegChangedYank : kRegChangedDelete, oap);
 }
 
 /// Format the register type as a string.
@@ -2702,10 +2811,14 @@ static void finish_write_reg(int name, yankreg_T *reg, yankreg_T *old_y_previous
   // Send text of clipboard register to the clipboard.
   set_clipboard(name, reg);
 
+  // Decided by slot, so ":let @a = ..." during ":redir @a" counts as a redir.
+  bool is_redir = redir_reg != 0 && op_reg_index(redir_reg) == (int)(reg - y_regs);
+
   // ':let @" = "val"' should change the meaning of the "" register
   if (name != '"') {
     y_previous = old_y_previous;
   }
+  reg_changed_slot(reg, is_redir ? kRegChangedRedir : kRegChangedSetreg, NULL);
 }
 
 /// store `str` in register `name`
@@ -2822,6 +2935,7 @@ void write_reg_contents_ex(int name, const char *str, ssize_t len, bool must_app
     memcpy(expr_line + offset, str, (size_t)len);
     expr_line[totlen] = NUL;
 
+    register_changed('=', kRegChangedExpr, NULL);
     return;
   }
 

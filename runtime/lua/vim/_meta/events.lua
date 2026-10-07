@@ -68,6 +68,13 @@ error('Cannot require a meta file')
 --- @field status? string
 --- @field title? string
 
+--- @class vim.event.registerchanged.data
+--- @field regname string Register name, always lowercase.
+--- @field operator string Operator; `""` unless `reason` is "yank" or "delete".
+--- @field visual boolean Visual-mode operator.
+--- @field reason string What wrote the register; see |RegisterChanged|.
+--- @field points_to? string Register the unnamed register resolves to; unnamed only.
+
 --- @class vim.event.tabmoved.data
 --- @field tabnr_old integer
 --- @field tabnr_new integer

@@ -54,6 +54,7 @@
 #include "nvim/plines.h"
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
+#include "nvim/register.h"
 #include "nvim/search.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
@@ -229,6 +230,7 @@ void save_re_pat(int idx, char *pat, size_t patlen, int magic)
   spats[idx].timestamp = os_time();
   spats[idx].additional_data = NULL;
   last_idx = idx;
+  register_changed('/', kRegChangedSearch, NULL);
   // If 'hlsearch' set and search pat changed: need redraw.
   if (p_hls) {
     redraw_all_later(UPD_SOME_VALID);
@@ -529,6 +531,7 @@ void set_last_search_pat(const char *s, int idx, int magic, bool setlast)
     }
     saved_spats_last_idx = last_idx;
   }
+  register_changed('/', kRegChangedSearch, NULL);
   // If 'hlsearch' set and search pat changed: need redraw.
   if (p_hls && idx == last_idx && !Search.no_hlsearch) {
     redraw_all_later(UPD_SOME_VALID);
@@ -3619,6 +3622,7 @@ void set_search_pattern(const SearchPattern pat)
   free_spat(&spats[0]);
   memcpy(&(spats[0]), &pat, sizeof(spats[0]));
   set_vv_searchforward();
+  register_changed('/', kRegChangedShada, NULL);
 }
 
 /// Set last substitute pattern
@@ -3627,6 +3631,7 @@ void set_substitute_pattern(const SearchPattern pat)
   free_spat(&spats[1]);
   memcpy(&(spats[1]), &pat, sizeof(spats[1]));
   CLEAR_FIELD(spats[1].off);
+  register_changed('/', kRegChangedShada, NULL);
 }
 
 /// Set last used search pattern
