@@ -853,6 +853,7 @@ function Screen:_wait(check, flags)
 
     return true
   end
+  local deadline = uv.hrtime() + timeout * 1e6
   local eof = run_session(self._session, flags.request_cb, notification_cb, nil, minimal_timeout)
   if not did_flush then
     if eof then
@@ -866,13 +867,18 @@ function Screen:_wait(check, flags)
     end
   end
 
-  if not success_seen and not eof then
-    did_minimal_timeout = true
-    eof =
-      run_session(self._session, flags.request_cb, notification_cb, nil, timeout - minimal_timeout)
-    if not did_flush then
-      err = 'no flush received'
+  did_minimal_timeout = true
+  while (not success_seen or not did_flush) and not eof do
+    local remaining = (deadline - uv.hrtime()) / 1e6
+    if remaining <= 0 then
+      break
     end
+    -- A partial redraw can arrive after stop() was requested by a matching
+    -- flush, before the event loop returns. Finish it within the same timeout.
+    eof = run_session(self._session, flags.request_cb, notification_cb, nil, math.ceil(remaining))
+  end
+  if not did_flush then
+    err = 'no flush received'
   end
 
   local did_warn = false
