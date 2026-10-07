@@ -389,7 +389,8 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
   } else if (filtering) {
     apply_autocmds_exarg(EVENT_FILTERWRITEPRE,
                          NULL, sfname, false, curbuf, eap);
-  } else if (reset_changed && whole) {
+  } else if (reset_changed && (whole || curbuf->terminal)) {
+    // Terminal buffers use BufWriteCmd for range writes
     bool was_changed = curbufIsChanged();
 
     did_cmd = apply_autocmds_exarg(EVENT_BUFWRITECMD, sfname, sfname, false, curbuf, eap);
