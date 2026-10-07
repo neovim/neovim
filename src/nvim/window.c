@@ -1013,7 +1013,8 @@ void ui_ext_win_viewport(win_T *wp)
         lnume = cur_botline;
         vcole = 0;
       }
-      delta -= win_text_height(wp, cur_topline, wp->w_skipcol, &lnume, &vcole, NULL, INT64_MAX);
+      delta -= win_text_height(wp, cur_topline, wp->w_skipcol, &lnume, &vcole, NULL, INT64_MAX,
+                               true);
     } else if (cur_topline > last_topline
                || (cur_topline == last_topline && wp->w_skipcol > last_skipcol)) {
       int64_t vcole = wp->w_skipcol;
@@ -1024,7 +1025,8 @@ void ui_ext_win_viewport(win_T *wp)
         lnume = last_botline;
         vcole = 0;
       }
-      delta += win_text_height(wp, last_topline, last_skipcol, &lnume, &vcole, NULL, INT64_MAX);
+      delta += win_text_height(wp, last_topline, last_skipcol, &lnume, &vcole, NULL, INT64_MAX,
+                               true);
     }
     delta += last_topfill;
     delta -= wp->w_topfill;

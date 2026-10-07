@@ -746,6 +746,7 @@ struct file_buffer {
 
   MarkTree b_marktree[1];
   Map(uint32_t, uint32_t) b_extmark_ns[1];         // extmark namespaces
+  Map(uint32_t, uint32_t) b_conceal_providers[1];  // provider ns -> conceal ns
 
   // Store the line count as it was before appending or inserting lines.
   // Used to determine a valid range before splicing marks, when the line
@@ -1270,8 +1271,7 @@ struct window_S {
   // This is related to positions in the window, not in the display or
   // buffer, thus w_wrow is relative to w_winrow.
   int w_wrow, w_wcol;               // cursor position in window
-  int w_wcol_conceal_off;           // screen cells concealed before w_wcol on
-                                    // the cursor's screen line, set by win_line()
+  int w_wcol_conceal_off;           // non-reflow conceal offset, set by win_line()
 
   linenr_T w_botline;               // number of the line below the bottom of
                                     // the window
