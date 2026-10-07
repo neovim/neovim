@@ -2611,7 +2611,14 @@ describe('vim.diagnostic', function()
         for i = 2, 5 do
           vim.diagnostic.set(_G.diagnostic_ns, bufnr, { _G.make_error('Error ' .. i, 0, 0, 0, 0) })
         end
-        return { first = first, last = count_autocmds() }
+        local last = count_autocmds()
+        vim.cmd('noautocmd bwipeout! ' .. bufnr)
+        vim.diagnostic.set(
+          _G.diagnostic_ns,
+          _G.diagnostic_bufnr,
+          { _G.make_error('E', 0, 0, 0, 0) }
+        )
+        return { first = first, last = last }
       end)
       eq(counts.first, counts.last)
     end)
