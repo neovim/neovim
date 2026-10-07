@@ -754,6 +754,60 @@ describe('vim.pack', function()
       eq(lockfile_fs_stat, vim.uv.fs_stat(get_lock_path()))
     end)
 
+    it('health recommends restoring the lockfile revision', function()
+      vim_pack_add({ repos_src.basic })
+      local expected_rev = git_get_hash('main~', 'basic')
+      local lock_tbl = get_lock_tbl()
+      lock_tbl.plugins.basic.rev = expected_rev
+      fn.writefile({ vim.json.encode(lock_tbl) }, get_lock_path())
+      n.clear()
+      vim_pack_add({ repos_src.basic })
+
+      local repair = 'vim.pack.update({ "basic" }, { offline = true, target = "lockfile" })'
+      n.command('checkhealth vim.pack')
+      t.retry(nil, 10000, function()
+        eq(
+          true,
+          n.curbuf_contents():find(
+            'To restore the lockfile revision, restart Nvim and run `' .. repair .. '`',
+            1,
+            true
+          ) ~= nil
+        )
+      end)
+
+      exec_lua(repair)
+      n.command('write')
+      t.retry(nil, 10000, function()
+        pack_assert_content('basic', 'return "basic init"')
+      end)
+      eq(expected_rev, get_lock_tbl().plugins.basic.rev)
+    end)
+
+    it('health recommends keeping the installed revision', function()
+      vim_pack_add({ repos_src.basic })
+      local installed_rev = git_get_hash('main', 'basic')
+      local lock_tbl = get_lock_tbl()
+      lock_tbl.plugins.basic.rev = git_get_hash('main~', 'basic')
+      fn.writefile({ vim.json.encode(lock_tbl) }, get_lock_path())
+      n.clear()
+      vim_pack_add({ repos_src.basic })
+
+      local repair = 'To keep the installed revision, delete `rev` lockfile entry '
+        .. '(do not create trailing comma) and restart Nvim to regenerate lockfile data'
+      n.command('checkhealth vim.pack')
+      t.retry(nil, 10000, function()
+        eq(true, n.curbuf_contents():find(repair, 1, true) ~= nil)
+      end)
+
+      lock_tbl.plugins.basic.rev = nil
+      fn.writefile({ vim.json.encode(lock_tbl) }, get_lock_path())
+      n.clear()
+      vim_pack_add({ repos_src.basic })
+      pack_assert_content('basic', 'return "basic main"')
+      eq(installed_rev, get_lock_tbl().plugins.basic.rev)
+    end)
+
     it('handles lockfile during install errors', function()
       local repo_not_exist = 'file://' .. repo_get_path('does-not-exist')
       pcall_err(exec_lua, function()

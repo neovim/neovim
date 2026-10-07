@@ -135,9 +135,9 @@ local function check_plugin_lock_data(plug_name, lock_data)
     health.error(
       ('Plugin %s is not at expected revision\n'):format(name_str)
         .. ('Expected: %s\nActual:   %s\n'):format(lock_data.rev, head)
-        .. 'To synchronize, restart Nvim and run '
-        .. ('`vim.pack.update({ %s }, { offline = true })`\n'):format(name_str)
-        .. 'If there are no updates, delete `rev` lockfile entry (do not create trailing comma) '
+        .. 'To restore the lockfile revision, restart Nvim and run '
+        .. ('`vim.pack.update({ %s }, { offline = true, target = "lockfile" })`\n'):format(name_str)
+        .. 'To keep the installed revision, delete `rev` lockfile entry (do not create trailing comma) '
         .. 'and restart Nvim to regenerate lockfile data\n'
         .. 'This can happen after updating plugins with read-only `$XDG_CONFIG_HOME`'
     )
