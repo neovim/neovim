@@ -3681,6 +3681,37 @@ describe('multicursor', function()
       eq(0, fn.assert_beeps('normal! ]C'))
       eq({ 1, 0 }, cur())
     end)
+
+    it('without a session, jumps to the previous cursors #42166', function()
+      cursors({ 'aaa bbb', 'ccc ddd', 'eee fff' }, 'wQjQj')
+      clear_cursors()
+      feed('gg0]C')
+      eq({ 1, 4 }, cur())
+      feed(']C')
+      eq({ 2, 4 }, cur())
+      feed(']C') -- The previous primary-cursor position.
+      eq({ 3, 4 }, cur())
+      feed(']C') -- wraps
+      eq({ 1, 4 }, cur())
+      feed('[C') -- wraps
+      eq({ 3, 4 }, cur())
+      eq(0, ncursors()) -- Does not start a session.
+      -- Works as an operator motion (no cascade).
+      feed('gg0d]C')
+      eq({ 'bbb', 'ccc ddd', 'eee fff' }, get_lines())
+      -- Still not an operator motion during a session.
+      feed('Q')
+      eq(0, fn.assert_beeps('normal! d]C'))
+      eq({ 'bbb', 'ccc ddd', 'eee fff' }, get_lines())
+    end)
+
+    it('without a session, skips a duplicate previous primary-cursor position', function()
+      cursors({ 'aaa', 'bbb', 'ccc' }, 'QjQ') -- The primary shares line 2 with a cursor.
+      clear_cursors()
+      feed('G0')
+      feed('3]C') -- 2 positions (not 3): wraps around to line 1
+      eq({ 1, 0 }, cur())
+    end)
   end)
 
   describe('treesitter', function()
