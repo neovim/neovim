@@ -859,7 +859,7 @@ void f_getfsize(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   FileInfo file_info;
   if (os_fileinfo(fname, &file_info)) {
     uint64_t filesize = os_fileinfo_size(&file_info);
-    if (os_isdir(fname)) {
+    if (S_ISDIR(file_info.stat.st_mode)) {
       rettv->vval.v_number = 0;
     } else {
       rettv->vval.v_number = (varnumber_T)filesize;

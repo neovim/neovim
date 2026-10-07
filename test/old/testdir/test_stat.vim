@@ -50,6 +50,33 @@ func Test_existent_directory()
   call assert_equal(has('win32') ? 'rw-' : 'rwx', getfperm(dname)[0:2])
 endfunc
 
+func Test_getfsize_symlink()
+  if !has('unix') && !has('win32')
+    throw 'Skipped: requires Unix or Windows'
+  endif
+  call mkdir('XsizeTarget', 'R')
+  call writefile(['text'], 'XsizeTarget/file')
+  try
+    if has('win32')
+      silent !mklink /D XsizeLink XsizeTarget
+    else
+      silent !ln -s XsizeTarget XsizeLink
+    endif
+    if v:shell_error
+      throw 'Skipped: cannot create symlinks'
+    endif
+    call assert_equal(0, getfsize('XsizeLink'))
+    call assert_equal(0, getfsize('XsizeLink/'))
+    call assert_equal(5, getfsize('XsizeLink/file'))
+    call delete('XsizeTarget/file')
+    call assert_equal(-1, getfsize('XsizeLink/file'))
+    call delete('XsizeTarget', 'd')
+    call assert_equal(-1, getfsize('XsizeLink'))
+  finally
+    call delete('XsizeLink')
+  endtry
+endfunc
+
 func SleepForTimestamp()
   " FAT has a granularity of 2 seconds, otherwise it's usually 1 second
   if has('win32')
