@@ -135,7 +135,12 @@ end
 --- @param hash vim.loader.CacheHash
 --- @param chunk function
 local function write_cachefile(cname, hash, chunk)
-  local f = assert(uv.fs_open(cname, 'w', 438))
+  local f, err, errname = uv.fs_open(cname, 'w', 438)
+  if not f and errname == 'ENAMETOOLONG' then
+    -- Cache filenames may exceed filesystem limits even when source paths do not.
+    return
+  end
+  assert(f, err)
   local header = {
     VERSION,
     hash.size,
