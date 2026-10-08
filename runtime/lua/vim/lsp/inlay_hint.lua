@@ -615,8 +615,12 @@ local action_handlers = {
         on_done({ buf = ctx.buf })
         return
       end
-      util.apply_text_edits(text_edits, ctx.buf, ctx.client.offset_encoding)
-      on_done({ buf = ctx.buf, client = ctx.client })
+      local success, err =
+        pcall(util.apply_text_edits, text_edits, ctx.buf, ctx.client.offset_encoding)
+      on_done({ buf = ctx.buf, client = success and ctx.client or nil })
+      if not success then
+        vim.notify(tostring(err), vim.log.levels.ERROR)
+      end
     end)
     return true
   end,
@@ -654,11 +658,17 @@ local action_handlers = {
       -- The jump may unload the source; its result now determines completion.
       ctx.stop_watching()
       api.nvim_set_current_win(ctx.win)
-      local shown = util.show_document(
+      local success, shown = pcall(
+        util.show_document,
         assert(item.location),
         ctx.client.offset_encoding,
         { reuse_win = true, focus = true }
       )
+      if not success then
+        on_done({ buf = ctx.buf })
+        vim.notify(tostring(shown), vim.log.levels.ERROR)
+        return
+      end
       on_done({
         buf = shown and api.nvim_get_current_buf() or ctx.buf,
         client = shown and ctx.client or nil,

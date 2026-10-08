@@ -888,6 +888,39 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
     )
   end)
 
+  for _, action in ipairs({ 'textEdits', 'location' }) do
+    it('completes and reports errors when ' .. action .. ' fails', function()
+      local buf, win = api.nvim_get_current_buf(), api.nvim_get_current_win()
+      local result, messages = unpack(exec_lua(function()
+        local client = start_hint_client()
+        local entry = hint_entry(client)
+        if action == 'textEdits' then
+          entry.inlay_hint.textEdits = { insert_edit('X') }
+          vim.bo.modifiable = false
+        else
+          local target = vim.api.nvim_create_buf(true, false)
+          vim.api.nvim_buf_set_name(target, 'Xhint_target')
+          entry.inlay_hint.label = { { value = 'T', location = label_loc(target) } }
+          vim.wo.winfixbuf = true
+        end
+        local messages = {}
+        vim.notify = function(message, level)
+          messages[#messages + 1] = { message = message, level = level }
+        end
+        local result = run_inlay_action(action, { entry })
+        assert(vim.api.nvim_get_current_buf() == buf)
+        return { result, messages }
+      end))
+      eq({ buf = buf, win = win, lines = { 'abc' } }, result)
+      eq(1, #messages)
+      eq(vim.log.levels.ERROR, messages[1].level)
+      t.matches(
+        action == 'textEdits' and "Buffer is not 'modifiable'" or 'E1513',
+        messages[1].message
+      )
+    end)
+  end
+
   it('deduplicates shared edit lists, preserving repeated insertions', function()
     eq(
       { '((abc))' },
