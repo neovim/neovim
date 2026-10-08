@@ -457,22 +457,19 @@ test text
   end)
 end)
 
---- Installs the shared action driver in the child process:
---- * `run_inlay_action(action, hints?, during?)` runs an action, checks the completion
----   contract, and reports the buffer left in focus. `during` runs after `action()`
----   returns but before waiting for it to finish.
---- * `capture_hints(record)` is an action handler that records the hints it is given.
+--- Run actions in the child, checking asynchronous, once-only completion.
+--- `during` runs after action() returns and before waiting for completion.
 local function setup_action_driver()
   exec_lua(function()
     --- @return {buf: integer, client_id: integer?, win: integer?, lines: string[]?}
     function _G.run_inlay_action(action, hints, during)
       local result ---@type table?
-      local calls, returned = 0, false
+      local returned = false
       vim.lsp.inlay_hint.action(action, {
         hints = hints,
         on_done = function(ctx)
           assert(returned, 'on_done must be asynchronous')
-          calls = calls + 1
+          assert(result == nil, 'on_done must run exactly once')
           result = { buf = ctx.buf, client_id = ctx.client and ctx.client.id }
         end,
       })
@@ -487,7 +484,6 @@ local function setup_action_driver()
         'action() did not finish'
       )
       vim.wait(0)
-      assert(calls == 1, 'on_done must run exactly once')
       -- An action may leave behind a buffer that was deleted while it ran.
       if vim.api.nvim_buf_is_valid(result.buf) then
         result.win = vim.fn.bufwinid(result.buf)
@@ -508,220 +504,81 @@ local function setup_action_driver()
 end
 
 describe('vim.lsp.inlay_hint.action', function()
-  ---@type table<string, {lines: string[], name: string, filetype: string, bufnr: integer?, uri: string}>
-  local mocked_files = {
-    main = {
-      lines = {
-        'use dummy::MyStruct;',
-        '',
-        'fn process_my_struct(data: MyStruct) {',
-        '    println!("Received MyStruct with value: {}", data.value);',
-        '}',
-        '',
-        'fn main() {',
-        '    let my_instance = MyStruct::new(42);',
-        '    let _MyInstance = MyStruct::new(43);',
-        '    process_my_struct(my_instance);',
-        '}',
-      },
-      name = 'src/main.rs',
-      uri = 'file:///src/main.rs',
-      filetype = 'rust',
-      bufnr = nil,
-    },
-    lib = {
-      lines = {
-        'pub struct MyStruct {',
-        '    pub value: i32,',
-        '}',
-        '',
-        'impl MyStruct {',
-        '    pub fn new(value: i32) -> Self {',
-        '        MyStruct { value }',
-        '    }',
-        '}',
-      },
-      name = 'src/lib.rs',
-      uri = 'file:///src/lib.rs',
-      filetype = 'rust',
-      bufnr = nil,
-    },
-  }
-
-  --- The location all `MyStruct` label parts point at (the struct definition in lib.rs).
-  ---@type lsp.Location
-  local lib_location = {
-    uri = mocked_files.lib.uri,
-    range = {
-      start = { line = 0, character = 11 },
-      ['end'] = { line = 0, character = 19 },
-    },
-  }
-
-  --- The hints as they look after `inlayHint/resolve`.
-  ---@type lsp.InlayHint[]
-  local resolved_response = {
-    {
-      label = {
-        { value = ': ' },
-        {
-          value = 'MyStruct',
-          location = lib_location,
-          command = { title = 'Dummy command', command = 'dummy_command' },
-          tooltip = 'string tooltip',
-        },
-      },
-      tooltip = { kind = 'plaintext', value = 'plaintext markup tooltip' },
-      position = { line = 7, character = 19 },
-      textEdits = {
-        {
-          newText = ': MyStruct',
-          range = {
-            start = { line = 7, character = 19 },
-            ['end'] = { line = 7, character = 19 },
-          },
-        },
-      },
-      data = { id = 1 },
-    },
-    {
-      label = {
-        { value = ': ' },
-        {
-          value = 'MyStruct',
-          location = lib_location,
-          tooltip = 'string tooltip',
-        },
-      },
-      tooltip = { kind = 'plaintext', value = 'plaintext markup tooltip' },
-      position = { line = 8, character = 19 },
-      textEdits = {
-        {
-          newText = ': MyStruct',
-          range = {
-            start = { line = 8, character = 19 },
-            ['end'] = { line = 8, character = 19 },
-          },
-        },
-      },
-      data = { id = 2 },
-    },
-    {
-      label = { { value = 'data:' } },
-      position = { line = 9, character = 22 },
-      data = { id = 3 },
-    },
-  }
-
-  --- The hints as initially returned by `textDocument/inlayHint` (this shape is taken from
-  --- basedpyright): hint 1 only carries its location/command/tooltip/textEdits after
-  --- `inlayHint/resolve`.
-  ---@type lsp.InlayHint[]
-  local orig_response = vim.deepcopy(resolved_response)
-  orig_response[1].label[2] = { value = 'MyStruct' }
-  orig_response[1].tooltip = nil
-  orig_response[1].textEdits = nil
-
-  local curr_winid ---@type integer?
-  local offset_encoding = 'utf-8'
-  local client_id ---@type integer?
-
-  -- Upper bound for the `vim.wait` calls; they all use a condition to stop early.
-  local wait_time = 5000
+  local lines = { 'let a = make();', 'let b = make();', 'use(a);' }
+  local source, target, win
 
   before_each(function()
     clear_notrace()
 
     exec_lua(create_server_definition)
 
-    mocked_files = exec_lua(function()
-      for _, item in pairs(mocked_files) do
-        item.bufnr = vim.uri_to_bufnr(item.uri)
-        local full_path = vim.uri_to_fname(item.uri)
-        vim.api.nvim_buf_set_name(item.bufnr, full_path)
-        vim.api.nvim_buf_set_lines(item.bufnr, 0, -1, false, item.lines)
-        vim.api.nvim_cmd({ cmd = 'edit', args = { full_path }, bang = true }, {})
+    source, target, win = unpack(exec_lua(function()
+      local source_buf = vim.api.nvim_get_current_buf()
+      vim.api.nvim_buf_set_lines(source_buf, 0, -1, false, lines)
+      local target_buf = vim.api.nvim_create_buf(true, false)
+      vim.api.nvim_buf_set_name(target_buf, 'Xhint_target.rs')
+      vim.api.nvim_buf_set_lines(target_buf, 0, -1, false, { 'struct T {}' })
+      local location = {
+        uri = vim.uri_from_bufnr(target_buf),
+        range = { start = { line = 0, character = 7 }, ['end'] = { line = 0, character = 8 } },
+      }
+      local resolved = {}
+      for row = 0, 1 do
+        local pos = { line = row, character = 5 }
+        resolved[row + 1] = {
+          label = {
+            { value = ': ' },
+            {
+              value = 'T',
+              location = location,
+              command = { title = 'Test command', command = 'test' },
+              tooltip = 'string tooltip',
+            },
+          },
+          tooltip = { kind = 'plaintext', value = 'plaintext tooltip' },
+          position = pos,
+          textEdits = { { newText = ': T', range = { start = pos, ['end'] = pos } } },
+          data = row + 1,
+        }
       end
-      return mocked_files
-    end)
+      resolved[3] = { label = 'arg:', position = { line = 2, character = 4 }, data = 3 }
+      local hints = vim.deepcopy(resolved)
+      -- The first hint gains its actionable fields only through resolution.
+      hints[1].label[2] = { value = 'T' }
+      hints[1].tooltip, hints[1].textEdits = nil, nil
 
-    exec_lua(function()
       _G.command_called = {}
-      _G.server = _G._create_server({
+      local server = _G._create_server({
         capabilities = {
           inlayHintProvider = { resolveProvider = true },
-          executeCommandProvider = { commands = { 'dummy_command' } },
+          executeCommandProvider = { commands = { 'test' } },
         },
         handlers = {
           ['workspace/executeCommand'] = function(_, param, callback)
             table.insert(_G.command_called, param)
             callback(nil, {})
           end,
-          ---@param param lsp.InlayHintParams
-          ['textDocument/inlayHint'] = function(_, param, callback)
-            local buf = vim.uri_to_bufnr(param.textDocument.uri)
-            local requested_range = vim.range.lsp(buf, param.range, offset_encoding)
-            local range_start = vim.pos(buf, requested_range.start_row, requested_range.start_col)
-            local range_end = vim.pos(buf, requested_range.end_row, requested_range.end_col)
-            local filtered_hints = vim
-              .iter(orig_response)
-              :filter(
-                ---@param hint lsp.InlayHint
-                function(hint)
-                  local hint_pos = vim.pos.lsp(buf, hint.position, offset_encoding)
-                  return hint_pos >= range_start and hint_pos < range_end
-                end
-              )
-              :totable()
-            return callback(nil, filtered_hints)
+          ['textDocument/inlayHint'] = function(_, _, callback)
+            callback(nil, vim.deepcopy(hints))
           end,
-          ---@param params lsp.InlayHint
           ['inlayHint/resolve'] = function(_, params, callback)
-            if params.data and params.data.id then
-              callback(nil, resolved_response[params.data.id])
-            else
-              callback(nil, params)
-            end
+            callback(nil, resolved[params.data])
           end,
-          ---@param params lsp.HoverParams
           ['textDocument/hover'] = function(_, params, callback)
-            local pos = params.position
-            if
-              params.textDocument.uri == mocked_files.lib.uri
-              and pos.line == 0
-              and pos.character >= 11
-              and pos.character < 19
-            then
-              callback(nil, {
-                contents = {
-                  kind = 'markdown',
-                  value = '\n```rust\ndummy\n```\n\n```rust\npub struct MyStruct {\n    pub value: i32,\n}\n```\n\n---\n\nsize = 4, align = 0x4',
-                },
-                range = lib_location.range,
-              })
-            else
-              callback()
-            end
+            assert(params.textDocument.uri == location.uri)
+            assert(vim.deep_equal(params.position, location.range.start))
+            callback(nil, { contents = { kind = 'markdown', value = '```rust\nstruct T {}\n```' } })
           end,
         },
       })
 
-      client_id =
-        vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd, offset_encoding = offset_encoding })
-      vim.wait(wait_time, function()
-        return vim.lsp.get_client_by_id(assert(client_id)).initialized
-      end)
-      if client_id then
-        vim.lsp.buf_attach_client(mocked_files.main.bufnr, client_id)
-        vim.lsp.buf_attach_client(mocked_files.lib.bufnr, client_id)
-        vim.lsp.inlay_hint.enable(true, { bufnr = mocked_files.main.bufnr })
-      end
-    end)
-
-    exec_lua(function()
-      vim.api.nvim_cmd({ cmd = 'buf', args = { tostring(mocked_files.main.bufnr) } }, {})
-      curr_winid = vim.api.nvim_get_current_win()
-    end)
+      assert(vim.lsp.start({ name = 'hints', cmd = server.cmd }))
+      vim.lsp.inlay_hint.enable(true, { bufnr = source_buf })
+      assert(vim.wait(1000, function()
+        return #vim.lsp.inlay_hint.get({ bufnr = source_buf }) == 3
+      end))
+      return { source_buf, target_buf, vim.api.nvim_get_current_win() }
+    end))
 
     setup_action_driver()
   end)
@@ -730,37 +587,27 @@ describe('vim.lsp.inlay_hint.action', function()
     api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
   end)
 
-  --- Runs the named action on the hints in the given range of the main file.
-  --- @param action vim.lsp.inlay_hint.action.name
-  --- @param start_pos [integer, integer] 0-indexed (line, character) LSP position
-  --- @param end_pos [integer, integer] 0-indexed (line, character) LSP position
-  --- @return {buf: integer, client_id: integer?, win: integer?, lines: string[]?}
-  local function run_action(action, start_pos, end_pos)
+  local function run_action(action, first, last)
     return exec_lua(function()
       return _G.run_inlay_action(
         action,
         vim.lsp.inlay_hint.get({
-          bufnr = mocked_files.main.bufnr,
+          bufnr = source,
           range = {
-            start = { line = start_pos[1], character = start_pos[2] },
-            ['end'] = { line = end_pos[1], character = end_pos[2] },
+            start = { line = first, character = 0 },
+            ['end'] = { line = last or first, character = #lines[(last or first) + 1] },
           },
         })
       )
     end)
   end
 
-  --- Counts the hints `action()` picks up from the cursor at `from`, or from the charwise
-  --- selection between `from` and `to`.
-  --- @param from [integer, integer] (1,0)-indexed cursor position
-  --- @param to? [integer, integer] (1,0)-indexed end of the visual selection
-  --- @return integer
   local function count_selected_hints(from, to)
     return exec_lua(function()
-      vim.api.nvim_win_set_cursor(curr_winid, from)
+      vim.api.nvim_win_set_cursor(win, from)
       if to then
         vim.cmd.normal('v')
-        vim.api.nvim_win_set_cursor(curr_winid, to)
+        vim.api.nvim_win_set_cursor(win, to)
       end
       local count ---@type integer?
       _G.run_inlay_action(_G.capture_hints(function(hints)
@@ -771,78 +618,57 @@ describe('vim.lsp.inlay_hint.action', function()
   end
 
   it('selects hints from the cursor, or from the visual selection', function()
-    eq(1, count_selected_hints({ 8, 18 }))
-    eq(2, count_selected_hints({ 8, 0 }, { 9, 30 }))
+    eq(1, count_selected_hints({ 1, 4 }))
+    eq(2, count_selected_hints({ 1, 0 }, { 2, 10 }))
   end)
 
   it('textEdits inserts the edits of every selected hint', function()
-    local result = run_action('textEdits', { 7, 18 }, { 8, 20 })
-    eq('let my_instance: MyStruct = MyStruct::new(42);', vim.trim(result.lines[8]))
-    eq('let _MyInstance: MyStruct = MyStruct::new(43);', vim.trim(result.lines[9]))
+    eq(
+      { 'let a: T = make();', 'let b: T = make();', 'use(a);' },
+      run_action('textEdits', 0, 1).lines
+    )
   end)
 
   it('location jumps to the label location', function()
-    eq(mocked_files.lib.bufnr, run_action('location', { 7, 18 }, { 7, 20 }).buf)
+    eq(target, run_action('location', 0).buf)
   end)
 
   it('tooltip shows the tooltips, location and command in a floating window', function()
-    -- The path in the tooltip is rendered relative to the client root (unset here), falling
-    -- back to the full path, so it depends on the platform.
-    local lib_path = exec_lua(function()
-      return vim.fn.fnamemodify(vim.uri_to_fname(mocked_files.lib.uri), ':p:~')
-    end)
-
-    local result = run_action('tooltip', { 7, 18 }, { 7, 20 })
-    neq(mocked_files.main.bufnr, result.buf)
-    neq(curr_winid, result.win)
+    local path = n.fn.fnamemodify(api.nvim_buf_get_name(target), ':~')
+    local result = run_action('tooltip', 0)
+    neq(source, result.buf)
+    neq(win, result.win)
     eq({
-      '# `: MyStruct`',
+      '# `: T`',
       '',
-      'plaintext markup tooltip',
+      'plaintext tooltip',
       '',
-      '## `MyStruct`',
+      '## `T`',
       '',
       'string tooltip',
-      ('_Location_: `%s`:0'):format(lib_path),
-      '_Command_: Dummy command',
+      ('_Location_: `%s`:0'):format(path),
+      '_Command_: Test command',
     }, result.lines)
   end)
 
   it('hover shows hover info of the label location in a floating window', function()
-    local result = run_action('hover', { 7, 18 }, { 7, 20 })
-    neq(mocked_files.main.bufnr, result.buf)
-    neq(curr_winid, result.win)
-    eq({
-      '# `MyStruct`',
-      '```rust',
-      'dummy',
-      '```',
-      '',
-      '```rust',
-      'pub struct MyStruct {',
-      '    pub value: i32,',
-      '}',
-      '```',
-      '',
-      '---',
-      '',
-      'size = 4, align = 0x4',
-    }, result.lines)
+    local result = run_action('hover', 0)
+    neq(source, result.buf)
+    neq(win, result.win)
+    eq({ '# `T`', '```rust', 'struct T {}', '```' }, result.lines)
   end)
 
   it('command executes the label command', function()
-    run_action('command', { 7, 18 }, { 7, 20 })
+    run_action('command', 0)
     eq(1, exec_lua('return #_G.command_called'))
   end)
 
-  -- The hint on line 9 carries a bare label and nothing else, so no action applies to it.
   it('takes no action on a hint without the needed attributes', function()
     local buf_count = #api.nvim_list_bufs()
     for _, action in ipairs({ 'textEdits', 'location', 'tooltip', 'hover', 'command' }) do
-      local result = run_action(action, { 9, 21 }, { 9, 24 })
-      -- No jump, no float, and nothing inserted.
-      eq(mocked_files.main.bufnr, result.buf, action)
-      eq(mocked_files.main.lines, result.lines, action)
+      local result = run_action(action, 2)
+      eq(source, result.buf, action)
+      eq(lines, result.lines, action)
       eq(nil, result.client_id, action)
     end
     eq(buf_count, #api.nvim_list_bufs())
