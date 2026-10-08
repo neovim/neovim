@@ -2,6 +2,7 @@
 --- The `vim.lsp.buf_…` functions perform operations for LSP clients attached to the current buffer.
 
 local api = vim.api
+local do_or_select = require('vim._core.util').do_or_select
 local nvim_on = require('vim._core.util').nvim_on
 local lsp = vim.lsp
 local validate = vim.validate
@@ -1007,11 +1008,8 @@ local function hierarchy(method)
 
     if #results == 0 then
       vim.notify('No item resolved', vim.log.levels.WARN)
-    elseif #results == 1 then
-      local client_id, item = results[1][1], results[1][2]
-      request_with_id(client_id, method, { item = item }, nil, bufnr)
     else
-      vim.ui.select(results, {
+      do_or_select(results, {
         prompt = string.format('Select a %s hierarchy item:', kind),
         kind = kind .. 'hierarchy',
         format_item = function(x)
