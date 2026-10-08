@@ -1,7 +1,8 @@
 local api = vim.api
 local fn = vim.fn
 local log = require('vim.lsp.log')
-local nvim_on = require('vim._core.util').nvim_on
+local core_util = require('vim._core.util')
+local nvim_on = core_util.nvim_on
 local util = require('vim.lsp.util')
 -- TODO(oriori1703): remove this import by replacing its usage with `vim.pos`.
 local get_line = require('vim.pos._util').get_line
@@ -431,27 +432,6 @@ function M.enable(enable, filter)
   Capability.enable('inlay_hint', enable, filter)
 end
 
---- A wrapper of `vim.ui.select` that skips the menu when there's only one item.
---- @generic T
---- @param items T[] Arbitrary items
---- @param opts vim.ui.select.Opts Additional options
---- @param on_choice fun(item: T|nil, idx: integer|nil)
-local function do_or_select(items, opts, on_choice)
-  assert(#items > 0, 'Empty items!')
-  if #items == 1 then
-    return on_choice(items[1], 1)
-  end
-  return vim.ui.select(items, opts, on_choice)
-end
-
---- @param path string
---- @param base string?
---- @return string
-local function cleanup_path(path, base)
-  -- Relative to `base`, falling back to a path shortened against $HOME.
-  return base and vim.fs.relpath(base, path) or fn.fnamemodify(path, ':p:~')
-end
-
 --- Build ranges from the cursor or visual selection, one per selected line.
 --- @return vim.Range[]
 local function make_ranges()
@@ -604,7 +584,7 @@ local action_handlers = {
       return false
     end
 
-    do_or_select(hint_labels, {
+    core_util.do_or_select(hint_labels, {
       prompt = 'Location to jump to',
       kind = 'inlay_hint_location',
       --- @param item lsp.InlayHintLabelPart
@@ -613,7 +593,7 @@ local action_handlers = {
         return string.format(
           '%s\t%s:%d',
           item.value,
-          cleanup_path(vim.uri_to_fname(location.uri), ctx.client.root_dir),
+          core_util.shorten_path(vim.uri_to_fname(location.uri), ctx.client.root_dir),
           location.range.start.line
         )
       end,
@@ -744,7 +724,7 @@ local action_handlers = {
       if label.location then
         lines[#lines + 1] = string.format(
           '_Location_: `%s`:%d',
-          cleanup_path(vim.uri_to_fname(label.location.uri), ctx.client.root_dir),
+          core_util.shorten_path(vim.uri_to_fname(label.location.uri), ctx.client.root_dir),
           label.location.range.start.line
         )
       end
@@ -784,7 +764,7 @@ local action_handlers = {
       return false
     end
 
-    do_or_select(hint_labels, {
+    core_util.do_or_select(hint_labels, {
       prompt = 'Command to execute',
       kind = 'inlay_hint_command',
       --- @param item lsp.InlayHintLabelPart
