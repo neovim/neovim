@@ -437,15 +437,15 @@ end
 local function make_ranges()
   local bufnr = api.nvim_get_current_buf()
   local mode = fn.mode()
-  --- End-exclusive column just past the character at `col`, clamped to the line end.
+  --- End-exclusive column past the character and its composing characters, clamped to EOL.
   --- @param line string
   --- @param col integer
   local function after_char(line, col)
-    return col >= #line and #line or col + vim.str_utf_end(line, col + 1) + 1
+    return col >= #line and #line or fn.byteidx(line, fn.charidx(line, col) + 1)
   end
   if mode ~= 'v' and mode ~= 'V' and mode ~= '\22' then
     local cursor = vim.pos.cursor(0)
-    local row, col = cursor[1], cursor[2]
+    local row, col = cursor.row, cursor.col
     return { vim.range(bufnr, row, col, row, after_char(get_line(bufnr, row), col)) }
   end
 
@@ -459,20 +459,18 @@ local function make_ranges()
   do
     local start_pos, end_pos = segment[1], segment[2]
     local row, start_col, end_col = start_pos[2] - 1, start_pos[3] - 1, end_pos[3] - 1
+    local line = get_line(bufnr, row)
+    local past_eol = start_pos[4] > 0 and start_col >= #line
     -- The fourth element is the offset into a multi-cell character. A start that lands
     -- inside one begins at the next character; an end that lands on one covers all of it.
-    if start_pos[4] > 0 or end_pos[4] == 0 then
-      local line = get_line(bufnr, row)
-      if start_pos[4] > 0 then
-        start_col = after_char(line, start_col)
-      end
-      if end_pos[4] == 0 then
-        end_col = after_char(line, end_col)
-      end
+    if start_pos[4] > 0 then
+      start_col = after_char(line, start_col)
     end
-    -- An empty segment (an empty line, or a blockwise column past the end of a short
-    -- line) can end before it starts; `vim.range` rejects those.
-    if start_col <= end_col then
+    if end_pos[4] == 0 then
+      end_col = after_char(line, end_col)
+    end
+    -- Keep empty ranges at real boundaries, but exclude purely virtual segments.
+    if not past_eol and start_col <= end_col then
       ranges[#ranges + 1] = vim.range(bufnr, row, start_col, row, end_col)
     end
   end
@@ -527,12 +525,16 @@ end
 --- @class (private) vim.lsp.inlay_hint.action.internal_context : vim.lsp.inlay_hint.action.context
 --- @field is_valid fun(): boolean
 --- @field win integer
+--- @field cursor vim.Pos
+--- @field stop_watching fun()
 
 --- Whether the action can still show something: the source buffer is unchanged and the
---- window the action started from is still around.
+--- window the action started from still shows the same buffer.
 --- @param ctx vim.lsp.inlay_hint.action.internal_context
 local function can_show(ctx)
-  return ctx.is_valid() and api.nvim_win_is_valid(ctx.win)
+  return ctx.is_valid()
+    and api.nvim_win_is_valid(ctx.win)
+    and api.nvim_win_get_buf(ctx.win) == ctx.cursor.buf
 end
 
 --- Show a Markdown preview in the originating window and report completion.
@@ -540,7 +542,7 @@ end
 --- @param ctx vim.lsp.inlay_hint.action.internal_context
 --- @param on_done vim.lsp.inlay_hint.action.on_done.callback
 local function show_preview(lines, ctx, on_done)
-  if #lines == 0 or not can_show(ctx) then
+  if #lines == 0 or not can_show(ctx) or vim.pos.cursor(ctx.win) ~= ctx.cursor then
     on_done({ buf = ctx.buf })
     return
   end
@@ -579,12 +581,11 @@ end
 --- @return lsp.InlayHint?
 local function single_hint(hints, action)
   if #hints > 1 then
-    vim.schedule(function()
-      vim.notify(
-        ('vim.lsp.inlay_hint.action(%q) only supports a single inlay hint.'):format(action),
-        vim.log.levels.WARN
-      )
-    end)
+    core_util.notify(
+      ('vim.lsp.inlay_hint.action(%q)'):format(action),
+      'only supports a single inlay hint.',
+      vim.log.levels.WARN
+    )
   end
   return hints[1]
 end
@@ -593,6 +594,15 @@ end
 --- @type table<vim.lsp.inlay_hint.action.name, fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.internal_context, on_done: vim.lsp.inlay_hint.action.on_done.callback): boolean>
 local action_handlers = {
   textEdits = function(hints, ctx, on_done)
+    -- Deduplicate whole edit lists, preserving repeated insertions within a hint.
+    vim.list.unique(hints, function(hint)
+      if hint.textEdits then
+        return vim.mpack.encode(vim.tbl_map(function(edit)
+          local start, finish = edit.range.start, edit.range['end']
+          return { start.line, start.character, finish.line, finish.character, edit.newText }
+        end, hint.textEdits))
+      end
+    end)
     local text_edits = {} --- @type lsp.TextEdit[]
     for _, hint in ipairs(hints) do
       vim.list_extend(text_edits, hint.textEdits or {})
@@ -618,7 +628,7 @@ local action_handlers = {
       vim.list_extend(hint_labels, get_hint_labels(item, { 'location' }))
     end
 
-    if vim.tbl_isempty(hint_labels) then
+    if #hint_labels == 0 then
       return false
     end
 
@@ -632,15 +642,17 @@ local action_handlers = {
           '%s\t%s:%d',
           item.value,
           core_util.shorten_path(vim.uri_to_fname(location.uri), ctx.client.root_dir),
-          location.range.start.line
+          location.range.start.line + 1
         )
       end,
-    }, function(item, idx)
-      if idx == nil or not can_show(ctx) then
+    }, function(item)
+      if not item or not can_show(ctx) then
         -- `vim.ui.select` was cancelled
         on_done({ buf = ctx.buf })
         return
       end
+      -- The jump may unload the source; its result now determines completion.
+      ctx.stop_watching()
       api.nvim_set_current_win(ctx.win)
       local shown = util.show_document(
         assert(item.location),
@@ -738,7 +750,7 @@ local action_handlers = {
         lines[#lines + 1] = string.format(
           '_Location_: `%s`:%d',
           core_util.shorten_path(vim.uri_to_fname(label.location.uri), ctx.client.root_dir),
-          label.location.range.start.line
+          label.location.range.start.line + 1
         )
       end
       if label.command then
@@ -777,20 +789,26 @@ local action_handlers = {
       format_item = function(item)
         local entry_line = string.format('%s: %s', item.value, assert(item.command).title)
         if item.tooltip then
-          entry_line = entry_line .. string.format(' (%s)', item.tooltip)
+          local tooltip = type(item.tooltip) == 'table' and item.tooltip.value or item.tooltip
+          entry_line = entry_line .. string.format(' (%s)', tooltip)
         end
         return entry_line
       end,
-    }, function(item, idx)
-      if idx == nil or not ctx.is_valid() then
+    }, function(item)
+      if not item or not ctx.is_valid() then
         -- `vim.ui.select` was cancelled
         on_done({ buf = ctx.buf })
         return
       end
       local cmd = assert(item.command)
+      if ctx.client.commands[cmd.command] or vim.lsp.commands[cmd.command] then
+        -- Local commands finish synchronously and may unload the source themselves.
+        ctx.stop_watching()
+      end
       local success, request_id = ctx.client:exec_cmd(cmd, { bufnr = ctx.buf }, function(err, ...)
         -- A caller-supplied handler replaces the default one, so run it explicitly to
         -- keep the standard error reporting.
+        ---@diagnostic disable-next-line: access-invisible
         assert(ctx.client:_resolve_handler('workspace/executeCommand'))(err, ...)
         on_done({ buf = ctx.buf, client = not err and ctx.client or nil })
       end)
@@ -859,8 +877,9 @@ local action_handlers = {
 
 --- Apply some actions provided by inlay hints in the selected range.
 --- Built-in actions are abandoned if the source buffer changes or is unloaded before
---- they can be applied. The "hover", "tooltip", and "command" actions use only the first
---- hint from each client, and warn if multiple hints were supplied for that client.
+--- they can be applied. Hover and tooltip previews are also abandoned if the invoking
+--- cursor position changes. The "hover", "tooltip", and "command" actions use only the
+--- first hint from each client, and warn if multiple hints were supplied for that client.
 ---
 --- Example usage:
 --- ```lua
@@ -905,15 +924,22 @@ function M.action(action, opts)
   vim.validate('opts.hints', opts.hints, vim.islist, true, 'list')
 
   local win = api.nvim_get_current_win()
+  local cursor = vim.pos.cursor(win)
   local bufnr = api.nvim_get_current_buf()
   local hints = opts.hints
   if hints == nil then
     hints = {}
+    local provider = InlayHint.active[bufnr]
     for _, range in ipairs(make_ranges()) do
       -- Cached hint positions are byte-indexed, so use UTF-8 rather than the
       -- client's encoding. get() includes both endpoints, selecting hints on
       -- either side of the cursor or selected characters.
-      vim.list_extend(hints, M.get({ bufnr = range.buf, range = range:to_lsp('utf-8') }))
+      for _, item in ipairs(M.get({ bufnr = range.buf, range = range:to_lsp('utf-8') })) do
+        local state = provider and provider.client_state[item.client_id]
+        if state and state.current_result.version == util.buf_versions[bufnr] then
+          hints[#hints + 1] = item
+        end
+      end
     end
   else
     for _, item in ipairs(hints) do
@@ -936,12 +962,22 @@ function M.action(action, opts)
 
   local changedtick = api.nvim_buf_is_loaded(bufnr) and api.nvim_buf_get_changedtick(bufnr)
   local finished = false
-  --- @type vim.lsp.inlay_hint.action.on_done.callback
+  local active_client --- @type vim.lsp.Client?
+  local lifecycle_autocmd --- @type integer?
+  local function stop_watching()
+    if lifecycle_autocmd then
+      api.nvim_del_autocmd(lifecycle_autocmd)
+      lifecycle_autocmd = nil
+    end
+  end
+
+  --- @param ctx vim.lsp.inlay_hint.action.on_done.context
   local function on_done(ctx)
     if finished then
       return
     end
     finished = true
+    stop_watching()
     if opts.on_done then
       vim.schedule(function()
         opts.on_done(ctx)
@@ -949,8 +985,20 @@ function M.action(action, opts)
     end
   end
 
+  -- Exiting clients do not reply to pending requests.
+  local function start_watching()
+    if not lifecycle_autocmd and api.nvim_buf_is_loaded(bufnr) then
+      lifecycle_autocmd = nvim_on({ 'LspDetach', 'BufUnload' }, nil, { buf = bufnr }, function(ev)
+        if ev.event == 'BufUnload' or (active_client and ev.data.client_id == active_client.id) then
+          on_done({ buf = bufnr })
+        end
+      end)
+    end
+  end
+
   local function is_valid()
     return not finished
+      and (not active_client or not active_client:is_stopped())
       and api.nvim_buf_is_loaded(bufnr)
       and api.nvim_buf_get_changedtick(bufnr) == changedtick
   end
@@ -967,9 +1015,16 @@ function M.action(action, opts)
       return
     end
     local client = vim.lsp.get_client_by_id(client_ids[idx])
-    if not client or client:is_stopped() then
+    if
+      not client
+      or client:is_stopped()
+      or not client.attached_buffers[bufnr]
+      or (action == 'hover' and not client:supports_method('textDocument/hover', bufnr))
+    then
       return do_action(idx + 1)
     end
+    active_client = client
+    start_watching()
 
     --- @param resolved lsp.InlayHint[]
     local function apply(resolved)
@@ -979,6 +1034,8 @@ function M.action(action, opts)
       end
       local handled
       if type(action) == 'function' then
+        -- Custom handlers own completion once invoked, including buffer changes.
+        stop_watching()
         handled = action(resolved, { buf = bufnr, client = client }, on_done)
       else
         --- @cast action vim.lsp.inlay_hint.action.name
@@ -986,7 +1043,9 @@ function M.action(action, opts)
           buf = bufnr,
           client = client,
           win = win,
+          cursor = cursor,
           is_valid = is_valid,
+          stop_watching = stop_watching,
         }, on_done)
       end
       if not handled and not finished then
@@ -1029,6 +1088,7 @@ function M.action(action, opts)
     end
   end
 
+  start_watching()
   vim.schedule(function()
     do_action(1)
   end)
