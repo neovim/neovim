@@ -827,6 +827,39 @@ void ui_refresh(void)
     }, result)
   end)
 
+  for _, source in ipairs({ 'file', 'string' }) do
+    for _, modeline in ipairs({ 'extends', 'inherits: other' }) do
+      it(
+        'supports indented "' .. modeline .. '" modelines in a query ' .. source .. ' #41352',
+        function()
+          local root = t.tmpname(false)
+          t.finally(function()
+            n.rmdir(root)
+          end)
+          local base_lang = modeline == 'extends' and 'c' or 'other'
+          n.fn.mkdir(root .. '/base/queries/' .. base_lang, 'p')
+          n.fn.mkdir(root .. '/custom/queries/c', 'p')
+          t.write_file(root .. '/base/queries/' .. base_lang .. '/test.scm', '(identifier) @base')
+          local query = '  ; query\n\t;; ' .. modeline .. '\n(identifier) @custom'
+          if source == 'file' then
+            t.write_file(root .. '/custom/queries/c/test.scm', query)
+          else
+            exec_lua(function(text)
+              vim.treesitter.query.set('c', 'test', text)
+            end, query)
+          end
+          eq(
+            { 'base', 'custom' },
+            exec_lua(function(path)
+              vim.opt.runtimepath:prepend({ path .. '/custom', path .. '/base' })
+              return vim.treesitter.query.get('c', 'test').captures
+            end, root)
+          )
+        end
+      )
+    end
+  end
+
   describe('Query:iter_captures', function()
     it('includes metadata for all captured nodes #23664', function()
       insert([[
