@@ -409,6 +409,91 @@ it("'winfixwidth/height' does not leave stray vseps/statuslines", function()
   eq(4, fn.winheight(2))
 end)
 
+describe('closing a window next to a group of windows #42281', function()
+  for _, vertical in ipairs({ true, false }) do
+    for _, before in ipairs({ true, false }) do
+      for _, all_fixed in ipairs({ false, true }) do
+        it(
+          ('distributes freed %s closing %s with %s windows fixed'):format(
+            vertical and 'widths' or 'heights',
+            before and 'before' or 'after',
+            all_fixed and 'all' or 'some'
+          ),
+          function()
+            clear()
+            local screen = Screen.new(120, 40)
+            local split = vertical and 'vsplit' or 'split'
+            local resize = vertical and 'vertical resize' or 'resize'
+            local fixed = vertical and 'winfixwidth' or 'winfixheight'
+            local size = vertical and fn.winwidth or fn.winheight
+            command(split)
+            command(resize .. (vertical and ' 30' or ' 10'))
+            command('setlocal ' .. fixed)
+            local b = fn.win_getid()
+            command(vertical and 'wincmd l' or 'wincmd j')
+            local c = fn.win_getid()
+            if all_fixed then
+              command('setlocal ' .. fixed)
+            end
+            command('botright ' .. (vertical and 'split' or 'vsplit'))
+            local d = fn.win_getid()
+            command((before and 'topleft ' or 'botright ') .. split)
+            command(resize .. (vertical and ' 20' or ' 5'))
+            local freed = size(0) + 1
+            local old_b, old_c, old_d = size(b), size(c), size(d)
+            if not all_fixed then
+              local result = exec_lua(function(target, is_vertical)
+                local function snapshot()
+                  return {
+                    vim.fn.winlayout(),
+                    vim.tbl_map(function(win)
+                      return {
+                        vim.fn.win_screenpos(win),
+                        vim.fn.winwidth(win),
+                        vim.fn.winheight(win),
+                      }
+                    end, vim.api.nvim_tabpage_list_wins(0)),
+                  }
+                end
+                if is_vertical then
+                  vim.o.winheight = 20
+                  vim.o.winminheight = 20
+                else
+                  vim.o.winwidth = 60
+                  vim.o.winminwidth = 60
+                end
+                local original = snapshot()
+                local success, err = pcall(vim.api.nvim_win_set_config, 0, {
+                  win = target,
+                  split = is_vertical and 'above' or 'left',
+                })
+                local restored = snapshot()
+                vim.o.winminheight = 1
+                vim.o.winheight = 1
+                vim.o.winminwidth = 1
+                vim.o.winwidth = 20
+                return { success, err, original, restored }
+              end, b, vertical)
+              eq(false, result[1])
+              t.matches('E36: Not enough room', result[2])
+              eq(result[3], result[4])
+            end
+            command('close')
+            if not all_fixed then
+              eq(old_b, size(b))
+            end
+            eq(old_b + old_c + 1 + freed, size(b) + size(c) + 1)
+            eq(old_d + freed, size(d))
+            -- Resizing also checks that nested frames filled the vacated space.
+            screen:try_resize(121, 41)
+            eq(vertical and 121 or 39, size(d))
+          end
+        )
+      end
+    end
+  end
+end)
+
 -- oldtest: Test_resize_from_another_tabpage()
 it('resizing window from another tabpage', function()
   clear()

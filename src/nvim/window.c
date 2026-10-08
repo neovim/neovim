@@ -3429,13 +3429,21 @@ win_T *winframe_remove(win_T *win, int *dirp, tabpage_T *tp, frame_T **unflat_al
   // Remove this frame from the list of frames.
   frame_remove(frp_close);
 
+  // Respect fixed sizes when possible, but fill the vacated space even if
+  // all windows in a row or column have a fixed size.
   if (*dirp == 'v') {
-    frame_new_height(altfr, altfr->fr_height + frp_close->fr_height,
-                     altfr == frp_close->fr_next, false, false);
+    int height = altfr->fr_height + frp_close->fr_height;
+    frame_new_height(altfr, height, altfr == frp_close->fr_next, true, false);
+    if (!frame_check_height(altfr, height)) {
+      frame_new_height(altfr, height, altfr == frp_close->fr_next, false, false);
+    }
   } else {
     assert(*dirp == 'h');
-    frame_new_width(altfr, altfr->fr_width + frp_close->fr_width,
-                    altfr == frp_close->fr_next, false);
+    int width = altfr->fr_width + frp_close->fr_width;
+    frame_new_width(altfr, width, altfr == frp_close->fr_next, true);
+    if (!frame_check_width(altfr, width)) {
+      frame_new_width(altfr, width, altfr == frp_close->fr_next, false);
+    }
   }
 
   // If the altframe wasn't adjacent and left/above, resizing it will have
@@ -3635,11 +3643,17 @@ void winframe_restore(win_T *wp, int dir, frame_T *unflat_altfr)
   // Restore the lost room that was redistributed to the altframe.  Also
   // adjusts window sizes to fit restored statuslines/separators, if needed.
   if (dir == 'v') {
-    frame_new_height(unflat_altfr, unflat_altfr->fr_height - frp->fr_height,
-                     unflat_altfr == frp->fr_next, false, false);
+    int height = unflat_altfr->fr_height - frp->fr_height;
+    frame_new_height(unflat_altfr, height, unflat_altfr == frp->fr_next, true, false);
+    if (!frame_check_height(unflat_altfr, height)) {
+      frame_new_height(unflat_altfr, height, unflat_altfr == frp->fr_next, false, false);
+    }
   } else if (dir == 'h') {
-    frame_new_width(unflat_altfr, unflat_altfr->fr_width - frp->fr_width,
-                    unflat_altfr == frp->fr_next, false);
+    int width = unflat_altfr->fr_width - frp->fr_width;
+    frame_new_width(unflat_altfr, width, unflat_altfr == frp->fr_next, true);
+    if (!frame_check_width(unflat_altfr, width)) {
+      frame_new_width(unflat_altfr, width, unflat_altfr == frp->fr_next, false);
+    }
   }
 
   // Recompute window positions within the parent frame to restore them.
