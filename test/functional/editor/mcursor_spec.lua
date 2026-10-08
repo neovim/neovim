@@ -858,6 +858,24 @@ describe('multicursor', function()
   end)
 
   describe('composite/mapping', function()
+    for _, mapping in ipairs({ 'Lua', '<Cmd>', ':' }) do
+      it('replays getcharstr() input in Visual ' .. mapping .. ' mappings #42280', function()
+        n.exec_lua(function(kind)
+          _G.insert_input = function()
+            local char = vim.fn.getcharstr()
+            local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+            vim.api.nvim_buf_set_text(0, row - 1, col, row - 1, col, { char })
+          end
+          local rhs = kind == 'Lua' and _G.insert_input
+            or (kind == '<Cmd>' and '<Cmd>lua insert_input()<CR>' or ':<C-u>lua insert_input()<CR>')
+          vim.keymap.set('x', 'gh', rhs)
+        end, mapping)
+        cursors({ 'aaa', 'bbb', 'ccc' })
+        feed('vghx')
+        eq({ 'xaaa', 'xbbb', 'xccc' }, get_lines())
+      end)
+    end
+
     it('Visual-mode mapping that creates cursors (Q) #41694', function()
       command('xmap I Q0i')
 

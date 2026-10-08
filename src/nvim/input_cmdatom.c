@@ -1513,6 +1513,7 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
       = atom_visual_pending() ? atom_from_frame(ca, root, old->visual.active) : (CmdAtom){ 0 };
     if (own.keys != NULL) {
       // This frame's children ended the session (":norm!" op in Lua mapping). #41956
+      atom_payload_append(&own, old);
       char *suffix = own.keys;
       own.keys = NULL;
       atom_free(&own);
@@ -1599,6 +1600,7 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
     } else if (vis && ca->cmdchar == K_LUA) {
       // Lua mapping moved the selection. Ignore subatoms, use use atom_from_frame() instead. #41956
       CmdAtom atom = atom_from_frame(ca, root, old->visual.active);
+      atom_payload_append(&atom, old);
       atom.origin = old->origin;
       atom_push(false, &atom);
     } else if (replayable && (!vis || ((keycls & kKeyPayload) == 0 && !failed))) {
