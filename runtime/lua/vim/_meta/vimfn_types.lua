@@ -67,6 +67,7 @@ error('Cannot require a meta file')
 --- @field wincol integer
 --- @field line integer
 --- @field column integer
+--- @field coladd integer
 
 --- @class vim.fn.getqflist.what
 --- @field all? integer
