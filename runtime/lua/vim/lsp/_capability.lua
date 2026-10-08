@@ -159,31 +159,34 @@ function M.enable(name, enable, filter)
 
   enable = enable == nil or enable
   filter = filter or {}
-  local bufnr = filter.bufnr and vim._resolve_bufnr(filter.bufnr)
   local client_id = filter.client_id
+  local bufnr = filter.bufnr and vim._resolve_bufnr(filter.bufnr)
 
   local var = make_enable_var(name)
   local client = client_id and vim.lsp.get_client_by_id(client_id)
+  local Capability = all_capabilities[name]
+
+  if client and bufnr then
+    client._buf_enabled_capabilities[bufnr][name] = enable
+  elseif client then
+    client._enabled_capabilities[name] = enable
+  elseif bufnr then
+    vim.b[bufnr][var] = enable
+  else
+    vim.g[var] = enable
+  end
 
   -- Attach or detach the client and its capability
-  -- based on the user’s latest marker value.
-  for _, it_client in ipairs(client and { client } or vim.lsp.get_clients()) do
-    for _, it_bufnr in
-      ipairs(
-        bufnr and { it_client.attached_buffers[bufnr] and bufnr }
-          or vim.tbl_keys(it_client.attached_buffers)
-          or {}
-      )
-    do
-      if enable ~= M.is_enabled(name, { bufnr = it_bufnr, client_id = it_client.id }) then
-        local Capability = all_capabilities[name]
+  for _, it_client in ipairs(client_id and { client } or vim.lsp.get_clients()) do
+    if it_client:supports_method(Capability.method) then
+      local affected_buffers = bufnr and { it_client.attached_buffers[bufnr] and bufnr }
+        or vim.tbl_keys(it_client.attached_buffers)
 
-        if enable then
-          if it_client:supports_method(Capability.method) then
-            local capability = Capability.active[it_bufnr] or Capability:new(it_bufnr)
-            if not capability.client_state[it_client.id] then
-              capability:on_attach(it_client.id)
-            end
+      for _, it_bufnr in ipairs(affected_buffers) do
+        if M.is_enabled(name, { bufnr = it_bufnr, client_id = it_client.id }) then
+          local capability = Capability.active[it_bufnr] or Capability:new(it_bufnr)
+          if not capability.client_state[it_client.id] then
+            capability:on_attach(it_client.id)
           end
         else
           local capability = Capability.active[it_bufnr]
@@ -197,55 +200,41 @@ function M.enable(name, enable, filter)
       end
     end
   end
-
-  -- Updates the marker value.
-  -- If local marker matches the global marker, set it to nil
-  -- so that `is_enable` falls back to the global marker.
-  if client then
-    if enable == vim.g[var] then
-      client._enabled_capabilities[name] = nil
-    else
-      client._enabled_capabilities[name] = enable
-    end
-  elseif bufnr then
-    if enable == vim.g[var] then
-      vim.b[bufnr][var] = nil
-    else
-      vim.b[bufnr][var] = enable
-    end
-  else
-    vim.g[var] = enable
-    for _, it_bufnr in ipairs(api.nvim_list_bufs()) do
-      if api.nvim_buf_is_loaded(it_bufnr) and vim.b[it_bufnr][var] == enable then
-        vim.b[it_bufnr][var] = nil
-      end
-    end
-    for _, it_client in ipairs(vim.lsp.get_clients()) do
-      if it_client._enabled_capabilities[name] == enable then
-        it_client._enabled_capabilities[name] = nil
-      end
-    end
-  end
 end
 
 ---@param name vim.lsp.capability.Name
 ---@param filter? vim.lsp.capability.enable.Filter
+---@return boolean
 function M.is_enabled(name, filter)
   vim.validate('name', name, 'string')
   vim.validate('filter', filter, 'table', true)
 
   filter = filter or {}
-  local bufnr = filter.bufnr and vim._resolve_bufnr(filter.bufnr)
-  local client_id = filter.client_id
-
   local var = make_enable_var(name)
-  local client = client_id and vim.lsp.get_client_by_id(client_id)
+  local enabled_globally = vim.g[var] or false ---@type boolean
 
-  -- As a fallback when not explicitly enabled or disabled:
-  -- Clients are treated as "enabled" since their capabilities can control behavior.
-  -- Buffers are treated as "disabled" to allow users to enable them as needed.
-  return vim.nonnil(client and client._enabled_capabilities[name], vim.g[var], true)
-    and vim.nonnil(bufnr and vim.b[bufnr][var], vim.g[var], false)
+  local client_id = filter.client_id
+  local client = client_id and vim.lsp.get_client_by_id(client_id)
+  local enabled_per_client = client and client._enabled_capabilities[name]
+
+  local buf = filter.bufnr and vim._resolve_bufnr(filter.bufnr)
+  local enabled_per_buf = buf and vim.b[buf][var] --[[@as boolean?]]
+
+  if buf and client_id then
+    if client and client._buf_enabled_capabilities[buf][name] ~= nil then
+      return client._buf_enabled_capabilities[buf][name]
+    else
+      enabled_per_client = vim.nonnil(enabled_per_client, enabled_globally) --[[@as boolean]]
+      enabled_per_buf = vim.nonnil(enabled_per_buf, true) --[[@as boolean]]
+      return enabled_per_client and enabled_per_buf
+    end
+  elseif filter.bufnr then
+    return vim.nonnil(enabled_per_buf, enabled_globally) --[[@as boolean]]
+  elseif client_id then
+    return vim.nonnil(enabled_per_client, enabled_globally) --[[@as boolean]]
+  end
+
+  return enabled_globally
 end
 
 M.all = all_capabilities
