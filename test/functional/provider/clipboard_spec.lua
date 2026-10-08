@@ -7,6 +7,7 @@ local Screen = require('test.functional.ui.screen')
 local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, feed, insert = n.clear, n.feed, n.insert
 local expect, eq, eval, source = n.expect, t.eq, n.eval, n.source
+local matches, pcall_err = t.matches, t.pcall_err
 local command = n.command
 local api = n.api
 
@@ -290,6 +291,23 @@ describe('clipboard', function()
       eq('', eval('provider#clipboard#Error()'))
       eq('custom', eval('provider#clipboard#Executable()'))
       eq('hello\nv', eval("getreg('*')"))
+    end)
+
+    it('can return a Blob, which is split into lines', function()
+      source([[let g:clipboard = {
+              \  'name': 'custom',
+              \  'copy': { '*': {lines, regtype ->  0} },
+              \  'paste': { '*': {-> [g:dummy_clipboard, 'v']} },
+              \}]])
+
+      -- "a\nb\0c\n": NUL becomes NL within its line (:help NL-used-for-Nul) and
+      -- a trailing NL yields a trailing empty line.
+      command('let g:dummy_clipboard = 0z610a6200630a')
+      eq({ 'a', 'b\nc', '' }, eval("getreg('*', 1, 1)"))
+      eq('v', eval("getregtype('*')"))
+
+      command('let g:dummy_clipboard = v:_null_blob')
+      matches('clipboard: provider returned invalid data', pcall_err(command, "call getreg('*')"))
     end)
   end)
 end)
