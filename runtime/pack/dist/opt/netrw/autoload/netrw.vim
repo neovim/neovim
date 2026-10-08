@@ -18,6 +18,7 @@
 " 2025 Nov 28 by Vim Project fix undefined variable in *NetrwMenu #18829
 " 2025 Dec 26 by Vim Project fix use of g:netrw_cygwin #19015
 " 2026 Jan 19 by Vim Project do not create swapfiles #18854
+" 2026 May 17 by Vim Project fix code injection via NetrwBookHistSave()
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -2935,7 +2936,7 @@ function s:NetrwBookHistSave()
         while ( first || cnt != g:netrw_dirhistcnt )
             let lastline= lastline + 1
             if exists("g:netrw_dirhist_{cnt}")
-                call setline(lastline,'let g:netrw_dirhist_'.cnt."='".g:netrw_dirhist_{cnt}."'")
+                call setline(lastline,'let g:netrw_dirhist_'.cnt.'='.string(g:netrw_dirhist_{cnt}))
             endif
             let first   = 0
             let cnt     = ( cnt - 1 ) % g:netrw_dirhistmax
