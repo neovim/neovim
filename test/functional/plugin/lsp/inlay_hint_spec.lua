@@ -1042,7 +1042,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
     )
   end)
 
-  it('retains hint order when resolve responses arrive in reverse order', function()
+  it('retains successful hint order when resolve responses arrive in reverse order', function()
     eq(
       { 'first', 'second' },
       exec_lua(function()
@@ -1050,7 +1050,11 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
         local client = start_hint_client({ inlayHintProvider = { resolveProvider = true } }, {
           ['inlayHint/resolve'] = function(_, params, cb)
             pending[#pending + 1] = function()
-              cb(nil, params)
+              if params.label == 'failed' then
+                cb({ code = -32603, message = 'failed' })
+              else
+                cb(nil, params)
+              end
             end
           end,
         })
@@ -1059,11 +1063,16 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
           capture_hints(function(hints)
             labels = { hints[1].label, hints[2].label }
           end),
-          { hint_entry(client, { label = 'first' }), hint_entry(client, { label = 'second' }) },
+          {
+            hint_entry(client, { label = 'first' }),
+            hint_entry(client, { label = 'failed' }),
+            hint_entry(client, { label = 'second' }),
+          },
           function()
             assert(vim.wait(1000, function()
-              return #pending == 2
+              return #pending == 3
             end))
+            pending[3]()
             pending[2]()
             pending[1]()
           end
@@ -1231,6 +1240,38 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
             label = { { value = 'T', location = loc }, { value = 'T', location = loc } },
           }),
         })
+        return result.lines
+      end)
+    )
+  end)
+
+  it('retains hover label order with reversed replies and an empty response', function()
+    eq(
+      { '# `A`', 'docs', '', '# `C`', 'docs' },
+      exec_lua(function()
+        local pending = {}
+        local client = start_hint_client(nil, {
+          ['textDocument/hover'] = function(_, _, cb)
+            pending[#pending + 1] = cb
+          end,
+        })
+        local loc = label_loc()
+        local result = run_inlay_action('hover', {
+          hint_entry(client, {
+            label = {
+              { value = 'A', location = loc },
+              { value = 'B', location = loc },
+              { value = 'C', location = loc },
+            },
+          }),
+        }, function()
+          assert(vim.wait(1000, function()
+            return #pending == 3
+          end))
+          pending[3](nil, { contents = 'docs' })
+          pending[2](nil, nil)
+          pending[1](nil, { contents = 'docs' })
+        end)
         return result.lines
       end)
     )

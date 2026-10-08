@@ -535,6 +535,44 @@ local function can_show(ctx)
   return ctx.is_valid() and api.nvim_win_is_valid(ctx.win)
 end
 
+--- Show a Markdown preview in the originating window and report completion.
+--- @param lines string[]
+--- @param ctx vim.lsp.inlay_hint.action.internal_context
+--- @param on_done vim.lsp.inlay_hint.action.on_done.callback
+local function show_preview(lines, ctx, on_done)
+  if #lines == 0 or not can_show(ctx) then
+    on_done({ buf = ctx.buf })
+    return
+  end
+  local buf = api.nvim_win_call(ctx.win, function()
+    return util.open_floating_preview(lines, 'markdown')
+  end)
+  on_done({ buf = buf, client = ctx.client })
+end
+
+--- Collect a non-empty batch of replies in input order, omitting nil results.
+--- @generic T
+--- @param count integer
+--- @param on_complete fun(results: T[])
+--- @return fun(index: integer, result: T?)
+local function collect_results(count, on_complete)
+  local results = {} --- @type table<integer, T>
+  local remaining = count
+  return function(index, result)
+    results[index] = result
+    remaining = remaining - 1
+    if remaining == 0 then
+      local ordered = {} --- @type T[]
+      for i = 1, count do
+        if results[i] ~= nil then
+          ordered[#ordered + 1] = results[i]
+        end
+      end
+      on_complete(ordered)
+    end
+  end
+end
+
 --- The hint an action that handles a single hint should use, warning when several were given.
 --- @param hints lsp.InlayHint[]
 --- @param action vim.lsp.inlay_hint.action.name
@@ -628,49 +666,24 @@ local action_handlers = {
       return false
     end
 
-    local function abort()
-      on_done({ buf = ctx.buf })
-    end
-
     --- Assemble the sections in label order and show them.
-    ---@param sections table<integer, string[]>
+    ---@param sections string[][]
     local function show(sections)
-      if not can_show(ctx) then
-        return abort()
-      end
       local lines = {} --- @type string[]
-      for i = 1, #hint_labels do
-        if sections[i] then
-          if #lines > 0 then
-            -- Blank line between label parts
-            lines[#lines + 1] = ''
-          end
-          vim.list_extend(lines, sections[i])
+      for _, section in ipairs(sections) do
+        if #lines > 0 then
+          -- Blank line between label parts
+          lines[#lines + 1] = ''
         end
+        vim.list_extend(lines, section)
       end
-      if #lines == 0 then
-        return abort()
-      end
-      local float_buf = api.nvim_win_call(ctx.win, function()
-        return util.open_floating_preview(lines, 'markdown')
-      end)
-      on_done({ client = ctx.client, buf = float_buf })
+      show_preview(lines, ctx, on_done)
     end
 
     -- The locations are independent, so request them all at once and assemble the
     -- hover once the last reply arrives.
-    local sections = {} --- @type table<integer, string[]>
-    local remaining = #hint_labels
+    local complete = collect_results(#hint_labels, show)
     for i, item in ipairs(hint_labels) do
-      ---@param section string[]?
-      local function complete(section)
-        sections[i] = section
-        remaining = remaining - 1
-        if remaining == 0 then
-          show(sections)
-        end
-      end
-
       -- `get_hint_labels` makes sure `item` has a location attribute
       local label_loc = assert(item.location)
       ---@type lsp.HoverParams
@@ -685,14 +698,14 @@ local action_handlers = {
         function(_, result)
           local md_lines = result and util.convert_input_to_markdown_lines(result.contents) or {}
           if #md_lines == 0 then
-            return complete(nil)
+            return complete(i, nil)
           end
-          complete(vim.list_extend({ string.format('# `%s`', item.value) }, md_lines))
+          complete(i, vim.list_extend({ string.format('# `%s`', item.value) }, md_lines))
         end,
         ctx.buf
       )
       if not success then
-        complete(nil)
+        complete(i, nil)
       end
     end
 
@@ -742,14 +755,7 @@ local action_handlers = {
       return false
     end
 
-    if not can_show(ctx) then
-      on_done({ buf = ctx.buf })
-      return true
-    end
-    local buf = api.nvim_win_call(ctx.win, function()
-      return util.open_floating_preview(lines, 'markdown')
-    end)
-    on_done({ buf = buf, client = ctx.client })
+    show_preview(lines, ctx, on_done)
     return true
   end,
 
@@ -997,25 +1003,10 @@ function M.action(action, opts)
     end
 
     -- Resolve in parallel, retaining input order even when replies arrive out of order.
-    local remaining = #client_hints
-    local resolved = {} --- @type table<integer, lsp.InlayHint>
+    local complete = collect_results(#client_hints, apply)
     for i, hint in ipairs(client_hints) do
-      --- @param result lsp.InlayHint?
-      local function complete(result)
-        resolved[i] = result
-        remaining = remaining - 1
-        if remaining == 0 then
-          local ordered = {} --- @type lsp.InlayHint[]
-          for j = 1, #client_hints do
-            if resolved[j] then
-              ordered[#ordered + 1] = resolved[j]
-            end
-          end
-          apply(ordered)
-        end
-      end
       if action == 'textEdits' and hint.textEdits ~= nil then
-        complete(hint)
+        complete(i, hint)
       else
         -- Only `position` is replaced, so the rest can stay shared with `hint`.
         local params = vim.tbl_extend('force', {}, hint) --[[@as lsp.InlayHint]]
@@ -1023,16 +1014,16 @@ function M.action(action, opts)
           vim.pos(bufnr, hint.position.line, hint.position.character):to_lsp(client.offset_encoding)
         local success = client:request('inlayHint/resolve', params, function(err, result)
           if err or not result then
-            complete(nil)
+            complete(i, nil)
           else
             local merged = vim.tbl_deep_extend('force', hint, result)
             -- Keep handler positions byte-indexed, like get(), without changing the cache.
             merged.position = hint.position
-            complete(merged)
+            complete(i, merged)
           end
         end, bufnr)
         if not success then
-          complete(nil)
+          complete(i, nil)
         end
       end
     end
