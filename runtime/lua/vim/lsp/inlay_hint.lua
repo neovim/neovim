@@ -515,6 +515,7 @@ end
 --- @field win integer
 --- @field cursor vim.Pos
 --- @field stop_watching fun()
+--- @field wrap_handler fun(handler: lsp.Handler, on_cancel: fun()): lsp.Handler, fun(request_id: integer?)
 
 --- Whether the action can still show something: the source buffer is unchanged and the
 --- window the action started from still shows the same buffer.
@@ -697,9 +698,7 @@ local action_handlers = {
         textDocument = { uri = label_loc.uri },
         position = label_loc.range.start,
       }
-      local success = ctx.client:request(
-        'textDocument/hover',
-        hover_param,
+      local handler, watch = ctx.wrap_handler(
         ---@param result lsp.Hover?
         function(_, result)
           local md_lines = result and util.convert_input_to_markdown_lines(result.contents) or {}
@@ -708,9 +707,19 @@ local action_handlers = {
           end
           complete(i, vim.list_extend({ string.format('# `%s`', item.value) }, md_lines))
         end,
+        function()
+          complete(i, nil)
+        end
+      )
+      local success, request_id = ctx.client:request(
+        'textDocument/hover',
+        hover_param,
+        handler,
         vim.uri_to_bufnr(label_loc.uri)
       )
-      if not success then
+      if success then
+        watch(request_id)
+      else
         complete(i, nil)
       end
     end
@@ -799,19 +808,17 @@ local action_handlers = {
         -- Local commands finish synchronously and may unload the source themselves.
         ctx.stop_watching()
       end
-      local ok, success, request_id = pcall(
-        ctx.client.exec_cmd,
-        ctx.client,
-        cmd,
-        { bufnr = ctx.buf },
-        function(err, ...)
-          -- A caller-supplied handler replaces the default one, so run it explicitly to
-          -- keep the standard error reporting.
-          ---@diagnostic disable-next-line: access-invisible
-          assert(ctx.client:_resolve_handler('workspace/executeCommand'))(err, ...)
-          on_done({ buf = ctx.buf, client = not err and ctx.client or nil })
-        end
-      )
+      local handler, watch = ctx.wrap_handler(function(err, ...)
+        -- A caller-supplied handler replaces the default one, so run it explicitly to
+        -- keep the standard error reporting.
+        ---@diagnostic disable-next-line: access-invisible
+        assert(ctx.client:_resolve_handler('workspace/executeCommand'))(err, ...)
+        on_done({ buf = ctx.buf, client = not err and ctx.client or nil })
+      end, function()
+        on_done({ buf = ctx.buf })
+      end)
+      local ok, success, request_id =
+        pcall(ctx.client.exec_cmd, ctx.client, cmd, { bufnr = ctx.buf }, handler)
       if not ok then
         on_done({ buf = ctx.buf })
         vim.notify(tostring(success), vim.log.levels.ERROR)
@@ -820,6 +827,8 @@ local action_handlers = {
       elseif not request_id then
         -- The command ran locally, so the handler above is never called.
         on_done({ buf = ctx.buf, client = ctx.client })
+      else
+        watch(request_id)
       end
     end)
 
@@ -967,11 +976,18 @@ function M.action(action, opts)
   local finished = false
   local active_client --- @type vim.lsp.Client?
   local lifecycle_autocmd --- @type integer?
+  local request_autocmd --- @type integer?
+  local pending_requests = vim.defaulttable() --- @type table<integer, table<integer, fun()>>
   local function stop_watching()
     if lifecycle_autocmd then
       api.nvim_del_autocmd(lifecycle_autocmd)
       lifecycle_autocmd = nil
     end
+    if request_autocmd then
+      api.nvim_del_autocmd(request_autocmd)
+      request_autocmd = nil
+    end
+    pending_requests = vim.defaulttable()
   end
 
   --- @param ctx vim.lsp.inlay_hint.action.on_done.context
@@ -996,6 +1012,45 @@ function M.action(action, opts)
           on_done({ buf = bufnr })
         end
       end)
+      -- Hover requests can belong to another buffer, so watch all request completions.
+      request_autocmd = nvim_on('LspRequest', nil, function(ev)
+        local data = ev.data
+        local pending = pending_requests[data.client_id]
+        local on_cancel = pending[data.request_id]
+        if data.request.type == 'complete' and on_cancel then
+          pending[data.request_id] = nil
+          -- RPC signals completion before invoking the response handler, but suppresses
+          -- that handler for RequestCancelled. Give normal replies time to run first.
+          vim.schedule(function()
+            if not finished then
+              on_cancel()
+            end
+          end)
+        end
+      end)
+    end
+  end
+
+  --- Wrap a response handler and return a function to watch its request ID for cancellation.
+  --- @param handler lsp.Handler
+  --- @param on_cancel fun()
+  --- @return lsp.Handler
+  --- @return fun(request_id: integer?)
+  local function wrap_handler(handler, on_cancel)
+    local client = assert(active_client)
+    local replied = false
+    return function(...)
+      replied = true
+      return handler(...)
+    end, function(request_id)
+      -- In-process servers may have already replied before request() returns.
+      if request_id and not replied and not finished then
+        pending_requests[client.id][request_id] = function()
+          if not replied then
+            on_cancel()
+          end
+        end
+      end
     end
   end
 
@@ -1049,6 +1104,7 @@ function M.action(action, opts)
           cursor = cursor,
           is_valid = is_valid,
           stop_watching = stop_watching,
+          wrap_handler = wrap_handler,
         }, on_done)
       end
       if not handled and not finished then
@@ -1074,7 +1130,7 @@ function M.action(action, opts)
         local params = vim.tbl_extend('force', {}, hint) --[[@as lsp.InlayHint]]
         params.position =
           vim.pos(bufnr, hint.position.line, hint.position.character):to_lsp(client.offset_encoding)
-        local success = client:request('inlayHint/resolve', params, function(err, result)
+        local handler, watch = wrap_handler(function(err, result)
           if err or not result then
             complete(i, nil)
           else
@@ -1083,8 +1139,13 @@ function M.action(action, opts)
             merged.position = hint.position
             complete(i, merged)
           end
-        end, bufnr)
-        if not success then
+        end, function()
+          complete(i, nil)
+        end)
+        local success, request_id = client:request('inlayHint/resolve', params, handler, bufnr)
+        if success then
+          watch(request_id)
+        else
           complete(i, nil)
         end
       end
