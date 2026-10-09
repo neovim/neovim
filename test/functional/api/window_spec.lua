@@ -761,6 +761,32 @@ describe('API/win', function()
       eq('', fn.getcmdwintype())
     end)
 
+    it(
+      "respects 'winfix{width,height}' when freed space goes to a group of windows #42281",
+      function()
+        for _, vertical in ipairs({ true, false }) do
+          clear()
+          local opt = vertical and 'winfixwidth' or 'winfixheight'
+          local size = vertical and api.nvim_win_get_width or api.nvim_win_get_height
+          local v, other = vertical and 'vertical ' or '', vertical and '' or 'vertical '
+
+          command(('%ssplit | %sresize %d | setlocal %s'):format(v, v, vertical and 30 or 5, opt))
+          local b = curwin()
+          command(vertical and 'wincmd l' or 'wincmd j')
+          local c = curwin()
+          command(('botright %ssplit'):format(other))
+          command(('topleft %ssplit | %sresize 4'):format(v, v))
+          local a = curwin()
+
+          local b0, c0, a0 = size(b), size(c), size(a)
+          api.nvim_win_close(a, false)
+
+          eq(b0, size(b), opt)
+          eq(c0 + a0 + 1, size(c), opt)
+        end
+      end
+    )
+
     it('closing current (float) window of another tabpage #15313 #40745', function()
       command('tabedit')
       command('botright split')
@@ -3847,6 +3873,7 @@ describe('API/win', function()
         function with_len(...)
           return select('#', ...), { ... }
         end
+
         function test(fn)
           local len, res = with_len(vim.api.nvim_win_call(other, fn))
           -- convert to serializable vim.NIL

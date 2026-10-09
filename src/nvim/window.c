@@ -3431,11 +3431,11 @@ win_T *winframe_remove(win_T *win, int *dirp, tabpage_T *tp, frame_T **unflat_al
 
   if (*dirp == 'v') {
     frame_new_height(altfr, altfr->fr_height + frp_close->fr_height,
-                     altfr == frp_close->fr_next, false, false);
+                     altfr == frp_close->fr_next, !frame_fixed_height(altfr), false);
   } else {
     assert(*dirp == 'h');
     frame_new_width(altfr, altfr->fr_width + frp_close->fr_width,
-                    altfr == frp_close->fr_next, false);
+                    altfr == frp_close->fr_next, !frame_fixed_width(altfr));
   }
 
   // If the altframe wasn't adjacent and left/above, resizing it will have
