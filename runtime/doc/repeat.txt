@@ -455,6 +455,10 @@ g CTRL-A		During a multicursor session, inserts an ascending
 							*[C*
 [C			Jump to the [count]'th previous cursor.
 
+			Without a multicursor session, "]C" and "[C" jump to
+			the previous session's cursors (|gQ|), and work as an
+			|exclusive| motion: "d]C" deletes to the next one.
+
 
 API								 *mcursor-api*
 

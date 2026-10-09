@@ -10,6 +10,8 @@ local M = {}
 local ns = vim.api.nvim_create_namespace('nvim.multicursor')
 --- Selection-end cursors, during a Visual selection.
 local vcur_ns = vim.api.nvim_create_namespace('nvim.multicursor.cursor')
+--- Previous session's cursors, snapshotted on clear ("gQ"). Mark id 1 is the primary cursor.
+local last_ns = vim.api.nvim_create_namespace('nvim.multicursor.last')
 --- Kitty cursors protocol: host terminal supports the protocol.
 local tty_cursors = false
 local last_seq = '' ---@type string
@@ -164,16 +166,22 @@ function M.enable(enable)
 end
 
 --- ]C/[C: Jumps to the [count]'th next/previous cursor.
+--- Without a session, jumps to the previous session's cursors ("gQ").
 --- @param forward boolean
 --- @param count integer?
 --- @return boolean moved
 function M.jump(forward, count)
   local last = vim.api.nvim_buf_line_count(0)
   local positions = {} ---@type vim.Pos[]
-  for _, m in ipairs(vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {})) do
-    if m[2] < last then
-      positions[#positions + 1] = vim.pos(0, m[2], m[3])
+  local jump_ns = M.active() and ns or last_ns
+  local prev ---@type vim.Pos?
+  for _, m in ipairs(vim.api.nvim_buf_get_extmarks(0, jump_ns, 0, -1, {})) do
+    local pos = vim.pos(0, m[2], m[3])
+    -- Skip duplicates (sorted): the "last" primary (mark 1) may share a position with a cursor.
+    if m[2] < last and pos ~= prev then
+      positions[#positions + 1] = pos
     end
+    prev = pos
   end
   local n = #positions
   if n == 0 then
@@ -207,7 +215,6 @@ function M.restore()
     vim.api.nvim_echo({ { 'gQ: multicursor session is active' } }, true, {})
     return
   end
-  local last_ns = vim.api.nvim_create_namespace('nvim.multicursor.last')
   local lastrow = vim.api.nvim_buf_line_count(0)
   local primary ---@type [integer, integer]?
   for _, m in ipairs(vim.api.nvim_buf_get_extmarks(0, last_ns, 0, -1, {})) do
