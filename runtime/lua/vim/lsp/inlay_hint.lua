@@ -526,17 +526,21 @@ local function can_show(ctx)
     and api.nvim_win_get_buf(ctx.win) == ctx.cursor.buf
 end
 
---- Convert preview content to Markdown, escaping explicit plaintext content.
+--- Convert preview content to Markdown. Explicit plaintext is fenced rather than
+--- interpreted, as `vim.lsp.buf.hover()` does when mixing it with other sections.
 ---@diagnostic disable-next-line: deprecated
 ---@param input lsp.MarkedString|lsp.MarkedString[]|lsp.MarkupContent
 ---@return string[]
 local function to_markdown_lines(input)
-  local lines = util.convert_input_to_markdown_lines(input)
-  if type(input) == 'table' and input.kind == 'plaintext' then
-    for i, line in ipairs(lines) do
-      lines[i] = line:gsub('(%p)', '\\%1')
-    end
+  if type(input) ~= 'table' or input.kind ~= 'plaintext' then
+    return util.convert_input_to_markdown_lines(input)
   end
+  local lines = vim.split(input.value or '', '\n', { trimempty = true })
+  if #lines == 0 then
+    return lines
+  end
+  table.insert(lines, 1, '```')
+  lines[#lines + 1] = '```'
   return lines
 end
 
@@ -806,7 +810,8 @@ local action_handlers = {
       format_item = function(item)
         local entry_line = string.format('%s: %s', item.value, assert(item.command).title)
         if item.tooltip then
-          local tooltip = type(item.tooltip) == 'table' and item.tooltip.value or item.tooltip
+          local tooltip = type(item.tooltip) == 'table' and (item.tooltip.value or '')
+            or item.tooltip
           entry_line = entry_line .. string.format(' (%s)', tooltip)
         end
         return entry_line
