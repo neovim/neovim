@@ -350,6 +350,9 @@ function M.get(filter)
 end
 
 --- Turn an inlay hint into the visible text, merging any label parts.
+--- Examples:
+--- - { label = ": number" } => ": number"
+--- - { label = { { value = ": " }, { value = "number" } } } => ": number"
 --- @param hint lsp.InlayHint
 --- @return string
 local function get_label_text(hint)
@@ -433,11 +436,17 @@ function M.enable(enable, filter)
 end
 
 --- Build ranges from the cursor or visual selection, one per selected line.
+--- Examples (zero-based rows/byte columns, ranges shown as [start, end)):
+--- - Row 0 is "abc", cursor on "b" => { [(0, 1), (0, 2)) }
+--- - Row 0 is "abc", inclusive Visual selection of "bc" => { [(0, 1), (0, 3)) }
 --- @return vim.Range[]
 local function make_ranges()
   local bufnr = api.nvim_get_current_buf()
   local mode = fn.mode()
   --- End-exclusive column past the character and its composing characters, clamped to EOL.
+  --- Examples (zero-based byte columns):
+  --- - line="aéz", col=1 => 3
+  --- - line="aéz", col=4 => 4
   --- @param line string
   --- @param col integer
   local function after_char(line, col)
@@ -479,6 +488,9 @@ end
 
 --- Append `new_label` to `labels` unless an equal label (comparing `value` and each of
 --- `by_attribute`) is already there.
+--- Examples with a = { value = "x", tooltip = "one" }, b = { value = "x", tooltip = "two" }:
+--- - labels={a}, new_label=vim.deepcopy(a), by_attribute={"tooltip"} => labels={a}
+--- - labels={a}, new_label=b, by_attribute={"tooltip"} => labels={a, b}
 ---@param labels lsp.InlayHintLabelPart[]
 ---@param new_label lsp.InlayHintLabelPart
 ---@param by_attribute ('location'|'command'|'tooltip')[]
@@ -500,7 +512,9 @@ local function add_new_label(labels, new_label, by_attribute)
   table.insert(labels, new_label)
 end
 
----Return the deduplicated hint label parts carrying at least one of `needed_fields`.
+--- Return the deduplicated hint label parts carrying at least one of `needed_fields`.
+--- Example with a = { value = "x", tooltip = "tip" }, needed_fields = { "tooltip" }:
+--- hint.label = { { value = "plain" }, a, vim.deepcopy(a) } => { a }
 --- @param hint lsp.InlayHint
 --- @param needed_fields ("location"|"command"|"tooltip")[]
 --- @return lsp.InlayHintLabelPart[]
@@ -553,6 +567,8 @@ local function show_preview(lines, ctx, on_done)
 end
 
 --- Collect a non-empty batch of replies in input order, omitting nil results.
+--- Example with count=3, replies in arrival order:
+--- (3, "c"), (1, "a"), (2, nil) => on_complete({ "a", "c" })
 --- @generic T
 --- @param count integer
 --- @param on_complete fun(results: T[])
