@@ -1116,10 +1116,7 @@ function M.action(action, opts)
     end
   end
 
-  start_watching()
-  vim.schedule(function()
-    do_action(1)
-  end)
+  do_action(1)
 end
 
 return M
