@@ -695,7 +695,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
     exec_lua(function()
       vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'abc' })
 
-      function _G.start_hint_client(capabilities, handlers)
+      function _G.start_hint_client(capabilities, handlers, flags)
         handlers = handlers or {}
         handlers['textDocument/inlayHint'] = handlers['textDocument/inlayHint']
           or function(_, _, cb)
@@ -705,7 +705,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
           capabilities = capabilities or { inlayHintProvider = true },
           handlers = handlers,
         })
-        local id = assert(vim.lsp.start({ name = 'hints', cmd = server.cmd }, {
+        local id = assert(vim.lsp.start({ name = 'hints', cmd = server.cmd, flags = flags }, {
           reuse_client = function()
             return false
           end,
@@ -888,19 +888,23 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
     )
   end)
 
-  for _, action in ipairs({ 'textEdits', 'location' }) do
+  for _, action in ipairs({ 'textEdits', 'location', 'command' }) do
     it('completes and reports errors when ' .. action .. ' fails', function()
       local buf, win = api.nvim_get_current_buf(), api.nvim_get_current_win()
       local result, messages = unpack(exec_lua(function()
-        local client = start_hint_client()
-        local entry = hint_entry(client)
+        local client, entry = start_action_client('workspace/executeCommand')
         if action == 'textEdits' then
           entry.inlay_hint.textEdits = { insert_edit('X') }
+          vim.bo.modifiable = false
+        elseif action == 'command' then
+          client.commands.test = function(_, ctx)
+            vim.api.nvim_buf_set_text(ctx.bufnr, 0, 1, 0, 1, { 'X' })
+          end
           vim.bo.modifiable = false
         else
           local target = vim.api.nvim_create_buf(true, false)
           vim.api.nvim_buf_set_name(target, 'Xhint_target')
-          entry.inlay_hint.label = { { value = 'T', location = label_loc(target) } }
+          entry.inlay_hint.label[1].location = label_loc(target)
           vim.wo.winfixbuf = true
         end
         local messages = {}
@@ -915,7 +919,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
       eq(1, #messages)
       eq(vim.log.levels.ERROR, messages[1].level)
       t.matches(
-        action == 'textEdits' and "Buffer is not 'modifiable'" or 'E1513',
+        action == 'location' and 'E1513' or "Buffer is not 'modifiable'",
         messages[1].message
       )
     end)
@@ -1309,6 +1313,37 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
           }),
         })
         return vim.api.nvim_buf_get_lines(result.buf, 0, -1, false)
+      end)
+    )
+  end)
+
+  it('flushes pending changes in the hover target buffer', function()
+    eq(
+      { 'textDocument/didChange', 'textDocument/hover' },
+      exec_lua(function()
+        local target = vim.api.nvim_create_buf(true, false)
+        vim.api.nvim_buf_set_name(target, 'Xhint_target')
+        local loc = label_loc(target)
+        local client, server = start_hint_client({
+          textDocumentSync = 1,
+          inlayHintProvider = true,
+          hoverProvider = true,
+        }, {
+          ['textDocument/hover'] = function(_, _, cb)
+            cb(nil, nil)
+          end,
+        }, { debounce_text_changes = 10000 })
+        assert(vim.lsp.buf_attach_client(target, client.id))
+        server.messages = {}
+        vim.api.nvim_buf_set_lines(target, 0, -1, false, { 'new documentation' })
+        assert(#server.messages == 0, 'target changes should still be pending')
+        run_inlay_action('hover', {
+          hint_entry(client, { label = { { value = 'T', location = loc } } }),
+        })
+        return vim.tbl_map(function(message)
+          assert(message.params.textDocument.uri == loc.uri)
+          return message.method
+        end, server.messages)
       end)
     )
   end)
