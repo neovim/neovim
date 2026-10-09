@@ -11794,6 +11794,8 @@ M.funcs = {
           c	callback invoked, including timer (repeats for
       	recursiveness up to "ccc")
           s	screen has scrolled for messages
+          l	text is locked (|textlock|), e.g. in an |:map-<expr>|
+      	mapping
     ]=],
     fast = true,
     name = 'state',
