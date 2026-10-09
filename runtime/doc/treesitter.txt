@@ -691,6 +691,13 @@ library.
 An instance `TSNode` of a treesitter node supports the following methods.
 
 
+*vim.treesitter.NodeIteratorOpts*
+
+    Fields: ~
+      • {start}?  (`[integer, integer]`) Zero-based `{row, column}` start
+                  position.
+
+
 TSNode:byte_length()                                    *TSNode:byte_length()*
     Return the number of bytes spanned by this node.
 
@@ -804,13 +811,17 @@ TSNode:id()                                                      *TSNode:id()*
     Return: ~
         (`string`)
 
-TSNode:iter_children()                                *TSNode:iter_children()*
-    Iterates over all the direct children of {TSNode}, regardless of whether
-    they are named or not. Returns the child node plus the eventual field name
-    corresponding to this child node.
+TSNode:iter_children({opts})                          *TSNode:iter_children()*
+    Iterates over the direct children of {TSNode}, regardless of whether they
+    are named or not. If {opts.start} is given, iteration starts with the
+    first child that contains or starts after that position. Returns the child
+    node plus the eventual field name corresponding to this child node.
+
+    Parameters: ~
+      • {opts}  (`vim.treesitter.NodeIteratorOpts?`)
 
     Return: ~
-        (`fun(): TSNode, string`)
+        (`fun(): TSNode, string?`)
 
 TSNode:missing()                                            *TSNode:missing()*
     Check if the node is missing. Missing nodes are inserted by the parser in
