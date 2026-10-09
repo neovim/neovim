@@ -529,6 +529,18 @@ local function get_hint_labels(hint, needed_fields)
   return hint_labels
 end
 
+--- Display form of a label part location: its path shortened against the client root,
+--- and its 1-based line.
+--- Example: uri "file:///home/u/proj/src/a.rs" at line 0, root "/home/u/proj" => "src/a.rs", 1
+--- @param location lsp.Location
+--- @param client vim.lsp.Client
+--- @return string path
+--- @return integer lnum
+local function location_display(location, client)
+  return core_util.shorten_path(vim.uri_to_fname(location.uri), client.root_dir),
+    location.range.start.line + 1
+end
+
 --- @class (private) vim.lsp.inlay_hint.action.internal_context : vim.lsp.inlay_hint.action.context
 --- @field is_valid fun(): boolean
 --- @field win integer
@@ -574,17 +586,19 @@ local builtin_actions = {
     end,
     run = function(hints, ctx, on_done)
       -- Deduplicate whole edit lists, preserving repeated insertions within a hint.
-      vim.list.unique(hints, function(hint)
+      local seen = {} --- @type table<string, true>
+      local text_edits = {} --- @type lsp.TextEdit[]
+      for _, hint in ipairs(hints) do
         if hint.textEdits then
-          return vim.mpack.encode(vim.tbl_map(function(edit)
+          local key = vim.mpack.encode(vim.tbl_map(function(edit)
             local start, finish = edit.range.start, edit.range['end']
             return { start.line, start.character, finish.line, finish.character, edit.newText }
           end, hint.textEdits))
+          if not seen[key] then
+            seen[key] = true
+            vim.list_extend(text_edits, hint.textEdits)
+          end
         end
-      end)
-      local text_edits = {} --- @type lsp.TextEdit[]
-      for _, hint in ipairs(hints) do
-        vim.list_extend(text_edits, hint.textEdits or {})
       end
       if #text_edits == 0 then
         return false
@@ -616,12 +630,9 @@ local builtin_actions = {
         kind = 'inlay_hint_location',
         --- @param item lsp.InlayHintLabelPart
         format_item = function(item)
-          local location = assert(item.location)
-          return string.format(
-            '%s\t%s:%d',
+          return ('%s\t%s:%d'):format(
             item.value,
-            core_util.shorten_path(vim.uri_to_fname(location.uri), ctx.client.root_dir),
-            location.range.start.line + 1
+            location_display(assert(item.location), ctx.client)
           )
         end,
       }, function(item)
@@ -727,26 +738,22 @@ local builtin_actions = {
       end
       local hint_labels = get_hint_labels(hint, { 'location', 'command', 'tooltip' })
 
-      -- The level 1 heading is the full hint object
-      local lines = { string.format('# `%s`', get_label_text(hint)), '' }
-
+      local body = {} --- @type string[]
       if hint.tooltip then
-        vim.list_extend(lines, util._to_markdown_section(hint.tooltip))
+        vim.list_extend(body, util._to_markdown_section(hint.tooltip))
       end
 
       for _, label in ipairs(hint_labels) do
-        lines[#lines + 1] = ''
+        body[#body + 1] = ''
         -- Each of the level 2 headings is the text of a label part.
-        lines[#lines + 1] = string.format('## `%s`', label.value)
-        lines[#lines + 1] = ''
+        body[#body + 1] = string.format('## `%s`', label.value)
+        body[#body + 1] = ''
         if label.tooltip then
-          vim.list_extend(lines, util._to_markdown_section(label.tooltip))
+          vim.list_extend(body, util._to_markdown_section(label.tooltip))
         end
         if label.location then
-          lines[#lines + 1] = string.format(
-            '_Location_: `%s`:%d',
-            core_util.shorten_path(vim.uri_to_fname(label.location.uri), ctx.client.root_dir),
-            label.location.range.start.line + 1
+          body[#body + 1] = ('_Location_: `%s`:%d'):format(
+            location_display(label.location, ctx.client)
           )
         end
         if label.command then
@@ -754,16 +761,18 @@ local builtin_actions = {
           if label.command.tooltip then
             command_line = command_line .. string.format(' (%s)', label.command.tooltip)
           end
-          lines[#lines + 1] = command_line
+          body[#body + 1] = command_line
         end
       end
 
-      if #lines == 2 then
+      if #body == 0 then
         -- No tooltip/command/location has been found. Skip this hint.
         return false
       end
 
-      show_preview(lines, ctx, on_done)
+      -- The level 1 heading is the full hint object
+      local lines = { string.format('# `%s`', get_label_text(hint)), '' }
+      show_preview(vim.list_extend(lines, body), ctx, on_done)
       return true
     end,
   },
