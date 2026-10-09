@@ -242,6 +242,8 @@ API
 • |nvim_create_autocmd()| is now |api-fast|, so it can be called from a fast
   event context (e.g. |vim.uv| callbacks).
 • |nvim_create_autocmd()| callback |event-args| provide `win`.
+• |nvim_chan_set()| sets channel properties. With `detach=false`, any RPC
+  channel can enable Nvim "self-exit on channel-close" behavior.
 
 BUILD
 

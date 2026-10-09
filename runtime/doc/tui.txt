@@ -30,7 +30,9 @@ and sets these fields on its channel: >
     name = 'nvim-tui',
     type = 'ui',
     version = { … },
-  }
+  },
+  -- Preserved across :restart.
+  detach = <false if the UI started the server, true after :detach!>,
 
 Nvim guesses the terminal type when it starts (except in |--embed| and
 |--headless| modes). The |$TERM| environment variable is the primary hint that

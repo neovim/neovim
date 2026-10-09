@@ -1640,8 +1640,8 @@ vim.list_extend({dst}, {src}, {start}, {finish})           *vim.list_extend()*
     Parameters: ~
       • {dst}     (`table`) List which will be modified and appended to
       • {src}     (`table`) List from which values will be inserted
-      • {start}   (`integer?`) Start index on src. Defaults to 1
-      • {finish}  (`integer?`) Final index on src. Defaults to `#src`
+      • {start}   (`integer?`) (default: 1) Start index on src.
+      • {finish}  (`integer?`) (default: `#src`) Final index on src.
 
     Return: ~
         (`table`) dst
@@ -2243,8 +2243,8 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
 vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
     Waits up to `time` milliseconds, until `callback` returns `true`
     (success). Executes `callback` immediately, then on user events, internal
-    events, and approximately every `interval` milliseconds (default 200).
-    Returns `true` plus any remaining callback results on success.
+    events, and approximately every `interval` milliseconds. Returns `true`
+    plus any remaining callback results on success.
 
     Nvim processes other events while waiting. Cannot be called during an
     |api-fast| event.
@@ -2283,8 +2283,8 @@ vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
                      non-negative number, any fractional part is truncated.
       • {callback}   (`fun(): boolean, ...?`) Optional callback. Waits until
                      {callback} returns true
-      • {interval}   (`integer?`) (Approximate) number of milliseconds to wait
-                     between polls
+      • {interval}   (`integer?`) (default: 200) Milliseconds (approximate) to
+                     wait between polls.
       • {fast_only}  (`boolean?`) If true, only |api-fast| events will be
                      processed.
 

@@ -44,8 +44,7 @@ vim._extra = {
 
 --- Waits up to `time` milliseconds, until `callback` returns `true` (success). Executes
 --- `callback` immediately, then on user events, internal events, and approximately every
---- `interval` milliseconds (default 200). Returns `true` plus any remaining callback
---- results on success.
+--- `interval` milliseconds. Returns `true` plus any remaining callback results on success.
 ---
 --- Nvim processes other events while waiting.
 --- Cannot be called during an |api-fast| event.
@@ -84,7 +83,7 @@ vim._extra = {
 --- @param time number Number of milliseconds to wait. Must be non-negative number, any fractional
 --- part is truncated.
 --- @param callback? fun(): boolean, ... Optional callback. Waits until {callback} returns true
---- @param interval? integer (Approximate) number of milliseconds to wait between polls
+--- @param interval? integer (default: 200) Milliseconds (approximate) to wait between polls.
 --- @param fast_only? boolean If true, only |api-fast| events will be processed.
 --- @return boolean, nil|-1|-2, ...
 ---     - If callback returns `true` before timeout: `true, ...` (remaining callback results).

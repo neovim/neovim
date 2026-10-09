@@ -25,6 +25,7 @@ describe('|api-fast| functions', function()
             keycode = vim.keycode('<C-a>'),
             keytrans = vim.fn.keytrans(vim.keycode('<C-Home>')),
             nr2char = vim.fn.nr2char(65),
+            nvim_chan_set = vim.api.nvim_chan_set(1, { detach = false }) == nil,
             nvim_create_autocmd = vim.api.nvim_create_autocmd('User', {
               pattern = 'Fast',
               callback = function() end,
@@ -58,6 +59,7 @@ describe('|api-fast| functions', function()
       keycode = '\1', -- <C-a>
       keytrans = '<C-Home>',
       nr2char = 'A',
+      nvim_chan_set = true,
       nvim_create_autocmd = true,
       nvim_replace_termcodes = '\27', -- <Esc>
       str2list = { 65, 66 },
@@ -114,6 +116,9 @@ describe('|api-fast| functions', function()
         end,
         nr2char = function()
           vim.fn.nr2char(65)
+        end,
+        nvim_chan_set = function()
+          vim.api.nvim_chan_set(1, { detach = false })
         end,
         nvim_create_autocmd = function()
           vim.api.nvim_exec_autocmds('User', { pattern = aupat })

@@ -818,8 +818,8 @@ end
 ---@generic T: table
 ---@param dst T List which will be modified and appended to
 ---@param src table List from which values will be inserted
----@param start integer? Start index on src. Defaults to 1
----@param finish integer? Final index on src. Defaults to `#src`
+---@param start integer? (default: 1) Start index on src.
+---@param finish integer? (default: `#src`) Final index on src.
 ---@return T dst
 function vim.list_extend(dst, src, start, finish)
   vim.validate('dst', dst, 'table')

@@ -17,6 +17,9 @@ error('Cannot require a meta file')
 --- @field force? boolean
 --- @field unload? boolean
 
+--- @class vim.api.keyset.chan_set
+--- @field detach? boolean
+
 --- @class vim.api.keyset.clear_autocmds
 --- @field buf? integer
 --- @field buffer? integer

@@ -244,7 +244,7 @@ describe('TUI :detach', function()
     ]])
   end)
 
-  it('detach! keeps the UI attached but survives client disconnect', function()
+  it('detach! keeps UI attached, sets detach=true', function()
     -- Wide enough that the confirmation message doesn't trigger a |hit-enter| prompt.
     setup_detach_child({ cols = 80 })
     -- Capture the client (foreground TUI) job so we can kill it below.
@@ -268,6 +268,17 @@ describe('TUI :detach', function()
     -- Unlike ":detach", the UI is still attached.
     eq(1, #({ child_session:request('nvim_list_uis') })[2])
 
+    -- The UI stays "detachable" after :restart. #42250
+    feed_data(':restart\r')
+    child_session:close()
+    retry(nil, 4000, function()
+      local s = n.connect(child_server)
+      local _, reason = s:request('nvim_get_vvar', 'startreason')
+      local _, uis = s:request('nvim_list_uis')
+      s:close()
+      eq({ 'restart', 1 }, { reason, #uis })
+    end)
+
     -- Simulate the host terminal disconnecting: SIGKILL the client so it can't shut down cleanly.
     -- On Windows this also exercises the console hand-off in rpc_close_event().
     n.exec_lua(function(pid)
@@ -275,7 +286,22 @@ describe('TUI :detach', function()
     end, n.fn.jobpid(term_job))
 
     retry(nil, 4000, function()
-      eq(2, ({ child_session:request('nvim_eval', '1+1') })[2])
+      eq(2, ({ n.connect(child_server):request('nvim_eval', '1+1') })[2])
+    end)
+
+    -- Nvim self-exits when the last (not first/any) detach=false channel closes. #42250
+    local c1, c2 = n.connect(child_server), n.connect(child_server)
+    local c1_id = ({ c1:request('nvim_get_api_info') })[2][1]
+    c1:request('nvim_chan_set', 0, { detach = false })
+    c2:request('nvim_chan_set', 0, { detach = false })
+    local server_pid = ({ c2:request('nvim_call_function', 'getpid', {}) })[2]
+    c1:close()
+    retry(nil, 4000, function()
+      eq({}, ({ c2:request('nvim_get_chan_info', c1_id) })[2])
+    end)
+    c2:close()
+    retry(nil, 4000, function()
+      eq(nil, (vim.uv.kill(server_pid, 0)))
     end)
   end)
 
@@ -489,6 +515,7 @@ describe('TUI :restart', function()
     finally(function()
       os.remove(testlog)
     end)
+    local term_job = n.api.nvim_buf_get_var(0, 'terminal_job_id')
     feed_data(':edit ' .. file .. '\r')
     screen:expect({ any = 'foo' })
 
@@ -510,6 +537,7 @@ describe('TUI :restart', function()
     -- [1-8]ZR does not preserve screen state
     tt.feed_data('1ZR')
     screen:expect({ any = vim.pesc('[No Name]'), none = 'foo' })
+    starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
 
     -- ZR on modified buffer fails with E37.
     tt.feed_data('ifoo\027')
@@ -526,8 +554,17 @@ describe('TUI :restart', function()
     screen:expect({ any = vim.pesc('[No Name]') })
     starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
 
-    -- The server is now detached and needs to be quit explicitly.
-    tt.feed_data(':qall!\r')
+    -- Restarted server self-exits when the TUI disconnects / host-terminal closed. #42250
+    retry(nil, 4000, function()
+      eq(1, #({ server_session:request('nvim_list_uis') })[2])
+    end)
+    local server_pid = ({ server_session:request('nvim_call_function', 'getpid', {}) })[2]
+    n.exec_lua(function(pid)
+      vim.uv.kill(pid, 'sigkill')
+    end, n.fn.jobpid(term_job))
+    retry(nil, 4000, function()
+      eq(nil, (vim.uv.kill(server_pid, 0)))
+    end)
   end)
 
   it('works', function()
@@ -2817,6 +2854,7 @@ describe('TUI', function()
         type = 'ui',
         version = expected_version,
       },
+      detach = false,
       id = ui_chan,
       mode = 'rpc',
       stream = 'stdio',

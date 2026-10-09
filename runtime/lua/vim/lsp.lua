@@ -689,11 +689,13 @@ end
 --- Buffer handle to attach to if starting or re-using a client (0 for current).
 --- @field bufnr? integer
 ---
---- Whether to attach the client to a buffer (default true).
+--- Whether to attach the client to a buffer.
 --- If set to `false`, `reuse_client` and `bufnr` will be ignored.
+--- (default: true)
 --- @field attach? boolean
 ---
---- Suppress error reporting if the LSP server fails to start (default false).
+--- Suppress error reporting if the LSP server fails to start.
+--- (default: false)
 --- @field silent? boolean
 ---
 --- @field package _root_markers? (string|string[])[]

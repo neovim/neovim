@@ -1400,9 +1400,9 @@ start({config}, {opts})                                      *vim.lsp.start()*
     Parameters: ~
       • {config}  (`vim.lsp.ClientConfig`) Configuration for the server.
       • {opts}    (`table?`) Optional keyword arguments.
-                  • {attach}? (`boolean`) Whether to attach the client to a
-                    buffer (default true). If set to `false`, `reuse_client`
-                    and `bufnr` will be ignored.
+                  • {attach}? (`boolean`, default: true) Whether to attach the
+                    client to a buffer. If set to `false`, `reuse_client` and
+                    `bufnr` will be ignored.
                   • {bufnr}? (`integer`) Buffer handle to attach to if
                     starting or re-using a client (0 for current).
                   • {reuse_client}?
@@ -1412,8 +1412,8 @@ start({config}, {opts})                                      *vim.lsp.start()*
                     re-uses a client if it has the same name and if the given
                     workspace folders (or root_dir) are all included in the
                     client's workspace folders.
-                  • {silent}? (`boolean`) Suppress error reporting if the LSP
-                    server fails to start (default false).
+                  • {silent}? (`boolean`, default: false) Suppress error
+                    reporting if the LSP server fails to start.
 
     Return: ~
         (`integer?`) client_id
