@@ -1547,7 +1547,7 @@ void terminal_notify_theme(Terminal *term, bool dark)
   }
 
   char buf[10];
-  ssize_t ret = snprintf(buf, sizeof(buf), "\x1b[997;%cn", dark ? '1' : '2');
+  ssize_t ret = snprintf(buf, sizeof(buf), "\x1b[?997;%cn", dark ? '1' : '2');
   assert(ret > 0);
   assert((size_t)ret <= sizeof(buf));
   terminal_send(term, buf, (size_t)ret);
