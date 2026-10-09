@@ -568,18 +568,7 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
   if (embedded_mode && os_has_conpty_working()) {
     stdin_dup_fd = os_dup_cloexec(STDIN_FILENO);
     stdout_dup_fd = os_dup_cloexec(STDOUT_FILENO);
-    if (!GetConsoleWindow()) {
-      // Borrow the parent's console so CONOUT$ resolves to the real terminal,
-      // preserving io.stdout rendering (e.g. SIXEL/Kitty images). A replacement
-      // server started by :restart can reuse the current server's console.
-      // Only fall back to a hidden console when the parent has no console.
-      if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
-        ILOG("parent console attach failed: %lu; allocating hidden console", GetLastError());
-        AllocConsole();
-        ShowWindow(GetConsoleWindow(), SW_HIDE);
-      }
-    }
-    os_reattach_console_stdio();
+    os_attach_parent_console();
   }
 #else
   if (embedded_mode) {

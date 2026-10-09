@@ -517,7 +517,7 @@ static void rpc_close_event(void **argv)
 #ifdef MSWIN
   // Unexpected disconnect (e.g. after ":detach!") does not call ui_detach_channel, unlike the
   // normal ":detach" case, so we need to do some cleanup here.
-  bool ui_stdio = channel->streamtype == kChannelStreamStdio && channel->rpc.ui != NULL;
+  bool ui_closed = channel->rpc.ui != NULL;
 #endif
 
   // No more I/O can happen on this channel. Remove UI if there is one attached.
@@ -544,9 +544,10 @@ static void rpc_close_event(void **argv)
     exit_on_closed_chan(0);
   }
 #ifdef MSWIN
-  else if (ui_stdio) {
-    // Move this server off the now-dead console so it keeps working (CONIN$/CONOUT$).
-    os_swap_to_hidden_console();
+  else if (ui_closed) {
+    // If the console belongs to the UI's host-terminal, swap to a hidden console, else closing that
+    // terminal would kill this server.
+    os_detach_ui_console(channel->streamtype == kChannelStreamStdio);
   }
 #endif
 }

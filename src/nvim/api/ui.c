@@ -137,11 +137,9 @@ void ui_detach_channel(uint64_t chan, Error *err)
   // Server-side channel close.
   channel_close(chan, kChannelPartAll, NULL);
 #ifdef MSWIN
-  if (detach_stdio) {
-    // After UI/channel detach, move this server off the parent's console so it
-    // survives terminal closure and still has working CONIN$/CONOUT$.
-    os_swap_to_hidden_console();
-  }
+  // If the console belongs to the UI's host-terminal, swap to a hidden console, else closing that
+  // terminal would kill this server.
+  os_detach_ui_console(detach_stdio);
 #endif
 }
 
