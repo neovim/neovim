@@ -26,6 +26,7 @@
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/extmark.h"
 #include "nvim/gettext_defs.h"
@@ -236,6 +237,7 @@ static void mc_sandbox_enter(McSandbox *sb, bool save_regs)
 {
   assert(!mc_replay);
   mc_replay = true;  // Capture hooks will ignore keys fed during the sandbox.
+  set_vim_var_bool(VV_CASCADING, kBoolVarTrue);
   sb->primary = (Context)CONTEXT_INIT;
   // Change/Visual marks belong to the primary cursor's (already executed) operation.
   // (jumplist/changelist are owned by the primary.)
@@ -285,6 +287,7 @@ static void mc_sandbox_leave(McSandbox *sb)
   }
   ctx_free(&sb->primary);
   mc_replay = false;
+  set_vim_var_bool(VV_CASCADING, kBoolVarFalse);
 }
 
 /// Cascade step: replays an atom at `cursoridx` and updates Context.

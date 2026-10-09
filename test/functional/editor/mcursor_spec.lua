@@ -713,7 +713,7 @@ describe('multicursor', function()
         _G.keys_seen, _G.cascading_seen = 0, false
         vim.on_key(function()
           _G.keys_seen = _G.keys_seen + 1
-          _G.cascading_seen = _G.cascading_seen or vim.api.nvim__mcursor_cascading()
+          _G.cascading_seen = _G.cascading_seen or vim.v.cascading
           if _G.keys_seen == 1000 then
             vim.fn.interrupt()
           end
@@ -3056,9 +3056,7 @@ describe('multicursor', function()
 
     it('TextYankPost fires per cursor with per-cursor contents', function()
       command('let g:yanks = []')
-      command(
-        'autocmd TextYankPost * let g:yanks += [[v:event.regcontents, luaeval("vim.api.nvim__mcursor_cascading()")]]'
-      )
+      command('autocmd TextYankPost * let g:yanks += [[v:event.regcontents, v:cascading]]')
       cursors({ 'aaa', 'bbb' }, 'Qj')
       feed('yy')
       -- The primary's own yank fires first and is not a replay.
@@ -4170,5 +4168,34 @@ describe('multicursor', function()
       feed('x') -- User input, cascades.
       eq({ 'aa', 'b' }, get_lines())
     end)
+  end)
+
+  it('v:cascading', function()
+    n.exec_lua(function()
+      _G.cascade_log = {}
+      vim.keymap.set('n', 'gh', function()
+        local cur = vim.api.nvim_win_get_cursor(0)
+        table.insert(_G.cascade_log, { vim.v.cascading, cur })
+        vim.api.nvim_buf_set_text(0, cur[1] - 1, cur[2], cur[1] - 1, cur[2], { 'x' })
+      end)
+    end)
+
+    local function assert(mcursor_init)
+      cursors({ 'aaa', 'bbb', 'ccc' }, mcursor_init)
+      eq(false, api.nvim_get_vvar('cascading'))
+      feed('gh')
+      eq({ 'xaaa', 'xbbb', 'xccc' }, get_lines())
+      eq(
+        { { false, { 3, 0 } }, { true, { 1, 0 } }, { true, { 2, 0 } } },
+        n.exec_lua('return _G.cascade_log')
+      )
+      eq(false, api.nvim_get_vvar('cascading'))
+
+      clear_cursors()
+      n.exec_lua('_G.cascade_log = {}')
+    end
+
+    assert('QjQj')
+    assert('QjQjQ')
   end)
 end)

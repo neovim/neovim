@@ -33,6 +33,11 @@ v:argv
 		See |v:progpath| to get the full path to Nvim.
 		See |v:argf| to get only file args, without other options.
 
+				*v:cascading* *cascading-variable*
+v:cascading
+		|v:true| during |mcursor| cascade, |v:false| otherwise.
+		Read-only.
+
 						*v:char* *char-variable*
 v:char
 		Argument for evaluating 'formatexpr' and used for the typed

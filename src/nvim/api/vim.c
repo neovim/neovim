@@ -2091,14 +2091,6 @@ void nvim__invalidate_glyph_cache(void)
 }
 
 /// @nodoc
-/// Returns true if a multicursor cascade is in-progress.
-Boolean nvim__mcursor_cascading(void)
-  FUNC_API_SINCE(15) FUNC_API_FAST
-{
-  return mc_replaying();
-}
-
-/// @nodoc
 Object nvim__unpack(String str, Arena *arena, Error *err)
   FUNC_API_FAST
 {
