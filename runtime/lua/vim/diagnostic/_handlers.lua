@@ -133,7 +133,7 @@ end
 --- @param ns vim.diagnostic.NS
 local function cleanup_show_autocmd(autocmd_key, ns)
   if ns.user_data[autocmd_key] then
-    api.nvim_del_autocmd(ns.user_data[autocmd_key])
+    pcall(api.nvim_del_autocmd, ns.user_data[autocmd_key])
     --- @type integer?
     ns.user_data[autocmd_key] = nil
   end
