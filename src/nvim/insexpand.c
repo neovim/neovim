@@ -1470,6 +1470,10 @@ static void trigger_complete_changed_event(int cur)
   dict_T *item = cur < 0 ? tv_dict_alloc() : ins_compl_dict_alloc(compl_curr_match);
   dict_T *v_event = get_v_event(&save_v_event);
   tv_dict_add_dict(v_event, S_LEN("completed_item"), item);
+  char *leader = ins_compl_leader();
+  tv_dict_add_str_len(v_event, S_LEN("complete_leader"),
+                      leader != NULL ? leader : "",
+                      leader != NULL ? (int)ins_compl_leader_len() : 0);
   pum_set_event_info(v_event);
   tv_dict_set_keys_readonly(v_event);
 
