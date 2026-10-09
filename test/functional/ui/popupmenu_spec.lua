@@ -1068,6 +1068,7 @@ describe('builtin popupmenu', function()
         [115] = { background = Screen.colors.Black, blend = 80 },
         [116] = { foreground = Screen.colors.Black },
         [117] = { background = Screen.colors.Grey80, foreground = Screen.colors.Black },
+        [118] = { background = Screen.colors.Plum1, foreground = Screen.colors.Black },
         -- popup non-selected item
         n = { background = Screen.colors.Plum1 },
         -- popup scrollbar knob
@@ -9901,7 +9902,7 @@ describe('builtin popupmenu', function()
         else
           screen:expect([[
             oneone^                        |
-            li{12: one            }{c: }{116: }{n:info}      |
+            li{12: one            }{c: }{118:1}{n:info}      |
             li{n: two            }{12: }{117:2}          |
             li{116:n}{117:e3               }          |
             line4line4line4               |
