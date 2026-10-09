@@ -1247,9 +1247,9 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
     end)
   end
 
-  it('deduplicates identical label locations within a hint', function()
+  it('preserves repeated label parts within a hint', function()
     eq(
-      { '# `T`', 'docs' },
+      { '# `T`', 'docs', '', '# `T`', 'docs' },
       exec_lua(function()
         local client = start_action_client('textDocument/hover', function(_, _, cb)
           cb(nil, { contents = { kind = 'markdown', value = 'docs' } })
