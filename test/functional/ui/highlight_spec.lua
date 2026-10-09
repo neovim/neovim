@@ -1067,7 +1067,8 @@ describe('CursorLine and CursorLineNr highlights', function()
                           |
     ]])
 
-    -- CursorLineNr should not apply to line number when 'cursorlineopt' does not contain "number"
+    -- A dry run adding "number" must not enable CursorLineNr.
+    api.nvim_set_option_value('cursorlineopt', 'number', { operation = 'append', dry_run = true })
     command('set relativenumber numberwidth=2')
     screen:expect([[
       {101:0 }{102:øøøøøøøøøøøø^øøøøøø}|

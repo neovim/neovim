@@ -101,6 +101,16 @@ typedef struct {
   /// New value of the option (not yet stored during validation).
   Object os_newval;
 
+  /// Initially empty; validation may prepare data for the did_set callback.
+  /// The callbacks agree on the union member and pointer type. A callback taking
+  /// ownership of a pointer must clear it.
+  union {
+    void *ptr;
+    unsigned flags;
+  } os_prepared;
+  /// Frees non-NULL prepared data after a dry run, an error, or application.
+  void (*os_prepared_free)(void *);
+
   /// Option value was checked to be safe, no need to set kOptFlagInsecure
   /// Used for the 'keymap', 'filetype' and 'syntax' options.
   bool os_value_checked;
@@ -123,7 +133,8 @@ typedef struct {
 
 /// Check a candidate value without changing option variables or derived state,
 /// or evaluating user code. Return an error message, or NULL on success.
-typedef const char *(*opt_validate_cb_T)(const optset_T *args);
+/// May populate os_prepared for the did_set callback.
+typedef const char *(*opt_validate_cb_T)(optset_T *args);
 
 /// Type for the callback function invoked after storing an option value to
 /// apply it and update derived state.
