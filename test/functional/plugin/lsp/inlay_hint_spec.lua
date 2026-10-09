@@ -667,7 +667,9 @@ describe('vim.lsp.inlay_hint.action', function()
     eq({
       '# `: T`',
       '',
+      '```',
       'plaintext tooltip',
+      '```',
       '',
       '## `T`',
       '',
@@ -1346,7 +1348,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
       local screen = Screen.new(80, 14)
       local lines = { '*ptr*', '---', '[link](url) &amp; \\path `code`' }
       exec_lua(function()
-        vim.cmd('syntax on')
+        vim.cmd('syntax off')
         local contents = { kind = 'plaintext', value = table.concat(lines, '\n') }
         local _, entry = start_action_client('textDocument/hover', function(_, _, cb)
           cb(nil, { contents = contents })
