@@ -47,8 +47,8 @@
             .lazy = true,
         },
         .treesitter_c = .{
-            .url = "git+https://github.com/tree-sitter/tree-sitter-c?ref=v0.24.2#b780e47fc780ddc8da13afa35a3f4ed5c157823d",
-            .hash = "tree_sitter_c-0.24.2-y5boS-ptQADHoCoVfjGT_nFtFQ5LbomIkW0fxG3_cmdB",
+            .url = "git+https://github.com/tree-sitter/tree-sitter-c#e9ba9d5a68dc7250a793367b411916a45d7298e7",
+            .hash = "tree_sitter_c-0.24.2-y5boS91tQADjqa_CdO1Z_B1px6WGMiGU2gbgKfeTVc-r",
         },
         .treesitter_markdown = .{
             .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-markdown?ref=v0.5.3#f969cd3ae3f9fbd4e43205431d0ae286014c05b5",

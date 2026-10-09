@@ -10,19 +10,20 @@ pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compi
             test_step.addPrefixedDirectoryArg("-I", path);
         }
     }
-    test_step.addArg(b.fmt("-P{s}", .{b.install_path}));
+    test_step.addPrefixedDirectoryArg("-P", b.graph.path(.install_prefix, ""));
     // TODO(bfredl): investigate parallel test groups like in cmake
-    test_step.addArg(b.fmt("-X{s}/Xdg_dir", .{b.install_path}));
+    test_step.addPrefixedDirectoryArg("-X", b.graph.path(.install_prefix, "Xdg_dir"));
     test_step.addArg("-v");
     test_step.addArg(b.fmt("--helper=./test/{s}/preload.lua", .{kind}));
     test_step.addPrefixedFileArg("--lpath=", config_dir.path(b, "?.lua")); // FULING: not a real file but works anyway?
     test_step.addArg(b.fmt("--default-path=./test/{s}", .{kind}));
-    if (b.args) |args| test_step.addArgs(args);
+    test_step.addPassthruArgs();
 
     const env = test_step.getEnvMap();
     try env.put("NVIM_TEST", "1");
     if (env.get("NVIM_LOG_FILE") == null) {
-        try env.put("NVIM_LOG_FILE", b.fmt("{s}/nvim.log", .{b.install_path}));
+        return error.NotImplemented;
+        // try env.put("NVIM_LOG_FILE", b.fmt("{s}/nvim.log", .{b.install_path}));
     }
 
     _ = env.swapRemove("NVIM");
@@ -45,11 +46,8 @@ pub fn test_steps(b: *std.Build, nvim_bin: *std.Build.Step.Compile, depend_on: *
     const old_tests = b.addRunArtifact(nvim_bin);
     old_tests.addArg("-l");
     old_tests.addFileArg(b.path("./test/old/runner.lua"));
-    if (b.args) |args| {
-        old_tests.addArgs(args); // accept TEST_FILE as a positional argument
-    }
-    const env = old_tests.getEnvMap();
-    try env.put("BUILD_DIR", b.install_path);
+    old_tests.addPrefixedDirectoryArg("-P", b.graph.path(.install_prefix, ""));
+    old_tests.addPassthruArgs();
 
     const oldtest_step = b.step("oldtest", "run old tests");
     oldtest_step.dependOn(&old_tests.step);
