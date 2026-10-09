@@ -266,6 +266,11 @@ typedef struct {
 } Dict(win_resize);
 
 typedef struct {
+  OptionalKeys is_set__win_set_buf_;
+  Boolean noautocmd;
+} Dict(win_set_buf);
+
+typedef struct {
   OptionalKeys is_set__clear_autocmds_;
   Buffer buffer;  // deprecated - use buf
   Buffer buf;
