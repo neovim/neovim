@@ -500,6 +500,41 @@ local function setup_action_driver()
         return true
       end
     end
+
+    function _G.start_hint_client(capabilities, handlers, flags)
+      handlers = handlers or {}
+      handlers['textDocument/inlayHint'] = handlers['textDocument/inlayHint']
+        or function(_, _, cb)
+          cb(nil, {})
+        end
+      local server = _G._create_server({
+        capabilities = capabilities or { inlayHintProvider = true },
+        handlers = handlers,
+      })
+      local id = assert(vim.lsp.start({ name = 'hints', cmd = server.cmd, flags = flags }, {
+        reuse_client = function()
+          return false
+        end,
+      }))
+      local client = assert(vim.lsp.get_client_by_id(id))
+      assert(vim.wait(1000, function()
+        return client.initialized
+      end))
+      return client, server
+    end
+
+    --- Enable inlay hints and wait for `count` of them to arrive.
+    --- @param count integer
+    --- @param buf? integer
+    function _G.enable_hints(count, buf)
+      vim.lsp.inlay_hint.enable(true, buf and { bufnr = buf })
+      assert(
+        vim.wait(1000, function()
+          return #vim.lsp.inlay_hint.get({ bufnr = buf or 0 }) == count
+        end),
+        'hints did not arrive'
+      )
+    end
   end)
 end
 
@@ -511,6 +546,7 @@ describe('vim.lsp.inlay_hint.action', function()
     clear_notrace()
 
     exec_lua(create_server_definition)
+    setup_action_driver()
 
     source, target, win = unpack(exec_lua(function()
       local source_buf = vim.api.nvim_get_current_buf()
@@ -548,40 +584,30 @@ describe('vim.lsp.inlay_hint.action', function()
       hints[1].tooltip, hints[1].textEdits = nil, nil
 
       _G.command_called = {}
-      local server = _G._create_server({
-        capabilities = {
-          inlayHintProvider = { resolveProvider = true },
-          hoverProvider = true,
-          executeCommandProvider = { commands = { 'test' } },
-        },
-        handlers = {
-          ['workspace/executeCommand'] = function(_, param, callback)
-            table.insert(_G.command_called, param)
-            callback(nil, {})
-          end,
-          ['textDocument/inlayHint'] = function(_, _, callback)
-            callback(nil, vim.deepcopy(hints))
-          end,
-          ['inlayHint/resolve'] = function(_, params, callback)
-            callback(nil, resolved[params.data])
-          end,
-          ['textDocument/hover'] = function(_, params, callback)
-            assert(params.textDocument.uri == location.uri)
-            assert(vim.deep_equal(params.position, location.range.start))
-            callback(nil, { contents = { kind = 'markdown', value = '```rust\nstruct T {}\n```' } })
-          end,
-        },
+      start_hint_client({
+        inlayHintProvider = { resolveProvider = true },
+        hoverProvider = true,
+        executeCommandProvider = { commands = { 'test' } },
+      }, {
+        ['workspace/executeCommand'] = function(_, param, callback)
+          table.insert(_G.command_called, param)
+          callback(nil, {})
+        end,
+        ['textDocument/inlayHint'] = function(_, _, callback)
+          callback(nil, vim.deepcopy(hints))
+        end,
+        ['inlayHint/resolve'] = function(_, params, callback)
+          callback(nil, resolved[params.data])
+        end,
+        ['textDocument/hover'] = function(_, params, callback)
+          assert(params.textDocument.uri == location.uri)
+          assert(vim.deep_equal(params.position, location.range.start))
+          callback(nil, { contents = { kind = 'markdown', value = '```rust\nstruct T {}\n```' } })
+        end,
       })
-
-      assert(vim.lsp.start({ name = 'hints', cmd = server.cmd }))
-      vim.lsp.inlay_hint.enable(true, { bufnr = source_buf })
-      assert(vim.wait(1000, function()
-        return #vim.lsp.inlay_hint.get({ bufnr = source_buf }) == 3
-      end))
+      enable_hints(3, source_buf)
       return { source_buf, target_buf, vim.api.nvim_get_current_win() }
     end))
-
-    setup_action_driver()
   end)
 
   after_each(function()
@@ -696,28 +722,6 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
     exec_lua(create_server_definition)
     exec_lua(function()
       vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'abc' })
-
-      function _G.start_hint_client(capabilities, handlers, flags)
-        handlers = handlers or {}
-        handlers['textDocument/inlayHint'] = handlers['textDocument/inlayHint']
-          or function(_, _, cb)
-            cb(nil, {})
-          end
-        local server = _G._create_server({
-          capabilities = capabilities or { inlayHintProvider = true },
-          handlers = handlers,
-        })
-        local id = assert(vim.lsp.start({ name = 'hints', cmd = server.cmd, flags = flags }, {
-          reuse_client = function()
-            return false
-          end,
-        }))
-        local client = assert(vim.lsp.get_client_by_id(id))
-        assert(vim.wait(1000, function()
-          return client.initialized
-        end))
-        return client, server
-      end
 
       function _G.hint_entry(client, hint, buf)
         return {
@@ -967,10 +971,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
             })
           end,
         })
-        vim.lsp.inlay_hint.enable(true)
-        assert(vim.wait(1000, function()
-          return #vim.lsp.inlay_hint.get({ bufnr = 0 }) == 1
-        end))
+        enable_hints(1)
         vim.api.nvim_buf_set_text(0, 0, 0, 0, 0, { 'Z' })
         vim.api.nvim_win_set_cursor(0, { 1, 1 })
         local result = run_inlay_action('textEdits')
@@ -1018,10 +1019,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
             cb(nil, params)
           end,
         })
-        vim.lsp.inlay_hint.enable(true)
-        assert(vim.wait(1000, function()
-          return #vim.lsp.inlay_hint.get({ bufnr = 0 }) == 1
-        end))
+        enable_hints(1)
         local hints = vim.lsp.inlay_hint.get({ bufnr = 0 })
         local received
         run_inlay_action(
@@ -1583,10 +1581,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
             })
           end,
         })
-        vim.lsp.inlay_hint.enable(true)
-        assert(vim.wait(1000, function()
-          return #vim.lsp.inlay_hint.get({ bufnr = 0 }) == 2
-        end))
+        enable_hints(2)
         vim.cmd.vsplit()
         local wins = vim.api.nvim_tabpage_list_wins(0)
         vim.api.nvim_win_set_cursor(wins[1], { 1, 0 })
@@ -1652,10 +1647,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
               })
             end,
           })
-          vim.lsp.inlay_hint.enable(true)
-          assert(vim.wait(1000, function()
-            return #vim.lsp.inlay_hint.get({ bufnr = 0 }) == 3
-          end))
+          enable_hints(3)
           vim.api.nvim_win_set_cursor(0, { 1, 0 })
           if mode == 'exclusive' then
             vim.o.selection = 'exclusive'
