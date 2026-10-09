@@ -147,7 +147,7 @@ endif()
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
 set(NVIM_VERSION_MINOR 12)
-set(NVIM_VERSION_PATCH 6)
+set(NVIM_VERSION_PATCH 7)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
