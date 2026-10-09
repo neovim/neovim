@@ -144,6 +144,13 @@ function vim.api.nvim__ns_set(ns_id, opts) end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- Add optional packages by name, without searching start packages. Used by vim.pack.
+--- @param name string
+--- @param load boolean
+function vim.api.nvim__packadd_opt(name, load) end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- Instruct Nvim to redraw various components.
 ---
 ---

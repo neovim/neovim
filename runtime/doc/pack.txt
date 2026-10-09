@@ -214,9 +214,10 @@ Manages plugins only in a dedicated *vim.pack-directory* (see |packages|):
 `site/pack/core/opt` subdirectory of "data" |standard-path|. Subdirectory
 `site` of "data" standard path needs to be part of 'packpath'. It usually is,
 but might not be in cases like |--clean| or setting |$XDG_DATA_HOME| during
-startup. Plugin's subdirectory name matches plugin's name in specification. It
-is assumed that all plugins in the directory are managed exclusively by
-`vim.pack`.
+startup. Only optional packages are loaded; same-named start packages are left
+to normal startup loading. Plugin's subdirectory name matches plugin's name in
+specification. It is assumed that all plugins in the directory are managed
+exclusively by `vim.pack`.
 
 Uses Git to manage plugins and requires present `git` executable. Target
 plugins should be Git repositories with versions as named tags following
@@ -506,8 +507,8 @@ add({specs}, {opts})                                          *vim.pack.add()*
         subdirectory (via partial blobless `git clone`) and update revision to
         match `version` (via `git checkout`). Plugin will not be on disk if
         any step resulted in an error.
-    • For each plugin execute |:packadd| (or customizable `load` function)
-      making it reachable by Nvim.
+    • For each plugin load matching optional packages (or call a customizable
+      `load` function), making it reachable by Nvim.
 
     Notes:
     • Installation is done in parallel, but waits for all to finish before
