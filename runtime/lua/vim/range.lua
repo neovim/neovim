@@ -434,30 +434,43 @@ function M.to_extmark(range)
   return start_row, start_col, end_row, end_col
 end
 
---- Creates a new |vim.Range| from extmark range (see |api-indexing|).
+--- Creates a new [vim.Range] from an extmark.
 ---
---- Example:
+--- {extmark} can be the [nvim_buf_get_extmark_by_id()] return value,
+--- an item of the [nvim_buf_get_extmarks()] return value,
+--- or destructured {start_row}, {start_col}, {end_row}, {end_col} arguments. ([api-indexing])
+---
+--- Examples:
 --- ```lua
+--- -- Create from an extmark (with opts.details=true).
+--- local extmarks = vim.api.nvim_buf_get_extmarks(0, ..., { details = true })
+--- local range = vim.range.extmark(0, extmarks[1])
+---
+--- -- Create from extmark range.
 --- local range = vim.range.extmark(0, 3, 5, 4, 0)
 --- ```
 ---@param buf integer
----@param start_row integer
----@param start_col integer
----@param end_row integer
----@param end_col integer
+---@param extmark vim.api.keyset.get_extmark_item_by_id|vim.api.keyset.get_extmark_item
+---       Extmark must have `end_row` and `end_col` details to construct a valid range.
 ---@return vim.Range
-function M.extmark(buf, start_row, start_col, end_row, end_col)
+---@overload fun(buf: integer, start_row: integer, start_col: integer, end_row: integer, end_col: integer): vim.Range
+function M.extmark(buf, extmark, ...)
   validate('buf', buf, 'number')
-  validate('start_row', start_row, 'number')
-  validate('start_col', start_col, 'number')
-  validate('end_row', end_row, 'number')
-  validate('end_col', end_col, 'number')
 
-  if buf == 0 then
-    buf = api.nvim_get_current_buf()
+  if ... then
+    -- stylua: ignore
+    ---@type integer, integer, integer, integer
+    local start_row, start_col, end_row, end_col = extmark --[[@as integer]], ...
+    -- Note: argument validation done by `M.new()`
+    return M.new(buf, start_row, start_col, end_row, end_col)
+  else
+    local row, col, end_row, end_col = util.from_extmark(extmark)
+    if end_row and end_col then
+      return M.new(buf, row, col, end_row, end_col)
+    else
+      error('extmark item must provide end_row and end_col details')
+    end
   end
-
-  return M.new(buf, start_row, start_col, end_row, end_col)
 end
 
 -- Overload `Range.new` to allow calling this module as a function.
