@@ -383,10 +383,10 @@ argument.
                 channel is still open.
 
                 Waits for a client to call |nvim_ui_attach()| before sourcing
-                startup files and reading buffers, so that UIs can handle
-                (display) early messages, dialogs, etc. Clients can do other
-                requests before `nvim_ui_attach` (e.g. `nvim_get_api_info` for
-                feature-detection). During this pre-startup phase the user
+                startup files and reading buffers, so UIs can display early
+                messages/dialogs and make preliminary requests (e.g.
+                `nvim_chan_set` to set channel config, or `nvim_get_api_info`
+                for feature-detection). During this pre-startup phase the user
                 config is of course not available (similar to `--cmd`).
 
                 Non-UI embedders must pass |--headless|, then startup will
@@ -398,8 +398,17 @@ argument.
                 UI embedders that want the UI protocol on a socket (instead of
                 stdio) must pass |--listen| as well as |--embed|: >
                     nvim --embed --listen addr
+<                Then stdin is an RPC channel only if it is a pipe/socket.
+                Otherwise (tty, /dev/null) Nvim waits for a UI to attach at
+                `addr`, e.g. to start a server for a GUI on a remote host: >
+                    ssh host 'nvim --embed --listen 0.0.0.0:8888 &'
+<                The UI can call |nvim_chan_set()| with `detach=false` to
+                enable exit-on-channel-close behavior.
 
-<                See also: |ui-startup| |channel-stdio|
+                To "daemonize" such a server, use |jobstart()| with "detach": >
+                    nvim -es +"lua vim.fn.jobstart({'nvim', '--embed', '--listen', 'addr'}, {detach=true, stdin='null'})" +q
+<
+                See also: |ui-startup| |channel-stdio|
 
                                                         *--headless*
 --headless      Start without UI, and do not wait for `nvim_ui_attach`. The
