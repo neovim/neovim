@@ -29,6 +29,35 @@ function M.shorten_path(path, base)
   return base and vim.fs.relpath(base, path) or vim.fn.fnamemodify(vim.fs.abspath(path), ':~')
 end
 
+--- Collects {count} asynchronous results in input order, omitting nil results, and calls
+--- {on_complete} once the last one arrives. A {count} of 0 completes immediately.
+--- Example with count=3, results reported in arrival order:
+--- (3, "c"), (1, "a"), (2, nil) => on_complete({ "a", "c" })
+--- @generic T
+--- @param count integer
+--- @param on_complete fun(results: T[])
+--- @return fun(index: integer, result: T?) report Reports the result at `index` (1-based).
+function M.collect_ordered(count, on_complete)
+  local results = {} --- @type table<integer, T>
+  local remaining = count
+  if count == 0 then
+    on_complete({})
+  end
+  return function(index, result)
+    results[index] = result
+    remaining = remaining - 1
+    if remaining == 0 then
+      local ordered = {} --- @type T[]
+      for i = 1, count do
+        if results[i] ~= nil then
+          ordered[#ordered + 1] = results[i]
+        end
+      end
+      on_complete(ordered)
+    end
+  end
+end
+
 -- Generated from async.nvim/lua/async/_errors.lua: start
 local nil_error = 'error(nil)'
 
