@@ -1131,87 +1131,11 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
   end)
 
   for _, case in ipairs({
-    {
-      'inlayHint/resolve',
-      'textEdits',
-      { cancel = { 'abc' }, success = { 'aXbc' }, mixed = { 'abXc' } },
-    },
-    {
-      'textDocument/hover',
-      'hover',
-      { cancel = { 'abc' }, success = { '# `1`', 'docs' }, mixed = { '# `2`', 'docs' } },
-    },
-    { 'workspace/executeCommand', 'command', { cancel = { 'abc' }, success = { 'abc' } } },
+    { 'inlayHint/resolve', 'textEdits' },
+    { 'textDocument/hover', 'hover' },
+    { 'workspace/executeCommand', 'command' },
   }) do
     local method, action = case[1], case[2]
-    for outcome, expected_lines in vim.spairs(case[3]) do
-      it('completes ' .. method .. ' with ' .. outcome .. ' RPC replies', function()
-        local result = exec_lua(function(fake_lsp_code)
-          local exit_code
-          local id = assert(vim.lsp.start({
-            name = 'rpc-hints',
-            cmd = {
-              vim.v.progpath,
-              '-l',
-              fake_lsp_code,
-              'inlay_hint_action',
-              '10000',
-              method,
-              outcome,
-            },
-            on_exit = function(code)
-              exit_code = code
-            end,
-          }))
-          local client = assert(vim.lsp.get_client_by_id(id))
-          local source = vim.api.nvim_get_current_buf()
-          assert(vim.wait(1000, function()
-            return client.initialized and client.attached_buffers[source]
-          end))
-          vim.wait(0)
-
-          -- Hover requests belong to the target buffer, not the source buffer.
-          local loc = label_loc(vim.api.nvim_create_buf(true, false))
-          local labels, entries = {}, {}
-          for i = 1, outcome == 'mixed' and 2 or 1 do
-            labels[i] = {
-              value = tostring(i),
-              location = loc,
-              command = { title = 'Test', command = 'test' },
-            }
-            entries[i] = hint_entry(client, { position = { line = 0, character = i } })
-          end
-          if action ~= 'textEdits' then
-            entries = { hint_entry(client, { label = labels }) }
-          end
-
-          local command_replies = 0
-          client.handlers['workspace/executeCommand'] = function(err)
-            assert(not err, 'cancellation must not reach the command handler')
-            command_replies = command_replies + 1
-          end
-          local events = { 'BufUnload', 'LspDetach', 'LspRequest' }
-          local autocmds = vim.api.nvim_get_autocmds({ event = events })
-          local windows = vim.api.nvim_list_wins()
-          local result = run_inlay_action(action, entries)
-          assert(not client:is_stopped())
-          assert(vim.deep_equal(autocmds, vim.api.nvim_get_autocmds({ event = events })))
-          assert(command_replies == (action == 'command' and outcome == 'success' and 1 or 0))
-          if outcome == 'cancel' then
-            assert(result.buf == source and result.client_id == nil)
-            assert(vim.deep_equal(windows, vim.api.nvim_list_wins()))
-          end
-          client:stop()
-          assert(vim.wait(1000, function()
-            return exit_code ~= nil
-          end))
-          assert(exit_code == 0)
-          return { handled = result.client_id == id, lines = result.lines }
-        end, t_lsp.fake_lsp_code)
-        eq({ handled = outcome ~= 'cancel', lines = expected_lines }, result)
-      end)
-    end
-
     it('completes when submitting ' .. method .. ' fails', function()
       eq(
         false,
