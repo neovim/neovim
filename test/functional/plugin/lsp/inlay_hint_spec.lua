@@ -1327,6 +1327,24 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
     end)
   end
 
+  for _, action in ipairs({ 'hover', 'tooltip' }) do
+    it('renders plaintext ' .. action .. ' content literally', function()
+      local screen = Screen.new(80, 14)
+      local lines = { '*ptr*', '---', '[link](url) &amp; \\path `code`' }
+      exec_lua(function()
+        vim.cmd('syntax on')
+        local contents = { kind = 'plaintext', value = table.concat(lines, '\n') }
+        local _, entry = start_action_client('textDocument/hover', function(_, _, cb)
+          cb(nil, { contents = contents })
+        end)
+        entry.inlay_hint.tooltip = { kind = 'plaintext', value = lines[1] .. '\n' .. lines[2] }
+        entry.inlay_hint.label[1].tooltip = { kind = 'plaintext', value = lines[3] }
+        run_inlay_action(action, { entry })
+      end)
+      screen:expect({ any = vim.tbl_map(vim.pesc, lines), attr_ids = {} })
+    end)
+  end
+
   it('preserves repeated label parts within a hint', function()
     eq(
       { '# `T`', 'docs', '', '# `T`', 'docs' },
