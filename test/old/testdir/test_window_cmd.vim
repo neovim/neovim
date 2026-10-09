@@ -610,6 +610,23 @@ func Test_equalalways_on_close()
   set equalalways&
 endfunc
 
+func Test_equalalways_on_open()
+  set equalalways
+  vsplit
+  split
+  wincmd l
+  windo vsplit
+
+  let basewidth = winwidth(1)
+
+  for win in range(2, winnr("$"))
+    call assert_true(abs(winwidth(win) - basewidth) <= 1)
+  endfor
+
+  only
+  set equalalways&
+endfunc
+
 func Test_win_screenpos()
   CheckFeature quickfix
 

@@ -1234,21 +1234,11 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
       win_setwidth_win(oldwin->w_width + new_size + 1, oldwin, true);
     }
 
-    // Only make all windows the same width if one of them (except oldwin)
-    // is wider than one of the split windows.
+    // Make all windows the same width if 'equalalways' is set, 'ead'
+    // not set to 'v', a size was not provided and there is a parent frame.
     if (!do_equal && p_ea && size == 0 && *p_ead != 'v'
         && oldwin->w_frame->fr_parent != NULL) {
-      frame_T *frp = oldwin->w_frame->fr_parent->fr_child;
-      while (frp != NULL) {
-        if (frp->fr_win != oldwin && frp->fr_win != NULL
-            && (frp->fr_win->w_width > new_size
-                || frp->fr_win->w_width > (oldwin->w_width
-                                           - new_size - 1))) {
-          do_equal = true;
-          break;
-        }
-        frp = frp->fr_next;
-      }
+      do_equal = true;
     }
   } else {
     // Check if we are able to split the current window and compute its height.
@@ -1323,21 +1313,11 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
       oldwin_height = oldwin->w_height;
     }
 
-    // Only make all windows the same height if one of them (except oldwin)
-    // is higher than one of the split windows.
-    if (!do_equal && p_ea && size == 0
-        && *p_ead != 'h'
+    // Make all windows the same height if 'equalalways' is set, 'ead' is
+    // not set to 'h', a size was not provided and there is a parent frame.
+    if (!do_equal && p_ea && size == 0 && *p_ead != 'h'
         && oldwin->w_frame->fr_parent != NULL) {
-      frame_T *frp = oldwin->w_frame->fr_parent->fr_child;
-      while (frp != NULL) {
-        if (frp->fr_win != oldwin && frp->fr_win != NULL
-            && (frp->fr_win->w_height > new_size
-                || frp->fr_win->w_height > oldwin_height - new_size - STATUS_HEIGHT)) {
-          do_equal = true;
-          break;
-        }
-        frp = frp->fr_next;
-      }
+      do_equal = true;
     }
   }
 
