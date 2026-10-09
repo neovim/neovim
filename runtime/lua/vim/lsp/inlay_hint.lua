@@ -600,18 +600,12 @@ local action_handlers = {
     if #text_edits == 0 then
       return false
     end
-    vim.schedule(function()
-      if not ctx.is_valid() then
-        on_done({ buf = ctx.buf })
-        return
-      end
-      local success, err =
-        pcall(util.apply_text_edits, text_edits, ctx.buf, ctx.client.offset_encoding)
-      on_done({ buf = ctx.buf, client = success and ctx.client or nil })
-      if not success then
-        vim.notify(tostring(err), vim.log.levels.ERROR)
-      end
-    end)
+    local success, err =
+      pcall(util.apply_text_edits, text_edits, ctx.buf, ctx.client.offset_encoding)
+    on_done({ buf = ctx.buf, client = success and ctx.client or nil })
+    if not success then
+      vim.notify(tostring(err), vim.log.levels.ERROR)
+    end
     return true
   end,
   location = function(hints, ctx, on_done)

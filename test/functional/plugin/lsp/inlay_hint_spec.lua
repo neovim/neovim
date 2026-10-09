@@ -1106,16 +1106,16 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
     end)
   end
 
-  it('rechecks the buffer before applying scheduled text edits', function()
+  it('applies text edits from a deferred resolve response', function()
     eq(
-      { 'changed', false },
+      { 'aXbc', true },
       exec_lua(function()
         local client = start_hint_client({ inlayHintProvider = { resolveProvider = true } }, {
           ['inlayHint/resolve'] = function(_, params, cb)
             params.textEdits = { insert_edit('X', params.position) }
-            cb(nil, params)
-            -- The response scheduled the edit, but it has not run yet.
-            vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'changed' })
+            vim.schedule(function()
+              cb(nil, params)
+            end)
           end,
         })
         local result = run_inlay_action('textEdits', { hint_entry(client) })
