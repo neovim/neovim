@@ -5035,9 +5035,12 @@ static void ex_restart(exarg_T *eap)
 
   // Prevent new server from self-exiting when the channel closes.
   ArenaMem result_mem = NULL;
-  MAXSIZE_TEMP_ARRAY(detach_args, 1);
-  ADD_C(detach_args, BOOLEAN_OBJ(true));
-  rpc_send_call(channel->id, "nvim__chan_set_detach", detach_args, &result_mem, &err);
+  MAXSIZE_TEMP_DICT(detach_opts, 1);
+  PUT_C(detach_opts, "detach", BOOLEAN_OBJ(true));
+  MAXSIZE_TEMP_ARRAY(detach_args, 2);
+  ADD_C(detach_args, INTEGER_OBJ(0));
+  ADD_C(detach_args, DICT_OBJ(detach_opts));
+  rpc_send_call(channel->id, "nvim_chan_set", detach_args, &result_mem, &err);
   if (ERROR_SET(&err)) {
     goto fail_2;
   }
@@ -5098,7 +5101,7 @@ static void ex_restart(exarg_T *eap)
 #endif
 
   // Send restart event with new listen address to all UIs.
-  ui_call_restart(cstr_as_string(listen_addr));
+  remote_ui_restart(cstr_as_string(listen_addr));
   ui_flush();
   xfree(listen_addr);
 

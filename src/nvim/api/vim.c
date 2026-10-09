@@ -1752,22 +1752,28 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dict version, String
   rpc_set_client_info(channel_id, copy_dict(info, NULL));
 }
 
-/// Sets the detach flag for the channel.
+/// Sets channel properties.
 ///
-/// Detached channels do not trigger self-exit when they are closed.
-///
-/// @param channel_id
-/// @param detach   New detach value for the channel.
-/// @param[out] err Error details, if any.
-void nvim__chan_set_detach(uint64_t channel_id, Boolean detach, Error *err)
-  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY
+/// @param chan Channel id, or 0 for current (RPC) channel.
+/// @param config Properties:
+///     - detach: (boolean, default: true) Closing the channel does not self-exit Nvim. Nvim
+///       self-exits when the last `detach=false` |RPC| channel closes. See also |:detach!|.
+/// @param[out] err Error details, if any
+void nvim_chan_set(uint64_t channel_id, Integer chan, Dict(chan_set) *config, Error *err)
+  FUNC_API_SINCE(15) FUNC_API_FAST
 {
-  Channel *chan = find_channel(channel_id);
-  VALIDATE(chan != NULL, "%s", e_invchan, {
+  if (chan == 0 && !is_internal_call(channel_id)) {
+    chan = (Integer)channel_id;
+  }
+  Channel *channel = find_channel((uint64_t)chan);
+  VALIDATE_INT(channel != NULL, "chan", chan, {
     return;
   });
 
-  chan->detach = (bool)detach;
+  if (HAS_KEY(config, chan_set, detach)) {
+    channel->detach = config->detach;
+    channel_event(channel, EVENT_CHANINFO);
+  }
 }
 
 /// Records the cmdwin scratchbuf and type, or clears both when type="" / buf=0. Internal use only.
@@ -1793,17 +1799,19 @@ void nvim__cmdwin_set(String type, Buffer buf, Error *err)
 
 /// Gets information about a channel.
 ///
-/// See |nvim_list_uis()| for an example of how to get channel info.
+/// The docs for |nvim_list_uis()| show an example.
 ///
-/// @param chan channel_id, or 0 for current channel
+/// @param chan Channel id, or 0 for current (RPC) channel
 /// @returns Channel info dict with these keys:
-///    - "id"       Channel id.
 ///    - "argv"     (optional) Job arguments list.
-///    - "stream"   Stream underlying the channel.
-///         - "stdio"      stdin and stdout of this Nvim instance
-///         - "stderr"     stderr of this Nvim instance
-///         - "socket"     TCP/IP socket or named pipe
-///         - "job"        Job with communication over its stdio.
+///    - "buf"      (optional) Buffer connected to |terminal| instance.
+///    - "buffer"   (optional) Deprecated alias for `buf`.
+///    - "client"   (optional) Info about the peer (client on the other end of the channel), as set
+///                 by |nvim_set_client_info()|.
+///    - "detach"   (optional) Closing the |RPC| channel does not exit Nvim. |nvim_chan_set()|
+///    - "exitcode" (optional) Exit code of the |terminal| process.
+///    - "id"       Channel id.
+///    - "internal" (optional) In-process channel (stream=socket).
 ///    - "mode"     How data received on the channel is interpreted.
 ///         - "bytes"      Send and receive raw bytes.
 ///         - "terminal"   |terminal| instance interprets ASCII sequences.
@@ -1811,12 +1819,11 @@ void nvim__cmdwin_set(String type, Buffer buf, Error *err)
 ///    - "pty"      (optional) Name of pseudoterminal. On a POSIX system this is a device path like
 ///                 "/dev/pts/1". If unknown, the key will still be present if a pty is used (e.g.
 ///                 for conpty on Windows).
-///    - "buf"      (optional) Buffer connected to |terminal| instance.
-///    - "buffer"   (optional) Deprecated alias for `buf`.
-///    - "client"   (optional) Info about the peer (client on the other end of the channel), as set
-///                 by |nvim_set_client_info()|.
-///    - "exitcode" (optional) Exit code of the |terminal| process.
-///
+///    - "stream"   Stream underlying the channel.
+///         - "stdio"      stdin and stdout of this Nvim instance
+///         - "stderr"     stderr of this Nvim instance
+///         - "socket"     TCP/IP socket or named pipe
+///         - "job"        Job with communication over its stdio.
 Dict nvim_get_chan_info(uint64_t channel_id, Integer chan, Arena *arena, Error *err)
   FUNC_API_SINCE(4)
 {

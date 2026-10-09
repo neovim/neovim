@@ -850,6 +850,14 @@ function vim.api.nvim_call_function(fn, args) end
 --- @param data string Data to write. 8-bit clean: may contain NUL bytes.
 function vim.api.nvim_chan_send(chan, data) end
 
+--- Sets channel properties.
+---
+--- @param chan integer Channel id, or 0 for current (RPC) channel.
+--- @param config vim.api.keyset.chan_set Properties:
+--- - detach: (boolean, default: true) Closing the channel does not self-exit Nvim. Nvim
+---   self-exits when the last `detach=false` `RPC` channel closes. See also `:detach!`.
+function vim.api.nvim_chan_set(chan, config) end
+
 --- Clears all autocommands matching the {opts} query. To delete autocmds see `nvim_del_autocmd()`.
 ---
 --- @param opts vim.api.keyset.clear_autocmds? Optional parameters:
@@ -1302,17 +1310,19 @@ function vim.api.nvim_get_autocmds(opts) end
 
 --- Gets information about a channel.
 ---
---- See `nvim_list_uis()` for an example of how to get channel info.
+--- The docs for `nvim_list_uis()` show an example.
 ---
---- @param chan integer channel_id, or 0 for current channel
+--- @param chan integer Channel id, or 0 for current (RPC) channel
 --- @return table<string,any> # Channel info dict with these keys:
---- - "id"       Channel id.
 --- - "argv"     (optional) Job arguments list.
---- - "stream"   Stream underlying the channel.
----      - "stdio"      stdin and stdout of this Nvim instance
----      - "stderr"     stderr of this Nvim instance
----      - "socket"     TCP/IP socket or named pipe
----      - "job"        Job with communication over its stdio.
+--- - "buf"      (optional) Buffer connected to |terminal| instance.
+--- - "buffer"   (optional) Deprecated alias for `buf`.
+--- - "client"   (optional) Info about the peer (client on the other end of the channel), as set
+---              by |nvim_set_client_info()|.
+--- - "detach"   (optional) Closing the |RPC| channel does not exit Nvim. |nvim_chan_set()|
+--- - "exitcode" (optional) Exit code of the |terminal| process.
+--- - "id"       Channel id.
+--- - "internal" (optional) In-process channel (stream=socket).
 --- - "mode"     How data received on the channel is interpreted.
 ---      - "bytes"      Send and receive raw bytes.
 ---      - "terminal"   |terminal| instance interprets ASCII sequences.
@@ -1320,12 +1330,11 @@ function vim.api.nvim_get_autocmds(opts) end
 --- - "pty"      (optional) Name of pseudoterminal. On a POSIX system this is a device path like
 ---              "/dev/pts/1". If unknown, the key will still be present if a pty is used (e.g.
 ---              for conpty on Windows).
---- - "buf"      (optional) Buffer connected to |terminal| instance.
---- - "buffer"   (optional) Deprecated alias for `buf`.
---- - "client"   (optional) Info about the peer (client on the other end of the channel), as set
----              by |nvim_set_client_info()|.
---- - "exitcode" (optional) Exit code of the |terminal| process.
----
+--- - "stream"   Stream underlying the channel.
+---      - "stdio"      stdin and stdout of this Nvim instance
+---      - "stderr"     stderr of this Nvim instance
+---      - "socket"     TCP/IP socket or named pipe
+---      - "job"        Job with communication over its stdio.
 function vim.api.nvim_get_chan_info(chan) end
 
 --- Returns the 24-bit RGB value of a `nvim_get_color_map()` color name or

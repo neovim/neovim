@@ -226,7 +226,7 @@ Channel *channel_alloc(ChannelStreamType type)
   chan->refcount = 1;
   chan->exit_status = -1;
   chan->streamtype = type;
-  chan->detach = false;
+  chan->detach = type != kChannelStreamStdio;
   assert(chan->id <= VARNUMBER_MAX);
   pmap_put(uint64_t)(&channels, chan->id, chan);
   return chan;
@@ -1049,6 +1049,7 @@ Dict channel_info(uint64_t id, Arena *arena)
   if (chan->is_rpc) {
     mode_desc = "rpc";
     PUT_C(info, "client", DICT_OBJ(chan->rpc.info));
+    PUT_C(info, "detach", BOOLEAN_OBJ(chan->detach));
   } else if (chan->term) {
     mode_desc = "terminal";
     PUT_C(info, "buf", BUFFER_OBJ(terminal_buf(chan->term)));

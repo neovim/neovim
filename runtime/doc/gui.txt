@@ -78,11 +78,14 @@ Stop or detach the current UI
                 (incorrectly) report an error.
 
                                                                     *:detach!*
-:detach!        Marks the current UI as "detachable" without detaching it now:
+:detach!        Sets the current UI as "detachable" without detaching it now:
                 the UI stays attached, but if it later disconnects
                 unexpectedly (e.g. host terminal closed, ssh disconnect,
                 etc.), the server keeps running in the background.
                 Use |:connect| or |--remote-ui| to reattach.
+
+                Same as |nvim_chan_set()| `detach=true` on the UI channel.
+                Preserved across |:restart|.
 
                 If you always want Nvim to survive accidental disconnect, put
                 this in your config: >vim

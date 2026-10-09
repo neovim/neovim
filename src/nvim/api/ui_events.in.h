@@ -29,8 +29,8 @@ void flush(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL;
 void connect(String server_addr)
   FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY FUNC_API_REMOTE_IMPL FUNC_API_CLIENT_IMPL;
-void restart(String listen_addr)
-  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY FUNC_API_CLIENT_IMPL;
+void restart(String listen_addr, Dict chan_config)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY FUNC_API_REMOTE_IMPL FUNC_API_CLIENT_IMPL;
 void suspend(void)
   FUNC_API_SINCE(3);
 void set_title(String title)
@@ -43,9 +43,6 @@ void option_set(String name, Object value)
   FUNC_API_SINCE(4);
 void chdir(String path)
   FUNC_API_SINCE(12);
-// Stop event is not exported as such, represented by EOF in the msgpack stream.
-void stop(void)
-  FUNC_API_NOEXPORT;
 void ui_send(String content)
   FUNC_API_SINCE(14) FUNC_API_REMOTE_IMPL;
 

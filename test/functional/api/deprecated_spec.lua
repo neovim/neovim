@@ -9,9 +9,101 @@ local clear, eval, eq, ok = n.clear, n.eval, t.eq, t.ok
 local api, command, fn = n.api, n.command, n.fn
 local pcall_err, assert_alive = t.pcall_err, n.assert_alive
 local insert, exec, feed = n.insert, n.exec, n.feed
+local NIL = vim.NIL
 
 describe('deprecated', function()
   before_each(n.clear)
+
+  describe('nvim_call_atomic', function()
+    it('works', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'first' })
+      local req = {
+        { 'nvim_get_current_line', {} },
+        { 'nvim_set_current_line', { 'second' } },
+      }
+      eq({ { 'first', NIL }, NIL }, api.nvim_call_atomic(req))
+      eq({ 'second' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    end)
+
+    it('allows multiple return values', function()
+      local req = {
+        { 'nvim_set_var', { 'avar', true } },
+        { 'nvim_set_var', { 'bvar', 'string' } },
+        { 'nvim_get_var', { 'avar' } },
+        { 'nvim_get_var', { 'bvar' } },
+      }
+      eq({ { NIL, NIL, true, 'string' }, NIL }, api.nvim_call_atomic(req))
+    end)
+
+    it('is aborted by errors in call', function()
+      local error_types = api.nvim_get_api_info()[2].error_types
+      local req = {
+        { 'nvim_set_var', { 'one', 1 } },
+        { 'nvim_buf_set_lines', {} },
+        { 'nvim_set_var', { 'two', 2 } },
+      }
+      eq({
+        { NIL },
+        {
+          1,
+          error_types.Exception.id,
+          'Wrong number of arguments: expecting 5 but got 0',
+        },
+      }, api.nvim_call_atomic(req))
+      eq(1, api.nvim_get_var('one'))
+      eq(false, pcall(api.nvim_get_var, 'two'))
+
+      -- still returns all previous successful calls
+      req = {
+        { 'nvim_set_var', { 'avar', 5 } },
+        { 'nvim_set_var', { 'bvar', 'string' } },
+        { 'nvim_get_var', { 'avar' } },
+        { 'nvim_buf_get_lines', { 0, 10, 20, true } },
+        { 'nvim_get_var', { 'bvar' } },
+      }
+      eq(
+        { { NIL, NIL, 5 }, { 3, error_types.Validation.id, 'Index out of bounds' } },
+        api.nvim_call_atomic(req)
+      )
+
+      req = {
+        { 'i_am_not_a_method', { 'xx' } },
+        { 'nvim_set_var', { 'avar', 10 } },
+      }
+      eq(
+        { {}, { 0, error_types.Exception.id, 'Invalid method: i_am_not_a_method' } },
+        api.nvim_call_atomic(req)
+      )
+      eq(5, api.nvim_get_var('avar'))
+    end)
+
+    it('validation', function()
+      local req = {
+        { 'nvim_set_var', { 'avar', 1 } },
+        { 'nvim_set_var' },
+        { 'nvim_set_var', { 'avar', 2 } },
+      }
+      eq("Invalid 'calls' item: expected 2-item Array", pcall_err(api.nvim_call_atomic, req))
+      -- call before was done, but not after
+      eq(1, api.nvim_get_var('avar'))
+
+      req = {
+        { 'nvim_set_var', { 'bvar', { 2, 3 } } },
+        12,
+      }
+      eq("Invalid 'calls' item: expected Array, got Integer", pcall_err(api.nvim_call_atomic, req))
+      eq({ 2, 3 }, api.nvim_get_var('bvar'))
+
+      req = {
+        { 'nvim_set_current_line', 'little line' },
+        { 'nvim_set_var', { 'avar', 3 } },
+      }
+      eq('Invalid call args: expected Array, got String', pcall_err(api.nvim_call_atomic, req))
+      -- call before was done, but not after
+      eq(1, api.nvim_get_var('avar'))
+      eq({ '' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    end)
+  end)
 
   describe('nvim_notify', function()
     it('can notify a info message', function()

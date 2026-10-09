@@ -345,10 +345,10 @@ void ui_client_event__set_restart_on_crash_exit(Array args)
 void ui_client_attach_to_restarted_server(bool error_restart)
 {
   Array args = restart_args;
-  bool restart = false;
+  bool start_server = false;  // Server crashed; start one ourselves (`_set_restart_on_crash_exit`).
   if (!restart_pending) {
     if (error_restart && ui_client_error_exit == -1 && restart_args_after_crash_exit.size > 0) {
-      restart = true;
+      start_server = true;
       args = restart_args_after_crash_exit;
     } else {
       return;
@@ -364,7 +364,7 @@ void ui_client_attach_to_restarted_server(bool error_restart)
 
   uint64_t chan_id;
   const char *first_arg = args.items[0].data.string.data;
-  if (restart) {
+  if (start_server) {  // Restart after server crash.
     if (args.size < 2 || args.items[1].type != kObjectTypeArray) {
       ELOG("Error handling ui event 'restart'");
       goto cleanup;
@@ -382,13 +382,20 @@ void ui_client_attach_to_restarted_server(bool error_restart)
     chan_id = ui_client_start_server(first_arg, cmdargs.size, argv);
     xfree(argv);
     ui_client_error_exit = -1;
-  } else {
+  } else {  // "restart" UI event: connect to the new server.
     bool is_tcp = socket_address_tcp_host_end(first_arg) != NULL;
     const char *err = NULL;
     chan_id = channel_connect(is_tcp, first_arg, true, CALLBACK_READER_INIT, 50, &err);
     if (err != NULL) {
       ELOG("cannot connect to server %s: %s", first_arg, err);
       goto cleanup;
+    }
+    if (args.size > 1 && args.items[1].type == kObjectTypeDict) {
+      // Restore channel properties after restart. Before attach, so `:detach!` in user config wins.
+      MAXSIZE_TEMP_ARRAY(chan_args, 2);
+      ADD_C(chan_args, INTEGER_OBJ(0));
+      ADD_C(chan_args, args.items[1]);
+      rpc_send_event(chan_id, "nvim_chan_set", chan_args);
     }
   }
 

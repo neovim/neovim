@@ -128,14 +128,12 @@ Nvim will pause before loading startup files and reading buffers, so the UI
 has a chance to invoke requests and do early initialization. Startup will
 continue when the UI invokes |nvim_ui_attach()|.
 
-A simple UI only needs to do a single |nvim_ui_attach()| request and then
-prepare to handle any UI event. A more featureful UI, which might need
-additional configuration of the Nvim process, should use the following startup
-procedure:
+A basic UI only needs to call |nvim_ui_attach()| and then prepare to handle
+UI events. A more featureful UI, should use the following startup procedure:
 
 1. Invoke |nvim_get_api_info()|, if needed to setup the client library and/or
    to get the list of supported UI extensions.
-2. Do any configuration that should be happen before user config is loaded.
+2. Do any configuration that should happen before user config is loaded.
    Buffers and windows are not available at this point, but this could be used
    to set |g:| variables visible to init.vim
 3. If the UI wants to do additional setup after user config is loaded,
@@ -146,6 +144,8 @@ procedure:
 5. If step 3 was used, Nvim will send a blocking "vimenter" request to the UI.
    Inside this request handler, the UI can safely do any initialization before
    entering normal mode, for example reading variables set by init.vim.
+
+UIs should also handle |ui-event-restart|.
 
 							   *ui-startup-stdin*
 UIs can support reading from stdin (like `command | nvim -`, see |--|) as follows:
@@ -253,14 +253,19 @@ the editor.
 	UI is expected to:
 	1. Attach to the server at `server_addr`.
 
-["restart", listen_addr] ~
+							*ui-event-restart*
+["restart", listen_addr, chan_config] ~
 	User invoked the |:restart| command. Nvim started a new server. The
-	old server is about to exit and close its channel.
+	old server is about to exit and close its channel. `chan_config` gives
+	the channel-specific properties from the old server, which the UI
+	should pass to |nvim_chan_set()| intact.
 
 	UI is expected to:
 	1. Wait for the channel to be closed, to confirm that the old server
 	   actually exited.
-	2. Attach to the new server at `listen_addr`.
+	2. Call `nvim_chan_set(0, chan_config)` on the new server at
+	   `listen_addr`, to restore the channel properties (e.g. |:detach!|).
+	3. Attach to the new server at `listen_addr`.
 
 ["suspend"] ~
 	|:suspend| command or |CTRL-Z| mapping is used. A terminal client (or

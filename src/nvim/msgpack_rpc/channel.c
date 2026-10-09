@@ -481,6 +481,18 @@ static void broadcast_event(const char *name, Array args)
   kvi_destroy(chans);
 }
 
+/// Checks if an open RPC channel has detach=false.
+static bool has_undetached_rpc_chan(void)
+{
+  Channel *chan;
+  map_foreach_value(&channels, chan, {
+    if (chan->is_rpc && !chan->rpc.closed && !chan->detach) {
+      return true;
+    }
+  });
+  return false;
+}
+
 /// Mark rpc state as closed, and release its reference to the channel.
 /// Don't call this directly, call channel_close(id, kChannelPartRpc, &error)
 void rpc_close(Channel *channel)
@@ -503,10 +515,9 @@ static void rpc_close_event(void **argv)
   channel_decref(channel);
 
 #ifdef MSWIN
-  // For ":detach!": unexpected disconnect does not call ui_detach_channel, unlike the normal
-  // ":detach" case, so we need to do some cleanup here.
-  bool detached_ui_stdio = channel->streamtype == kChannelStreamStdio
-                           && channel->detach && channel->rpc.ui != NULL;
+  // Unexpected disconnect (e.g. after ":detach!") does not call ui_detach_channel, unlike the
+  // normal ":detach" case, so we need to do some cleanup here.
+  bool ui_stdio = channel->streamtype == kChannelStreamStdio && channel->rpc.ui != NULL;
 #endif
 
   // No more I/O can happen on this channel. Remove UI if there is one attached.
@@ -529,11 +540,11 @@ static void rpc_close_event(void **argv)
       return;
     }
     exit_on_closed_chan(0);
-  } else if (channel->streamtype == kChannelStreamStdio && !channel->detach) {
+  } else if (!channel->detach && !has_undetached_rpc_chan()) {
     exit_on_closed_chan(0);
   }
 #ifdef MSWIN
-  else if (detached_ui_stdio) {
+  else if (ui_stdio) {
     // Move this server off the now-dead console so it keeps working (CONIN$/CONOUT$).
     os_swap_to_hidden_console();
   }

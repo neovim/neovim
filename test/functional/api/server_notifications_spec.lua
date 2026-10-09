@@ -83,7 +83,7 @@ describe('notify', function()
     local catpath = vim.fs.normalize(eval('exepath("cat")'))
     api.nvim_set_var('somevar', 0)
     eq(
-      { id = catchan, argv = { catpath }, stream = 'job', mode = 'rpc', client = {} },
+      { id = catchan, argv = { catpath }, stream = 'job', mode = 'rpc', client = {}, detach = true },
       exec_lua(function()
         vim.rpcnotify(catchan, 'nvim_call_function', 'chanclose', { catchan, 'rpc' })
         vim.rpcnotify(catchan, 'nvim_set_var', 'somevar', 1) -- Should be cancelled.
