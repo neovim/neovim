@@ -9,7 +9,7 @@ local assert_alive = n.assert_alive
 local feed, insert, source = n.feed, n.insert, n.source
 local clear, command, expect = n.clear, n.command, n.expect
 local eq, eval, write_file = t.eq, n.eval, t.write_file
-local poke_eventloop = n.poke_eventloop
+local poke_eventloop, fn = n.poke_eventloop, n.fn
 local dedent = t.dedent
 local pcall_err = t.pcall_err
 
@@ -497,9 +497,9 @@ describe('eval', function()
     expect(
       '\n'
         .. "{{{2 setreg('d', ['abcD4b-0', '\000', 'abcD4b-2\000', '\000abcD4b-3', 'abcD4b-4\000abcD4b-4-2'], 'b')\n"
-        .. "d: type \02219; value: abcD4b-0\000\000\000abcD4b-2\000\000\000abcD4b-3\000abcD4b-4\000abcD4b-4-2 (['abcD4b-0', '\000', 'abcD4b-2\000', '\000abcD4b-3', 'abcD4b-4\000abcD4b-4-2']), expr: abcD4b-0\000\000\000abcD4b-2\000\000\000abcD4b-3\000abcD4b-4\000abcD4b-4-2 (['abcD4b-0', '\000', 'abcD4b-2\000', '\000abcD4b-3', 'abcD4b-4\000abcD4b-4-2'])\n"
+        .. "d: type \02220; value: abcD4b-0\000\000\000abcD4b-2\000\000\000abcD4b-3\000abcD4b-4\000abcD4b-4-2 (['abcD4b-0', '\000', 'abcD4b-2\000', '\000abcD4b-3', 'abcD4b-4\000abcD4b-4-2']), expr: abcD4b-0\000\000\000abcD4b-2\000\000\000abcD4b-3\000abcD4b-4\000abcD4b-4-2 (['abcD4b-0', '\000', 'abcD4b-2\000', '\000abcD4b-3', 'abcD4b-4\000abcD4b-4-2'])\n"
         .. '==\n'
-        .. '=abcD4b-0           =\n'
+        .. '=abcD4b-0            =\n'
         .. ' \000\n'
         .. ' abcD4b-2\000\n'
         .. ' \000abcD4b-3\n'
@@ -530,6 +530,30 @@ describe('eval', function()
 
     command("call setreg('b', '🇧🇷', 'b')")
     eq('\0222', eval("getregtype('b')"))
+  end)
+
+  it('setting register with unprintable chars in block mode', function()
+    -- unprintable ASCII control char, displayed as ^G
+    fn.setreg('a', 'a\007y', 'b')
+    eq('\0224', fn.getreginfo('a').regtype)
+    fn.setreg('a', { 'a\007y', '123' }, 'b')
+    eq('\0224', fn.getreginfo('a').regtype)
+
+    -- truncated UTF-8 (displayed as <c4> )
+    fn.setreg('a', 'qq\196', 'b')
+    eq('\0226', fn.getreginfo('a').regtype)
+    fn.setreg('a', { 'qq\196', '123' }, 'b')
+    eq('\0226', fn.getreginfo('a').regtype)
+
+    -- invalid UTF-8 start byte (displayed as <82> )
+    fn.setreg('a', 'qqq\130', 'b')
+    eq('\0227', fn.getreginfo('a').regtype)
+    fn.setreg('a', { 'qqq\130', '123' }, 'b')
+    eq('\0227', fn.getreginfo('a').regtype)
+
+    -- embeded NUL (as NL in list), displayed as ^@
+    fn.setreg('a', { 'q\n434', '12345' }, 'b')
+    eq('\0226', fn.getreginfo('a').regtype)
   end)
 
   it('getreg("a",1,1) returns a valid list when "a is unset', function()

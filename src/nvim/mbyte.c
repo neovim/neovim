@@ -606,13 +606,13 @@ size_t mb_string2cells(const char *str)
   return clen;
 }
 
-/// Get the number of cells occupied by string `str` with maximum length `size`
+/// Get the number of cells occupied by string `str` with length `size`
 ///
 /// @param str The source string, may not be NULL, must be a NUL-terminated
 ///            string.
-/// @param size maximum length of string. It will terminate on earlier NUL.
+/// @param size exact length of string. It will NOT terminate on earlier NUL.
 /// @return The number of cells occupied by string `str`
-size_t mb_string2cells_len(const char *str, size_t size, bool allow_nul)
+size_t mb_string2cells_len(const char *str, size_t size)
   FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ARG(1)
 {
   size_t clen = 0;
@@ -620,7 +620,7 @@ size_t mb_string2cells_len(const char *str, size_t size, bool allow_nul)
   int len = (int)size;
 
   StrCharInfo ci = utf_ptr2StrCharInfo_len((char *)str, len);
-  while ((allow_nul || *ci.ptr != NUL) && len > 0) {
+  while (len > 0) {
     ClusterInfo cli = utf_ClusterInfo_len(ci, &len);
     clen += (size_t)cli.cells;
     ci = cli.next;

@@ -299,7 +299,7 @@ describe('mbyte', function()
       -- of bounded and unbounded CharInfo iterators
       eq(expected, lib.utf_ptr2cells(to_cstr(str)))
       -- this a bit of a cop-out (string not cluster), but see above
-      eq(expected, lib.mb_string2cells_len(to_cstr(str), #str, false))
+      eq(expected, lib.mb_string2cells_len(to_cstr(str), #str))
     end
 
     itp('gives a spacing mark its own cell', function()

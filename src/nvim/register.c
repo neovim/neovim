@@ -318,9 +318,7 @@ void update_yankreg_width(yankreg_T *reg)
   if (reg->y_type == kMTBlockWise) {
     size_t maxlen = 0;
     for (size_t i = 0; i < reg->y_size; i++) {
-      // TODO(bfredl): likely false->true as below but the entire shebang needs to be reconsidered.
-      // like shouldn't C0 bytes have `dy_escape_width` width ?
-      size_t rowlen = mb_string2cells_len(reg->y_array[i].data, reg->y_array[i].size, false);
+      size_t rowlen = mb_string2cells_len(reg->y_array[i].data, reg->y_array[i].size);
       maxlen = MAX(maxlen, rowlen);
     }
     assert(maxlen <= INT_MAX);
@@ -2637,7 +2635,8 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
     for (char **ss = (char **)str; *ss != NULL; ss++, lnum++) {
       pp[lnum] = cstr_to_string(*ss);
       if (yank_type == kMTBlockWise) {
-        size_t charlen = mb_string2cells(*ss);
+        // TODO(bfredl): mb_string2cells should behave the same as vim_strsize
+        size_t charlen = (size_t)vim_strsize(*ss);
         maxlen = MAX(maxlen, charlen);
       }
     }
@@ -2650,7 +2649,7 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
       const char *line_end = memchr(start, '\n', (size_t)(end - start));
       line_len = (size_t)((line_end ? line_end : end) - start);
       if (yank_type == kMTBlockWise) {
-        size_t charlen = mb_string2cells_len(start, line_len, true);
+        size_t charlen = mb_string2cells_len(start, line_len);
         maxlen = MAX(maxlen, (size_t)charlen);
       }
 
