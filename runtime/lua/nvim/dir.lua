@@ -211,6 +211,16 @@ local function setup_render_autocmds(buf)
       M._reload(buf)
     end,
   })
+  api.nvim_create_autocmd('FileChangedShell', {
+    group = listing_group,
+    buffer = buf,
+    desc = 'Reload directory listing',
+    callback = function()
+      vim.schedule(function()
+        M._reload(buf)
+      end)
+    end,
+  })
 end
 
 --- Request entries and render the current list generation.
