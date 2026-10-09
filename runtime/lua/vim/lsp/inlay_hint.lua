@@ -715,6 +715,10 @@ local action_handlers = {
         textDocument = { uri = label_loc.uri },
         position = label_loc.range.start,
       }
+      -- Attribute the request to the target buffer so its pending changes are flushed
+      -- first, but only when it is already listed: `vim.uri_to_bufnr()` would create one
+      -- for every location that is not open, and an unloaded buffer has nothing to flush.
+      local target_buf = fn.bufnr(vim.uri_to_fname(label_loc.uri))
       local success = ctx.client:request(
         'textDocument/hover',
         hover_param,
@@ -726,7 +730,7 @@ local action_handlers = {
           end
           complete(i, vim.list_extend({ string.format('# `%s`', item.value) }, md_lines))
         end,
-        vim.uri_to_bufnr(label_loc.uri)
+        target_buf ~= -1 and target_buf or ctx.buf
       )
       if not success then
         complete(i, nil)

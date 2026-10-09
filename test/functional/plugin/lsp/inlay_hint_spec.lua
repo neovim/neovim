@@ -1337,6 +1337,30 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
     )
   end)
 
+  it('does not open a buffer for an unopened hover location', function()
+    eq(
+      { true, true },
+      exec_lua(function()
+        local hovered = false
+        -- An empty reply keeps a preview buffer from being opened, so any new buffer is
+        -- one the request itself created.
+        local client = start_action_client('textDocument/hover', function(_, _, cb)
+          hovered = true
+          cb(nil, nil)
+        end)
+        local loc = {
+          uri = vim.uri_from_fname(vim.fs.abspath('Xhint_unopened')),
+          range = { start = { line = 0, character = 0 }, ['end'] = { line = 0, character = 1 } },
+        }
+        local buffers = #vim.api.nvim_list_bufs()
+        run_inlay_action('hover', {
+          hint_entry(client, { label = { { value = 'T', location = loc } } }),
+        })
+        return { #vim.api.nvim_list_bufs() == buffers, hovered }
+      end)
+    )
+  end)
+
   it('flushes pending changes in the hover target buffer', function()
     eq(
       { 'textDocument/didChange', 'textDocument/hover' },
