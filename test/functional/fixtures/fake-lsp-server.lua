@@ -1075,6 +1075,39 @@ function tests.inlay_hint()
   }
 end
 
+function tests.inlay_hint_action()
+  local method, outcome = arg[3], arg[4]
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          inlayHintProvider = { resolveProvider = method == 'inlayHint/resolve' },
+          hoverProvider = true,
+          executeCommandProvider = { commands = { 'test' } },
+        },
+      }
+    end,
+    body = function()
+      for i = 1, outcome == 'mixed' and 2 or 1 do
+        expect_request(method, function(params)
+          if outcome ~= 'success' and i == 1 then
+            return { code = protocol.ErrorCodes.RequestCancelled, message = 'cancelled' }, nil
+          end
+          if method == 'inlayHint/resolve' then
+            params.textEdits = {
+              { newText = 'X', range = { start = params.position, ['end'] = params.position } },
+            }
+            return nil, params
+          elseif method == 'textDocument/hover' then
+            return nil, { contents = 'docs' }
+          end
+          return nil, vim.NIL
+        end)
+      end
+    end,
+  }
+end
+
 -- Tests will be indexed by test_name
 local test_name = arg[1]
 local timeout = tonumber(arg[2])
