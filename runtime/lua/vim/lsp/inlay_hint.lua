@@ -525,24 +525,6 @@ local function can_show(ctx)
     and api.nvim_win_get_buf(ctx.win) == ctx.cursor.buf
 end
 
---- Convert preview content to Markdown. Explicit plaintext is fenced rather than
---- interpreted, as `vim.lsp.buf.hover()` does when mixing it with other sections.
----@diagnostic disable-next-line: deprecated
----@param input lsp.MarkedString|lsp.MarkedString[]|lsp.MarkupContent
----@return string[]
-local function to_markdown_lines(input)
-  if type(input) ~= 'table' or input.kind ~= 'plaintext' then
-    return util.convert_input_to_markdown_lines(input)
-  end
-  local lines = vim.split(input.value or '', '\n', { trimempty = true })
-  if #lines == 0 then
-    return lines
-  end
-  table.insert(lines, 1, '```')
-  lines[#lines + 1] = '```'
-  return lines
-end
-
 --- Show a Markdown preview in the originating window and report completion.
 --- @param lines string[]
 --- @param ctx vim.lsp.inlay_hint.action.internal_context
@@ -731,7 +713,7 @@ local action_handlers = {
         hover_param,
         ---@param result lsp.Hover?
         function(_, result)
-          local md_lines = result and to_markdown_lines(result.contents) or {}
+          local md_lines = result and util._to_markdown_section(result.contents) or {}
           if #md_lines == 0 then
             return complete(i, nil)
           end
@@ -758,7 +740,7 @@ local action_handlers = {
     local lines = { string.format('# `%s`', get_label_text(hint)), '' }
 
     if hint.tooltip then
-      vim.list_extend(lines, to_markdown_lines(hint.tooltip))
+      vim.list_extend(lines, util._to_markdown_section(hint.tooltip))
     end
 
     for _, label in ipairs(hint_labels) do
@@ -767,7 +749,7 @@ local action_handlers = {
       lines[#lines + 1] = string.format('## `%s`', label.value)
       lines[#lines + 1] = ''
       if label.tooltip then
-        vim.list_extend(lines, to_markdown_lines(label.tooltip))
+        vim.list_extend(lines, util._to_markdown_section(label.tooltip))
       end
       if label.location then
         lines[#lines + 1] = string.format(
