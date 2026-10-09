@@ -486,35 +486,9 @@ local function make_ranges()
   return ranges
 end
 
---- Append `new_label` to `labels` unless an equal label (comparing `value` and each of
---- `by_attribute`) is already there.
---- Examples with a = { value = "x", tooltip = "one" }, b = { value = "x", tooltip = "two" }:
---- - labels={a}, new_label=vim.deepcopy(a), by_attribute={"tooltip"} => labels={a}
---- - labels={a}, new_label=b, by_attribute={"tooltip"} => labels={a, b}
----@param labels lsp.InlayHintLabelPart[]
----@param new_label lsp.InlayHintLabelPart
----@param by_attribute ('location'|'command'|'tooltip')[]
-local function add_new_label(labels, new_label, by_attribute)
-  for _, existing_label in ipairs(labels) do
-    if existing_label.value == new_label.value then
-      local same = true
-      for _, attr in ipairs(by_attribute) do
-        if not vim.deep_equal(existing_label[attr], new_label[attr]) then
-          same = false
-          break
-        end
-      end
-      if same then
-        return
-      end
-    end
-  end
-  table.insert(labels, new_label)
-end
-
---- Return the deduplicated hint label parts carrying at least one of `needed_fields`.
+--- Return hint label parts carrying at least one of `needed_fields`, in server order.
 --- Example with a = { value = "x", tooltip = "tip" }, needed_fields = { "tooltip" }:
---- hint.label = { { value = "plain" }, a, vim.deepcopy(a) } => { a }
+--- hint.label = { a, { value = "plain" }, a } => { a, a }
 --- @param hint lsp.InlayHint
 --- @param needed_fields ("location"|"command"|"tooltip")[]
 --- @return lsp.InlayHintLabelPart[]
@@ -526,7 +500,7 @@ local function get_hint_labels(hint, needed_fields)
     for _, label in ipairs(hint.label) do
       for _, field_name in ipairs(needed_fields) do
         if label[field_name] ~= nil then
-          add_new_label(hint_labels, label, needed_fields)
+          table.insert(hint_labels, label)
           break
         end
       end
