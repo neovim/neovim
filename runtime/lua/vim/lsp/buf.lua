@@ -152,22 +152,17 @@ function M.hover(config)
         contents[#contents + 1] = string.format('# %s', client.name)
       end
 
-      if type(result.contents) == 'table' and result.contents.kind == MarkupKind.PlainText then
-        if nresults == 1 then
-          -- Only one client: use PlainText format
-          format = MarkupKind.PlainText
-          contents = vim.split(result.contents.value or '', '\n', { trimempty = true })
-        else
-          -- Multiple clients: surround plaintext with ``` to get correct formatting
-          contents[#contents + 1] = '```'
-          vim.list_extend(
-            contents,
-            vim.split(result.contents.value or '', '\n', { trimempty = true })
-          )
-          contents[#contents + 1] = '```'
-        end
+      if
+        nresults == 1
+        and type(result.contents) == 'table'
+        and result.contents.kind == MarkupKind.PlainText
+      then
+        -- Only one client: use PlainText format
+        format = MarkupKind.PlainText
+        contents = vim.split(result.contents.value or '', '\n', { trimempty = true })
       else
-        vim.list_extend(contents, util.convert_input_to_markdown_lines(result.contents))
+        -- Plaintext from one of several clients is fenced to get correct formatting
+        vim.list_extend(contents, util._to_markdown_section(result.contents))
       end
       if result.range then
         local range = vim.range.lsp(bufnr, result.range, client.offset_encoding)
