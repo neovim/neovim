@@ -121,12 +121,6 @@ function vim.api.nvim__invalidate_glyph_cache() end
 
 --- WARNING: This feature is experimental/unstable.
 ---
---- Returns true if a multicursor cascade is in-progress.
---- @return boolean
-function vim.api.nvim__mcursor_cascading() end
-
---- WARNING: This feature is experimental/unstable.
----
 --- Get the properties for namespace
 ---
 --- @param ns_id integer Namespace

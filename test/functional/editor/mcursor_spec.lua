@@ -713,7 +713,7 @@ describe('multicursor', function()
         _G.keys_seen, _G.cascading_seen = 0, false
         vim.on_key(function()
           _G.keys_seen = _G.keys_seen + 1
-          _G.cascading_seen = _G.cascading_seen or vim.api.nvim__mcursor_cascading()
+          _G.cascading_seen = _G.cascading_seen or vim.v.cascading
           if _G.keys_seen == 1000 then
             vim.fn.interrupt()
           end
@@ -3056,9 +3056,7 @@ describe('multicursor', function()
 
     it('TextYankPost fires per cursor with per-cursor contents', function()
       command('let g:yanks = []')
-      command(
-        'autocmd TextYankPost * let g:yanks += [[v:event.regcontents, luaeval("vim.api.nvim__mcursor_cascading()")]]'
-      )
+      command('autocmd TextYankPost * let g:yanks += [[v:event.regcontents, v:cascading]]')
       cursors({ 'aaa', 'bbb' }, 'Qj')
       feed('yy')
       -- The primary's own yank fires first and is not a replay.
