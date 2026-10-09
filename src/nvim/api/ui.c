@@ -348,11 +348,6 @@ void remote_ui_restart(String listen_addr)
   });
 }
 
-/// No-op: "stop" is sent as EOF (see ui_events.in.h).
-void remote_ui_stop(RemoteUI *ui)
-{
-}
-
 void nvim_ui_try_resize(uint64_t channel_id, Integer width, Integer height, Error *err)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {

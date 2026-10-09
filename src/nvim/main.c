@@ -719,7 +719,6 @@ void os_exit(int r)
     }
   } else {
     ui_flush();
-    ui_call_stop();
   }
 
   if (!event_teardown() && r == 0) {
