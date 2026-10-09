@@ -142,6 +142,24 @@ function InlayHint:refresh(client_id)
   end
 end
 
+--- Drop the optional fields of `hint` and its label parts that the server sent as `null`
+--- rather than omitting. RPC decodes `null` to the truthy `vim.NIL`, which neither `if`
+--- tests nor `or {}` fallbacks catch.
+--- @param hint lsp.InlayHint
+local function drop_nulls(hint)
+  local tables = { hint } --- @type table[]
+  if type(hint.label) == 'table' then
+    vim.list_extend(tables, hint.label)
+  end
+  for _, tbl in ipairs(tables) do
+    for key, value in pairs(tbl) do
+      if value == vim.NIL then
+        tbl[key] = nil
+      end
+    end
+  end
+end
+
 --- |lsp-handler| for the method `textDocument/inlayHint`
 --- Store hints for a specific buffer and client
 ---@param err lsp.ResponseError?
@@ -193,6 +211,7 @@ function M.on_inlayhint(err, result, ctx)
   local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
 
   for _, hint in ipairs(result) do
+    drop_nulls(hint)
     local lnum = hint.position.line
     local line = lines and lines[lnum + 1] or ''
     hint.position.character =
@@ -559,13 +578,6 @@ end
 --- @type table<vim.lsp.inlay_hint.action.name, fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.internal_context, on_done: vim.lsp.inlay_hint.action.on_done.callback): boolean>
 local action_handlers = {
   textEdits = function(hints, ctx, on_done)
-    for _, hint in ipairs(hints) do
-      -- A server may send `null` rather than omitting the field, which decodes to the
-      -- truthy `vim.NIL` and is neither a list nor caught by an `or {}` fallback.
-      if type(hint.textEdits) ~= 'table' then
-        hint.textEdits = nil
-      end
-    end
     -- Deduplicate whole edit lists, preserving repeated insertions within a hint.
     vim.list.unique(hints, function(hint)
       if hint.textEdits then
@@ -1066,6 +1078,7 @@ function M.action(action, opts)
           if err or not result then
             report(i, nil)
           else
+            drop_nulls(result)
             local merged = vim.tbl_deep_extend('force', params, result)
             -- Keep handler positions byte-indexed, like get(), without changing the cache.
             merged.position = hint.position
