@@ -2326,12 +2326,12 @@ static schar_T get_encoded_char_adv(const char **p)
     return (char2cells((int)num) > 1) ? 0 : schar_from_char((int)num);
   }
 
-  int clen = utfc_ptr2len(s);
-  int firstc;
-  schar_T c = utfc_ptr2schar(s, &firstc);
-  *p += clen;
+  StrCharInfo ci = utf_ptr2StrCharInfo(s);
+  ClusterInfo cli = utf_ClusterInfo(ci);
+  *p = cli.next.ptr;
   // Invalid UTF-8 byte or doublewidth not allowed
-  return ((clen == 1 && firstc > 127) || char2cells(firstc) > 1) ? 0 : c;
+  // TODO: add unit cases for cli.cells being > 1 for ALL the invalid chars!
+  return cli.cells > 1 ? 0 : schar_from_cluster(ci, cli);
 }
 
 struct chars_tab {
