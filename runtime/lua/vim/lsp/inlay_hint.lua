@@ -708,7 +708,7 @@ local action_handlers = {
           end
           complete(i, vim.list_extend({ string.format('# `%s`', item.value) }, md_lines))
         end,
-        ctx.buf
+        vim.uri_to_bufnr(label_loc.uri)
       )
       if not success then
         complete(i, nil)
@@ -799,14 +799,23 @@ local action_handlers = {
         -- Local commands finish synchronously and may unload the source themselves.
         ctx.stop_watching()
       end
-      local success, request_id = ctx.client:exec_cmd(cmd, { bufnr = ctx.buf }, function(err, ...)
-        -- A caller-supplied handler replaces the default one, so run it explicitly to
-        -- keep the standard error reporting.
-        ---@diagnostic disable-next-line: access-invisible
-        assert(ctx.client:_resolve_handler('workspace/executeCommand'))(err, ...)
-        on_done({ buf = ctx.buf, client = not err and ctx.client or nil })
-      end)
-      if not success then
+      local ok, success, request_id = pcall(
+        ctx.client.exec_cmd,
+        ctx.client,
+        cmd,
+        { bufnr = ctx.buf },
+        function(err, ...)
+          -- A caller-supplied handler replaces the default one, so run it explicitly to
+          -- keep the standard error reporting.
+          ---@diagnostic disable-next-line: access-invisible
+          assert(ctx.client:_resolve_handler('workspace/executeCommand'))(err, ...)
+          on_done({ buf = ctx.buf, client = not err and ctx.client or nil })
+        end
+      )
+      if not ok then
+        on_done({ buf = ctx.buf })
+        vim.notify(tostring(success), vim.log.levels.ERROR)
+      elseif not success then
         on_done({ buf = ctx.buf })
       elseif not request_id then
         -- The command ran locally, so the handler above is never called.
