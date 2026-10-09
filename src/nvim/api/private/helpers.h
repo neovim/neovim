@@ -10,6 +10,7 @@
 #include "nvim/ex_eval_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
+#include "nvim/mark_defs.h"  // IWYU pragma: keep
 #include "nvim/message_defs.h"  // IWYU pragma: keep
 
 #define OBJECT_OBJ(o) o
@@ -181,6 +182,27 @@ typedef struct {
     Object __foreach_item = (a).items[__foreach_item##_index]; \
     code; \
   }
+
+/// Where a mark is stored. Decides how it is looked up, and whether it can be
+/// set or deleted at all.
+typedef enum {
+  kMarkClassWindow,    ///< ' and `  -- live in win_T, cannot be deleted
+  kMarkClassGlobal,    ///< A-Z 0-9  -- live in namedfm[]
+  kMarkClassBufLocal,  ///< a-z " [ ] < >
+  kMarkClassMotion,    ///< { } ( )  -- computed from the cursor, not stored
+  kMarkClassPrompt,    ///< :        -- prompt start, only in prompt buffers
+  kMarkClassReadOnly,  ///< ^ .
+  kMarkClassInvalid,
+} MarkClass;
+
+/// A mark resolved by mark_query().
+typedef struct {
+  Integer line;         ///< 1-indexed, 0 when the mark is not set.
+  Integer col;          ///< 0-indexed, only meaningful when "line" is not 0.
+  Integer bufnr;        ///< Global marks only, 0 otherwise.
+  String file;          ///< Global marks only, empty otherwise.
+  Timestamp timestamp;  ///< 0 when the mark type carries none, or is not set.
+} MarkInfo;
 
 #include "api/private/helpers.h.generated.h"
 
