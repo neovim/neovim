@@ -602,6 +602,13 @@ end
 --- @type table<vim.lsp.inlay_hint.action.name, fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.internal_context, on_done: vim.lsp.inlay_hint.action.on_done.callback): boolean>
 local action_handlers = {
   textEdits = function(hints, ctx, on_done)
+    for _, hint in ipairs(hints) do
+      -- A server may send `null` rather than omitting the field, which decodes to the
+      -- truthy `vim.NIL` and is neither a list nor caught by an `or {}` fallback.
+      if type(hint.textEdits) ~= 'table' then
+        hint.textEdits = nil
+      end
+    end
     -- Deduplicate whole edit lists, preserving repeated insertions within a hint.
     vim.list.unique(hints, function(hint)
       if hint.textEdits then
