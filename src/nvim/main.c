@@ -309,7 +309,11 @@ int main(int argc, char **argv)
   }
 #endif
 
-  if (embedded_mode) {
+  // "--embed --listen …": use stdio as RPC chan only if stdin is a pipe/socket.
+  // Otherwise (tty, /dev/null, EOF) wait for a UI.
+  uv_handle_type stdin_type = uv_guess_handle(STDIN_FILENO);
+  bool stdio_rpc = !params.listen_addr || stdin_type == UV_NAMED_PIPE || stdin_type == UV_TCP;
+  if (embedded_mode && stdio_rpc) {
     const char *err;
     if (!channel_from_stdio(true, CALLBACK_READER_INIT, &err)) {
       abort();
@@ -418,10 +422,13 @@ int main(int argc, char **argv)
   // Set the break level after the terminal is initialized.
   debug_break_level = params.use_debug_break_level;
 
-  // Wait for UIs to set up Nvim or show early messages
-  // and prompts (--cmd, swapfile dialog, …).
+  // Wait for UIs to set up Nvim or show early messages and prompts (--cmd, swapfile dialog, …).
   bool use_remote_ui = (embedded_mode && !headless_mode);
   if (use_remote_ui) {
+    if (!stdio_rpc) {
+      fprintf(stderr, "Nvim server (pid: %" PRId64 ") waiting for UI, listening on: \"%s\"\n",
+              os_get_pid(), get_vim_var_str(VV_SEND_SERVER));
+    }
     TIME_MSG("waiting for UI");
     remote_ui_wait_for_attach();
     TIME_MSG("done waiting for UI");

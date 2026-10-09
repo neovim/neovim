@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+local tt = require('test.functional.testterm')
 local describe, it, after_each, pending, finally =
   t.describe, t.it, t.after_each, t.pending, t.finally
 local uv = vim.uv
@@ -299,8 +300,8 @@ describe('--embed UI', function()
   end)
 end)
 
-describe('--embed --listen UI', function()
-  it('waits for connection on listening address', function()
+describe('--embed --listen', function()
+  it('waits for UI on listening address', function()
     clear()
     local child_server = assert(n.new_pipename())
     fn.jobstart({
@@ -356,5 +357,26 @@ describe('--embed --listen UI', function()
     var_ok, var = child_session:request('nvim_get_var', 'evs')
     ok(var_ok)
     eq({ 'VimEnter', ('UIEnter:%d'):format(api_info[1]) }, var)
+  end)
+
+  it('waits for UI if stdin is not a pipe/socket', function()
+    clear()
+    local child_server = assert(n.new_pipename())
+    -- In :terminal, stdin is a tty.
+    local screen = tt.setup_child_nvim(
+      { '--embed', '--listen', child_server, '--clean' },
+      { cols = 256 } --  Wide screen so the message doesn't wrap.
+    )
+    screen:expect({ any = ('waiting for UI, listening on: "%s"'):format(vim.pesc(child_server)) })
+
+    local child_session = n.connect(child_server)
+    eq({ true, 0 }, { child_session:request('nvim_get_vvar', 'vim_did_enter') })
+    local child_screen = Screen.new(40, 6, nil, child_session)
+    child_screen:expect({ any = vim.pesc('[No Name]') })
+
+    -- The UI can claim the server: Nvim self-exits when the UI disconnects.
+    child_session:request('nvim_chan_set', 0, { detach = false })
+    child_session:close()
+    screen:expect({ any = 'Process exited' })
   end)
 end)

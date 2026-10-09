@@ -489,7 +489,8 @@ PLUGINS
 
 STARTUP
 
-• todo
+• |--embed| with |--listen| waits for a UI on the listen address if stdin is
+  not a pipe (e.g. tty or /dev/null), instead of exiting.
 
 TERMINAL
 

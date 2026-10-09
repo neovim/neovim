@@ -551,7 +551,7 @@ describe('TUI :restart', function()
 
     -- [9]ZR discards unsaved changes.
     tt.feed_data('9ZR')
-    screen:expect({ any = vim.pesc('[No Name]') })
+    screen:expect({ any = vim.pesc('[No Name]'), none = vim.pesc('[+]') })
     starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
 
     -- Restarted server self-exits when the TUI disconnects / host-terminal closed. #42250
