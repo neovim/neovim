@@ -4171,4 +4171,33 @@ describe('multicursor', function()
       eq({ 'aa', 'b' }, get_lines())
     end)
   end)
+
+  it('v:cascading', function()
+    n.exec_lua(function()
+      _G.cascade_log = {}
+      vim.keymap.set('n', 'gh', function()
+        local cur = vim.api.nvim_win_get_cursor(0)
+        table.insert(_G.cascade_log, { vim.v.cascading, cur })
+        vim.api.nvim_buf_set_text(0, cur[1] - 1, cur[2], cur[1] - 1, cur[2], { 'x' })
+      end)
+    end)
+
+    local function assert(mcursor_init)
+      cursors({ 'aaa', 'bbb', 'ccc' }, mcursor_init)
+      eq(false, api.nvim_get_vvar('cascading'))
+      feed('gh')
+      eq({ 'xaaa', 'xbbb', 'xccc' }, get_lines())
+      eq(
+        { { false, { 3, 0 } }, { true, { 1, 0 } }, { true, { 2, 0 } } },
+        n.exec_lua('return _G.cascade_log')
+      )
+      eq(false, api.nvim_get_vvar('cascading'))
+
+      clear_cursors()
+      n.exec_lua('_G.cascade_log = {}')
+    end
+
+    assert('QjQj')
+    assert('QjQjQ')
+  end)
 end)

@@ -27,6 +27,13 @@ M.vars = {
       See |v:argf| to get only file args, without other options.
     ]=],
   },
+  cascading = {
+    type = 'boolean',
+    desc = [=[
+      |v:true| during |mcursor| cascade, |v:false| otherwise.
+      Read-only.
+    ]=],
+  },
   char = {
     type = 'string',
     desc = [=[

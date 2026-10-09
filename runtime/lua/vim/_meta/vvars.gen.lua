@@ -30,6 +30,11 @@ vim.v.argf = ...
 --- @type string[]
 vim.v.argv = ...
 
+--- `v:true` during `mcursor` cascade, `v:false` otherwise.
+--- Read-only.
+--- @type boolean
+vim.v.cascading = ...
+
 --- Argument for evaluating 'formatexpr' and used for the typed
 --- character when using <expr> in an abbreviation `:map-<expr>`.
 --- It is also used by the `InsertCharPre`, `InsertEnter`,
