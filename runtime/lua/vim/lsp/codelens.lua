@@ -1,5 +1,6 @@
 local api = vim.api
 local log = require('vim.lsp.log')
+local collect_ordered = require('vim._core.util').collect_ordered
 local do_or_select = require('vim._core.util').do_or_select
 local tableclear = require('vim._core.table').clear
 local util = require('vim.lsp.util')
@@ -373,53 +374,54 @@ end
 local function on_lenses_run(lnum, opts, results, context)
   local bufnr = context.bufnr or 0
 
-  ---@type {client: vim.lsp.Client, command: lsp.Command}[]
-  local candidates = {}
-  local pending_resolve = 1
-  local function on_resolved()
-    pending_resolve = pending_resolve - 1
-    if pending_resolve > 0 then
-      return
-    end
-    if #candidates == 0 then
-      vim.notify('No codelens at current line')
-    else
-      local selectopts = {
-        prompt = 'Code lenses: ',
-        kind = 'codelens',
-        ---@param candidate {client: vim.lsp.Client, command: lsp.Command}
-        format_item = function(candidate)
-          return string.format('%s [%s]', candidate.command.title, candidate.client.name)
-        end,
-      }
-      do_or_select(candidates, selectopts, function(candidate)
-        if candidate then
-          candidate.client:exec_cmd(candidate.command, { bufnr = bufnr })
-        end
-      end)
-    end
-  end
+  ---@type {client: vim.lsp.Client, lens: lsp.CodeLens}[]
+  local line_lenses = {}
   for client_id, result in pairs(results) do
     if opts.client_id == nil or opts.client_id == client_id then
       local client = assert(vim.lsp.get_client_by_id(client_id))
       for _, lens in ipairs(result.result or {}) do
         if lens.range.start.line == lnum then
-          if lens.command then
-            table.insert(candidates, { client = client, command = lens.command })
-          else
-            pending_resolve = pending_resolve + 1
-            client:request('codeLens/resolve', lens, function(_, resolved_lens)
-              if resolved_lens and resolved_lens.command then
-                table.insert(candidates, { client = client, command = resolved_lens.command })
-              end
-              on_resolved()
-            end, bufnr)
-          end
+          line_lenses[#line_lenses + 1] = { client = client, lens = lens }
         end
       end
     end
   end
-  on_resolved()
+
+  ---@param candidates {client: vim.lsp.Client, command: lsp.Command}[]
+  local report = collect_ordered(#line_lenses, function(candidates)
+    if #candidates == 0 then
+      vim.notify('No codelens at current line')
+      return
+    end
+    do_or_select(candidates, {
+      prompt = 'Code lenses: ',
+      kind = 'codelens',
+      ---@param candidate {client: vim.lsp.Client, command: lsp.Command}
+      format_item = function(candidate)
+        return string.format('%s [%s]', candidate.command.title, candidate.client.name)
+      end,
+    }, function(candidate)
+      if candidate then
+        candidate.client:exec_cmd(candidate.command, { bufnr = bufnr })
+      end
+    end)
+  end)
+
+  -- Resolve the lenses lacking a command all at once, keeping them in lens order.
+  for i, item in ipairs(line_lenses) do
+    local client, lens = item.client, item.lens
+    if lens.command then
+      report(i, { client = client, command = lens.command })
+    else
+      local sent = client:request('codeLens/resolve', lens, function(_, resolved)
+        local command = resolved and resolved.command
+        report(i, command and { client = client, command = command } or nil)
+      end, bufnr)
+      if not sent then
+        report(i, nil)
+      end
+    end
+  end
 end
 
 --- Optional parameters |kwargs|:

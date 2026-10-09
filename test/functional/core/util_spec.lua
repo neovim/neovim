@@ -60,6 +60,32 @@ describe('vim._core.util', function()
     end
   end)
 
+  describe('collect_ordered()', function()
+    it('orders results by index, drops nils, and completes once', function()
+      exec_lua(function()
+        local completions = {} --- @type string[][]
+        local report = require('vim._core.util').collect_ordered(3, function(results)
+          completions[#completions + 1] = results
+        end)
+        report(3, 'c')
+        report(1, 'a')
+        assert(#completions == 0)
+        report(2, nil)
+        assert(#completions == 1 and vim.deep_equal(completions[1], { 'a', 'c' }))
+      end)
+    end)
+
+    it('completes immediately with nothing to collect', function()
+      exec_lua(function()
+        local results
+        require('vim._core.util').collect_ordered(0, function(got)
+          results = got
+        end)
+        assert(vim.deep_equal(results, {}))
+      end)
+    end)
+  end)
+
   describe('shorten_path()', function()
     it('shortens paths for display', function()
       exec_lua(function()

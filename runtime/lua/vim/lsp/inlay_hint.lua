@@ -532,31 +532,6 @@ local function show_preview(lines, ctx, on_done)
   on_done({ buf = buf, client = ctx.client })
 end
 
---- Collect a non-empty batch of replies in input order, omitting nil results.
---- Example with count=3, replies in arrival order:
---- (3, "c"), (1, "a"), (2, nil) => on_complete({ "a", "c" })
---- @generic T
---- @param count integer
---- @param on_complete fun(results: T[])
---- @return fun(index: integer, result: T?)
-local function collect_results(count, on_complete)
-  local results = {} --- @type table<integer, T>
-  local remaining = count
-  return function(index, result)
-    results[index] = result
-    remaining = remaining - 1
-    if remaining == 0 then
-      local ordered = {} --- @type T[]
-      for i = 1, count do
-        if results[i] ~= nil then
-          ordered[#ordered + 1] = results[i]
-        end
-      end
-      on_complete(ordered)
-    end
-  end
-end
-
 --- The hint an action that handles a single hint should use, warning when several were given.
 --- @param hints lsp.InlayHint[]
 --- @param action vim.lsp.inlay_hint.action.name
@@ -687,7 +662,7 @@ local action_handlers = {
 
     -- The locations are independent, so request them all at once and assemble the
     -- hover once the last reply arrives.
-    local complete = collect_results(#hint_labels, show)
+    local report = core_util.collect_ordered(#hint_labels, show)
     for i, item in ipairs(hint_labels) do
       -- `get_hint_labels` makes sure `item` has a location attribute
       local label_loc = assert(item.location)
@@ -707,14 +682,14 @@ local action_handlers = {
         function(_, result)
           local md_lines = result and util._to_markdown_section(result.contents) or {}
           if #md_lines == 0 then
-            return complete(i, nil)
+            return report(i, nil)
           end
-          complete(i, vim.list_extend({ string.format('# `%s`', item.value) }, md_lines))
+          report(i, vim.list_extend({ string.format('# `%s`', item.value) }, md_lines))
         end,
         target_buf ~= -1 and target_buf or ctx.buf
       )
       if not success then
-        complete(i, nil)
+        report(i, nil)
       end
     end
 
@@ -1069,10 +1044,10 @@ function M.action(action, opts)
     end
 
     -- Resolve in parallel, retaining input order even when replies arrive out of order.
-    local complete = collect_results(#client_hints, apply)
+    local report = core_util.collect_ordered(#client_hints, apply)
     for i, hint in ipairs(client_hints) do
       if action == 'textEdits' and hint.textEdits ~= nil then
-        complete(i, hint)
+        report(i, hint)
       else
         -- Only `position` is replaced, so the rest can stay shared with `hint`.
         --- @type lsp.InlayHint
@@ -1081,16 +1056,16 @@ function M.action(action, opts)
           vim.pos(bufnr, hint.position.line, hint.position.character):to_lsp(client.offset_encoding)
         local success = client:request('inlayHint/resolve', params, function(err, result)
           if err or not result then
-            complete(i, nil)
+            report(i, nil)
           else
             local merged = vim.tbl_deep_extend('force', params, result)
             -- Keep handler positions byte-indexed, like get(), without changing the cache.
             merged.position = hint.position
-            complete(i, merged)
+            report(i, merged)
           end
         end, bufnr)
         if not success then
-          complete(i, nil)
+          report(i, nil)
         end
       end
     end
