@@ -1,5 +1,6 @@
 local api = vim.api
 local log = require('vim.lsp.log')
+local do_or_select = require('vim._core.util').do_or_select
 local tableclear = require('vim._core.table').clear
 local util = require('vim.lsp.util')
 
@@ -363,9 +364,6 @@ local function on_lenses_run(lnum, opts, results, context)
     end
     if #candidates == 0 then
       vim.notify('No codelens at current line')
-    elseif #candidates == 1 then
-      local candidate = candidates[1]
-      candidate.client:exec_cmd(candidate.command, { bufnr = bufnr })
     else
       local selectopts = {
         prompt = 'Code lenses: ',
@@ -375,7 +373,7 @@ local function on_lenses_run(lnum, opts, results, context)
           return string.format('%s [%s]', candidate.command.title, candidate.client.name)
         end,
       }
-      vim.ui.select(candidates, selectopts, function(candidate)
+      do_or_select(candidates, selectopts, function(candidate)
         if candidate then
           candidate.client:exec_cmd(candidate.command, { bufnr = bufnr })
         end

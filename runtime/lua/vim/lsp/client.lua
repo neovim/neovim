@@ -1130,6 +1130,8 @@ end
 --- @param cmd lsp.Command
 --- @param context? {bufnr?: integer}
 --- @param handler? lsp.Handler only called if a server command
+--- @return boolean success Whether a local command ran or a server request was sent.
+--- @return integer? request_id The request ID, if a server request was sent.
 function Client:exec_cmd(cmd, context, handler)
   context = vim.deepcopy(context or {}, true) --[[@as lsp.HandlerContext]]
   context.bufnr = vim._resolve_bufnr(context.bufnr)
@@ -1138,7 +1140,7 @@ function Client:exec_cmd(cmd, context, handler)
   local fn = self.commands[cmdname] or lsp.commands[cmdname]
   if fn then
     fn(cmd, context)
-    return
+    return true
   end
 
   local command_provider = self.server_capabilities.executeCommandProvider
@@ -1153,7 +1155,7 @@ function Client:exec_cmd(cmd, context, handler)
       ),
       vim.log.levels.WARN
     )
-    return
+    return false
   end
   -- Not using cmd directly to exclude extra properties,
   -- see https://github.com/python-lsp/python-lsp-server/issues/146
@@ -1162,7 +1164,7 @@ function Client:exec_cmd(cmd, context, handler)
     command = cmdname,
     arguments = cmd.arguments,
   }
-  self:request('workspace/executeCommand', params, handler, context.bufnr)
+  return self:request('workspace/executeCommand', params, handler, context.bufnr)
 end
 
 --- Default handler for the 'textDocument/didClose' LSP notification.
