@@ -144,6 +144,13 @@ function vim.api.nvim__ns_set(ns_id, opts) end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- Add a known optional package directory. Used by vim.pack to avoid discovery globs.
+--- @param path string
+--- @param load boolean
+function vim.api.nvim__packadd(path, load) end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- Instruct Nvim to redraw various components.
 ---
 ---
