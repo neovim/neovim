@@ -1185,10 +1185,10 @@ Lua module: vim                                                      *lua-vim*
 *vim.Ringbuf*
 
     Fields: ~
-      • {clear}  (`fun()`) See |Ringbuf:clear()|.
-      • {peek}   (`fun(): T?`) See |Ringbuf:peek()|.
-      • {pop}    (`fun(): T?`) See |Ringbuf:pop()|.
-      • {push}   (`fun(item: T)`) See |Ringbuf:push()|.
+      • {clear}  (`fun(self: vim.Ringbuf)`) See |Ringbuf:clear()|.
+      • {peek}   (`fun(self: vim.Ringbuf): T?`) See |Ringbuf:peek()|.
+      • {pop}    (`fun(self: vim.Ringbuf): T?`) See |Ringbuf:pop()|.
+      • {push}   (`fun(self: vim.Ringbuf, item: T)`) See |Ringbuf:push()|.
 
 
 Ringbuf:clear()                                              *Ringbuf:clear()*

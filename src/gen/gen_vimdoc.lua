@@ -39,8 +39,8 @@ local INDENTATION = 4
 --- @field filename string
 ---
 --- Ordered filenames or groups of filenames to merge into one section.
---- For a group, the first filename determines the section name and help tag.
---- @field section_order (string|string[])[]
+--- For a group, the first entry determines the section name and help tag.
+--- @field section_order? (string|string[])[]
 ---
 --- List of files/directories for doxygen to read, relative to `base_dir`.
 --- @field files string[]
@@ -54,8 +54,16 @@ local INDENTATION = 4
 ---
 --- @field brief_xform? fun(brief: string): string
 ---
+--- @field text_xform? fun(text: string): string
+---
+--- Apply Neovim naming conventions to the source.
+--- @field lint? boolean
+---
+--- Compatibility alias for a section, class, or function help tag.
+--- @field helptag_alias? fun(tag: string): string?
+---
 --- For generated section names.
---- @field section_fmt fun(name: string): string
+--- @field section_fmt? fun(name: string): string
 ---
 --- @field helptag_fmt fun(name: string): string|string[]
 ---
@@ -118,13 +126,37 @@ local function fn_helptag_fmt_common(fun)
     return fmt('%s.%s%s', fun.module, fun.name, fn_sfx)
   end
   if fun.classvar then
-    return fmt('%s:%s%s', fun.classvar, fun.name, fn_sfx)
+    return fmt('%s%s%s%s', fun.classvar, fun.member_sep or ':', fun.name, fn_sfx)
   end
   if fun.module then
     return fmt('%s.%s%s', fun.module, fun.name, fn_sfx)
   end
   return fun.name .. fn_sfx
 end
+
+--- @param tags string|string[]
+--- @param cfg nvim.gen_vimdoc.Config
+--- @return string
+local function helptags(tags, cfg)
+  local labels = {}
+  for _, tag in ipairs(type(tags) == 'table' and tags or { tags }) do
+    labels[#labels + 1] = tag
+    local alias = cfg.helptag_alias and cfg.helptag_alias(tag)
+    if alias then
+      labels[#labels + 1] = alias
+    end
+  end
+  return '*' .. table.concat(labels, '* *') .. '*'
+end
+
+--- @param name string
+--- @return string
+local function luv_section_tag(name)
+  name = name:match('^`[^`]+` %- (.*)$') or name
+  return 'luv-' .. name:lower():gsub('%s+', '-')
+end
+
+local luv_links --- @type table<string,string>?
 
 --- @type table<string,nvim.gen_vimdoc.Config>
 local config = {
@@ -308,6 +340,56 @@ local config = {
       end
 
       return fn_helptag_fmt_common(fun)
+    end,
+  },
+  luv = {
+    filename = 'luvref.txt',
+    files = { 'runtime/lua/uv/_meta.lua' },
+    lint = false, -- Vendored from upstream
+    helptag_fmt = luv_section_tag,
+    helptag_alias = function(tag)
+      local aliases = {
+        ['luv-error-handling'] = 'uv.errno',
+        ['luv-event-loop'] = 'uv_loop_t',
+      }
+      return aliases[tag] or tag:match('^uv%.(uv_.+)$')
+    end,
+    fn_xform = function(fun)
+      -- The source path (uv._meta) is not part of the public function name.
+      fun.module = nil
+
+      -- Document nil constants with their type.
+      if fun.table and fun.type then
+        fun.desc = ('(%s)%s'):format(fun.type[1].type, fun.desc and ' ' .. fun.desc or '')
+      end
+    end,
+    -- Resolve upstream Markdown references without changing the vendored source.
+    text_xform = function(text)
+      if not luv_links then
+        luv_links = {}
+        for line in io.lines('runtime/lua/uv/_meta.lua') do
+          local name, url = line:match('^%-%-%- %[(.-)%]: (%S+)')
+          if name then
+            luv_links[name] = url:gsub('^http://', 'https://')
+          end
+        end
+      end
+
+      text = text:gsub('%[[^]]+%]%(%#([^)]+)%)', '|luv-%1|')
+      text = text:gsub('|userdata|', '`userdata`')
+      -- Single-quoted prose is parsed as a Vim option in :help.
+      text = text:gsub("([%s(])'([^'\n]+%s[^'\n]+)'", '%1"%2"')
+      text = text:gsub('http://', 'https://')
+
+      return (
+        text:gsub('%[([^]]+)%]%[%]', function(name)
+          if luv_links[name] then
+            return ('[%s](%s)'):format(name, luv_links[name])
+          end
+          local ty = name:match('^`([^`]+)`$')
+          return '|' .. (ty or luv_section_tag(name)) .. '|'
+        end)
+      )
     end,
   },
   lsp = {
@@ -634,10 +716,7 @@ end
 
 --- @param p nvim.luacats.parser.param|nvim.luacats.parser.field
 local function should_render_field_or_param(p)
-  return not p.nodoc
-    and not p.access
-    and not contains(p.name, { '_', 'self' })
-    and not vim.startswith(p.name, '_')
+  return not p.nodoc and not p.deprecated and not p.access and not vim.startswith(p.name, '_')
 end
 
 --- Gets a field's description and its "(default: …)" value, if any (see `lsp/client.lua` for
@@ -792,10 +871,13 @@ local function render_class(class, classes, hidden_fields, cfg)
 
   local ret = {} --- @type string[]
 
-  table.insert(ret, fmt('*%s*\n', class.name))
+  table.insert(ret, helptags(class.name, cfg) .. '\n')
 
   if class.parent then
     local txt = fmt('Extends: |%s|', class.parent)
+    if cfg.text_xform then
+      txt = cfg.text_xform(txt)
+    end
     table.insert(ret, md_to_vimdoc(txt, INDENTATION, INDENTATION, TEXT_WIDTH))
     table.insert(ret, '\n')
   end
@@ -853,14 +935,14 @@ local function render_fun_header(fun, cfg)
 
   local args = {} --- @type string[]
   for _, p in ipairs(fun.params or {}) do
-    if p.name ~= 'self' then
+    if p.name ~= 'self' or fun.member_sep ~= ':' then
       args[#args + 1] = fmt_field_name(p.name)
     end
   end
 
   local nm = fun.name
   if fun.classvar and not is_module_fun(fun) then
-    nm = fmt('%s:%s', fun.classvar, nm)
+    nm = fmt('%s%s%s', fun.classvar, fun.member_sep or ':', nm)
   end
   if nm == 'vim.bo' then
     nm = 'vim.bo[{bufnr}]'
@@ -871,7 +953,7 @@ local function render_fun_header(fun, cfg)
 
   local proto = fun.table and nm or nm .. '(' .. table.concat(args, ', ') .. ')'
 
-  local tag = '*' .. cfg.fn_helptag_fmt(fun) .. '*'
+  local tag = helptags(cfg.fn_helptag_fmt(fun), cfg)
 
   if #proto + #tag > TEXT_WIDTH - 8 then
     table.insert(ret, fmt('%78s\n', tag))
@@ -995,7 +1077,10 @@ local function render_fun(fun, classes, cfg)
   end
 
   if fun.params and #fun.params > 0 then
-    local param_txt = render_fields_or_params(fun.params, fun.generics, classes, cfg)
+    local params = vim.tbl_filter(function(p)
+      return p.name ~= 'self' or fun.member_sep ~= ':'
+    end, fun.params)
+    local param_txt = render_fields_or_params(params, fun.generics, classes, cfg)
     if not param_txt:match('^%s*$') then
       table.insert(ret, '\n    Parameters: ~\n')
       ret[#ret + 1] = param_txt
@@ -1034,6 +1119,9 @@ local function render_briefs(briefs, cfg)
   local ret = {} --- @type string[]
 
   for _, b in ipairs(briefs) do
+    if cfg.text_xform then
+      b = cfg.text_xform(b)
+    end
     if cfg.brief_xform then
       b = cfg.brief_xform(b)
     end
@@ -1125,20 +1213,15 @@ end
 --- @param classes_txt string
 --- @return nvim.gen_vimdoc.Section?
 local function make_section(filename, cfg, briefs, funs_txt, classes_txt)
-  -- filename: e.g., 'autocmd.c'
-  -- name: e.g. 'autocmd'
-  local name = filename:match('(.*)%.[a-z]+')
-
-  -- Formatted (this is what's going to be written in the vimdoc)
-  -- e.g., "Autocmd Functions"
-  local sectname = cfg.section_name and cfg.section_name[filename] or mktitle(name)
+  local sectname = filename
+  if cfg.section_order then
+    -- For file-based sections, e.g. 'autocmd.c' -> 'Autocmd'.
+    sectname = mktitle(filename:match('(.*)%.[a-z]+') or filename)
+  end
+  sectname = cfg.section_name and cfg.section_name[filename] or sectname
 
   -- section tag: e.g., "*api-autocmd*"
-  local help_labels = cfg.helptag_fmt(sectname)
-  if type(help_labels) == 'table' then
-    help_labels = table.concat(help_labels, '* *')
-  end
-  local help_tags = '*' .. help_labels .. '*'
+  local help_tags = helptags(cfg.helptag_fmt(sectname), cfg)
 
   if funs_txt == '' and classes_txt == '' and #briefs == 0 then
     return
@@ -1146,7 +1229,7 @@ local function make_section(filename, cfg, briefs, funs_txt, classes_txt)
 
   return {
     name = sectname,
-    title = cfg.section_fmt(sectname),
+    title = cfg.section_fmt and cfg.section_fmt(sectname) or sectname,
     help_tag = help_tags,
     funs_txt = funs_txt,
     classes_txt = classes_txt,
@@ -1309,6 +1392,7 @@ local function gen_target(cfg)
   cfg.fn_helptag_fmt = cfg.fn_helptag_fmt or fn_helptag_fmt_common
   print('Target:', cfg.filename)
   local sections = {} --- @type nvim.gen_vimdoc.Section[]
+  local section_order = vim.list_slice(cfg.section_order or {})
 
   expand_files(cfg.files)
 
@@ -1321,13 +1405,22 @@ local function gen_target(cfg)
   --- @type table<string,nvim.luacats.parser.module>
   local modules = {}
 
+  --- @type table<string,[table<string,nvim.luacats.parser.class>, nvim.luacats.parser.fun[], string[]]>
+  local files_by_name = {}
+
   --- First pass so we can collect all classes and module exports.
   for _, f in vim.spairs(cfg.files) do
     local ext = f:match('%.([^.]+)$')
     local parser = parsers[ext]
     if parser then
-      local classes, funs, briefs, _, module = parser(f)
+      local classes, funs, briefs, _, module, source_sections =
+        parser(f, { sections = not cfg.section_order })
       file_results[f] = { classes, funs, briefs }
+      for _, section in ipairs(source_sections or {}) do
+        assert(not files_by_name[section.name], 'duplicate section: ' .. section.name)
+        section_order[#section_order + 1] = section.name
+        files_by_name[section.name] = { section.classes, section.funs, section.briefs }
+      end
       all_classes = vim.tbl_extend('error', all_classes, classes)
       if module then
         modules[module.name] = module
@@ -1338,15 +1431,26 @@ local function gen_target(cfg)
   luacats_parser.resolve_modules(modules)
   expand_module_docs(modules)
 
-  --- @type table<string,[table<string,nvim.luacats.parser.class>, nvim.luacats.parser.fun[], string[]]>
-  local files_by_name = {}
-
   for f, r in vim.spairs(file_results) do
     local classes, funs, briefs = r[1], r[2], r[3]
 
-    if not f:find('ui_events%.in%.h$') then -- TODO(justinmk): also lint UI events.
+    if cfg.lint ~= false and not f:find('ui_events%.in%.h$') then -- TODO(justinmk): also lint UI events.
       lint.lint_names(f, funs, nil, classes)
       lint.lint_quasi_keysets(f, funs)
+    end
+
+    if cfg.text_xform then
+      local function transform(obj)
+        for key, value in pairs(obj) do
+          if key == 'desc' and type(value) == 'string' then
+            obj[key] = cfg.text_xform(value)
+          elseif type(value) == 'table' then
+            transform(value)
+          end
+        end
+      end
+      transform(classes)
+      transform(funs)
     end
 
     local mod_cls_nm = find_module_class(classes, 'M')
@@ -1364,7 +1468,7 @@ local function gen_target(cfg)
     files_by_name[vim.fs.basename(f)] = r
   end
 
-  for _, entry in ipairs(cfg.section_order) do
+  for _, entry in ipairs(section_order) do
     local files = type(entry) == 'table' and entry or { entry }
     local classes = {} --- @type table<string,nvim.luacats.parser.class>
     local funs = {} --- @type nvim.luacats.parser.fun[]
