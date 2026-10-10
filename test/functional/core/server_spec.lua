@@ -402,7 +402,7 @@ describe('startup --listen', function()
     _test({ '--listen', '/' }, nil, 'nvim.*: Failed to %-%-listen: [^:]+: "/"')
     if not is_os('win') then
       -- Too-long path is rejected, not silently truncated. #38623
-      local too_long = './Xtest-listen-' .. ('x'):rep(192)
+      local too_long = './Xtest-listen-' .. ('x'):rep(256)
       _test(
         { '--listen', too_long },
         nil,
