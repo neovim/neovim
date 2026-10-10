@@ -1920,6 +1920,75 @@ describe('multicursor', function()
       eq({ { 0, 5 } }, anchors())
       eq({ 2, 6 }, api.nvim_win_get_cursor(0))
     end)
+
+    it('mapping that edits via API is committed, not dropped #42205', function()
+      -- <Cmd>/Lua keys are not captured, so live preview is edit's only representation at
+      -- cursors: commit it, instead of a session-end replay that cannot reproduce it.
+      n.exec_lua(function()
+        vim.keymap.set('i', '<C-j>', function()
+          vim.api.nvim_put({ 'X' }, 'c', false, true)
+        end)
+      end)
+      cursors({ 'foo', 'bar' }, 'QjQ')
+      feed('A<C-j>')
+      eq({ 'fooX', 'barX' }, get_lines()) -- Mirrored live.
+      feed('<Esc>')
+      eq({ 'fooX', 'barX' }, get_lines()) -- Kept by commit.
+      -- Cursors land on last-inserted char, like primary.
+      eq({ { 0, 3 }, { 1, 3 } }, anchors())
+      eq({ 2, 3 }, api.nvim_win_get_cursor(0))
+      feed('u') -- One undo step.
+      eq({ 'foo', 'bar' }, get_lines())
+
+      -- Typed text around API edit still replays as spans ('textwidth' re-wraps per cursor).
+      command('set textwidth=12')
+      clear_cursors()
+      cursors({ 'foo', 'bar' }, 'QjQ')
+      feed('Aab<C-j>cd ee ff<Esc>')
+      eq({ 'fooabXcd ee', 'ff', 'barabXcd ee', 'ff' }, get_lines())
+      command('set textwidth&')
+
+      -- Non-literal keys after API edit flush as usual, against committed text.
+      clear_cursors()
+      cursors({ 'foo', 'bar' }, 'QjQ')
+      feed('A<C-j><Left>Y<BS><Esc>')
+      eq({ 'fooX', 'barX' }, get_lines())
+    end)
+
+    it('mapping that edits via API: session-ending variants #42205', function()
+      -- mapping itself ends session, right after its (uncaptured) edit.
+      command(
+        [[inoremap <C-j> <Cmd>lua vim.api.nvim_put({'X'}, 'c', false, true)<CR><Cmd>stopinsert<CR>]]
+      )
+      cursors({ 'foo', 'bar' }, 'QjQ')
+      feed('A<C-j>')
+      eq({ 'fooX', 'barX' }, get_lines())
+
+      -- CTRL-C ends session without a commit replay: committed preview stays.
+      command([[inoremap <C-k> <Cmd>lua vim.api.nvim_put({'Y'}, 'c', false, true)<CR>]])
+      clear_cursors()
+      cursors({ 'foo', 'bar' }, 'QjQ')
+      feed('A<C-k>')
+      n.poke_eventloop() -- Let mapping run before CTRL-C interrupts.
+      feed('<C-c>')
+      eq({ 'fooY', 'barY' }, get_lines())
+
+      -- A scheduled (K_EVENT) edit, not mapping's own.
+      n.exec_lua(function()
+        vim.keymap.set('i', '<C-b>', function()
+          vim.schedule(function()
+            vim.api.nvim_put({ 'Z' }, 'c', false, true)
+          end)
+        end)
+      end)
+      clear_cursors()
+      cursors({ 'foo', 'bar' }, 'QjQ')
+      feed('A<C-b>')
+      n.poke_eventloop()
+      eq({ 'fooZ', 'barZ' }, get_lines())
+      feed('<Esc>')
+      eq({ 'fooZ', 'barZ' }, get_lines())
+    end)
   end)
 
   describe('navigation state (primary-only)', function()
