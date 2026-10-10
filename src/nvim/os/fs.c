@@ -245,18 +245,17 @@ int os_exepath(char *buffer, size_t *size)
 bool os_can_exe(const char *name, char **abspath, bool use_path)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (!use_path || gettail_dir(name) != name) {
-#ifdef MSWIN
-    return is_executable_ext(name, abspath);
-#else
-    // Must have path separator, cannot execute files in the current directory.
-    return ((use_path || gettail_dir(name) != name)
-            && is_executable(name, abspath));
-#endif
-    return false;
+  bool has_dir = path_tail(name) != name;
+  if (use_path && !has_dir) {
+    return is_executable_in_path(name, abspath);
   }
 
-  return is_executable_in_path(name, abspath);
+#ifdef MSWIN
+  return is_executable_ext(name, abspath);
+#else
+  // Must have path separator, cannot execute files in the current directory.
+  return has_dir && is_executable(name, abspath);
+#endif
 }
 
 /// Returns true if `name` is an executable file.
@@ -1107,7 +1106,7 @@ int os_file_mkdir(char *fname, int32_t mode)
   if (!dir_of_file_exists(fname)) {
     char *tail = path_tail_with_sep(fname);
     char *last_char = tail + strlen(tail) - 1;
-    if (vim_ispathsep(*last_char)) {
+    if (path_is_sep(*last_char)) {
       emsg(_(e_noname));
       return -1;
     }
@@ -1231,27 +1230,27 @@ bool os_fileinfo2(const char *path, FileInfo *info)
   const char *p = path_skip_sep(path, false);
   size_t leading_slashes = (size_t)(p - path);
 #ifdef MSWIN
-  if (leading_slashes == 0 && ASCII_ISALPHA(p[0]) && p[1] == ':') {
+  if (leading_slashes == 0 && path_has_drive_letter(p)) {
     info->type = kPathDrive;
     p = path_skip_sep(p + 2, false);
     info->rest_off = (size_t)(p - path);
     return true;
   }
   if (leading_slashes >= 2 && (p[0] == '?' || p[0] == '.')) {
-    if (!vim_ispathsep_nocolon(p[1])) {
+    if (!path_is_sep(p[1])) {
       return true;
     }
     info->type = kPathDevice;
     info->prefix_off = leading_slashes - 2;
     p = path_skip_sep(p + 2, false);
-    if (vim_strnicmp_asc(p, "unc", 3) == 0 && vim_ispathsep_nocolon(p[3])) {
+    if (vim_strnicmp_asc(p, "unc", 3) == 0 && path_is_sep(p[3])) {
       info->type = kPathDeviceUNC;
       p = path_skip_sep(p + 4, false);
       info->root_off = (size_t)(p - path);
       goto server;
     }
     info->root_off = (size_t)(p - path);
-    if (ASCII_ISALPHA(p[0]) && p[1] == ':') {
+    if (path_has_drive_letter(p)) {
       p += 2;
     }
     p = path_skip_sep(path_next_component(p), false);
@@ -1513,49 +1512,28 @@ shortcut_end:
   return rfname;
 }
 
-# define IS_PATH_SEP(c) ((c) == L'\\' || (c) == L'/')
 /// Returns true if the path contains a reparse point (junction or symbolic
-/// link). Otherwise false in returned.
+/// link). Otherwise false is returned.
 bool os_is_reparse_point_include(const char *path)
 {
-  wchar_t *p, *q, *utf16_path;
-  wchar_t buf[MAX_PATH];
-  DWORD attr;
-  bool result = false;
+  FileInfo info;
+  char buf[MAXPATHL];
+  xstrlcpy(buf, path, MAXPATHL);
+  char *p = buf;
 
-  const int r = utf8_to_utf16(path, -1, &utf16_path);
-  if (r != 0) {
-    semsg("utf8_to_utf16 failed: %d", r);
-    return false;
-  }
-
-  p = utf16_path;
-  if (isalpha((uint8_t)p[0]) && p[1] == L':' && IS_PATH_SEP(p[2])) {
-    p += 3;
-  } else if (IS_PATH_SEP(p[0]) && IS_PATH_SEP(p[1])) {
-    p += 2;
-  }
-
-  while (*p != L'\0') {
-    q = wcspbrk(p, L"\\/");
-    if (q == NULL) {
-      p = q = utf16_path + wcslen(utf16_path);
-    } else {
-      p = q + 1;
+  p = get_past_head(p);
+  for (char sep; *p != NUL; *p++ = sep) {
+    p = strpbrk(p, "\\/");
+    if (p != NULL) {
+      sep = *p;
+      *p = NUL;
     }
-    if (q - utf16_path >= MAX_PATH) {
-      break;
-    }
-    wcsncpy(buf, utf16_path, (size_t)(q - utf16_path));
-    buf[q - utf16_path] = L'\0';
-    attr = GetFileAttributesW(buf);
-    if (attr != INVALID_FILE_ATTRIBUTES
-        && (attr & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
-      result = true;
-      break;
+    if (os_fileinfo_link(buf, &info) && S_ISLNK(info.stat.st_mode)) {
+      return true;
+    } else if (p == NULL) {
+      return false;
     }
   }
-  xfree(utf16_path);
-  return result;
+  return false;
 }
 #endif

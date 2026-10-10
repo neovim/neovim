@@ -58,18 +58,16 @@ static inline uint32_t hash_cstr_t(const char *s)
 static inline uint32_t hash_path_t(const char *p)
 {
   uint32_t h = 0;
-#ifdef MSWIN
-  if (ASCII_ISALPHA(*p) && p[1] == ':') {
+  if (path_has_drive_letter(p)) {
     p += 2;
   }
-#endif
   bool ic = false;
 #ifdef CASE_INSENSITIVE_FILENAME
   ic = true;
 #endif
   const char *start = p;
   for (int len = 0; *p; p += len) {
-    if (vim_ispathsep_nocolon(*p)
+    if (path_is_sep(*p)
         && p[1] == NUL
         && start != p
         && !vim_ispathsep(p[-1])) {

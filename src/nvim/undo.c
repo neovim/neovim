@@ -721,7 +721,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
       dir_name[dir_len] = NUL;
 
       // Remove trailing pathseps from directory name
-      while (dir_len > 1 && vim_ispathsep_nocolon(dir_name[dir_len - 1])) {
+      while (dir_len > 1 && path_is_sep(dir_name[dir_len - 1])) {
         dir_name[--dir_len] = NUL;
       }
 

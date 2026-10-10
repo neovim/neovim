@@ -39,6 +39,13 @@ typedef enum {
   kPathCmpFull    = 1 << 2,  ///< Compare full names when FileIds are unavailable.
 } PathCmpFlags;
 
+/// path_with_component() result
+typedef enum {
+  kPathCompNone = 0,  ///< The first component of "p1" does not match "p2".
+  kPathCompNul,       ///< The first component of "p1" matches "p2" up to NUL.
+  kPathCompSep,       ///< The first component of "p1" matches "p2" up to a path separator.
+} PathCompMatch;
+
 #ifdef BACKSLASH_IN_FILENAME
 # define TO_SLASH(p) path_to_slash(p)
 # define TO_SLASH_SAVE(p) path_to_slash_save(p)

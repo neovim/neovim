@@ -4106,7 +4106,7 @@ void escape_fname(char **pp)
 /// If 'orig_pat' starts with "~/", replace the home directory with "~".
 void tilde_replace(char *orig_pat, int num_files, char **files)
 {
-  if (orig_pat[0] == '~' && vim_ispathsep(orig_pat[1])) {
+  if (orig_pat[0] == '~' && path_is_sep(orig_pat[1])) {
     for (int i = 0; i < num_files; i++) {
       char *p = home_replace_save(NULL, files[i]);
       xfree(files[i]);

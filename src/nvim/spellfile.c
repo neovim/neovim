@@ -5674,7 +5674,7 @@ static void init_spellfile(void)
   // is a path separator remember the start of the tail.
   for (lend = curwin->w_s->b_p_spl; *lend != NUL
        && vim_strchr(",._", (uint8_t)(*lend)) == NULL; lend++) {
-    if (vim_ispathsep(*lend)) {
+    if (path_is_sep(*lend)) {
       aspath = true;
       lstart = lend + 1;
     }
