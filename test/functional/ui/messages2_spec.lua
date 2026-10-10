@@ -1484,4 +1484,25 @@ describe('messages2', function()
                                                            |
     ]])
   end)
+
+  it("'modified' flag in 'ruler' is cleared after :write with 'laststatus' 0 #42255", function()
+    local file = t.tmpname()
+    finally(function()
+      os.remove(file)
+    end)
+    command('set noautoread laststatus=0 ruler rulerformat=%m')
+    command('edit ' .. file)
+    feed('ihello<Esc>')
+    screen:expect([[
+      hell^o                                                |
+      {1:~                                                    }|*12
+                                                        [+]|
+    ]])
+    command('silent write')
+    screen:expect([[
+      hell^o                                                |
+      {1:~                                                    }|*12
+                                                           |
+    ]])
+  end)
 end)

@@ -2753,6 +2753,11 @@ void redraw_buf_status_later(buf_T *buf)
       set_must_redraw(UPD_VALID);
     }
   }
+  // Redraw the ruler if it is in the command line and was not marked for redraw above
+  if (p_ru && curwin->w_buffer == buf && !curwin->w_status_height && !curwin->w_redr_status) {
+    redraw_cmdline = true;
+    set_must_redraw(UPD_VALID);
+  }
 }
 
 /// Mark all status lines and window bars for redraw; used after first :cd
