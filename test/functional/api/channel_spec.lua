@@ -65,6 +65,45 @@ describe('API', function()
       eq({}, api.nvim_get_chan_info(10))
     end)
 
+    it('emits ChanInfo when channel information changes', function()
+      Screen.new(80, 24)
+      t.finally(function()
+        api.nvim_chan_set(0, { detach = false })
+      end)
+      command('let g:info_events = []')
+      command('autocmd ChanInfo * call add(g:info_events, deepcopy(v:event))')
+      local info = vim.deepcopy(testinfo)
+      local events = {}
+      local function check_event()
+        events[#events + 1] = { info = vim.deepcopy(info) }
+        t.retry(nil, nil, function()
+          eq(events, api.nvim_get_var('info_events'))
+        end)
+        eq(info, api.nvim_get_chan_info(1))
+      end
+
+      for _, detach in ipairs({ true, false }) do
+        api.nvim_chan_set(0, { detach = detach })
+        info.detach = detach
+        check_event()
+      end
+
+      info.client = {
+        name = 'test-client',
+        version = { major = 1 },
+        type = 'ui',
+        methods = {},
+        attributes = {},
+      }
+      api.nvim_set_client_info('test-client', { major = 1 }, 'ui', {}, {})
+      check_event()
+
+      feed(':detach!<CR>')
+      info.detach = true
+      check_event()
+      eq(1, #api.nvim_list_uis())
+    end)
+
     it('stream=stdio channel', function()
       eq({ [1] = testinfo, [2] = stderr }, api.nvim_list_chans())
       -- 0 should return current channel
