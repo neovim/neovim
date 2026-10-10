@@ -176,10 +176,8 @@ func Test_jumpoptions()
         \  {'lnum': 20, 'bufnr': bnr, 'col': 0, 'coladd': 0},
         \  {'lnum': 30, 'bufnr': bnr, 'col': 0, 'coladd': 0},
         \  {'lnum': 90, 'bufnr': bnr, 'col': 0, 'coladd': 0},
-        "\ Nvim: avoids useless/phantom jumps
-        "\  {'lnum': 60, 'bufnr': bnr, 'col': 0, 'coladd': 0},
-        "\ ], 6], getjumplist())
-        \ ], 5], getjumplist())
+        \  {'lnum': 60, 'bufnr': bnr, 'col': 0, 'coladd': 0},
+        \ ], 6], getjumplist())
 
   " does add the same location twice non adjacently
   normal 10G

@@ -26,6 +26,27 @@ describe('jumplist', function()
     eq('\n jump line  col file/text\n>', fn.execute('jumps'))
   end)
 
+  it('does not delete the last entry when queried #33598', function()
+    write_file(fname1, ('foo\n'):rep(4))
+    command('edit ' .. fname1)
+    command('clearjumps')
+    feed('G3k')
+
+    -- The jump back to line 1 is useless while the cursor is on line 1, so it is hidden...
+    local hidden = ' jump line  col file/text\n>'
+    eq(1, #fn.getjumplist()[1])
+    eq(1, #fn.getjumplist()[1])
+    eq(hidden, exec_capture('jumps'))
+    eq(hidden, exec_capture('jumps'))
+
+    -- ... but it is not deleted: moving off line 1 uncovers a usable jump again.
+    feed('j')
+    eq(1, #fn.getjumplist()[1])
+    eq(' jump line  col file/text\n   1     1    0 foo\n>', exec_capture('jumps'))
+    feed('<C-O>')
+    eq(1, fn.line('.'))
+  end)
+
   it('does not require two <C-O> strokes to jump back', function()
     write_file(fname1, 'first file contents')
     write_file(fname2, 'second file contents')
