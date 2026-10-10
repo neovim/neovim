@@ -492,6 +492,25 @@ describe(':terminal buffer', function()
     eq('TermLeave bar false', exec_lua('return _G.last_event'))
   end)
 
+  it('sends theme update notifications when requested', function()
+    command('set background=dark')
+    exec_lua(function()
+      _G.input = {}
+      vim.cmd 'enew'
+      local chan = vim.api.nvim_open_term(0, {
+        on_input = function(_, _, _, data)
+          table.insert(_G.input, data)
+        end,
+      })
+      vim.api.nvim_chan_send(chan, '\27[?2031h') -- Enable theme update notifications
+    end)
+    command('set background=light')
+    command('set background=dark')
+    retry(nil, 1000, function()
+      eq({ '\27[?997;2n', '\27[?997;1n' }, exec_lua('return _G.input'))
+    end)
+  end)
+
   it('no crash with race between buffer close and OSC 2', function()
     skip(is_os('win'), 'tty-test cannot forward OSC 2 on Windows?')
     exec_lua(function()
