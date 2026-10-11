@@ -260,7 +260,8 @@ end
 
 --- Schedule a function only if bufnr is loaded.
 --- We schedule fold level computation for the following reasons:
---- * queries seem to use the old buffer state in on_bytes for some unknown reason;
+--- * on_bytes can fire before the buffer text reflects the change (e.g. `J`), so parsing or
+---   querying from it would see the old state;
 --- * to avoid textlock;
 --- * to avoid infinite recursion:
 ---   compute_folds_levels → parse → _do_callback → on_changedtree → compute_folds_levels.
@@ -272,6 +273,22 @@ local function schedule_if_loaded(bufnr, fn)
       return
     end
     fn()
+  end)
+end
+
+--- Recompute all fold levels of bufnr, then update folds in its windows.
+---@param bufnr integer
+---@param foldinfo TS.FoldInfo
+local function refresh_folds(bufnr, foldinfo)
+  api.nvim_buf_call(bufnr, function()
+    compute_folds_levels(bufnr, foldinfo, nil, nil, function()
+      -- FileType/BufUnload can clear or replace the fold state while this
+      -- async parse is in flight. Ignore callbacks for stale generations.
+      if foldinfos[bufnr] ~= foldinfo then
+        return
+      end
+      foldinfo:foldupdate(bufnr, 0, api.nvim_buf_line_count(bufnr))
+    end)
   end)
 end
 
@@ -395,12 +412,21 @@ function M.foldexpr(lnum)
       foldinfos[bufnr] = nil
     end)
 
-    local parser = foldinfos[bufnr].parser
+    local foldinfo = foldinfos[bufnr]
+    local parser = foldinfo.parser
     if not parser then
       return '0'
     end
 
-    compute_folds_levels(bufnr, foldinfos[bufnr])
+    local _, tree = next(parser:trees())
+    local buf_bytes = api.nvim_buf_get_offset(bufnr, api.nvim_buf_line_count(bufnr))
+    if not tree or select(3, tree:root():end_()) == buf_bytes then
+      compute_folds_levels(bufnr, foldinfo)
+    else
+      schedule_if_loaded(bufnr, function()
+        refresh_folds(bufnr, foldinfo)
+      end)
+    end
 
     if not registered_cbs[bufnr] then
       parser:register_cbs({
@@ -448,16 +474,7 @@ nvim_on('OptionSet', group, {
   for _, bufnr in ipairs(bufs) do
     local foldinfo = FoldInfo.new(bufnr)
     foldinfos[bufnr] = foldinfo
-    api.nvim_buf_call(bufnr, function()
-      compute_folds_levels(bufnr, foldinfo, nil, nil, function()
-        -- FileType/BufUnload can clear or replace the fold state while this
-        -- async parse is in flight. Ignore callbacks for stale generations.
-        if foldinfos[bufnr] ~= foldinfo then
-          return
-        end
-        foldinfo:foldupdate(bufnr, 0, api.nvim_buf_line_count(bufnr))
-      end)
-    end)
+    refresh_folds(bufnr, foldinfo)
   end
 end)
 return M
