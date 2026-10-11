@@ -5315,23 +5315,24 @@ void tabpage_close(int forceit)
 
   // First close all the windows but the current one.  If that worked then
   // close the last window in this tab, that will close it.
-  while (curwin->w_floating && ++done < 1000) {
+  while (curtab == save_curtab && curwin->w_floating && ++done < 1000) {
     ex_win_close(forceit, curwin, NULL);
   }
-  if (done == 1000) {
-    return;
+  if (done == 1000 || curtab != save_curtab) {
+    goto cleanup;
   }
 
   if (!ONE_WINDOW) {
     close_others(true, forceit, true);
   }
-  if (ONE_WINDOW) {
+  if (curtab == save_curtab && ONE_WINDOW) {
     ex_win_close(forceit, curwin, NULL);
   }
-  if (curtab == save_curtab) {
+cleanup:
+  if (valid_tabpage(save_curtab)) {
     // When closing the tab page failed, reset tp_did_tabclosedpre so that
     // TabClosedPre behaves consistently on next :close vs :tabclose.
-    curtab->tp_did_tabclosedpre = false;
+    save_curtab->tp_did_tabclosedpre = false;
   }
 }
 
