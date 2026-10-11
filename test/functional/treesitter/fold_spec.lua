@@ -842,6 +842,16 @@ t2]])
     ]])
   end)
 
+  it('no error setting foldminlines after a buffer is wiped in an autocmd #40290', function()
+    insert('foo')
+    command('set foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr()')
+    command('call foldlevel(1) | enew')
+    -- BufUnload doesn't fire for a buffer wiped inside another autocmd.
+    command('autocmd User Wipe ++once bwipeout! 1')
+    command('doautocmd User Wipe')
+    command('set foldminlines=0')
+  end)
+
   it('clamps unbounded changed ranges on 32-bit platforms', function()
     insert([[
 one

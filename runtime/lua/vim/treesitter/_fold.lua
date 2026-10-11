@@ -446,18 +446,24 @@ nvim_on('OptionSet', group, {
     or foldinfos[buf] and { buf }
     or {}
   for _, bufnr in ipairs(bufs) do
-    local foldinfo = FoldInfo.new(bufnr)
-    foldinfos[bufnr] = foldinfo
-    api.nvim_buf_call(bufnr, function()
-      compute_folds_levels(bufnr, foldinfo, nil, nil, function()
-        -- FileType/BufUnload can clear or replace the fold state while this
-        -- async parse is in flight. Ignore callbacks for stale generations.
-        if foldinfos[bufnr] ~= foldinfo then
-          return
-        end
-        foldinfo:foldupdate(bufnr, 0, api.nvim_buf_line_count(bufnr))
+    if not api.nvim_buf_is_loaded(bufnr) then
+      -- A buffer without a parser can be unloaded without BufUnload firing (inside another
+      -- autocmd, or with :noautocmd), which leaves its entry behind.
+      foldinfos[bufnr] = nil
+    else
+      local foldinfo = FoldInfo.new(bufnr)
+      foldinfos[bufnr] = foldinfo
+      api.nvim_buf_call(bufnr, function()
+        compute_folds_levels(bufnr, foldinfo, nil, nil, function()
+          -- FileType/BufUnload can clear or replace the fold state while this
+          -- async parse is in flight. Ignore callbacks for stale generations.
+          if foldinfos[bufnr] ~= foldinfo then
+            return
+          end
+          foldinfo:foldupdate(bufnr, 0, api.nvim_buf_line_count(bufnr))
+        end)
       end)
-    end)
+    end
   end
 end)
 return M
