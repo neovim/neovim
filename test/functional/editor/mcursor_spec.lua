@@ -331,6 +331,13 @@ describe('multicursor', function()
       feed('x')
       eq({ 'b b b', 'xx b' }, get_lines())
 
+      -- A search limited to the Visual area ("\%V") matches there.
+      clear_cursors()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'foo bar baz', 'bar baz foo', 'baz foo bar' })
+      feed('gg0vip<Esc>/\\%Vfoo<CR>')
+      feed('zqn')
+      eq(3, ncursors())
+
       -- In mappings: an operator alias ("gz"); an edit after "zq" applies at every cursor it placed.
       clear_cursors()
       n.exec_lua(function()

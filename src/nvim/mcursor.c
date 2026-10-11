@@ -1294,15 +1294,16 @@ static visualinfo_T mc_zq_target(pos_T step, bool search, MotionType motion_type
 {
   const visualinfo_T save = curbuf->b_visual;
   const int save_mode_eval = curbuf->b_visual_mode_eval;
-  // Search: lnum=0 if "gn" finds no match.
-  curbuf->b_visual = search ? (visualinfo_T){ 0 }
-                            : (visualinfo_T){ .vi_start = step, .vi_end = step,
-                                              .vi_curswant = step.col,
-                                              .vi_mode = motion_type == kMTLineWise ? 'V' : 'v' };
-  curbuf->b_visual_mode_eval = curbuf->b_visual.vi_mode;
-  if (search) {
-    mc_zq_step("gn\033", step);  // Selects the match at `step`; <Esc> stores it as '< '>.
+  // Search: keeps '< '> for "\%V" in the pattern.
+  if (!search) {
+    curbuf->b_visual = (visualinfo_T){ .vi_start = step, .vi_end = step,
+                                       .vi_curswant = step.col,
+                                       .vi_mode = motion_type == kMTLineWise ? 'V' : 'v' };
   }
+  curbuf->b_visual_mode_eval = curbuf->b_visual.vi_mode;
+  if (search && mc_zq_step("gn\033", step).lnum == 0) {
+    curbuf->b_visual = (visualinfo_T){ 0 };  // lnum=0: "gn" found no match.
+  }  // Else "gn" selected the match at `step`; <Esc> stored it as '< '>.
   if (ctx != NULL) {
     curwin->w_cursor = step;
     ctx_save(ctx, kCtxVisual);  // Tracks the marks by extmark.
