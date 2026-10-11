@@ -2611,20 +2611,35 @@ describe('vim.diagnostic', function()
         for i = 2, 5 do
           vim.diagnostic.set(_G.diagnostic_ns, bufnr, { _G.make_error('Error ' .. i, 0, 0, 0, 0) })
         end
-        return { first = first, last = count_autocmds() }
+        local last = count_autocmds()
+        -- No error after the buffer is wiped without autocmds. #42207
+        vim.cmd(('noautocmd bwipeout! %d'):format(bufnr))
+        vim.diagnostic.set(
+          _G.diagnostic_ns,
+          _G.diagnostic_bufnr,
+          { _G.make_error('E', 0, 0, 0, 0) }
+        )
+        vim.diagnostic.show()
+        return { first = first, last = last }
       end)
       eq(counts.first, counts.last)
     end)
 
     it('computes positions from the last set() when the buffer loads', function()
       eq(
-        { autocmds = 0, extmarks = { { 2, 1 } } },
+        { autocmds = 0, extmarks = { { 2, 1 } }, signs = 1 },
         exec_lua(function()
           local path = vim.fn.tempname()
           vim.fn.writefile({ 'one', 'two', 'three' }, path)
           local bufnr = vim.fn.bufadd(path)
           vim.diagnostic.set(_G.diagnostic_ns, bufnr, { _G.make_error('Old', 0, 0, 0, 0) })
           vim.diagnostic.set(_G.diagnostic_ns, bufnr, { _G.make_error('New', 2, 1, 2, 2) })
+          -- Showing another buffer in the namespace does not cancel the display of `bufnr`.
+          vim.diagnostic.set(
+            _G.diagnostic_ns,
+            _G.diagnostic_bufnr,
+            { _G.make_error('E', 0, 0, 0, 0) }
+          )
           vim.fn.bufload(bufnr)
           local location_ns = vim.diagnostic.get_namespace(_G.diagnostic_ns).user_data.location_ns
           local extmarks = {} --- @type [integer, integer][]
@@ -2634,6 +2649,7 @@ describe('vim.diagnostic', function()
           return {
             autocmds = #vim.api.nvim_get_autocmds({ event = 'BufRead', buffer = bufnr }),
             extmarks = extmarks,
+            signs = #vim.api.nvim_buf_get_extmarks(bufnr, -1, 0, -1, { type = 'sign' }),
           }
         end)
       )
