@@ -875,6 +875,7 @@ is_na_patch() {
           '-I^(Functions:|GUI|Other)\s~$' \
           '-I^[A-Z]\s+\*\+sodium\*\s+compiled with ' \
           '-I^\|(ch|popup)_[_a-z]+\(\)\|' \
+          '-I^'\''tabpanel[a-z]*'\' \
           '-I^popup_[_a-z]+\(' \
           '-I^sodium\s+Compiled with ' \
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
@@ -893,6 +894,7 @@ is_na_patch() {
           '-I\spopup window\s' \
           '-I\sterm_start\(\)\s' \
           '-I\svim\s.*VIMRUNTIME/tutor/tutor' \
+          '-I[[:space:],]tpl_vert[[:space:]:]' \
           '-I\-gui=gtk' \
           "$patch" -- "${file}")
         if test -n "$HUNKS"; then
@@ -948,18 +950,20 @@ is_na_patch() {
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^\s*/?\*/?$' \
-          '-I^\s*(//|/?\*).*\s([vV]im9|E[0-9]{,4} unused|E[0-9]{4} - |FEAT_|JSON-RPC|channel|job|popup|sound|terminal)' \
+          '-I^\s*(//|/?\*).*\s\+?([vV]im9|E[0-9]{,4} unused|E[0-9]{4} - |FEAT_|JSON-RPC|channel|job|popup|sound|tabpanel|terminal)' \
           '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*(FEAT_[^_]|USE_GTK)' \
           '-I^#\s*(else|endif)' \
           '-I^#\s*define\s+(FEAT|POPUPWIN|XDG|t)_[^_]' \
           '-I^\s+(&&|\|\|)\s.*defined\(.*FEAT_[^_]' \
           '-IEVENT_TERMINALWINOPEN' \
-          '-I^#\s*define\s+(ASSIGN_VAR|POPF_CURSORLINE)\s' \
+          '-I^#\s*define\s+(ASSIGN_VAR|IN_TABPANEL|POPF_CURSORLINE)\s' \
           '-I^typedef enum \{$' \
           '-I^\s+(CH_MODE|POPCLOSE)_[A-Z]+,?(\s+//.+)?$' \
           '-I^\} popclose_T;$' \
           '-I^EXTERN\schar\s+\*popup_transparent' \
+          '-I^EXTERN\schar_u\s+\*p_tplo?;' \
           '-I^EXTERN\sint\s+[_a-z]+_for_testing\s' \
+          '-I^EXTERN\slong\s+p_stpl;' \
           '-I^EXTERN type_T static_types\[' \
           '-I^EXTERN type_T t_.* INIT[2-9]\(' \
           '-I^EXTERN\swin_T\s+\*popup_dragwin' \
@@ -967,7 +971,7 @@ is_na_patch() {
           '-I^EXTERN char e_.*def_function' \
           '-I^EXTERN char e_.*enddef' \
           '-I^EXTERN char e_.*vim9' \
-          '-I^EXTERN char e_[_a-z]+_channel' \
+          '-I^EXTERN char e_[_a-zA-Z]+_(channel|redrawtabpanel)' \
           '-I^EXTERN char e_cannot_add(_redraw|)_listener_in_listener_callback' \
           '-I^EXTERN char e_cannot_declare_.*variable_str' \
           '-I^EXTERN char e_cannot_define_new_.+_as_static' \
@@ -979,6 +983,7 @@ is_na_patch() {
           '-I^EXTERN char e_failed_to_source_defaults' \
           '-I^EXTERN char e_gethostbyname_in_channel_' \
           '-I^EXTERN char e_invalid_identifier_in_defineannotype' \
+          '-I^EXTERN int\s+redraw_tabpanel\s' \
           '-I\sINIT\(= .+"E[0-9]+: (Abstract|Const|Class|Enum|Final|Interface|Public|Static|Type) ' \
           '-I\sINIT\(= .+"E[0-9]+: .*:def ' \
           '-I\sINIT\(= .+"E[0-9]+: .*enddef"' \
@@ -991,12 +996,15 @@ is_na_patch() {
           '-I\sINIT\(= .+"E1365: Cannot use a return type with the \\"new\\" function"' \
           '-I\sINIT\(= .+"E1370: Cannot define a .+ as static' \
           '-I\sINIT\(= .+"E15[0-9]+: Cannot use .*listener_add in a .* listener callback"' \
+          '-I\sINIT\(= .+"E1547: .+ :redrawtabpanel"' \
           '-I\sINIT\(= .+"E1551: Cannot open a popup window to a closing buffer' \
           '-I\sINIT\(= .+"E157[34]: ' \
+          '-I\sHLF_TPL[SF]?\s+//\stabpanel' \
           '-I\s(bool|char(|_u)|int)\s+w_popup_image_[_a-zA-Z]+;' \
           '-I\schar(|_u)\s+\*w_popup_title;' \
           '-I\sint\s+ch_[_a-zA-Z]+;' \
           '-I\sint\s+sv_const;' \
+          '-I\sint\s+tpl_vert;' \
           '-I\sint\s+w_(filter_mode|firstline|popup_drag|want_scrollbar);' \
           '-I\slist_T\s+\*w_popup_mask;' \
           '-I\spopclose_T\sw_popup_close;' \
@@ -1011,7 +1019,7 @@ is_na_patch() {
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^\s*/?\*/?$' \
-          '-I^\s*(//|/?\*).*\s([vV]im9|E[0-9]{4} - |FEAT_|channel|job|popup|sound|terminal|uf_type_list)' \
+          '-I^\s*(//|/?\*).*\s\+?([vV]im9|E[0-9]{4} - |FEAT_|channel|job|popup|sound|tabpanel|terminal|uf_type_list)' \
           '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*(FEAT_[^_]|USE_GTK)' \
           '-I^#\s*(else|endif)' \
           '-I^#\s*define\s+(FEAT|POPUPWIN|XDG|t)_[^_]' \
@@ -1024,6 +1032,7 @@ is_na_patch() {
           '-I^\s*(static)?\s(char(|_u)|hashtab_T|int|void)( \*)?$' \
           '-I^static\sargcheck_T\sarg[1-9]_[_a-z]+' \
           '-I^static\s(char(|_u)|hashtab_T|int|void)\s\*?[^*]+\(.+\);$' \
+          '-I^static\schar\s\*\(p_tpl_values' \
           '-I#\s*define.*ex_ni$' \
           '-I[.>]b_p_key' \
           '-I[_.>]sc_version = ' \
@@ -1034,8 +1043,11 @@ is_na_patch() {
           '-Icrypt_get_method_nr\(.+\)' \
           '-Ie_failed_to_source_defaults' \
           '-Imsg\(.*".*GTK.*"\)' \
+          '-I\s"default link TabPanel.+",' \
+          '-I\sif\s\((in|redraw)_tabpanel[[:space:])]' \
+          '-I\s(in|redraw)_tabpanel =' \
+          '-I\sdraw_tabpanel\(\);$' \
           '-I\spopup_set_firstline\(.+\);' \
-          '-I\sredraw_tabpanel =' \
           '-I\sterm_focus_change\(.+\);$' \
           '-I\supdate_vim9_script_var\(.+\);$' \
           '-I\svim_free\(.*w_popup_title\);' \
