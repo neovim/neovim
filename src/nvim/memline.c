@@ -1367,12 +1367,12 @@ void recover_names(char *fname, bool skip_curbuf, list_T *ret_list)
         p = dir_name.data + dir_name.size;
         if (after_pathsep(dir_name.data, p) && dir_name.size > 1 && p[-1] == p[-2]) {
           // Ends with '//', Use Full path for swap name
-          tail = make_percent_swname(dir_name.data, p, fname_res);
+          tail = make_slug_swname(dir_name, fname_res);
         } else {
           tail = path_tail(fname_res);
           tail = concat_fnames(dir_name, cstr_as_string(tail), true).data;
         }
-        num_names = recov_file_names(names, tail, false);
+        num_names = (tail != NULL) ? recov_file_names(names, tail, false) : 0;
         xfree(tail);
       }
     }
@@ -1438,45 +1438,39 @@ void recover_names(char *fname, bool skip_curbuf, list_T *ret_list)
   xfree(dir_name.data);
 }
 
-/// Append the full path to name with path separators made into percent
-/// signs, to dir. An unnamed buffer is handled as "" (<currentdir>/"")
-/// signs, to "dir". An unnamed buffer is handled as "" (<currentdir>/"")
-/// The last character in "dir" must be an extra slash or backslash, it is
-/// removed.
-char *make_percent_swname(char *dir, char *dir_end, const char *name)
-  FUNC_ATTR_NONNULL_ARG(1, 2)
+/// Appends the slug of the fixed "name" to "dir".
+/// An unnamed buffer is handled as "" (current dir).
+///
+/// @return [allocated] "dir/<slug>" or NULL on failure.
+char *make_slug_swname(String dir, const char *name)
 {
-  String fixed_fname;
   char *fname = fix_fname(name != NULL ? name : "");
   if (fname == NULL) {
     return NULL;
   }
 
-  FileInfo file_info;
-  if (!os_fileinfo2(fname, &file_info)) {
+  dict_T *dict = tv_dict_alloc();
+  tv_dict_add_nr(dict, S_LEN("maxlen"), 64);
+  typval_T args[] = {
+    { .v_type = VAR_STRING, .vval.v_string = fname },
+    { .v_type = VAR_DICT, .vval.v_dict = dict },
+    { .v_type = VAR_UNKNOWN },
+  };
+  typval_T rettv;
+  nlua_call_typval("vim.fs", "slug", args, &rettv);
+  if (rettv.v_type != VAR_STRING || rettv.vval.v_string == NULL) {
+    tv_clear(&rettv);
     xfree(fname);
     return NULL;
   }
-  fixed_fname.data = fname + file_info.root_off;
-  if (file_info.type == kPathDeviceUNC) {
-    assert(file_info.root_off >= 2);
-    fixed_fname.data -= 2;
-    fixed_fname.data[0] = '/';  // Fixup //?/UNC/server/ path: "C/server/..." -> "//server/..."
-  }
-  char *p;
-  for (p = fixed_fname.data; *p != NUL; MB_PTR_ADV(p)) {
-    if (vim_ispathsep(*p)) {
-      *p = '%';
-    }
-  }
-  fixed_fname.size = (size_t)(p - fixed_fname.data);
 
-  // remove one trailing slash
-  p = &dir_end[-1];
-  *p = NUL;
-  String d = concat_fnames(cbuf_as_string(dir, (size_t)(p - dir)), fixed_fname, true);
+  // remove trailing slash
+  while (dir.size > 1 && vim_ispathsep_nocolon(dir.data[dir.size - 1])) {
+    dir.size--;
+  }
+  String d = concat_fnames(dir, cstr_as_string(rettv.vval.v_string), true);
+  tv_clear(&rettv);
   xfree(fname);
-
   return d.data;
 }
 
@@ -3313,18 +3307,17 @@ char *makeswapname(char *fname, char *ffname, buf_T *buf, char *dir_name)
     fname_res = fname_buf;
   }
 #endif
-  int len = (int)strlen(dir_name);
+  size_t len = strlen(dir_name);
 
   char *s = dir_name + len;
   if (after_pathsep(dir_name, s) && len > 1 && s[-1] == s[-2]) {
     // Ends with '//', Use Full path
-    char *r = NULL;
-    s = make_percent_swname(dir_name, s, fname_res);
+    s = make_slug_swname(cbuf_as_string(dir_name, len), fname_res);
     if (s != NULL) {
-      r = modname(s, ".swp", false);
+      char *r = modname(s, ".swp", false);
       xfree(s);
+      return r;
     }
-    return r;
   }
 
   // Prepend a '.' to the swapfile name for the current directory.

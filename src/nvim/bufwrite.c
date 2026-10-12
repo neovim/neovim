@@ -709,8 +709,7 @@ char *buf_get_backup_name(char *fname, char **dirp, bool no_prepend_dot, char *b
   }
   if (dir_len > 1 && after_pathsep(IObuff, p) && p[-1] == p[-2]) {
     // path ends with '//', use full path
-    if ((p = make_percent_swname(IObuff, p, fname))
-        != NULL) {
+    if ((p = make_slug_swname(cbuf_as_string(IObuff, dir_len), fname)) != NULL) {
       backup = modname(p, backup_ext, no_prepend_dot);
       xfree(p);
     }

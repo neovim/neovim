@@ -599,6 +599,9 @@ These existing features changed their behavior.
   can be used when printing to a terminal.
 • It is no longer allowed to change the window layout during a |DiffUpdated|
   autocommand.
+• File names in 'directory', 'backupdir' and 'undodir' use |vim.fs.slug()|,
+  instead of replacing path separators with "%". Existing files created by
+  older versions in such directories may no longer be found.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

@@ -698,7 +698,6 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
 #endif
 
   char dir_name[MAXPATHL + 1];
-  String munged_name = STRING_INIT;
   char *undo_file_name = NULL;
 
   const size_t ffname_len = strlen(ffname);
@@ -718,13 +717,6 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
       *tail = '.';
       memmove(tail + tail_len + 1, ".un~", sizeof(".un~"));
     } else {
-      dir_name[dir_len] = NUL;
-
-      // Remove trailing pathseps from directory name
-      while (dir_len > 1 && vim_ispathsep_nocolon(dir_name[dir_len - 1])) {
-        dir_name[--dir_len] = NUL;
-      }
-
       bool has_directory = os_isdir(dir_name);
       if (!has_directory && *dirp == NUL && !reading) {
         // Last directory in the list does not exist, create it.
@@ -739,16 +731,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
         }
       }
       if (has_directory) {
-        if (munged_name.data == NULL) {
-          munged_name = cbuf_to_string(ffname, ffname_len);
-          for (char *p = munged_name.data; *p != NUL; MB_PTR_ADV(p)) {
-            if (vim_ispathsep(*p)) {
-              *p = '%';
-            }
-          }
-        }
-        undo_file_name = concat_fnames(cbuf_as_string(dir_name, dir_len),
-                                       munged_name, true).data;
+        undo_file_name = make_slug_swname(cbuf_as_string(dir_name, dir_len), ffname);
       }
     }
 
@@ -760,7 +743,6 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
     XFREE_CLEAR(undo_file_name);
   }
 
-  xfree(munged_name.data);
   return undo_file_name;
 }
 

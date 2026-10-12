@@ -162,11 +162,10 @@ describe('fileio', function()
     feed('Abar<esc>')
     command('write')
 
-    -- Backup filename = fullpath, separators replaced with "%".
-    local backup_file_name = string.gsub(
-      currentdir() .. '/Xtest_startup_file1',
-      is_os('win') and '[:/\\]' or '/',
-      '%%'
+    -- Backup filename = slug of the full path.
+    local backup_file_name = vim.fs.slug(
+      ('%s/Xtest_startup_file1'):format(currentdir()),
+      { maxlen = 64 }
     ) .. '~'
     local foo_contents = trim(read_file('Xtest_backupdir/' .. backup_file_name))
     local foobar_contents = trim(read_file('Xtest_startup_file1'))
@@ -186,11 +185,10 @@ describe('fileio', function()
     feed('Abar<esc>')
     command('write')
 
-    -- Backup filename = fullpath, separators replaced with "%".
-    local backup_file_name = string.gsub(
-      currentdir() .. '/Xtest_startup_file1',
-      is_os('win') and '[:/\\]' or '/',
-      '%%'
+    -- Backup filename = slug of the full path.
+    local backup_file_name = vim.fs.slug(
+      ('%s/Xtest_startup_file1'):format(currentdir()),
+      { maxlen = 64 }
     ) .. '~'
     local foo_contents = trim(read_file('Xtest_backupdir with spaces/' .. backup_file_name))
     local foobar_contents = trim(read_file('Xtest_startup_file1'))
