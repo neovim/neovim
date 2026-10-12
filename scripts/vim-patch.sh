@@ -912,6 +912,7 @@ is_na_patch() {
       src/po/Make*)
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I^\$\([_A-Z]+\)\.pot:' \
+          '-I^VIM(PROG)?\s=\s' \
           "$patch" -- "${file}")
         if test -n "$HUNKS"; then
           # shellcheck disable=SC2016
