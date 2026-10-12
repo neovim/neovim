@@ -2503,6 +2503,39 @@ func Test_winfixheight_split_only_window()
   bwipe!
 endfunc
 
+" Test that closing a window respects 'winfixwidth' and 'winfixheight'
+" when the freed space goes to a group of windows.
+func Test_winfixsize_close_non_leaf_frame()
+  for vertical in [v:true, v:false]
+    let opt = vertical ? 'winfixwidth' : 'winfixheight'
+    let split = vertical ? 'vertical ' : ''
+    let other = vertical ? '' : 'vertical '
+    let move = vertical ? 'l' : 'j'
+    let Size = {id -> vertical ? winwidth(win_id2win(id))
+          \                     : winheight(win_id2win(id))}
+
+    exe split .. 'split | ' .. split .. 'resize ' .. (vertical ? 30 : 5)
+    exe 'setlocal ' .. opt
+    let b = win_getid()
+    exe 'wincmd ' .. move
+    let c = win_getid()
+    exe 'botright ' .. other .. 'split'
+    exe 'topleft ' .. split .. 'split | ' .. split .. 'resize 4'
+    let a = win_getid()
+
+    let b0 = Size(b)
+    let c0 = Size(c)
+    let a0 = Size(a)
+    close
+
+    call assert_equal(b0, Size(b), opt)
+    call assert_equal(c0 + a0 + 1, Size(c), opt)
+
+    call win_execute(b, 'setlocal no' .. opt)
+    only!
+  endfor
+endfunc
+
 func Test_window_w_locked_bypass()
   split Xfoo
   let s:win = win_getid()
