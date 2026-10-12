@@ -3352,7 +3352,9 @@ static void get_op_vcol(oparg_T *oap, bool initial)
     return;
   }
 
-  oap->motion_type = kMTBlockWise;
+  // motion_type stays the motion's own type. do_pending_operator() uses it to
+  // decide "inclusive" (a linewise motion forced blockwise is inclusive), then
+  // sets kMTBlockWise.
 
   // prevent from moving onto a trail byte
   mark_mb_adjustpos(curwin->w_buffer, &oap->end);
@@ -3586,6 +3588,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       // oap->inclusive defaults to true.
       // If oap->end is on a NUL (empty line) oap->inclusive becomes
       // false.  This makes "d}P" and "v}dP" work the same.
+      // motion_type is still the motion's own type: a linewise motion forced
+      // blockwise ("<C-v>j") is inclusive, so '] is the corner of the block.
       if (oap->motion_force == NUL || oap->motion_type == kMTLineWise) {
         oap->inclusive = true;
       }
@@ -3607,6 +3611,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
             oap->line_count++;
           }
         }
+      } else if (Visual.mode == Ctrl_V) {
+        oap->motion_type = kMTBlockWise;
       }
 
       // Switch Visual off now, so screen updating does
