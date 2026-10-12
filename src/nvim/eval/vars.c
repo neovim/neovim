@@ -221,6 +221,7 @@ static struct vimvar {
   VV(VV_EXITREASON,       "exitreason",       VAR_STRING, VV_RO),
   VV(VV_USERACTIVE,       "useractive",       VAR_NUMBER, VV_RO),
   VV(VV_STARTREASON,      "startreason",      VAR_STRING, VV_RO),
+  VV(VV_CASCADING,        "cascading",        VAR_BOOL,   VV_RO),
 };
 #undef VV
 

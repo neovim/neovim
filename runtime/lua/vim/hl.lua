@@ -207,7 +207,7 @@ function M.hl_op(opts)
 
   local state = hl_op_state[state_key]
   -- Multicursor cascade: accumulate per-cursor, don't cancel the previous event's highlight.
-  local cascading = api.nvim__mcursor_cascading()
+  local cascading = vim.v.cascading
   if state ~= nil and state.timer and not state.timer:is_closing() and not cascading then
     state.timer:close()
     assert(state.clear)
