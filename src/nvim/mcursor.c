@@ -103,6 +103,7 @@ typedef struct {
 /// The boundary:
 /// - literal text is previewed
 /// - non-literal keys (mc_ins_keys_nonliteral) have per-cursor effects, so flush (early commit).
+/// - non-captured cursor-moves and edits keep the previews (see mc_ins_cascade_restart).
 static struct {
   CmdOrigin origin;  ///< State at session start: the session's atoms diff against it.
   kvec_t(uint32_t) regions;  ///< Per-cursor preview regions (`mc_session_ns`).
@@ -792,8 +793,9 @@ static bool mc_ins_keys_nonliteral(const char *keys, size_t len)
   return false;
 }
 
-/// Capture restarted mid insert-session (stop_arrow(), after a non-captured cursor-move: mouse,
-/// <PageUp>, …). The previews stay; rebase and continue the insert-cascade.
+/// Capture restarted mid insert-session, after a non-captured cursor-move (stop_arrow(): mouse,
+/// <PageUp>, …) or edit (<Cmd>, Lua mapping, RPC, …). The previews stay; rebase and continue the
+/// insert-cascade.
 void mc_ins_cascade_restart(void)
 {
   if (!mc_ins_span.active || mc_replaying() || !(State & MODE_INSERT)
