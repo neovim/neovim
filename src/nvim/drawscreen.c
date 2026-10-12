@@ -2741,7 +2741,7 @@ void redraw_buf_range_later(buf_T *buf, linenr_T first, linenr_T last)
   }
 }
 
-/// called when the status bars for the buffer 'buf' need to be updated
+/// Marks the statuslines, 'winbar' and cmdline ruler of `buf` for redraw.
 void redraw_buf_status_later(buf_T *buf)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
@@ -2752,6 +2752,10 @@ void redraw_buf_status_later(buf_T *buf)
       wp->w_redr_status = true;
       set_must_redraw(UPD_VALID);
     }
+  }
+  // Redraw 'ruler' if it is in cmdline (e.g. 'laststatus=0') and was not marked for redraw above.
+  if (p_ru && curwin->w_buffer == buf && !curwin->w_status_height && !curwin->w_redr_status) {
+    redraw_cmdline = true;
   }
 }
 
@@ -2787,7 +2791,7 @@ void status_redraw_buf(buf_T *buf)
       redraw_later(wp, UPD_VALID);
     }
   }
-  // Redraw the ruler if it is in the command line and was not marked for redraw above
+  // Redraw 'ruler' if it is in cmdline (e.g. 'laststatus=0') and was not marked for redraw above.
   if (p_ru && !curwin->w_status_height && !curwin->w_redr_status) {
     redraw_cmdline = true;
     redraw_later(curwin, UPD_VALID);
