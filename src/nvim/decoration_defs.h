@@ -62,6 +62,9 @@ enum {
   kSHConceal = 64,
   kSHConcealLines = 128,
   kSHConcealOff = 256,
+  // Special-case so multicursors are visible on search/spell/etc.
+  // TODO(justinmk): drop this in favor of "priority"? #41629
+  kSHAboveSearch = 512,
 };
 
 typedef struct {
