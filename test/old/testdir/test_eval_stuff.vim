@@ -555,8 +555,8 @@ func Test_setreg_basic()
   call Assert_regput('c', ['==', 'abcC4l-0', "\n", "abcC4l-2\n", "\nabcC4l-3", "abcC4l-4\nabcC4l-4-2", '=='])
 
   call setreg('d', ['abcD4b-0', "\n", "abcD4b-2\n", "\nabcD4b-3", "abcD4b-4\nabcD4b-4-2"], 'b')
-  call Assert_reg('d', "19", "abcD4b-0\n\n\nabcD4b-2\n\n\nabcD4b-3\nabcD4b-4\nabcD4b-4-2", "['abcD4b-0', '\n', 'abcD4b-2\n', '\nabcD4b-3', 'abcD4b-4\nabcD4b-4-2']", "abcD4b-0\n\n\nabcD4b-2\n\n\nabcD4b-3\nabcD4b-4\nabcD4b-4-2", "['abcD4b-0', '\n', 'abcD4b-2\n', '\nabcD4b-3', 'abcD4b-4\nabcD4b-4-2']")
-  call Assert_regput('d', ['==', '=abcD4b-0           =', " \n", " abcD4b-2\n", " \nabcD4b-3", " abcD4b-4\nabcD4b-4-2"])
+  call Assert_reg('d', "20", "abcD4b-0\n\n\nabcD4b-2\n\n\nabcD4b-3\nabcD4b-4\nabcD4b-4-2", "['abcD4b-0', '\n', 'abcD4b-2\n', '\nabcD4b-3', 'abcD4b-4\nabcD4b-4-2']", "abcD4b-0\n\n\nabcD4b-2\n\n\nabcD4b-3\nabcD4b-4\nabcD4b-4-2", "['abcD4b-0', '\n', 'abcD4b-2\n', '\nabcD4b-3', 'abcD4b-4\nabcD4b-4-2']")
+  call Assert_regput('d', ['==', '=abcD4b-0            =', " \n", " abcD4b-2\n", " \nabcD4b-3", " abcD4b-4\nabcD4b-4-2"])
 
   call setreg('e', ['abcE4b10-0', "\n", "abcE4b10-2\n", "\nabcE4b10-3", "abcE4b10-4\nabcE4b10-4-2"], 'b10')
   call Assert_reg('e', "10", "abcE4b10-0\n\n\nabcE4b10-2\n\n\nabcE4b10-3\nabcE4b10-4\nabcE4b10-4-2", "['abcE4b10-0', '\n', 'abcE4b10-2\n', '\nabcE4b10-3', 'abcE4b10-4\nabcE4b10-4-2']", "abcE4b10-0\n\n\nabcE4b10-2\n\n\nabcE4b10-3\nabcE4b10-4\nabcE4b10-4-2", "['abcE4b10-0', '\n', 'abcE4b10-2\n', '\nabcE4b10-3', 'abcE4b10-4\nabcE4b10-4-2']")
