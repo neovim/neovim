@@ -1306,7 +1306,7 @@ describe('messages2', function()
     ]])
   end)
 
-  it('crops long messages to make place for ruler', function()
+  it("'ruler' placement truncates long messages", function()
     command('set noruler | echo "-"->repeat(&columns)')
     screen:expect([[
       ^                                                     |
@@ -1402,6 +1402,23 @@ describe('messages2', function()
       ^                                                     |
       {1:~                                                    }|*12
       ----------------------------------------------------0|
+    ]])
+  end)
+
+  it("'ruler' updates on 'modified' change #42255", function()
+    command('set laststatus=0 ruler rulerformat=%m noautoread')
+    command(('edit %s'):format(t.tmpname(false)))
+    feed('ihello<Esc>')
+    screen:expect([[
+      hell^o                                                |
+      {1:~                                                    }|*12
+                                                        [+]|
+    ]])
+    command('silent write')
+    screen:expect([[
+      hell^o                                                |
+      {1:~                                                    }|*12
+                                                           |
     ]])
   end)
 
