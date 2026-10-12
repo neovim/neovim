@@ -350,7 +350,6 @@ context), multicursor replays actions "semantically" (|CmdAtom|).
   instead of skipping over them. The primary cursor keeps the usual
   |fold-behavior|.
 - Cursors are per-buffer, and cascade only while their buffer is current.
-  Use |v:cascading| to check if cascade is in action.
 - Multicursors are presented as |hl-MCursor| highlights, unless your
   (terminal) UI supports the Kitty multiple-cursors protocol.
 - CTRL-C interrupts the cascade.
@@ -470,6 +469,11 @@ deletes the cursor.
 You can also use |:marks| to peek at cursors: >
     :marks nvim.multicursor
 <
+
+In rare cases a plugin may need to check |v:cascading| to change its
+per-cursor behavior. Such special handling is generally discouraged;
+multicursor is intended to work implicitly, without plugin modifications.
+
 
 EXAMPLES						*mcursor-examples*
 

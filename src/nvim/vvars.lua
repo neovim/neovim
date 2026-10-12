@@ -30,7 +30,7 @@ M.vars = {
   cascading = {
     type = 'boolean',
     desc = [=[
-      |v:true| during |mcursor| cascade, |v:false| otherwise.
+      |v:true| during |multicursor| cascade, |v:false| otherwise.
       Read-only.
     ]=],
   },
