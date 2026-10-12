@@ -385,12 +385,18 @@ describe('multicursor', function()
       local screen = Screen.new(30, 5)
       cursors({ 'aa bb cc', 'dd ee' }, '')
       feed('zqw')
-      eq({ 1, 0 }, api.nvim_win_get_cursor(0))
       screen:expect({
+        grid = [[
+          {17:^a}a {17:b}b {17:c}c                      |
+          {17:d}d {17:ee}                         |
+          {1:~                             }|*2
+                                        |
+        ]],
         condition = function()
           eq('normal', screen.mode) -- Not "operator".
         end,
       })
+      eq({ 1, 0 }, api.nvim_win_get_cursor(0))
       -- ("w" on the last word stops at its end.)
       eq({ { 0, 0 }, { 0, 3 }, { 0, 6 }, { 1, 0 }, { 1, 3 }, { 1, 4 } }, anchors())
       -- A count applies to the motion ("2zqw" is "zq2w": every 2nd word).
@@ -1884,6 +1890,49 @@ describe('multicursor', function()
         eq({ 'aa', ('%saa  cc %saa '):format(text, text), ('%saa '):format(text) }, get_lines())
         feed('x<Esc>')
         eq({ 'aa', ('%saa x cc %saa x'):format(text, text), ('%saa x'):format(text) }, get_lines())
+      end
+    end)
+
+    it('edit not captured by redo (Lua/RPC) stays as previewed #42205', function()
+      n.exec_lua(function()
+        vim.keymap.set('i', '<C-j>', function()
+          vim.api.nvim_put({ 'X' }, 'c', false, true)
+        end)
+      end)
+      cursors({ 'foo', 'bar' }, 'QjQ')
+      feed('A<C-j>')
+      eq({ 'fooX', 'barX' }, get_lines())
+      feed('<Esc>')
+      eq({ 'fooX', 'barX' }, get_lines())
+      -- Cursors land on the last-inserted char, like the primary.
+      eq({ { 0, 3 }, { 1, 3 } }, anchors())
+      eq({ 2, 3 }, api.nvim_win_get_cursor(0))
+      -- Typed text around the edits; RPC edit (K_EVENT).
+      feed('a1<C-j>2')
+      api.nvim_put({ 'Y' }, 'c', false, true)
+      feed('3<Esc>')
+      eq({ 'fooX1X2Y3', 'barX1X2Y3' }, get_lines())
+      feed('u')
+      eq({ 'fooX', 'barX' }, get_lines())
+
+      -- Typed text after the edit still replays ('textwidth' wraps per cursor), non-literal keys
+      -- after it flush, and a session ended by the mapping (:stopinsert) or CTRL-C keeps it.
+      command('set textwidth=12')
+      command('imap <C-k> <C-j><Cmd>stopinsert<CR>')
+      for _, case in ipairs({
+        { 'Aab<C-j>cd ee ff<Esc>', { 'fooabXcd ee', 'ff', 'barabXcd ee', 'ff' } },
+        { 'A<C-j><Left>Y<BS><Esc>', { 'fooX', 'barX' } },
+        { 'A<C-k>', { 'fooX', 'barX' } },
+        { 'A<C-j>', { 'fooX', 'barX' }, '<C-c>' },
+      }) do
+        clear_cursors()
+        cursors({ 'foo', 'bar' }, 'QjQ')
+        feed(case[1])
+        if case[3] then
+          n.poke_eventloop() -- Mapping runs before CTRL-C interrupts.
+          feed(case[3])
+        end
+        eq(case[2], get_lines(), case[1])
       end
     end)
 

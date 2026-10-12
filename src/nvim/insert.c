@@ -986,13 +986,16 @@ static int insert_handle_key(InsertState *s)
       pum_want.active = false;
     }
 
-    if (curbuf->b_u_synced
-        || (bufref_valid(&save_curbuf)
-            && curbuf == save_curbuf.br_buf
-            && tick != buf_get_changedtick(curbuf))) {
+    const bool changed = bufref_valid(&save_curbuf) && curbuf == save_curbuf.br_buf
+                         && tick != buf_get_changedtick(curbuf);
+    if (curbuf->b_u_synced || changed) {
       // The K_EVENT, K_COMMAND, or K_LUA synced undo or changed this buffer.
       // Save the cursor line before the next typed edit.
       Ins.need_undo = true;
+    }
+    if (changed && !ins_compl_active()) {  // Multicursor: keep the edit as preview text.
+      mc_ins_cascade();
+      mc_ins_cascade_restart();
     }
     break;
   }
