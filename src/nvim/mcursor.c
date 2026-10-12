@@ -132,8 +132,6 @@ static bool mc_ins_joined;
 /// The mcursors, in creation order. Each is a Context snapshot: an extmark-tracked position
 /// plus editor state (registers) scoped to that cursor.
 static ContextVec mc_cursors = KV_INITIAL_VALUE;
-/// Replay is in progress: keys re-executing internally, hooks suppressed.
-static bool mc_replay = false;
 
 void mc_init(void)
 {
@@ -210,10 +208,10 @@ size_t mc_showcmd(char *buf, size_t size)
   return (size_t)snprintf(buf, size, "%s%zu× ", mc_following() ? "=" : "", kv_size(mc_cursors));
 }
 
-/// True during a replay: re-executing keys internally, not new user input.
+/// True during a replay (v:cascading): re-executing keys internally, not new user input.
 bool mc_replaying(void)
 {
-  return mc_replay;
+  return get_vim_var_tv(VV_CASCADING)->vval.v_bool == kBoolVarTrue;
 }
 
 /// Creates or updates the (ui_watched) extmark tracking a multicursor position.
@@ -236,9 +234,8 @@ static void mc_track_upd(buf_T *buf, uint32_t *mark, pos_T pos)
 /// @param save_regs  Registers too. Perf: skipped for pure motions.
 static void mc_sandbox_enter(McSandbox *sb, bool save_regs)
 {
-  assert(!mc_replay);
-  mc_replay = true;  // Capture hooks will ignore keys fed during the sandbox.
-  set_vim_var_bool(VV_CASCADING, kBoolVarTrue);
+  assert(!mc_replaying());
+  set_vim_var_bool(VV_CASCADING, kBoolVarTrue);  // Capture hooks ignore keys fed in the sandbox.
   sb->primary = (Context)CONTEXT_INIT;
   // Change/Visual marks belong to the primary cursor's (already executed) operation.
   // (jumplist/changelist are owned by the primary.)
@@ -287,7 +284,6 @@ static void mc_sandbox_leave(McSandbox *sb)
     }
   }
   ctx_free(&sb->primary);
-  mc_replay = false;
   set_vim_var_bool(VV_CASCADING, kBoolVarFalse);
 }
 
@@ -762,6 +758,7 @@ static void mc_ins_preview_set(const String *new)
   mc_track_upd(curbuf, &primary, curwin->w_cursor);
   const int save_cmod_flags = cmdmod.cmod_flags;
   cmdmod.cmod_flags |= CMOD_KEEPJUMPS;  // Not a change of the user: keeps '. and the changelist.
+  set_vim_var_bool(VV_CASCADING, kBoolVarTrue);  // Listeners (on_bytes, …) see cascade edits.
   for (size_t i = 0; i < kv_size(mc_ins_span.regions); i++) {
     pos_T rs, re;
     // Re-resolve each region, previous loop iterations may have shifted it.
@@ -771,6 +768,7 @@ static void mc_ins_preview_set(const String *new)
     // Cursor display mark (right-gravity) is pushed by the replacement to the new preview end.
     mc_ins_preview_replace(rs, re, new);
   }
+  set_vim_var_bool(VV_CASCADING, kBoolVarFalse);
   cmdmod.cmod_flags = save_cmod_flags;
   pos_T pos = curwin->w_cursor;
   if (extmark_get_pos(curbuf, mc_session_ns(), primary, &pos)) {
@@ -1091,6 +1089,7 @@ void mc_vsel_refresh(void)
   McSandbox sb;  // Save the primary-cursor state (selection included), like a cascade replay.
   mc_sandbox_enter(&sb, false);
   block_autocmds();
+  block_on_key();
   emsg_silent++;
 
   for (size_t i = 0; i < kv_size(mc_cursors); i++) {
@@ -1140,6 +1139,7 @@ void mc_vsel_refresh(void)
   }
 
   emsg_silent--;
+  unblock_on_key();
   unblock_autocmds();
   mc_sandbox_leave(&sb);
   xfree(span.data);
@@ -1278,12 +1278,14 @@ static pos_T mc_zq_step(const char *keys, pos_T pos)
   // Like ":normal": not fed the mapping's pending keys ("xmap I Q0i"), keeps `finish_op`.
   atom_suppress(true);
   block_autocmds();
+  block_on_key();
   save_state_T sst;
   save_current_state(&sst);
   const uint64_t beeps = did_beep_silent;
   exec_normal_cmd((char *)keys, REMAP_NONE, true);
   const bool failed = did_beep_silent != beeps;
   restore_current_state(&sst);
+  unblock_on_key();
   unblock_autocmds();
   atom_suppress(false);
   cmdmod.cmod_flags = save_cmod_flags;

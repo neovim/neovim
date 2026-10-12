@@ -737,6 +737,7 @@ describe('multicursor', function()
       feed('x') -- Primary edit + cascade over ~5000 cursors...
       n.poke_eventloop()
       eq(true, n.exec_lua('return _G.cascading_seen'))
+      eq(false, api.nvim_get_vvar('cascading')) -- Reset by the interrupted cascade.
       local edited, unedited = 0, 0
       for _, l in ipairs(get_lines()) do
         if l == 'aa' then
@@ -1583,6 +1584,14 @@ describe('multicursor', function()
       command('let v:oldfiles = ["/a", "/b"] | let @a = "reg"')
       local screen = Screen.new(30, 6)
       cursors({ 'aaa', 'bbb', 'ccc' })
+      n.exec_lua(function()
+        _G.edits = {}
+        vim.api.nvim_buf_attach(0, false, {
+          on_bytes = function(_, _, _, row)
+            table.insert(_G.edits, { row, vim.v.cascading })
+          end,
+        })
+      end)
       -- Still in insert mode (no <Esc> yet): the text already cascaded; each cursor displays
       -- at its insertion point, like the primary.
       feed('iXY')
@@ -1593,6 +1602,8 @@ describe('multicursor', function()
         {1:~                             }|*2
         {5:-- INSERT --}                  |
       ]])
+      -- The previews are cascade edits (v:cascading), the primary's are not.
+      eq({ { 2, false }, { 0, true }, { 1, true } }, n.exec_lua('return _G.edits'))
       feed('<Esc>')
       eq({ 'XYaaa', 'XYbbb', 'XYccc' }, get_lines())
       -- The session end shifts every cursor onto the last inserted char.
@@ -4227,32 +4238,31 @@ describe('multicursor', function()
     end)
   end)
 
-  it('v:cascading', function()
+  it('vim.on_key() sees replayed keys (v:cascading), not internal keys', function()
+    cursors({ 'aaa', 'bbb', 'ccc' })
     n.exec_lua(function()
-      _G.cascade_log = {}
-      vim.keymap.set('n', 'gh', function()
-        local cur = vim.api.nvim_win_get_cursor(0)
-        table.insert(_G.cascade_log, { vim.v.cascading, cur })
-        vim.api.nvim_buf_set_text(0, cur[1] - 1, cur[2], cur[1] - 1, cur[2], { 'x' })
+      _G.keys = { [true] = {}, [false] = {} }
+      vim.on_key(function(key)
+        table.insert(_G.keys[vim.v.cascading], key)
       end)
     end)
-
-    local function assert(mcursor_init)
-      cursors({ 'aaa', 'bbb', 'ccc' }, mcursor_init)
-      eq(false, api.nvim_get_vvar('cascading'))
-      feed('gh')
-      eq({ 'xaaa', 'xbbb', 'xccc' }, get_lines())
-      eq(
-        { { false, { 3, 0 } }, { true, { 1, 0 } }, { true, { 2, 0 } } },
-        n.exec_lua('return _G.cascade_log')
-      )
-      eq(false, api.nvim_get_vvar('cascading'))
-
-      clear_cursors()
-      n.exec_lua('_G.cascade_log = {}')
+    local function keys(cascading)
+      return n.exec_lua(function(c)
+        return table.concat(_G.keys[c])
+      end, cascading)
     end
-
-    assert('QjQj')
-    assert('QjQjQ')
+    -- Not the Visual preview (fake selections) at the cursors.
+    feed('viw')
+    eq('viw', keys(false))
+    eq('', keys(true))
+    feed('d')
+    eq({ '', '', '' }, get_lines())
+    eq('viwd', keys(false))
+    eq('viwdviwd', keys(true))
+    -- Nor the "zq" steps.
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'aa bb cc' })
+    clear_cursors()
+    feed('0zqw')
+    eq('viwd0zqw', keys(false))
   end)
 end)
