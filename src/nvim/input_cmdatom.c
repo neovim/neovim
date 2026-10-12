@@ -305,19 +305,22 @@ static CmdAtom atom_from_cmdline(CmdAtomType type, cmdarg_T *ca, const char *cmd
   };
 }
 
-/// Gets an Ex/Lua frame as a CmdAtom: "<Cmd>…", ":…", or Lua mapping-id (K_LUA + id).
-static CmdAtom atom_from_frame(cmdarg_T *ca, const CmdFrame *root, bool vis)
+/// Gets an Ex/Lua frame as a CmdAtom: "<Cmd>…", ":…", or Lua mapping-id (K_LUA + id), plus the
+/// payload it read ("ds]" getchar() => "]").
+static CmdAtom atom_from_frame(cmdarg_T *ca, CmdFrame *frame)
 {
+  const CmdFrame *root = root_frame();
+  CmdAtom atom = { 0 };  // Not a Ex/Lua cmd => keys=NULL.
   if (root->cmdline != NULL && (ca->cmdchar == ':' || ca->cmdchar == K_COMMAND)) {
-    return atom_from_cmdline(kAExcmd, ca, root->cmdline, vis);
-  }
-  if (ca->cmdchar == K_LUA) {
+    atom = atom_from_cmdline(kAExcmd, ca, root->cmdline, frame->visual.active);
+  } else if (ca->cmdchar == K_LUA) {
     char lua_id[NUMBUFLEN];
     // XXX: grabs LAST luamap; latent bug if "nested" (Lua mapping calls another via ":norm")...
     snprintf(lua_id, sizeof(lua_id), "%d", repeat_luamap);
-    return atom_from_cmdline(kANormal, ca, lua_id, vis);
+    atom = atom_from_cmdline(kANormal, ca, lua_id, frame->visual.active);
   }
-  return (CmdAtom){ 0 };  // Frame is not a Ex/Lua cmd: keys=NULL.
+  atom_payload_append(&atom, frame);
+  return atom;
 }
 
 /// Joins the `keys` of a list of (composite) subatoms, starting at index `from`. Plain concat
@@ -1509,11 +1512,9 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
       vatom.state |= kVatomVoid;
     }
   } else if (old->visual.active && !child) {
-    CmdAtom own
-      = atom_visual_pending() ? atom_from_frame(ca, root, old->visual.active) : (CmdAtom){ 0 };
+    CmdAtom own = atom_visual_pending() ? atom_from_frame(ca, old) : (CmdAtom){ 0 };
     if (own.keys != NULL) {
       // This frame's children ended the session (":norm!" op in Lua mapping). #41956
-      atom_payload_append(&own, old);  // Payload read during the cmd (getchar()).
       char *suffix = own.keys;
       own.keys = NULL;
       atom_free(&own);
@@ -1592,15 +1593,12 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
       atom_push(false, &atom);
     } else if (root->cmdline != NULL && (ca->cmdchar == ':' || ca->cmdchar == K_COMMAND)) {
       // Same for ":cnext<CR>" or "<Cmd>cnext<CR>".
-      CmdAtom atom = atom_from_cmdline(kAExcmd, ca, root->cmdline, old->visual.active);
-      // Payload read during the cmdline execution (`ds)` getchar() => ")").
-      atom_payload_append(&atom, old);
+      CmdAtom atom = atom_from_frame(ca, old);
       atom.origin = old->origin;
       atom_push(false, &atom);
     } else if (vis && ca->cmdchar == K_LUA) {
       // Lua mapping moved the selection. Ignore subatoms, use atom_from_frame() instead. #41956
-      CmdAtom atom = atom_from_frame(ca, root, old->visual.active);
-      atom_payload_append(&atom, old);  // Payload read during the mapping (getchar()).
+      CmdAtom atom = atom_from_frame(ca, old);
       atom.origin = old->origin;
       atom_push(false, &atom);
     } else if (replayable && (!vis || ((keycls & kKeyPayload) == 0 && !failed))) {
