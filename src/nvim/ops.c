@@ -3588,8 +3588,6 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       // oap->inclusive defaults to true.
       // If oap->end is on a NUL (empty line) oap->inclusive becomes
       // false.  This makes "d}P" and "v}dP" work the same.
-      // motion_type is still the motion's own type: a linewise motion forced
-      // blockwise ("<C-v>j") is inclusive, so '] is the corner of the block.
       if (oap->motion_force == NUL || oap->motion_type == kMTLineWise) {
         oap->inclusive = true;
       }

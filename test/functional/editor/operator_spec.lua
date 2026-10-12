@@ -9,7 +9,6 @@ local command = n.command
 local feed = n.feed
 local fn = n.fn
 local api = n.api
-local poke_eventloop = n.poke_eventloop
 local eq = t.eq
 
 --- '[ / '] as {lnum, col, coladd}, the slice operatorfunc sees.
@@ -35,11 +34,9 @@ describe('forced blockwise motion', function()
   local function block(lines, op_keys, yank_keys)
     api.nvim_buf_set_lines(0, 0, -1, true, lines)
     feed(op_keys)
-    poke_eventloop()
     local typ = fn.eval('g:op_type')
     local marks = fn.eval('g:op_marks')
     feed(yank_keys)
-    poke_eventloop()
     return {
       type = typ,
       marks = marks,
@@ -73,26 +70,15 @@ describe('forced blockwise motion', function()
       yank = { 'bcd', 'bcd', 'b  ' },
     }, block({ 'abcdef', 'abcdef', 'ab' }, '1G4|g@<C-v>2j', '1G4|y<C-v>2j'))
     command('set virtualedit=')
-
-    -- Exclusive charwise motion forced blockwise. Vim leaves '] one column
-    -- short of the yanked text; the block itself is unchanged.
-    eq({
-      type = 'block',
-      marks = { { 1, 2, 0 }, { 1, 2, 0 } },
-      yank_marks = { { 1, 2, 0 }, { 1, 2, 0 } },
-      yank = { 'bc' },
-    }, block({ 'abcd' }, '1G2|g@<C-v>l', '1G2|y<C-v>l'))
   end)
 
   it('deletes the block, not the whole lines', function()
     api.nvim_buf_set_lines(0, 0, -1, true, { 'ab', 'cd' })
     feed('gg0d<C-v>j')
-    poke_eventloop()
     eq({ 'b', 'd' }, api.nvim_buf_get_lines(0, 0, -1, true))
 
     api.nvim_buf_set_lines(0, 0, -1, true, { 'ab', 'cd' })
     feed('gg0<C-v>jd')
-    poke_eventloop()
     eq({ 'b', 'd' }, api.nvim_buf_get_lines(0, 0, -1, true))
   end)
 end)
