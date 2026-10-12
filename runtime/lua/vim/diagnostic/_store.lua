@@ -107,14 +107,15 @@ local function set_position_extmarks(bufnr, namespace)
   end
 end
 
--- Positions can only be computed once the buffer is loaded, so set the
--- extmarks for any buffer with cached diagnostics when it is read (or re-read).
+-- Positions can only be computed (and handlers can only draw) once the buffer is loaded, so set
+-- the extmarks and show diagnostics for any buffer with cached diagnostics when it is read.
 nvim_on('BufRead', api.nvim_create_augroup('nvim.diagnostic.buf_load'), function(ev)
   local buf_cache = rawget(diagnostic_cache, ev.buf) --- @type table<integer,vim.Diagnostic[]?>?
   if buf_cache then
     for namespace in pairs(buf_cache) do
       set_position_extmarks(ev.buf, namespace)
     end
+    vim.diagnostic.show(nil, ev.buf)
   end
 end)
 
