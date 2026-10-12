@@ -331,6 +331,14 @@ describe('multicursor', function()
       feed('x')
       eq({ 'b b b', 'xx b' }, get_lines())
 
+      -- "\%V" pattern matches in the selection ('< '>) only. #42302
+      clear_cursors()
+      cursors({ 'foo bar baz', 'bar baz foo', 'baz foo bar', '', 'foo' }, '')
+      feed('vip<Esc>/\\%Vfoo<CR>')
+      eq({ 3, 4 }, api.nvim_win_get_cursor(0))
+      feed('zqn')
+      eq({ { 0, 0 }, { 1, 8 }, { 2, 4 } }, anchors())
+
       -- In mappings: an operator alias ("gz"); an edit after "zq" applies at every cursor it placed.
       clear_cursors()
       n.exec_lua(function()
