@@ -24,9 +24,8 @@
 ^runtime/spell/.*\.latin1
 ^runtime/syntax/generator/
 ^runtime/syntax/testdir/
-^runtime/tutor/it/
-^runtime/tutor/ru/
-^runtime/tutor/sr/
+^runtime/tutor/README
+^runtime/tutor/tutor[1-9]
 ^runtime/vim[0-9l]
 ^runtime/.\+\.c$
 ^runtime/.\+\.mak$

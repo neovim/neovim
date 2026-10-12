@@ -892,6 +892,7 @@ is_na_patch() {
           '-I\sGTK\s?4\s' \
           '-I\spopup window\s' \
           '-I\sterm_start\(\)\s' \
+          '-I\svim\s.*VIMRUNTIME/tutor/tutor' \
           '-I\-gui=gtk' \
           "$patch" -- "${file}")
         if test -n "$HUNKS"; then
