@@ -746,14 +746,15 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
     } else {
       // Check if we can create a file and set the owner/group/mode to
       // the ones from the original file.
-      // First find a file name that doesn't exist yet (use some
-      // arbitrary numbers).
+      // First find a file name that doesn't exist yet.  Use the
+      // conventional hidden swap file name so that this short-lived
+      // probe is covered by standard Vim ignore patterns.
       size_t dirlen = (size_t)(path_tail(fname) - fname);
       assert(dirlen < MAXPATHL);
       char tmp_fname[MAXPATHL];
       xmemcpyz(tmp_fname, fname, dirlen);
       for (int i = 4913;; i += 123) {
-        snprintf(tmp_fname + dirlen, sizeof(tmp_fname) - dirlen, "%d", i);
+        snprintf(tmp_fname + dirlen, sizeof(tmp_fname) - dirlen, ".%d.swp", i);
         if (!os_fileinfo_link(tmp_fname, &file_info)) {
           break;
         }
