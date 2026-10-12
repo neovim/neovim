@@ -3295,7 +3295,7 @@ static void op_function(const oparg_T *oap)
     // Set '[ and '] marks to text to be operated on.
     curbuf->b_op_start = oap->start;
     curbuf->b_op_end = oap->end;
-    if (oap->motion_type != kMTLineWise && !oap->inclusive) {
+    if (oap->motion_type == kMTCharWise && !oap->inclusive) {
       // Exclude the end position.
       decl(&curbuf->b_op_end);
     }

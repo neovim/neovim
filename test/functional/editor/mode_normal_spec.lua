@@ -67,4 +67,26 @@ describe('Normal mode', function()
     feed('gk')
     n.assert_alive()
   end)
+
+  it("'] after a forced blockwise exclusive motion", function()
+    n.exec([=[
+      function! Opfunc(type)
+        let g:marks = [getpos("'[")[1:3], getpos("']")[1:3]]
+      endfunction
+      set operatorfunc=Opfunc
+    ]=])
+    fn.setline(1, { 'abcd' })
+    feed('02|g@<C-v>l')
+    eq({ { 1, 2, 0 }, { 1, 3, 0 } }, api.nvim_get_var('marks'))
+    fn.setline(1, { 'ab cd' })
+    feed('0y<C-v>w')
+    eq({ 'ab c' }, fn.getreg('"', 1, 1))
+    eq({ 0, 1, 4, 0 }, fn.getpos("']"))
+    -- With 'selection' exclusive the block is only "b".
+    command('set selection=exclusive')
+    fn.setline(1, { 'abcd' })
+    feed('02|y<C-v>l')
+    eq({ 'b' }, fn.getreg('"', 1, 1))
+    eq({ 0, 1, 2, 0 }, fn.getpos("']"))
+  end)
 end)
