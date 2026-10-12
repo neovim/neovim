@@ -23,6 +23,37 @@ describe('vim.loader', function()
     end)
   end)
 
+  it('preserves Windows UNC runtime paths when finding modules #33482', function()
+    eq(
+      '//server/share/nvim/lua/unc_probe.lua',
+      exec_lua(function()
+        local normalize = vim.fs.normalize
+        vim.fs.normalize = function(path, opts)
+          opts.win = true
+          return normalize(path, opts)
+        end
+        vim.api.nvim_get_runtime_file = function()
+          return { '//server/share/nvim' }
+        end
+        vim.fs.dir = function()
+          local yielded = false
+          return function()
+            if not yielded then
+              yielded = true
+              return 'unc_probe.lua', 'file'
+            end
+          end
+        end
+        vim.uv.fs_stat = function(path)
+          if vim.endswith(path, '/unc_probe.lua') then
+            return { type = 'file' }
+          end
+        end
+        return vim.loader.find('unc_probe')[1].modpath
+      end)
+    )
+  end)
+
   it('works with --luamod-dev #27413', function()
     clear({ args = { '--luamod-dev' } })
     exec_lua(function()

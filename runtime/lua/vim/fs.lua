@@ -877,7 +877,7 @@ function M.normalize(path, opts)
 
   -- Check for double slashes at the start of the path because they have special meaning
   local double_slash = false
-  if not opts._fast then
+  if not opts._fast or win then
     double_slash = vim.startswith(path, '//') and not vim.startswith(path, '///')
   end
 

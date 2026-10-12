@@ -847,6 +847,31 @@ describe('vim.fs', function()
       eq('//./BootPartition', vim.fs.normalize([[\\.\BootPartition]], win_opts))
     end)
 
+    it('preserves UNC and DOS device prefixes in fast mode #33482', function()
+      local opts = { win = true, plain = true, _fast = true }
+      for _, path in ipairs({
+        '//server/share/lua',
+        '//?/C:/lua',
+        '//./C:/lua',
+        '//?/UNC/server/share/lua',
+        '//./BootPartition/lua',
+      }) do
+        eq(path, vim.fs.normalize(path, opts))
+        eq(path, vim.fs.normalize(path:gsub('/', '\\'), opts))
+      end
+      eq('//server/share', vim.fs.normalize([[\\server\share]], opts))
+      eq('C:/lua/module.lua', vim.fs.normalize([[c:\lua\module.lua]], opts))
+      eq('lua/./module.lua', vim.fs.normalize('lua/./module.lua', opts))
+      eq('C:/lua/../module.lua', vim.fs.normalize('C:/lua/../module.lua', opts))
+    end)
+
+    it('preserves POSIX paths in fast mode', function()
+      local opts = { win = false, plain = true, _fast = true }
+      for _, path in ipairs({ '//foo/bar', '///foo/bar', '/foo//bar', 'foo/./bar', '../foo' }) do
+        eq(path, vim.fs.normalize(path, opts))
+      end
+    end)
+
     it('converts backward slashes', function()
       eq('C:/Users/jdoe', vim.fs.normalize([[C:\Users\jdoe]], win_opts))
     end)
