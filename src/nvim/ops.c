@@ -3352,10 +3352,6 @@ static void get_op_vcol(oparg_T *oap, bool initial)
     return;
   }
 
-  // motion_type stays the motion's own type. do_pending_operator() uses it to
-  // decide "inclusive" (a linewise motion forced blockwise is inclusive), then
-  // sets kMTBlockWise.
-
   // prevent from moving onto a trail byte
   mark_mb_adjustpos(curwin->w_buffer, &oap->end);
 
