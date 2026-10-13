@@ -60,7 +60,25 @@ func Test_retab()
   call assert_equal("        a           b        c    ", Retab(' ', 10))
   call assert_equal("        a           b        c    ", Retab('!', 10))
 
-  set tabstop=4 noexpandtab
+  set tabstop=8 noexpandtab expandtabalign
+  call assert_equal("\ta           b        c    ",       Retab('',  ''))
+  call assert_equal("\ta           b        c    ",       Retab('',  0))
+  call assert_equal("\ta           b        c    ",       Retab('',  8))
+  call assert_equal("\ta           b        c    ",       Retab('!', ''))
+  call assert_equal("\ta           b        c    ",       Retab('!', 0))
+  call assert_equal("\ta           b        c    ",       Retab('!', 8))
+
+  call assert_equal("\t\ta           b        c    ",     Retab('',  4))
+  call assert_equal("\t\ta           b        c    ",     Retab('!', 4))
+
+  call assert_equal("        a           b        c    ", Retab('',  10))
+  call assert_equal("        a           b        c    ", Retab('!', 10))
+
+  set tabstop=8 expandtab expandtabalign
+  call assert_equal("        a           b        c    ", Retab('',  ''))
+  call assert_equal("        a           b        c    ", Retab('!', ''))
+
+  set tabstop=4 noexpandtab noexpandtabalign
   call assert_equal("\ta\t\tb        c    ",              Retab('',  ''))
   call assert_equal("\ta\t\tb\t\t c\t  ",                 Retab('!', ''))
   call assert_equal("\t a\t\t\tb        c    ",           Retab('',  3))
@@ -76,9 +94,17 @@ func Test_retab()
   call assert_equal("    a       b        c    ",         Retab('',  5))
   call assert_equal("    a       b        c    ",         Retab('!', 5))
 
+  set tabstop=4 noexpandtab expandtabalign
+  call assert_equal("\ta       b        c    ",            Retab('',  ''))
+  call assert_equal("\ta       b        c    ",            Retab('!',  ''))
+  call assert_equal("\t a       b        c    ",           Retab('',  3))
+  call assert_equal("\t a       b        c    ",           Retab('!',  3))
+  call assert_equal("    a       b        c    ",          Retab('',  5))
+  call assert_equal("    a       b        c    ",          Retab('!',  5))
+
   " Test with '-indentonly'
   let so='-indentonly'
-  set tabstop=8 noexpandtab
+  set tabstop=8 noexpandtab noexpandtabalign
   call assert_equal("\ta  \t    b        c    ",          Retab('',  '', so))
   call assert_equal("\ta  \t    b        c    ",          Retab('',  0, so))
   call assert_equal("\ta  \t    b        c    ",          Retab('',  8, so))
@@ -106,7 +132,21 @@ func Test_retab()
   call assert_equal("        a  \t    b        c    ",    Retab(' ', 10, so))
   call assert_equal("        a  \t    b        c    ",    Retab('!', 10, so))
 
-  set tabstop=4 noexpandtab
+  set tabstop=8 noexpandtab expandtabalign
+  call assert_equal("\ta  \t    b        c    ",       Retab('',  '', so))
+  call assert_equal("\ta  \t    b        c    ",       Retab('',  0, so))
+  call assert_equal("\ta  \t    b        c    ",       Retab('',  8, so))
+  call assert_equal("\ta  \t    b        c    ",       Retab('!', '', so))
+  call assert_equal("\ta  \t    b        c    ",       Retab('!', 0, so))
+  call assert_equal("\ta  \t    b        c    ",       Retab('!', 8, so))
+
+  call assert_equal("\t\ta  \t    b        c    ",     Retab('',  4, so))
+  call assert_equal("\t\ta  \t    b        c    ",     Retab('!', 4, so))
+
+  call assert_equal("        a  \t    b        c    ", Retab('',  10, so))
+  call assert_equal("        a  \t    b        c    ", Retab('!', 10, so))
+
+  set tabstop=4 noexpandtab noexpandtabalign
   call assert_equal("\ta  \t    b        c    ",          Retab('',  '', so))
   call assert_equal("\ta  \t    b        c    ",          Retab('!', '', so))
   call assert_equal("\t a  \t    b        c    ",         Retab('',  3, so))
@@ -131,16 +171,27 @@ func Test_retab()
   set tabstop=8 expandtab
   call assert_equal("            a\t        ", Retab('',  '', so, test_line))
   call assert_equal("            a\t        ", Retab('!',  '', so, test_line))
+  set tabstop=8 noexpandtab expandtabalign
+  call assert_equal("\t    a\t        ",   Retab('',  '', so, test_line))
+  call assert_equal("\t    a\t        ",   Retab('!', '', so, test_line))
+  call assert_equal("\t\t\ta\t        ",   Retab('',  4, so, test_line))
+  call assert_equal("\t\t\ta\t        ",   Retab('!', 4, so, test_line))
+  set tabstop=8 expandtab expandtabalign
+  call assert_equal("            a\t        ", Retab('',  '', so, test_line))
+  call assert_equal("            a\t        ", Retab('!',  '', so, test_line))
 
   let test_line="            a\t        "
-  set tabstop=8 noexpandtab
+  set tabstop=8 noexpandtab noexpandtabalign
   call assert_equal(test_line,              Retab('',  '', so, test_line))
   call assert_equal("\t    a\t        ",    Retab('!',  '', so, test_line))
   set tabstop=8 expandtab
   call assert_equal(test_line,              Retab('',  '', so, test_line))
   call assert_equal(test_line,              Retab('!',  '', so, test_line))
+  set tabstop=8 noexpandtab expandtabalign
+  call assert_equal(test_line,              Retab('',  '', so, test_line))
+  call assert_equal("\t    a\t        ",    Retab('!',  '', so, test_line))
 
-  set tabstop& expandtab&
+  set tabstop& expandtab& expandtabalign&
 endfunc
 
 func Test_retab_error()

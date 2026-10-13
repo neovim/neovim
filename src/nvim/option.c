@@ -142,6 +142,7 @@ static char *p_ttytype = NULL;
 
 // Saved values for when 'bin' is set.
 static int p_et_nobin;
+static int p_eta_nobin;
 static int p_ml_nobin;
 static OptInt p_tw_nobin;
 static OptInt p_wm_nobin;
@@ -149,6 +150,7 @@ static OptInt p_wm_nobin;
 // Saved values for when 'paste' is set.
 static int p_ai_nopaste;
 static int p_et_nopaste;
+static int p_eta_nopaste;
 static OptInt p_sts_nopaste;
 static OptInt p_tw_nopaste;
 static OptInt p_wm_nopaste;
@@ -167,12 +169,12 @@ static char *p_vsts_nopaste;
 #include "options_map.generated.h"
 
 static int p_bin_dep_opts[] = {
-  kOptTextwidth, kOptWrapmargin, kOptModeline, kOptExpandtab, kOptInvalid
+  kOptTextwidth, kOptWrapmargin, kOptModeline, kOptExpandtab, kOptExpandtabalign, kOptInvalid
 };
 
 static int p_paste_dep_opts[] = {
-  kOptAutoindent, kOptExpandtab, kOptRuler, kOptShowmatch, kOptSmarttab, kOptSofttabstop,
-  kOptTextwidth, kOptWrapmargin, kOptRevins, kOptVarsofttabstop, kOptInvalid
+  kOptAutoindent, kOptExpandtab, kOptExpandtabalign, kOptRuler, kOptShowmatch, kOptSmarttab,
+  kOptSofttabstop, kOptTextwidth, kOptWrapmargin, kOptRevins, kOptVarsofttabstop, kOptInvalid
 };
 
 void set_init_tablocal(void)
@@ -1749,12 +1751,14 @@ void set_options_bin(int oldval, int newval, int opt_flags)
         curbuf->b_p_wm_nobin = curbuf->b_p_wm;
         curbuf->b_p_ml_nobin = curbuf->b_p_ml;
         curbuf->b_p_et_nobin = curbuf->b_p_et;
+        curbuf->b_p_eta_nobin = curbuf->b_p_eta;
       }
       if (!(opt_flags & OPT_LOCAL)) {
         p_tw_nobin = p_tw;
         p_wm_nobin = p_wm;
         p_ml_nobin = p_ml;
         p_et_nobin = p_et;
+        p_eta_nobin = p_eta;
       }
     }
 
@@ -1763,6 +1767,7 @@ void set_options_bin(int oldval, int newval, int opt_flags)
       curbuf->b_p_wm = 0;       // no automatic line wrap
       curbuf->b_p_ml = 0;       // no modelines
       curbuf->b_p_et = 0;       // no expandtab
+      curbuf->b_p_eta = 0;      // no expandtabalign
     }
     if (!(opt_flags & OPT_LOCAL)) {
       p_tw = 0;
@@ -1777,12 +1782,14 @@ void set_options_bin(int oldval, int newval, int opt_flags)
       curbuf->b_p_wm = curbuf->b_p_wm_nobin;
       curbuf->b_p_ml = curbuf->b_p_ml_nobin;
       curbuf->b_p_et = curbuf->b_p_et_nobin;
+      curbuf->b_p_eta = curbuf->b_p_eta_nobin;
     }
     if (!(opt_flags & OPT_LOCAL)) {
       p_tw = p_tw_nobin;
       p_wm = p_wm_nobin;
       p_ml = p_ml_nobin;
       p_et = p_et_nobin;
+      p_eta = p_eta_nobin;
     }
   }
 
@@ -2535,6 +2542,7 @@ static const char *did_set_paste(optset_T *args FUNC_ATTR_UNUSED)
         buf->b_p_sts_nopaste = buf->b_p_sts;
         buf->b_p_ai_nopaste = buf->b_p_ai;
         buf->b_p_et_nopaste = buf->b_p_et;
+        buf->b_p_eta_nopaste = buf->b_p_eta;
         if (buf->b_p_vsts_nopaste) {
           xfree(buf->b_p_vsts_nopaste);
         }
@@ -2551,6 +2559,7 @@ static const char *did_set_paste(optset_T *args FUNC_ATTR_UNUSED)
       // save global values for local buffer options
       p_ai_nopaste = p_ai;
       p_et_nopaste = p_et;
+      p_eta_nopaste = p_eta;
       p_sts_nopaste = p_sts;
       p_tw_nopaste = p_tw;
       p_wm_nopaste = p_wm;
@@ -2569,6 +2578,7 @@ static const char *did_set_paste(optset_T *args FUNC_ATTR_UNUSED)
       buf->b_p_sts = 0;             // softtabstop is 0
       buf->b_p_ai = 0;              // no auto-indent
       buf->b_p_et = 0;              // no expandtab
+      buf->b_p_eta = 0;             // no expandtabalign
       if (buf->b_p_vsts) {
         free_string_option(buf->b_p_vsts);
       }
@@ -2590,6 +2600,7 @@ static const char *did_set_paste(optset_T *args FUNC_ATTR_UNUSED)
     p_sts = 0;
     p_ai = 0;
     p_et = 0;
+    p_eta = 0;
     if (p_vsts) {
       free_string_option(p_vsts);
     }
@@ -2604,6 +2615,7 @@ static const char *did_set_paste(optset_T *args FUNC_ATTR_UNUSED)
       buf->b_p_sts = buf->b_p_sts_nopaste;
       buf->b_p_ai = buf->b_p_ai_nopaste;
       buf->b_p_et = buf->b_p_et_nopaste;
+      buf->b_p_eta = buf->b_p_eta_nopaste;
       if (buf->b_p_vsts) {
         free_string_option(buf->b_p_vsts);
       }
@@ -2627,6 +2639,7 @@ static const char *did_set_paste(optset_T *args FUNC_ATTR_UNUSED)
     // set global values for local buffer options
     p_ai = p_ai_nopaste;
     p_et = p_et_nopaste;
+    p_eta = p_eta_nopaste;
     p_sts = p_sts_nopaste;
     p_tw = p_tw_nopaste;
     p_wm = p_wm_nopaste;
@@ -5492,6 +5505,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(buf->b_p_fixeol);
   case kOptExpandtab:
     return &(buf->b_p_et);
+  case kOptExpandtabalign:
+    return &(buf->b_p_eta);
   case kOptFileencoding:
     return &(buf->b_p_fenc);
   case kOptFileformat:
@@ -5892,12 +5907,16 @@ void buf_copy_options(buf_T *buf, int flags)
       COPY_OPT_SCTX(buf, kBufOptBomb);
       buf->b_p_et = p_et;
       COPY_OPT_SCTX(buf, kBufOptExpandtab);
+      buf->b_p_eta = p_eta;
+      COPY_OPT_SCTX(buf, kBufOptExpandtabalign);
       buf->b_p_fixeol = p_fixeol;
       COPY_OPT_SCTX(buf, kBufOptFixendofline);
       buf->b_p_follow = p_follow;
       COPY_OPT_SCTX(buf, kBufOptFollow);
       buf->b_p_et_nobin = p_et_nobin;
       buf->b_p_et_nopaste = p_et_nopaste;
+      buf->b_p_eta_nobin = p_eta_nobin;
+      buf->b_p_eta_nopaste = p_eta_nopaste;
       buf->b_p_ml = p_ml;
       COPY_OPT_SCTX(buf, kBufOptModeline);
       buf->b_p_ml_nobin = p_ml_nobin;
