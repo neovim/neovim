@@ -20,6 +20,7 @@
 ^dynamic_feature(
 ^ex_behave(
 ^ex_open(
+^ex_redrawtabpanel(
 ^ex_scriptversion(
 ^ex_shell(
 ^ex_smile(

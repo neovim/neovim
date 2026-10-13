@@ -91,6 +91,7 @@
 \*:open\*
 \*:promptfind\*
 \*:promptrepl\*
+\*:redrawtabpanel\*
 \*:scriptversion\*
 \*:shell\*
 \*:smile\*
@@ -122,6 +123,7 @@
 \*global-ime\*
 \*gui-start\*
 \*help-toc-install\*
+\*hl-TabPanel[a-zA-Z]\+\*
 \*multibyte-ime\*
 \*os-support\*
 \*patches-\(after-\)\?[0-9].*\*
