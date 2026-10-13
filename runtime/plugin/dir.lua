@@ -30,7 +30,6 @@ vim.keymap.set('n', '<Plug>(nvim-dir-reload)', function()
   require('nvim.dir')._reload()
 end, { silent = true, desc = 'Reload directory' })
 
-
 ---@param buf integer
 ---@param path string
 ---@return boolean
