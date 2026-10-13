@@ -4,6 +4,7 @@
 " Former Repository: https://github.com/jalvesaq/R-Vim-runtime
 " Last Change: 2023 Dec 24  07:21AM
 "   2024 Feb 19 by Vim Project (announce adoption)
+"   2026 Oct 11 by Vim project (fix code execution via fenced pattern)
 "
 "   For highlighting pandoc extensions to markdown like citations and TeX and
 "   many other advanced features like folding of markdown sections, it is
@@ -198,9 +199,10 @@ endfunction
 
 function s:CheckRmdFencedLanguages()
   let alines = getline(1, '$')
+  let pat = '^\w\+'
   call filter(alines, "v:val =~ '^```{'")
   call map(alines, "substitute(v:val, '^```{', '', '')")
-  call map(alines, "substitute(v:val, '\\W.*', '', '')")
+  call map(alines, "matchstr(v:val, pat)")
   for tpy in alines
     if len(tpy) == 0
       continue
