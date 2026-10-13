@@ -9,7 +9,6 @@ local nvim_on = require('vim._core.util').nvim_on
 vim.keymap.set('n', '<Plug>(nvim-dir-open)', function()
   require('nvim.dir')._open_entry()
 end, { silent = true, desc = 'Open directory entry' })
-
 vim.keymap.set('n', '<Plug>(nvim-dir-up)', function()
   if vim.v.count == 1 then
     -- Edits global CWD
