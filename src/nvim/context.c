@@ -711,7 +711,7 @@ bool ctx_switch(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf, CtxSwitchFl
       buf_copy_options(buf, BCO_ENTER | BCO_NOHELP);
       prevwin = curwin;
     }
-    assert(win_valid(wp));
+    assert(win_valid_any_tab(wp));
   } else if (!win_valid(wp)) {
     return false;
   }
