@@ -987,13 +987,13 @@ int showmode(void)
           length = (Rows - msg_row) * Columns - 3;
         }
         if (edit_submode_extra != NULL) {
-          length -= vim_strsize(edit_submode_extra);
+          length -= mb_string2cells(edit_submode_extra);
         }
         if (length > 0) {
           if (edit_submode_pre != NULL) {
-            length -= vim_strsize(edit_submode_pre);
+            length -= mb_string2cells(edit_submode_pre);
           }
-          if (length - vim_strsize(edit_submode) > 0) {
+          if (length - mb_string2cells(edit_submode) > 0) {
             if (edit_submode_pre != NULL) {
               msg_puts_hl(edit_submode_pre, hl_id, false);
             }

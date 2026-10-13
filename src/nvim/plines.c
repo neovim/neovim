@@ -428,7 +428,7 @@ CharSize charsize_regular(CharsizeArg *csarg, const char *cur, colnr_T const vco
       if (head_prev == INT_MIN) {
         head_prev = 0;
         if (*sbr != NUL) {
-          head_prev += vim_strsize(sbr);
+          head_prev += mb_string2cells(sbr);
         }
         if (wp->w_p_bri) {
           head_prev += get_breakindent_win(wp, line);
@@ -454,7 +454,7 @@ CharSize charsize_regular(CharsizeArg *csarg, const char *cur, colnr_T const vco
       if (head_mid == INT_MIN) {
         head_mid = 0;
         if (*sbr != NUL) {
-          head_mid += vim_strsize(sbr);
+          head_mid += mb_string2cells(sbr);
         }
         if (wp->w_p_bri) {
           head_mid += get_breakindent_win(wp, line);

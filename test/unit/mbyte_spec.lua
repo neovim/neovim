@@ -52,11 +52,13 @@ describe('mbyte', function()
     end)
   end
 
-  describe('utfc_ptr2schar', function()
+  describe('utf_Clusterinfo and schar_from_cluster', function()
     local function test_seq(seq)
       local firstc = ffi.new('int[1]')
+      local cells = ffi.new('int[1]')
       local buf = ffi.new('char[32]')
-      lib.schar_get(buf, lib.unittest_schar_from_cluster(to_string(seq), firstc))
+      -- inline functions, so use a wrapper
+      lib.schar_get(buf, lib.unittest_schar_from_cluster(to_string(seq), firstc, cells))
       local str = ffi.string(buf)
       if 1 > 2 then -- for debugging
         local tbl = {}
@@ -66,115 +68,119 @@ describe('mbyte', function()
         print('{ ' .. table.concat(tbl, ', ') .. ' }')
         io.stdout:flush()
       end
-      return { str, firstc[0] }
+      return { str, firstc[0], cells[0] }
     end
 
-    local function byte(val)
-      return { string.char(val), val }
+    local function byte(val, width)
+      return { string.char(val), val, width or 1 }
     end
 
     itp('1-byte sequences', function()
-      eq({ '', 0 }, test_seq { 0 })
-      for c = 1, 127 do
+      eq({ '', 0, 2 }, test_seq { 0 })
+      for c = 1, 31 do
+        eq(byte(c, 2), test_seq { c })
+      end
+      for c = 32, 126 do
         eq(byte(c), test_seq { c })
       end
+      eq(byte(127, 2), test_seq { 127 })
       for c = 128, 255 do
-        eq({ '', -1 }, test_seq { c })
+        eq({ '', -1, 4 }, test_seq { c })
       end
     end)
 
     itp('2-byte sequences', function()
       -- No combining characters
-      eq(byte(0x7f), test_seq { 0x7f, 0x7f })
+      eq(byte(0x7f, 2), test_seq { 0x7f, 0x7f })
       -- No combining characters
-      eq(byte(0x7f), test_seq { 0x7f, 0x80 })
+      eq(byte(0x7f, 2), test_seq { 0x7f, 0x80 })
 
       -- No UTF-8 sequence
-      eq({ '', -1 }, test_seq { 0xc2, 0x7f })
+      eq({ '', -1, 4 }, test_seq { 0xc2, 0x7f })
       -- One UTF-8 character
-      eq({ '\xc2\x80', 0x80 }, test_seq { 0xc2, 0x80 })
+      eq({ '\xc2\x80', 0x80, 4 }, test_seq { 0xc2, 0x80 })
       -- No UTF-8 sequence
-      eq({ '', -1 }, test_seq { 0xc2, 0xc0 })
+      eq({ '', -1, 4 }, test_seq { 0xc2, 0xc0 })
     end)
 
     itp('3-byte sequences', function()
       -- No second UTF-8 character
-      eq(byte(0x7f), test_seq { 0x7f, 0x80, 0x80 })
+      eq(byte(0x7f, 2), test_seq { 0x7f, 0x80, 0x80 })
       -- No combining character
-      eq(byte(0x7f), test_seq { 0x7f, 0xc2, 0x80 })
+      eq(byte(0x7f, 2), test_seq { 0x7f, 0xc2, 0x80 })
 
       -- Combining character is U+0300
-      eq({ '\x29\xcc\x80', 0x29 }, test_seq { 0x29, 0xcc, 0x80 })
+      eq({ '\x29\xcc\x80', 0x29, 1 }, test_seq { 0x29, 0xcc, 0x80 })
       -- invalid start byte for combining
-      eq({ '\x7f', 0x7f }, test_seq { 0x7f, 0xcc, 0x80 })
+      eq({ '\x7f', 0x7f, 2 }, test_seq { 0x7f, 0xcc, 0x80 })
 
       -- No UTF-8 sequence
-      eq({ '', -1 }, test_seq { 0xc2, 0x7f, 0xcc })
+      eq({ '', -1, 4 }, test_seq { 0xc2, 0x7f, 0xcc })
       -- Incomplete combining character
-      eq({ '\xc2\x80', 0x80 }, test_seq { 0xc2, 0x80, 0xcc })
+      eq({ '\xc2\x80', 0x80, 4 }, test_seq { 0xc2, 0x80, 0xcc })
 
       -- One UTF-8 character (composing only)
-      eq({ ' \xe2\x83\x90', 0x20d0 }, test_seq { 0xe2, 0x83, 0x90 })
+      eq({ ' \xe2\x83\x90', 0x20d0, 1 }, test_seq { 0xe2, 0x83, 0x90 })
     end)
 
     itp('4-byte sequences', function()
       -- No following combining character
-      eq(byte(0x7f), test_seq { 0x7f, 0x7f, 0xcc, 0x80 })
-      eq(byte(0x29), test_seq { 0x29, 0x29, 0xcc, 0x80 })
+      eq(byte(0x7f, 2), test_seq { 0x7f, 0x7f, 0xcc, 0x80 })
+      eq(byte(0x29, 1), test_seq { 0x29, 0x29, 0xcc, 0x80 })
       -- No second UTF-8 character
-      eq(byte(0x7f), test_seq { 0x7f, 0xc2, 0xcc, 0x80 })
+      eq(byte(0x7f, 2), test_seq { 0x7f, 0xc2, 0xcc, 0x80 })
 
       -- Combining character U+0300
-      eq({ '\x29\xcc\x80', 0x29 }, test_seq { 0x29, 0xcc, 0x80, 0xcc })
+      eq({ '\x29\xcc\x80', 0x29, 1 }, test_seq { 0x29, 0xcc, 0x80, 0xcc })
 
       -- No UTF-8 sequence
-      eq({ '', -1 }, test_seq { 0xc2, 0x7f, 0xcc, 0x80 })
+      eq({ '', -1, 4 }, test_seq { 0xc2, 0x7f, 0xcc, 0x80 })
       -- No following UTF-8 character
-      eq({ '\xc2\x80', 0x80 }, test_seq { 0xc2, 0x80, 0xcc, 0xcc })
+      eq({ '\xc2\x80', 0x80, 4 }, test_seq { 0xc2, 0x80, 0xcc, 0xcc })
       -- Combining character U+0301
-      eq({ '\xc2\xbc\xcc\x81', 0xbc }, test_seq { 0xc2, 0xbc, 0xcc, 0x81 })
+      eq({ '\xc2\xbc\xcc\x81', 0xbc, 1 }, test_seq { 0xc2, 0xbc, 0xcc, 0x81 })
       -- U+0080 : not a valid start char
-      eq({ '\xc2\x80', 0x80 }, test_seq { 0xc2, 0x80, 0xcc, 0x81 })
+      eq({ '\xc2\x80', 0x80, 4 }, test_seq { 0xc2, 0x80, 0xcc, 0x81 })
 
       -- One UTF-8 character
-      eq({ '\xf4\x80\x80\x80', 0x100000 }, test_seq { 0xf4, 0x80, 0x80, 0x80 })
+      eq({ '\xf4\x80\x80\x80', 0x100000, 1 }, test_seq { 0xf4, 0x80, 0x80, 0x80 })
     end)
 
     itp('5+-byte sequences', function()
       -- No following combining character
-      eq(byte(0x7f), test_seq { 0x7f, 0x7f, 0xcc, 0x80, 0x80 })
+      eq(byte(0x7f, 2), test_seq { 0x7f, 0x7f, 0xcc, 0x80, 0x80 })
       -- No second UTF-8 character
-      eq(byte(0x7f), test_seq { 0x7f, 0xc2, 0xcc, 0x80, 0x80 })
+      eq(byte(0x7f, 2), test_seq { 0x7f, 0xc2, 0xcc, 0x80, 0x80 })
 
       -- Combining character U+0300
-      eq({ '\x29\xcc\x80', 0x29 }, test_seq { 0x29, 0xcc, 0x80, 0xcc, 0x00 })
+      eq({ '\x29\xcc\x80', 0x29, 1 }, test_seq { 0x29, 0xcc, 0x80, 0xcc, 0x00 })
 
       -- Combining characters U+0300 and U+0301
-      eq({ '\x29\xcc\x80\xcc\x81', 0x29 }, test_seq { 0x29, 0xcc, 0x80, 0xcc, 0x81 })
+      eq({ '\x29\xcc\x80\xcc\x81', 0x29, 1 }, test_seq { 0x29, 0xcc, 0x80, 0xcc, 0x81 })
       -- Combining characters U+0300, U+0301, U+0302
       eq(
-        { '\x29\xcc\x80\xcc\x81\xcc\x82', 0x29 },
+        { '\x29\xcc\x80\xcc\x81\xcc\x82', 0x29, 1 },
         test_seq { 0x29, 0xcc, 0x80, 0xcc, 0x81, 0xcc, 0x82 }
       )
       -- Combining characters U+0300, U+0301, U+0302, U+0303
       eq(
-        { '\x29\xcc\x80\xcc\x81\xcc\x82\xcc\x83', 0x29 },
+        { '\x29\xcc\x80\xcc\x81\xcc\x82\xcc\x83', 0x29, 1 },
         test_seq { 0x29, 0xcc, 0x80, 0xcc, 0x81, 0xcc, 0x82, 0xcc, 0x83 }
       )
       -- Combining characters U+0300, U+0301, U+0302, U+0303, U+0304
       eq(
-        { '\x29\xcc\x80\xcc\x81\xcc\x82\xcc\x83\xcc\x84', 0x29 },
+        { '\x29\xcc\x80\xcc\x81\xcc\x82\xcc\x83\xcc\x84', 0x29, 1 },
         test_seq { 0x29, 0xcc, 0x80, 0xcc, 0x81, 0xcc, 0x82, 0xcc, 0x83, 0xcc, 0x84 }
       )
       -- Combining characters U+0300, U+0301, U+0302, U+0303, U+0304, U+0305
       eq(
-        { '\x29\xcc\x80\xcc\x81\xcc\x82\xcc\x83\xcc\x84\xcc\x85', 0x29 },
+        { '\x29\xcc\x80\xcc\x81\xcc\x82\xcc\x83\xcc\x84\xcc\x85', 0x29, 1 },
         test_seq { 0x29, 0xcc, 0x80, 0xcc, 0x81, 0xcc, 0x82, 0xcc, 0x83, 0xcc, 0x84, 0xcc, 0x85 }
       )
 
       -- Combining characters U+0300, U+0301, U+0302, U+0303, U+0304, U+0305, U+0306
       eq(
-        { '\x29\xcc\x80\xcc\x81\xcc\x82\xcc\x83\xcc\x84\xcc\x85\xcc\x86', 0x29 },
+        { '\x29\xcc\x80\xcc\x81\xcc\x82\xcc\x83\xcc\x84\xcc\x85\xcc\x86', 0x29, 1 },
         test_seq {
           0x29,
           0xcc,
@@ -196,30 +202,30 @@ describe('mbyte', function()
 
       -- Only three following combining characters U+0300, U+0301, U+0302
       eq(
-        { '\x29\xcc\x80\xcc\x81\xcc\x82', 0x29 },
+        { '\x29\xcc\x80\xcc\x81\xcc\x82', 0x29, 1 },
         test_seq { 0x29, 0xcc, 0x80, 0xcc, 0x81, 0xcc, 0x82, 0xc2, 0x80, 0xcc, 0x84, 0xcc, 0x85 }
       )
 
       -- No UTF-8 sequence
-      eq({ '', -1 }, test_seq { 0xc2, 0x7f, 0xcc, 0x80, 0x80 })
+      eq({ '', -1, 4 }, test_seq { 0xc2, 0x7f, 0xcc, 0x80, 0x80 })
       -- No following UTF-8 character
-      eq({ '\xc2\xbc', 0xbc }, test_seq { 0xc2, 0xbc, 0xcc, 0xcc, 0x80 })
+      eq({ '\xc2\xbc', 0xbc, 1 }, test_seq { 0xc2, 0xbc, 0xcc, 0xcc, 0x80 })
       -- Combining character U+0301
-      eq({ '\xc2\xbc\xcc\x81', 0xbc }, test_seq { 0xc2, 0xbc, 0xcc, 0x81, 0x7f })
+      eq({ '\xc2\xbc\xcc\x81', 0xbc, 1 }, test_seq { 0xc2, 0xbc, 0xcc, 0x81, 0x7f })
       -- Combining character U+0301
-      eq({ '\xc2\xbc\xcc\x81', 0xbc }, test_seq { 0xc2, 0xbc, 0xcc, 0x81, 0xcc })
+      eq({ '\xc2\xbc\xcc\x81', 0xbc, 1 }, test_seq { 0xc2, 0xbc, 0xcc, 0x81, 0xcc })
 
       -- One UTF-8 character
-      eq({ '\xf4\x80\x80\x80', 0x100000 }, test_seq { 0xf4, 0x80, 0x80, 0x80, 0x7f })
+      eq({ '\xf4\x80\x80\x80', 0x100000, 1 }, test_seq { 0xf4, 0x80, 0x80, 0x80, 0x7f })
 
       -- One UTF-8 character
-      eq({ '\xf4\x80\x80\x80', 0x100000 }, test_seq { 0xf4, 0x80, 0x80, 0x80, 0x80 })
+      eq({ '\xf4\x80\x80\x80', 0x100000, 1 }, test_seq { 0xf4, 0x80, 0x80, 0x80, 0x80 })
       -- One UTF-8 character
-      eq({ '\xf4\x80\x80\x80', 0x100000 }, test_seq { 0xf4, 0x80, 0x80, 0x80, 0xcc })
+      eq({ '\xf4\x80\x80\x80', 0x100000, 1 }, test_seq { 0xf4, 0x80, 0x80, 0x80, 0xcc })
 
       -- Combining characters U+1AB0 and U+0301
       eq(
-        { '\xf4\x80\x80\x80\xe1\xaa\xb0\xcc\x81', 0x100000 },
+        { '\xf4\x80\x80\x80\xe1\xaa\xb0\xcc\x81', 0x100000, 1 },
         test_seq { 0xf4, 0x80, 0x80, 0x80, 0xe1, 0xaa, 0xb0, 0xcc, 0x81 }
       )
     end)

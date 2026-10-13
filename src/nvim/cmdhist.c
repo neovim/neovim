@@ -20,6 +20,7 @@
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/macros_defs.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option_vars.h"
@@ -662,7 +663,7 @@ void ex_history(exarg_T *eap)
           msg_putchar('\n');
           int len = snprintf(IObuff, IOSIZE,
                              "%c%6d  ", i == idx ? '>' : ' ', hist[i].hisnum);
-          if (vim_strsize(hist[i].hisstr) > Columns - 10) {
+          if (mb_string2cells(hist[i].hisstr) > Columns - 10) {
             trunc_string(hist[i].hisstr, IObuff + len, Columns - 10, IOSIZE - len);
           } else {
             xstrlcpy(IObuff + len, hist[i].hisstr, (size_t)(IOSIZE - len));
