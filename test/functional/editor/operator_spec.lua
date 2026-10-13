@@ -11,7 +11,7 @@ local fn = n.fn
 local api = n.api
 local eq = t.eq
 
-describe('forced blockwise motion', function()
+describe('operator', function()
   before_each(clear)
 
   it('forced-blockwise motion (o_CTRL-V): g@ and y get the block #42309', function()
