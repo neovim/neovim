@@ -1021,6 +1021,42 @@ end)
 describe('builtin popupmenu', function()
   before_each(clear)
 
+  it('keeps the buffer cursor after cmdline completion with conceal', function()
+    local screen = Screen.new(40, 6)
+    exec([[
+      call setline(1, 'See |help| here.')
+      syntax match Hidden /|/ conceal
+      set conceallevel=2 concealcursor=nc wildoptions=pum wildmode=full
+      nnoremenu Test.Item <Nop>
+    ]])
+    feed('$')
+    local grid = [[
+      See help here^.                          |
+      {1:~                                       }|*4
+                                              |
+    ]]
+    screen:expect(grid)
+    feed(':set wild<Tab>')
+    eq(1, fn.pumvisible())
+    screen:expect({ any = ':set wild' })
+    feed('<Esc>')
+    screen:expect(grid)
+    eq(14, fn.wincol())
+
+    feed(':set wild<Tab>')
+    eq(1, fn.pumvisible())
+    screen:expect({ any = ':set wild' })
+    feed('<C-U>popup Test<CR>')
+    screen:expect([[
+      See help here^.                          |
+      {1:~           }{4: Item }{1:                      }|
+      {1:~                                       }|*3
+      :popup Test                             |
+    ]])
+    feed('<Esc>')
+    screen:expect({ any = 'See help here%^%.', none = 'Item' })
+  end)
+
   local function with_ext_multigrid(multigrid, send_mouse_grid)
     local screen
     before_each(function()
@@ -1103,6 +1139,33 @@ describe('builtin popupmenu', function()
       })
     end)
 
+    local function check_noinsert(row, col, caret, menu_col)
+      feed('<C-y>')
+      command('autocmd CompleteChanged * let g:completion_wincol = wincol()')
+      local rl = fn.getwinvar(0, '&rightleft') == 1
+      menu_col = menu_col or (rl and fn.winwidth(0) - col or col - 1)
+      local item = rl and 'eno' or 'one'
+      for _, cot in ipairs({ 'menuone,noinsert', 'menuone,noselect' }) do
+        command(('set completeopt=%s'):format(cot))
+        api.nvim_set_var('completion_wincol', -1)
+        fn.complete(fn.col('.'), { 'one', 'two' })
+        eq(col, api.nvim_get_var('completion_wincol'))
+        local pos = fn.pum_getpos()
+        eq({ row, menu_col }, { pos.row, pos.col })
+        if multigrid then
+          local left = rl and menu_col - 14 or menu_col - 1
+          screen:expect({
+            any = { caret, item },
+            float_pos = { [4] = { -1, 'NW', 2, row, left, false, 100, 1, row, left } },
+          })
+        else
+          screen:expect({ any = { caret, item } })
+        end
+        feed('<C-e>')
+        screen:expect({ any = caret, none = item })
+      end
+    end
+
     -- oldtest: Test_pum_position_with_concealed_text()
     it('position with fully concealed text', function()
       screen:try_resize(55, 10)
@@ -1127,6 +1190,70 @@ describe('builtin popupmenu', function()
           {1:~                                                      }|*6
           {5:-- Keyword Local completion (^N^P) The only match}      |
         ]])
+      end
+      check_noinsert(2, 7, 'foobar%^')
+
+      for _, case in ipairs({
+        { line = 'foo bar CONCEALED ', row = 1, wincol = 9, caret = 'foo bar %^' },
+        {
+          line = 'foo bar ' .. ('x'):rep(55) .. ' CONCEALED ',
+          row = 2,
+          wincol = 10,
+          caret = 'xxxxxxxx %^',
+        },
+      }) do
+        feed('<Esc>')
+        api.nvim_buf_set_lines(0, 0, -1, true, { case.line })
+        command('set completeopt=menuone,noinsert')
+        feed('ggA')
+        fn.complete(5, { 'barbaz' })
+        eq(case.wincol, api.nvim_get_var('completion_wincol'))
+        local pos = fn.pum_getpos()
+        eq({ case.row, 4 }, { pos.row, pos.col })
+        if multigrid then
+          screen:expect({
+            any = case.caret,
+            float_pos = { [4] = { -1, 'NW', 2, case.row, 3, false, 100, 1, case.row, 3 } },
+          })
+        else
+          screen:expect({ any = case.caret })
+        end
+      end
+    end)
+
+    it('position with conceal before a tab', function()
+      screen:try_resize(40, 10)
+      local line = 'a\tHIDDEN\tend'
+      api.nvim_buf_set_lines(0, 0, -1, true, { line })
+      exec([[
+        syntax match Hidden /HIDDEN/ conceal
+        set conceallevel=2 concealcursor=nvic completeopt=menuone,noinsert
+        autocmd CompleteChanged * let g:completion_wincol = wincol()
+      ]])
+      feed('A')
+      for _, startcol in ipairs({ 4, 9 }) do
+        for _, cursorcol in ipairs({ startcol, #line + 1 }) do
+          api.nvim_win_set_cursor(0, { 1, cursorcol - 1 })
+          local prefix = line:sub(startcol, cursorcol - 1)
+          fn.complete(startcol, {
+            { word = prefix .. 'one', abbr = 'one' },
+            { word = prefix .. 'two', abbr = 'two' },
+          })
+          eq(cursorcol == #line + 1 and 20 or 9, api.nvim_get_var('completion_wincol'))
+          eq(line, api.nvim_get_current_line())
+          local pos = fn.pum_getpos()
+          eq({ 1, 8 }, { pos.row, pos.col })
+          local caret = cursorcol == #line + 1 and 'end%^' or 'a       %^'
+          if multigrid then
+            screen:expect({
+              any = caret,
+              float_pos = { [4] = { -1, 'NW', 2, 1, 7, false, 100, 1, 1, 7 } },
+            })
+          else
+            screen:expect({ any = caret })
+          end
+          feed('<C-e>')
+        end
       end
     end)
 
@@ -1155,6 +1282,7 @@ describe('builtin popupmenu', function()
           {5:-- Keyword Local completion (^N^P) The only match}      |
         ]])
       end
+      check_noinsert(2, 8, 'foobar%^')
     end)
 
     -- oldtest: Test_pum_position_with_concealed_rl()
@@ -1183,6 +1311,7 @@ describe('builtin popupmenu', function()
           {5:-- Keyword Local completion (^N^P) The only match}      |
         ]])
       end
+      check_noinsert(2, 7, '%^ raboof')
     end)
 
     -- oldtest: Test_pum_position_with_concealed_wrap()
@@ -1211,7 +1340,84 @@ describe('builtin popupmenu', function()
           {5:-- The only match}   |
         ]])
       end
+      check_noinsert(3, 8, 'foobar%^', 4)
+
+      for _, wrap in ipairs({ true, false }) do
+        feed('<Esc>')
+        screen:try_resize(wrap and 24 or 48, wrap and 6 or 8)
+        command('set laststatus=0 scrolloff=0 sidescrolloff=0 completeopt=menuone,noinsert')
+        command(wrap and 'set wrap nonumber' or 'set nowrap number sidescroll=1')
+        local line = ('abcdefghij'):rep(wrap and 32 or 20) .. 'tail'
+        api.nvim_buf_set_lines(0, 0, -1, true, { line })
+        feed('ggA')
+        local col = fn.wincol()
+        local view = fn.winsaveview()
+        eq(true, (wrap and view.skipcol or view.leftcol) > 0)
+        fn.complete(5, {
+          { word = line:sub(5) .. 'one', abbr = 'one' },
+          { word = line:sub(5) .. 'two', abbr = 'two' },
+        })
+        eq(col, api.nvim_get_var('completion_wincol'))
+        eq(line, api.nvim_get_current_line())
+        local pos = fn.pum_getpos()
+        eq({ wrap and 0 or 1, wrap and 4 or 0 }, { pos.row, pos.col })
+        if multigrid then
+          local left = wrap and 3 or 0
+          local anchor = wrap and 'SW' or 'NW'
+          local anchor_row = wrap and 2 or 1
+          screen:expect({
+            any = 'tail%^',
+            float_pos = {
+              [4] = { -1, anchor, 2, anchor_row, left, false, 100, 1, pos.row, left },
+            },
+          })
+        else
+          screen:expect({ any = 'tail%^' })
+        end
+        feed('<C-e>')
+      end
     end)
+
+    for _, info in ipairs({ 'preview', 'popup' }) do
+      for _, selection in ipairs({ 'noinsert', 'noselect' }) do
+        it('position with concealed text and ' .. info .. ', ' .. selection, function()
+          screen:try_resize(55, 20)
+          exec([[
+            call setline(1, 'foo CONCEALED bar')
+            syntax match Hidden /CONCEALED / conceal
+            set conceallevel=2 concealcursor=nvic splitkeep=cursor previewheight=6
+            autocmd CompleteChanged * let g:completion_wincol = wincol()
+          ]])
+          command(('set completeopt=menuone,%s,%s'):format(selection, info))
+          feed('A')
+          fn.complete(15, {
+            { word = 'barone', info = 'one\ntwo\nthree' },
+            { word = 'bartwo', info = 'one\ntwo\nthree\nfour\nfive\nsix' },
+          })
+          eq(8, api.nvim_get_var('completion_wincol'))
+          eq(4, fn.pum_getpos().col)
+          api.nvim_select_popupmenu_item(1, false, false, {})
+          eq(8, api.nvim_get_var('completion_wincol'))
+          eq('foo CONCEALED bar', api.nvim_get_current_line())
+          local row = info == 'preview' and 8 or 1
+          local pos = fn.pum_getpos()
+          eq({ row, 4 }, { pos.row, pos.col })
+          if multigrid then
+            local menu_grid = selection == 'noinsert' and 5 or 4
+            local float_pos = {
+              [menu_grid] = { -1, 'NW', 2, 1, 3, false, 100, info == 'popup' and 2 or 1, row, 3 },
+            }
+            if info == 'popup' then
+              float_pos[selection == 'noinsert' and 4 or 5] =
+                { 1001, 'NW', 1, 1, 19, true, 50, 1, 1, 19 }
+            end
+            screen:expect({ any = { 'foo bar%^', 'six' }, float_pos = float_pos })
+          else
+            screen:expect({ any = { 'foo bar%^', 'six' } })
+          end
+        end)
+      end
+    end
 
     it('with preview-window above', function()
       feed(':ped<CR><c-w>4+')
@@ -2285,12 +2491,51 @@ describe('builtin popupmenu', function()
         end
       end)
 
-      it('hide info window when insufficient space', function()
-        screen:try_resize(12, 11)
-        feed('S<C-x><C-o>')
-        local info = fn.complete_info()
-        eq(true, api.nvim_win_get_config(info.preview_winid).hide)
-      end)
+      for _, selection in ipairs({ 'noinsert', 'noselect' }) do
+        it('hide info window when insufficient space with ' .. selection, function()
+          exec([[
+            call setline(1, 'foo HIDDEN bar')
+            syntax match Hidden /HIDDEN/ conceal
+            set conceallevel=2 concealcursor=nvic splitkeep=cursor
+            autocmd CompleteChanged * let g:completion_wincol = wincol()
+          ]])
+          command(('set completeopt=menuone,%s,popup'):format(selection))
+          local win = api.nvim_get_current_win()
+          feed('A')
+          for _, width in ipairs({ 30, 31, 30 }) do
+            screen:try_resize(width, 14)
+            fn.complete(12, {
+              { word = 'barone', info = 'one\ntwo\nthree' },
+              { word = 'bartwo', info = 'four\nfive\nsix' },
+            })
+            eq(9, api.nvim_get_var('completion_wincol'))
+            eq(5, fn.pum_getpos().col)
+            api.nvim_set_var('completion_wincol', -1)
+            api.nvim_select_popupmenu_item(1, false, false, {})
+            eq(9, api.nvim_get_var('completion_wincol'))
+            eq(win, api.nvim_get_current_win())
+            eq('foo HIDDEN bar', api.nvim_get_current_line())
+            local info = fn.complete_info()
+            local hidden = width == 30
+            eq(hidden, api.nvim_win_get_config(info.preview_winid).hide)
+            local pos = fn.pum_getpos()
+            eq({ 1, 5 }, { pos.row, pos.col })
+            if multigrid then
+              local menu_grid = selection == 'noinsert' and 5 or 4
+              local float_pos = {
+                [menu_grid] = { -1, 'NW', 2, 1, 4, false, 100, hidden and 1 or 2, 1, 4 },
+              }
+              if not hidden then
+                float_pos[selection == 'noinsert' and 4 or 5] =
+                  { 1001, 'NW', 1, 1, 20, true, 50, 1, 1, 20 }
+              end
+              screen:expect({ any = 'foo  bar%^', float_pos = float_pos })
+            else
+              screen:expect({ any = 'foo  bar%^' })
+            end
+          end
+        end)
+      end
 
       it('enables wrap to avoid info text truncation', function()
         screen:try_resize(50, 11)

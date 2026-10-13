@@ -71,6 +71,7 @@ typedef struct {
   int row;                   ///< row in the window, excl w_winrow
 
   colnr_T vcol;              ///< virtual column, before wrapping
+  colnr_T vcol_tab;          ///< tab's virtual column before conceal compensation
   int col;                   ///< visual column on screen, after wrapping
   int boguscols;             ///< nonexistent columns added to "col" to force wrapping
   int old_boguscols;         ///< bogus boguscols
@@ -1077,6 +1078,7 @@ static void win_line_start(win_T *wp, winlinevars_T *wlv)
 
 static void fix_for_boguscols(winlinevars_T *wlv)
 {
+  wlv->vcol_tab = MAX(wlv->vcol_tab, wlv->vcol);
   wlv->n_extra += wlv->vcol_off_co;
   wlv->vcol -= wlv->vcol_off_co;
   wlv->vcol_off_co = 0;
@@ -2751,10 +2753,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         && in_curline && conceal_cursor_line(wp)
         && (wlv.vcol + wlv.skip_cells >= wp->w_virtcol || mb_schar == NUL)) {
       wp->w_wcol = wlv.col - wlv.boguscols;
-      // Screen cells concealed before the cursor on this screen line, so
-      // pum_display() can line the menu up with the visible text;
-      // "skip_cells" is the concealed cell at the cursor not yet counted.
-      wp->w_wcol_conceal_off = wlv.vcol_off_co + wlv.skip_cells;
       if (wlv.vcol + wlv.skip_cells < wp->w_virtcol) {
         // Cursor beyond end of the line with 'virtualedit'.
         wp->w_wcol += wp->w_virtcol - wlv.vcol - wlv.skip_cells;
@@ -3057,7 +3055,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         linebuf_attr[wlv.off] = wlv.char_attr;
       }
 
-      linebuf_vcol[wlv.off] = wlv.vcol;
+      linebuf_vcol[wlv.off] = MAX(wlv.vcol, wlv.vcol_tab);
 
       if (schar_cells(mb_schar) > 1) {
         // Need to fill two screen columns.
@@ -3067,7 +3065,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         linebuf_char[wlv.off] = 0;
         linebuf_attr[wlv.off] = linebuf_attr[wlv.off - 1];
 
-        linebuf_vcol[wlv.off] = ++wlv.vcol;
+        wlv.vcol++;
+        linebuf_vcol[wlv.off] = MAX(wlv.vcol, wlv.vcol_tab);
 
         // When "wlv.tocol" is halfway through a character, set it to the end
         // of the character, otherwise highlighting won't stop.
