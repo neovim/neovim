@@ -6,6 +6,9 @@ local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local command = n.command
 local feed = n.feed
+local eq = t.eq
+local pcall_err = t.pcall_err
+local assert_alive = n.assert_alive
 
 describe(':digraphs', function()
   local screen
@@ -27,5 +30,13 @@ describe(':digraphs', function()
       EM {18:^Y}  25    SB {18:^Z}  26    EC {18:^[}  27    FS {18:^\}  28    GS {18:^]}  29    |
       {6:-- More --}^                                                       |
     ]])
+  end)
+
+  it('does not crash with too large number', function()
+    eq(
+      'Vim(digraphs):E1510: Value too large: 99999999999999999999',
+      pcall_err(command, 'digraphs ab 99999999999999999999')
+    )
+    assert_alive()
   end)
 end)

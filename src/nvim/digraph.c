@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -1695,7 +1696,12 @@ void putdigraph(char *str)
       emsg(_(e_number_exp));
       return;
     }
-    int n = getdigits_int(&str, true, 0);
+    const char *const nr_start = str;
+    int n = getdigits_int(&str, false, INT_MAX);
+    if (n == INT_MAX) {
+      semsg(_(e_val_too_large_len), (int)(str - nr_start), nr_start);
+      return;
+    }
 
     registerdigraph(char1, char2, n);
   }
