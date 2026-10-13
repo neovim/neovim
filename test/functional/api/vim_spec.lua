@@ -5061,6 +5061,8 @@ describe('API', function()
         'Parsing command-line: E464: Ambiguous use of user-defined command',
         pcall_err(api.nvim_parse_cmd, 'F', {})
       )
+      eq('Parsing command-line: E16: Invalid range', pcall_err(api.nvim_parse_cmd, "'btab", {}))
+      eq('Parsing command-line: E16: Invalid range', pcall_err(api.nvim_parse_cmd, '99tab sp', {}))
     end)
     it('does not interfere with printing line in Ex mode #19400', function()
       local screen = Screen.new(60, 12)
