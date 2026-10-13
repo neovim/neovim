@@ -99,19 +99,19 @@ static void pum_compute_size(void)
   pum_extra_width = 0;
   for (int i = 0; i < pum_size; i++) {
     if (pum_array[i].pum_text != NULL) {
-      int w = vim_strsize(pum_array[i].pum_text);
+      int w = mb_string2cells(pum_array[i].pum_text);
       if (pum_base_width < w) {
         pum_base_width = w;
       }
     }
     if (pum_array[i].pum_kind != NULL) {
-      int w = vim_strsize(pum_array[i].pum_kind) + 1;
+      int w = mb_string2cells(pum_array[i].pum_kind) + 1;
       if (pum_kind_width < w) {
         pum_kind_width = w;
       }
     }
     if (pum_array[i].pum_extra != NULL) {
-      int w = vim_strsize(pum_array[i].pum_extra) + 1;
+      int w = mb_string2cells(pum_array[i].pum_extra) + 1;
       if (pum_extra_width < w) {
         pum_extra_width = w;
       }
@@ -453,7 +453,7 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf, int user_hlattr)
     return NULL;
   }
 
-  int *attrs = xmalloc(sizeof(int) * (size_t)vim_strsize(text));
+  int *attrs = xmalloc(sizeof(int) * (size_t)mb_string2cells(text));
   bool in_fuzzy = (State & MODE_CMDLINE) ? cmdline_compl_is_fuzzy()
                                          : (get_cot_flags() & kOptCotFlagFuzzy) != 0;
   size_t leader_len = strlen(leader);
@@ -779,7 +779,7 @@ void pum_redraw(void)
           if (pum_rl) {
             char *rt = reverse_text(st);
             char *rt_start = rt;
-            int cells = (int)mb_string2cells(rt);
+            int cells = mb_string2cells(rt);
             int pad = next_isempty ? 0 : 2;
             if (width_limit - totwidth < cells + pad) {
               need_fcs_trunc = true;
@@ -810,7 +810,7 @@ void pum_redraw(void)
             xfree(st);
             grid_col -= width;
           } else {
-            int cells = (int)mb_string2cells(st);
+            int cells = mb_string2cells(st);
             int pad = next_isempty ? 0 : 2;
             if (width_limit - totwidth < cells + pad) {
               need_fcs_trunc = true;

@@ -2577,7 +2577,7 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
     validate_virtcol(curwin);
     colnr_T virtcol = cursor_disp_vcol(curwin);
     if (virtcol > (colnr_T)width1 && *get_showbreak_value(curwin) != NUL) {
-      virtcol -= vim_strsize(get_showbreak_value(curwin));
+      virtcol -= mb_string2cells(get_showbreak_value(curwin));
     }
 
     int c = utf_ptr2char(get_cursor_pos_ptr());

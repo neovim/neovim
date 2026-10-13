@@ -497,7 +497,7 @@ bool msg_keep(const char *s, int hl_id, bool keep, bool multiline)
     retval = msg_end();
   }
 
-  if (keep && retval && vim_strsize(s) < (Rows - cmdline_row - 1) * Columns + sc_col) {
+  if (keep && retval && mb_string2cells(s) < (Rows - cmdline_row - 1) * Columns + sc_col) {
     set_keep_msg(s, 0);
   }
 
@@ -522,7 +522,7 @@ char *msg_strtrunc(const char *s, int force)
        && msg_silent == 0 && !ui_has(kUIMessages))
       || force) {
     int room;
-    int len = vim_strsize(s);
+    int len = mb_string2cells(s);
     if (msg_scrolled != 0) {
       // Use all the columns.
       room = (Rows - msg_row) * Columns - 1;
@@ -1091,7 +1091,7 @@ char *msg_may_trunc(bool force, char *s)
   if (room > 0
       && (force || shortmess(kShmTrunc))
       && (int)strlen(s) - room > 0) {
-    int size = vim_strsize(s);
+    int size = mb_string2cells(s);
 
     // There may be room anyway when there are multibyte chars.
     if (size <= room) {
@@ -1587,7 +1587,7 @@ void wait_return(int redraw)
   emsg_on_display = false;      // can delete error message now
   lines_left = -1;              // reset lines_left at next msg_start()
   reset_last_sourcing();
-  if (keep_msg != NULL && vim_strsize(keep_msg) >=
+  if (keep_msg != NULL && mb_string2cells(keep_msg) >=
       (Rows - cmdline_row - 1) * Columns + sc_col) {
     XFREE_CLEAR(keep_msg);          // don't redisplay message, it's too long
   }
@@ -1994,7 +1994,7 @@ int msg_outtrans_special(const char *strstart, bool from, int maxlen)
       // single-byte character or illegal byte
       text = transchar_byte_buf(NULL, (uint8_t)text[0]);
     }
-    const int len = vim_strsize(text);
+    const int len = mb_string2cells(text);
     if (maxlen > 0 && retval + len >= maxlen) {
       break;
     }
@@ -2492,7 +2492,7 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
     // Find last newline in the message and calculate the current message column
     const char *lastline = xmemrchr(str, '\n', len);
     const char *p = lastline ? lastline + 1 : str;
-    int col = (int)mb_string2cells_len(p, len - (size_t)(p - str));
+    int col = mb_string2cells_len(p, len - (size_t)(p - str));
     msg_col = (lastline ? 0 : msg_col) + col;
 
     return;

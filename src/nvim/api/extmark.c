@@ -1239,7 +1239,7 @@ VirtText parse_virt_text(Array chunks, Error *err, int *width, bool untab)
     }
 
     char *text = transstr(str.size > 0 ? str.data : "", untab);  // allocates
-    w += (int)mb_string2cells(text);
+    w += mb_string2cells(text);
 
     kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));
   }

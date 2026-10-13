@@ -38,6 +38,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/message.h"
@@ -1788,7 +1789,7 @@ static bool highlight_list_arg(const int id, bool didh, const int type, int iarg
     }
   }
 
-  syn_list_header(didh, vim_strsize(ts) + (int)strlen(name) + 1, id, false);
+  syn_list_header(didh, mb_string2cells(ts) + (int)strlen(name) + 1, id, false);
   didh = true;
   if (!got_int) {
     if (*name != NUL) {
