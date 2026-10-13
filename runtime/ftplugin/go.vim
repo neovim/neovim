@@ -10,6 +10,7 @@
 " 2025 Jul 05 by Vim Project (update b:undo_ftplugin #17664)
 " 2026 Feb 13 by Vim Project (remove formatprg #19108)
 " 2026 Jun 27 by Vim Project (normalize recommended style guard)
+" 2026 Oct 12 by Vim Project (correctly use shellescape())
 
 if exists('b:did_ftplugin')
   finish
@@ -41,8 +42,10 @@ if !exists('*' . expand('<SID>') . 'GoKeywordPrg')
     let temp_isk = &l:iskeyword
     setl iskeyword+=.
     try
-      let cmd = 'go doc -C ' . shellescape(expand('%:h')) . ' ' . shellescape(expand('<cword>'))
-      if has('gui_running') || has('nvim')
+      let cmd = 'go doc -C ' . shellescape(expand('%:h'), 1) . ' ' . shellescape(expand('<cword>'), 1)
+      if has('gui_running')
+        exe 'hor term ++shell' cmd
+      elseif has('nvim')
         exe 'hor term' cmd
       else
         exe '!' . cmd
