@@ -1190,7 +1190,7 @@ void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
       curbuf->b_op_start.col = 0;
       curbuf->b_op_end.col = MAXCOL;
     }
-    if (yank_type != kMTLineWise && !oap->inclusive) {
+    if (yank_type == kMTCharWise && !oap->inclusive) {
       // Exclude the end position.
       decl(&curbuf->b_op_end);
     }

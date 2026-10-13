@@ -3295,7 +3295,7 @@ static void op_function(const oparg_T *oap)
     // Set '[ and '] marks to text to be operated on.
     curbuf->b_op_start = oap->start;
     curbuf->b_op_end = oap->end;
-    if (oap->motion_type != kMTLineWise && !oap->inclusive) {
+    if (oap->motion_type == kMTCharWise && !oap->inclusive) {
       // Exclude the end position.
       decl(&curbuf->b_op_end);
     }
@@ -3351,8 +3351,6 @@ static void get_op_vcol(oparg_T *oap, bool initial)
       || (!initial && oap->end.col < curwin->w_view_width)) {
     return;
   }
-
-  oap->motion_type = kMTBlockWise;
 
   // prevent from moving onto a trail byte
   mark_mb_adjustpos(curwin->w_buffer, &oap->end);
@@ -3607,6 +3605,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
             oap->line_count++;
           }
         }
+      } else if (Visual.mode == Ctrl_V) {
+        oap->motion_type = kMTBlockWise;
       }
 
       // Switch Visual off now, so screen updating does
