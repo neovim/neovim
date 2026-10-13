@@ -11,74 +11,44 @@ local fn = n.fn
 local api = n.api
 local eq = t.eq
 
---- '[ / '] as {lnum, col, coladd}, the slice operatorfunc sees.
-local function op_marks()
-  local s = fn.getpos("'[")
-  local e = fn.getpos("']")
-  return { { s[2], s[3], s[4] }, { e[2], e[3], e[4] } }
-end
-
 describe('forced blockwise motion', function()
-  before_each(function()
-    clear()
-    command([=[
-      function! Op(type) abort
-        let g:op_type = a:type
-        let g:op_marks = [getpos("'[")[1:3], getpos("']")[1:3]]
-      endfunction
+  before_each(clear)
+
+  it('forced-blockwise motion (o_CTRL-V): g@ and y get the block #42309', function()
+    local marks = [=[[getpos("'[")[1:3], getpos("']")[1:3]]]=]
+    n.exec(([[
+      func! Op(type) abort
+        let g:op = [a:type] + %s
+      endfunc
       set operatorfunc=Op
-    ]=])
-  end)
-
-  --- g@ then the same motion as a yank. Positioning keys are part of both.
-  local function block(lines, op_keys, yank_keys)
-    api.nvim_buf_set_lines(0, 0, -1, true, lines)
-    feed(op_keys)
-    local typ = fn.eval('g:op_type')
-    local marks = fn.eval('g:op_marks')
-    feed(yank_keys)
-    return {
-      type = typ,
-      marks = marks,
-      yank_marks = op_marks(),
-      yank = fn.getreg('"', 1, 1),
-    }
-  end
-
-  it("'] is the corner of the block for g@ and y #42309", function()
-    eq({
-      type = 'block',
-      marks = { { 2, 1, 0 }, { 3, 1, 0 } },
-      yank_marks = { { 2, 1, 0 }, { 3, 1, 0 } },
-      yank = { 'a', 'c' },
-    }, block({ 'seed', 'ab', 'cd' }, '2G0g@<C-v>j', '2G0y<C-v>j'))
-
-    -- Inclusive charwise motion, same columns as a one-line block.
-    eq({
-      type = 'block',
-      marks = { { 2, 1, 0 }, { 2, 2, 0 } },
-      yank_marks = { { 2, 1, 0 }, { 2, 2, 0 } },
-      yank = { 'ab' },
-    }, block({ 'seed', 'ab', 'cd' }, '2G0g@<C-v>e', '2G0y<C-v>e'))
-
-    -- Short last line: '] keeps the right edge (coladd past EOL).
+    ]]):format(marks))
+    --- Asserts that g@ and y see the same block: '[ and '] marks, and the yanked text.
+    local function assert_block(lines, keys, expected_marks, expected_text)
+      api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      feed(keys)
+      eq({ 'block', unpack(expected_marks) }, api.nvim_get_var('op'), keys)
+      feed((keys:gsub('g@', 'y')))
+      eq(expected_marks, n.eval(marks), keys)
+      eq(expected_text, fn.getreg('"', 1, 1), keys)
+    end
+    assert_block({ 'seed', 'ab', 'cd' }, '2G0g@<C-v>j', { { 2, 1, 0 }, { 3, 1, 0 } }, { 'a', 'c' })
+    assert_block({ 'seed', 'ab', 'cd' }, '2G0g@<C-v>e', { { 2, 1, 0 }, { 2, 2, 0 } }, { 'ab' })
+    -- Exclusive motion: the block still includes the end.
+    assert_block({ 'abcd' }, '02|g@<C-v>l', { { 1, 2, 0 }, { 1, 3, 0 } }, { 'bc' })
+    command('set selection=exclusive')
+    assert_block({ 'abcd' }, '02|g@<C-v>l', { { 1, 2, 0 }, { 1, 2, 0 } }, { 'b' })
+    command('set selection&')
+    -- Short last line: '] keeps the right edge (past EOL).
     command('set virtualedit=block')
-    eq({
-      type = 'block',
-      marks = { { 1, 2, 0 }, { 3, 3, 1 } },
-      yank_marks = { { 1, 2, 0 }, { 3, 3, 1 } },
-      yank = { 'bcd', 'bcd', 'b  ' },
-    }, block({ 'abcdef', 'abcdef', 'ab' }, '1G4|g@<C-v>2j', '1G4|y<C-v>2j'))
-    command('set virtualedit=')
-  end)
-
-  it('deletes the block, not the whole lines', function()
+    assert_block(
+      { 'abcdef', 'abcdef', 'ab' },
+      '1G4|g@<C-v>2j',
+      { { 1, 2, 0 }, { 3, 3, 1 } },
+      { 'bcd', 'bcd', 'b  ' }
+    )
+    -- "d" deletes the block, not the lines.
     api.nvim_buf_set_lines(0, 0, -1, true, { 'ab', 'cd' })
     feed('gg0d<C-v>j')
-    eq({ 'b', 'd' }, api.nvim_buf_get_lines(0, 0, -1, true))
-
-    api.nvim_buf_set_lines(0, 0, -1, true, { 'ab', 'cd' })
-    feed('gg0<C-v>jd')
     eq({ 'b', 'd' }, api.nvim_buf_get_lines(0, 0, -1, true))
   end)
 end)
