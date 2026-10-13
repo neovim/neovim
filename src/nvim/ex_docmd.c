@@ -5876,6 +5876,7 @@ static void ex_detach(exarg_T *eap)
 
   if (eap && eap->forceit) {
     chan->detach = true;
+    channel_event(chan, EVENT_CHANINFO);
     msg(_("Nvim will continue running if the UI disconnects"), 0);
     return;
   }

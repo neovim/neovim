@@ -262,8 +262,21 @@ describe('TUI :detach', function()
       end)
     end)
 
+    -- :detach! must emit ChanInfo with the current UI channel's updated detach flag.
+    local _, uis = child_session:request('nvim_list_uis')
+    eq(1, #uis)
+    local _, info = child_session:request('nvim_get_chan_info', uis[1].chan)
+    eq(false, info.detach)
+    child_session:request('nvim_command', 'autocmd ChanInfo * let g:info_event = deepcopy(v:event)')
+
     feed_data('\027\027:detach!\013')
     screen:expect({ any = vim.pesc('Nvim will continue running') })
+
+    info.detach = true
+    retry(nil, nil, function()
+      local _, event = child_session:request('nvim_get_var', 'info_event')
+      eq({ info = info }, event)
+    end)
 
     -- Unlike ":detach", the UI is still attached.
     eq(1, #({ child_session:request('nvim_list_uis') })[2])
