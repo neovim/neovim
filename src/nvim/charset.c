@@ -602,42 +602,6 @@ int char2cells(int c)
   return ascii2cells(c);
 }
 
-/// Return the number of character cells string "s" will take on the screen,
-/// counting TABs as two characters: "^I".
-///
-/// 's' must be non-null.
-///
-/// @param s
-///
-/// @return number of character cells.
-int vim_strsize(const char *s)
-{
-  return vim_strnsize(s, MAXCOL);
-}
-
-/// Return the number of character cells string "s[len]" will take on the
-/// screen, counting TABs as two characters: "^I".
-///
-/// 's' must be non-null.
-///
-/// @param s
-/// @param len
-///
-/// @return Number of character cells.
-int vim_strnsize(const char *s, int len)
-{
-  assert(s != NULL);
-  int size = 0;
-  StrCharInfo ci = utf_ptr2StrCharInfo(s);
-  while (*ci.ptr != NUL && len > 0) {
-    ClusterInfo cli = utf_ClusterInfo(ci);
-    size += cli.cells;
-    len -= (int)(cli.next.ptr - ci.ptr);
-    ci = cli.next;
-  }
-  return size;
-}
-
 /// Checks that `c` is an identifier character, as decided by the 'isident' option.
 /// Chars >= 256 never are.
 ///

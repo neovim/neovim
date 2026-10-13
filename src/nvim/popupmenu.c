@@ -779,7 +779,7 @@ void pum_redraw(void)
           if (pum_rl) {
             char *rt = reverse_text(st);
             char *rt_start = rt;
-            int cells = (int)mb_string2cells(rt);
+            int cells = mb_string2cells(rt);
             int pad = next_isempty ? 0 : 2;
             if (width_limit - totwidth < cells + pad) {
               need_fcs_trunc = true;
@@ -810,7 +810,7 @@ void pum_redraw(void)
             xfree(st);
             grid_col -= width;
           } else {
-            int cells = (int)mb_string2cells(st);
+            int cells = mb_string2cells(st);
             int pad = next_isempty ? 0 : 2;
             if (width_limit - totwidth < cells + pad) {
               need_fcs_trunc = true;

@@ -316,13 +316,12 @@ bool op_reg_set_previous(const char name)
 void update_yankreg_width(yankreg_T *reg)
 {
   if (reg->y_type == kMTBlockWise) {
-    size_t maxlen = 0;
+    int maxlen = 0;
     for (size_t i = 0; i < reg->y_size; i++) {
-      size_t rowlen = mb_string2cells_len(reg->y_array[i].data, reg->y_array[i].size);
+      int rowlen = mb_string2cells_len(reg->y_array[i].data, reg->y_array[i].size);
       maxlen = MAX(maxlen, rowlen);
     }
-    assert(maxlen <= INT_MAX);
-    reg->y_width = MAX(reg->y_width, (int)maxlen - 1);
+    reg->y_width = MAX(reg->y_width, maxlen - 1);
   }
 }
 
@@ -2628,15 +2627,14 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
   size_t lnum = y_ptr->y_size;  // The current line number.
 
   // If called with `blocklen < 0`, we have to update the yank reg's width.
-  size_t maxlen = 0;
+  colnr_T maxlen = 0;
 
   // Find the end of each line and save it into the array.
   if (str_list) {
     for (char **ss = (char **)str; *ss != NULL; ss++, lnum++) {
       pp[lnum] = cstr_to_string(*ss);
       if (yank_type == kMTBlockWise) {
-        // TODO(bfredl): mb_string2cells should behave the same as vim_strsize
-        size_t charlen = (size_t)vim_strsize(*ss);
+        int charlen = mb_string2cells(*ss);
         maxlen = MAX(maxlen, charlen);
       }
     }
@@ -2649,8 +2647,8 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
       const char *line_end = memchr(start, '\n', (size_t)(end - start));
       line_len = (size_t)((line_end ? line_end : end) - start);
       if (yank_type == kMTBlockWise) {
-        size_t charlen = mb_string2cells_len(start, line_len);
-        maxlen = MAX(maxlen, (size_t)charlen);
+        int charlen = mb_string2cells_len(start, line_len);
+        maxlen = MAX(maxlen, charlen);
       }
 
       // When appending, copy the previous line and free it after.
