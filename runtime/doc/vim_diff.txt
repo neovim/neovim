@@ -149,7 +149,6 @@ you never want any default mappings, call |:mapclear| early in your config.
 - <C-W> |i_CTRL-W-default|
 - <C-L> |CTRL-L-default|
 - & |&-default|
-- - |dir-mappings|
 - @ |v_@-default|
 - # |v_#-default|
 - * |v_star-default|

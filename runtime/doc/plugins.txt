@@ -46,9 +46,13 @@ Help-link		Loaded	Short description ~
 ==============================================================================
 Builtin plugin: dir                                                      *dir*
 
-Nvim opens a directory listing when you |:edit| a directory path, handled by
-the builtin "dir" plugin.  The listing is read-only, dir.lua does not provide
+Nvim opens a directory listing when you || a directory path, handled by
+the builtin "dir" plugin. The listing is read-only, dir.lua does not provide
 actions which modify the filesystem.
+
+Use || with a directory path to open a directory listing. For example,
+:edit . opens the current working directory, and :edit %:h opens the
+directory containing the current file.
 
 Each "dir" buffer is initialized as follows:
 - Sets 'filetype' to "directory".
@@ -60,12 +64,6 @@ Each "dir" buffer is initialized as follows:
 To disable the built-in directory browser, set this before startup: >lua
     vim.g.loaded_nvim_dir_plugin = 1
 <
-
-GLOBAL MAPPINGS                                                 *dir-mappings*
-
-• - opens the parent directory of the current file or directory.
-• {count}- is like -, but a count of 1 opens the global working directory,
-  and a higher count goes up that many levels.
 
 BUFFER-LOCAL MAPPINGS                                    *dir-buffer-mappings*
 
