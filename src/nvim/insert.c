@@ -963,7 +963,14 @@ static int insert_handle_key(InsertState *s)
         Ins.dont_sync_undo = kNone;
       }
     } else if (s->c == K_COMMAND) {
-      do_cmdline(NULL, getcmdkeycmd, NULL, 0);
+      exarg_T ea = {
+        .cmd = NULL,
+        .line1 = 1,
+        .line2 = 1,
+        .ea_getline = getcmdkeycmd,
+        .cookie = NULL
+      };
+      do_cmdline(&ea, 0);
     } else {
       map_execute_lua(false, false);
     }

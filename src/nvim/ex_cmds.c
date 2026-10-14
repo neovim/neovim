@@ -2917,7 +2917,14 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
   curbuf->b_last_used = time(NULL);
 
   if (command != NULL) {
-    do_cmdline(command, NULL, NULL, DOCMD_VERBOSE);
+    exarg_T ea = {
+      .cmd = command,
+      .line1 = 1,
+      .line2 = 1,
+      .ea_getline = NULL,
+      .cookie = NULL
+    };
+    do_cmdline(&ea, DOCMD_VERBOSE);
   }
 
   if (curbuf->b_kmap_state & KEYMAP_INIT) {
@@ -4611,11 +4618,14 @@ static void global_exe_one(char *const cmd, const linenr_T lnum)
 {
   curwin->w_cursor.lnum = lnum;
   curwin->w_cursor.col = 0;
-  if (*cmd == NUL || *cmd == '\n') {
-    do_cmdline("p", NULL, NULL, DOCMD_NOWAIT);
-  } else {
-    do_cmdline(cmd, NULL, NULL, DOCMD_NOWAIT);
-  }
+  exarg_T ea = {
+    .cmd = (*cmd == NUL || *cmd == '\n') ? "p" : cmd,
+    .line1 = lnum,
+    .line2 = lnum,
+    .ea_getline = NULL,
+    .cookie = NULL,
+  };
+  do_cmdline(&ea, DOCMD_NOWAIT);
 }
 
 /// Execute a global command of the form:

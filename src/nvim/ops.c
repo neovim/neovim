@@ -3212,6 +3212,10 @@ void cursor_pos_info(dict_T *dict)
 /// here. For OP_COLON/OP_FILTER the user types the rest after the stuffed part.
 static void op_colon(oparg_T *oap)
 {
+  if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
+    curbuf->b_op_start = oap->start;
+    curbuf->b_op_end = oap->end;
+  }
   if (oap->is_VIsual) {
     stuffReadbuff("'<,'>");
   } else {
@@ -3261,7 +3265,14 @@ static void op_colon(oparg_T *oap)
     stuffReadbuff("\n']");
   }
 
-  do_cmdline(NULL, getexline, NULL, 0);
+  exarg_T ea = {
+    .cmd = NULL,
+    .line1 = 1,
+    .line2 = 1,
+    .ea_getline = getexline,
+    .cookie = NULL,
+  };
+  do_cmdline(&ea, 0);
   // Keys stuffed past the cmdline ("']" for OP_FORMAT): internal cleanup, not an atom.
   atom_suppress(true);
   exec_stuffed(NULL);
