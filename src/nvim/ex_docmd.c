@@ -6935,12 +6935,11 @@ static void ex_copymove(exarg_T *eap)
     return;
   }
 
-  if (eap->cmdidx == CMD_move) {
-    if (do_move(eap->line1, eap->line2, n) == FAIL) {
-      return;
-    }
-  } else {
-    ex_copy(eap->line1, eap->line2, n);
+  int status = (eap->cmdidx == CMD_move)
+               ? do_move(eap->line1, eap->col1, eap->line2, eap->col2, n, addr.col)
+               : ex_copy(eap->line1, eap->col1, eap->line2, eap->col2, n, addr.col);
+  if (status == FAIL) {
+    return;
   }
   u_clearline(curbuf);
   beginline(BL_SOL | BL_FIX);

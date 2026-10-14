@@ -1460,8 +1460,22 @@ void ex_retab(exarg_T *eap)
     int col = 0;
     int64_t vcol = 0;
     bool did_undo = false;  // called u_save for current line
+    bool is_charwise = (eap->addr_type == ADDR_POSITIONS)
+                       && (eap->addr_mode == kOmCharWise || eap->col2 != MAXCOL);
+    int min_col = (is_charwise && lnum == eap->line1) ? eap->col1 : 0;
+    int max_col = (is_charwise && lnum == eap->line2) ? eap->col2 : old_len;
+
     while (true) {
-      if (ascii_iswhite(ptr[col])) {
+      if (col < min_col) {
+        if (ptr[col] == NUL) {
+          break;
+        }
+        vcol += win_chartabsize(curwin, ptr + col, (colnr_T)vcol);
+        col += utfc_ptr2len(ptr + col);
+        continue;
+      }
+
+      if (ascii_iswhite(ptr[col]) && col <= max_col) {
         if (!got_tab && num_spaces == 0) {
           // First consecutive white-space
           start_vcol = vcol;
@@ -1521,6 +1535,7 @@ void ex_retab(exarg_T *eap)
               new_line = curbuf->b_ml.ml_line_ptr;
               extmark_splice_cols(curbuf, lnum - 1, 0, (colnr_T)old_len,
                                   (colnr_T)new_len - 1, kExtmarkUndo);
+              max_col += (new_len - 1) - old_len;
             }
             if (first_line == 0) {
               first_line = lnum;
@@ -1538,7 +1553,7 @@ void ex_retab(exarg_T *eap)
           break;
         }
       }
-      if (ptr[col] == NUL) {
+      if (ptr[col] == NUL || col > max_col) {
         break;
       }
       vcol += win_chartabsize(curwin, ptr + col, (colnr_T)vcol);
