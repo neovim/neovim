@@ -4,9 +4,9 @@
 --- experimental, yet should be stable enough for daily use.
 ---
 ---Manages plugins only in a dedicated [vim.pack-directory]() (see |packages|):
----`site/pack/core/opt` subdirectory of "data" |standard-path|. Subdirectory `site` of "data"
----standard path needs to be part of 'packpath'. It usually is, but might not be
----in cases like |--clean| or setting |$XDG_DATA_HOME| during startup.
+---`site/pack/core/opt` subdirectory of "data" |standard-path|. Managed plugins are
+---loaded by their directory, independently of 'packpath'. Other packages with
+---the same name are not loaded.
 ---Plugin's subdirectory name matches plugin's name in specification.
 ---It is assumed that all plugins in the directory are managed exclusively by `vim.pack`.
 ---
@@ -610,7 +610,7 @@ local function source_manifest_script(p, name)
 
   local script_path = vim.fs.joinpath(p.path, (manifest.scripts or {})[name])
   vim._with({ cwd = p.path, o = { runtimepath = vim.o.runtimepath } }, function()
-    vim.cmd.packadd({ p.spec.name, bang = true })
+    api.nvim__packadd(p.path, false)
     ---@diagnostic disable-next-line: no-unknown
     local ok, err = pcall(vim.cmd.source, { script_path, magic = { file = false, bar = false } })
     if not ok then
@@ -971,10 +971,9 @@ local function pack_add(plug, load)
     return
   end
 
-  -- NOTE: The `:packadd` specifically seems to not handle spaces in dir name
-  vim.cmd.packadd({ vim.fn.escape(plug.spec.name, ' '), bang = not load, magic = { file = false } })
+  api.nvim__packadd(plug.path, load)
 
-  -- The `:packadd` only sources plain 'plugin/' files. Execute 'after/' scripts
+  -- Package loading only sources plain 'plugin/' files. Execute 'after/' scripts
   -- if not during startup (when they will be sourced later, even if
   -- `vim.pack.add` is inside user's 'plugin/')
   -- See https://github.com/vim/vim/issues/15584
@@ -1158,7 +1157,7 @@ end
 ---       subdirectory (via partial blobless `git clone`) and update revision
 ---       to match `version` (via `git checkout`). Plugin will not be on disk if
 ---       any step resulted in an error.
---- - For each plugin execute |:packadd| (or customizable `load` function) making
+--- - For each plugin load its directory (or call a customizable `load` function), making
 ---   it reachable by Nvim.
 ---
 --- Notes:

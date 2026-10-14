@@ -644,6 +644,15 @@ static bool find_runtime_cb(int num_fnames, char **fnames, bool all, void *c)
   return num_fnames > 0;
 }
 
+/// Add a known optional package directory. Used by vim.pack to avoid discovery globs.
+/// @nodoc
+void nvim__packadd(String path, Boolean load, Error *err)
+{
+  TRY_WRAP(err, {
+    runtime_pack_add(path.data, load, err);
+  });
+}
+
 /// @nodoc
 String nvim__get_lib_dir(void)
   FUNC_API_RET_ALLOC
