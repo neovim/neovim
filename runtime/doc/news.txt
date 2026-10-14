@@ -601,7 +601,7 @@ These existing features changed their behavior.
   autocommand.
 • File names in 'directory', 'backupdir' and 'undodir' use |vim.fs.slug()|,
   instead of replacing path separators with "%". Existing files created by
-  older versions in such directories may no longer be found.
+  older versions in such directories will no longer be used.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
