@@ -308,17 +308,19 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
 /// |:set|: for global-local options, both the global and local value are set
 /// unless otherwise specified with {scope}.
 ///
-/// Note the options {win} and {buf} cannot be used together.
+/// Note that `win` and `buf` cannot be used together.
 ///
 /// @param name      Option name
-/// @param value     New option value
+/// @param value     New option value. May be structured for dict/list options, e.g. 'formatoptions'
+///                  accepts `{ 'c', 'r' }`, 'listchars' accepts `{ eol = '~' }`.
 /// @param opts      Optional parameters
 ///                  - buf: Buffer number. Used for setting buffer local option.
 ///                  - dry_run: (`boolean?`, default: false) If true, validates the
 ///                    option value without setting it.
-///                  - operation: One of "set", "append", "prepend", or "remove".
-///                    Corresponds to |:set=|, |:set+=|, |:set^=|, and |:set-=|.
-///                    Default is "set".
+///                  - operation: (`string?`, default: "set") One of "set", "append", "prepend", or
+///                    "remove". Corresponds to |:set=|, |:set+=|, |:set^=|, and |:set-=|.
+///                    With "remove", each item in a structured `value` is removed regardless of
+///                    order/adjacency.
 ///                  - scope: One of "global" or "local". Analogous to
 ///                  |:setglobal| and |:setlocal|, respectively.
 ///                  - tab: |tab-ID| for tab-local options (currently only 'cmdheight'). Tabpage 0
@@ -354,61 +356,81 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
     }
   }
 
-  // Convert the incoming value into an Object.
-  bool error = false;
-  Object optval_right = optval_from_obj(opt_idx, value, operation, &error);
-
-  VALIDATE_EXP(!error, name.data, "a valid type", api_typename(value.type), {
-    return NIL;
-  });
-
   Object merged_val = NIL;
   const char *errmsg = NULL;
   vimoption_T *option = get_option(opt_idx);
+  const bool is_array = value.type == kObjectTypeArray;
+  const bool is_dict = value.type == kObjectTypeDict;
 
   // Need to use varp specific to buf/win to ensure that merges are handled
   // correctly when the supplied buf/win are different than curbuf/curwin.
   buf_T *buf = scope == kOptScopeBuf ? to : curbuf;
   win_T *win = scope == kOptScopeWin ? to : curwin;
   void *varp = get_varp_from(option, buf, win);
-  char *argp = NULL;
 
-  switch (optval_right.type) {
-  case kObjectTypeUnset:
-  case kObjectTypeNil:
-    break;
-  case kObjectTypeString: {
-    char *optval_escaped = escape_option_str_cmdline(optval_right.data.string.data);
-    // We need a leading equal sign because get_option_newval is used for
-    // cmdline stuff and expects an =
-    argp = arena_printf(arena, "=%s", optval_escaped).data;
-    XFREE_CLEAR(optval_escaped);
-    break;
-  }
-  case kObjectTypeInteger:
-    argp = arena_printf(arena, "=%" PRId64, optval_right.data.integer).data;
-    break;
-  case kObjectTypeBoolean:
-    merged_val = optval_right;
-    break;
-  case kObjectTypeLuaRef:
-    // Callback option: no ":set"-style merge; take an independent ref for the set below.
-    merged_val = copy_object(optval_right, NULL);
-    break;
-  default:
-    abort();
-  }
+  // |:set-=| matches a contiguous substring, so can't remove non-contiguous items.
+  // Instead, remove one item at a time instead, merging each onto the previous result.
+  const size_t nitems = is_array ? value.data.array.size : (is_dict ? value.data.dict.size : 0);
+  const bool per_item = operation == OP_REMOVING && nitems > 0;
 
-  optval_free(optval_right);
+  for (size_t i = 0; i < (per_item ? nitems : 1); i++) {
+    Object item = value;
+    if (per_item && is_array) {
+      item = ARRAY_OBJ(((Array){ .items = &value.data.array.items[i], .size = 1 }));
+    } else if (per_item) {
+      item = DICT_OBJ(((Dict){ .items = &value.data.dict.items[i], .size = 1 }));
+    }
 
-  if (optval_right.type == kObjectTypeInteger || optval_right.type == kObjectTypeString) {
-    Object oldval = optval_own(opt_idx, opt_from_varp(opt_idx, varp));
-    merged_val = get_option_newval(opt_idx, opt_flags, PREFIX_NONE, &argp, 0, operation,
-                                   varp, &oldval, &errmsg);
-    optval_free(oldval);
-    VALIDATE(errmsg == NULL, "%s", errmsg, {
+    // Convert the incoming value to Object.
+    bool error = false;
+    Object optval_right = optval_from_obj(opt_idx, item, operation, &error);
+
+    VALIDATE_EXP(!error, name.data, "a valid type", api_typename(value.type), {
+      optval_free(merged_val);
       return NIL;
     });
+
+    char *argp = NULL;
+
+    switch (optval_right.type) {
+    case kObjectTypeUnset:
+    case kObjectTypeNil:
+      break;
+    case kObjectTypeString: {
+      char *optval_escaped = escape_option_str_cmdline(optval_right.data.string.data);
+      // We need a leading equal sign because get_option_newval is used for
+      // cmdline stuff and expects an =
+      argp = arena_printf(arena, "=%s", optval_escaped).data;
+      XFREE_CLEAR(optval_escaped);
+      break;
+    }
+    case kObjectTypeInteger:
+      argp = arena_printf(arena, "=%" PRId64, optval_right.data.integer).data;
+      break;
+    case kObjectTypeBoolean:
+      merged_val = optval_right;
+      break;
+    case kObjectTypeLuaRef:
+      // Callback option: no ":set"-style merge; take an independent ref for the set below.
+      merged_val = copy_object(optval_right, NULL);
+      break;
+    default:
+      abort();
+    }
+
+    optval_free(optval_right);
+
+    if (optval_right.type == kObjectTypeInteger || optval_right.type == kObjectTypeString) {
+      // The first item merges onto the option's value, each later one onto the running result.
+      Object oldval = i == 0 ? optval_own(opt_idx, opt_from_varp(opt_idx, varp)) : merged_val;
+      merged_val = get_option_newval(opt_idx, opt_flags, PREFIX_NONE, &argp, 0, operation, varp,
+                                     &oldval, &errmsg);
+      optval_free(oldval);
+      VALIDATE(errmsg == NULL, "%s", errmsg, {
+        optval_free(merged_val);
+        return NIL;
+      });
+    }
   }
 
   if (dry_run) {
