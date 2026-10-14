@@ -110,33 +110,34 @@ enum {
 
 /// Context before a temporary switch of current window/buffer. Undone by ctx_restore().
 typedef struct {
-  CtxSwitchFlags cs_flags;        ///< kCtx* flags of the switch
-  int cs_mode;                    ///< kCtxSwitch* (what was switched)
+  CtxSwitchFlags cs_flags;    ///< kCtx* flags of the switch
+  int cs_mode;                ///< kCtxSwitch* (what was switched)
   // Saved location:
-  handle_T cs_curwin;             ///< saved curwin
-  handle_T cs_prevwin;            ///< saved prevwin (ctx_switch())
-  tabpage_T *cs_curtab;           ///< saved curtab (NULL: tabpage unchanged)
-  bool cs_same_win;               ///< Visual.active was not reset
-  bool cs_visual_active;          ///< saved Visual.active
-  int cs_prompt_insert;           ///< saved b_prompt_insert
+  handle_T cs_curwin;         ///< saved curwin
+  bool cs_curwin_xtab;        ///< cs_curwin was outside curtab (e.g. for cross-tab 'statusline').
+  handle_T cs_prevwin;        ///< saved prevwin (ctx_switch())
+  tabpage_T *cs_curtab;       ///< saved curtab (NULL: tabpage unchanged)
+  bool cs_same_win;           ///< Visual.active was not reset
+  bool cs_visual_active;      ///< saved Visual.active
+  int cs_prompt_insert;       ///< saved b_prompt_insert
   // Temporary location (ctx_switch()):
-  handle_T cs_new_curwin;         ///< ID of new curwin
-  bufref_T cs_new_curbuf;         ///< new curbuf
-  int cs_ctxwin_idx;              ///< "autocmd" window in the ctx_win pool, or -1.
+  handle_T cs_new_curwin;     ///< ID of new curwin
+  bufref_T cs_new_curbuf;     ///< new curbuf
+  int cs_ctxwin_idx;          ///< "autocmd" window in the ctx_win pool, or -1.
   // Target tracking (kCtxValidate):
-  handle_T cs_target_win;         ///< the window switched to
-  pos_T cs_target_old_pos;        ///< its cursor before the switch
+  handle_T cs_target_win;     ///< the window switched to
+  pos_T cs_target_old_pos;    ///< its cursor before the switch
   // State kept across the switch:
-  bool cs_did_chdir;              ///< saved `ctx_did_chdir` of the enclosing context
-  handle_T cs_dirs_tab;           ///< kCtxKeepDirs: tabpage that owns cs_tp_localdir.
+  bool cs_did_chdir;          ///< saved `ctx_did_chdir` of the enclosing context
+  handle_T cs_dirs_tab;       ///< kCtxKeepDirs: tabpage that owns cs_tp_localdir.
   // Saved dir state. Three users:
   // 1. hidden-buffer target always saves b/tp/globaldir (so the temp context starts dir-neutral)
   // 2. kCtxKeepCwd saves globaldir.
   // 3. kCtxKeepDirs also saves w/b/tp-localdir.
-  char *cs_w_localdir;            ///< Saved w_localdir of the target window
-  char *cs_b_localdir;            ///< Saved b_localdir of the target buffer
-  char *cs_tp_localdir;           ///< Saved tp_localdir
-  char *cs_globaldir;             ///< Saved globaldir
-  char *cs_cwd;                   ///< Saved CWD (kCtxKeepCwd/kCtxKeepDirs).
-  bool cs_apply_acd;              ///< Re-apply 'autochdir' on ctx_restore().
+  char *cs_w_localdir;        ///< Saved w_localdir of the target window
+  char *cs_b_localdir;        ///< Saved b_localdir of the target buffer
+  char *cs_tp_localdir;       ///< Saved tp_localdir
+  char *cs_globaldir;         ///< Saved globaldir
+  char *cs_cwd;               ///< Saved CWD (kCtxKeepCwd/kCtxKeepDirs).
+  bool cs_apply_acd;          ///< Re-apply 'autochdir' on ctx_restore().
 } CtxSwitch;

@@ -442,14 +442,16 @@ describe('vim._with', function()
     it('discards ":bcd"/":lcd" that a `buf`/`win` context would keep', function()
       local out = exec_lua [[
         local other_buf, _ = setup_buffers()
-        local other_win, _ = setup_windows()
+        vim.cmd.tabnew() -- `win` in another tabpage.
+        local other_win = api.nvim_get_current_win()
+        vim.cmd.tabprevious()
         local cwd = fn.getcwd()
         local dir = vim.fs.joinpath(cwd, 'test')
         vim._with({ buf = other_buf, keepcwd = true }, function() vim.cmd.bcd(dir) end)
         vim._with({ win = other_win, keepcwd = true }, function() vim.cmd.lcd(dir) end)
         return {
           fn.haslocaldir(-1, -1, other_buf),
-          fn.haslocaldir(fn.win_id2win(other_win)),
+          fn.haslocaldir(1, 2),
           fn.getcwd() == cwd,
         }
       ]]

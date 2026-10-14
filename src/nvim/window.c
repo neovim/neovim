@@ -1762,8 +1762,8 @@ bool tabpage_win_valid(const tabpage_T *tp, const win_T *win)
   return false;
 }
 
-// Find window "handle" in the current tab page.
-// Return NULL if not found.
+/// Finds window `handle` in the current tabpage, or NULL.
+/// Note: use handle_get_window() to search all tabpages.
 win_T *win_find_by_handle(handle_T handle)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
