@@ -11,7 +11,6 @@
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
 #include "nvim/decoration_provider.h"
-#include "nvim/extmark.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
 #include "nvim/log.h"
@@ -64,7 +63,6 @@ static bool decor_provider_invoke(int provider_idx, const char *name, LuaRef ref
 
     if (provider->error_count >= CB_MAX_ERROR) {
       provider->state = kDecorProviderDisabled;
-      decor_provider_clear_conceal_bufs(provider->ns_id);
     }
   }
 
@@ -90,10 +88,8 @@ void decor_providers_invoke_spell(win_T *wp, int start_row, int start_col, int e
   }
 }
 
-/// @return whether a provider placed any marks in the callback.
-bool decor_providers_invoke_conceal_line(win_T *wp, int row)
+void decor_providers_invoke_conceal_line(win_T *wp, int row)
 {
-  size_t keys = wp->w_buffer->b_marktree->n_keys;
   for (size_t i = 0; i < kv_size(decor_providers); i++) {
     DecorProvider *p = &kv_A(decor_providers, i);
     if (p->state != kDecorProviderDisabled && p->conceal_line != LUA_NOREF) {
@@ -104,96 +100,25 @@ bool decor_providers_invoke_conceal_line(win_T *wp, int row)
       decor_provider_invoke((int)i, "conceal_line", p->conceal_line, args, true, NULL);
     }
   }
-  return wp->w_buffer->b_marktree->n_keys > keys;
 }
 
-/// Invokes the `_on_conceal` callback for buffer row "row", so a provider can add the row's conceal
+/// Invokes the `_on_conceal` callback for buffer row `row`, so a provider can add the row's conceal
 /// to the marktree, where both drawing and geometry read it. No-op unless 'conceallevel' is set and
-/// such a provider exists; providers cache their per-row work, so repeated calls are cheap.
-///
-/// @return whether a provider placed any marks in the callback.
-bool decor_providers_invoke_conceal(win_T *wp, int row)
+/// the buffer has such a provider (see nvim__buf_set_conceal_provider()); providers cache their
+/// per-row work, so repeated calls are cheap.
+void decor_providers_invoke_conceal(win_T *wp, int row)
 {
-  if (row < 0 || wp->w_p_cole < 1 || map_size(wp->w_buffer->b_conceal_providers) == 0) {
-    return false;
+  if (row < 0 || wp->w_p_cole < 1 || wp->w_buffer->b_conceal_providers == 0) {
+    return;
   }
-  size_t keys = wp->w_buffer->b_marktree->n_keys;
   for (size_t i = 0; i < kv_size(decor_providers); i++) {
     DecorProvider *p = &kv_A(decor_providers, i);
-    if (p->state != kDecorProviderDisabled && p->conceal != LUA_NOREF
-        && map_has(uint32_t, wp->w_buffer->b_conceal_providers, (uint32_t)p->ns_id)) {
+    if (p->state != kDecorProviderDisabled && p->conceal != LUA_NOREF) {
       MAXSIZE_TEMP_ARRAY(args, 3);
       ADD_C(args, INTEGER_OBJ(wp->handle));
       ADD_C(args, INTEGER_OBJ(wp->w_buffer->handle));
       ADD_C(args, INTEGER_OBJ(row));
       decor_provider_invoke((int)i, "conceal", p->conceal, args, true, NULL);
-    }
-  }
-  return wp->w_buffer->b_marktree->n_keys > keys;
-}
-
-/// @return whether "buf" has a decoration provider enabled for intra-line conceal.
-bool decor_has_conceal_providers(buf_T *buf)
-{
-  if (map_size(buf->b_conceal_providers) == 0) {
-    return false;
-  }
-  for (size_t i = 0; i < kv_size(decor_providers); i++) {
-    DecorProvider *p = &kv_A(decor_providers, i);
-    if (p->state != kDecorProviderDisabled && p->conceal != LUA_NOREF
-        && map_has(uint32_t, buf->b_conceal_providers, (uint32_t)p->ns_id)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-void decor_provider_set_conceal_buf(buf_T *buf, NS ns_id, NS conceal_ns_id, bool enabled)
-{
-  uint32_t old_ns = map_get(uint32_t, uint32_t)(buf->b_conceal_providers, (uint32_t)ns_id);
-  bool changed = false;
-  if (enabled) {
-    if (old_ns != (uint32_t)conceal_ns_id) {
-      map_put(uint32_t, uint32_t)(buf->b_conceal_providers, (uint32_t)ns_id,
-                                  (uint32_t)conceal_ns_id);
-      changed = true;
-    }
-  } else if (old_ns != 0) {
-    map_del(uint32_t, uint32_t)(buf->b_conceal_providers, (uint32_t)ns_id, NULL);
-    changed = true;
-  }
-
-  if (changed) {
-    if (old_ns != 0 && (!enabled || old_ns != (uint32_t)conceal_ns_id)) {
-      extmark_clear(buf, old_ns, 0, 0, MAXLNUM - 1, MAXCOL);
-    }
-    FOR_ALL_TAB_WINDOWS(tp, wp) {
-      if (wp->w_buffer == buf) {
-        changed_window_setting(wp);
-      }
-    }
-  }
-}
-
-void decor_provider_clear_conceal_bufs(NS ns_id)
-{
-  FOR_ALL_BUFFERS(buf) {
-    decor_provider_set_conceal_buf(buf, ns_id, 0, false);
-  }
-}
-
-void decor_provider_clear_conceal_marks(NS ns_id)
-{
-  FOR_ALL_BUFFERS(buf) {
-    uint32_t conceal_ns = map_get(uint32_t, uint32_t)(buf->b_conceal_providers, (uint32_t)ns_id);
-    if (conceal_ns == 0) {
-      continue;
-    }
-    extmark_clear(buf, conceal_ns, 0, 0, MAXLNUM - 1, MAXCOL);
-    FOR_ALL_TAB_WINDOWS(tp, wp) {
-      if (wp->w_buffer == buf) {
-        changed_window_setting(wp);
-      }
     }
   }
 }
@@ -434,7 +359,6 @@ void decor_provider_clear(DecorProvider *p)
 void decor_free_all_mem(void)
 {
   for (size_t i = 0; i < kv_size(decor_providers); i++) {
-    decor_provider_clear_conceal_bufs(kv_A(decor_providers, i).ns_id);
     decor_provider_clear(&kv_A(decor_providers, i));
   }
   kv_destroy(decor_providers);

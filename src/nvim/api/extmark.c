@@ -403,10 +403,9 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buf, Integer ns_i
 ///                     Non-empty char is used as |:syn-cchar|. Highlighted with "hl_group" if
 ///                     defined, else defaults to |hl-Conceal|.
 ///                   - boolean: true is equivalent to "", false removes any existing conceal.
-///                 With 'wrap', active persistent conceal determines the displayed layout,
-///                 including its replacement. Syntax, match, or ephemeral conceal cannot
-///                 override that layout at the same position. Other highlight attributes
-///                 retain their usual priority; use a persistent conceal override to change layout.
+///                 With 'wrap', lines wrap at their concealed width, and extmark-conceal (not
+///                 `ephemeral`) takes precedence over |:syn-conceal|, |matchadd()| and `ephemeral`
+///                 conceal at the same position.
 ///               - conceal_lines: (string) Line-level conceal. When set to an empty string (other
 ///                 values reserved for future use), the lines in the extmark range are not drawn;
 ///                 the next non-concealed line is drawn in their place. Requires 'conceallevel' >=
@@ -1078,9 +1077,6 @@ void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *
 {
   DecorProvider *p = get_decor_provider((NS)ns_id, true);
   assert(p != NULL);
-  if (p->conceal != LUA_NOREF) {
-    decor_provider_clear_conceal_marks(p->ns_id);
-  }
   decor_provider_clear(p);
 
   // regardless of what happens, it seems good idea to redraw
@@ -1117,49 +1113,24 @@ void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *
   p->state = kDecorProviderActive;
   p->hl_valid++;
   p->hl_cached = false;
-  if (p->conceal == LUA_NOREF) {
-    decor_provider_clear_conceal_bufs(p->ns_id);
-  }
 }
 
 /// @nodoc
-/// "conceal_ns_id" must identify a dedicated namespace for conceal marks added by this provider.
-void nvim__buf_set_conceal_provider(Buffer buf, Integer ns_id, Integer conceal_ns_id,
-                                    Boolean enabled, Error *err)
+/// Enables (or disables) the `_on_conceal` decoration providers for `buf`: measuring a row runs
+/// them first, so rows not yet drawn are measured concealed. Each enable needs one disable.
+void nvim__buf_set_conceal_provider(Buffer buf, Boolean enabled, Error *err)
   FUNC_API_LUA_ONLY
 {
   buf_T *b = find_buffer_by_handle(buf, err);
   if (b == NULL) {
     return;
   }
-  VALIDATE(ns_id > 0, "%s", "namespace id must be positive", {
-    return;
-  });
-  VALIDATE(!enabled || conceal_ns_id > 0, "%s",
-           "conceal namespace id must be positive", {
-    return;
-  });
-  VALIDATE(!enabled || conceal_ns_id != ns_id, "%s",
-           "conceal namespace must differ from provider namespace", {
-    return;
-  });
-  bool namespace_in_use = false;
-  uint32_t provider_ns;
-  uint32_t conceal_ns;
-  map_foreach(b->b_conceal_providers, provider_ns, conceal_ns, {
-    namespace_in_use |= provider_ns != (uint32_t)ns_id
-                        && conceal_ns == (uint32_t)conceal_ns_id;
-  });
-  VALIDATE(!enabled || !namespace_in_use, "%s",
-           "conceal namespace is already in use", {
-    return;
-  });
-  DecorProvider *provider = get_decor_provider((NS)ns_id, false);
-  VALIDATE(!enabled || (provider != NULL && provider->conceal != LUA_NOREF),
-           "%s", "namespace has no _on_conceal provider", {
-    return;
-  });
-  decor_provider_set_conceal_buf(b, (NS)ns_id, (NS)conceal_ns_id, enabled);
+  b->b_conceal_providers = MAX(b->b_conceal_providers + (enabled ? 1 : -1), 0);
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_buffer == b) {
+      changed_window_setting(wp);
+    }
+  }
 }
 
 /// Gets the line and column of an |extmark|.

@@ -1879,5 +1879,19 @@ describe('window motions and scrolling with conceal-aware wrap (#14409)', functi
       { 1, 18, 1, 7 },
       { api.nvim_win_get_cursor(0)[1], fn.winsaveview().skipcol, fn.winline(), fn.wincol() }
     )
+
+    -- So does update_topline(): a cursor entering the topline above the skipped part scrolls back.
+    command('set nolinebreak nobreakindent showbreak= nonumber norelativenumber conceallevel=2')
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      ('%s%s%s%s'):format(('H'):rep(10), ('a'):rep(15), ('b'):rep(20), ('c'):rep(20)),
+      'END',
+    })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_col = 10, conceal = '' })
+    api.nvim_win_set_cursor(0, { 1, 10 })
+    feed('<C-E>j')
+    eq(22, fn.winsaveview().skipcol)
+    api.nvim_win_set_cursor(0, { 1, 28 })
+    eq({ 0, 1, 19 }, { fn.winsaveview().skipcol, fn.winline(), fn.wincol() })
   end)
 end)

@@ -378,7 +378,7 @@ void update_topline(win_T *wp)
 
         // Check that the cursor position is visible.  Add columns for
         // the marker displayed in the top-left if needed.
-        getvvcol(wp, &wp->w_cursor, &vcol, NULL, NULL, 0);
+        getvvcol(wp, &wp->w_cursor, &vcol, NULL, NULL, GETVCOL_CONCEAL);
         int overlap = sms_marker_overlap(wp, -1);
         if (wp->w_skipcol + overlap > vcol) {
           check_topline = true;
@@ -589,17 +589,20 @@ void check_cursor_moved(win_T *wp)
     wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL
                      |VALID_CHEIGHT|VALID_CROW|VALID_TOPLINE);
 
-    // Concealed line visibility toggled: a line whose height changes when it is revealed or
-    // concealed shifts the layout of the lines below, so the whole window must be redrawn (see
-    // extconceal_line_changes_height()). Whole-line conceal ('conceal_lines') is covered by
-    // decor_conceal_line().
     if (wp == curwin && wp->w_valid_cursor.lnum > 0 && wp->w_p_cole >= 1
-        && !conceal_cursor_line(wp)
-        && (decor_conceal_line(wp, wp->w_cursor.lnum - 1, true)
-            || decor_conceal_line(wp, wp->w_valid_cursor.lnum - 1, true)
-            || extconceal_line_changes_height(wp, wp->w_cursor.lnum)
-            || extconceal_line_changes_height(wp, wp->w_valid_cursor.lnum))) {
-      changed_window_setting(wp);
+        && !conceal_cursor_line(wp)) {
+      linenr_T const old = wp->w_valid_cursor.lnum;
+      linenr_T const new = wp->w_cursor.lnum;
+      // Concealed line visibility toggled.
+      if (decor_conceal_line(wp, new - 1, true) || decor_conceal_line(wp, old - 1, true)) {
+        changed_window_setting(wp);
+      } else if (has_extconceal(wp) && Visual.active) {
+        // The Visual area grew or shrank between the old and new cursor line.
+        conceal_reveal_changed(wp, MIN(old, new), MAX(old, new));
+      } else if (has_extconceal(wp)) {
+        conceal_reveal_changed(wp, old, old);
+        conceal_reveal_changed(wp, new, new);
+      }
     }
     wp->w_valid_cursor = wp->w_cursor;
     wp->w_valid_leftcol = wp->w_leftcol;
@@ -868,7 +871,7 @@ void validate_cursor_col(win_T *wp)
     return;
   }
 
-  colnr_T col = cursor_screen_col(wp);
+  colnr_T col = cursor_disp_vcol(wp);
   colnr_T off = win_col_off(wp);
   col += off;
   int width = wp->w_view_width - off + win_col_off2(wp);
@@ -909,21 +912,15 @@ int win_col_off2(win_T *wp)
   return 0;
 }
 
-/// Requires valid w_virtcol; reuse it unless wrapping conceal can change the layout.
-static colnr_T cursor_screen_col(win_T *wp)
+/// Cursor vcol, displayed (see CharsizeArg.extconceal_off). Requires valid w_virtcol.
+colnr_T cursor_disp_vcol(win_T *wp)
 {
-  if (!wp->w_p_wrap || !maybe_extconceal_line(wp, wp->w_cursor.lnum)) {
+  if (!line_has_extconceal(wp, wp->w_cursor.lnum)) {
     return wp->w_virtcol;
   }
   colnr_T vcol;
   getvvcol(wp, &wp->w_cursor, NULL, &vcol, NULL, GETVCOL_CONCEAL);
-  colnr_T col = wp->w_cursor.col;
-  char *line = ml_get_buf(wp->w_buffer, wp->w_cursor.lnum);
-  if (line[col] == TAB && getvcol_tab_end(wp, &wp->w_cursor)) {
-    col++;
-  }
-  colnr_T const hidden = (colnr_T)extconceal_off_before(wp, wp->w_cursor.lnum, col, NULL, NULL);
-  return vcol - MIN(vcol, hidden);
+  return vcol;
 }
 
 // Compute wp->w_wcol and wp->w_virtcol.
@@ -957,7 +954,7 @@ void curs_columns(win_T *wp, int may_scroll)
   }
 
   int extra = win_col_off(wp);
-  colnr_T const cursor_col = wp->w_cline_folded ? wp->w_virtcol : cursor_screen_col(wp);
+  colnr_T const cursor_col = wp->w_cline_folded ? wp->w_virtcol : cursor_disp_vcol(wp);
   wp->w_wcol = cursor_col + extra;
   endcol += extra;
 
@@ -1209,35 +1206,7 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
       coloff = (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1 + off;
     } else {
       assert(lnum == pos->lnum);
-      getvcol(wp, pos, &scol, &ccol, &ecol, wp->w_p_wrap ? GETVCOL_CONCEAL : 0);
-
-      // Convert the virtual columns to screen-layout columns when conceal hides cells on this line,
-      // so screenpos() reflects the reflowed (displayed) position, not the pre-conceal one.
-      ConcealOffState conceal_state = { 0 };
-      colnr_T bytecol = MIN(pos->col, ml_get_buf_len(wp->w_buffer, pos->lnum));
-      colnr_T const coff = wp->w_p_wrap
-                           ? (colnr_T)extconceal_off_before(wp, pos->lnum, bytecol, NULL,
-                                                            &conceal_state)
-                           : 0;
-      colnr_T ecoff = coff;
-      bool tab_end = false;
-      if (wp->w_p_wrap) {
-        char *line = ml_get_buf(wp->w_buffer, pos->lnum);
-        // getvcol() leaves MAXCOL unchanged; provider callbacks may also replace the line.
-        bytecol = MIN(bytecol, ml_get_buf_len(wp->w_buffer, pos->lnum));
-        tab_end = line[bytecol] == TAB && getvcol_tab_end(wp, pos);
-        if (line[bytecol] != NUL) {
-          colnr_T const next = bytecol + utfc_ptr2len(line + bytecol);
-          ecoff =
-            (colnr_T)extconceal_off_before(wp, pos->lnum, next, NULL, &conceal_state);
-        }
-      }
-      if (coff != 0) {
-        scol = MAX(scol - coff, 0);
-      }
-      ccol = MAX(ccol - (tab_end ? ecoff : coff), 0);
-      ecol = MAX(ecol - ecoff, 0);
-      extconceal_off_end(&conceal_state);
+      getvcol(wp, pos, &scol, &ccol, &ecol, GETVCOL_CONCEAL);
 
       // similar to what is done in validate_cursor_col()
       colnr_T col = scol;
@@ -1369,7 +1338,7 @@ static void cursor_correct_sms(win_T *wp)
   int width2 = width1 + win_col_off2(wp);
   int64_t so_cols = so == 0 ? 0 : width1 + (so - 1) * width2;
   int space_cols = (wp->w_view_height - 1) * width2;
-  int size = so == 0 ? 0 : win_screen_linewidth_eol(wp, wp->w_topline);
+  int size = so == 0 ? 0 : linetabsize_conceal_eol(wp, wp->w_topline);
 
   if (wp->w_topline == 1 && wp->w_skipcol == 0) {
     so_cols = 0;               // Ignore 'scrolloff' at top of buffer.
@@ -1392,8 +1361,7 @@ static void cursor_correct_sms(win_T *wp)
   int64_t bot = wp->w_skipcol + width1 + (wp->w_view_height - 1) * width2 - so_cols;
 
   validate_virtcol(wp);
-  bool const use_scol = maybe_extconceal_line(wp, wp->w_cursor.lnum);
-  colnr_T const cursor_col = use_scol ? cursor_screen_col(wp) : wp->w_virtcol;
+  colnr_T const cursor_col = cursor_disp_vcol(wp);
   colnr_T col = cursor_col;
 
   if (col < top) {
@@ -1410,7 +1378,7 @@ static void cursor_correct_sms(win_T *wp)
   }
 
   if (col != cursor_col) {
-    wp->w_curswant = use_scol ? scol2vcol(wp, wp->w_cursor.lnum, col) : col;
+    wp->w_curswant = disp_vcol2vcol(wp, wp->w_cursor.lnum, col);
     int rc = coladvance(wp, wp->w_curswant);
     // validate_virtcol() marked various things as valid, but after
     // moving the cursor they need to be recomputed
@@ -1418,7 +1386,7 @@ static void cursor_correct_sms(win_T *wp)
     if (rc == FAIL && wp->w_skipcol > 0
         && wp->w_cursor.lnum < wp->w_buffer->b_ml.ml_line_count) {
       validate_virtcol(wp);
-      colnr_T const cursor_after = use_scol ? cursor_screen_col(wp) : wp->w_virtcol;
+      colnr_T const cursor_after = cursor_disp_vcol(wp);
       if (cursor_after < wp->w_skipcol + overlap) {
         // Cursor still not visible: move it to the next line instead.
         wp->w_cursor.lnum++;
@@ -1542,7 +1510,7 @@ bool scrolldown(win_T *wp, linenr_T line_count, int byfold)
         todo++;
       } else {
         if (do_sms) {
-          int size = win_screen_linewidth_eol(wp, wp->w_topline);
+          int size = linetabsize_conceal_eol(wp, wp->w_topline);
           if (size > width1) {
             wp->w_skipcol = width1;
             size -= width1;
@@ -1582,7 +1550,7 @@ bool scrolldown(win_T *wp, linenr_T line_count, int byfold)
   if (wp->w_p_wrap && wp->w_view_width != 0) {
     validate_virtcol(wp);
     validate_cheight(wp);
-    colnr_T const cursor_col = cursor_screen_col(wp);
+    colnr_T const cursor_col = cursor_disp_vcol(wp);
     wrow += wp->w_cline_height - 1 -
             cursor_col / wp->w_view_width;
   }
@@ -1626,7 +1594,7 @@ bool scrollup(win_T *wp, linenr_T line_count, bool byfold)
     const colnr_T prev_skipcol = wp->w_skipcol;
 
     if (do_sms) {
-      size = win_screen_linewidth_eol(wp, wp->w_topline);
+      size = linetabsize_conceal_eol(wp, wp->w_topline);
     }
 
     // diff mode: first consume "topfill"
@@ -1670,7 +1638,7 @@ bool scrollup(win_T *wp, linenr_T line_count, bool byfold)
           wp->w_topfill = win_get_fill(wp, lnum);
           wp->w_skipcol = 0;
           if (todo > 1 && do_sms) {
-            size = win_screen_linewidth_eol(wp, wp->w_topline);
+            size = linetabsize_conceal_eol(wp, wp->w_topline);
           }
         }
       }
@@ -1735,7 +1703,7 @@ void adjust_skipcol(void)
   }
 
   validate_virtcol(curwin);
-  colnr_T const cursor_col = cursor_screen_col(curwin);
+  colnr_T const cursor_col = cursor_disp_vcol(curwin);
   int overlap = sms_marker_overlap(curwin, curwin->w_view_width - width2);
   while (curwin->w_skipcol > 0
          && cursor_col < curwin->w_skipcol + overlap + scrolloff_cols) {
@@ -1757,7 +1725,7 @@ void adjust_skipcol(void)
 
   // Avoid adjusting for 'scrolloff' beyond the text line height.
   if (scrolloff_cols > 0) {
-    int size = win_screen_linewidth_eol(curwin, curwin->w_topline);
+    int size = linetabsize_conceal_eol(curwin, curwin->w_topline);
     size = width1 + width2 * ((size - width1 + width2 - 1) / width2);
     while (col > size) {
       col -= width2;
@@ -1829,7 +1797,7 @@ void scrolldown_clamp(void)
   if (curwin->w_p_wrap && curwin->w_view_width != 0) {
     validate_cheight(curwin);
     validate_virtcol(curwin);
-    colnr_T const cursor_col = cursor_screen_col(curwin);
+    colnr_T const cursor_col = cursor_disp_vcol(curwin);
     end_row += curwin->w_cline_height - 1 -
                cursor_col / curwin->w_view_width;
   }
@@ -1866,7 +1834,7 @@ void scrollup_clamp(void)
                    - curwin->w_topfill);
   if (curwin->w_p_wrap && curwin->w_view_width != 0) {
     validate_virtcol(curwin);
-    colnr_T const cursor_col = cursor_screen_col(curwin);
+    colnr_T const cursor_col = cursor_disp_vcol(curwin);
     start_row -= cursor_col / curwin->w_view_width;
   }
   if (start_row >= get_scrolloff_value(curwin)) {
@@ -2028,7 +1996,7 @@ void scroll_cursor_top(win_T *wp, int min_scroll, int always)
       reset_skipcol(wp);
     } else if (wp->w_topline == wp->w_cursor.lnum) {
       validate_virtcol(wp);
-      colnr_T const cursor_col = cursor_screen_col(wp);
+      colnr_T const cursor_col = cursor_disp_vcol(wp);
       if (wp->w_skipcol >= cursor_col) {
         // Skip up to the screen line the cursor is in, so that the
         // position in the line is kept.
@@ -2614,7 +2582,7 @@ static bool scroll_with_sms(Direction dir, int count, int *curscount)
     int width2 = width1 + win_col_off2(curwin);
     count = 1 + (curwin->w_skipcol - width1 - 1) / width2;
     if (fixdir == FORWARD) {
-      count = 1 + (win_screen_linewidth_eol(curwin, curwin->w_topline)
+      count = 1 + (linetabsize_conceal_eol(curwin, curwin->w_topline)
                    - curwin->w_skipcol - width1 + width2 - 1) / width2;
     }
     scroll_redraw(fixdir == FORWARD, count);

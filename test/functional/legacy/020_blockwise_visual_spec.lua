@@ -65,7 +65,7 @@ test text]])
     -- Block-select raw columns 2-4 across all 3 lines and delete: the concealed line's selection
     -- must use the same raw column range as the two plain lines, not a screen-adjusted one.
     api.nvim_win_set_cursor(0, { 1, 2 })
-    feed('<C-v>2jll' .. 'd')
+    feed('<C-v>2jlld')
     eq({
       '0156789',
       'aaDDENbbb9',
@@ -89,7 +89,7 @@ test text]])
           api.nvim_buf_set_extmark(0, ns, 0, 19, { end_col = 22, conceal = '' })
         end
         api.nvim_win_set_cursor(0, { 1, 22 })
-        feed('<C-v>j' .. keys)
+        feed(('<C-v>j%s'):format(keys))
         results[#results + 1] = {
           n.fn.getreg('"'),
           api.nvim_buf_get_lines(0, 0, -1, true),

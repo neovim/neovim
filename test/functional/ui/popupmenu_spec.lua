@@ -50,9 +50,9 @@ describe('ui/ext_popupmenu', function()
       for _, noinsert in ipairs({ false, true }) do
         command('set wrap conceallevel=2 concealcursor=nvic nonumber showbreak=')
         if case.opts ~= '' then
-          command('set ' .. case.opts)
+          command(('set %s'):format(case.opts))
         end
-        command('set completeopt=menuone' .. (noinsert and ',noinsert,noselect' or ''))
+        command(('set completeopt=menuone%s'):format(noinsert and ',noinsert,noselect' or ''))
         api.nvim_buf_clear_namespace(0, ns, 0, -1)
         local prefix = case.prefix or ('a'):rep(10)
         api.nvim_buf_set_lines(0, 0, -1, true, {

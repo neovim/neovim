@@ -5035,8 +5035,6 @@ void tabpage_move(int nr)
 /// position to keep the same Visual area.
 void win_goto(win_T *wp)
 {
-  win_T *owp = curwin;
-
   if (text_or_buf_locked()) {
     beep_flush();
     return;
@@ -5055,14 +5053,6 @@ void win_goto(win_T *wp)
   }
 
   win_enter(wp, true);
-
-  // Conceal cursor line in previous window, unconceal in current window.
-  if (win_valid(owp) && owp->w_p_cole > 0 && !msg_scrolled) {
-    redrawWinline(owp, owp->w_cursor.lnum);
-  }
-  if (curwin->w_p_cole > 0 && !msg_scrolled) {
-    redrawWinline(curwin, curwin->w_cursor.lnum);
-  }
 }
 
 // Find the tabpage for window "win".
@@ -5352,6 +5342,16 @@ static void win_enter_ext(win_T *const wp, const int flags)
   // set window width to desired minimal value
   if (curwin->w_width < p_wiw && !curwin->w_p_wfw && !curwin->w_floating) {
     win_setwidth((int)p_wiw);
+  }
+
+  // Conceal cursor line in previous window, unconceal in current window.
+  if (!msg_scrolled) {
+    if (!curwin_invalid && win_valid(prevwin) && prevwin->w_p_cole > 0) {
+      conceal_redraw_cursor_line(prevwin);
+    }
+    if (curwin->w_p_cole > 0) {
+      conceal_redraw_cursor_line(curwin);
+    }
   }
 
   setmouse();                   // in case jumped to/from help buffer

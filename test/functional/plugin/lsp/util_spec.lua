@@ -1435,56 +1435,6 @@ describe('vim.lsp.util', function()
         eq(true, api.nvim_win_is_valid(converted))
         eq('', api.nvim_win_get_config(converted).relative)
       end)
-
-      it('resizes only a managed preview after parsing', function()
-        exec_lua(function()
-          vim.g.syntax_on = false
-          local source = vim.api.nvim_get_current_win()
-          local source_buf = vim.api.nvim_get_current_buf()
-          local LanguageTree = require('vim.treesitter.languagetree')
-          local parse = LanguageTree.parse
-
-          for _, mode in ipairs({ 'managed', 'split', 'unmanaged' }) do
-            local finish
-            LanguageTree.parse = function(self, range, on_parse)
-              if range == true and on_parse then
-                finish = function()
-                  on_parse(nil, parse(self, range))
-                end
-                return nil
-              end
-              return parse(self, range, on_parse)
-            end
-            local _, win = vim.lsp.util.open_floating_preview({
-              '[link](https://example.com/' .. string.rep('a', 50) .. ')',
-            }, 'markdown', { width = 5, max_height = 4, focus = false })
-            LanguageTree.parse = parse
-            assert(finish)
-
-            if mode ~= 'managed' then
-              vim.api.nvim_win_set_config(win, { win = source, split = 'below' })
-              vim.api.nvim_win_set_height(win, 4)
-            end
-            if mode == 'unmanaged' then
-              vim.api.nvim_exec_autocmds('CursorMoved', { buffer = source_buf })
-              assert(vim.wait(1000, function()
-                return vim.b[source_buf].lsp_floating_preview == nil
-              end))
-              vim.api.nvim_win_set_config(win, {
-                relative = 'editor',
-                row = 0,
-                col = 0,
-                width = 5,
-                height = 4,
-              })
-            end
-
-            finish()
-            assert(vim.api.nvim_win_get_height(win) == (mode == 'managed' and 1 or 4))
-            vim.api.nvim_win_close(win, true)
-          end
-        end)
-      end)
     end)
 
     it('open_floating_preview zindex greater than current window', function()
@@ -1600,7 +1550,7 @@ describe('vim.lsp.util', function()
       })
       local win = exec_lua(function(link)
         local _, popup = vim.lsp.util.open_floating_preview(
-          { '[x](' .. link .. ') tail' },
+          { ('[x](%s) tail'):format(link) },
           'markdown',
           { width = 10, max_height = 4, border = 'single', focus = false }
         )

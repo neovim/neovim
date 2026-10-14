@@ -2456,38 +2456,6 @@ bool find_decl(char *ptr, size_t len, bool locally, bool thisblock, int flags_ar
   return retval;
 }
 
-/// Cells hidden before the cursor's displayed position.
-static colnr_T nv_hidden_at_cursor(void)
-{
-  colnr_T col = curwin->w_cursor.col;
-  if (ml_get_buf(curbuf, curwin->w_cursor.lnum)[col] == TAB
-      && getvcol_tab_end(curwin, &curwin->w_cursor)) {
-    col++;
-  }
-  return (colnr_T)extconceal_off_before(curwin, curwin->w_cursor.lnum, col, NULL, NULL);
-}
-
-static colnr_T nv_vcol_to_scol_cursor(colnr_T vcol)
-{
-  colnr_T layout;
-  getvvcol(curwin, &curwin->w_cursor, NULL, &layout, NULL, GETVCOL_CONCEAL);
-  vcol += layout - curwin->w_virtcol;
-  return vcol - MIN(vcol, nv_hidden_at_cursor());
-}
-
-/// Screen-layout column of the cursor, excluding virtual space.
-static colnr_T nv_scol_at_cursor(void)
-{
-  return nv_vcol_to_scol_cursor(curwin->w_virtcol - curwin->w_cursor.coladd);
-}
-
-/// Length of line "lnum", in nv_screengo()'s use_scol convention: screen-layout width when the
-/// cursor line's conceal is hidden, buffer-wide tab-expanded width otherwise.
-static int nv_screengo_linelen(bool use_scol, linenr_T lnum)
-{
-  return use_scol ? win_screen_linewidth(curwin, lnum) : linetabsize(curwin, lnum);
-}
-
 /// Move 'dist' lines in direction 'dir', counting lines by *screen*
 /// lines rather than lines in the file.
 /// 'dist' must be positive.
@@ -2495,8 +2463,7 @@ static int nv_screengo_linelen(bool use_scol, linenr_T lnum)
 /// @return  true if able to move cursor, false otherwise.
 bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
 {
-  bool const use_scol = maybe_extconceal_buf(curwin);
-  int linelen = nv_screengo_linelen(use_scol, curwin->w_cursor.lnum);
+  int linelen = linetabsize_conceal(curwin, curwin->w_cursor.lnum);
   bool retval = true;
   bool atend = false;
   int col_off1;                 // margin offset for first screen line
@@ -2507,14 +2474,8 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
   oap->motion_type = kMTCharWise;
   oap->inclusive = (curwin->w_curswant == MAXCOL);
 
-  // Working column. On a concealed cursor line "cw" points at a local screen-layout column (derived
-  // from w_curswant); otherwise it points at w_curswant itself so the behavior is unchanged.
-  colnr_T scol_want = curwin->w_curswant;
-  if (use_scol && scol_want != MAXCOL) {
-    validate_virtcol(curwin);
-    scol_want = nv_vcol_to_scol_cursor(scol_want);
-  }
-  colnr_T *const cw = use_scol ? &scol_want : &curwin->w_curswant;
+  // Desired column as a displayed vcol (see CharsizeArg.extconceal_off).
+  colnr_T want = vcol2disp_vcol(curwin, curwin->w_cursor.lnum, curwin->w_curswant);
 
   col_off1 = win_col_off(curwin);
   col_off2 = col_off1 - win_col_off2(curwin);
@@ -2529,19 +2490,16 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
     int n;
     // Instead of sticking at the last character of the buffer line we
     // try to stick in the last column of the screen.
-    if (*cw == MAXCOL) {
+    if (want == MAXCOL) {
       atend = true;
       validate_virtcol(curwin);
-      colnr_T virtcol = curwin->w_virtcol;
-      if (use_scol) {
-        virtcol = nv_vcol_to_scol_cursor(virtcol);
-      }
+      colnr_T const virtcol = cursor_disp_vcol(curwin);
       if (width1 <= 0) {
-        *cw = 0;
+        want = 0;
       } else {
-        *cw = width1 - 1;
-        if (virtcol > *cw) {
-          *cw += ((virtcol - *cw - 1) / width2 + 1) * width2;
+        want = width1 - 1;
+        if (virtcol > want) {
+          want += ((virtcol - want - 1) / width2 + 1) * width2;
         }
       }
     } else {
@@ -2550,17 +2508,17 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
       } else {
         n = width1;
       }
-      *cw = MIN(*cw, n - 1);
+      want = MIN(want, n - 1);
     }
 
     while (dist--) {
       if (dir == BACKWARD) {
-        if (*cw >= width1
+        if (want >= width1
             && !hasFolding(curwin, curwin->w_cursor.lnum, NULL, NULL)) {
           // Move back within the line. This can give a negative value
-          // for the column if width1 < width2 (with cpoptions+=n),
+          // for w_curswant if width1 < width2 (with cpoptions+=n),
           // which will get clipped to column 0.
-          *cw -= width2;
+          want -= width2;
         } else {
           // to previous line
           if (curwin->w_cursor.lnum <= 1) {
@@ -2569,11 +2527,11 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
           }
           cursor_up_inner(curwin, 1, skip_conceal);
 
-          linelen = nv_screengo_linelen(use_scol, curwin->w_cursor.lnum);
+          linelen = linetabsize_conceal(curwin, curwin->w_cursor.lnum);
           if (linelen > width1) {
             int w = (((linelen - width1 - 1) / width2) + 1) * width2;
-            assert(w <= 0 || *cw <= INT_MAX - w);
-            *cw += w;
+            assert(w <= 0 || want <= INT_MAX - w);
+            want += w;
           }
         }
       } else {  // dir == FORWARD
@@ -2582,10 +2540,10 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
         } else {
           n = width1;
         }
-        if (*cw + width2 < (colnr_T)n
+        if (want + width2 < (colnr_T)n
             && !hasFolding(curwin, curwin->w_cursor.lnum, NULL, NULL)) {
           // move forward within line
-          *cw += width2;
+          want += width2;
         } else {
           // to next line
           if (curwin->w_cursor.lnum >= curwin->w_buffer->b_ml.ml_line_count) {
@@ -2593,32 +2551,25 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
             break;
           }
           cursor_down_inner(curwin, 1, skip_conceal);
-          *cw %= width2;
+          want %= width2;
 
           // Check if the cursor has moved below the number display
           // when width1 < width2 (with cpoptions+=n). Subtract width2
-          // to get a negative value for the column, which will get
+          // to get a negative value for w_curswant, which will get
           // clipped to column 0.
-          if (*cw >= width1) {
-            *cw -= width2;
+          if (want >= width1) {
+            want -= width2;
           }
-          linelen = nv_screengo_linelen(use_scol, curwin->w_cursor.lnum);
+          linelen = linetabsize_conceal(curwin, curwin->w_cursor.lnum);
         }
       }
     }
   }
 
-  colnr_T vcol_target = 0;  // virtual equivalent of the desired screen column (use_scol only)
-  bool have_vcol_target = false;
   if (virtual_active(curwin) && atend) {
     coladvance(curwin, MAXCOL);
-  } else if (use_scol && *cw != MAXCOL) {
-    // Move by displayed columns, but keep the desired column raw for j/k.
-    vcol_target = scol2vcol(curwin, curwin->w_cursor.lnum, *cw);
-    have_vcol_target = true;
-    coladvance_scol(curwin, *cw);
   } else {
-    coladvance(curwin, *cw);
+    coladvance(curwin, disp_vcol2vcol(curwin, curwin->w_cursor.lnum, want));
   }
 
   if (curwin->w_cursor.col > 0 && curwin->w_p_wrap) {
@@ -2626,42 +2577,29 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
     // last line.  We want to advance a screenline, not end up in the same
     // screenline or move two screenlines.
     validate_virtcol(curwin);
-    colnr_T virtcol;
-    if (use_scol && extconceal_line_has_scol_shift(curwin, curwin->w_cursor.lnum)) {
-      // nv_scol_at_cursor() already accounts for 'showbreak', unlike raw curwin->w_virtcol, so it
-      // must not get the correction below too (would subtract it twice).
-      virtcol = nv_scol_at_cursor();
-    } else {
-      virtcol = curwin->w_virtcol;
-      if (virtcol > (colnr_T)width1 && *get_showbreak_value(curwin) != NUL) {
-        virtcol -= vim_strsize(get_showbreak_value(curwin));
-      }
+    colnr_T virtcol = cursor_disp_vcol(curwin);
+    if (virtcol > (colnr_T)width1 && *get_showbreak_value(curwin) != NUL) {
+      virtcol -= vim_strsize(get_showbreak_value(curwin));
     }
 
     int c = utf_ptr2char(get_cursor_pos_ptr());
-    if (dir == FORWARD && virtcol < *cw
-        && (*cw <= (colnr_T)width1)
+    if (dir == FORWARD && virtcol < want
+        && (want <= (colnr_T)width1)
         && !vim_isprintc(c) && c > 255) {
       oneright();
     }
 
-    if (virtcol > *cw
-        && (*cw < (colnr_T)width1
-            ? (*cw > (colnr_T)width1 / 2)
-            : ((*cw - width1) % width2
+    if (virtcol > want
+        && (want < (colnr_T)width1
+            ? (want > (colnr_T)width1 / 2)
+            : ((want - width1) % width2
                > (colnr_T)width2 / 2))) {
       curwin->w_cursor.col--;
     }
   }
 
-  if (atend) {
-    curwin->w_curswant = MAXCOL;            // stick in the last column
-  } else if (use_scol) {
-    // Keep the virtual w_curswant at the desired column (its virtual equivalent), so the
-    // buffer-line motions j/k continue from there. This matches the unconcealed behavior, where the
-    // desired column *cw is itself virtual and is left in w_curswant.
-    curwin->w_curswant = have_vcol_target ? vcol_target : *cw;
-  }
+  // Stick in the last column, or keep the raw desired column for j/k.
+  curwin->w_curswant = atend ? MAXCOL : disp_vcol2vcol(curwin, curwin->w_cursor.lnum, want);
   adjust_skipcol();
 
   return retval;
@@ -5311,32 +5249,24 @@ static void nv_gv_cmd(cmdarg_T *cap)
   showmode();
 }
 
-/// Cursor's current column in the use_scol convention nv_g_home_m_cmd() and nv_g_dollar_cmd() use:
-/// screen-layout when the cursor line's conceal is hidden, virtual column otherwise.
-static colnr_T nv_scol_or_virtcol(bool use_scol)
-{
-  return use_scol ? nv_scol_at_cursor() : curwin->w_virtcol;
-}
-
 /// Skip displayed whitespace, without stopping inside a fully concealed run.
-static void nv_scol_skipwhite(void)
+static void nv_disp_skipwhite(void)
 {
   linenr_T const lnum = curwin->w_cursor.lnum;
   colnr_T const start = curwin->w_cursor.col;
   CharsizeArg csarg;
-  CSType const cstype = init_charsize_arg_conceal(&csarg, curwin, lnum, ml_get(lnum));
-  ConcealWalk walk;
-  conceal_walk_start(&csarg, &walk);
+  ConcealSpans spans;
+  CSType const cstype = init_charsize_arg_conceal(&csarg, curwin, lnum, &spans);
   StrCharInfo ci = utf_ptr2StrCharInfo(csarg.line);
   int vcol = 0;
   while (*ci.ptr != NUL) {
     colnr_T const col = (colnr_T)(ci.ptr - csarg.line);
     ClusterInfo const cli = utf_ClusterInfo(ci);
     CharSize const cs = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg, cli.cells);
-    int const hidden = conceal_walk_advance(&csarg, &walk, col, cs);
+    int const hidden = cs.hidden;
     if (col >= start && cs.body > hidden) {
       curwin->w_cursor.col = col;
-      schar_T const replacement = walk.active ? decor_conceal_char(curwin, &walk.state) : NUL;
+      schar_T const replacement = conceal_char_at(&csarg, col);
       if (replacement != NUL ? replacement != schar_from_ascii(' ')
                              : !ascii_iswhite(ci.chr.value)) {
         break;
@@ -5349,7 +5279,7 @@ static void nv_scol_skipwhite(void)
     curwin->w_cursor.col = (colnr_T)(ci.ptr - csarg.line);
   }
   curwin->w_cursor.coladd = 0;
-  conceal_walk_end(&csarg, &walk);
+  kv_destroy(spans);
 }
 
 /// "g0", "g^" : Like "0" and "^" but for screen lines.
@@ -5358,20 +5288,18 @@ void nv_g_home_m_cmd(cmdarg_T *cap)
 {
   int i;
   const bool flag = cap->nchar == '^';
-  bool const use_scol = maybe_extconceal_buf(curwin);
 
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
-  bool const wrapped = curwin->w_p_wrap && curwin->w_view_width != 0;
-  if (wrapped) {
+  if (curwin->w_p_wrap && curwin->w_view_width != 0) {
     int width1 = curwin->w_view_width - win_col_off(curwin);
     int width2 = width1 + win_col_off2(curwin);
 
     validate_virtcol(curwin);
-    colnr_T scol = nv_scol_or_virtcol(use_scol);
+    colnr_T const virtcol = cursor_disp_vcol(curwin);
     i = 0;
-    if (scol >= (colnr_T)width1 && width2 > 0) {
-      i = (scol - width1) / width2 * width2 + width1;
+    if (virtcol >= (colnr_T)width1 && width2 > 0) {
+      i = (virtcol - width1) / width2 * width2 + width1;
     }
 
     // When ending up below 'smoothscroll' marker, move just beyond it so
@@ -5383,8 +5311,6 @@ void nv_g_home_m_cmd(cmdarg_T *cap)
       }
     }
   } else {
-    // 'nowrap': w_leftcol is already a virtual column, not a screen-layout one, so it must not go
-    // through the scol->vcol conversion below.
     i = curwin->w_leftcol;
   }
   // Go to the middle of the screen line.  When 'number' or
@@ -5394,14 +5320,10 @@ void nv_g_home_m_cmd(cmdarg_T *cap)
     i += (curwin->w_view_width - win_col_off(curwin)
           + ((curwin->w_p_wrap && i > 0) ? win_col_off2(curwin) : 0)) / 2;
   }
-  if (use_scol && wrapped) {
-    coladvance_scol(curwin, (colnr_T)i);
-  } else {
-    coladvance(curwin, (colnr_T)i);
-  }
+  coladvance(curwin, disp_vcol2vcol(curwin, curwin->w_cursor.lnum, (colnr_T)i));
   if (flag) {
-    if (use_scol && wrapped && maybe_extconceal_line(curwin, curwin->w_cursor.lnum)) {
-      nv_scol_skipwhite();
+    if (line_has_extconceal(curwin, curwin->w_cursor.lnum)) {
+      nv_disp_skipwhite();
     } else {
       do {
         i = gchar_cursor();
@@ -5452,7 +5374,6 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
   int i;
   int col_off = win_col_off(curwin);
   const bool flag = cap->nchar == K_END || cap->nchar == K_KEND;
-  bool const use_scol = maybe_extconceal_buf(curwin);
 
   oap->motion_type = kMTCharWise;
   oap->inclusive = true;
@@ -5463,16 +5384,12 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
       int width2 = width1 + win_col_off2(curwin);
 
       validate_virtcol(curwin);
-      colnr_T scol = nv_scol_or_virtcol(use_scol);
+      colnr_T const virtcol = cursor_disp_vcol(curwin);
       i = width1 - 1;
-      if (scol >= (colnr_T)width1) {
-        i += ((scol - width1) / width2 + 1) * width2;
+      if (virtcol >= (colnr_T)width1) {
+        i += ((virtcol - width1) / width2 + 1) * width2;
       }
-      if (use_scol) {
-        coladvance_scol(curwin, (colnr_T)i);
-      } else {
-        coladvance(curwin, (colnr_T)i);
-      }
+      coladvance(curwin, disp_vcol2vcol(curwin, curwin->w_cursor.lnum, (colnr_T)i));
 
       // Make sure we stick in this column.
       update_curswant_force();
@@ -5480,8 +5397,7 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
         // Check for landing on a character that got split at
         // the end of the line.  We do not want to advance to
         // the next screen line.
-        colnr_T vcol = nv_scol_or_virtcol(use_scol);
-        if (vcol > (colnr_T)i) {
+        if (cursor_disp_vcol(curwin) > (colnr_T)i) {
           curwin->w_cursor.col--;
         }
       }

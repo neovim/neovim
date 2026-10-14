@@ -95,7 +95,7 @@ describe('decorations providers', function()
             end
           end,
         })
-        vim.api.nvim__buf_set_conceal_provider(0, nsid, _G.conceal_ns, true)
+        vim.api.nvim__buf_set_conceal_provider(0, true)
       end, ns)
 
       -- 46 raw cells become 40 displayed cells: two rows instead of three.
@@ -119,48 +119,15 @@ describe('decorations providers', function()
           return calls
         end)
       )
-      eq(
-        { 3, 1, 1 },
-        exec_lua(function(nsid)
-          local buf = vim.api.nvim_get_current_buf()
-          _G.conceal_calls[buf] = 0
-          vim.api.nvim_set_decoration_provider(nsid, {
-            _on_conceal = function(_, _, callback_buf, row)
-              _G.conceal_calls[callback_buf] = _G.conceal_calls[callback_buf] + 1
-              vim.api.nvim_buf_set_extmark(callback_buf, _G.conceal_ns, row, 16, {
-                end_col = 17,
-                conceal = '',
-              })
-            end,
-          })
-          local height = vim.api.nvim_win_text_height(0, {}).all
-          return {
-            height,
-            _G.conceal_calls[buf],
-            #vim.api.nvim_buf_get_extmarks(0, _G.conceal_ns, 0, -1, {}),
-          }
-        end, ns)
-      )
-      eq(
-        { 0, 0 },
-        exec_lua(function(nsid)
-          vim.api.nvim_set_decoration_provider(nsid, {})
-          return {
-            vim.api.nvim__buf_stats(0).conceal_providers,
-            #vim.api.nvim_buf_get_extmarks(0, _G.conceal_ns, 0, -1, {}),
-          }
-        end, ns)
-      )
     end)
 
     it('_on_conceal registration does not survive a reused buffer', function()
       local bufnr = api.nvim_get_current_buf()
       exec_lua(function(nsid)
-        local conceal_ns = vim.api.nvim_create_namespace('conceal_wrap_reuse_marks')
         vim.api.nvim_set_decoration_provider(nsid, {
           _on_conceal = function() end,
         })
-        vim.api.nvim__buf_set_conceal_provider(0, nsid, conceal_ns, true)
+        vim.api.nvim__buf_set_conceal_provider(0, true)
       end, ns)
       command('edit Xconceal_provider_reuse')
       eq(bufnr, api.nvim_get_current_buf())
@@ -192,7 +159,7 @@ describe('decorations providers', function()
               end
             end,
           })
-          vim.api.nvim__buf_set_conceal_provider(0, nsid, conceal_ns, true)
+          vim.api.nvim__buf_set_conceal_provider(0, true)
           local height = vim.api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all
           return { height, calls }
         end, ns)
@@ -215,8 +182,7 @@ describe('decorations providers', function()
               calls = calls + 1
             end,
           })
-          local marks = vim.api.nvim_create_namespace('raw_conceal')
-          vim.api.nvim__buf_set_conceal_provider(0, nsid, marks, true)
+          vim.api.nvim__buf_set_conceal_provider(0, true)
           vim.fn.virtcol({ 1, 25 })
           vim.cmd('normal! 25|')
           return calls
@@ -251,10 +217,44 @@ describe('decorations providers', function()
               end
             end,
           })
-          vim.api.nvim__buf_set_conceal_provider(0, nsid, conceal_ns, true)
+          vim.api.nvim__buf_set_conceal_provider(0, true)
           return vim.api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all
         end, ns)
       )
+
+      -- Nor the drawing iterators, when 'statuscolumn' measures the row being drawn while the
+      -- provider rewrites the row's marks.
+      command('set linebreak')
+      api.nvim_buf_clear_namespace(0, ns, 0, -1)
+      api.nvim_buf_set_lines(0, 0, -1, true, { ('ab_1 '):rep(8), ('ab_1 '):rep(8) })
+      exec_lua(function(nsid)
+        local conceal_ns = vim.api.nvim_create_namespace('conceal_iterator_provider_marks')
+        vim.api.nvim_set_decoration_provider(nsid, {
+          _on_conceal = function(_, _, buf, row)
+            vim.api.nvim_buf_clear_namespace(buf, conceal_ns, row, row + 1)
+            local line = vim.api.nvim_buf_get_lines(buf, row, row + 1, true)[1]
+            for col in line:gmatch('()_1') do
+              vim.api.nvim_buf_set_extmark(buf, conceal_ns, row, col - 1, {
+                end_col = col + 1,
+                conceal = '',
+              })
+            end
+          end,
+        })
+        _G.Stc = function()
+          vim.api.nvim_win_text_height(0, { start_row = vim.v.lnum - 1, end_row = vim.v.lnum - 1 })
+          return ' '
+        end
+        vim.o.statuscolumn = '%!v:lua.Stc()'
+      end, ns)
+      screen:expect([[
+        {3: }^ab ab ab ab ab ab  |
+        {3: }ab ab              |
+        {3: }ab ab ab ab ab ab  |
+        {3: }ab ab              |
+        {1:~                   }|
+                            |
+      ]])
     end)
   end)
 
@@ -2526,6 +2526,17 @@ describe('extmark decorations', function()
                                               |
     ]],
     }
+
+    -- Match conceal does not reflow: the character still moves to the next row.
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    fn.matchadd('Conceal', '<>')
+    feed('k')
+    screen:expect([[
+      ^                                        |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{1:>}  |
+      古                                      |
+                                              |
+    ]])
   end)
 
   it('redraws properly when adding/removing conceal on non-current line', function()
