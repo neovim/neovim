@@ -106,5 +106,4 @@ the same Nvim configuration on all of your machines, by creating
     source ~/.config/nvim/init.vim
 <
 
-==============================================================================
  vim:tw=78:ts=8:et:ft=help:norl:

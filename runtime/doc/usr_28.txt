@@ -30,7 +30,7 @@ Table of contents: |usr_toc.txt|
 *28.1*	What is folding?
 
 Folding is used to show a range of lines in the buffer as a single line on the
-screen.  Like a piece of paper which is folded to make it shorter:
+screen.  Like a piece of paper which is folded to make it shorter: >
 
 	+------------------------+
 	| line 1		 |
