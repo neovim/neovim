@@ -9,6 +9,7 @@
 "			2025 Mar 09 by Vim Project (set b:match_skip)
 "			2025 Jul 22 by phanium (use :hor term #17822)
 "			2026 Jul 10 by Vim Project (pass K argument as a list, prevent shell injection)
+"			2026 Sep 01 by Vim Project (use correct terminal feature test)
 
 if exists("b:did_ftplugin")
   finish
@@ -54,7 +55,7 @@ let s:is_bash = get(b:, "is_bash", get(g:, "is_bash", 0))
 let s:is_kornshell = get(b:, "is_kornshell", get(g:, "is_kornshell", 0))
 
 if s:is_bash
-  if exists(':terminal') == 2
+  if exists('*term_start')
     command! -buffer -nargs=1 ShKeywordPrg call term_start(['bash', '-c', 'help "$1" 2>/dev/null || man "$1"', '--', <q-args>])
   else
     command! -buffer -nargs=1 ShKeywordPrg echo system(['bash', '-c', 'help "$1" 2>/dev/null || MANPAGER= man "$1"', '--', <q-args>])

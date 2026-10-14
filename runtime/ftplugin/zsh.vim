@@ -2,7 +2,7 @@
 " Language:             Zsh shell script
 " Maintainer:           Christian Brabandt <cb@256bit.org>
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2026 Jul 23
+" Latest Revision:      2026 Sep 01
 " License:              Vim (see :h license)
 " Repository:           https://github.com/chrisbra/vim-zsh
 
@@ -24,7 +24,7 @@ if get(g:, 'zsh_fold_enable', 0)
 endif
 
 if executable('zsh') && &shell !~# '/\%(nologin\|false\)$'
-  if exists(':terminal') == 2
+  if exists('*term_start')
     command! -buffer -nargs=1 ZshKeywordPrg call term_start(['zsh', '-c', 'autoload -Uz run-help; run-help "$1"', '--', <q-args>])
   elseif has("patch-9.2.0250")
     command! -buffer -nargs=1 ZshKeywordPrg echo system(['zsh', '-c', 'autoload -Uz run-help; MANPAGER= run-help "$1" 2>/dev/null', '--', <q-args>])
