@@ -7053,4 +7053,25 @@ func Test_complete_cpt_func_changes_complete()
   bwipe!
 endfunc
 
+func Test_complete_fuzzy_keep_order_as_leader_changes()
+  new
+  set completeopt=menu,menuone,noselect,fuzzy
+  call setline(1, 'xbc xba')
+
+  let g:words = []
+  func! CollectWords()
+    call add(g:words, map(copy(complete_info(['items']).items), 'v:val.word'))
+    return ''
+  endfunc
+
+  call feedkeys("o\<C-N>b\<C-R>\<C-R>=CollectWords()\<CR>a\<BS>\<C-R>\<C-R>=CollectWords()\<CR>\<Esc>", 'tx')
+  call assert_equal(['xbc', 'xba'], g:words[0])
+  call assert_equal(['xbc', 'xba'], g:words[1])
+
+  delfunc CollectWords
+  unlet g:words
+  set completeopt&
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

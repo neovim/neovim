@@ -174,6 +174,7 @@ struct compl_S {
   char *cp_commit_chars;         ///< commit characters, allocated. May be NULL.
   int cp_flags;                  ///< CP_ values
   int cp_number;                 ///< sequence number
+  int cp_order;                  ///< list position when first scored
   bool cp_preselect;             ///< preselect item
   int cp_score;                  ///< fuzzy match score or proximity score
   bool cp_in_match_array;        ///< collected by compl_match_array
@@ -1069,6 +1070,7 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
   // Copy the values to the new match structure.
   match = xcalloc(1, sizeof(compl_T));
   match->cp_number = flags & CP_ORIGINAL_TEXT ? 0 : -1;
+  match->cp_order = -1;
   new_str = new_str == NULL ? xstrnsave(str, (size_t)len) : new_str;
   match->cp_str = cbuf_as_string(new_str, (size_t)len);
   match->cp_commit_chars = commit_chars;
@@ -1508,7 +1510,12 @@ static int cp_compare_fuzzy(const void *a, const void *b)
 {
   int score_a = ((compl_T *)a)->cp_score;
   int score_b = ((compl_T *)b)->cp_score;
-  return (score_b > score_a) ? 1 : (score_b < score_a) ? -1 : 0;
+
+  if (score_a != score_b) {
+    return (score_b > score_a) ? 1 : -1;
+  }
+
+  return ((compl_T *)a)->cp_order - ((compl_T *)b)->cp_order;
 }
 
 static int cp_compare_nearest(const void *a, const void *b)
@@ -1616,8 +1623,14 @@ static void set_fuzzy_score(void)
   }
 
   // Score all completion matches
+  int next = 0;
   compl_T *comp = compl_first_match;
   do {
+    if (comp->cp_order < 0) {
+      comp->cp_order = next;
+    }
+    next = MAX(next, comp->cp_order + 1);
+
     if (use_leader) {
       pattern = get_leader_for_startcol(comp, true)->data;
     }
