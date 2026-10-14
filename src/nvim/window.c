@@ -4233,6 +4233,7 @@ static int frame_minwidth(frame_T *topfrp, win_T *next_curwin)
 void close_others(int message, int forceit, bool ignore_pinned)
 {
   win_T *const old_curwin = curwin;
+  tabpage_T *const old_curtab = curtab;
 
   if (curwin->w_floating) {
     if (message && !autocmd_busy) {
@@ -4250,7 +4251,7 @@ void close_others(int message, int forceit, bool ignore_pinned)
 
   // Be very careful here: autocommands may change the window layout.
   win_T *nextwp;
-  for (win_T *wp = firstwin; win_valid(wp); wp = nextwp) {
+  for (win_T *wp = firstwin; curtab == old_curtab && win_valid(wp); wp = nextwp) {
     nextwp = wp->w_next;
 
     // autocommands messed this one up
@@ -4291,7 +4292,7 @@ void close_others(int message, int forceit, bool ignore_pinned)
     win_close(wp, !buf_hide(wp->w_buffer) && !bufIsChanged(wp->w_buffer), false);
   }
 
-  if (message && !ONE_WINDOW) {
+  if (message && curtab == old_curtab && !ONE_WINDOW) {
     // Check if remaining windows are non-pinned
     bool has_non_pinned = false;
     for (win_T *wp = firstwin; wp != NULL; wp = wp->w_next) {
