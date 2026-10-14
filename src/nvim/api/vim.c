@@ -2039,6 +2039,26 @@ void nvim_select_popupmenu_item(Integer item, Boolean insert, Boolean finish, Di
   pum_ext_select_item((int)item, insert, finish);
 }
 
+/// Gets the highlight definition for a UI attribute id, as sent in `attr_id` of UI events.
+///
+/// The result has the same format as |nvim_get_hl()| and can be passed to |nvim_set_hl()|.
+/// Attribute ids are only valid until the highlight tables are reset; an unknown id gives an empty definition.
+///
+/// @param attr_id Attribute id
+/// @return Highlight definition map
+DictAs(highlight) nvim__get_attr(Integer attr_id, Arena *arena)
+{
+  Dict hl = arena_dict(arena, HLATTRS_DICT_SIZE + 1);
+  Dict hl_cterm = arena_dict(arena, HLATTRS_DICT_SIZE);
+  HlAttrs attr = syn_attr2entry((int)attr_id);
+  hlattrs2dict(&hl, NULL, attr, true, true);
+  hlattrs2dict(&hl, &hl_cterm, attr, false, true);
+  if (kv_size(hl_cterm)) {
+    PUT_C(hl, "cterm", DICT_OBJ(hl_cterm));
+  }
+  return hl;
+}
+
 /// NB: if your UI doesn't use hlstate, this will not return hlstate first time.
 Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Arena *arena, Error *err)
 {

@@ -47,6 +47,17 @@ function vim.api.nvim__complete_set(index, opts) end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- Gets the highlight definition for a UI attribute id, as sent in `attr_id` of UI events.
+---
+--- The result has the same format as `nvim_get_hl()` and can be passed to `nvim_set_hl()`.
+--- Attribute ids are only valid until the highlight tables are reset; an unknown id gives an empty definition.
+---
+--- @param attr_id integer Attribute id
+--- @return vim.api.keyset.highlight # Highlight definition map
+function vim.api.nvim__get_attr(attr_id) end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- @return string
 function vim.api.nvim__get_lib_dir() end
 

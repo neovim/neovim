@@ -587,11 +587,25 @@ function M.msg_showcmd(content)
   set_virttext('last', 'cmd')
 end
 
+local attr_hls = {} ---@type table<integer, integer>
+
 --- Place the 'ruler' text in the cmdline window.
 ---
 ---@param content MsgContent
 function M.msg_ruler(content)
-  M.virt.last[M.virt.idx.ruler] = (ui.cmd.level > 0 or M.cmd_on_key) and {} or content
+  local chunks = {} ---@type MsgContent
+  for _, chunk in ipairs(content) do
+    local attr_id, text, hl_id = chunk[1], chunk[2], chunk[3]
+    if attr_id > 0 and not attr_hls[attr_id] then
+      local name = 'Ui2Attr' .. attr_id
+      api.nvim_set_hl(0, name, api.nvim__get_attr(attr_id))
+      attr_hls[attr_id] = api.nvim_get_hl_id_by_name(name)
+    end
+
+    table.insert(chunks, { attr_id, text, attr_hls[attr_id] or hl_id })
+  end
+
+  M.virt.last[M.virt.idx.ruler] = (ui.cmd.level > 0 or M.cmd_on_key) and {} or chunks
   set_virttext('last', 'cmd')
 end
 

@@ -1783,6 +1783,22 @@ nvim__exec_lua_fast({code}, {args})                    *nvim__exec_lua_fast()*
     Return: ~
         (`any`) Return value of Lua code if present or NIL.
 
+nvim__get_attr({attr_id})                                   *nvim__get_attr()*
+    WARNING: This feature is experimental/unstable.
+
+    Gets the highlight definition for a UI attribute id, as sent in `attr_id`
+    of UI events.
+
+    The result has the same format as |nvim_get_hl()| and can be passed to
+    |nvim_set_hl()|. Attribute ids are only valid until the highlight tables
+    are reset; an unknown id gives an empty definition.
+
+    Parameters: ~
+      • {attr_id}  (`integer`) Attribute id
+
+    Return: ~
+        (`vim.api.keyset.highlight`) Highlight definition map
+
 nvim__get_runtime({pat}, {all}, {opts})                  *nvim__get_runtime()*
     WARNING: This feature is experimental/unstable.
 
