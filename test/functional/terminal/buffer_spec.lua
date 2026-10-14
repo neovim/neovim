@@ -997,6 +997,20 @@ describe(':terminal buffer', function()
     eq('🏴‍☠️ yarrr', api.nvim_get_current_line())
   end)
 
+  it('[Process exited] message does not hide last line #42334', function()
+    local screen = Screen.new(50, 7)
+    local chan = api.nvim_open_term(0, {})
+    api.nvim_chan_send(chan, ('meow\r\n'):rep(10) .. 'LAST LINE')
+    fn.chanclose(chan)
+    feed('i')
+    screen:expect([[
+      meow                                              |*4
+      LAST LINE                                         |
+      ^[Terminal closed]                                 |
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
   it('handles split UTF-8 sequences #16245', function()
     local screen = Screen.new(50, 10)
     fn.jobstart({ testprg('shell-test'), 'UTF-8' }, { term = true })
