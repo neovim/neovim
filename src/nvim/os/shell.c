@@ -1244,7 +1244,7 @@ static size_t word_length(const char *str)
 /// before we finish writing.
 static void read_input(StringBuilder *buf)
 {
-  read_buffer_into(curbuf, curbuf->b_op_start.lnum, curbuf->b_op_end.lnum, buf);
+  read_buffer_into(curbuf, &curbuf->b_op_start, &curbuf->b_op_end, buf);
 }
 
 static size_t write_output(char *output, size_t remaining, bool eof)

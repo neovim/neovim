@@ -654,7 +654,11 @@ static int nlua_ex_docmd(lua_State *lstate)
   msg_scroll = true;
   need_wait_return = false;
   no_wait_return++;  // Don't wait for return, e.g. after "-V1" messages.
-  do_cmdline(NULL, nlua_ex_getline, &cookie, 0);
+  exarg_T ea = {
+    .ea_getline = nlua_ex_getline,
+    .cookie = &cookie,
+  };
+  do_cmdline(&ea, 0);
   no_wait_return--;
   nlua_unref_global(lstate, cookie.getline);
   lua_pushboolean(lstate, cookie.got_line);
