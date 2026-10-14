@@ -262,9 +262,14 @@ describe('TUI :detach', function()
       end)
     end)
 
+    -- The server socket can be available before its TUI has attached.
+    local uis = retry(nil, nil, function()
+      local _, result = child_session:request('nvim_list_uis')
+      eq(1, #result)
+      return result
+    end)
+
     -- :detach! must emit ChanInfo with the current UI channel's updated detach flag.
-    local _, uis = child_session:request('nvim_list_uis')
-    eq(1, #uis)
     local _, info = child_session:request('nvim_get_chan_info', uis[1].chan)
     eq(false, info.detach)
     child_session:request('nvim_command', 'autocmd ChanInfo * let g:info_event = deepcopy(v:event)')
