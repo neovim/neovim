@@ -2619,6 +2619,30 @@ describe('api/buf', function()
       eq(other_buf, api.nvim_win_get_buf(other_win))
     end)
 
+    it('restores curwin when called by expr eval for a window in non-current tabpage', function()
+      local buf1 = api.nvim_get_current_buf()
+      command('tabnew')
+      local t2win = api.nvim_get_current_win()
+      command('tabprevious')
+      local hidden = api.nvim_create_buf(false, true)
+      -- The expression for `t2win` makes it curwin, while curtab stays the same.
+      eq(
+        { t2win, t2win, t2win },
+        exec_lua(function()
+          local wins = {}
+          _G.test_stl = function()
+            for _, buf in ipairs({ 0, buf1, hidden }) do
+              vim.api.nvim_buf_call(buf, function() end)
+              table.insert(wins, vim.api.nvim_get_current_win())
+            end
+            return ''
+          end
+          vim.api.nvim_eval_statusline('%{v:lua.test_stl()}', { winid = t2win })
+          return wins
+        end)
+      )
+    end)
+
     it('preserves visual-mode, unless the callback ended it', function()
       -- Same-buffer: Visual survives untouched.
       command('normal! v')
