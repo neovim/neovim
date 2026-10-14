@@ -38,6 +38,7 @@
 #define TS_META_PARSER "treesitter_parser"
 #define TS_META_TREE "treesitter_tree"
 #define TS_META_NODE "treesitter_node"
+#define TS_META_NODEITERATOR "treesitter_nodeiterator"
 #define TS_META_QUERY "treesitter_query"
 #define TS_META_QUERYCURSOR "treesitter_querycursor"
 #define TS_META_QUERYMATCH "treesitter_querymatch"
@@ -57,6 +58,12 @@ typedef struct {
   // We derive TSNode's, TSQueryCursor's, etc., from the TSTree, so it must not be mutated.
   const TSTree *tree;
 } TSLuaTree;
+
+typedef struct {
+  TSTreeCursor cursor;
+  bool has_current;
+  bool first;
+} TSLuaNodeIterator;
 
 typedef struct {
   uint64_t parse_start_time;
@@ -1238,14 +1245,93 @@ static int node_next_child(lua_State *L)
   return 2;
 }
 
+static int node_iterator_gc(lua_State *L)
+{
+  TSLuaNodeIterator *iter = luaL_checkudata(L, 1, TS_META_NODEITERATOR);
+  ts_tree_cursor_delete(&iter->cursor);
+  return 0;
+}
+
+static struct luaL_Reg node_iterator_meta[] = {
+  { "__gc", node_iterator_gc },
+  { NULL, NULL }
+};
+
+static int node_next_child_cursor(lua_State *L)
+{
+  TSLuaNodeIterator *iter = luaL_checkudata(L, lua_upvalueindex(1), TS_META_NODEITERATOR);
+
+  if (!iter->has_current) {
+    return 0;
+  }
+
+  if (iter->first) {
+    iter->first = false;
+  } else if (!ts_tree_cursor_goto_next_sibling(&iter->cursor)) {
+    iter->has_current = false;
+    return 0;
+  }
+
+  TSNode child = ts_tree_cursor_current_node(&iter->cursor);
+  push_node(L, child, lua_upvalueindex(2));
+
+  const char *field = ts_tree_cursor_current_field_name(&iter->cursor);
+  if (field != NULL) {
+    lua_pushstring(L, field);
+  } else {
+    lua_pushnil(L);
+  }
+
+  return 2;
+}
+
 static int node_iter_children(lua_State *L)
 {
-  node_check(L, 1);
-  uint32_t *child_index = lua_newuserdata(L, sizeof(uint32_t));  // [source_node,..., udata]
-  *child_index = 0;
+  TSNode node = node_check(L, 1);
+  bool has_start = false;
+  TSPoint start = { 0 };
 
-  lua_pushvalue(L, 1);  // [source_node, ..., udata, source_node]
-  lua_pushcclosure(L, node_next_child, 2);
+  if (lua_gettop(L) >= 2 && !lua_isnil(L, 2)) {
+    luaL_argcheck(L, lua_istable(L, 2), 2, "table expected");
+    lua_getfield(L, 2, "start");  // [source_node, opts, start]
+    if (!lua_isnil(L, -1)) {
+      luaL_argcheck(L, lua_istable(L, -1), 2, "start must be a table");
+
+      lua_rawgeti(L, -1, 1);  // [source_node, opts, start, row]
+      lua_Integer row = luaL_checkinteger(L, -1);
+      luaL_argcheck(L, row >= 0, 2, "start row must be non-negative");
+      lua_pop(L, 1);  // [source_node, opts, start]
+
+      lua_rawgeti(L, -1, 2);  // [source_node, opts, start, column]
+      lua_Integer column = luaL_checkinteger(L, -1);
+      luaL_argcheck(L, column >= 0, 2, "start column must be non-negative");
+      lua_pop(L, 1);  // [source_node, opts, start]
+
+      start = (TSPoint){ (uint32_t)row, (uint32_t)column };
+      has_start = true;
+    }
+    lua_pop(L, 1);  // [source_node, opts]
+  }
+
+  if (!has_start) {
+    uint32_t *child_index = lua_newuserdata(L, sizeof(uint32_t));  // [source_node, ..., udata]
+    *child_index = 0;
+
+    lua_pushvalue(L, 1);  // [source_node, ..., udata, source_node]
+    lua_pushcclosure(L, node_next_child, 2);
+    return 1;
+  }
+
+  TSLuaNodeIterator *iter = lua_newuserdata(L, sizeof(TSLuaNodeIterator));
+  iter->cursor = ts_tree_cursor_new(node);
+  iter->first = true;
+  iter->has_current = ts_tree_cursor_goto_first_child_for_point(&iter->cursor, start) >= 0;
+
+  lua_getfield(L, LUA_REGISTRYINDEX, TS_META_NODEITERATOR);
+  lua_setmetatable(L, -2);
+
+  lua_pushvalue(L, 1);
+  lua_pushcclosure(L, node_next_child_cursor, 2);
 
   return 1;
 }
@@ -1805,6 +1891,7 @@ static void tslua_init(lua_State *L)
   build_meta(L, TS_META_PARSER, parser_meta);
   build_meta(L, TS_META_TREE, tree_meta);
   build_meta(L, TS_META_NODE, node_meta);
+  build_meta(L, TS_META_NODEITERATOR, node_iterator_meta);
   build_meta(L, TS_META_QUERY, query_meta);
   build_meta(L, TS_META_QUERYCURSOR, querycursor_meta);
   build_meta(L, TS_META_QUERYMATCH, querymatch_meta);

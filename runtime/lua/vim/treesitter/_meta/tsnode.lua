@@ -34,12 +34,17 @@ function TSNode:next_named_sibling() end
 --- @return TSNode?
 function TSNode:prev_named_sibling() end
 
---- Iterates over all the direct children of {TSNode}, regardless of whether
---- they are named or not.
+---@class vim.treesitter.NodeIteratorOpts
+---@field start? [integer, integer] Zero-based `{row, column}` start position.
+
+--- Iterates over the direct children of {TSNode}, regardless of whether they
+--- are named or not. If {opts.start} is given, iteration starts with the first
+--- child that contains or starts after that position.
 --- Returns the child node plus the eventual field name corresponding to this
 --- child node.
---- @return fun(): TSNode, string
-function TSNode:iter_children() end
+---@param opts? vim.treesitter.NodeIteratorOpts
+---@return fun(): TSNode, string?
+function TSNode:iter_children(opts) end
 
 --- Returns a list of all the node's children that have the given field name.
 --- @param name string
