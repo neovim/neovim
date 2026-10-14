@@ -2179,19 +2179,19 @@ For example, the format of the output from the Amiga Aztec compiler is:
 This can be matched with this 'errorformat' entry:
 	%f>%l:%c:%t:%n:%m
 
-Some examples for C compilers that produce single-line error outputs:
-%f:%l:\ %t%*[^0123456789]%n:\ %m	for Manx/Aztec C error messages
-					(scanf() doesn't understand [0-9])
-%f\ %l\ %t%*[^0-9]%n:\ %m		for SAS C
-\"%f\"\\,%*[^0-9]%l:\ %m		for generic C compilers
-%f:%l:\ %m				for GCC
-%f:%l:\ %m,%Dgmake[%*\\d]:\ Entering\ directory\ `%f',
-%Dgmake[%*\\d]:\ Leaving\ directory\ `%f'
-					for GCC with gmake (concat the lines!)
-%f(%l)\ :\ %*[^:]:\ %m			old SCO C compiler (pre-OS5)
-%f(%l)\ :\ %t%*[^0-9]%n:\ %m		idem, with error type and number
-%f:%l:\ %m,In\ file\ included\ from\ %f:%l:,\^I\^Ifrom\ %f:%l%m
-					for GCC, with some extras
+Some examples for C compilers that produce single-line error outputs: >
+	%f:%l:\ %t%*[^0123456789]%n:\ %m	for Manx/Aztec C error messages
+						(scanf() doesn't understand [0-9])
+	%f\ %l\ %t%*[^0-9]%n:\ %m		for SAS C
+	\"%f\"\\,%*[^0-9]%l:\ %m		for generic C compilers
+	%f:%l:\ %m				for GCC
+	%f:%l:\ %m,%Dgmake[%*\\d]:\ Entering\ directory\ `%f',
+	%Dgmake[%*\\d]:\ Leaving\ directory\ `%f'
+						for GCC with gmake (concat the lines!)
+	%f(%l)\ :\ %*[^:]:\ %m			old SCO C compiler (pre-OS5)
+	%f(%l)\ :\ %t%*[^0-9]%n:\ %m		idem, with error type and number
+	%f:%l:\ %m,In\ file\ included\ from\ %f:%l:,\^I\^Ifrom\ %f:%l%m
+						for GCC, with some extras
 
 Extended examples for the handling of multi-line messages are given below,
 see |errorformat-Jikes| and |errorformat-LaTeX|.
