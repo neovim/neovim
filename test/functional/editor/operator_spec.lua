@@ -33,10 +33,10 @@ describe('operator', function()
     end
     assert_block({ 'seed', 'ab', 'cd' }, '2G0g@<C-v>j', { { 2, 1, 0 }, { 3, 1, 0 } }, { 'a', 'c' })
     assert_block({ 'seed', 'ab', 'cd' }, '2G0g@<C-v>e', { { 2, 1, 0 }, { 2, 2, 0 } }, { 'ab' })
-    -- Exclusive motion: the block still includes the end.
-    assert_block({ 'abcd' }, '02|g@<C-v>l', { { 1, 2, 0 }, { 1, 3, 0 } }, { 'bc' })
+    -- Exclusive motion: the yank includes the end character, '] is one short.
+    assert_block({ 'abcd' }, '02|g@<C-v>l', { { 1, 2, 0 }, { 1, 2, 0 } }, { 'bc' })
     command('set selection=exclusive')
-    assert_block({ 'abcd' }, '02|g@<C-v>l', { { 1, 2, 0 }, { 1, 2, 0 } }, { 'b' })
+    assert_block({ 'abcd' }, '02|g@<C-v>l', { { 1, 2, 0 }, { 1, 1, 0 } }, { 'b' })
     command('set selection&')
     -- Short last line: '] keeps the right edge (past EOL).
     command('set virtualedit=block')
