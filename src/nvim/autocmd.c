@@ -2100,6 +2100,10 @@ char *getnextac(int c, void *cookie, int indent, bool do_concat)
 bool has_autocmd(event_T event, char *sfname, buf_T *buf)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  if (!has_event(event)) {
+    return false;
+  }
+
   char *tail = path_tail(sfname);
   bool retval = false;
 
