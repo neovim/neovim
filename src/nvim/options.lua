@@ -590,7 +590,7 @@ local options = {
         - For Unix and Win32, if a directory ends in two path separators "//",
           the swap file name will be built using |vim.fs.slug()| on the
           complete path to the file.  This will ensure file name uniqueness
-          in the backdup directory.
+          in the backup directory.
           On Win32, it is also possible to end with "\\".  However, When a
           separating comma is following, you must use "//", since "\\" will
           include the comma in the file name.  Therefore it is recommended to
