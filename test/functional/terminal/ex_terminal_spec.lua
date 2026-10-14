@@ -51,6 +51,28 @@ describe(':terminal', function()
     ]])
   end)
 
+  it('does not hide the last output line without a newline #42334', function()
+    screen:try_resize(50, 7)
+    fn.jobstart({ testprg('shell-test'), '-t', ('meow\n'):rep(100) .. 'LAST LINE' }, {
+      term = true,
+    })
+    retry(nil, nil, function()
+      local ns = api.nvim_get_namespaces()['nvim.terminal.exitmsg']
+      eq(1, #api.nvim_buf_get_extmarks(0, ns, 0, -1, {}))
+    end)
+    command('normal! G')
+    screen:expect([[
+      meow                                              |*4
+      LAST LINE $                                       |
+      ^[Process exited 0]                                |
+                                                        |
+    ]])
+    local lines = api.nvim_buf_get_lines(0, -4, -1, false)
+    -- ConPTY may omit trailing spaces when redrawing the terminal.
+    lines[2] = lines[2]:gsub(' +$', '')
+    eq({ 'meow', 'LAST LINE $', '' }, lines)
+  end)
+
   it('reads output buffer on terminal reporting #4151', function()
     skip(is_os('win'))
     if is_os('win') then

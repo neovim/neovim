@@ -693,6 +693,13 @@ void terminal_close(Terminal **termpp, int status)
     if (!exiting) {
       block_autocmds();
       refresh_terminal(term);
+      if (status != -1 && buf
+          && row_to_linenr(term, term->cursor.row) == buf->b_ml.ml_line_count
+          && *ml_get_buf(buf, buf->b_ml.ml_line_count) != NUL) {
+        // Make room for the exit message without covering the last line of output.
+        terminal_receive(term, "\r\n", 2);
+        refresh_terminal(term);
+      }
       unblock_autocmds();
     }
     term->closed = true;

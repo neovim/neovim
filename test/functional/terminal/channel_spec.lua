@@ -121,6 +121,62 @@ describe('terminal channel is closed and later released if', function()
   end)
 end)
 
+describe('terminal exit message', function()
+  before_each(clear)
+
+  for _, line_count in ipairs({ 1, 6, 100 }) do
+    for _, newline in ipairs({ false, true }) do
+      it(
+        ('does not hide the last of %d output lines %s a newline #42334'):format(
+          line_count,
+          newline and 'with' or 'without'
+        ),
+        function()
+          local screen = Screen.new(50, 7)
+          local channel = api.nvim_open_term(0, {})
+          local output = ('meow\r\n'):rep(line_count - 1) .. 'LAST LINE'
+          api.nvim_chan_send(channel, output .. (newline and '\r\n' or ''))
+          n.fn.chanclose(channel)
+          command('normal! G')
+          if line_count == 1 then
+            command('normal! gg')
+            if newline then
+              screen:expect([[
+                ^LAST LINE                                         |
+                                                                  |
+                [Terminal closed]                                 |
+                                                                  |*4
+              ]])
+            else
+              screen:expect([[
+                ^LAST LINE                                         |
+                [Terminal closed]                                 |
+                                                                  |*5
+              ]])
+            end
+          else
+            screen:expect([[
+              meow                                              |*4
+              LAST LINE                                         |
+              ^[Terminal closed]                                 |
+                                                                |
+            ]])
+          end
+          local lines = {}
+          for _ = 1, line_count - 1 do
+            lines[#lines + 1] = 'meow'
+          end
+          lines[#lines + 1] = 'LAST LINE'
+          repeat
+            lines[#lines + 1] = ''
+          until #lines >= 6
+          eq(lines, api.nvim_buf_get_lines(0, 0, -1, false))
+        end
+      )
+    end
+  end
+end)
+
 it('chansend sends lines to terminal channel in proper order', function()
   clear({ args = { '--cmd', 'set laststatus=2' } })
   local screen = Screen.new(100, 20)
