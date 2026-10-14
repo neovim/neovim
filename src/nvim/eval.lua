@@ -5780,9 +5780,9 @@ M.funcs = {
       `v:_null_blob` have the same `id()` with different types
       because they are internally represented as NULL pointers.
       `id()` returns a hexadecimal representation of the pointers to
-      the containers (i.e. like `0x994a40`), same as `printf("%p",
-      {expr})`, but it is advised against counting on the exact
-      format of the return value.
+      the containers (i.e. like `0x994a40`), same as
+      `printf("%p", {expr})`, but it is advised against counting on
+      the exact format of the return value.
 
       It is not guaranteed that `id(no_longer_existing_container)`
       will not be equal to some other `id()`: new containers may

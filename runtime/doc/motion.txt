@@ -272,7 +272,7 @@ f{char}			To [count]'th occurrence of {char} to the right.  The
 			in Insert mode can be used to switch this on/off
 			|i_CTRL-^|.
 
-			See |getcharsearch() |setcharsearch()
+			See |getcharsearch()| |setcharsearch()|
 
 							*F*
 F{char}			To the [count]'th occurrence of {char} to the left.
@@ -285,7 +285,7 @@ t{char}			Till before [count]'th occurrence of {char} to the
 			{char} |inclusive|.
 			{char} can be entered like with the |f| command.
 
-			See |getcharsearch() |setcharsearch()
+			See |getcharsearch()| |setcharsearch()|
 
 							*T*
 T{char}			Till after [count]'th occurrence of {char} to the
@@ -296,13 +296,13 @@ T{char}			Till after [count]'th occurrence of {char} to the
 							*;*
 ;			Repeat latest f, t, F or T [count] times.
 
-			See |getcharsearch() |setcharsearch() |cpo-;|
+			See |getcharsearch()| |setcharsearch()| |cpo-;|
 
 							*,*
 ,			Repeat latest f, t, F or T in opposite direction
 			[count] times.
 
-			See |getcharsearch() |setcharsearch() |cpo-;|
+			See |getcharsearch()| |setcharsearch()| |cpo-;|
 
 ==============================================================================
 3. Up-down motions					*up-down-motions*

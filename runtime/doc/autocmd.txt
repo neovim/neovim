@@ -496,7 +496,7 @@ CmdAtom				After a user action (an "atom" of input): any
 				    - "excmd": Ex cmdline session.
 				    - "insert": Insert session.
 				    - "jump": Absolute motion ("G", marks,
-				      "H", |jumplist).
+				      "H", |jumplist|).
 				    - "mapping": Composite (≥2 subatoms).
 				    - "motion": Cursor-relative motion ("w",
 				      "%", "fx", "*").

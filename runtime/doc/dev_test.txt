@@ -512,11 +512,11 @@ Number; !must be defined to function properly):
   search inside `/.deps`. If absent, nothing is excluded.
 
 - `NVIM_TEST_CORE_DB_CMD` (FU) (S): command to get backtrace out of the
-  debugger. E.g. `gdb -n -batch -ex "thread apply all bt full"
-  "$_NVIM_TEST_APP" -c "$_NVIM_TEST_CORE"`. Defaults to the example command.
-  This debug command may use environment variables `_NVIM_TEST_APP` (path to
+  debugger. It may use environment variables `_NVIM_TEST_APP` (path to
   application which is being debugged: normally either nvim or luajit) and
-  `_NVIM_TEST_CORE` (core file to get backtrace from).
+  `_NVIM_TEST_CORE` (core file to get backtrace from). Default: >
+    gdb -n -batch -ex "thread apply all bt full" "$_NVIM_TEST_APP" -c "$_NVIM_TEST_CORE"
+<
 
 - `NVIM_TEST_CORE_RANDOM_SKIP` (FU) (D): makes `check_cores` not check cores
   after approximately 90% of the tests. Should be used when finding cores is
