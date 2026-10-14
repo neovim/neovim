@@ -936,287 +936,11 @@ describe('treesitter highlighting (C)', function()
       command('set conceallevel=3 concealcursor=nvic')
     end)
 
-    local function parse_visible()
-      exec_lua(function()
-        local force_sync = vim.g._ts_force_sync_parsing
-        vim.g._ts_force_sync_parsing = true
-        local ok, err = xpcall(vim.treesitter.highlighter._on_start, debug.traceback)
-        vim.g._ts_force_sync_parsing = force_sync
-        if not ok then
-          error(err)
-        end
-      end)
-    end
-
-    it('tree-sitter @conceal reflows wrapped lines through edits and undo', function()
-      screen:try_resize(20, 6)
-      command('set conceallevel=2')
-      local original = { text, 'int HIDDENIDENTIFIER = a;', 'int HIDDENIDENTIFIER = c;' }
-      local edited = {
-        'int VISIBLEIDENTIFIE = b;',
-        'int VISIBLEIDENTIFIE = a;',
-        'int VISIBLEIDENTIFIE = c;',
-      }
-      api.nvim_buf_set_lines(0, 0, -1, true, original)
-      exec_lua(function(query_text)
-        vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, 'c'), {
-          queries = { c = query_text },
-        })
-      end, conceal_query)
-      local function heights()
-        parse_visible()
-        return {
-          api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all,
-          api.nvim_win_text_height(0, { start_row = 1, end_row = 1 }).all,
-          api.nvim_win_text_height(0, { start_row = 2, end_row = 2 }).all,
-        }
-      end
-      eq(1, api.nvim__buf_stats(0).conceal_providers)
-      eq({ 1, 1, 1 }, heights())
-      eq({ row = 1, col = 5, curscol = 5, endcol = 5 }, fn.screenpos(0, 1, 21))
-      eq({ row = 1, col = 9, curscol = 9, endcol = 9 }, fn.screenpos(0, 1, 25))
-
-      api.nvim_buf_set_lines(0, 0, 1, true, { edited[1] })
-      eq({ 2, 1, 1 }, heights())
-      api.nvim_buf_set_lines(0, 1, 2, true, { edited[2] })
-      api.nvim_buf_set_lines(0, 2, 3, true, { edited[3] })
-      eq({ 2, 2, 2 }, heights())
-
-      command('undo')
-      eq({ 2, 2, 1 }, heights())
-      command('undo')
-      eq({ 2, 1, 1 }, heights())
-      command('undo')
-      eq({ 1, 1, 1 }, heights())
-      eq(original, api.nvim_buf_get_lines(0, 0, -1, true))
-      command('redo')
-      eq({ 2, 1, 1 }, heights())
-      eq(edited[1], api.nvim_buf_get_lines(0, 0, 1, true)[1])
-      command('redo | redo')
-      eq({ 2, 2, 2 }, heights())
-      eq(edited, api.nvim_buf_get_lines(0, 0, -1, true))
-      command('undo | undo | undo')
-      command('redo | redo | redo')
-      eq({ 2, 2, 2 }, heights())
-
-      -- Starting the ordinary C highlighter must not retain the custom query's provider.
-      eq(
-        { 0, 0 },
-        exec_lua(function()
-          vim.treesitter.stop(0)
-          local counts = { vim.api.nvim__buf_stats(0).conceal_providers }
-          vim.treesitter.start(0, 'c')
-          counts[2] = vim.api.nvim__buf_stats(0).conceal_providers
-          vim.treesitter.stop(0)
-          return counts
-        end)
-      )
-    end)
-
-    it('conceal redraws do not grow undo history during insert', function()
-      screen:try_resize(80, 8)
-      command('set conceallevel=2')
-      local original = { text, text, text, text }
-      for _, concealed in ipairs({ false, true }) do
-        api.nvim_buf_set_lines(0, 0, -1, true, original)
-        exec_lua(
-          function(query_text)
-            vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, 'c'), {
-              queries = { c = query_text },
-            })
-          end,
-          concealed and (conceal_query .. '((identifier) @noconceal (#eq? @noconceal "b"))')
-            or '(identifier) @variable'
-        )
-        feed('ggA')
-        local seq
-        for i = 1, 40 do
-          feed(' ')
-          parse_visible()
-          api.nvim_win_text_height(0, {})
-          if i == 10 or i == 40 then
-            local undo = fn.undotree()
-            seq = seq or undo.seq_cur
-            eq(seq, undo.seq_cur)
-            eq(0, undo.synced)
-            eq(1, api.nvim__buf_stats(0).uhp_extmark_size)
-            eq(concealed and 4 or 0, api.nvim__buf_stats(0).conceal_marks)
-          end
-        end
-        if concealed then
-          exec_lua(function()
-            local ns = vim.api.nvim_get_namespaces()['nvim.treesitter.highlighter.conceal']
-            local marks = vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, { details = true })
-            assert(#marks == 8)
-            for _, mark in ipairs(marks) do
-              assert(mark[4].undo_restore == false)
-            end
-          end)
-        end
-        feed('<Esc>u')
-        eq(original, api.nvim_buf_get_lines(0, 0, -1, true))
-        feed('<C-r>')
-        eq(text .. (' '):rep(40), api.nvim_get_current_line())
-        parse_visible()
-        eq(4, api.nvim_win_text_height(0, {}).all)
-        exec_lua('vim.treesitter.stop(0)')
-        eq(0, api.nvim__buf_stats(0).conceal_marks)
-        eq(1, api.nvim__buf_stats(0).uhp_extmark_size)
-      end
-    end)
-
-    it('tree-sitter conceal geometry never requests a full parse', function()
-      command('set conceallevel=2')
-      api.nvim_buf_set_lines(0, 0, -1, true, { text })
-      eq(
-        { 2, 1, 2, 1, 0 },
-        exec_lua(function(query_text)
-          local parser = vim.treesitter.get_parser(0, 'c')
-          local parse = parser.parse
-          local calls = {}
-          parser.parse = function(self, range, ...)
-            calls[#calls + 1] = range
-            return parse(self, range, ...)
-          end
-          local highlighter =
-            vim.treesitter.highlighter.new(parser, { queries = { c = query_text } })
-          local before = vim.api.nvim_win_text_height(0, {}).all
-          local force_sync = vim.g._ts_force_sync_parsing
-          vim.g._ts_force_sync_parsing = true
-          vim.treesitter.highlighter._on_start()
-          vim.g._ts_force_sync_parsing = force_sync
-          local after = vim.api.nvim_win_text_height(0, {}).all
-
-          vim.api.nvim_buf_set_lines(0, 0, 1, true, { 'int VISIBLEIDENTIFIE = b;' })
-          local invalid = vim.api.nvim_win_text_height(0, {}).all
-          local full = 0
-          for _, range in ipairs(calls) do
-            full = full + (range == true and 1 or 0)
-          end
-          parser.parse = parse
-          highlighter:destroy()
-          return { before, after, invalid, #calls, full }
-        end, conceal_query)
-      )
-    end)
-
-    it('tree-sitter clips multiline conceal marks to each checked row', function()
-      command('set conceallevel=2')
-      api.nvim_buf_set_lines(0, 0, -1, true, { 'int a;', 'int b;', 'int c;' })
-      eq(
-        { { 0, 0, 0, 6 }, { 1, 0, 1, 6 }, { 2, 0, 2, 6 } },
-        exec_lua(function()
-          vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, 'c'), {
-            queries = { c = '((translation_unit) @conceal (#set! conceal ""))' },
-          })
-          local force_sync = vim.g._ts_force_sync_parsing
-          vim.g._ts_force_sync_parsing = true
-          vim.treesitter.highlighter._on_start()
-          vim.g._ts_force_sync_parsing = force_sync
-          for row = 0, 2 do
-            vim.api.nvim_win_text_height(0, { start_row = row, end_row = row })
-          end
-
-          local ns = vim.api.nvim_get_namespaces()['nvim.treesitter.highlighter.conceal']
-          local ranges = {}
-          for _, mark in ipairs(vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, { details = true })) do
-            local details = mark[4]
-            assert(details.undo_restore == false)
-            ranges[#ranges + 1] = { mark[2], mark[3], details.end_row, details.end_col }
-          end
-          return ranges
-        end)
-      )
-    end)
-
-    it('tree-sitter rebuilds checked rows when a conceal-capable injection is added', function()
-      command('set conceallevel=2')
-      api.nvim_buf_set_lines(0, 0, -1, true, { 'HIDDENIDENTIFIER = value' })
-      exec_lua(function()
-        _G.conceal_injection_parser = vim.treesitter.get_parser(0, 'c')
-        _G.conceal_injection_highlighter =
-          vim.treesitter.highlighter.new(_G.conceal_injection_parser, {
-            queries = {
-              c = [[
-                ((identifier) @conceal
-                 (#eq? @conceal "NEVER")
-                 (#set! conceal ""))
-              ]],
-              lua = [[
-                ((identifier) @conceal
-                 (#eq? @conceal "HIDDENIDENTIFIER")
-                 (#set! conceal ""))
-              ]],
-            },
-          })
-      end)
-      parse_visible()
-      eq(2, api.nvim_win_text_height(0, {}).all)
-      exec_lua(function()
-        _G.conceal_injection_parser:add_child('lua')
-      end)
-      parse_visible()
-      eq(1, api.nvim_win_text_height(0, {}).all)
-      exec_lua(function()
-        _G.conceal_injection_highlighter:destroy()
-        _G.conceal_injection_parser:remove_child('lua')
-      end)
-
-      -- Also register/unregister when only the child language is conceal-capable.
-      eq(
-        { 0, 1, 0, 0, true, true },
-        exec_lua(function()
-          local parser = vim.treesitter.get_parser(0, 'c')
-          local highlighter = vim.treesitter.highlighter.new(parser, {
-            queries = {
-              c = '((identifier) @variable)',
-              lua = '((identifier) @conceal (#set! conceal ""))',
-            },
-          })
-          local counts = { vim.api.nvim__buf_stats(0).conceal_providers }
-          parser:add_child('lua')
-          counts[#counts + 1] = vim.api.nvim__buf_stats(0).conceal_providers
-          highlighter._conceal_checked[0] = true
-          local ns = vim.api.nvim_get_namespaces()['nvim.treesitter.highlighter.conceal']
-          vim.api.nvim_buf_set_extmark(0, ns, 0, 0, { end_col = 1, conceal = '' })
-          parser:remove_child('lua')
-          counts[#counts + 1] = vim.api.nvim__buf_stats(0).conceal_providers
-          counts[#counts + 1] = #vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {})
-          counts[#counts + 1] = next(highlighter._conceal_checked) == nil
-          highlighter._conceal_checked[0] = true
-          parser:add_child('lua')
-          counts[#counts + 1] = next(highlighter._conceal_checked) == nil
-          highlighter:destroy()
-          return counts
-        end)
-      )
-    end)
-
-    it('reuses persistent conceal marks on redraw', function()
-      exec_lua(function(query_text, line)
-        vim.api.nvim_buf_set_lines(0, 0, -1, false, { line })
-        vim.treesitter.query.set('c', 'highlights', query_text)
-        vim.treesitter.start(0, 'c')
-        vim.treesitter.get_parser():parse(true)
-      end, conceal_query, text)
-      eq(1, api.nvim_win_text_height(0, {}).all)
-      screen:expect([[
-        ^int  = b;           |
-        {1:~                   }|*2
-                            |
-      ]])
-      exec_lua(function()
-        local ns = vim.api.nvim_get_namespaces()['nvim.treesitter.highlighter.conceal']
-        local marks = vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {})
-        vim.cmd('redraw!')
-        assert(vim.deep_equal(marks, vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {})))
-      end)
-    end)
-
-    it('ignores callbacks from a stopped highlighter', function()
-      exec_lua(function(line)
+    --- Starts C highlighting of `lines`, with Lua injected in comments concealing its identifiers.
+    local function start_injected(lines)
+      exec_lua(function(lines_)
         local q = vim.treesitter.query
-        vim.api.nvim_buf_set_lines(0, 0, -1, false, { '/* hidden */', line })
+        vim.api.nvim_buf_set_lines(0, 0, -1, false, lines_)
         q.set(
           'c',
           'injections',
@@ -1231,7 +955,111 @@ describe('treesitter highlighting (C)', function()
         q.set('lua', 'highlights', '((identifier) @conceal (#set! conceal ""))')
         vim.treesitter.start(0, 'c')
         vim.treesitter.get_parser():parse(true)
-      end, text)
+      end, lines)
+    end
+
+    it('tree-sitter @conceal reflows wrapped lines through edits and undo', function()
+      screen:try_resize(20, 6)
+      command('set conceallevel=2')
+      local edited = 'int VISIBLEIDENTIFIE = b;'
+      api.nvim_buf_set_lines(0, 0, -1, true, { text, text, text })
+      exec_lua(function(query_text)
+        vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, 'c'), {
+          queries = { c = query_text },
+        })
+      end, conceal_query)
+      local function heights()
+        return {
+          api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all,
+          api.nvim_win_text_height(0, { start_row = 1, end_row = 1 }).all,
+          api.nvim_win_text_height(0, { start_row = 2, end_row = 2 }).all,
+        }
+      end
+      eq({ 1, 1, 1 }, heights())
+      eq({ row = 1, col = 5, curscol = 5, endcol = 5 }, fn.screenpos(0, 1, 21))
+      eq({ row = 1, col = 9, curscol = 9, endcol = 9 }, fn.screenpos(0, 1, 25))
+
+      api.nvim_buf_set_lines(0, 0, 1, true, { edited })
+      eq({ 2, 1, 1 }, heights())
+      api.nvim_buf_set_lines(0, 1, 3, true, { edited, edited })
+      eq({ 2, 2, 2 }, heights())
+      command('undo')
+      eq({ 2, 1, 1 }, heights())
+      command('undo')
+      eq({ 1, 1, 1 }, heights())
+      command('redo | redo')
+      eq({ 2, 2, 2 }, heights())
+
+      -- 'nowrap' replaces the marks that an edit moved.
+      command('undo | undo')
+      command('set nowrap | echo')
+      api.nvim_buf_set_text(0, 0, 10, 0, 10, { 'x' })
+      screen:expect([[
+        ^int HIDDENxIDENTIFIE|
+        int  = b;           |*2
+        {1:~                   }|*2
+                            |
+      ]])
+
+      exec_lua('vim.treesitter.stop(0)')
+      eq(0, api.nvim__buf_stats(0).conceal_providers)
+    end)
+
+    it('conceal redraws do not grow undo history during insert', function()
+      screen:try_resize(60, 8)
+      command('set conceallevel=2')
+      local original = { text, text, text, text }
+      api.nvim_buf_set_lines(0, 0, -1, true, original)
+      exec_lua(function(query_text)
+        vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, 'c'), {
+          queries = { c = query_text },
+        })
+      end, conceal_query)
+      feed('ggA')
+      local seq
+      for i = 1, 40 do
+        feed(' ')
+        api.nvim_win_text_height(0, {})
+        if i == 10 or i == 40 then
+          local undo = fn.undotree()
+          seq = seq or undo.seq_cur
+          eq(seq, undo.seq_cur)
+          eq(0, undo.synced)
+          eq(1, api.nvim__buf_stats(0).uhp_extmark_size)
+        end
+      end
+      feed('<Esc>u')
+      eq(original, api.nvim_buf_get_lines(0, 0, -1, true))
+      feed('<C-r>')
+      eq(text .. (' '):rep(40), api.nvim_get_current_line())
+      -- The redone line is 65 raw cells, 49 displayed.
+      eq(4, api.nvim_win_text_height(0, {}).all)
+      command('set conceallevel=0')
+      eq(5, api.nvim_win_text_height(0, {}).all)
+      exec_lua('vim.treesitter.stop(0)')
+      eq(1, api.nvim__buf_stats(0).uhp_extmark_size)
+    end)
+
+    it('tree-sitter conceals an injected tree through edits outside it', function()
+      start_injected({ 'int x;', '', '/* HIDDENIDENTIFIER = 1 */' })
+      screen:expect([[
+        ^int {25:x};              |
+                            |
+        /*  = 1 */          |
+                            |
+      ]])
+      -- Measured before a redraw: parsing the edited row drops the injected tree.
+      eq(
+        3,
+        exec_lua(function()
+          vim.api.nvim_buf_set_text(0, 0, 0, 0, 0, { 'x' })
+          return vim.api.nvim_win_text_height(0, {}).all
+        end)
+      )
+    end)
+
+    it('ignores callbacks from a stopped highlighter', function()
+      start_injected({ '/* hidden */', text })
 
       eq(
         1,
@@ -1254,7 +1082,7 @@ describe('treesitter highlighting (C)', function()
     end)
 
     for _, override in ipairs({ '@noconceal', 'pattern metadata', 'capture metadata' }) do
-      it('uses ' .. override .. ' without another concealing pattern', function()
+      it(('uses %s without another concealing pattern'):format(override), function()
         exec_lua(function(kind, line)
           vim.api.nvim_buf_set_lines(0, 0, -1, false, { line })
           vim.api.nvim_buf_set_extmark(0, vim.api.nvim_create_namespace('test'), 0, 4, {
@@ -1289,118 +1117,128 @@ describe('treesitter highlighting (C)', function()
       end)
     end
 
-    it('keeps conceal_lines ranges when measuring intra-line conceal first', function()
+    it('checks conceal_lines and intra-line conceal once per row', function()
+      local c_query = [[
+        ((comment) @comment (#set! conceal_lines ""))
+        ((identifier) @conceal (#set! conceal ""))
+      ]]
+      api.nvim_buf_set_lines(0, 0, -1, false, { '/* one', 'two', 'three */', 'int identifier;' })
       eq(
-        { 0, 2, 1, 1 },
-        exec_lua(function()
-          vim.api.nvim_buf_set_lines(
-            0,
-            0,
-            -1,
-            false,
-            { '/* one', 'two', 'three */', 'int identifier;' }
-          )
-          vim.treesitter.query.set(
-            'c',
-            'highlights',
-            [[
-              ((comment) @comment (#set! conceal_lines ""))
-              ((identifier) @conceal (#set! conceal ""))
-            ]]
-          )
+        { 1, 1 },
+        exec_lua(function(query_text)
+          vim.treesitter.query.set('c', 'highlights', query_text)
           vim.treesitter.start(0, 'c')
           vim.treesitter.get_parser():parse(true)
           vim.fn.screenpos(0, 1, 3)
-          local ns = vim.api.nvim_get_namespaces()['nvim.treesitter.highlighter']
-          local mark = vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, { details = true })[1]
           return {
-            mark[2],
-            mark[4].end_row,
             vim.api.nvim_win_text_height(0, {}).all,
             vim.api.nvim_win_text_height(0, {}).all,
           }
+        end, c_query)
+      )
+
+      -- A capture that ends at column 0 does not include that row.
+      eq(
+        { 2, 2 },
+        exec_lua(function()
+          vim.treesitter.stop()
+          vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'a', '```', 'code', '```', 'b' })
+          vim.treesitter.query.set(
+            'markdown',
+            'highlights',
+            '((fenced_code_block) @markup.raw.block (#set! conceal_lines ""))'
+          )
+          vim.treesitter.start(0, 'markdown')
+          return {
+            vim.api.nvim_win_text_height(0, {}).all,
+            vim.api.nvim_win_text_height(0, {}).all,
+          }
+        end)
+      )
+      screen:expect([[
+        ^a                   |
+        b                   |
+        {1:~                   }|
+                            |
+      ]])
+
+      -- Under 'nowrap', checking `conceal_lines` adds no intra-line conceal, which 'wrap' adds.
+      command('set nowrap')
+      eq(
+        0,
+        exec_lua(function(lines, query_text)
+          vim.treesitter.stop()
+          vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+          vim.treesitter.query.set('c', 'highlights', query_text)
+          vim.treesitter.start(0, 'c')
+          vim.cmd('redraw')
+          local conceal_ns = vim.api.nvim_create_namespace('nvim.treesitter.highlighter.conceal')
+          return #vim.api.nvim_buf_get_extmarks(0, conceal_ns, 0, -1, {})
+        end, { '/* one */', ('int %s;'):format(('x'):rep(20)) }, c_query)
+      )
+      command('set wrap')
+      eq(1, api.nvim_win_text_height(0, { start_row = 1, end_row = 1 }).all)
+
+      -- Under 'wrap', each row is checked once, though `conceal_lines` asks first.
+      eq(
+        { 1, 1 },
+        exec_lua(function()
+          local hl = require('vim.treesitter.highlighter')
+          local prepare = hl.prepare_highlight_states
+          local checks = {}
+          hl.prepare_highlight_states = function(self, srow, erow)
+            checks[srow + 1] = (checks[srow + 1] or 0) + (srow == erow and 1 or 0)
+            return prepare(self, srow, erow)
+          end
+          vim.treesitter.stop()
+          vim.treesitter.start(0, 'c')
+          vim.api.nvim_win_text_height(0, {})
+          hl.prepare_highlight_states = prepare
+          return checks
         end)
       )
     end)
 
     it('preserves the replacement start when clipping multiline conceal', function()
-      for _, level in ipairs({ 1, 2 }) do
-        exec_lua(function(cole)
-          vim.wo.conceallevel = cole
-          vim.wo.listchars = 'conceal:-'
-          vim.api.nvim_buf_set_lines(0, 0, -1, false, {
-            '/* hidden',
-            'end */' .. string.rep('x', 20),
-          })
-          vim.treesitter.stop()
-          vim.treesitter.query.set(
-            'c',
-            'highlights',
-            '((comment) @Normal (#set! conceal "' .. (cole == 1 and '' or 'X') .. '"))'
-          )
-          vim.treesitter.start(0, 'c')
-          vim.treesitter.get_parser():parse(true)
-        end, level)
-        eq(1, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
-        eq(1, api.nvim_win_text_height(0, { start_row = 1, end_row = 1 }).all)
-        screen:expect(([[
-            {14:^%s}                   |
-            xxxxxxxxxxxxxxxxxxxx|
-            {1:~                   }|
-                                |
-          ]]):format(level == 1 and '-' or 'X'))
-        eq(
-          { 1, 1 },
-          exec_lua(function(cole)
-            local other = vim.api.nvim_open_win(0, false, {
-              relative = 'editor',
-              row = 0,
-              col = 0,
-              width = 20,
-              height = 2,
-              hide = true,
-            })
-            vim.wo[other].conceallevel = cole == 1 and 2 or 1
-            vim.wo[other].concealcursor = 'nvic'
-            local before = vim.api.nvim_win_text_height(other, { start_row = 1, end_row = 1 }).all
-            vim.api.nvim_buf_set_text(0, 1, 0, 1, 3, { 'other' })
-            vim.treesitter.get_parser():parse(true)
-            local after = vim.api.nvim_win_text_height(other, { start_row = 1, end_row = 1 }).all
-            vim.api.nvim_win_close(other, true)
-            return { before, after }
-          end, level)
-        )
-        eq(2, api.nvim_win_text_height(0, {}).all)
-        screen:expect_unchanged()
-      end
-    end)
-
-    it('does not cache conceal checks for a nonconcealing query', function()
+      command('set conceallevel=2')
+      api.nvim_buf_set_lines(0, 0, -1, false, { '/* hidden', ('end */%s'):format(('x'):rep(20)) })
+      exec_lua(function()
+        vim.treesitter.query.set('c', 'highlights', '((comment) @Normal (#set! conceal "X"))')
+        vim.treesitter.start(0, 'c')
+        vim.treesitter.get_parser():parse(true)
+      end)
+      eq(1, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
+      eq(1, api.nvim_win_text_height(0, { start_row = 1, end_row = 1 }).all)
+      screen:expect([[
+        {14:^X}                   |
+        xxxxxxxxxxxxxxxxxxxx|
+        {1:~                   }|
+                            |
+      ]])
+      -- Also in a window with another 'conceallevel', after an edit.
       eq(
-        { true, true, 0 },
+        { 1, 1 },
         exec_lua(function()
-          vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'int value;' })
-          vim.treesitter.query.set('c', 'highlights', '(identifier) @variable')
-          vim.treesitter.start(0, 'c')
-          local parser = vim.treesitter.get_parser()
-          parser:parse(true)
-          vim.api.nvim_buf_set_text(0, 0, 0, 0, 3, { '   ' })
-          parser:parse(true)
-          local hl = vim.treesitter.highlighter.active[vim.api.nvim_get_current_buf()]
-          local unchecked = {
-            next(hl._conceal_checked) == nil,
-            next(hl._conceal_line_checked) == nil,
-          }
-          local clear, calls = vim.api.nvim_buf_clear_namespace, 0
-          vim.api.nvim_buf_clear_namespace = function(...)
-            calls = calls + 1
-            return clear(...)
-          end
-          vim.api.nvim_buf_set_text(0, 0, 4, 0, 5, { 'x' })
-          vim.api.nvim_buf_clear_namespace = clear
-          return { unchecked[1], unchecked[2], calls }
+          local other = vim.api.nvim_open_win(0, false, {
+            relative = 'editor',
+            row = 0,
+            col = 0,
+            width = 20,
+            height = 2,
+            hide = true,
+          })
+          vim.wo[other].conceallevel = 1
+          vim.wo[other].concealcursor = 'nvic'
+          local before = vim.api.nvim_win_text_height(other, { start_row = 1, end_row = 1 }).all
+          vim.api.nvim_buf_set_text(0, 1, 0, 1, 3, { 'other' })
+          vim.treesitter.get_parser():parse(true)
+          local after = vim.api.nvim_win_text_height(other, { start_row = 1, end_row = 1 }).all
+          vim.api.nvim_win_close(other, true)
+          return { before, after }
         end)
       )
+      eq(2, api.nvim_win_text_height(0, {}).all)
+      screen:expect_unchanged()
     end)
   end)
 
@@ -1648,6 +1486,27 @@ describe('treesitter highlighting (help)', function()
                                                 |
       ]],
     })
+
+    -- Concealed taglinks wrap at their concealed width, also on rows no window has drawn yet.
+    exec_lua(function()
+      local lines = {}
+      for i = 1, 100 do
+        lines[i] = ('|a| |b| |c| |d| |e| |f| |g| |h| |i| |j| %d'):format(i)
+      end
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      vim.wo.wrap = true
+      vim.wo.conceallevel = 2
+    end)
+    feed('G')
+    screen:expect([[
+      {25:a} {25:b} {25:c} {25:d} {25:e} {25:f} {25:g} {25:h} {25:i} {25:j} 97                  |
+      {25:a} {25:b} {25:c} {25:d} {25:e} {25:f} {25:g} {25:h} {25:i} {25:j} 98                  |
+      {25:a} {25:b} {25:c} {25:d} {25:e} {25:f} {25:g} {25:h} {25:i} {25:j} 99                  |
+      {25:^|a|} {25:|b|} {25:|c|} {25:|d|} {25:|e|} {25:|f|} {25:|g|} {25:|h|} {25:|i|} {25:|j|} |
+      100                                     |
+                                              |
+    ]])
+    eq(101, api.nvim_win_text_height(0, {}).all)
   end)
 
   it('correctly redraws added/removed injections', function()

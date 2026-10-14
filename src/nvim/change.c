@@ -226,6 +226,18 @@ void changed_lines_invalidate_win(win_T *wp, linenr_T lnum, colnr_T col, linenr_
   }
 }
 
+/// Resets `w_skipcol` if topline is within `line1` to `line2` and its length has become smaller
+/// such that nothing will be visible anymore, accounting for 'smoothscroll' <<< or 'listchars'
+/// "precedes" marker.
+void changed_topline_skipcol(win_T *wp, linenr_T line1, linenr_T line2)
+{
+  if (wp->w_skipcol > 0 && wp->w_topline >= line1 && wp->w_topline <= line2
+      && (linetabsize_disp_eol(wp, wp->w_topline)
+          <= wp->w_skipcol + sms_marker_overlap(wp, -1))) {
+    wp->w_skipcol = 0;
+  }
+}
+
 /// Line changed_lines_invalidate_win(), but for all windows displaying a buffer.
 void changed_lines_invalidate_buf(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnume,
                                   linenr_T xtra)
@@ -356,17 +368,10 @@ static void changed_common(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnum
 
       linenr_T last = lnume + xtra - 1;  // last line after the change
 
-      // Reset "w_skipcol" if the topline length has become smaller to
-      // such a degree that nothing will be visible anymore, accounting
-      // for 'smoothscroll' <<< or 'listchars' "precedes" marker.
-      if (wp->w_skipcol > 0
-          && (last < wp->w_topline
-              || (wp->w_topline >= lnum
-                  && wp->w_topline < lnume
-                  && (win_screen_linewidth_eol(wp, wp->w_topline)
-                      <= wp->w_skipcol + sms_marker_overlap(wp, -1))))) {
+      if (last < wp->w_topline) {
         wp->w_skipcol = 0;
       }
+      changed_topline_skipcol(wp, lnum, lnume - 1);
 
       // Check if a change in the buffer has invalidated the cached
       // values for the cursor.

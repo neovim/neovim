@@ -125,11 +125,8 @@ void decor_redraw_sh(buf_T *buf, int row1, int row2, DecorSignHighlight sh)
     if (row2 >= row1) {
       redraw_buf_range_later(buf, row1 + 1, row2 + 1);
       if (sh.flags & (kSHConceal | kSHConcealOff)) {
-        FOR_ALL_TAB_WINDOWS(tp, wp) {
-          if (wp->w_buffer == buf && wp->w_p_wrap && wp->w_p_cole > 0) {
-            changed_lines_invalidate_win(wp, row1 + 1, 0, row2 + 2, 0);
-          }
-        }
+        // Extmark-conceal may change the height of the lines.
+        changed_lines_invalidate_buf(buf, row1 + 1, 0, row2 + 2, 0);
       }
     }
   }
@@ -331,11 +328,12 @@ void decor_state_invalidate(buf_T *buf)
 {
   if (decor_state.win && decor_state.win->w_buffer == buf) {
     decor_state.itr_valid = false;
-    decor_state.version++;
   }
 }
 
-static schar_T decor_conceal_char_impl(win_T *wp, bool is_start, schar_T cchar)
+/// Character shown for concealed text: `cchar`, else 'listchars' "conceal" or a space with
+/// 'conceallevel' 1, or NUL when hidden. Only the start of a concealed region shows one.
+schar_T conceal_replacement(win_T *wp, bool is_start, schar_T cchar)
 {
   if (!is_start || wp->w_p_cole == 3 || (cchar == NUL && wp->w_p_cole != 1)) {
     return NUL;
@@ -349,25 +347,25 @@ static schar_T decor_conceal_char_impl(win_T *wp, bool is_start, schar_T cchar)
 /// Replacement at the start of a concealed region, or NUL when fully hidden.
 schar_T decor_conceal_char(win_T *wp, const DecorState *state)
 {
-  return decor_conceal_char_impl(wp, decor_conceal_is_start(state), state->conceal_char);
+  return conceal_replacement(wp, state->conceal > 1, state->conceal_char);
 }
 
-/// Persistent replacement at buffer column "col", ignoring ephemeral conceal overrides.
-/// Call after decor_redraw_col(). Only wrapped reflow should give this result layout authority;
-/// other decoration attributes and non-reflowed text retain their combined priority.
+/// Extmark-conceal replacement at buffer column `col` (see CharsizeArg.extconceal_off).
+/// Call after decor_redraw_col().
+///
 /// @param[out] attr  Replacement highlight, or zero for the default; may be NULL.
-schar_T decor_conceal_char_persistent(win_T *wp, const DecorState *state, int col, int *attr)
+schar_T decor_extconceal_char(win_T *wp, const DecorState *state, int col, int *attr)
 {
   if (attr != NULL) {
     *attr = 0;
   }
-  if (state->conceal_persistent == 0) {
+  if (state->conceal_slot_i < 0) {
     return NUL;
   }
-  const DecorRange *r = &kv_A(state->slots, state->conceal_persistent - 1).range;
+  const DecorRange *r = &kv_A(state->slots, state->conceal_slot_i).range;
   bool is_start = r->start_row == state->row && r->start_col == col
-                  && !(r->data.sh.flags & kSHConcealNoStart);
-  schar_T replacement = decor_conceal_char_impl(wp, is_start, r->data.sh.text[0]);
+                  && !(r->data.sh.flags & kSHConcealCont);
+  schar_T replacement = conceal_replacement(wp, is_start, r->data.sh.text[0]);
   if (attr != NULL && replacement != NUL && r->data.sh.text[0] != NUL) {
     *attr = r->attr_id;
   }
@@ -494,18 +492,8 @@ bool decor_redraw_reset(win_T *wp, DecorState *state)
   state->current_end = 0;
   state->future_begin = 0;
   state->new_range_ordering = 0;
-  state->conceal_persistent = 0;
-  state->conceal_only = false;
 
   return wp->w_buffer->b_marktree->n_keys;
-}
-
-/// Prepare a measurement state without ranges retained only for drawing.
-bool decor_redraw_reset_conceal(win_T *wp, DecorState *state)
-{
-  bool has_decor = decor_redraw_reset(wp, state);
-  state->conceal_only = true;
-  return has_decor;
 }
 
 /// @return true if decor has a virtual position (virtual text or ui_watched)
@@ -586,6 +574,11 @@ void decor_redraw_line(win_T *wp, int row, DecorState *state)
   state->row = row;
   state->col_last = -1;
   state->eol_col = -1;
+  // Conceal is set per column by decor_redraw_col(), and is absent on a line it is not called for.
+  state->conceal = 0;
+  state->conceal_slot_i = -1;
+  state->conceal_char = 0;
+  state->conceal_attr = 0;
 }
 
 // Checks if there are (likely) more decorations on the current line.
@@ -755,6 +748,12 @@ int decor_redraw_col_impl(win_T *wp, int col, int win_col, bool hidden, DecorSta
   int const row = state->row;
   int col_last = max_col_last;
 
+  if (!state->itr_valid) {
+    // A callback changed the marktree: resume after the marks already read (see col_last).
+    marktree_itr_get(buf->b_marktree, row, state->col_last + 1, state->itr);
+    state->itr_valid = true;
+  }
+
   while (true) {
     // TODO(bfredl): check duplicate entry in "intersection"
     // branch
@@ -827,7 +826,7 @@ next_mark:
   int attr = 0;
   int hl_eol_attr = 0;
   int conceal = 0;
-  int conceal_persistent = 0;
+  int conceal_slot_i = -1;
   schar_T conceal_char = 0;
   int conceal_attr = 0;
   TriState spell = kNone;
@@ -857,10 +856,10 @@ next_mark:
       if (r->kind == kDecorKindHighlight && (r->data.sh.flags & kSHConceal)) {
         conceal = 1;
         if (!r->owned) {
-          conceal_persistent = index + 1;
+          conceal_slot_i = index;
         }
         if (r->start_row == row && r->start_col == col
-            && !(r->data.sh.flags & kSHConcealNoStart)) {
+            && !(r->data.sh.flags & kSHConcealCont)) {
           DecorSignHighlight *sh = &r->data.sh;
           conceal = 2;
           conceal_char = sh->text[0];
@@ -872,7 +871,7 @@ next_mark:
       if (r->kind == kDecorKindHighlight && (r->data.sh.flags & kSHConcealOff)) {
         conceal = 0;
         if (!r->owned) {
-          conceal_persistent = 0;
+          conceal_slot_i = -1;
         }
       }
 
@@ -924,20 +923,57 @@ next_mark:
   state->current = attr;
   state->current_hl_eol = hl_eol_attr;
   state->conceal = conceal;
-  state->conceal_persistent = conceal_persistent;
+  state->conceal_slot_i = conceal_slot_i;
   state->conceal_char = conceal_char;
   state->conceal_attr = conceal_attr;
   state->spell = spell;
   return attr;
 }
 
-static const uint32_t conceal_lines_filter[kMTMetaCount] = {
-  [kMTMetaConcealLines] = kMTFilterSelect,
-};
+/// @return Whether a mark with `flag` (counted in `meta`) of a namespace in `wp` overlaps `row`.
+static bool decor_row_has_mark(win_T *wp, int row, MetaIndex meta, uint32_t flag)
+{
+  if (!buf_meta_total(wp->w_buffer, meta)) {
+    return false;
+  }
+  uint32_t filter[kMTMetaCount] = { 0 };
+  filter[meta] = kMTFilterSelect;
+
+  MarkTree *const tree = wp->w_buffer->b_marktree;
+  MTPair pair;
+  MarkTreeIter itr[1];
+  marktree_itr_get_overlap(tree, row, 0, itr);
+  while (marktree_itr_step_overlap(tree, itr, &pair)) {
+    if ((pair.start.flags & flag) && ns_in_win(pair.start.ns, wp)) {
+      return true;
+    }
+  }
+
+  marktree_itr_step_out_filter(tree, itr, filter);
+
+  while (itr->x) {
+    MTKey mark = marktree_itr_current(itr);
+    if (mark.pos.row > row) {
+      break;
+    }
+    if ((mark.flags & flag) && ns_in_win(mark.ns, wp)) {
+      return true;
+    }
+    marktree_itr_next_filter(tree, itr, row + 1, 0, filter);
+  }
+
+  return false;
+}
+
+/// @return Whether a conceal mark of `wp` overlaps `row`. Does not invoke `_on_conceal`.
+bool decor_row_has_conceal(win_T *wp, int row)
+{
+  return decor_row_has_mark(wp, row, kMTMetaConceal, MT_FLAG_DECOR_CONCEAL);
+}
 
 /// Called by draw, move and plines code to determine whether a line is concealed.
-/// Scans the marktree for conceal_line marks on "row" and invokes any
-/// _on_conceal_line decoration provider callbacks, if necessary.
+/// Invokes any `_on_conceal_line` decoration provider callbacks, then scans the marktree for
+/// `conceal_lines` marks on `row`.
 ///
 /// @param check_cursor If true, avoid an early return for an unconcealed cursorline.
 ///                     Depending on the callsite, we still want to know whether the
@@ -952,35 +988,8 @@ bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
     return false;
   }
 
-  // No need to scan the marktree if there are no whole-line conceal marks.
-  if (!buf_meta_total(wp->w_buffer, kMTMetaConcealLines)) {
-    return decor_providers_invoke_conceal_line(wp, row);
-  }
-
-  // Scan the marktree for any conceal_line marks on this row.
-  MTPair pair;
-  MarkTreeIter itr[1];
-  marktree_itr_get_overlap(wp->w_buffer->b_marktree, row, 0, itr);
-  while (marktree_itr_step_overlap(wp->w_buffer->b_marktree, itr, &pair)) {
-    if (mt_conceal_lines(pair.start) && ns_in_win(pair.start.ns, wp)) {
-      return true;
-    }
-  }
-
-  marktree_itr_step_out_filter(wp->w_buffer->b_marktree, itr, conceal_lines_filter);
-
-  while (itr->x) {
-    MTKey mark = marktree_itr_current(itr);
-    if (mark.pos.row > row) {
-      break;
-    }
-    if (mt_conceal_lines(mark) && ns_in_win(mark.ns, wp)) {
-      return true;
-    }
-    marktree_itr_next_filter(wp->w_buffer->b_marktree, itr, row + 1, 0, conceal_lines_filter);
-  }
-
-  return decor_providers_invoke_conceal_line(wp, row);
+  decor_providers_invoke_conceal(wp, row, true);
+  return decor_row_has_mark(wp, row, kMTMetaConcealLines, MT_FLAG_DECOR_CONCEAL_LINES);
 }
 
 /// @return whether a window may have folded or concealed lines

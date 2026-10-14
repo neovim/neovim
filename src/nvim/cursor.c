@@ -87,33 +87,6 @@ int coladvance(win_T *wp, colnr_T wcol)
   return rc;
 }
 
-/// Move to a displayed column without interpreting its offset as a raw virtual column.
-int coladvance_scol(win_T *wp, colnr_T scol)
-{
-  if (!maybe_extconceal_line(wp, wp->w_cursor.lnum)) {
-    return coladvance(wp, scol);
-  }
-  pos_T pos = { .lnum = wp->w_cursor.lnum };
-  pos.col = scol2col(wp, pos.lnum, scol, &pos.coladd);
-  return coladvance_pos(wp, &pos);
-}
-
-/// Move to a resolved screen position while retaining coladvance()'s mode and EOL rules.
-int coladvance_pos(win_T *wp, pos_T *pos)
-{
-  assert(wp->w_cursor.lnum == pos->lnum);
-  colnr_T vcol;
-  getvcol(wp, pos, &vcol, NULL, NULL, 0);
-  int rc = coladvance(wp, vcol);
-  if (virtual_active(wp)) {
-    wp->w_cursor.coladd = pos->coladd;
-    wp->w_valid &= ~(VALID_WCOL | VALID_WROW | VALID_VIRTCOL);
-  } else if (pos->coladd > 0 && pos->col == ml_get_buf_len(wp->w_buffer, pos->lnum)) {
-    rc = FAIL;
-  }
-  return rc;
-}
-
 /// @param addspaces  change the text to achieve our goal? only for wp=curwin!
 /// @param finetune  change char offset for the exact column
 /// @param wcol_arg  column to move to (can be negative)
@@ -131,11 +104,8 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
                  || (Visual.active && *p_sel != 'o')
                  || ((get_ve_flags(wp) & kOptVeFlagOnemore) && wcol < MAXCOL);
 
-  char *line = ml_get_buf(wp->w_buffer, pos->lnum);
-  int linelen = ml_get_buf_len(wp->w_buffer, pos->lnum);
-
   if (wcol >= MAXCOL) {
-    idx = linelen - 1 + one_more;
+    idx = ml_get_buf_len(wp->w_buffer, pos->lnum) - 1 + one_more;
     col = wcol;
 
     if ((addspaces || finetune) && !Visual.active) {
@@ -153,21 +123,25 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
         && wp->w_view_width != 0
         && wcol >= (colnr_T)width
         && width > 0) {
-      csize = linetabsize_eol(wp, pos->lnum);
+      csize = linetabsize_disp_eol(wp, pos->lnum);
       if (csize > 0) {
         csize--;
       }
 
-      if (wcol / width > (colnr_T)csize / width
-          && ((State & MODE_INSERT) == 0 || (int)wcol > csize + 1)) {
+      colnr_T const disp_wcol = vcol2disp_vcol(wp, pos->lnum, wcol);
+      if (disp_wcol / width > (colnr_T)csize / width
+          && ((State & MODE_INSERT) == 0 || (int)disp_wcol > csize + 1)) {
         // In case of line wrapping don't move the cursor beyond the
         // right screen edge.  In Insert mode allow going just beyond
         // the last character (like what happens when typing and
         // reaching the right window edge).
-        wcol = (csize / width + 1) * width - 1;
+        wcol = disp_vcol2vcol(wp, pos->lnum, (csize / width + 1) * width - 1);
       }
     }
 
+    // Read after the clamp, which may free the line (see init_charsize_arg_extconceal()).
+    char *line = ml_get_buf(wp->w_buffer, pos->lnum);
+    int linelen = ml_get_buf_len(wp->w_buffer, pos->lnum);
     CharsizeArg csarg;
     CSType cstype = init_charsize_arg(&csarg, wp, pos->lnum, line);
     StrCharInfo ci = utf_ptr2StrCharInfo(line);

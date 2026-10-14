@@ -217,6 +217,16 @@ describe('Screen', function()
         {0:~                                                    }|*8
         {4:-- INSERT --}                                         |
       ]])
+      -- At the end of a full row the cursor stays in the window.
+      command('vsplit | vertical resize 18')
+      feed(('<Esc>o%s'):format(('x'):rep(18)))
+      screen:expect([[
+        {1:&&&}               │{1:&&&}                               |
+        xxxxxxxxxxxxxxxxx^x│xxxxxxxxxxxxxxxxxx                |
+        {0:~                 }│{0:~                                 }|*6
+        {2:[No Name] [+]      }{3:[No Name] [+]                     }|
+        {4:-- INSERT --}                                         |
+      ]])
     end)
 
     it('cursor position when scrolling in Normal mode with cocu=n #31271', function()

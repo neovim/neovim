@@ -332,7 +332,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       // anchor position: the start of the completed word
       pum_win_row = curwin->w_wrow;
       int wcol = curwin->w_wcol;
-      // Apply the remaining conceal offset recorded by win_line().
+      // w_wcol does not account for text concealed before the cursor;
+      // shift by the offset win_line() recorded for the cursor line so the
+      // menu lines up with the visible text.
       if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)) {
         wcol -= curwin->w_wcol_conceal_off;
         if (wcol < 0) {

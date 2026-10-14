@@ -20,12 +20,11 @@ function vim.api.nvim__buf_debug_extmarks(buf, keys, dot) end
 
 --- WARNING: This feature is experimental/unstable.
 ---
---- "conceal_ns_id" must identify a dedicated namespace for conceal marks added by this provider.
+--- Enables (or disables) the `_on_conceal` decoration providers for `buf`: measuring a row runs
+--- them first, so rows not yet drawn are measured concealed. Each enable needs one disable.
 --- @param buf integer
---- @param ns_id integer
---- @param conceal_ns_id integer
 --- @param enabled boolean
-function vim.api.nvim__buf_set_conceal_provider(buf, ns_id, conceal_ns_id, enabled) end
+function vim.api.nvim__buf_set_conceal_provider(buf, enabled) end
 
 --- WARNING: This feature is experimental/unstable.
 ---
@@ -629,15 +628,12 @@ function vim.api.nvim_buf_line_count(buf) end
 --- @param line integer Line where to place the mark, 0-based. `api-indexing`
 --- @param col integer Column where to place the mark, 0-based. `api-indexing`
 --- @param opts vim.api.keyset.set_extmark? Optional parameters:
---- - conceal: (boolean|string)
----     - string: Single char or empty string, enables conceal similar to `:syn-conceal`.
----       Non-empty char is used as `:syn-cchar`. Highlighted with "hl_group" if
----       defined, else defaults to `hl-Conceal`.
----     - boolean: true is equivalent to "", false removes any existing conceal.
----   With 'wrap', active persistent conceal determines the displayed layout,
----   including its replacement. Syntax, match, or ephemeral conceal cannot
----   override that layout at the same position. Other highlight attributes
----   retain their usual priority; use a persistent conceal override to change layout.
+--- - conceal: (boolean|string) Conceals the range ("extmark-conceal") like
+---   `:syn-conceal`: a single char behaves like `:syn-cchar` (highlighted with
+---   "hl_group", default `hl-Conceal`); empty string or `true` conceals without
+---   cchar; `false` reveals text that lower-priority conceal hides. Lines 'wrap' at
+---   their (non-ephemeral) concealed width (takes precedence over legacy
+---   `:syn-conceal`, `matchadd()`).
 --- - conceal_lines: (string) Line-level conceal. When set to an empty string (other
 ---   values reserved for future use), the lines in the extmark range are not drawn;
 ---   the next non-concealed line is drawn in their place. Requires 'conceallevel' >=

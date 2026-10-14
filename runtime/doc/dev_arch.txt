@@ -94,6 +94,44 @@ There are two ways to do that:
 - if they are public, choose a new filepath in `runtime/lua/vim/`
   and add it to VIM_MODULE_FILE in src/nvim/CMakeLists.txt.
 
+==============================================================================
+Internal practices and patterns                          *dev-internals-howto*
+
+------------------------------------------------------------------------------
+Add a new excmd or vimfn ("f_xx")  function    *dev-new-excmd* *dev-new-vimfn*
+
+To implement an Ex cmd or f_xx function, choose from one of three ways (in
+order of preference):
+
+1. Full Lua: the implementation lives in entirely in Lua. This has
+   a performance benefit: the Vimscript <=> Lua bridge is skipped when the
+   `vim.fn.xx()` function is called from Lua. Examples:
+    - `f_hostname`
+2. Partial Lua: the C implementation calls `nlua_call_typval` or
+   `nlua_call_excmd`. (Or in rare cases: `nlua_exec` / `NLUA_EXEC_STATIC`).
+   Examples:
+   - `ex_log`
+   - `ex_lsp`
+   - `f_serverlist`
+3. Legacy way: implement the function entirely in C.
+   Examples:
+   - `f_chansend`
+   - `f_flatten`
+   - `f_searchpos`
+
+------------------------------------------------------------------------------
+Add a new event (autocmd)                                      *dev-new-event*
+
+To add a new editor event (autocmd):
+
+1. Register the event name in `src/nvim/auevents.lua`. If the event is
+   Nvim-only (not in Vim), also update the `nvim_specific` table.
+2. Fire the event, by one of these approaches:
+   - From C, use `aucmd_defer()` to fire deferred (safe, predictable). See
+     `do_markset_autocmd` for example.
+   - From Lua, use `vim.api.nvim_exec_autocmds()`.
+3. Define the |event-data| type (if any) in `runtime/lua/vim/_meta/events.lua`.
+4. Document the event in `runtime/doc/autocmd.txt`.
 
 ==============================================================================
 Data structures
@@ -239,43 +277,36 @@ Common examples of non-fast code: regexp matching, wildcard expansion,
 expression evaluation.
 
 ==============================================================================
-Internal practices and patterns                          *dev-internals-howto*
+Extmarks                                                        *dev-extmarks*
+
+Extmarks (`extmark.c`, `marktree.c`) are buffer positions that move with
+edits. Decorations (`decoration.c`) attach highlights, virtual text, signs and
+conceal to them. Marktree nodes count some decoration kinds (`MetaIndex`), so
+callers can skip rows without them.
 
 ------------------------------------------------------------------------------
-Add a new excmd or vimfn ("f_xx")  function    *dev-new-excmd* *dev-new-vimfn*
+Conceal                                                          *dev-conceal*
 
-To implement an Ex cmd or f_xx function, choose from one of three ways (in
-order of preference):
+Two mechanisms:
+- extmark-conceal (stored marks, including treesitter's) reflows 'wrap'.
+  Wrap prefixes, 'linebreak' and line heights use the "displayed vcol"
+  (see `CharsizeArg.extconceal_off`); `getvcol()`, marks and 'virtualedit'
+  keep the raw vcol. `extconceal_vcol_map()` maps between them.
+- `:syntax`, |matchadd()| and ephemeral conceal exist only while drawing, so
+  measuring can't see them: `win_line()` hides their cells with `boguscols`
+  and keeps the raw layout.
 
-1. Full Lua: the implementation lives in entirely in Lua. This has
-   a performance benefit: the Vimscript <=> Lua bridge is skipped when the
-   `vim.fn.xx()` function is called from Lua. Examples:
-    - `f_hostname`
-2. Partial Lua: the C implementation calls `nlua_call_typval` or
-   `nlua_call_excmd`. (Or in rare cases: `nlua_exec` / `NLUA_EXEC_STATIC`).
-   Examples:
-   - `ex_log`
-   - `ex_lsp`
-   - `f_serverlist`
-3. Legacy way: implement the function entirely in C.
-   Examples:
-   - `f_chansend`
-   - `f_flatten`
-   - `f_searchpos`
+Measuring a line (heights, motions, mouse) copies the row's extmark-conceal
+into `ConcealSpans` (`init_charsize_arg_extconceal()`), after running the
+`_on_conceal` providers (`decor_providers_invoke_conceal()`), so rows not
+yet drawn are measured concealed. Rows without conceal marks
+(`kMTMetaConceal`) take the fast path.
 
-------------------------------------------------------------------------------
-Add a new event (autocmd)                                      *dev-new-event*
+'concealcursor' reveals the cursor line and the Visual area; revealing
+changes height, so `conceal_reveal_changed()` invalidates those lines.
 
-To add a new editor event (autocmd):
-
-1. Register the event name in `src/nvim/auevents.lua`. If the event is
-   Nvim-only (not in Vim), also update the `nvim_specific` table.
-2. Fire the event, by one of these approaches:
-   - From C, use `aucmd_defer()` to fire deferred (safe, predictable). See
-     `do_markset_autocmd` for example.
-   - From Lua, use `vim.api.nvim_exec_autocmds()`.
-3. Define the |event-data| type (if any) in `runtime/lua/vim/_meta/events.lua`.
-4. Document the event in `runtime/doc/autocmd.txt`.
+TODO: produce `ConcealSpans` for `:syntax` and match conceal too, so they
+reflow and `boguscols` goes away?
 
 ==============================================================================
 The event-loop                                                    *event-loop*

@@ -285,10 +285,7 @@ static int get_fpos_of_mouse(pos_T *mpos, win_T **wpp)
     return IN_UNKNOWN;
   }
 
-  // Under 'wrap' "col" is a screen-layout column; under 'nowrap' it includes raw w_leftcol.
-  mpos->col = wp->w_p_wrap && maybe_extconceal_line(wp, mpos->lnum)
-              ? scol2col(wp, mpos->lnum, col, &mpos->coladd)
-              : vcol2col(wp, mpos->lnum, col, &mpos->coladd);
+  mpos->col = vcol2col(wp, mpos->lnum, col, &mpos->coladd);
   return IN_BUFFER;
 }
 
@@ -1376,6 +1373,10 @@ retnomove:
 
   win_T *old_curwin = curwin;
   pos_T old_cursor = curwin->w_cursor;
+  win_T *resolved = NULL;  // Window the click was resolved in.
+  linenr_T lnum = 0;
+  colnr_T vcol = 0;
+  int mouse_fold_flags = 0;
   if (!keep_focus) {
     if (on_winbar) {
       return IN_OTHER_WIN | MOUSE_WINBAR;
@@ -1417,14 +1418,20 @@ retnomove:
 
     // Before jumping to another buffer, or moving the cursor for a left
     // click, stop Visual mode.
-    if (Visual.active
-        && (wp->w_buffer != curwin->w_buffer
-            || (!status_line_offset
-                && !sep_line_offset
-                && (wp->w_p_rl
-                    ? col < wp->w_view_width - fdc
-                    : col >= fdc)
-                && (flags & MOUSE_MAY_STOP_VIS)))) {
+    bool const stop_visual = Visual.active
+                             && (wp->w_buffer != curwin->w_buffer
+                                 || (!status_line_offset
+                                     && !sep_line_offset
+                                     && (wp->w_p_rl
+                                         ? col < wp->w_view_width - fdc
+                                         : col >= fdc)
+                                     && (flags & MOUSE_MAY_STOP_VIS)));
+    // Ending Visual mode or entering the window can change what is concealed.
+    if (!status_line_offset && !sep_line_offset) {
+      resolved = wp;
+      mouse_past_bottom = mouse_resolve(wp, row, col, &lnum, &vcol, &mouse_fold_flags);
+    }
+    if (stop_visual) {
       end_visual_mode();
       redraw_curbuf_later(UPD_INVERTED);  // delete the inversion
     }
@@ -1565,29 +1572,13 @@ retnomove:
   }
 
 foldclick:;
-  colnr_T col_from_screen = -1;
-  int mouse_fold_flags = 0;
-  mouse_check_grid(&col_from_screen, &mouse_fold_flags);
-
-  // compute the position in the buffer line from the posn on the screen
-  pos_T screenpos = { 0 };
-  if (mouse_comp_pos(curwin, &row, &col, &screenpos.lnum)) {
-    mouse_past_bottom = true;
+  // Compute the position in the buffer line from the posn on the screen, if not resolved above or
+  // autocommands of entering the window switched windows or deleted the line.
+  if (resolved == NULL || resolved != curwin || lnum > curbuf->b_ml.ml_line_count) {
+    mouse_fold_flags = 0;
+    mouse_past_bottom = mouse_resolve(curwin, row, col, &lnum, &vcol, &mouse_fold_flags);
   }
-
-  // Resolve before moving the cursor or starting Visual mode changes conceal.
-  bool const use_scol = curwin->w_p_wrap && maybe_extconceal_line(curwin, screenpos.lnum);
-  if (use_scol) {
-    if (col_from_screen >= 0) {
-      col = mouse_layout_to_pos(curwin, &screenpos, col_from_screen);
-    } else {
-      screenpos.col = scol2col(curwin, screenpos.lnum, col, &screenpos.coladd);
-      col = scol2vcol(curwin, screenpos.lnum, col);
-    }
-  } else if (col_from_screen >= 0) {
-    col = col_from_screen;
-  }
-  curwin->w_cursor.lnum = screenpos.lnum;
+  curwin->w_cursor.lnum = lnum;
 
   // Start Visual mode before coladvance(), for when 'sel' != "old"
   if ((flags & MOUSE_MAY_VIS) && !Visual.active) {
@@ -1603,10 +1594,9 @@ foldclick:;
     }
   }
 
-  curwin->w_curswant = col;
+  curwin->w_curswant = vcol;
   curwin->w_set_curswant = false;       // May still have been true
-  int const rc = use_scol ? coladvance_pos(curwin, &screenpos) : coladvance(curwin, col);
-  if (rc == FAIL) {        // Mouse click beyond end of line
+  if (coladvance(curwin, vcol) == FAIL) {       // Mouse click beyond end of line
     if (inclusive != NULL) {
       *inclusive = true;
     }
@@ -1787,7 +1777,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
   col -= win_col_off(win);
   col = MAX(col, 0);
 
-  *colp = col;
+  *colp = disp_vcol2vcol(win, lnum, col);
   *rowp = row;
   *lnump = lnum;
   return retval;
@@ -1893,41 +1883,6 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
   return NULL;
 }
 
-/// Resolve a grid layout column to a byte position and raw desired column.
-static colnr_T mouse_layout_to_pos(win_T *wp, pos_T *pos, colnr_T vcol)
-{
-  CharsizeArg csarg;
-  CSType const cstype = init_charsize_arg_conceal(&csarg, wp, pos->lnum,
-                                                  ml_get_buf(wp->w_buffer, pos->lnum));
-  ConcealWalk walk;
-  conceal_walk_start(&csarg, &walk);
-  StrCharInfo ci = utf_ptr2StrCharInfo(csarg.line);
-  int col = 0;
-  int head = 0;
-  while (*ci.ptr != NUL) {
-    ClusterInfo const cli = utf_ClusterInfo(ci);
-    CharSize const cs = win_charsize(cstype, col, ci.ptr, ci.chr.value, &csarg, cli.cells);
-    conceal_walk_advance(&csarg, &walk, (int)(ci.ptr - csarg.line), cs);
-    if (col + cs.width > vcol) {
-      head = cs.head;
-      // Keep the raw offset inside the source body, not the displayed replacement's offset:
-      // virtualedit motions and getvvcol() interpret cursor coladd in the raw column domain.
-      pos->coladd = MAX(vcol - col - head, 0);
-      break;
-    }
-    col += cs.width;
-    ci = cli.next;
-  }
-  pos->col = (colnr_T)(ci.ptr - csarg.line);
-  if (*ci.ptr == NUL) {
-    pos->coladd = MAX(vcol - col, 0);
-  }
-  conceal_walk_end(&csarg, &walk);
-  colnr_T raw;
-  getvcol(wp, pos, &raw, NULL, NULL, 0);
-  return raw + MAX(vcol - col - head, 0);
-}
-
 /// Convert a virtual (screen) column to a character column.
 /// The first column is zero.
 colnr_T vcol2col(win_T *wp, linenr_T lnum, colnr_T vcol, colnr_T *coladdp)
@@ -2027,7 +1982,7 @@ static linenr_T find_longest_lnum(void)
 }
 
 /// Check clicked cell on its grid
-static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
+static void mouse_check_grid(win_T *wp, colnr_T *vcolp, int *flagsp)
   FUNC_ATTR_NONNULL_ALL
 {
   int click_grid = mouse_grid;
@@ -2035,15 +1990,15 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
   int click_col = mouse_col;
 
   // XXX: this doesn't change click_grid if it is 1, even with multigrid
-  if (mouse_find_win_inner(&click_grid, &click_row, &click_col) != curwin
+  if (mouse_find_win_inner(&click_grid, &click_row, &click_col) != wp
       // Only use vcols[] after the window was redrawn.  Mainly matters
       // for tests, a user would not click before redrawing.
-      || curwin->w_redr_type != 0) {
+      || wp->w_redr_type != 0) {
     return;
   }
   int start_row = 0;
   int start_col = 0;
-  ScreenGrid *gp = grid_adjust(&curwin->w_grid, &start_row, &start_col);
+  ScreenGrid *gp = grid_adjust(&wp->w_grid, &start_row, &start_col);
   if (gp->handle != click_grid || gp->chars == NULL) {
     return;
   }
@@ -2068,6 +2023,18 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
   } else if (col_from_screen == -3) {
     *flagsp |= MOUSE_FOLD_CLOSE;
   }
+}
+
+/// Resolves a click at `row`/`col` of `wp` to a buffer line and vcol, as `wp` is drawn.
+///
+/// @return  Whether the click is below the last line.
+static bool mouse_resolve(win_T *wp, int row, int col, linenr_T *lnump, colnr_T *vcolp, int *flagsp)
+{
+  colnr_T col_from_screen = -1;
+  mouse_check_grid(wp, &col_from_screen, flagsp);
+  bool const past_bottom = mouse_comp_pos(wp, &row, &col, lnump);
+  *vcolp = col_from_screen >= 0 ? disp_vcol2vcol(wp, *lnump, col_from_screen) : col;
+  return past_bottom;
 }
 
 /// "getmousepos()" function
@@ -2100,8 +2067,7 @@ void f_getmousepos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       wincol = col + 1 + wp->w_wincol_off;  // Adjust by 1 for left border
       if (row >= 0 && row < wp->w_height && col >= 0 && col < wp->w_width) {
         mouse_comp_pos(wp, &row, &col, &lnum);
-        col = wp->w_p_wrap && maybe_extconceal_line(wp, lnum)
-              ? scol2col(wp, lnum, col, &coladd) : vcol2col(wp, lnum, col, &coladd);
+        col = vcol2col(wp, lnum, col, &coladd);
         column = col + 1;
       }
     }

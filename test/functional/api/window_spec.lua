@@ -1335,6 +1335,87 @@ describe('API/win', function()
       )
     end)
 
+    it('with extmark-conceal', function()
+      -- Vcols stay raw, rows are displayed.
+      screen:try_resize(20, 6)
+      command('set conceallevel=2 concealcursor=n')
+      local function conceal_line(text, col, end_col)
+        api.nvim_buf_clear_namespace(0, ns, 0, -1)
+        api.nvim_buf_set_lines(0, 0, -1, true, { text })
+        api.nvim_buf_set_extmark(0, ns, 0, col, { end_col = end_col, conceal = '' })
+      end
+      -- Raw vcol 22 (raw row 2) is displayed at column 16, on the first of two rows.
+      conceal_line(('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(15), 10, 16)
+      eq(2, api.nvim_win_text_height(0, { start_row = 0, start_vcol = 22 }).all)
+      -- Raw vcol 25 is displayed at column 19, still on the first row.
+      conceal_line(('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(29), 10, 16)
+      eq(1, api.nvim_win_text_height(0, { start_row = 0, end_row = 0, end_vcol = 25 }).all)
+      eq(26, api.nvim_win_text_height(0, { max_height = 1 }).end_vcol)
+      screen:try_resize(12, 6)
+      conceal_line(('A'):rep(11) .. '古' .. ('B'):rep(5), 11, 14)
+      for vcol = 11, 14 do
+        eq(2, api.nvim_win_text_height(0, { start_row = 0, start_vcol = vcol }).all)
+      end
+      conceal_line(('A'):rep(11) .. 'XB', 11, 12)
+      local inline = { virt_text = { { 'III' } }, virt_text_pos = 'inline' }
+      api.nvim_buf_set_extmark(0, ns, 0, 11, inline)
+      eq(2, api.nvim_win_text_height(0, { start_row = 0, end_row = 0, end_vcol = 13 }).all)
+      eq(12, api.nvim_win_text_height(0, { max_height = 1 }).end_vcol)
+
+      -- Overlapping marks resolve by priority.
+      screen:try_resize(20, 6)
+      api.nvim_buf_clear_namespace(0, ns, 0, -1)
+      api.nvim_buf_set_lines(0, 0, -1, true, { ('A'):rep(19) .. 'XZ' })
+      local function add(conceal, priority)
+        return api.nvim_buf_set_extmark(0, ns, 0, 19, {
+          end_col = 20,
+          conceal = conceal,
+          priority = priority,
+        })
+      end
+      local function height()
+        return api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all
+      end
+      add(false, 50)
+      eq(2, height())
+      add('', 100)
+      eq(1, height())
+      local reveal = add(false, 200)
+      eq(2, height())
+      local hide = add('', 300)
+      eq(1, height())
+      api.nvim_buf_del_extmark(0, ns, hide)
+      eq(2, height())
+      api.nvim_buf_del_extmark(0, ns, reveal)
+      eq(1, height())
+
+      -- Marks of a namespace scoped to another window do not conceal here.
+      api.nvim_buf_clear_namespace(0, ns, 0, -1)
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'first', ('A'):rep(40) .. 'tail', 'last' })
+      local win = api.nvim_get_current_win()
+      local other = api.nvim_open_win(0, false, {
+        relative = 'editor',
+        row = 0,
+        col = 0,
+        width = 10,
+        height = 1,
+        style = 'minimal',
+      })
+      local scoped = api.nvim_create_namespace('scoped-conceal')
+      api.nvim__ns_set(scoped, { wins = { other } })
+      local id = api.nvim_buf_set_extmark(0, scoped, 0, 0, {
+        end_row = 1,
+        end_col = 40,
+        conceal = '',
+      })
+      eq(3, api.nvim_win_text_height(win, { start_row = 1, end_row = 1 }).all)
+      api.nvim__ns_set(scoped, { wins = { win } })
+      eq(1, api.nvim_win_text_height(win, { start_row = 1, end_row = 1 }).all)
+      api.nvim__ns_set(scoped, { wins = { other } })
+      api.nvim_buf_set_extmark(0, scoped, 1, 0, { id = id, end_col = 40, conceal = '' })
+      eq(3, api.nvim_win_text_height(win, { start_row = 1, end_row = 1 }).all)
+    end)
+
     it('with virtual lines around a fold', function()
       screen:try_resize(45, 10)
       exec([[

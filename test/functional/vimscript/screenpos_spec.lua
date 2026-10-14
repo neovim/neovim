@@ -14,6 +14,10 @@ describe('screenpos() function', function()
     Screen.new(20, 4)
     api.nvim_buf_set_lines(0, 0, -1, true, { 'abc' })
     eq({ row = 1, col = 4, endcol = 4, curscol = 4 }, fn.screenpos(0, 1, 0x7fffffff))
+    -- Also with extmark-conceal.
+    command('set conceallevel=2 concealcursor=nvic')
+    api.nvim_buf_set_extmark(0, api.nvim_create_namespace(''), 0, 1, { end_col = 2, conceal = '' })
+    eq({ row = 1, col = 3, endcol = 3, curscol = 3 }, fn.screenpos(0, 1, 0x7fffffff))
   end)
 
   it('works in floating window with border', function()

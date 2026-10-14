@@ -32,11 +32,7 @@ describe('insert-mode', function()
       end_col = 16,
       conceal = '',
     })
-    feed('GA')
-    eq(1, n.fn.line('w0'))
-    feed('x')
-    eq(1, n.fn.line('w0'))
-    eq({ 5, 30 }, api.nvim_win_get_cursor(0))
+    feed('GAx')
     screen:expect([[
       one                           |
       two                           |

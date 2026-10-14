@@ -13,8 +13,6 @@ local EXTENDS_FORMAT = '^;+%s*extends%s*$'
 local M = {}
 
 ---@type table<string, TSDirective>
-local directive_handlers
----@type table<string, TSDirective>
 local builtin_directive_handlers
 
 ---Parsed query, see |vim.treesitter.query.parse()|
@@ -77,7 +75,6 @@ function Query:_process_patterns()
         if
           (pred_name == 'set!' and (pattern[2] == 'conceal' or pattern[3] == 'conceal'))
           or not builtin_directive_handlers[pred_name]
-          or builtin_directive_handlers[pred_name] ~= directive_handlers[pred_name]
         then
           self.has_conceal = true
         end
@@ -651,9 +648,8 @@ predicate_handlers['any-vim-match?'] = predicate_handlers['any-match?']
 -- Directives should always end with a `!`.
 -- Directive handler receive the following arguments
 -- (match, pattern, bufnr, predicate, metadata)
----@nodoc
 ---@type table<string,TSDirective>
-directive_handlers = {
+local directive_handlers = {
   ['set!'] = function(_, _, _, pred, metadata)
     if #pred >= 3 and type(pred[2]) == 'number' then
       -- (#set! @capture key value)
@@ -891,7 +887,6 @@ function Query._apply_directives(_, directives, pattern_i, captures, source)
   local metadata = {}
 
   for _, directive in pairs(directives) do
-    ---@type TSDirective?
     local handler = directive_handlers[directive[1]]
 
     if not handler then

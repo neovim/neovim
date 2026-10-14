@@ -110,11 +110,6 @@ static inline bool mt_decor_sign(MTKey key)
   return key.flags & (MT_FLAG_DECOR_SIGNTEXT | MT_FLAG_DECOR_SIGNHL);
 }
 
-static inline bool mt_conceal_lines(MTKey key)
-{
-  return key.flags & MT_FLAG_DECOR_CONCEAL_LINES;
-}
-
 static inline uint32_t mt_flags(bool right_gravity, bool no_undo, bool invalidate, bool decor_ext)
 {
   return (right_gravity ? MT_FLAG_RIGHT_GRAVITY : 0)

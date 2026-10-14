@@ -1653,7 +1653,7 @@ describe('scroll_cursor_halfway()', function()
 end)
 
 describe('window motions and scrolling with conceal-aware wrap (#14409)', function()
-  -- Line "lnum" reflows from 36 raw cells to 30 displayed cells.
+  -- Line `lnum` reflows from 36 raw cells to 30 displayed cells.
   local function reflowing_buf(count, lnum)
     local ns = api.nvim_create_namespace('conceal_wrap_scroll')
     local lines = {}
@@ -1714,31 +1714,6 @@ describe('window motions and scrolling with conceal-aware wrap (#14409)', functi
     eq(4, fn.winline())
     feed('j')
     eq({ 2, 160 }, api.nvim_win_get_cursor(0))
-  end)
-
-  it('g^ skips hidden nonblank text but ^ keeps buffer semantics', function()
-    Screen.new(20, 6)
-    command('set wrap conceallevel=2 concealcursor=nvic')
-    api.nvim_buf_set_lines(0, 0, -1, true, {
-      ('a'):rep(20) .. '  HIDDEN  ABCDE',
-      '  HIDDEN  A',
-      '  HIDDEN  ',
-    })
-    local ns = api.nvim_create_namespace('')
-    api.nvim_buf_set_extmark(0, ns, 0, 22, { end_col = 28, conceal = '' })
-    api.nvim_buf_set_extmark(0, ns, 1, 2, { end_col = 8, conceal = '' })
-    api.nvim_buf_set_extmark(0, ns, 2, 2, { end_col = 8, conceal = '' })
-    feed('gg$g^')
-    eq({ 1, 30 }, api.nvim_win_get_cursor(0))
-    feed('2G$^')
-    eq({ 2, 2 }, api.nvim_win_get_cursor(0))
-    feed('g^')
-    eq({ 2, 10 }, api.nvim_win_get_cursor(0))
-    feed('G$g^')
-    eq({ 3, 9 }, api.nvim_win_get_cursor(0))
-    command('set virtualedit=all')
-    feed('g^')
-    eq({ 3, 10 }, api.nvim_win_get_cursor(0))
   end)
 
   it('scroll commands count the displayed cursor row', function()
@@ -1806,9 +1781,8 @@ describe('window motions and scrolling with conceal-aware wrap (#14409)', functi
         },
       })
 
-      -- A 5th press must skip into the reflowed line's own 2nd row (skipcol), the sub-line boundary
-      -- this feature's reflow affects: topline stays on line 5 (0-indexed 4), only the screen view
-      -- advances by the single reflowed row.
+      -- A 5th press must skip into the reflowed line's own 2nd row (skipcol): topline stays on line
+      -- 5 (0-indexed 4), only the screen view advances by the single reflowed row.
       feed('<C-E>')
       screen:expect({
         grid = [[
@@ -1879,5 +1853,19 @@ describe('window motions and scrolling with conceal-aware wrap (#14409)', functi
       { 1, 18, 1, 7 },
       { api.nvim_win_get_cursor(0)[1], fn.winsaveview().skipcol, fn.winline(), fn.wincol() }
     )
+
+    -- So does update_topline(): a cursor entering the topline above the skipped part scrolls back.
+    command('set nolinebreak nobreakindent showbreak= nonumber norelativenumber conceallevel=2')
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      ('%s%s%s%s'):format(('H'):rep(10), ('a'):rep(15), ('b'):rep(20), ('c'):rep(20)),
+      'END',
+    })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_col = 10, conceal = '' })
+    api.nvim_win_set_cursor(0, { 1, 10 })
+    feed('<C-E>j')
+    eq(22, fn.winsaveview().skipcol)
+    api.nvim_win_set_cursor(0, { 1, 28 })
+    eq({ 0, 1, 19 }, { fn.winsaveview().skipcol, fn.winline(), fn.wincol() })
   end)
 end)

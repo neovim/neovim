@@ -388,7 +388,7 @@ typedef struct {
   LuaRefOf(("end" _, Integer tick)) on_end;
   LuaRefOf(("hl_def" _)) _on_hl_def;
   LuaRefOf(("spell_nav" _)) _on_spell_nav;
-  LuaRefOf(("conceal_line" _)) _on_conceal_line;
+  LuaRefOf(("conceal_line" _, Integer winid, Integer bufnr, Integer row)) _on_conceal_line;
   LuaRefOf(("conceal" _, Integer winid, Integer bufnr, Integer row)) _on_conceal;
 } Dict(set_decoration_provider);
 
@@ -429,7 +429,7 @@ typedef struct {
   String url;
   Boolean scoped;
 
-  Boolean _conceal_continuation;  // Do not repeat the replacement of a row-clipped conceal range.
+  Boolean _conceal_continuation;  // See kSHConcealCont.
   Integer _subpriority;
 } Dict(set_extmark);
 
