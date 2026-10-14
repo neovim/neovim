@@ -7,6 +7,7 @@ local command = n.command
 local eq = t.eq
 local feed = n.feed
 local fn = n.fn
+local api = n.api
 local pcall_err = t.pcall_err
 
 describe('search (/)', function()
@@ -35,5 +36,14 @@ describe('search (/)', function()
     feed('GyF')
     eq('foo', fn.getreg('"'))
     eq({ vstart, vend, 'V' }, { fn.getpos("'<"), fn.getpos("'>"), fn.visualmode() })
+  end)
+
+  it('empty pattern with offset uses the substitute pattern', function()
+    fn.setline(1, { 'foo', 'xfoox' })
+    command('s/foo/bar/')
+    feed('gg//e<CR>')
+    eq({ 2, 3 }, api.nvim_win_get_cursor(0))
+    feed('gg//<CR>')
+    eq({ 2, 1 }, api.nvim_win_get_cursor(0))
   end)
 end)
