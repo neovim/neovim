@@ -33,8 +33,8 @@ local M = {}
 --- @field namespace integer
 --- @field supports_range boolean
 --- @field supports_delta boolean
---- @field active_request STActiveRequest
---- @field active_range_request STActiveRequest
+--- @field active_request STActiveRequest?
+--- @field active_range_request STActiveRequest?
 --- @field current_result STCurrentResult
 --- @field timer uv.uv_timer_t? uv_timer for debouncing requests for new tokens
 --- @field has_full_result boolean
@@ -78,10 +78,9 @@ end
 ---@param data integer[]
 ---@param bufnr integer
 ---@param client vim.lsp.Client
----@param request STActiveRequest
----@param ranges STTokenRange[]
+---@param is_current function
 ---@return STTokenRange[]
-local function tokens_to_ranges(data, bufnr, client, request, ranges)
+local function tokens_to_ranges(data, bufnr, client, is_current)
   local legend = assert(client.server_capabilities.semanticTokensProvider).legend
   local token_types = legend.tokenTypes
   local token_modifiers = legend.tokenModifiers
@@ -89,9 +88,7 @@ local function tokens_to_ranges(data, bufnr, client, request, ranges)
   local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
   -- For all encodings, \r\n takes up two code points, and \n (or \r) takes up one.
   local eol_offset = vim.bo[bufnr].fileformat == 'dos' and 2 or 1
-  local version = request.version
-  local request_id = request.request_id
-  local last_insert_idx = 1
+  local ranges = {} ---@type STTokenRange[]
 
   local start = uv.hrtime()
   local ms_to_ns = 1e6
@@ -109,12 +106,7 @@ local function tokens_to_ranges(data, bufnr, client, request, ranges)
         vim.schedule(function()
           -- Ensure the request hasn't become stale since the last time the coroutine ran.
           -- If it's stale, we don't resume the coroutine so it'll be garbage collected.
-          if
-            version == util.buf_versions[bufnr]
-            ---@diagnostic disable-next-line: preferred-local-alias
-            and request_id == request.request_id
-            and api.nvim_buf_is_valid(bufnr)
-          then
+          if is_current() then
             coroutine.resume(co)
           end
         end)
@@ -152,8 +144,7 @@ local function tokens_to_ranges(data, bufnr, client, request, ranges)
 
       local end_col = vim.str_byteindex(buf_line, encoding, end_char, false)
 
-      ---@type STTokenRange
-      local range = {
+      ranges[#ranges + 1] = {
         line = line,
         end_line = end_line,
         start_col = start_col,
@@ -162,51 +153,60 @@ local function tokens_to_ranges(data, bufnr, client, request, ranges)
         modifiers = modifiers,
         marked = false,
       }
-
-      if last_insert_idx < #ranges then
-        local needs_insert = true
-        local idx = vim.list.bisect(ranges, range, {
-          lo = last_insert_idx,
-          key = function(highlight)
-            return highlight.line
-          end,
-        })
-        while idx <= #ranges do
-          local token = assert(ranges[idx])
-
-          if
-            token.line > range.line
-            or (token.line == range.line and token.start_col > range.start_col)
-          then
-            break
-          end
-
-          if
-            range.line == token.line
-            and range.start_col == token.start_col
-            and range.end_line == token.end_line
-            and range.end_col == token.end_col
-            and range.type == token.type
-          then
-            needs_insert = false
-            break
-          end
-
-          idx = idx + 1
-        end
-
-        last_insert_idx = idx
-        if needs_insert then
-          table.insert(ranges, last_insert_idx, range)
-        end
-      else
-        last_insert_idx = #ranges + 1
-        ranges[last_insert_idx] = range
-      end
     end
   end
 
   return ranges
+end
+
+---@param existing STTokenRange[] current (existing) highlight tokens
+---@param response STTokenRange[] newly decoded highlight tokens from request
+---@param request_range vim.Range the range the request covered
+---@return STTokenRange[]
+local function merge_highlight_ranges(existing, response, request_range)
+  local function before(a, b)
+    return a.line < b.line or (a.line == b.line and a.start_col <= b.start_col)
+  end
+
+  local function overlaps(token)
+    ---@type vim.Range
+    local token_range =
+      vim.range(request_range.buf, token.line, token.start_col, token.end_line, token.end_col)
+    return request_range:intersect(token_range) ~= nil
+  end
+
+  ---@type STTokenRange[]
+  local result = {}
+  local i, j = 1, 1
+
+  local function add(token)
+    token.marked = false
+    result[#result + 1] = token
+  end
+
+  while true do
+    while i <= #existing and overlaps(existing[i]) do
+      i = i + 1
+    end
+    while j <= #response and not overlaps(response[j]) do
+      j = j + 1
+    end
+
+    local a, b = existing[i], response[j]
+    if not a and not b then
+      break
+    end
+
+    if not b or (a and before(a, b)) then
+      add(a)
+      i = i + 1
+    else
+      add(b)
+      j = j + 1
+    end
+  end
+
+  return result
 end
 
 ---@package
@@ -245,8 +245,6 @@ function STHighlighter:on_attach(client_id)
       supports_delta = client
           and client:supports_method('textDocument/semanticTokens/full/delta', self.bufnr)
         or false,
-      active_request = {},
-      active_range_request = {},
       current_result = {},
       has_full_result = false,
     }
@@ -314,7 +312,7 @@ function STHighlighter:send_request(client_id)
 
     if
       (not state.has_full_result or state.current_result.version ~= version)
-      and state.active_request.version ~= version
+      and (not state.active_request or state.active_request.version ~= version)
     then
       self:send_full_delta_request(client, state, version)
     end
@@ -328,13 +326,11 @@ end
 ---@param state STClientState
 ---@param version integer
 function STHighlighter:send_range_request(client, state, version)
-  local active_request = state.active_range_request
-
   -- cancel stale in-flight request
-  if active_request and active_request.request_id then
-    client:cancel_request(active_request.request_id)
-    active_request.request_id = nil
-    active_request.version = nil
+  if state.active_range_request and state.active_range_request.request_id then
+    local request_id = state.active_range_request.request_id
+    state.active_range_request = nil
+    client:cancel_request(request_id)
   end
 
   ---@type lsp.SemanticTokensRangeParams
@@ -346,6 +342,9 @@ function STHighlighter:send_range_request(client, state, version)
   ---@type vim.lsp.protocol.Method.ClientToServer.Request
   local method = 'textDocument/semanticTokens/range'
 
+  local request = { version = version }
+  state.active_range_request = request
+
   ---@param response? lsp.SemanticTokens
   local success, request_id = client:request(method, params, function(err, response, ctx)
     local bufnr = assert(ctx.bufnr)
@@ -354,13 +353,17 @@ function STHighlighter:send_range_request(client, state, version)
       return
     end
 
+    -- This request was already cancelled, replaced, or completed
+    if state.active_range_request ~= request then
+      return
+    end
+
     -- Only process range response if we got a valid response and don't have a full result yet
     if err or not response or state.has_full_result then
       if err then
         vim.lsp.log.error('semantic_tokens', err)
       end
-      active_request.request_id = nil
-      active_request.version = nil
+      state.active_range_request = nil
       return
     end
 
@@ -368,15 +371,18 @@ function STHighlighter:send_range_request(client, state, version)
       highlighter,
       response,
       client,
-      ctx.request_id,
+      request,
       version,
-      true
+      ctx.params.range
     )
   end, self.bufnr)
 
-  if success then
-    active_request.request_id = request_id
-    active_request.version = version
+  if state.active_range_request == request then
+    if success then
+      request.request_id = request_id
+    else
+      state.active_range_request = nil
+    end
   end
 end
 
@@ -388,13 +394,12 @@ end
 ---@param version integer
 function STHighlighter:send_full_delta_request(client, state, version)
   local current_result = state.current_result
-  local active_request = state.active_request
 
   -- cancel stale in-flight request
-  if active_request.request_id then
-    client:cancel_request(active_request.request_id)
-    active_request.request_id = nil
-    active_request.version = nil
+  if state.active_request and state.active_request.request_id then
+    local request_id = state.active_request.request_id
+    state.active_request = nil
+    client:cancel_request(request_id)
   end
 
   ---@type lsp.SemanticTokensParams|lsp.SemanticTokensDeltaParams
@@ -408,6 +413,9 @@ function STHighlighter:send_full_delta_request(client, state, version)
     params.previousResultId = current_result.result_id
   end
 
+  local request = { version = version }
+  state.active_request = request
+
   ---@param response? lsp.SemanticTokens|lsp.SemanticTokensDelta
   local success, request_id = client:request(method, params, function(err, response, ctx)
     local bufnr = assert(ctx.bufnr)
@@ -416,12 +424,16 @@ function STHighlighter:send_full_delta_request(client, state, version)
       return
     end
 
+    -- This request was already cancelled, replaced, or completed
+    if state.active_request ~= request then
+      return
+    end
+
     if err or not response then
       if err then
         vim.lsp.log.error('semantic_tokens', err)
       end
-      active_request.request_id = nil
-      active_request.version = nil
+      state.active_request = nil
       return
     end
 
@@ -429,15 +441,18 @@ function STHighlighter:send_full_delta_request(client, state, version)
       highlighter,
       response,
       client,
-      ctx.request_id,
+      request,
       version,
-      false
+      nil
     )
   end, self.bufnr)
 
-  if success then
-    active_request.request_id = request_id
-    active_request.version = version
+  if state.active_request == request then
+    if success then
+      request.request_id = request_id
+    else
+      state.active_request = nil
+    end
   end
 end
 
@@ -447,17 +462,18 @@ function STHighlighter:cancel_active_request(client_id)
   local state = assert(self.client_state[client_id])
   local client = vim.lsp.get_client_by_id(client_id)
 
-  ---@param request STActiveRequest
-  local function clear(request)
-    if client and request.request_id then
+  ---@param field 'active_request'|'active_range_request'
+  local function clear(field)
+    local request = state[field] ---@type STActiveRequest?
+    state[field] = nil ---@type STActiveRequest?
+
+    if client and request and request.request_id then
       client:cancel_request(request.request_id)
-      request.request_id = nil
-      request.version = nil
     end
   end
 
-  clear(state.active_range_request)
-  clear(state.active_request)
+  clear('active_range_request')
+  clear('active_request')
 end
 
 --- Gets a range that encompasses all visible lines plus overscan across all windows
@@ -505,30 +521,35 @@ end
 ---@async
 ---@param response lsp.SemanticTokens|lsp.SemanticTokensDelta
 ---@param client vim.lsp.Client
----@param request_id integer
+---@param request STActiveRequest the request that triggered this response
 ---@param version integer
----@param is_range_request boolean
+---@param range lsp.Range? nil if this was a full request
 ---@private
-function STHighlighter:process_response(response, client, request_id, version, is_range_request)
+function STHighlighter:process_response(response, client, request, version, range)
   local state = self.client_state[client.id]
   if not state then
     return
   end
 
-  ---@type STActiveRequest
-  local active_request
-  if is_range_request then
-    active_request = state.active_range_request
-  else
-    active_request = state.active_request
-  end
+  local is_range_request = range ~= nil
+  local field = is_range_request and 'active_range_request' or 'active_request'
+  local active_request = state[field] ---@type STActiveRequest?
 
   -- ignore stale responses
-  if active_request.request_id and request_id ~= active_request.request_id then
+  if not active_request or active_request ~= request then
     return
   end
 
-  if not api.nvim_buf_is_valid(self.bufnr) then
+  local function is_current()
+    return STHighlighter.active[self.bufnr] == self
+      and self.client_state[client.id] == state
+      and api.nvim_buf_is_loaded(self.bufnr)
+      and state[field] == active_request
+      and active_request.version == util.buf_versions[self.bufnr]
+      and (not is_range_request or not state.has_full_result)
+  end
+
+  if not is_current() then
     return
   end
 
@@ -556,31 +577,37 @@ function STHighlighter:process_response(response, client, request_id, version, i
     tokens = response.data
   end
 
-  local current_result = state.current_result
-  local version_changed = version ~= current_result.version
-  local highlights = not version_changed and current_result.highlights or {}
-
   -- convert token list to highlight ranges
   -- this could yield and run over multiple event loop iterations
-  highlights = tokens_to_ranges(tokens, self.bufnr, client, active_request, highlights)
+  local highlights = tokens_to_ranges(tokens, self.bufnr, client, is_current)
+
+  if not is_current() then
+    return
+  end
+
+  if range then
+    local current = state.current_result
+    local existing = current.version == version and current.highlights or {}
+    local request_range = vim.range.lsp(self.bufnr, range, client.offset_encoding)
+    highlights = merge_highlight_ranges(existing, highlights, request_range)
+  end
+
+  -- reset active request
+  state[field] = nil ---@type STActiveRequest?
 
   -- if this was a full result, mark the state as having processed it
   if not is_range_request then
     state.has_full_result = true
   end
 
-  -- reset active request
-  active_request.request_id = nil
-  active_request.version = nil
-
   -- update the state with the new results
-  current_result.version = version
-  current_result.result_id = not is_range_request and response.resultId or nil
-  current_result.tokens = tokens
-  current_result.highlights = highlights
-  if version_changed then
-    current_result.namespace_cleared = false
-  end
+  state.current_result = {
+    version = version,
+    result_id = not is_range_request and response.resultId or nil,
+    tokens = tokens,
+    highlights = highlights,
+    namespace_cleared = false,
+  }
 
   -- redraw all windows displaying buffer
   if vim.fn.win_gettype(vim.fn.bufwinid(self.bufnr)) == '' then
@@ -753,15 +780,15 @@ end
 function STHighlighter:mark_dirty(client_id)
   local state = assert(self.client_state[client_id])
 
-  -- if we clear the version from current_result, it'll cause the next
+  -- If we clear the version from current_result, it'll cause the next
   -- full/delta request to be sent and will also pause new highlights
-  -- from being added in on_win until a new result comes from the server
-  if state.current_result then
-    state.current_result.version = nil
-  end
-
-  -- clearing this flag will also allow range requests to fire to
-  -- potentially get a faster result
+  -- from being added in on_win until a new result comes from the server.
+  -- Clearing has_full_result and result_id will allow range requests to
+  -- fire again along with a new full baseline. Not clearing result_id
+  -- here would potentially allow the delta response to be built from
+  -- a set of tokens changed by the range request.
+  state.current_result.version = nil
+  state.current_result.result_id = nil
   state.has_full_result = false
 
   self:cancel_active_request(client_id)
