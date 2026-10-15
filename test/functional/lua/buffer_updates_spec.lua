@@ -1219,6 +1219,89 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it('visual paste 3: replacing all lines', function()
+      local check_events = setup_eventcheck(verify, { 'x', 'y' })
+      fn.setreg('a', { 'foo', 'bar' }, 'l')
+
+      feed 'ggVG"ap'
+      check_events {
+        { 'test1', 'bytes', 1, 3, 0, 0, 0, 2, 0, 4, 1, 0, 1 },
+        { 'test1', 'bytes', 1, 4, 0, 0, 0, 0, 0, 0, 2, 0, 8 },
+        { 'test1', 'bytes', 1, 5, 2, 0, 8, 1, 0, 1, 0, 0, 0 },
+      }
+
+      feed 'u'
+      check_events {
+        { 'test1', 'bytes', 1, 9, 2, 0, 8, 0, 0, 0, 1, 0, 1 },
+        { 'test1', 'bytes', 1, 9, 0, 0, 0, 2, 0, 8, 0, 0, 0 },
+        { 'test1', 'bytes', 1, 9, 0, 0, 0, 1, 0, 1, 2, 0, 4 },
+      }
+
+      feed '<C-r>'
+      check_events {
+        { 'test1', 'bytes', 1, 13, 0, 0, 0, 2, 0, 4, 1, 0, 1 },
+        { 'test1', 'bytes', 1, 13, 0, 0, 0, 0, 0, 0, 2, 0, 8 },
+        { 'test1', 'bytes', 1, 13, 2, 0, 8, 1, 0, 1, 0, 0, 0 },
+      }
+    end)
+
+    it('visual paste 4: replacing all lines with cursor after the text', function()
+      local check_events = setup_eventcheck(verify, { 'x', 'y' })
+      fn.setreg('a', { 'foo', 'bar' }, 'l')
+      exec_lua(function()
+        _G.cursor_beyond = {}
+        vim.api.nvim_buf_attach(0, false, {
+          on_bytes = function()
+            local row = vim.api.nvim_win_get_cursor(0)[1]
+            if row > vim.api.nvim_buf_line_count(0) then
+              table.insert(_G.cursor_beyond, row)
+            end
+          end,
+        })
+      end)
+
+      feed 'ggVG"agp'
+      check_events {
+        { 'test1', 'bytes', 1, 3, 0, 0, 0, 2, 0, 4, 1, 0, 1 },
+        { 'test1', 'bytes', 1, 4, 0, 0, 0, 0, 0, 0, 2, 0, 8 },
+        { 'test1', 'bytes', 1, 5, 2, 0, 8, 1, 0, 1, 0, 0, 0 },
+      }
+      -- Callbacks must not see the cursor on the deleted line.
+      eq({}, exec_lua('return _G.cursor_beyond'))
+      eq({ 2, 2 }, api.nvim_win_get_cursor(0))
+    end)
+
+    it('visual paste 5: replacing all lines with nothing', function()
+      local check_events = setup_eventcheck(verify, { 'x', 'y' })
+
+      feed 'ggVG"zp' -- E353: Nothing in register z
+      check_events {
+        { 'test1', 'bytes', 1, 3, 0, 0, 0, 2, 0, 4, 1, 0, 1 },
+      }
+
+      feed 'u'
+      check_events {
+        { 'test1', 'bytes', 1, 5, 0, 0, 0, 1, 0, 1, 2, 0, 4 },
+      }
+    end)
+
+    it('visual paste 6: nothing over empty buffer', function()
+      local check_events = setup_eventcheck(verify)
+      local tick = api.nvim_buf_get_changedtick(0)
+
+      feed 'V"zp' -- E353: Nothing in register z
+      check_events {}
+      eq(false, api.nvim_get_option_value('modified', {}))
+      eq(tick, api.nvim_buf_get_changedtick(0))
+
+      fn.setreg('a', { 'foo', 'bar' }, 'l')
+      command 'setlocal nomodifiable'
+      feed 'V"ap' -- E21: Cannot make changes, 'modifiable' is off
+      check_events {}
+      eq(false, api.nvim_get_option_value('modified', {}))
+      eq(tick, api.nvim_buf_get_changedtick(0))
+    end)
+
     it('nvim_buf_set_lines', function()
       local check_events = setup_eventcheck(verify, { 'AAA', 'BBB' })
 
