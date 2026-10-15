@@ -109,18 +109,17 @@ The Nvim C API defines custom types for all function parameters. Some are just
 typedefs around C99 standard types, others are Nvim-defined data structures.
 
 Basic types ~
->
-  API Type                              C type
-  ------------------------------------------------------------------------
+
+  API Type				C type ~
   Nil
-  Boolean                               bool
-  Integer (signed 64-bit integer)       int64_t
-  Float (IEEE 754 double precision)     double
-  String                                {char* data, size_t size} struct
-  Array                                 kvec
-  Dict (msgpack: map)                   kvec
-  Object                                any of the above
-<
+  Boolean				bool
+  Integer (signed 64-bit integer)	int64_t
+  Float (IEEE 754 double precision)	double
+  String				{char* data, size_t size} struct
+  Array					kvec
+  Dict (msgpack: map)			kvec
+  Object				any of the above
+
   Note:
     - Empty Array is accepted as a valid Dictionary parameter.
     - Functions cannot cross RPC boundaries. But API functions (e.g.
@@ -136,13 +135,11 @@ Special types (msgpack EXT) ~
   The EXT object data is the (integer) object handle. The EXT type codes given
   in the |api-metadata| `types` key are stable: they will not change and are
   thus forward-compatible.
->
-  EXT Type      C type                                  Data
-  ------------------------------------------------------------------------
-  Buffer        enum value kObjectTypeBuffer            |bufnr()|
-  Window        enum value kObjectTypeWindow            |window-ID|
-  Tabpage       enum value kObjectTypeTabpage           internal handle
-<
+
+  EXT Type	C type					Data ~
+  Buffer	enum value kObjectTypeBuffer		|bufnr()|
+  Window	enum value kObjectTypeWindow		|window-ID|
+  Tabpage	enum value kObjectTypeTabpage		internal handle
 
                                                         *api-indexing*
 Most of the API uses 0-based indices, and ranges are end-exclusive. For the
