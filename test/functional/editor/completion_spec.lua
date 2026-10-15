@@ -1949,6 +1949,42 @@ describe('completion', function()
     eq('foobar(', n.api.nvim_get_current_line())
   end)
 
+  it('complete_info() preserves the source path when rebuilding buffer completion', function()
+    command('set hidden complete=b completeopt=menuone,noselect')
+    command('file Xcompletion-source')
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'foobar' })
+    command('enew')
+    screen:set_option('ext_popupmenu', true)
+    feed('ifoo<C-n>')
+    screen:expect {
+      popupmenu = {
+        anchor = { 1, 0, 0 },
+        items = { { 'foobar', '', 'Xcompletion-source', '' } },
+        pos = -1,
+      },
+    }
+
+    eq('Xcompletion-source', fn.complete_info({ 'items' }).items[1].menu)
+    exec_lua([[vim.fn.complete(1, vim.fn.complete_info({ 'items' }).items)]])
+    screen:expect {
+      unchanged = true,
+      popupmenu = {
+        anchor = { 1, 0, 0 },
+        items = { { 'foobar', '', 'Xcompletion-source', '' } },
+        pos = -1,
+      },
+    }
+  end)
+
+  it('complete_info() preserves explicit menu text', function()
+    command('set completeopt=menuone,noselect')
+    feed('i')
+    exec_lua([[vim.fn.complete(1, { { word = 'foobar', menu = 'custom menu' } })]])
+    eq('custom menu', fn.complete_info({ 'items' }).items[1].menu)
+    exec_lua([[vim.fn.complete(1, vim.fn.complete_info({ 'items' }).items)]])
+    eq('custom menu', fn.complete_info({ 'items' }).items[1].menu)
+  end)
+
   it('complete_info() reports equal, preselect and commit_chars', function()
     command('set completeopt=menuone,noinsert')
     source([[
