@@ -283,7 +283,7 @@ function M.intersect(r1, r2)
   return M.new(r1.buf, rs[1], rs[2], re[3], re[4])
 end
 
---- Converts |vim.Range| to `lsp.Range`.
+--- Converts |vim.Range| to `lsp.Range` (0-based lines, character offsets in {position_encoding}).
 ---
 --- Example:
 --- ```lua
@@ -307,7 +307,8 @@ function M.to_lsp(range, position_encoding)
   }
 end
 
---- Creates a new |vim.Range| from `lsp.Range`.
+--- Creates a new |vim.Range| from `lsp.Range` (0-based lines, character offsets in
+--- {position_encoding}).
 ---
 --- Example:
 --- ```lua
@@ -336,7 +337,8 @@ function M.lsp(buf, range, position_encoding)
   return M.new(buf, start_row, start_col, end_row, end_col)
 end
 
---- Converts |vim.Range| to extmark range (see |api-indexing|).
+--- Converts |vim.Range| to mark range (1,0)-indexed (see |api-indexing|). The end is inclusive
+--- unless 'selection' is "exclusive".
 ---
 --- Example:
 --- ```lua
@@ -361,7 +363,8 @@ function M.to_mark(range)
   return start_row, start_col, end_row, end_col
 end
 
---- Creates a new |vim.Range| from "mark-indexed" range (see |api-indexing|).
+--- Creates a new |vim.Range| from mark range (1,0)-indexed (see |api-indexing|). The end is
+--- treated as inclusive unless 'selection' is "exclusive".
 ---
 --- Example:
 --- ```lua
@@ -398,7 +401,7 @@ function M.mark(buf, start_lnum, start_col, end_lnum, end_col)
   return M.new(buf, start_lnum, start_col, end_lnum, end_col)
 end
 
---- Converts |vim.Range| to extmark range (see |api-indexing|).
+--- Converts |vim.Range| to extmark range (0,0)-indexed (see |api-indexing|).
 ---
 --- Example:
 --- ```lua
@@ -434,7 +437,7 @@ function M.to_extmark(range)
   return start_row, start_col, end_row, end_col
 end
 
---- Creates a new |vim.Range| from extmark range (see |api-indexing|).
+--- Creates a new |vim.Range| from extmark range (0,0)-indexed (see |api-indexing|).
 ---
 --- Example:
 --- ```lua

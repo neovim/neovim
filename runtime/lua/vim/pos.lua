@@ -121,7 +121,7 @@ function M.__eq(p1, p2)
   return util.cmp_pos.eq(p1[1], p1[2], p2[1], p2[2])
 end
 
---- Converts |vim.Pos| to `lsp.Position`.
+--- Converts |vim.Pos| to `lsp.Position` (0-based line, character offset in {position_encoding}).
 ---
 --- Example:
 --- ```lua
@@ -140,7 +140,8 @@ function M.to_lsp(pos, position_encoding)
   return util.to_lsp(pos.buf, pos[1], pos[2], position_encoding)
 end
 
---- Creates a new |vim.Pos| from `lsp.Position`.
+--- Creates a new |vim.Pos| from `lsp.Position` (0-based line, character offset in
+--- {position_encoding}).
 ---
 --- Example:
 --- ```lua
@@ -164,7 +165,7 @@ function M.lsp(buf, pos, position_encoding)
   return M.new(buf, row, col)
 end
 
---- Converts |vim.Pos| to cursor position (see |api-indexing|).
+--- Converts |vim.Pos| to cursor position (1,0)-indexed (see |api-indexing|).
 ---
 --- Example:
 --- ```lua
@@ -181,7 +182,7 @@ function M.to_cursor(pos)
   return { util.to_mark(pos[1], pos[2]) }
 end
 
---- Creates a new |vim.Pos| from cursor position (see |api-indexing|).
+--- Creates a new |vim.Pos| from cursor position (1,0)-indexed (see |api-indexing|).
 ---
 --- If {pos} is omitted, the first argument is treated as {win} instead of {buf},
 --- and the current cursor position of {win} is used. If {win} is also omitted,
@@ -218,7 +219,7 @@ function M.cursor(buf, pos)
   return M.new(buf, util.from_mark(pos[1], pos[2]))
 end
 
---- Converts |vim.Pos| to mark position (see |api-indexing|).
+--- Converts |vim.Pos| to mark position (1,0)-indexed (see |api-indexing|).
 ---
 --- Example:
 --- ```lua
@@ -235,7 +236,7 @@ function M.to_mark(pos)
   return util.to_mark(pos[1], pos[2])
 end
 
---- Creates a new |vim.Pos| from mark position (see |api-indexing|).
+--- Creates a new |vim.Pos| from mark position (1,0)-indexed (see |api-indexing|).
 ---
 --- Example:
 --- ```lua
@@ -260,7 +261,7 @@ function M.mark(buf, lnum, col)
   return M.new(buf, util.from_mark(lnum, col))
 end
 
---- Converts |vim.Pos| to extmark position (see |api-indexing|).
+--- Converts |vim.Pos| to extmark position (0,0)-indexed (see |api-indexing|).
 ---
 --- Example:
 --- ```lua
@@ -276,7 +277,7 @@ function M.to_extmark(pos)
   return pos[1], pos[2]
 end
 
---- Creates a new |vim.Pos| from extmark position (see |api-indexing|).
+--- Creates a new |vim.Pos| from extmark position (0,0)-indexed (see |api-indexing|).
 ---
 --- Example:
 --- ```lua
@@ -294,7 +295,7 @@ function M.extmark(buf, row, col)
   return M.new(buf, row, col)
 end
 
---- Converts |vim.Pos| to buffer (bytes) offset.
+--- Converts |vim.Pos| to 0-based buffer (bytes) offset.
 ---
 --- Example:
 --- ```lua
@@ -314,7 +315,7 @@ function M.to_offset(pos)
   return api.nvim_buf_get_offset(pos.buf, pos[1]) + pos[2]
 end
 
---- Creates a new |vim.Pos| from buffer (bytes) offset.
+--- Creates a new |vim.Pos| from 0-based buffer (bytes) offset.
 ---
 --- Example:
 --- ```lua
