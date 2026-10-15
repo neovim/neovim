@@ -6373,7 +6373,7 @@ static void ex_syncbind(exarg_T *eap)
 static void ex_read(exarg_T *eap)
 {
   if (eap->usefilter) {  // :r!cmd
-    do_bang(1, eap, false, false, true);
+    do_bang(eap, false, false, true);
     return;
   }
 
@@ -6381,9 +6381,38 @@ static void ex_read(exarg_T *eap)
     return;
   }
 
+  char *split_line = NULL;
+  colnr_T split_col = eap->col2;
+  linenr_T split_lnum = eap->line2;
+  bool do_split = (split_col != MAXCOL && split_lnum > 0
+                   && split_lnum <= curbuf->b_ml.ml_line_count);
+
+  if (do_split) {
+    char *line = ml_get(split_lnum);
+    colnr_T len = (colnr_T)strlen(line);
+    if (split_col <= len) {
+      split_line = xstrdup(line + split_col);
+      char *new_line = xstrnsave(line, (size_t)split_col);
+      ml_replace(split_lnum, new_line, false);
+      changed_lines(curbuf, split_lnum, 0, split_lnum + 1, 0, true);
+    } else {
+      do_split = false;
+    }
+  }
+
+  linenr_T lines_before = curbuf->b_ml.ml_line_count;
   int i;
   if (*eap->arg == NUL) {
     if (check_fname() == FAIL) {       // check for no file name
+      if (do_split && split_line != NULL) {
+        char *line = ml_get(split_lnum);
+        size_t restored_len = strlen(line) + strlen(split_line) + 1;
+        char *restored = xmalloc(restored_len);
+        snprintf(restored, restored_len, "%s%s", line, split_line);
+        ml_replace(split_lnum, restored, false);
+        changed_lines(curbuf, split_lnum, 0, split_lnum + 1, 0, true);
+        xfree(split_line);
+      }
       return;
     }
     i = readfile(curbuf->b_ffname, curbuf->b_fname,
@@ -6399,7 +6428,44 @@ static void ex_read(exarg_T *eap)
     if (!aborting()) {
       semsg(_(e_notopen), eap->arg);
     }
+    if (do_split && split_line != NULL) {
+      char *line = ml_get(split_lnum);
+      size_t restored_len = strlen(line) + strlen(split_line) + 1;
+      char *restored = xmalloc(restored_len);
+      snprintf(restored, restored_len, "%s%s", line, split_line);
+      ml_replace(split_lnum, restored, false);
+      changed_lines(curbuf, split_lnum, 0, split_lnum + 1, 0, true);
+      xfree(split_line);
+    }
   } else {
+    if (do_split && split_line != NULL) {
+      linenr_T lines_inserted = curbuf->b_ml.ml_line_count - lines_before;
+      if (lines_inserted > 0) {
+        char *prefix = xstrdup(ml_get(split_lnum));
+        char *first_read = ml_get(split_lnum + 1);
+        size_t merged_first_len = strlen(prefix) + strlen(first_read) + 1;
+        char *merged_first = xmalloc(merged_first_len);
+        snprintf(merged_first, merged_first_len, "%s%s", prefix, first_read);
+        ml_replace(split_lnum, merged_first, false);
+        changed_lines(curbuf, split_lnum, 0, split_lnum + 1, 0, true);
+        xfree(prefix);
+
+        if (u_savedel(split_lnum + 1, 1) == OK) {
+          ml_delete(split_lnum + 1);
+          deleted_lines_mark(split_lnum + 1, 1);
+        }
+      }
+
+      linenr_T target_lnum = split_lnum + lines_inserted - (lines_inserted > 0 ? 1 : 0);
+      char *last_line = ml_get(target_lnum);
+      size_t merged_last_len = strlen(last_line) + strlen(split_line) + 1;
+      char *merged_last = xmalloc(merged_last_len);
+      snprintf(merged_last, merged_last_len, "%s%s", last_line, split_line);
+      ml_replace(target_lnum, merged_last, false);
+      changed_lines(curbuf, target_lnum, 0, target_lnum + 1, 0, true);
+
+      xfree(split_line);
+    }
     redraw_curbuf_later(UPD_VALID);
   }
 }
@@ -7021,7 +7087,7 @@ static void ex_at(exarg_T *eap)
 /// ":!".
 static void ex_bang(exarg_T *eap)
 {
-  do_bang(eap->addr_count, eap, eap->forceit, true, true);
+  do_bang(eap, eap->forceit, true, true);
 }
 
 /// ":undo".
