@@ -827,6 +827,19 @@ void ui_refresh(void)
     }, result)
   end)
 
+  it('lints a query buffer whose filetype has no parser', function()
+    local diagnostics = exec_lua(function()
+      local buf = vim.api.nvim_get_current_buf()
+      vim.api.nvim_buf_set_lines(buf, 0, -1, false, { '(not_a_node) @id' })
+      vim.bo[buf].filetype = 'text'
+      vim.treesitter.query.lint(buf, { langs = 'c' })
+      return vim.tbl_map(function(d)
+        return { d.lnum, d.col, d.end_col, d.message }
+      end, vim.diagnostic.get(buf))
+    end)
+    eq({ { 0, 1, 11, 'Invalid node type "not_a_node"' } }, diagnostics)
+  end)
+
   describe('Query:iter_captures', function()
     it('includes metadata for all captured nodes #23664', function()
       insert([[
