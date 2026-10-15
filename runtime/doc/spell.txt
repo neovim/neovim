@@ -747,22 +747,21 @@ than Myspell is Hunspell ( https://hunspell.github.io ).
 
 WORD LIST FORMAT				*spell-dic-format*
 
-A short example, with line numbers:
-
-	1	1234 ~
-	2	aan ~
-	3	Als ~
-	4	Etten-Leur ~
-	5	et al. ~
-	6	's-Gravenhage ~
-	7	's-Gravenhaags ~
-	8	# word that differs between regions ~
-	9	kado/1 ~
-	10	cadeau/2 ~
-	11	TCP,IP ~
-	12	/the S affix may add a 's' ~
-	13	bedel/S ~
-
+A short example, with line numbers: >
+	1	1234
+	2	aan
+	3	Als
+	4	Etten-Leur
+	5	et al.
+	6	's-Gravenhage
+	7	's-Gravenhaags
+	8	# word that differs between regions
+	9	kado/1
+	10	cadeau/2
+	11	TCP,IP
+	12	/the S affix may add a 's'
+	13	bedel/S
+<
 The first line contains the number of words.  Vim ignores it, but you do get
 an error message if it's not there.  *E760*
 
@@ -1144,9 +1143,9 @@ This flag is not supported by Myspell.  It has the meaning that case matters.
 This can be used if the word does not have the first letter in upper case at
 the start of a sentence.  Example:
 
-    word list	    matches		    does not match ~
-    's morgens/=    's morgens		    'S morgens 's Morgens 'S MORGENS
-    's Morgens	    's Morgens 'S MORGENS   'S morgens 's morgens
+word list	matches			does not match ~
+'s morgens/=	's morgens		'S morgens 's Morgens 'S MORGENS
+'s Morgens	's Morgens 'S MORGENS	'S morgens 's morgens
 
 The flag can also be used to avoid that the word matches when it is in all
 upper-case letters.
@@ -1481,23 +1480,21 @@ SOUND-A-LIKE						*spell-SAL*
 
 In the affix file SAL items can be used to define the sounds-a-like mechanism
 to be used.  The main items define the "from" text and the "to" replacement.
-Simplistic example:
-
-	SAL CIA			 X ~
-	SAL CH			 X ~
-	SAL C			 K ~
-	SAL K			 K ~
-
+Simplistic example: >
+	SAL CIA			 X
+	SAL CH			 X
+	SAL C			 K
+	SAL K			 K
+<
 There are a few rules and this can become quite complicated.  An explanation
 how it works can be found in the Aspell manual:
 http://aspell.net/man-html/Phonetic-Code.html.
 
-There are a few special items:
-
-	SAL followup		true ~
-	SAL collapse_result	true ~
-	SAL remove_accents	true ~
-
+There are a few special items: >
+	SAL followup		true
+	SAL collapse_result	true
+	SAL remove_accents	true
+<
 "1" has the same meaning as "true".  Any other value means "false".
 
 

@@ -959,12 +959,11 @@ expr4 && expr4 ..	logical AND		*expr-&&*
 The "||" and "&&" operators take one argument on each side.  The arguments
 are (converted to) Numbers.  The result is:
 
-    input			 output ~
-n1	n2		n1 || n2	n1 && n2 ~
-|FALSE|	|FALSE|		|FALSE|		|FALSE|
-|FALSE|	|TRUE|		|TRUE|		|FALSE|
-|TRUE|	|FALSE|		|TRUE|		|FALSE|
-|TRUE|	|TRUE|		|TRUE|		|TRUE|
+n1	n2	n1 || n2	n1 && n2 ~
+|FALSE|	|FALSE|	|FALSE|		|FALSE|
+|FALSE|	|TRUE|	|TRUE|		|FALSE|
+|TRUE|	|FALSE|	|TRUE|		|FALSE|
+|TRUE|	|TRUE|	|TRUE|		|TRUE|
 
 The operators can be concatenated, for example: >
 
@@ -1324,9 +1323,8 @@ When using the lambda form there must be no white space between the } and the
 (.
 
 
-							*expr9*
 ------------------------------------------------------------------------------
-number
+number							*expr9*
 
 number			number constant			*expr-number*
 

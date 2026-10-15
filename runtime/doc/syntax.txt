@@ -1009,7 +1009,7 @@ There are a couple of variables that have an effect on syntax highlighting,
 and are to do with non-standard highlighting options.
 
 Variable			Default	Effect ~
-g:doxygen_enhanced_color
+g:doxygen_enhanced_color	 	 
 g:doxygen_enhanced_colour	0	Use non-standard highlighting for
 					doxygen comments.
 
@@ -4568,11 +4568,11 @@ Examples: "ms=s+1", "hs=e-2", "lc=3".
 Although all offsets are accepted after any pattern, they are not always
 meaningful.  This table shows which offsets are actually used:
 
-		    ms	 me   hs   he	rs   re	  lc ~
-match item	    yes  yes  yes  yes	-    -	  yes
-region item start   yes  -    yes  -	yes  -	  yes
-region item skip    -	 yes  -    -	-    -	  yes
-region item end     -	 yes  -    yes	-    yes  yes
+ 			ms	me	hs	he	rs	re	lc ~
+match item		yes	yes	yes	yes	-	-	yes
+region item start	yes	-	yes	-	yes	-	yes
+region item skip	-	yes	-	-	-	-	yes
+region item end		-	yes	-	yes	-	yes	yes
 
 Offsets can be concatenated, with a ',' in between.  Example: >
   :syn match String  /"[^"]*"/hs=s+1,he=e-1

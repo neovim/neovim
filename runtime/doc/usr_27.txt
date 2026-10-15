@@ -412,8 +412,8 @@ few more of these:
 	\D	non-digit		[^0-9]
 	\x	hex digit		[0-9a-fA-F]
 	\X	non-hex digit		[^0-9a-fA-F]
-	\s	white space		[ 	]     (<Tab> and <Space>)
-	\S	non-white characters	[^ 	]     (not <Tab> and <Space>)
+	\s	white space		[ \t]     (<Tab> and <Space>)
+	\S	non-white characters	[^ \t]     (not <Tab> and <Space>)
 	\l	lowercase alpha		[a-z]
 	\L	non-lowercase alpha	[^a-z]
 	\u	uppercase alpha		[A-Z]

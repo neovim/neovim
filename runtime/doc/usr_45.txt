@@ -362,11 +362,11 @@ LAST RESORT
 
 If all other methods fail, you can enter any character with CTRL-V:
 
-	encoding   type			range ~
-	8-bit	   CTRL-V 123		decimal 0-255
-	8-bit	   CTRL-V x a1		hexadecimal 00-ff
-	16-bit     CTRL-V u 013b	hexadecimal 0000-ffff
-	31-bit	   CTRL-V U 001303a4	hexadecimal 00000000-7fffffff
+	encoding	type			range ~
+	8-bit		CTRL-V 123		decimal 0-255
+	8-bit		CTRL-V x a1		hexadecimal 00-ff
+	16-bit		CTRL-V u 013b		hexadecimal 0000-ffff
+	31-bit		CTRL-V U 001303a4	hexadecimal 00000000-7fffffff
 
 Don't type the spaces.  See |i_CTRL-V_digit| for the details.
 

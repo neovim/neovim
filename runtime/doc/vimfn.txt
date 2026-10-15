@@ -9,6 +9,7 @@ Vimscript functions			*vimscript-functions* *builtin.txt*
 For functions grouped by what they are used for see |function-list|.
 
 				      Type |gO| to see the table of contents.
+
 ==============================================================================
 1. Details					*vimscript-functions-details*
 
@@ -6516,7 +6517,7 @@ mapcheck({name} [, {mode} [, {abbr}]])                              *mapcheck()*
 		A match happens with a mapping that starts with {name} and
 		with a mapping which is equal to the start of {name}.
 
-			matches mapping "a"	"ab"	"abc" ~
+		   matches mapping	"a"	"ab"	"abc" ~
 		   mapcheck("a")	yes	yes	 yes
 		   mapcheck("abc")	yes	yes	 yes
 		   mapcheck("ax")	yes	no	 no

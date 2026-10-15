@@ -40,14 +40,14 @@ Tag		Char		Insert-mode action	~
 |i_CTRL-G_u|	CTRL-G u	start new undoable edit
 |i_CTRL-G_U|	CTRL-G U	don't break undo with next cursor movement
 |i_<BS>|	<BS>		delete character before the cursor
-|i_digraph|	{char1}<BS>{char2}
+|i_digraph|	{char1}<BS>{char2}	 
 				enter digraph (only when 'digraph' option set)
 |i_CTRL-H|	CTRL-H		same as <BS>
 |i_<Tab>|	<Tab>		insert a <Tab> character
 |i_CTRL-I|	CTRL-I		same as <Tab>
 |i_<NL>|	<NL>		same as <CR>
 |i_CTRL-J|	CTRL-J		same as <CR>
-|i_CTRL-K|	CTRL-K {char1} {char2}
+|i_CTRL-K|	CTRL-K {char1} {char2}	 
 				enter digraph
 |i_<CR>|	<CR>		begin new line
 |i_CTRL-M|	CTRL-M		same as <CR>
@@ -61,7 +61,7 @@ Tag		Char		Insert-mode action	~
 				control flow
 |i_CTRL-SHIFT-Q|  CTRL-SHIFT-Q {char}
 				like CTRL-Q unless |tui-modifyOtherKeys| is active
-|i_CTRL-R|	CTRL-R {register}
+|i_CTRL-R|	CTRL-R {register}	 
 				insert the contents of a register
 |i_CTRL-R_CTRL-R| CTRL-R CTRL-R {register}
 				insert the contents of a register literally
@@ -86,20 +86,25 @@ Tag		Char		Insert-mode action	~
 |i_CTRL-Y|	CTRL-Y		insert the character which is above the cursor
 |i_<Esc>|	<Esc>		end insert mode
 |i_CTRL-[|	CTRL-[		same as <Esc>
-|i_CTRL-\_CTRL-N| CTRL-\ CTRL-N	go to Normal mode
-|i_CTRL-\_CTRL-G| CTRL-\ CTRL-G	go to Normal mode
+|i_CTRL-\_CTRL-N|	CTRL-\ CTRL-N	go to Normal mode
+|i_CTRL-\_CTRL-G|	CTRL-\ CTRL-G	go to Normal mode
  		CTRL-\ a - z	reserved for extensions
  		CTRL-\ others	not used
 |i_CTRL-]|	CTRL-]		trigger abbreviation
 |i_CTRL-^|	CTRL-^		toggle use of |:lmap| mappings
 |i_CTRL-_|	CTRL-_		When 'allowrevins' set: toggle 'revins'
+ -----------------------------------------------------------------------------
  		<Space> to '~'	not used, except '0' and '^' followed by
 				CTRL-D
+ -----------------------------------------------------------------------------
 |i_0_CTRL-D|	0 CTRL-D	delete all indent in the current line
 |i_^_CTRL-D|	^ CTRL-D	delete all indent in the current line, restore
 				it in the next line
+ -----------------------------------------------------------------------------
 |i_<Del>|	<Del>		delete character under the cursor
+ -----------------------------------------------------------------------------
  		Meta characters (0x80 to 0xff, 128 to 255)	not used
+ -----------------------------------------------------------------------------
 |i_<Left>|	<Left>		cursor one character left
 |i_<S-Left>|	<S-Left>	cursor one word left
 |i_<C-Left>|	<C-Left>	cursor one word left
@@ -127,7 +132,7 @@ Tag		Char		Insert-mode action	~
 |i_<ScrollWheelLeft>|	<ScrollWheelLeft>	move window six columns left
 |i_<S-ScrollWheelLeft>|	<S-ScrollWheelLeft>	move window one page left
 |i_<ScrollWheelRight>|	<ScrollWheelRight>	move window six columns right
-|i_<S-ScrollWheelRight>| <S-ScrollWheelRight>	move window one page right
+|i_<S-ScrollWheelRight>|	<S-ScrollWheelRight>	move window one page right
 
 commands in CTRL-X submode				*i_CTRL-X_index*
 
@@ -227,8 +232,9 @@ Tag		Char	      Note Normal-mode action	~
 |CTRL-<Tab>|	CTRL-<Tab>	   same as `g<Tab>` : go to last accessed tab
 				   page
  		CTRL-_		   not used
+ -----------------------------------------------------------------------------
 |<Space>|	<Space>		1  same as "l"
-|!|		!{motion}{filter}
+|!|		!{motion}{filter}	 
 				2  filter Nmove text through the {filter}
 				   command
 |!!|		!!{filter}	2  filter N lines through the {filter} command
@@ -430,7 +436,7 @@ Tag		Char	      Note Normal-mode action	~
 |<C-Left>|	<C-Left>	1  same as "b"
 |<C-LeftMouse>|	<C-LeftMouse>	   place a multicursor at mouse-click
 |<C-Right>|	<C-Right>	1  same as "w"
-|<C-RightMouse>| <C-RightMouse>	   same as "CTRL-T"
+|<C-RightMouse>|	<C-RightMouse>	   same as "CTRL-T"
 |<C-Tab>|	<C-Tab>		   same as "g<Tab>"
 |<Del>|		["x]<Del>	2  same as "x"
 |N<Del>|	{count}<Del>	   remove the last digit from {count}
@@ -452,7 +458,7 @@ Tag		Char	      Note Normal-mode action	~
 |<S-Left>|	<S-Left>	1  same as "b"
 |<S-LeftMouse>|	<S-LeftMouse>	   same as "*" at the mouse click position
 |<S-Right>|	<S-Right>	1  same as "w"
-|<S-RightMouse>| <S-RightMouse>	   same as "#" at the mouse click position
+|<S-RightMouse>|	<S-RightMouse>	   same as "#" at the mouse click position
 |<S-Up>|	<S-Up>		1  same as CTRL-B
 |<Undo>|	<Undo>		2  same as "u"
 |<Up>|		<Up>		1  same as "k"
@@ -607,7 +613,7 @@ Tag		Command		   Normal-mode action	~
 |CTRL-W_<Down>|	CTRL-W <Down>	   same as "CTRL-W j"
 |CTRL-W_<Up>|	CTRL-W <Up>	   same as "CTRL-W k"
 |CTRL-W_<Left>|	CTRL-W <Left>	   same as "CTRL-W h"
-|CTRL-W_<Right>| CTRL-W <Right>	   same as "CTRL-W l"
+|CTRL-W_<Right>|	CTRL-W <Right>	   same as "CTRL-W l"
 
 ==============================================================================
 2.3 Square bracket commands					*[* *]*
@@ -658,7 +664,8 @@ Tag		Char	      Note Normal-mode action	~
 |[s|		[s		1  move to the previous misspelled word
 |[z|		[z		1  move to start of open fold
 |[{|		[{		1  cursor N times back to unmatched '{'
-|[<MiddleMouse>| [<MiddleMouse>	2  same as "[p"
+|[<MiddleMouse>|	[<MiddleMouse>	2  same as "[p"
+ -----------------------------------------------------------------------------
 |]_CTRL-D|	] CTRL-D	   jump to first #define found in current and
 				   included files matching the word under the
 				   cursor, start searching at cursor position
@@ -698,7 +705,7 @@ Tag		Char	      Note Normal-mode action	~
 |]s|		]s		1  move to next misspelled word
 |]z|		]z		1  move to end of open fold
 |]}|		]}		1  cursor N times forward to unmatched '}'
-|]<MiddleMouse>| ]<MiddleMouse>	2  same as "]p"
+|]<MiddleMouse>|	]<MiddleMouse>	2  same as "]p"
 
 ==============================================================================
 2.4 Commands starting with 'g'						*g*
@@ -894,8 +901,8 @@ here are those that are different.
 
 Tag		Command	      Note Visual-mode action	~
 ------------------------------------------------------------------------------ ~
-|v_CTRL-\_CTRL-N| CTRL-\ CTRL-N	   stop Visual mode
-|v_CTRL-\_CTRL-G| CTRL-\ CTRL-G	   go to Normal mode
+|v_CTRL-\_CTRL-N|	CTRL-\ CTRL-N	   stop Visual mode
+|v_CTRL-\_CTRL-G|	CTRL-\ CTRL-G	   go to Normal mode
 |v_CTRL-A|	CTRL-A		2  add N to number in highlighted text
 |v_CTRL-C|	CTRL-C		   stop Visual mode
 |v_CTRL-G|	CTRL-G		   toggle between Visual mode and Select mode
@@ -1027,7 +1034,7 @@ Tag		Command		Command-line editing-mode action	~
 				command-line window; otherwise not used
 |c_CTRL-G|	CTRL-G		next match when 'incsearch' is active
 |c_<BS>|	<BS>		delete the character in front of the cursor
-|c_digraph|	{char1} <BS> {char2}
+|c_digraph|	{char1} <BS> {char2}	 
 				enter digraph when 'digraph' is on
 |c_CTRL-H|	CTRL-H		same as <BS>
 |c_<Tab>|	<Tab>		if 'wildchar' is <Tab>: Do completion on
@@ -1038,7 +1045,7 @@ Tag		Command		Command-line editing-mode action	~
 |c_CTRL-I|	CTRL-I		same as <Tab>
 |c_<NL>|	<NL>		same as <CR>
 |c_CTRL-J|	CTRL-J		same as <CR>
-|c_CTRL-K|	CTRL-K {char1} {char2}
+|c_CTRL-K|	CTRL-K {char1} {char2}	 
 				enter digraph
 |c_CTRL-L|	CTRL-L		do completion on the pattern in front of the
 				cursor and insert the longest common part
@@ -1053,7 +1060,7 @@ Tag		Command		Command-line editing-mode action	~
 				command-line from history.
 |c_CTRL-Q|	CTRL-Q		same as CTRL-V, unless it's used for terminal
 				control flow
-|c_CTRL-R|	CTRL-R {regname}
+|c_CTRL-R|	CTRL-R {regname}	 
 				insert the contents of a register or object
 				under the cursor as if typed
 |c_CTRL-R_CTRL-R| CTRL-R CTRL-R {regname}
@@ -1072,16 +1079,17 @@ Tag		Command		Command-line editing-mode action	~
  		CTRL-Z		not used (reserved for suspend)
 |c_<Esc>|	<Esc>		abandon command-line without executing it
 |c_CTRL-[|	CTRL-[		same as <Esc>
-|c_CTRL-\_CTRL-N| CTRL-\ CTRL-N	go to Normal mode, abandon command-line
-|c_CTRL-\_CTRL-G| CTRL-\ CTRL-G	go to Normal mode, abandon command-line
+|c_CTRL-\_CTRL-N|	CTRL-\ CTRL-N	go to Normal mode, abandon command-line
+|c_CTRL-\_CTRL-G|	CTRL-\ CTRL-G	go to Normal mode, abandon command-line
  		CTRL-\ a - d	reserved for extensions
-|c_CTRL-\_e|	CTRL-\ e {expr} replace the command line with the result of
+|c_CTRL-\_e|	CTRL-\ e {expr}	replace the command line with the result of
 				{expr}
  		CTRL-\ f - z	reserved for extensions
  		CTRL-\ others	not used
 |c_CTRL-]|	CTRL-]		trigger abbreviation
 |c_CTRL-^|	CTRL-^		toggle use of |:lmap| mappings
 |c_<Del>|	<Del>		delete the character under the cursor
+ -----------------------------------------------------------------------------
 |c_<Left>|	<Left>		cursor left
 |c_<S-Left>|	<S-Left>	cursor one word left
 |c_<C-Left>|	<C-Left>	cursor one word left

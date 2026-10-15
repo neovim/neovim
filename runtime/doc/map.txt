@@ -409,12 +409,11 @@ t[nore]map     |  -   |  -  |  -  |  -  |  -  |  -  | yes  |  -   |
 l[nore]map     |  -   | yes | yes |  -  |  -  |  -  |  -   | yes  |
 
 
-    COMMANDS				      MODES ~
-				       Normal  Visual+Select  Operator-pending ~
-:map   :noremap   :unmap   :mapclear	 yes	    yes		   yes
-:nmap  :nnoremap  :nunmap  :nmapclear	 yes	     -		    -
-:vmap  :vnoremap  :vunmap  :vmapclear	  -	    yes		    -
-:omap  :onoremap  :ounmap  :omapclear	  -	     -		   yes
+COMMANDS				Normal	Visual+Select	Op-pending ~
+:map   :noremap   :unmap   :mapclear	yes	yes		yes
+:nmap  :nnoremap  :nunmap  :nmapclear	yes	-		-
+:vmap  :vnoremap  :vunmap  :vmapclear	-	yes		-
+:omap  :onoremap  :ounmap  :omapclear	-	-		yes
 
 :nunmap can also be used outside of a monastery.
 						*mapmode-x* *mapmode-s*
@@ -425,21 +424,19 @@ NOTE: Mapping a printable character in Select mode may confuse the user.  It's
 better to explicitly use :xmap and :smap for printable characters.  Or use
 :sunmap after defining the mapping.
 
-    COMMANDS				      MODES ~
-					  Visual    Select ~
-:vmap  :vnoremap  :vunmap  :vmapclear	    yes      yes
-:xmap  :xnoremap  :xunmap  :xmapclear	    yes       -
-:smap  :snoremap  :sunmap  :smapclear	    -	     yes
+COMMANDS				Visual	Select ~
+:vmap  :vnoremap  :vunmap  :vmapclear	yes	yes
+:xmap  :xnoremap  :xunmap  :xmapclear	yes	-
+:smap  :snoremap  :sunmap  :smapclear	-	yes
 
 			*mapmode-ic* *mapmode-i* *mapmode-c* *mapmode-l*
 Some commands work both in Insert mode and Command-line mode, some not:
 
-    COMMANDS				      MODES ~
-					  Insert  Command-line	Lang-Arg ~
-:map!  :noremap!  :unmap!  :mapclear!	    yes	       yes	   -
-:imap  :inoremap  :iunmap  :imapclear	    yes		-	   -
-:cmap  :cnoremap  :cunmap  :cmapclear	     -	       yes	   -
-:lmap  :lnoremap  :lunmap  :lmapclear	    yes*       yes*	  yes*
+COMMANDS				Insert	Command-line	Lang-Arg ~
+:map!  :noremap!  :unmap!  :mapclear!	yes	yes		-
+:imap  :inoremap  :iunmap  :imapclear	yes	-		-
+:cmap  :cnoremap  :cunmap  :cmapclear	-	yes		-
+:lmap  :lnoremap  :lunmap  :lmapclear	yes*	yes*		yes*
 
 * If 'iminsert' is 1, see |language-mapping| below.
 
@@ -1299,10 +1296,10 @@ When 'verbose' is non-zero, listing a command will also display where it was
 last defined and any completion argument.  Example: >
 
     :verbose command TOhtml
-<	Name	    Args Range Complete  Definition ~
-	TOhtml	    0	 %		 :call Convert2HTML(<line1>, <line2>) ~
-	    Last set from /usr/share/vim/vim-7.0/plugin/tohtml.vim ~
-
+	Name	    Args Range Complete  Definition
+	TOhtml	    0	 %		 :call Convert2HTML(<line1>, <line2>)
+	    Last set from /usr/share/vim/vim-7.0/plugin/tohtml.vim
+<
 See |:verbose-cmd| for more information.
 
 							*E174* *E182*

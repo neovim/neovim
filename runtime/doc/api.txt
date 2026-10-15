@@ -111,7 +111,7 @@ typedefs around C99 standard types, others are Nvim-defined data structures.
 Basic types ~
 
   API Type				C type ~
-  Nil
+  Nil					 
   Boolean				bool
   Integer (signed 64-bit integer)	int64_t
   Float (IEEE 754 double precision)	double

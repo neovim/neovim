@@ -96,14 +96,13 @@ LISTING MAPPINGS
 
 To see the currently defined mappings, use ":map" without arguments.  Or one
 of the variants that include the mode in which they work.  The output could
-look like this:
-
-	   _g		 :call MyGrep(1)<CR> ~
-	v  <F2>		 :s/^/> /<CR>:noh<CR>`` ~
-	n  <F2>		 :.,$s/^/> /<CR>:noh<CR>`` ~
+look like this: >
+	   _g		 :call MyGrep(1)<CR>
+	v  <F2>		 :s/^/> /<CR>:noh<CR>``
+	n  <F2>		 :.,$s/^/> /<CR>:noh<CR>``
 	   <xHome>	 <Home>
 	   <xEnd>	 <End>
-
+<
 
 The first column of the list shows in which mode the mapping is effective.
 This is "n" for Normal mode, "i" for Insert mode, etc.  A blank is used for a

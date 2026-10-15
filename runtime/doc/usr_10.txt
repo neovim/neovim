@@ -516,12 +516,11 @@ SHIFTING
 The command ">" shifts the selected text to the right one shift amount,
 inserting whitespace.  The starting point for this shift is the left edge of
 the visual block.
-   With the same example again, ">" gives this result:
-
-	This is a	  long line ~
-	short ~
-	Any other	  long line ~
-
+   With the same example again, ">" gives this result: >
+	This is a	  long line
+	short
+	Any other	  long line
+<
 The shift amount is specified with the 'shiftwidth' option.  To change it to
 use 4 spaces: >
 

@@ -258,12 +258,11 @@ shorter to type: >
 
 	:ls
 
-The output could look like this:
-
-  1 #h   "help.txt"			line 62 ~
-  2 %a + "usr_21.txt"			line 1 ~
-  3      "usr_toc.txt"			line 1 ~
-
+The output could look like this: >
+  1 #h   "help.txt"			line 62
+  2 %a + "usr_21.txt"			line 1
+  3      "usr_toc.txt"			line 1
+<
 The first column contains the buffer number.  You can use this to edit the
 buffer without having to type the name, see below.
    After the buffer number come the flags.  Then the name of the file

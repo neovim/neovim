@@ -370,7 +370,7 @@ local function get_table_cells(node, bufnr)
 end
 
 --- Gets the rows (header first) of `block` if it is a table, else nil. Each row is a list of cells,
---- each cell a list of nodes. See "Tables" in the tree-sitter-vimdoc README.
+--- each cell a list of nodes. Separator => empty row. See "Tables" in the tree-sitter-vimdoc README.
 ---@param block TSNode
 ---@param bufnr integer
 ---@return TSNode[][][]?
@@ -385,8 +385,12 @@ local function get_table(block, bufnr)
     local line = assert(block:named_child(i))
     local is_sep = vim.treesitter.get_node_text(line, bufnr):match('^[%s%-=~]+$')
     local row = not is_sep and get_table_cells(line, bufnr)
-    if row and #row == 1 and #rows > 1 then
-      vim.list_extend(rows[#rows][#rows[#rows]], row[1]) -- Wrapped line continues last cell.
+    local last = rows[#rows]
+    local in_body = #rows > 1 and #last > 0 -- Last row is not the header or a separator.
+    if is_sep and in_body then
+      rows[#rows + 1] = {}
+    elseif row and #row == 1 and in_body then
+      vim.list_extend(last[#last], row[1]) -- Wrapped line continues last cell.
     elseif row then
       rows[#rows + 1] = row
     end
@@ -656,6 +660,9 @@ local function ts_node_to_html(root, level, lang_tree, headings, opt, stats)
     local trs = {} ---@type string[]
     for i, row in ipairs(table_rows) do
       local tag = i == 1 and 'th' or 'td'
+      local next_row = table_rows[i + 1]
+      -- Empty row = separator.
+      local attr = next_row and #next_row == 0 and ' class="help-table-sep"' or ''
       local cells = {} ---@type string[]
       for _, cell in ipairs(row) do
         local s = ''
@@ -664,7 +671,9 @@ local function ts_node_to_html(root, level, lang_tree, headings, opt, stats)
         end
         cells[#cells + 1] = ('<%s>%s</%s>'):format(tag, trim(s), tag)
       end
-      trs[#trs + 1] = ('<tr>%s</tr>'):format(table.concat(cells))
+      if #row > 0 then
+        trs[#trs + 1] = ('<tr%s>%s</tr>'):format(attr, table.concat(cells))
+      end
     end
     return ('<table class="help-table">\n<thead>%s</thead>\n<tbody>\n%s\n</tbody>\n</table>\n'):format(
       trs[1],
@@ -993,7 +1002,13 @@ local function ts_node_to_typ(root, level, lang_tree, opt, stats)
         cells[#cells + 1] = ('[%s]'):format(trim(s))
       end
       local tr = table.concat(cells, ', ')
-      trs[#trs + 1] = i == 1 and ('table.header(%s),'):format(tr) or ('%s,'):format(tr)
+      if i == 1 then
+        trs[#trs + 1] = ('table.header(%s),'):format(tr)
+      elseif #row == 0 then
+        trs[#trs + 1] = 'table.hline(stroke: 2pt),' -- Separator (see `get_table`).
+      else
+        trs[#trs + 1] = ('%s,'):format(tr)
+      end
     end
     return ('#table(columns: %d,\n  %s\n)\n'):format(ncols, table.concat(trs, '\n  '))
   end
@@ -1530,7 +1545,7 @@ local print_css = [[
   .help-column_heading { font-weight: bold; }
   .help-table { border-collapse: collapse; margin: 0.6em 0; break-inside: avoid; }
   .help-table th, .help-table td { padding: 0.15em 0.8em; text-align: left; vertical-align: top; border-bottom: 1px solid #ccc; }
-  .help-table th { border-bottom-color: #888; }
+  .help-table th, .help-table-sep td { border-bottom-color: #888; }
 ]]
 
 --- Joins page bodies into one standalone HTML page, for printing to PDF.

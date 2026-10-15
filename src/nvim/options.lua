@@ -1920,7 +1920,7 @@ local options = {
         To avoid problems with flags that are added in the future, use the
         "+=" and "-=" feature of ":set" |add-option-flags|.
 
-            contains	behavior	~
+            contains    behavior        ~
         							*cpo-a*
         	a	When included, a ":read" command with a file name
         		argument will set the alternate file name for the
@@ -9204,7 +9204,7 @@ local options = {
         is 2 or 3) is controlling the output of |CTRL-G|.
 
         field	    meaning ~
-        -	    Left justify the item.  The default is right justified
+        `-`	    Left justify the item.  The default is right justified
         	    when minwid is larger than the length of the item.
         0	    Leading zeroes in numeric items.  Overridden by "-".
         minwid	    Minimum width of the item, padding as set by "-" & "0".
