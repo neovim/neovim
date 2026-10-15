@@ -280,6 +280,11 @@ local M = vim._defer_require('vim.diagnostic', {
 --- (default: `false`)
 --- @field current_line? boolean
 ---
+--- Include the diagnostic source in virtual lines. Use `'if_many'` to only
+--- show sources if there is more than one diagnostic source in the buffer.
+--- Otherwise, any truthy value means to always show the diagnostic source.
+--- @field source? boolean|"if_many"
+---
 --- A function that takes a diagnostic as input and returns a string or nil.
 --- If the return value is nil, the diagnostic is not displayed by the handler.
 --- Else the output text is used to display the diagnostic.

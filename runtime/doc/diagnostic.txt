@@ -724,6 +724,11 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {severity}?      (`vim.diagnostic.SeverityFilter`) Only show virtual
                          lines for diagnostics matching the given severity
                          |diagnostic-severity|
+      • {source}?        (`boolean|"if_many"`) Include the diagnostic source
+                         in virtual lines. Use `'if_many'` to only show
+                         sources if there is more than one diagnostic source
+                         in the buffer. Otherwise, any truthy value means to
+                         always show the diagnostic source.
 
 *vim.diagnostic.Opts.VirtualText*
 
