@@ -18,6 +18,7 @@
 "                             autoload
 "		05.11.2006 MK Bram suggested to save on spaces
 "		19.09.2007 NO use project file only when there is a project
+"		14.10.2026 by Vim Project: quote project files in commands
 "    Help Page: compiler-gnat
 "------------------------------------------------------------------------------
 
@@ -113,10 +114,10 @@ function gnat#New ()						     " {{{1
       \ 'Set_Session'      : function ('gnat#Set_Session'),
       \ 'Get_Command'      : function ('gnat#Get_Command'),
       \ 'Project_File'     : '',
-      \ 'Make_Command'     : '"gnat make -P " . self.Project_File . "  -F -gnatef  "',
-      \ 'Pretty_Command'   : '"gnat pretty -P " . self.Project_File . " "',
-      \ 'Find_Program'     : '"gnat find -P " . self.Project_File . " -F "',
-      \ 'Tags_Command'     : '"gnat xref -P " . self.Project_File . " -v  *.AD*"',
+      \ 'Make_Command'     : '"gnat make -P " .   shellescape(self.Project_File, 1) . "  -F -gnatef  "',
+      \ 'Pretty_Command'   : '"gnat pretty -P " . shellescape(self.Project_File, 1) . " "',
+      \ 'Find_Command'     : '"gnat find -P " .   shellescape(self.Project_File, 1) . " -F "',
+      \ 'Tags_Command'     : '"gnat xref -P " .   shellescape(self.Project_File, 1) . " -v  *.AD*"',
       \ 'Error_Format'     : '%f:%l:%c: %trror: %m,'   .
 			   \ '%f:%l:%c: %tarning: %m,' .
 			   \ '%f:%l:%c: (%ttyle) %m'}
