@@ -2786,6 +2786,7 @@ M.funcs = {
       If {expr2} is a |Funcref| it must take two arguments:
       	1. the key or the index of the current item.
       	2. the value of the current item.
+
       The function must return |TRUE| if the item should be kept.
       Example that keeps the odd items of a list: >vim
       	func Odd(idx, val)
@@ -3172,6 +3173,7 @@ M.funcs = {
       If {expr2} is a |Funcref| it must take two arguments:
       	1. the key or the index of the current item.
       	2. the value of the current item.
+
       With a lambda you don't get an error if it only accepts one
       argument.
       If the function returns a value, it is ignored.
@@ -5878,6 +5880,7 @@ M.funcs = {
       If {expr} is a |Funcref| it must take two arguments:
       	1. the key or the index of the current item.
       	2. the value of the current item.
+
       The function must return |TRUE| if the item is found and the
       search should stop.
 
@@ -6926,6 +6929,7 @@ M.funcs = {
       If {expr2} is a |Funcref| it is called with two arguments:
       	1. The key or the index of the current item.
       	2. the value of the current item.
+
       The function must return the new value of the item.  Example
       that changes each value by "key-value": >vim
       	func KeyValue(key, val)
@@ -9022,6 +9026,7 @@ M.funcs = {
       - CR characters that appear before a NL are removed.
       - Whether the last line ends in a NL or not does not matter.
       - Any UTF-8 byte order mark is removed from the text.
+
       When {max} is given this specifies the maximum number of lines
       to be read.  Useful if you only want to check the first ten
       lines of a file: >vim
@@ -10082,6 +10087,7 @@ M.funcs = {
       < >
       	=> /tmp/nvim.bram/oknANW/nvim.15430.5
       <
+
       Example bash command to list all Nvim servers: >bash
       	ls ${XDG_RUNTIME_DIR:-${TMPDIR}nvim.${USER}}/*/nvim.*.0
 
@@ -11638,7 +11644,8 @@ M.funcs = {
       	"caps"		word should start with Capital
       Example: >vim
       	echo spellbadword("the quik brown fox")
-      <	['quik', 'bad'] ~
+      	" ['quik', 'bad']
+      <
 
       The spelling information for the current window and the value
       of 'spelllang' are used.
@@ -12868,6 +12875,7 @@ M.funcs = {
         the window which will be used when going to this tabpage.
       - When "$" the number of windows is returned.
       - When "#" the previous window nr is returned.
+
       Useful examples: >vim
           tabpagewinnr(1)	    " current window of tabpage 1
           tabpagewinnr(4, '$')    " number of windows in tabpage 4

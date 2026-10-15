@@ -235,9 +235,9 @@ an archive or as a repository.  For an archive you can follow these steps:
 		cd ~/.local/share/nvim/site/pack/fancy
 		unzip /tmp/fancy.zip
 <	   If the archive layout is different make sure that you end up with a
-	   path like this:
-		~/.local/share/nvim/site/pack/fancy/start/fancytext/plugin/fancy.vim ~
-	   Here "fancytext" is the name of the package, it can be anything
+	   path like this: >
+		~/.local/share/nvim/site/pack/fancy/start/fancytext/plugin/fancy.vim
+<	   Here "fancytext" is the name of the package, it can be anything
 	   else.
 
 

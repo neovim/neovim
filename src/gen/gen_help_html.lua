@@ -701,6 +701,9 @@ local function ts_node_to_html(root, level, lang_tree, headings, opt, stats)
     then
       return '' -- Discard common "noise" lines.
     end
+    if parent == 'codeblock' or parent == 'code' then
+      return text -- Includes its newline.
+    end
     -- XXX: Avoid newlines (too much whitespace) after block elements in old (preformatted) layout.
     local div = opt.old
       and root:child(0)
@@ -735,7 +738,9 @@ local function ts_node_to_html(root, level, lang_tree, headings, opt, stats)
       opt.indent_ws = opt.indent_ws or { ws() }
       local sib_ws = ws(sib)
       local this_ws = ws()
-      if get_indent(node_text()) == 0 then
+      -- Unindented listitem is top-level. Check only its first line: other lines in the captured
+      -- listitem may be at column 0 (e.g. codeblock ">" or "<").
+      if this_ws == '' then
         opt.indent = 1
         opt.indent_ws = { this_ws }
       elseif this_ws > sib_ws then
@@ -784,7 +789,7 @@ local function ts_node_to_html(root, level, lang_tree, headings, opt, stats)
   elseif node_name == 'codeblock' then
     return text
   elseif node_name == 'language' then
-    language = node_text(root)
+    language = trim(node_text(root))
     return ''
   elseif node_name == 'code' then -- Highlighted codeblock (child).
     if is_blank(text) then
@@ -1002,7 +1007,7 @@ local function ts_node_to_typ(root, level, lang_tree, opt, stats)
   elseif node_name == 'codeblock' then
     return text
   elseif node_name == 'language' then
-    language = node_text(root)
+    language = trim(node_text(root))
     return ''
   elseif node_name == 'code' then -- Highlighted codeblock (child).
     if is_blank(text) then

@@ -113,7 +113,7 @@ Guidance: use the "result-or-message" pattern for...
 - Functions that return a value, e.g. Foo:new().
 - When there is a list of known error codes which can be returned as a third
   value (like |luv-error-handling|).
-<
+
                                                                     *iterator*
 An iterator is just a function that can be called repeatedly to get the "next"
 value of a collection (or any other |iterable|). This interface is expected by
@@ -535,6 +535,7 @@ Example: File-change detection                                    *watch-file*
     vim.api.nvim_command(
       "command! -nargs=1 Watch call luaeval('watch_file(_A)', expand('<args>'))")
 <
+
                                                          *inotify-limitations*
 When on Linux you may need to increase the maximum number of `inotify` watches
 and queued events as the default limit can be too low. To increase the limit,

@@ -600,6 +600,7 @@ local options = {
           get one in the option (see |option-backslash|), for example: >vim
             set bdir=c:\\tmp,\ dir\\,with\\,commas,\\\ dir\ with\ spaces
         <
+
         See also 'backup' and 'writebackup' options.
         If you want to hide your backup files on Unix, consider this value: >vim
         	set backupdir=./.backup,~/.backup,.,/tmp
@@ -2698,6 +2699,7 @@ local options = {
           get one in the option (see |option-backslash|), for example: >vim
             set dir=c:\\tmp,\ dir\\,with\\,commas,\\\ dir\ with\ spaces
         <
+
         Editing the same file twice will result in a warning.  Using "/tmp" on
         is discouraged: if the system crashes you lose the swap file. And
         others on the computer may be able to see the files.
@@ -6806,7 +6808,9 @@ local options = {
         	set path=.,c:\\include
         <	  Or just use '/' instead: >vim
         	set path=.,c:/include
-        <	Don't forget "." or files won't even be found in the same directory as
+        <
+
+        Don't forget "." or files won't even be found in the same directory as
         the file!
         The maximum length is limited.  How much depends on the system, mostly
         it is something like 256 or 1024 characters.
@@ -8007,6 +8011,7 @@ local options = {
            'a"b', '"a\b"' is the same as "a\b" again.
         4. Outside of quotes backslash always means itself, it cannot be used
            to escape quote: 'a\"b"' is the same as "a\b".
+
         Note that such processing is done after |:set| did its own round of
         unescaping, so to keep yourself sane use |:let-&| like shown above.
         						*shell-powershell*

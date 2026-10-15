@@ -4998,6 +4998,7 @@ vim.go.pm = vim.go.patchmode
 --- ```vim
 --- 	set path=.,c:/include
 --- ```
+---
 --- Don't forget "." or files won't even be found in the same directory as
 --- the file!
 --- The maximum length is limited.  How much depends on the system, mostly
@@ -5909,6 +5910,7 @@ vim.go.sdf = vim.go.shadafile
 ---    'a"b', '"a\b"' is the same as "a\b" again.
 --- 4. Outside of quotes backslash always means itself, it cannot be used
 ---    to escape quote: 'a\"b"' is the same as "a\b".
+---
 --- Note that such processing is done after `:set` did its own round of
 --- unescaping, so to keep yourself sane use `:let-&` like shown above.
 --- 						*shell-powershell*
