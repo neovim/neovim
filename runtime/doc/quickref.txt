@@ -1199,7 +1199,7 @@ Context-sensitive completion on the command-line:
 				   file
 |:wN|	   :wN[ext][!] [file]	write file and edit previous file
 
-	     in current window    in new window	~
+	     in current window	  in new window		action ~
 |:argument|  :argu[ment] N	  :sar[gument] N	edit file N
 |:next|      :n[ext]		  :sn[ext]		edit next file
 |:next_f|    :n[ext] {arglist}	  :sn[ext] {arglist}	define new arg list
