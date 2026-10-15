@@ -268,6 +268,30 @@ it('no double-free in garbage collection #16287', function()
   assert_alive()
 end)
 
+it('copyID does not overflow #42231', function()
+  clear()
+  if not exec_lua("return pcall(require, 'ffi')") then
+    pending('N/A: missing LuaJIT FFI')
+  end
+  eq(
+    { foo = 'bar' },
+    exec_lua(function()
+      local ffi = require('ffi')
+      ffi.cdef('int64_t get_copyID(void);')
+      vim.w.foo = 'bar'
+      vim.v.testing = 1
+      local gc_copyID = tonumber(ffi.C.get_copyID()) + 2
+      vim.fn.test_garbagecollect_now()
+      -- Make a 32-bit copyID wrap around to the one GC stamped on w:variables.
+      local n = ((gc_copyID - 2 - tonumber(ffi.C.get_copyID())) % 2 ^ 32) / 2
+      for _ = 1, n do
+        ffi.C.get_copyID()
+      end
+      return vim.fn.getwininfo(vim.api.nvim_get_current_win())[1].variables
+    end)
+  )
+end)
+
 it('no heap-use-after-free with EXITFREE and partial as prompt callback', function()
   clear()
   exec([[

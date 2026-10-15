@@ -7171,7 +7171,7 @@ int set_errorlist(win_T *wp, list_T *list, int action, char *title, dict_T *what
   return retval;
 }
 
-static bool mark_quickfix_user_data(qf_info_T *qi, int copyID)
+static bool mark_quickfix_user_data(qf_info_T *qi, int64_t copyID)
 {
   bool abort = false;
   for (int i = 0; i < qi->qf_maxcount && !abort; i++) {
@@ -7194,7 +7194,7 @@ static bool mark_quickfix_user_data(qf_info_T *qi, int copyID)
 
 /// Mark the quickfix context and callback function as in use for all the lists
 /// in a quickfix stack.
-static bool mark_quickfix_ctx(qf_info_T *qi, int copyID)
+static bool mark_quickfix_ctx(qf_info_T *qi, int64_t copyID)
 {
   bool abort = false;
 
@@ -7214,7 +7214,7 @@ static bool mark_quickfix_ctx(qf_info_T *qi, int copyID)
 
 /// Mark the context of the quickfix list and the location lists (if present) as
 /// "in use". So that garbage collection doesn't free the context.
-bool set_ref_in_quickfix(int copyID)
+bool set_ref_in_quickfix(int64_t copyID)
 {
   assert(ql_info != NULL);
   if (mark_quickfix_ctx(ql_info, copyID)
