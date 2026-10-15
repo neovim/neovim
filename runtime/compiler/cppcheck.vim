@@ -2,6 +2,7 @@
 " Compiler:	cppcheck (C++ static checker)
 " Maintainer:   Vincent B. (twinside@free.fr)
 " Last Change:  2025 Nov 06 by @Konfekt
+" 2026 Oct 14 by Vim project: escape paths and arguments
 
 if exists("current_compiler") | finish | endif
 let current_compiler = "cppcheck"
@@ -22,10 +23,11 @@ exe 'CompilerSet makeprg=' .. escape('cppcheck --quiet'
       \ ..' --template="{file}:{line}:{column}: {severity}: [{id}] {message} {callstack}"'
       \ ..' '..get(b:, 'c_cppcheck_params', get(g:, 'c_cppcheck_params', (&filetype ==# 'cpp' ? ' --language=c++' : '')))
       \ ..' '..get(b:, 'c_cppcheck_includes', get(g:, 'c_cppcheck_includes',
-      \	          (filereadable('compile_commands.json') ? '--project=compile_commands.json' :
-      \           (!empty(glob('*'..s:slash..'compile_commands.json', 1, 1)) ? '--project='..glob('*'..s:slash..'compile_commands.json', 1, 1)[0] :
-      \	          (empty(&path) ? '' : '-I')..join(map(filter(split(&path, ','), 'isdirectory(v:val)'),'shellescape(v:val)'), ' -I'))))),
-      \ ' \|"')
+      \           (filereadable('compile_commands.json') ? '--project=compile_commands.json' :
+      \           (!empty(glob('*'..s:slash..'compile_commands.json', 1, 1)) ? '--project='..
+      \             shellescape(glob('*'..s:slash..'compile_commands.json', 1, 1)[0], 1) :
+      \           (empty(&path) ? '' : '-I')..join(map(filter(split(&path, ','), 'isdirectory(v:val)'),
+      \            'shellescape(v:val, 1)'), ' -I'))))), ' \|"')
 
 CompilerSet errorformat=
   \%f:%l:%c:\ %tarning:\ %m,
