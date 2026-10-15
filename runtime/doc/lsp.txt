@@ -1791,88 +1791,92 @@ Lua module: vim.lsp.client                                        *lsp-client*
 *vim.lsp.Client*
 
     Fields: ~
-      • {attached_buffers}      (`table<integer,string>`) Each buffer's last
-                                used `languageId`.
-      • {cancel_request}        (`fun(self: vim.lsp.Client, id: integer): boolean`)
-                                See |Client:cancel_request()|.
-      • {capabilities}          (`lsp.ClientCapabilities`) Capabilities
-                                provided by the client (editor or tool), at
-                                startup.
-      • {commands}              (`table<string,fun(command: lsp.Command, ctx: table)>`)
-                                Client commands. See |vim.lsp.ClientConfig|.
-      • {config}                (`vim.lsp.ClientConfig`) Copy of the config
-                                passed to |vim.lsp.start()|.
-      • {dynamic_capabilities}  (`lsp.DynamicCapabilities`) Capabilities
-                                provided at runtime (after startup).
-      • {exec_cmd}              (`fun(self: vim.lsp.Client, cmd: lsp.Command, context: {bufnr?: integer}?, handler: lsp.Handler?)`)
-                                See |Client:exec_cmd()|.
-      • {exit_timeout}          (`integer|boolean`, default: `false`) See
-                                |vim.lsp.ClientConfig|.
-      • {flags}                 (`table`) Experimental client flags:
-                                • {allow_incremental_sync}? (`boolean`,
-                                  default: `true`) Allow using incremental
-                                  sync for buffer edits
-                                • {debounce_text_changes}? (`integer`,
-                                  default: `150`) Debounce `didChange`
-                                  notifications to the server by the given
-                                  number in milliseconds.
-      • {get_language_id}       (`fun(bufnr: integer, filetype: string): string`)
-                                See |vim.lsp.ClientConfig|.
-      • {handlers}              (`table<string,lsp.Handler>`) See
-                                |vim.lsp.ClientConfig|.
-      • {id}                    (`integer`) The id allocated to the client.
-      • {initialized}           (`true?`)
-      • {is_stopped}            (`fun(self: vim.lsp.Client): boolean`) See
-                                |Client:is_stopped()|.
-      • {name}                  (`string`) See |vim.lsp.ClientConfig|.
-      • {notify}                (`fun(self: vim.lsp.Client, method: string, params: table?, bufnr: integer?): boolean`)
-                                See |Client:notify()|.
-      • {offset_encoding}       (`'utf-8'|'utf-16'|'utf-32'`) See
-                                |vim.lsp.ClientConfig|.
-      • {on_attach}             (`fun(self: vim.lsp.Client, bufnr: integer)`)
-                                See |Client:on_attach()|.
-      • {progress}              (`vim.lsp.Client.Progress`) A ring buffer
-                                (|vim.ringbuf()|) containing progress messages
-                                sent by the server.
-      • {request}               (`fun(self: vim.lsp.Client, method: string, params: table?, handler: lsp.Handler?, bufnr: integer?): boolean, integer?`)
-                                See |Client:request()|.
-      • {request_sync}          (`fun(self: vim.lsp.Client, method: string, params: table, timeout_ms: integer?, bufnr: integer?): {err: lsp.ResponseError?, result:any}?, string?`)
-                                See |Client:request_sync()|.
-      • {requests}              (`table<integer,{ type: string, bufnr: integer, method: vim.lsp.protocol.Method}?>`)
-                                The current pending requests in flight to the
-                                server. Entries are key-value pairs with the
-                                key being the request id while the value is a
-                                table with `type`, `bufnr`, and `method`
-                                key-value pairs. `type` is either "pending"
-                                for an active request, or "cancel" for a
-                                cancel request. It will be "complete"
-                                ephemerally while executing |LspRequest|
-                                autocmds when replies are received from the
-                                server.
-      • {root_dir}              (`string?`) See |vim.lsp.ClientConfig|.
-      • {rpc}                   (`vim.lsp.rpc.Client`) RPC client object, for
-                                low level interaction with the client. See
-                                |vim.lsp.rpc.start()|.
-      • {server_capabilities}   (`lsp.ServerCapabilities`) Response from the
-                                server sent on `initialize` describing the
-                                server's capabilities.
-      • {server_info}           (`lsp.ServerInfo?`) Response from the server
-                                sent on `initialize` describing server
-                                information (e.g. version).
-      • {settings}              (`lsp.LSPObject`) See |vim.lsp.ClientConfig|.
-      • {stop}                  (`fun(self: vim.lsp.Client, force: integer|boolean?)`)
-                                See |Client:stop()|.
-      • {supports_method}       (`fun(self: vim.lsp.Client, method: string|string, bufnr: integer?): boolean`)
-                                See |Client:supports_method()|.
-      • {workspace_folders}     (`lsp.WorkspaceFolder[]?`) See
-                                |vim.lsp.ClientConfig|.
+      • {attached_buffers}        (`table<integer,string>`) Each buffer's last
+                                  used `languageId`.
+      • {cancel_request}          (`fun(self: vim.lsp.Client, id: integer): boolean`)
+                                  See |Client:cancel_request()|.
+      • {capabilities}            (`lsp.ClientCapabilities`) Capabilities
+                                  provided by the client (editor or tool), at
+                                  startup.
+      • {commands}                (`table<string,fun(command: lsp.Command, ctx: table)>`)
+                                  Client commands. See |vim.lsp.ClientConfig|.
+      • {config}                  (`vim.lsp.ClientConfig`) Copy of the config
+                                  passed to |vim.lsp.start()|.
+      • {dynamic_capabilities}    (`lsp.DynamicCapabilities`) Capabilities
+                                  provided at runtime (after startup).
+      • {exec_cmd}                (`fun(self: vim.lsp.Client, cmd: lsp.Command, context: {bufnr?: integer}?, handler: lsp.Handler?)`)
+                                  See |Client:exec_cmd()|.
+      • {exit_timeout}            (`integer|boolean`, default: `false`) See
+                                  |vim.lsp.ClientConfig|.
+      • {flags}                   (`table`) Experimental client flags:
+                                  • {allow_incremental_sync}? (`boolean`,
+                                    default: `true`) Allow using incremental
+                                    sync for buffer edits
+                                  • {debounce_text_changes}? (`integer`,
+                                    default: `150`) Debounce `didChange`
+                                    notifications to the server by the given
+                                    number in milliseconds.
+      • {get_language_id}         (`fun(bufnr: integer, filetype: string): string`)
+                                  See |vim.lsp.ClientConfig|.
+      • {handlers}                (`table<string,lsp.Handler>`) See
+                                  |vim.lsp.ClientConfig|.
+      • {id}                      (`integer`) The id allocated to the client.
+      • {initialized}             (`true?`)
+      • {is_stopped}              (`fun(self: vim.lsp.Client): boolean`) See
+                                  |Client:is_stopped()|.
+      • {name}                    (`string`) See |vim.lsp.ClientConfig|.
+      • {notify}                  (`fun(self: vim.lsp.Client, method: string, params: table?, bufnr: integer?): boolean`)
+                                  See |Client:notify()|.
+      • {offset_encoding}         (`'utf-8'|'utf-16'|'utf-32'`) See
+                                  |vim.lsp.ClientConfig|.
+      • {on_attach}               (`fun(self: vim.lsp.Client, bufnr: integer)`)
+                                  See |Client:on_attach()|.
+      • {partial_result_request}  (`fun(self: vim.lsp.Client, method: string, params: table, on_partial_result: fun(value: lsp.LSPAny), handler: lsp.Handler?, bufnr: integer?): boolean, integer?`)
+                                  See |Client:partial_result_request()|.
+      • {progress}                (`vim.lsp.Client.Progress`) A ring buffer
+                                  (|vim.ringbuf()|) containing progress
+                                  messages sent by the server.
+      • {request}                 (`fun(self: vim.lsp.Client, method: string, params: table?, handler: lsp.Handler?, bufnr: integer?): boolean, integer?`)
+                                  See |Client:request()|.
+      • {request_sync}            (`fun(self: vim.lsp.Client, method: string, params: table, timeout_ms: integer?, bufnr: integer?): {err: lsp.ResponseError?, result:any}?, string?`)
+                                  See |Client:request_sync()|.
+      • {requests}                (`table<integer,{ type: string, bufnr: integer, method: vim.lsp.protocol.Method}?>`)
+                                  The current pending requests in flight to
+                                  the server. Entries are key-value pairs with
+                                  the key being the request id while the value
+                                  is a table with `type`, `bufnr`, and
+                                  `method` key-value pairs. `type` is either
+                                  "pending" for an active request, or "cancel"
+                                  for a cancel request. It will be "complete"
+                                  ephemerally while executing |LspRequest|
+                                  autocmds when replies are received from the
+                                  server.
+      • {root_dir}                (`string?`) See |vim.lsp.ClientConfig|.
+      • {rpc}                     (`vim.lsp.rpc.Client`) RPC client object,
+                                  for low level interaction with the client.
+                                  See |vim.lsp.rpc.start()|.
+      • {server_capabilities}     (`lsp.ServerCapabilities`) Response from the
+                                  server sent on `initialize` describing the
+                                  server's capabilities.
+      • {server_info}             (`lsp.ServerInfo?`) Response from the server
+                                  sent on `initialize` describing server
+                                  information (e.g. version).
+      • {settings}                (`lsp.LSPObject`) See
+                                  |vim.lsp.ClientConfig|.
+      • {stop}                    (`fun(self: vim.lsp.Client, force: integer|boolean?)`)
+                                  See |Client:stop()|.
+      • {supports_method}         (`fun(self: vim.lsp.Client, method: string|string, bufnr: integer?): boolean`)
+                                  See |Client:supports_method()|.
+      • {workspace_folders}       (`lsp.WorkspaceFolder[]?`) See
+                                  |vim.lsp.ClientConfig|.
 
 *vim.lsp.Client.Progress*
     Extends: |vim.Ringbuf|
 
 
     Fields: ~
-      • {pending}  (`table<lsp.ProgressToken,lsp.LSPAny>`)
+      • {partialResults}  (`table<lsp.ProgressToken,fun(value: lsp.LSPAny)>`)
+      • {pending}         (`table<lsp.ProgressToken,lsp.LSPAny>`)
 
 *vim.lsp.ClientConfig*
 
@@ -2078,6 +2082,32 @@ Client:on_attach({bufnr})                                 *Client:on_attach()*
 
     Parameters: ~
       • {bufnr}  (`integer`) Buffer number
+
+                                             *Client:partial_result_request()*
+Client:partial_result_request({method}, {params}, {on_partial_result},
+                              {handler}, {bufnr})
+    Sends a request that streams results via LSP partial results
+    (`$/progress`).
+
+    Generates and registers a `partialResultToken`, threading streamed values
+    to {on_partial_result}. The token is deregistered once the request
+    completes, whether by response, error, or cancellation, so callers never
+    need to touch `client.progress.partialResults` themselves.
+
+    Parameters: ~
+      • {method}             (`string`) LSP method name.
+      • {params}             (`table`) LSP request params.
+                             `partialResultToken` is set/overwritten.
+      • {on_partial_result}  (`fun(value: lsp.LSPAny)`) Called for each
+                             streamed `$/progress` value.
+      • {handler}            (`lsp.Handler?`) Response |lsp-handler| for the
+                             final response.
+      • {bufnr}              (`integer?`) (default: 0) Buffer handle, or 0 for
+                             current.
+
+    Return (multiple): ~
+        (`boolean`) status See |Client:request()|.
+        (`integer?`) request_id See |Client:request()|.
 
                                                             *Client:request()*
 Client:request({method}, {params}, {handler}, {bufnr})
