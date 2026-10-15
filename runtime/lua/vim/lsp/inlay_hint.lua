@@ -420,4 +420,30 @@ function M.enable(enable, filter)
   Capability.enable('inlay_hint', enable, filter)
 end
 
+--- Force a refresh of all inlay hints.
+---
+--- Only has an effect if the buffer is currently active for inlay hints
+--- (|vim.lsp.inlay_hint.enable()| has been called for it).
+---
+--- @param filter? vim.lsp.capability.enable.Filter
+--- @since 15
+function M.refresh(filter)
+  vim.validate('filter', filter, 'table', true)
+  filter = filter or {}
+  local bufnr = filter.bufnr and vim._resolve_bufnr(filter.bufnr)
+
+  local buffers = bufnr and { bufnr } or vim.tbl_keys(InlayHint.active)
+  for _, buffer in ipairs(buffers) do
+    local provider = InlayHint.active[buffer]
+    if provider then
+      for client_id, _ in pairs(provider.client_state) do
+        if not filter.client_id or filter.client_id == client_id then
+          provider:reset(client_id)
+          provider:refresh(client_id)
+        end
+      end
+    end
+  end
+end
+
 return M
