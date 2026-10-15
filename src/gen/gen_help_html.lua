@@ -1,4 +1,4 @@
---- Converts Nvim :help files to alternate formats (HTML or Typst).
+--- Converts Nvim :help files to alternate formats (HTML, Typst, or "amalgamated" HTML page).
 --- Validates |tag| links and document syntax (parser errors).
 --
 -- USAGE (For CI/local testing purposes): Simply `make lintdoc`, which basically does the following:
@@ -21,6 +21,15 @@
 --   5. mv pdf_docs/usr_toc.typ pdf_docs/user_manual.typ && cat pdf_docs/usr_*.typ >> pdf_docs/user_manual.typ
 --   6. typst compile pdf_docs/user_manual.typ
 --   7. open pdf_docs/user_manual.pdf
+--
+-- USAGE (GENERATE PDF VIA BROWSER):
+--   1. `:helptags ALL`
+--   2. nvim -V1 -es --clean +"lua require('src.gen.gen_help_html').gen('print', './runtime/doc', 'pdf_docs')" +q
+--      - To print only some files, pass them (in order) as `include`. Example (user manual):
+--        {'usr_toc.txt', unpack(vim.tbl_map(vim.fs.basename, vim.fn.glob('runtime/doc/usr_[0-9]*.txt', 0, 1)))}
+--   3. chrome --headless --no-pdf-header-footer --disable-pdf-tagging --print-to-pdf=pdf_docs/nvim-help.pdf pdf_docs/print.html
+--      (macOS: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+--   4. open pdf_docs/nvim-help.pdf
 --
 -- USAGE (VALIDATE):
 --   1. nvim -V1 -es +"lua require('src.gen.gen_help_html').validate('./runtime/doc')" +q
@@ -1263,6 +1272,7 @@ end
 ---
 --- @return string html
 --- @return table stats
+--- @return string main HTML body, without the Hugo front matter.
 local function gen_one_html(fname, text, to_fname, old, commit)
   local stats = {
     noise_lines = {},
@@ -1312,7 +1322,7 @@ local function gen_one_html(fname, text, to_fname, old, commit)
 
   vim.cmd('q!')
   lang_tree:destroy()
-  return html, stats
+  return html, stats, main
 end
 
 --- Generates Typst from one :help file `fname`.
@@ -1499,6 +1509,58 @@ local function gen_redirect_pages(commit, helpfile, to_dir, to_fname)
   return true
 end
 
+--- Stylesheet for `output_format=print` (PDF generation via `chrome --headless`).
+local print_css = [[
+  @page { size: A4; margin: 15mm; }
+  body { font: 10.5pt/1.4 system-ui, sans-serif; }
+  a { color: inherit; }
+  .chapter { break-before: page; }
+  .chapter:first-child { break-before: auto; }
+  h1, h2, h3, h4 { break-after: avoid; }
+  .help-heading { display: flex; flex-flow: row wrap; justify-content: space-between; gap: 0 1em; }
+  pre, code, .old-help-para { font-family: ui-monospace, Menlo, Consolas, monospace; }
+  pre, .old-help-para { font-size: 9pt; white-space: pre-wrap; tab-size: 8; }
+  pre { background: #f4f4f4; padding: 0.4em 0.6em; break-inside: avoid; }
+  .help-para, .old-help-para { margin: 0.6em 0; counter-reset: li; }
+  .help-li, .help-li-num { display: list-item; margin-left: 1.5em; }
+  .help-li-num { list-style: none; }
+  .help-li-num::before { counter-increment: li; content: counter(li) ". "; margin-left: -1em; }
+  .help-tag, .help-tag-right { color: #0a6b52; }
+  .help-tag-right { float: right; }
+  .help-column_heading { font-weight: bold; }
+  .help-table { border-collapse: collapse; margin: 0.6em 0; break-inside: avoid; }
+  .help-table th, .help-table td { padding: 0.15em 0.8em; text-align: left; vertical-align: top; border-bottom: 1px solid #ccc; }
+  .help-table th { border-bottom-color: #888; }
+]]
+
+--- Joins page bodies into one standalone HTML page, for printing to PDF.
+--- Links to `helpfiles` become in-page links; other links go to neovim.io.
+---
+--- @param chapters string[] Page bodies.
+--- @param helpfiles string[] Source files of `chapters`.
+--- @return string
+local function gen_print_html(chapters, helpfiles)
+  local pages = {} ---@type table<string, true>
+  for _, f in ipairs(helpfiles) do
+    pages[(get_helppage_html(vim.fs.basename(f)):gsub('/$', ''))] = true
+  end
+  local body = table.concat(chapters, '\n')
+  body = body:gsub('href="/doc/user/([^"#]*)(#?[^"]*)"', function(page, anchor)
+    page = page:gsub('/$', '')
+    if pages[page] and anchor ~= '' then
+      return ('href="%s"'):format(anchor)
+    end
+    return ('href="https://neovim.io/doc/user/%s%s"'):format(
+      page == '' and '' or page .. '/',
+      anchor
+    )
+  end)
+  return ('<!doctype html>\n<html><head><meta charset="utf-8"><title>Nvim</title>\n<style>\n%s</style>\n</head><body>\n%s\n</body></html>\n'):format(
+    vim.text.indent(0, print_css),
+    body
+  )
+end
+
 --- @class nvim.gen_help_html.gen_result
 --- @field helpfiles string[] list of generated HTML files, from the source docs {include}
 --- @field err_count integer number of parse errors in :help docs
@@ -1510,7 +1572,8 @@ end
 ---
 ---   gen('$VIMRUNTIME/doc', '/path/to/neovim.github.io/_site/doc/', {'api.txt', 'autocmd.txt', 'channel.txt'}, nil)
 ---
---- @param output_format string Currently only "html"
+--- @param output_format string "html", "typ" (Typst), or "print" (one standalone
+--- `to_dir/print.html` for printing to PDF, with the files in `include` order).
 --- @param help_dir string Source directory containing the :help files. Must run `make helptags` first.
 --- @param to_dir string Target directory where the output files will be written.
 --- @param include string[]|nil Process only these filenames. Example: {'api.txt', 'autocmd.txt', 'channel.txt'}
@@ -1544,6 +1607,33 @@ function M.gen(output_format, help_dir, to_dir, include, commit, parser_path)
 
   tagmap = get_helptags(vim.fs.normalize(help_dir))
   helpfiles = get_helpfiles(help_dir, include)
+
+  -- Sort-order (matters for output_format=print).
+  -- Decided by `include`, else: help.txt, user manual, reference, rest alphabetically.
+  local order = {} ---@type table<string, integer>
+  local function add(f)
+    order[f] = order[f] or vim.tbl_count(order)
+  end
+  for _, f in ipairs(include or {}) do
+    add(f)
+  end
+  if not include and output_format == 'print' then
+    add('help.txt')
+    for _, toc in ipairs({ 'usr_toc.txt', 'help.txt' }) do
+      local path = ('%s/%s'):format(help_dir, toc)
+      if vim.fn.filereadable(path) == 1 then
+        add(toc)
+        for f in table.concat(vim.fn.readfile(path), '\n'):gmatch('|([%w_.-]+%.txt)|') do
+          add(f)
+        end
+      end
+    end
+  end
+  table.sort(helpfiles, function(a, b)
+    local fa, fb = vim.fs.basename(a), vim.fs.basename(b)
+    local oa, ob = order[fa] or math.huge, order[fb] or math.huge
+    return oa < ob or (oa == ob and fa < fb)
+  end)
   to_dir = vim.fs.normalize(to_dir)
 
   print(('output dir: %s\n\n'):format(to_dir))
@@ -1559,23 +1649,30 @@ function M.gen(output_format, help_dir, to_dir, include, commit, parser_path)
   local generators = {
     html = gen_one_html,
     typ = gen_one_typ,
+    print = gen_one_html,
   }
   local gen_one = generators[output_format]
+  local chapters = {} ---@type string[] Page bodies, for "print" format.
 
   for _, f in ipairs(helpfiles) do
     -- "foo.txt"
     local helpfile = vim.fs.basename(f)
 
     local to_fname = ''
-    if output_format == 'html' then
+    if output_format == 'html' or output_format == 'print' then
       -- "to/dir/foo.html"
       to_fname = ('%s/%s'):format(to_dir, get_helppage_html(helpfile, true))
     else
       to_fname = ('%s/%s.%s'):format(to_dir, helpfile:gsub('.txt', ''), output_format)
     end
 
-    local converted_help, stats = gen_one(f, nil, to_fname, not new_layout[helpfile], commit or '?')
-    tofile(to_fname, converted_help)
+    local converted_help, stats, main =
+      gen_one(f, nil, to_fname, not new_layout[helpfile], commit or '?')
+    if output_format == 'print' then
+      chapters[#chapters + 1] = ('<section class="chapter">\n%s\n</section>'):format(main)
+    else
+      tofile(to_fname, converted_help)
+    end
     print(
       ('generated (%-2s errors): %-15s => %s'):format(
         #stats.parse_errors,
@@ -1592,6 +1689,12 @@ function M.gen(output_format, help_dir, to_dir, include, commit, parser_path)
     end
 
     err_count = err_count + #stats.parse_errors
+  end
+
+  if output_format == 'print' then
+    local to_fname = ('%s/print.html'):format(to_dir)
+    tofile(to_fname, gen_print_html(chapters, helpfiles))
+    print(('\nprint: %s'):format(to_fname))
   end
 
   print(('\ngenerated %d pages'):format(#helpfiles + redirects_count))
