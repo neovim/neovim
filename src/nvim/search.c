@@ -1218,10 +1218,17 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
     }
 
     if (pat != NULL && *pat != NUL) {   // look for (new) offset
+      char *const prev_searchstr = searchstr;
+      const size_t prev_searchstrlen = searchstrlen;
       Search.cmdlen += parse_search_pattern_offset(&pat, &patlen, search_delim,
                                                    options, &strcopy, &searchstr,
                                                    &searchstrlen, &dircp,
                                                    &spats[0].off);
+      // An empty pattern (e.g. "//e") uses the previous pattern selected above.
+      if (*searchstr == NUL) {
+        searchstr = prev_searchstr;
+        searchstrlen = prev_searchstrlen;
+      }
     }
 
     bool show_search_stats = false;

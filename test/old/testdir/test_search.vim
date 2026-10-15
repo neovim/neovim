@@ -1734,10 +1734,22 @@ endfunc
 func Test_search_with_last_substitute_pat()
   let lines =<< trim [SCRIPT]
     new
-    set shortmess+=S
+    set shortmess+=Ss
     call setline(1, repeat(['foofoo'], 3))
     %s/foo/bar/
     call assert_equal(repeat(['barfoo'], 3), getline(1, '$'))
+
+    " this was crashing
+    call cursor(1, 1)
+    call assert_equal("/foo/e", execute('call feedkeys("//e\r", "tx")', '')->trim())
+    call assert_equal([0, 1, 6, 0], getpos('.'))
+    call assert_equal("?foo?e", execute('call feedkeys("??e\r", "tx")', '')->trim())
+    call assert_equal([0, 3, 6, 0], getpos('.'))
+    call cursor(1, 1)
+    call assert_equal("/foo", execute('call feedkeys("//\r", "tx")', '')->trim())
+    call assert_equal([0, 1, 4, 0], getpos('.'))
+    call assert_equal("?foo", execute('call feedkeys("??\r", "tx")', '')->trim())
+    call assert_equal([0, 3, 4, 0], getpos('.'))
 
     call cursor(1, 1)
     call assert_equal("/foo", execute('call feedkeys("/\r", "tx")', '')->trim())
