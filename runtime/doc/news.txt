@@ -344,6 +344,7 @@ EVENTS
 • |TabMoved| is triggered when tabs are reordered.
 • |DirReadPost| is triggered after each |dir| listing is rendered, so it can
   be sorted or filtered. See |dir-render|.
+• |VisualChanged| is triggered when the Visual selection changes.
 
 HIGHLIGHTS
 

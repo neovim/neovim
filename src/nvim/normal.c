@@ -1308,6 +1308,44 @@ static void normal_check_cursor_moved(NormalState *s)
   }
 }
 
+/// Visual selection state when VisualChanged was last triggered.
+/// "mode" is NUL when Visual mode is not active.
+static struct {
+  int mode;
+  bool select;
+  bool to_eol;  ///< block mode extends to end of line ("$")
+  pos_T cursor;
+  pos_T anchor;
+  win_T *win;
+} last_visual = { .mode = NUL };
+
+static void normal_check_visual_changed(NormalState *s)
+{
+  if (!Visual.active) {
+    last_visual.mode = NUL;
+    return;
+  }
+  if (finish_op || !has_event(EVENT_VISUALCHANGED)) {
+    return;
+  }
+  bool to_eol = Visual.mode == Ctrl_V && curwin->w_curswant == MAXCOL;
+  if (last_visual.mode == Visual.mode
+      && last_visual.select == Visual.select
+      && last_visual.to_eol == to_eol
+      && last_visual.win == curwin
+      && equalpos(last_visual.cursor, curwin->w_cursor)
+      && equalpos(last_visual.anchor, Visual.start)) {
+    return;
+  }
+  last_visual.mode = Visual.mode;
+  last_visual.select = Visual.select;
+  last_visual.to_eol = to_eol;
+  last_visual.win = curwin;
+  last_visual.cursor = curwin->w_cursor;
+  last_visual.anchor = Visual.start;
+  aucmd_defer(EVENT_VISUALCHANGED, NULL, NULL, AUGROUP_ALL, curbuf, NULL, NULL);
+}
+
 static void normal_check_text_changed(NormalState *s)
 {
   // Trigger TextChanged if changedtick differs.
@@ -1429,6 +1467,7 @@ static int normal_check(VimState *state)
     validate_cursor(curwin);
 
     normal_check_cursor_moved(s);
+    normal_check_visual_changed(s);
     normal_check_text_changed(s);
     normal_check_window_scrolled(s);
     normal_check_safe_state(s);
