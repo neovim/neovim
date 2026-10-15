@@ -511,6 +511,7 @@ TUI:
 - Start Nvim with 'verbose' level 3 to show terminal capabilities: >
         nvim -V3
 <
+
                         *'term'* *E529* *E530* *E531*
 - 'term' reflects the terminal type derived from |$TERM| and other environment
   checks.  Use `:echo &term` to get its value. For debugging only; not
