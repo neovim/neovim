@@ -775,4 +775,26 @@ func Test_compiler_just()
   compiler make
 endfunc
 
+func Test_compiler_cppcheck_project_path()
+  CheckUnix
+
+  let shell = &shell
+  set shell=sh
+  let dirname = 'X$(touch${IFS}Xcppcheck_dir)%'
+  let project = dirname .. '/compile_commands.json'
+  call mkdir(dirname, 'R')
+  call writefile(['[]'], project)
+  exe 'new ' .. fnameescape("X'$(touch${IFS}Xcppcheck_file)'")
+  try
+    compiler cppcheck
+    call assert_true(stridx(&l:makeprg, shellescape(project, 1)) >= 0)
+    silent! make!
+    call assert_false(filereadable('Xcppcheck_dir'))
+    call assert_false(filereadable('Xcppcheck_file'))
+  finally
+    bwipe!
+    let &shell = shell
+  endtry
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
