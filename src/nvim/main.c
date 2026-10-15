@@ -468,8 +468,10 @@ int main(int argc, char **argv)
 
   // Reset 'loadplugins' for "-u NONE" before "--cmd" arguments.
   // Allows for setting 'loadplugins' there.
-  // For --clean we still want to load plugins.
-  p_lpl = vimrc_none ? params.clean : p_lpl;
+  // For --clean we still want to load plugins (unless --noplugin was given).
+  if (vimrc_none && !params.clean) {
+    p_lpl = false;
+  }
 
   // Execute --cmd arguments.
   exe_pre_commands(&params);

@@ -45,6 +45,13 @@ describe('startup', function()
 
     clear('--clean')
     ok(not api.nvim_get_option_value('runtimepath', {}):match(vim.pesc(fn.stdpath('config'))))
+    eq(true, api.nvim_get_option_value('loadplugins', {}))
+
+    for _, args in ipairs({ { '--clean', '--noplugin' }, { '--noplugin', '--clean' } }) do
+      clear({ args = args })
+      eq(false, api.nvim_get_option_value('loadplugins', {}))
+      eq(0, eval('get(g:, "loaded_nvim_dir_plugin", 0)'))
+    end
   end)
 
   it('prevents remote UI infinite loop', function()
