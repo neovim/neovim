@@ -248,6 +248,27 @@ describe('vim.treesitter.inspect_tree', function()
     n.expect_exit(n.command, 'quit')
   end)
 
+  it('keeps the tree window when it is the last non-floating window', function()
+    insert('print()')
+    n.command('set filetype=lua')
+    -- make the source buffer's only window a float
+    exec_lua(function()
+      _G.source_win = vim.api.nvim_get_current_win()
+      vim.treesitter.inspect_tree()
+      _G.tree_win = vim.api.nvim_get_current_win()
+      vim.api.nvim_win_set_config(
+        _G.source_win,
+        { relative = 'editor', row = 0, col = 0, width = 12, height = 3 }
+      )
+    end)
+
+    -- closing the float hides the source buffer, but the tree window stays
+    feed(':only<CR>')
+    eq('', n.api.nvim_get_vvar('errmsg'))
+    eq(false, exec_lua('return vim.api.nvim_win_is_valid(source_win)'))
+    eq(true, exec_lua('return vim.api.nvim_win_is_valid(tree_win)'))
+  end)
+
   it('shows which nodes are missing', function()
     insert([[
       int main() {

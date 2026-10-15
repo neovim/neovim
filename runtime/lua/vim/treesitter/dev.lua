@@ -156,12 +156,21 @@ local decor_ns = api.nvim_create_namespace('nvim.treesitter.dev')
 ---@param w integer
 ---@return boolean closed Whether the window was closed.
 local function close_win(w)
-  if api.nvim_win_is_valid(w) then
-    api.nvim_win_close(w, true)
-    return true
+  if not api.nvim_win_is_valid(w) then
+    return false
   end
 
-  return false
+  -- Closing the last non-floating window fails (E444), e.g. when the source
+  -- window is a float and its buffer gets hidden by :only in this window.
+  local last = vim.iter(api.nvim_list_wins()):all(function(win)
+    return win == w or api.nvim_win_get_config(win).relative ~= ''
+  end)
+  if last then
+    return false
+  end
+
+  api.nvim_win_close(w, true)
+  return true
 end
 
 ---@param w integer
