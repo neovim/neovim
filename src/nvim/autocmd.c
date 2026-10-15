@@ -2171,6 +2171,19 @@ char *aucmd_set_expand_context(expand_T *xp, char *arg, bool doautocmd)
     arg++;
   }
   if (*arg) {
+    // skip over "++once", "++nested" and "nested"
+    arg = skipwhite(arg);
+    for (int i = 0; i < 2; i++) {
+      if (strncmp(arg, "++once", 6) == 0 && ascii_iswhite(arg[6])) {
+        arg = skipwhite(arg + 6);
+      }
+      if (strncmp(arg, "++nested", 8) == 0 && ascii_iswhite(arg[8])) {
+        arg = skipwhite(arg + 8);
+      }
+      if (strncmp(arg, "nested", 6) == 0 && ascii_iswhite(arg[6])) {
+        arg = skipwhite(arg + 6);
+      }
+    }
     return arg;  // expand (next) command
   }
 
