@@ -695,6 +695,10 @@ function M.virtual_lines.show(namespace, bufnr, diagnostics, opts)
   diagnostics =
     diagnostic_shared.reformat_diagnostics(vopts.format or format_virtual_lines, diagnostics)
 
+  if vopts.source and (vopts.source ~= 'if_many' or diagnostic_shared.count_sources(bufnr) > 1) then
+    diagnostics = diagnostic_shared.prefix_source(diagnostics)
+  end
+
   if vopts.current_line == true then
     -- Create a mapping from line -> diagnostics so that we can quickly get the
     -- diagnostics we need when the cursor line doesn't change.

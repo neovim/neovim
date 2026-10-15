@@ -2387,6 +2387,40 @@ describe('vim.diagnostic', function()
       eq('miss-symbol: Missed symbol `,`', result[1][4].virt_lines[1][3][1])
     end)
 
+    it('can show diagnostic sources in virtual lines', function()
+      local result = exec_lua(function()
+        vim.diagnostic.config({ virtual_lines = { source = 'always' } })
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Some error', 0, 0, 0, 0, 'source x'),
+        })
+
+        local extmarks = _G.get_virt_lines_extmarks(_G.diagnostic_ns)
+        return extmarks[1][4].virt_lines[1][3][1]
+      end)
+      eq('source x: Some error', result)
+
+      result = exec_lua(function()
+        vim.diagnostic.config({ virtual_lines = { source = 'if_many' } }, _G.diagnostic_ns)
+
+        local extmarks = _G.get_virt_lines_extmarks(_G.diagnostic_ns)
+        return extmarks[1][4].virt_lines[1][3][1]
+      end)
+      eq('Some error', result)
+
+      result = exec_lua(function()
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Some error', 0, 0, 0, 0, 'source x'),
+          _G.make_error('Another error', 1, 1, 1, 1, 'source y'),
+        })
+
+        local extmarks = _G.get_virt_lines_extmarks(_G.diagnostic_ns)
+        return { extmarks[1][4].virt_lines[1][3][1], extmarks[2][4].virt_lines[1][3][1] }
+      end)
+      eq('source x: Some error', result[1])
+      eq('source y: Another error', result[2])
+    end)
+
     it('adds space to the left of the diagnostic', function()
       local error_offset = 5
       local result = exec_lua(function()
