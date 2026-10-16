@@ -997,6 +997,7 @@ add_custom_target(generated-sources DEPENDS
 file(GLOB API_SOURCES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/nvim/api/*.c)
 
 file(GLOB LUA_SOURCES CONFIGURE_DEPENDS
+  ${NVIM_RUNTIME_DIR}/lua/uv/*.lua
   ${NVIM_RUNTIME_DIR}/lua/vim/*.lua
   ${NVIM_RUNTIME_DIR}/lua/vim/async/*.lua
   ${NVIM_RUNTIME_DIR}/lua/vim/_meta/*.lua
@@ -1016,6 +1017,7 @@ add_target(doc-vim
     ${NVIM_RUNTIME_DIR}/doc/diagnostic.txt
     ${NVIM_RUNTIME_DIR}/doc/lsp.txt
     ${NVIM_RUNTIME_DIR}/doc/lua-async.txt
+    ${NVIM_RUNTIME_DIR}/doc/luvref.txt
     ${NVIM_RUNTIME_DIR}/doc/lua.txt
     ${NVIM_RUNTIME_DIR}/doc/treesitter.txt
   )
