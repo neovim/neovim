@@ -97,6 +97,7 @@ describe('vim.lsp.completion: item conversion', function()
 
   -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
   it('prefers textEdit over label as word', function()
+    n.command('set completeopt=menuone,popup')
     local range0 = {
       start = { line = 0, character = 0 },
       ['end'] = { line = 0, character = 0 },
@@ -129,7 +130,7 @@ describe('vim.lsp.completion: item conversion', function()
       },
       {
         label = '•INT16_C(c)',
-        insertText = 'INT16_C(${1:c})',
+        insertText = 'x$0',
         insertTextFormat = 2,
         filterText = 'INT16_C',
         sortText = 'h',
@@ -160,6 +161,7 @@ describe('vim.lsp.completion: item conversion', function()
     }
     local result = complete('|', completion_list)
     eq_partial(expected, result.items)
+    eq('```\nINT16_C(c)\n```', result.items[8].info)
   end)
 
   local word_sorter = function(a, b)
