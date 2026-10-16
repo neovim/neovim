@@ -8408,7 +8408,7 @@ static void ex_folddo(exarg_T *eap)
     }
   }
 
-  global_exe(eap->arg);  // Execute the command on the marked lines.
+  global_exe(eap->arg, eap);  // Execute the command on the marked lines.
   ml_clearmarked();      // clear rest of the marks
 }
 
