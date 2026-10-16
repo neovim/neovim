@@ -141,6 +141,7 @@ the locale name for a specific language, territory and codeset is not unified
 and depends on your system.
 
 Examples of locale name:
+
     charset	    language		  locale name ~
     GB2312	    Chinese (simplified)  zh_CN.EUC, zh_CN.GB2312
     Big5	    Chinese (traditional) zh_TW.BIG5, zh_TW.Big5
@@ -302,6 +303,7 @@ u   utf-32le	same as ucs-4le
 For the UCS codes the byte order matters.  This is tricky, use UTF-8 whenever
 you can.  The default is to use big-endian (most significant byte comes
 first):
+
 	    name	bytes		char ~
 	    ucs-2	      11 22	    1122
 	    ucs-2le	      22 11	    1122

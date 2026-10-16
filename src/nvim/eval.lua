@@ -2644,6 +2644,8 @@ M.funcs = {
       wait-for-character without doing anything.
 
       {mode} is a String, which can contain these character flags:
+
+      Flag	Meaning ~
       'm'	Remap keys.  This is default.  If {mode} is absent,
       	keys are remapped.
       'n'	Do not remap keys.
@@ -3460,6 +3462,8 @@ M.funcs = {
       When the argument is a |Dictionary| only the buffers matching
       the specified criteria are returned.  The following keys can
       be specified in {dict}:
+
+      	Key		Description ~
       	buflisted	include only listed buffers.
       	bufloaded	include only loaded buffers.
       	bufmodified	include only modified buffers.
@@ -3792,6 +3796,7 @@ M.funcs = {
       Return the current character search information as a {dict}
       with the following entries:
 
+          Key		Description ~
           char	character previously used for a character
       		search (|t|, |f|, |T|, or |F|); empty string
       		if no character search has been performed
@@ -4052,9 +4057,9 @@ M.funcs = {
     base = 1,
     desc = [=[
       Get the position of the cursor.  This is like getpos('.'), but
-      includes an extra "curswant" item in the list:
-          [0, lnum, col, off, curswant] ~
-      The "curswant" number is the preferred column when moving the
+      includes an extra "curswant" item in the list: >
+          [0, lnum, col, off, curswant]
+      <The "curswant" number is the preferred column when moving the
       cursor vertically.  After |$| command it will be a very large
       number equal to |v:maxcol|.  Also see |getcursorcharpos()| and
       |getpos()|.
@@ -4762,6 +4767,8 @@ M.funcs = {
     desc = [=[
       Returns detailed information about register {regname} as a
       Dictionary with the following entries:
+
+      	Key		Description ~
       	regcontents	List of lines contained in register
       			{regname}, like
       			getreg({regname}, 1, 1).
@@ -4960,6 +4967,8 @@ M.funcs = {
 
       The optional Dict argument {opts} supports the following
       optional items:
+
+          Key		Description ~
           name	Script name match pattern.  If specified,
       		and "sid" is not specified, information about
       		scripts with a name that match the pattern
@@ -5001,6 +5010,8 @@ M.funcs = {
       Returns the current stack trace of Vim scripts.
       Stack trace is a |List|, of which each item is a |Dictionary|
       with the following items:
+
+          Key		Description ~
           funcref	The funcref if the stack is at a function,
       		otherwise this item is omitted.
           event	The string of the event description if the
@@ -5026,6 +5037,8 @@ M.funcs = {
       page does not exist an empty List is returned.
 
       Each List item is a |Dictionary| with the following entries:
+
+      	Key		Description ~
       	tabnr		|tabpage-number|
       	variables	a reference to the dictionary with
       			tabpage-local variables
@@ -5112,6 +5125,8 @@ M.funcs = {
       When window {winnr} doesn't exist, an empty Dict is returned.
 
       The returned dictionary contains the following entries:
+
+      	Key		Description ~
       	curidx		Current index in the stack.  When at
       			top of the stack, set to (length + 1).
       			Index of bottom of the stack is 1.
@@ -5122,6 +5137,8 @@ M.funcs = {
 
       Each item in the stack is a dictionary with the following
       entries:
+
+      	Key		Description ~
       	bufnr		buffer number of the current jump
       	from		cursor position before the tag jump.
       			See |getpos()| for the format of the
@@ -5171,6 +5188,8 @@ M.funcs = {
       tabpages is returned.
 
       Each List item is a |Dictionary| with the following entries:
+
+      	Key		Description ~
       	botline		last complete displayed buffer line
       	bufnr		number of buffer in the window
       	height		window height (excluding winbar)
@@ -7550,6 +7569,8 @@ M.funcs = {
 
       The optional {dict} argument always supports the following
       items:
+
+          Key		Description ~
           matchseq	When this item is present return only matches
       		that contain the characters in {str} in the
       		given sequence.
@@ -7558,6 +7579,8 @@ M.funcs = {
 
       If {list} is a list of dictionaries, then the optional {dict}
       argument supports the following additional items:
+
+          Key		Description ~
           key		Key of the item which is fuzzy matched against
       		{str}.  The value of this item should be a
       		string.
@@ -7706,6 +7729,8 @@ M.funcs = {
           submatches	include submatch information (|/\(|)
 
       For each match, a |Dict| with the following items is returned:
+
+          Key		Description ~
           byteidx	starting byte index of the match.
           idx		index in {list} of the match.
           text	matched string
@@ -7951,6 +7976,8 @@ M.funcs = {
       has no effect.
 
       {flags} can contain these character flags:
+
+       Flag	Meaning ~
        "p"	intermediate directories will be created as necessary
        "D"	{name} will be deleted at the end of the current
       	function, but not recursively |:defer|
@@ -8254,11 +8281,11 @@ M.funcs = {
       If {len} is omitted or smaller than 1 then 1 is used (single
       letters).  Leading '~' and '.' characters are kept.  Examples: >vim
       	echo pathshorten('~/.config/nvim/autoload/file1.vim')
-      <	~/.c/n/a/file1.vim ~
+      	~/.c/n/a/file1.vim
       >vim
       	echo pathshorten('~/.config/nvim/autoload/file2.vim', 2)
-      <	~/.co/nv/au/file2.vim ~
-      It doesn't matter if the path exists or not.
+      	~/.co/nv/au/file2.vim
+      <It doesn't matter if the path exists or not.
       Returns an empty string on error.
 
     ]=],
@@ -8349,9 +8376,9 @@ M.funcs = {
       Return a String with {fmt}, where "%" items are replaced by
       the formatted form of their respective arguments.  Example: >vim
       	echo printf("%4d: E%d %.30s", lnum, errno, msg)
-      <May result in:
-      	"  99: E42 asdfasdfasdfasdfasdfasdfasdfas" ~
-
+      <May result in: >
+      	"  99: E42 asdfasdfasdfasdfasdfasdfasdfas"
+      <
       When used as a |method| the base is passed as the second
       argument: >vim
       	Compute()->printf("result: %d")
@@ -8359,6 +8386,8 @@ M.funcs = {
       You can use `call()` to pass the items as a list.
 
       Often used items are:
+
+        Item	Meaning ~
         %s	string
         %6S	string right-aligned in 6 display cells
         %6s	string right-aligned in 6 bytes
@@ -8494,6 +8523,7 @@ M.funcs = {
       	Generally, these modifiers are not useful.  They are
       	ignored when type is known from the argument.
 
+      Type	Meaning ~
       i	alias for d
       D	alias for ld
       U	alias for lu
@@ -9702,9 +9732,9 @@ M.funcs = {
       under or after the cursor.  Because of the 'p' flag, it
       returns 1, 2, or 3 depending on which keyword is found, or 0
       if the search fails.  With the cursor on the first word of the
-      line:
-          if (foo == 0) | let foo = foo + 1 | endif ~
-      the function returns 1.  Without the 'c' flag, the function
+      line: >
+          if (foo == 0) | let foo = foo + 1 | endif
+      <the function returns 1.  Without the 'c' flag, the function
       finds the "endif" and returns 3.  The same thing happens
       without the 'e' flag if the cursor is on the "f" of "if".
       The 'n' flag tells the function not to move the cursor.
@@ -9813,6 +9843,7 @@ M.funcs = {
       	call searchcount()
       <
       {options} must be a |Dictionary|.  It can contain:
+
         key		type		meaning ~
         recompute	|Boolean|	if |TRUE|, recompute the count
       				like |n| or |N| was executed.
@@ -10254,6 +10285,7 @@ M.funcs = {
       Set the current character search information to {dict},
       which contains one or more of the following entries:
 
+          Key		Description ~
           char	character which will be used for a subsequent
       		|,| or |;| command; an empty string clears the
       		character search
@@ -10475,6 +10507,8 @@ M.funcs = {
     base = 2,
     desc = [=[
       Set the position for String {expr}.  Possible values:
+
+      	Value	Position ~
       	.	the cursor
       	'x	mark x
 
@@ -10597,6 +10631,8 @@ M.funcs = {
       	clear the list: >vim
       		call setqflist([], 'r')
       <
+
+      Action	Meaning ~
       'u'	Like 'r', but tries to preserve the current selection
       	in the quickfix list.  The entry nearest to the
       	previously selected one becomes the current entry.
@@ -10951,6 +10987,8 @@ M.funcs = {
       The {name} can be a String or a Number.  The optional {dict}
       argument specifies the sign attributes.  The following values
       are supported:
+
+         Key		Description ~
          icon		full path to the bitmap file for the sign.
          linehl	highlight group used for the whole line the
       		sign is placed in.
@@ -11007,6 +11045,8 @@ M.funcs = {
 
       Each list item in the returned value is a dictionary with the
       following entries:
+
+         Key		Description ~
          icon		full path to the bitmap file of the sign
          linehl	highlight group used for the whole line the
       		sign is placed in; not present if not set.
@@ -11064,6 +11104,8 @@ M.funcs = {
 
       Each list item in the returned value is a dictionary with the
       following entries:
+
+      	Key	Description ~
       	bufnr	number of the buffer with the sign
       	signs	list of signs placed in {bufnr}.  Each list
       		item is a dictionary with the below listed
@@ -11155,6 +11197,8 @@ M.funcs = {
       values, see |bufname()|.
 
       The optional {dict} argument supports the following entries:
+
+      	Key		Description ~
       	lnum		line number in the file or buffer
       			{buf} where the sign is to be placed.
       			For the accepted values, see |line()|.
@@ -11370,6 +11414,8 @@ M.funcs = {
 
       The {list} argument specifies the List of signs to remove.
       Each list item is a dict with the following sign attributes:
+
+          Key		Description ~
           buffer	buffer name or number.  For the accepted
       		values, see |bufname()|.  If not specified,
       		then the specified sign is removed from all
@@ -11547,13 +11593,13 @@ M.funcs = {
       	" ö is sorted similarly to o with English locale.
       	language collate en_US.UTF8
       	echo sort(['n', 'o', 'O', 'ö', 'p', 'z'], 'l')
-      <	['n', 'o', 'O', 'ö', 'p', 'z'] ~
+      	['n', 'o', 'O', 'ö', 'p', 'z']
       >vim
       	" ö is sorted after z with Swedish locale.
       	language collate sv_SE.UTF8
       	echo sort(['n', 'o', 'O', 'ö', 'p', 'z'], 'l')
-      <	['n', 'o', 'O', 'p', 'z', 'ö'] ~
-      This does not work properly on Mac.
+      	['n', 'o', 'O', 'p', 'z', 'ö']
+      <This does not work properly on Mac.
 
       When {how} is given and it is 'n' then all items will be
       sorted numerical (Implementation detail: this uses the
@@ -11792,6 +11838,8 @@ M.funcs = {
       <
       These characters indicate the state, generally indicating that
       something is busy:
+
+          Char	Meaning ~
           m	halfway a mapping, :normal command, |feedkeys()| or
       	stuffed command
           o	operator pending, e.g. after |d|
@@ -13355,6 +13403,8 @@ M.funcs = {
 
       The first item in the "entries" list is the oldest undo item.
       Each List item is a |Dictionary| with these items:
+
+        Key		Description ~
         "seq"		Undo sequence number.  Same as what appears in
       		|:undolist|.
         "time"	Timestamp when the change happened.  Use
@@ -13845,6 +13895,8 @@ M.funcs = {
       Returns zero for success, non-zero for failure.
 
       {options} is a |Dictionary| with the following optional entries:
+
+        Key		Description ~
         "vertical"	When TRUE, the split is created vertically,
       		like with |:vsplit|.
         "rightbelow"	When TRUE, the split is made below or to the

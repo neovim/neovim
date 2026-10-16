@@ -140,7 +140,7 @@ the second character has a standard meaning:
 	Zero			0	Ring above
 	Two			2	Hook
 	Nine			9	Horn
-
+	----------------------------------------------------------------------
 	Equals			=	Cyrillic (= used as second char)
 	Asterisk		*	Greek
 	Percent sign		%	Greek/Cyrillic special

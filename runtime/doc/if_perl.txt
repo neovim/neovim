@@ -257,6 +257,7 @@ Buffer()						*perl-Window-Buffer*
 
 There are multiple lexical variables.
 
+Variable		Description ~
 $curwin			The current Window object.
 $curbuf			The current Buffer object.
 $vim			A Neovim::Ext object.
@@ -265,6 +266,7 @@ $current		A Neovim::Ext::Current object.
 
 These are also available via the "main" package:
 
+Variable		Description ~
 $main::curwin		The current Window object.
 $main::curbuf		The current Buffer object.
 

@@ -168,6 +168,8 @@ For the |:s| command the "e" flag can be used to avoid the error message
 
 					*search-options*
 The following options affect how a search is performed in Vim:
+
+    Option		Description ~
     'hlsearch'		highlight matches
     'ignorecase'	ignore case when searching
     'imsearch'		use IME when entering the search pattern
@@ -390,6 +392,7 @@ Vim will automatically select the right engine for you.  However, if you run
 into a problem or want to specifically select one engine or the other, you can
 prepend one of the following to the pattern:
 
+	Item	Meaning ~
 	\%#=0	Force automatic selection.  Only has an effect when
 		'regexpengine' has been set to a non-zero value.
 	\%#=1	Force using the old engine.
@@ -429,6 +432,7 @@ Use of "\V" means that after it, only a backslash and the terminating
 character (usually / or ?) have special meaning: "very nomagic"
 
 Examples:
+
 after:	  \v	   \m	    \M	     \V		matches ~
 		'magic' 'nomagic'
 	  a	   a	    a	     a		literal 'a'
@@ -453,27 +457,25 @@ or not by putting "\m" or "\M" at the start of the pattern.
 Overview of multi items.				*/multi* *E61* *E62*
 More explanation and examples below, follow the links.		*E64* *E871*
 
-	  multi ~
-     'magic' 'nomagic'	matches of the preceding atom ~
+ 	magic	nomagic	matches of the preceding atom ~
 |/star|	*	\*	0 or more	as many as possible
 |/\+|	\+	\+	1 or more	as many as possible
 |/\=|	\=	\=	0 or 1		as many as possible
 |/\?|	\?	\?	0 or 1		as many as possible
-
+------------------------------------------------------------------------------
 |/\{|	\{n,m}	\{n,m}	n to m		as many as possible
-	\{n}	\{n}	n		exactly
-	\{n,}	\{n,}	at least n	as many as possible
-	\{,m}	\{,m}	0 to m		as many as possible
-	\{}	\{}	0 or more	as many as possible (same as "*")
-
+ 	\{n}	\{n}	n		exactly
+ 	\{n,}	\{n,}	at least n	as many as possible
+ 	\{,m}	\{,m}	0 to m		as many as possible
+ 	\{}	\{}	0 or more	as many as possible (same as "*")
+------------------------------------------------------------------------------
 |/\{-|	\{-n,m}	\{-n,m}	n to m		as few as possible
-	\{-n}	\{-n}	n		exactly
-	\{-n,}	\{-n,}	at least n	as few as possible
-	\{-,m}	\{-,m}	0 to m		as few as possible
-	\{-}	\{-}	0 or more	as few as possible
-
-							*E59*
-|/\@>|	\@>	\@>	1, like matching a whole pattern
+ 	\{-n}	\{-n}	n		exactly
+ 	\{-n,}	\{-n,}	at least n	as few as possible
+ 	\{-,m}	\{-,m}	0 to m		as few as possible
+ 	\{-}	\{-}	0 or more	as few as possible
+------------------------------------------------------------------------------
+|/\@>|	\@>	\@>	1, like matching a whole pattern	*E59*
 |/\@=|	\@=	\@=	nothing, requires a match |/zero-width|
 |/\@!|	\@!	\@!	nothing, requires NO match |/zero-width|
 |/\@<=|	\@<=	\@<=	nothing, requires a match behind |/zero-width|
@@ -483,7 +485,6 @@ More explanation and examples below, follow the links.		*E64* *E871*
 Overview of ordinary atoms.				*/ordinary-atom*
 More explanation and examples below, follow the links.
 
-      ordinary atom ~
  	magic	nomagic	matches ~
 |/^|	^	^	start-of-line (at start of pattern) |/zero-width|
 |/\^|	\^	\^	literal '^'
@@ -507,6 +508,7 @@ More explanation and examples below, follow the links.
 |/\%v|	\%23v	\%23v	in virtual column 23 |/zero-width|
 
 Character classes:					*/character-classes*
+
  	magic	nomagic	matches ~
 |/\i|	\i	\i	identifier character (see 'isident' option)
 |/\I|	\I	\I	like "\i", but excluding digits
@@ -536,6 +538,7 @@ Character classes:					*/character-classes*
 |/\U|	\U	\U	non-uppercase character		[^A-Z]
 |/\_|	\_x	\_x	where x is any of the characters above: character
 			class with end-of-line included
+
 (end of character classes)
 
  	magic	nomagic	matches ~
@@ -547,18 +550,17 @@ Character classes:					*/character-classes*
 |/~|	~	\~	last given substitute string
 |/\1|	\1	\1	same string as matched by first \(\)
 |/\2|	\2	\2	Like "\1", but uses second \(\)
-	   ...
+ 	...
 |/\9|	\9	\9	Like "\1", but uses ninth \(\)
-								*E68*
-|/\z1|	\z1	\z1	only for syntax highlighting, see |:syn-ext-match|
-	   ...
+|/\z1|	\z1	\z1	only for syntax highlighting, see |:syn-ext-match|	*E68*
+ 	...
 |/\z1|	\z9	\z9	only for syntax highlighting, see |:syn-ext-match|
-
-	x	x	a character with no special meaning matches itself
-
+------------------------------------------------------------------------------
+ 	x	x	a character with no special meaning matches itself
+------------------------------------------------------------------------------
 |/[]|	[]	\[]	any character specified inside the []
 |/\%[]|	\%[]	\%[]	a sequence of optionally matched atoms
-
+------------------------------------------------------------------------------
 |/\c|	\c	\c	ignore case, do not use the 'ignorecase' option
 |/\C|	\C	\C	match case, do not use the 'ignorecase' option
 |/\Z|	\Z	\Z	ignore differences in Unicode "combining characters".
@@ -569,8 +571,8 @@ Character classes:					*/character-classes*
 |/\M|	\M	\M	'magic' off for the following chars in the pattern
 |/\v|	\v	\v	the following chars in the pattern are "very magic"
 |/\V|	\V	\V	the following chars in the pattern are "very nomagic"
-|/\%#=|   \%#=1   \%#=1   select regexp engine |/zero-width|
-
+|/\%#=|	\%#=1	\%#=1	select regexp engine |/zero-width|
+------------------------------------------------------------------------------
 |/\%d|	\%d	\%d	match specified decimal character (eg \%d123)
 |/\%x|	\%x	\%x	match specified hex character (eg \%x2a)
 |/\%o|	\%o	\%o	match specified octal character (eg \%o040)
@@ -579,20 +581,19 @@ Character classes:					*/character-classes*
 			\%U12345678)
 |/\%C|	\%C	\%C	match any composing characters
 
-Example			matches ~
-\<\I\i*		or
-\<\h\w*
-\<[a-zA-Z_][a-zA-Z0-9_]*
-			An identifier (e.g., in a C program).
-
-\(\.$\|\. \)		A period followed by <EOL> or a space.
-
-[.!?][])"']*\($\|[ ]\)	A search pattern that finds the end of a sentence,
-			with almost the same definition as the ")" command.
-
-cat\Z			Both "cat" and "càt" ("a" followed by 0x0300)
-			Does not match "càt" (character 0x00e0), even
-			though it may look the same.
+Example				matches ~
+\<\I\i*				An identifier (e.g., in a C program).
+\<\h\w*				idem
+\<[a-zA-Z_][a-zA-Z0-9_]*	idem
+------------------------------------------------------------------------------
+\(\.$\|\. \)			A period followed by <EOL> or a space.
+------------------------------------------------------------------------------
+[.!?][])"']*\($\|[ ]\)		A search pattern that finds the end of a sentence,
+				with almost the same definition as the ")" command.
+------------------------------------------------------------------------------
+cat\Z				Both "cat" and "càt" ("a" followed by 0x0300)
+				Does not match "càt" (character 0x00e0), even
+				though it may look the same.
 
 
 ==============================================================================
@@ -624,12 +625,14 @@ overview.
 
 							*/\+*
 \+	Matches 1 or more of the preceding atom, as many as possible.
+
 	Example		matches ~
 	^.\+$		any non-empty line
 	\s\+		white space of at least one character
 
 							*/\=*
 \=	Matches 0 or 1 of the preceding atom, as many as possible.
+
 	Example		matches ~
 	foo\=		"fo" and "foo"
 
@@ -673,10 +676,12 @@ overview.
 							*/\@=*
 \@=	Matches the preceding atom with zero width.
 	Like "(?=pattern)" in Perl.
+
 	Example			matches ~
 	foo\(bar\)\@=		"foo" in "foobar"
 	foo\(bar\)\@=foo	nothing
 							*/zero-width*
+
 	When using "\@=" (or "^", "$", "\<", "\>") no characters are included
 	in the match.  These items are only used to check if a match can be
 	made.  This can be tricky, because a match with following items will
@@ -693,6 +698,7 @@ overview.
 \@!	Matches with zero width if the preceding atom does NOT match at the
 	current position. |/zero-width|
 	Like "(?!pattern)" in Perl.
+
 	Example			matches ~
 	foo\(bar\)\@!		any "foo" not followed by "bar"
 	a.\{-}p\@!		"a", "ap", "app", "appp", etc. not immediately
@@ -723,9 +729,11 @@ overview.
 \@<=	Matches with zero width if the preceding atom matches just before what
 	follows. |/zero-width|
 	Like "(?<=pattern)" in Perl, but Vim allows non-fixed-width patterns.
+
 	Example			matches ~
 	\(an\_s\+\)\@<=file	"file" after "an" and white space or an
 				end-of-line
+
 	For speed it's often much better to avoid this multi.  Try using "\zs"
 	instead |/\zs|.  To match the same as the above example:
 		an\_s\+\zsfile
@@ -741,11 +749,13 @@ overview.
 	"\@<!" are checked for a match first, thus things like "\1" don't work
 	to reference \(\) inside the preceding atom.  It does work the other
 	way around:
+
 	Bad example			matches ~
 	\%#=1\1\@<=,\([a-z]\+\)		",abc" in "abc,abc"
 
 	However, the new regexp engine works differently, it is better to not
 	rely on this behavior, do not use \@<= if it can be avoided:
+
 	Example				matches ~
 	\([a-z]\+\)\zs,\1		",abc" in "abc,abc"
 
@@ -783,6 +793,7 @@ overview.
 							*/\@>*
 \@>	Matches the preceding atom like matching a whole pattern.
 	Like "(?>pattern)" in Perl.
+
 	Example		matches ~
 	\(a*\)\@>a	nothing (the "a*" takes all the "a"'s, there can't be
 			another one following)
@@ -803,6 +814,7 @@ An ordinary atom can be:
 							*/^*
 ^	At beginning of pattern or after "\|", "\(", "\%(" or "\n": matches
 	start-of-line; at other positions, matches literal '^'. |/zero-width|
+
 	Example		matches ~
 	^beep(		the start of the C function "beep" (probably).
 
@@ -813,6 +825,7 @@ An ordinary atom can be:
 							*/\_^*
 \_^	Matches start-of-line. |/zero-width|  Can be used at any position in
 	the pattern, but not inside [].
+
 	Example		matches ~
 	\_s*\_^foo	white space and blank lines and then "foo" at
 			start-of-line
@@ -830,6 +843,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 \_$	Matches end-of-line. |/zero-width|  Can be used at any position in the
 	pattern, but not inside [].  Note that "a\_$b" never matches, since
 	"b" cannot match an end-of-line.  Use "a\nb" instead |/\n|.
+
 	Example		matches ~
 	foo\_$\_s*	"foo" at end-of-line and following white space and
 			blank lines
@@ -1104,6 +1118,7 @@ x	A single character, with no special meaning, matches itself
 \_[]
 	A collection.  This is a sequence of characters enclosed in square
 	brackets.  It matches any single character in the collection.
+
 	Example		matches ~
 	[xyz]		any 'x', 'y' or 'z'
 	[a-zA-Z]$	any alphabetic character at the end of a line
@@ -1273,7 +1288,8 @@ ignored.  "\C" does the opposite: Force matching case for the whole pattern.
 Note that 'ignorecase', "\c" and "\C" are not used for the character classes.
 
 Examples:
-      pattern	'ignorecase'  'smartcase'	matches ~
+
+	pattern	'ignorecase'	'smartcase'	matches ~
 	foo	  off		-		foo
 	foo	  on		-		foo Foo FOO
 	Foo	  on		off		foo Foo FOO
@@ -1333,6 +1349,7 @@ more composing characters than the pattern, it still matches.  But all
 composing characters in the pattern must be found in the text.
 
 Suppose B is a base character and x and y are composing characters:
+
 	pattern		text		match ~
 	Bxy		Bxy		yes (perfect match)
 	Bxy		Byx		yes (order ignored)

@@ -39,6 +39,8 @@ that toplevel functions have a "{" in the first column.  Otherwise they are
 easily confused with declarations.
 
 These five options control C program indenting:
+
+Option		Description ~
 'cindent'	Enables Vim to perform C program indenting automatically.
 'cinkeys'	Specifies which keys trigger reindenting in insert mode.
 'cinoptions'	Sets your preferred indent style.
@@ -61,6 +63,7 @@ used instead.  The format of 'cinkeys' and 'indentkeys' is equal.
 The default is "0{,0},0),0],:,0#,!^F,o,O,e" which specifies that indenting
 occurs as follows:
 
+	Key	Meaning ~
 	"0{"	if you type "{" as the first character in a line
 	"0}"	if you type "}" as the first character in a line
 	"0)"	if you type ")" as the first character in a line
@@ -75,6 +78,8 @@ occurs as follows:
 		line
 
 Characters that can precede each key:				*i_CTRL-F*
+
+Char	Meaning ~
 !	When a "!" precedes the key, Vim will not insert the key but will
 	instead reindent the current line.  This allows you to define a
 	command key for reindenting the current line.  CTRL-F is the default
@@ -92,25 +97,27 @@ When neither "!" nor "*" precedes the key, Vim reindents the line after you
 type the key.  So ";" sets the indentation of a line which includes the ";".
 
 Special key names:
-<>	Angle brackets mean spelled-out names of keys.  For example: "<Up>",
-	"<Ins>" (see |key-notation|).
-^	Letters preceded by a caret (^) are control characters.  For example:
-	"^F" is CTRL-F.
-o	Reindent a line when you use the "o" command or when Vim opens a new
-	line below the current one (e.g., when you type <Enter> in insert
-	mode).
-O	Reindent a line when you use the "O" command.
-e	Reindent a line that starts with "else" when you type the second 'e'.
-:	Reindent a line when a ':' is typed which is after a label or case
-	statement.  Don't reindent for a ":" in "class::method" for C++.  To
-	Reindent for any ":", use "<:>".
-=word	Reindent when typing the last character of "word".  "word" may
-	actually be part of another word.  Thus "=end" would cause reindenting
-	when typing the "d" in "endif" or "endwhile".  But not when typing
-	"bend".  Also reindent when completion produces a word that starts
-	with "word".  "0=word" reindents when there is only white space before
-	the word.
-=~word	Like =word, but ignore case.
+
+	Notation	Meaning ~
+	<>	Angle brackets mean spelled-out names of keys.  For example: "<Up>",
+		"<Ins>" (see |key-notation|).
+	^	Letters preceded by a caret (^) are control characters.  For example:
+		"^F" is CTRL-F.
+	o	Reindent a line when you use the "o" command or when Vim opens a new
+		line below the current one (e.g., when you type <Enter> in insert
+		mode).
+	O	Reindent a line when you use the "O" command.
+	e	Reindent a line that starts with "else" when you type the second 'e'.
+	:	Reindent a line when a ':' is typed which is after a label or case
+		statement.  Don't reindent for a ":" in "class::method" for C++.  To
+		Reindent for any ":", use "<:>".
+	=word	Reindent when typing the last character of "word".  "word" may
+		actually be part of another word.  Thus "=end" would cause reindenting
+		when typing the "d" in "endif" or "endwhile".  But not when typing
+		"bend".  Also reindent when completion produces a word that starts
+		with "word".  "0=word" reindents when there is only white space before
+		the word.
+	=~word	Like =word, but ignore case.
 
 If you really want to reindent when you type 'o', 'O', 'e', '0', '<', '>',
 "*", ':' or '!', use "<o>", "<O>", "<e>", "<0>", "<<>", "<>>", "<*>", "<:>" or
@@ -129,6 +136,8 @@ used CTRL-T or CTRL-D.
 						*cinoptions-values*
 The 'cinoptions' option sets how Vim performs indentation.  The value after
 the option character can be one of these (N is any number):
+
+	Value	Meaning ~
 	N	indent N spaces
 	-N	indent N spaces to the left
 	Ns	N times 'shiftwidth' spaces
@@ -800,15 +809,15 @@ do: >
       :call HtmlIndent_CheckUserSettings()
 
 Detail:
-  Calculation of indent inside "blocktags" with "alien" content:
-      BLOCKTAG   INDENT EXPR	    WHEN APPLICABLE ~
+  Calculation of indent inside "blocktags" with "alien" content: >
+      BLOCKTAG   INDENT EXPR	    WHEN APPLICABLE
       <script> : {customizable}	    if first line of block
 	       : cindent(v:lnum)    if attributes empty or contain "java"
 	       : -1		    else (vbscript, tcl, ...)
       <style>  : {customizable}	    if first line of block
 	       : GetCSSIndent()	    else
       <!-- --> : -1
-
+<
 IDRIS2							*ft-idris2-indent*
 
 Idris 2 indentation can be configured with several variables that control the

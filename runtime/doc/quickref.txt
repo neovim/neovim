@@ -7,6 +7,7 @@
 Quick reference guide
 
 							 *quickref* *Contents*
+
  tag	  subject			 tag	  subject	~
 |Q_ct|	list of help files		|Q_re|	Repeating commands
 |Q_lr|	motion: Left-right		|Q_km|	Key mapping
@@ -147,16 +148,16 @@ N is used to indicate an optional count that can be given before the command.
 		   idem but excluding digits	\P	\P
 	     matches a white space character	\s	\s
 	 matches a non-white space character	\S	\S
-
+     ----------------------------------------------------------
 			       matches <Esc>	\e	\e
 			       matches <Tab>	\t	\t
 				matches <CR>	\r	\r
 				matches <BS>	\b	\b
-
+     ----------------------------------------------------------
      matches 0 or more of the preceding atom	*	\*
      matches 1 or more of the preceding atom	\+	\+
 	matches 0 or 1 of the preceding atom	\=	\=
-	matches 2 to 5 of the preceding atom	\{2,5}  \{2,5}
+	matches 2 to 5 of the preceding atom	\{2,5}	\{2,5}
 		  separates two alternatives	\|	\|
 		group a pattern into an atom	\(\)	\(\)
 

@@ -305,13 +305,13 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			used in the output of `:verbose command UserCmd`
 			White space between the filename, the separator and
 			the number is ignored.
-			Examples:
-				eval.c:10 ~
-				eval.c @ 20 ~
-				eval.c (30) ~
-				eval.c 40 ~
-				eval.c line 50 ~
-
+			Examples: >
+				eval.c:10
+				eval.c @ 20
+				eval.c (30)
+				eval.c 40
+				eval.c line 50
+<
 							*v_gF*
 {Visual}[count]gF	Same as "v_gf", but if a colon and a number appear
 			immediately after the end of the selected text,
@@ -505,10 +505,11 @@ for the "+cmd" argument and once for the ":set" command.
 
 							*file-formats*
 The 'fileformat' option sets the <EOL> style for a file:
-'fileformat'    characters	   name				~
-  "dos"		<CR><NL> or <NL>   DOS format		*DOS-format*
-  "unix"	<NL>		   Unix format		*Unix-format*
-  "mac"		<CR>		   Mac format		*Mac-format*
+
+'fileformat'	characters		name ~
+  "dos"		<CR><NL> or <NL>	DOS format		*DOS-format*
+  "unix"	<NL>			Unix format		*Unix-format*
+  "mac"		<CR>			Mac format		*Mac-format*
 
 When reading a file, the mentioned characters are interpreted as the <EOL>.
 In DOS format (default for Windows), <CR><NL> and <NL> are both interpreted as
@@ -563,6 +564,8 @@ single <NL> characters are unexpectedly replaced with <CR><NL>.
 END-OF-LINE AND END-OF-FILE				*eol-and-eof*
 
 Vim has several options to control the file format:
+
+	Option		Controls ~
 	'fileformat'	the <EOL> style: Unix, DOS, Mac
 	'endofline'	whether the last line ends with a <EOL>
 	'endoffile'	whether the file ends with a CTRL-Z
@@ -682,14 +685,16 @@ list of the current window.
 			Otherwise they are added after the [count]'th file.
 			If the argument list is "a b c", and "b" is the
 			current argument, then these commands result in:
+
 				command		new argument list ~
 				:argadd x	a  [b]  x  c
 				:0argadd x	x   a  [b] c
 				:1argadd x	a   x  [b] c
 				:$argadd x	a  [b]  c  x
-			And after the last one:
+
+			And after the last one: >
 				:+2argadd y	a  [b]  c  x  y
-			There is no check for duplicates, it is possible to
+<			There is no check for duplicates, it is possible to
 			add a file to the argument list twice.  You can use
 			|:argdedupe| to fix it afterwards: >
 				:argadd *.txt | argdedupe
@@ -1045,11 +1050,12 @@ the 'backup' option is off, the backup file is deleted.  When the 'patchmode'
 option is on the backup file may be renamed.
 
 							*backup-table*
-'backup' 'writebackup'	action	~
-   off	     off	no backup made
-   off	     on		backup current file, deleted afterwards (default)
-   on	     off	delete old backup, backup current file
-   on	     on		delete old backup, backup current file
+
+'backup'	'writebackup'	action ~
+off		off		no backup made
+off		on		backup current file, deleted afterwards (default)
+on		off		delete old backup, backup current file
+on		on		delete old backup, backup current file
 
 When the 'backupskip' pattern matches with the name of the file which is
 written, no backup file is made.  The values of 'backup' and 'writebackup' are

@@ -20,9 +20,10 @@ Vim picks up the locale from the environment.  In most cases this means Vim
 will use the language that you prefer, unless it's not available.
 
 To see a list of supported locale names on your system, look in one of these
-directories (for Unix):
-	/usr/lib/locale ~
-	/usr/share/locale ~
+directories (for Unix): >
+	/usr/lib/locale
+	/usr/share/locale
+<
 Unfortunately, upper/lowercase differences matter.  Also watch out for the
 use of "-" and "_".
 

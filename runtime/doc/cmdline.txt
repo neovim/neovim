@@ -815,30 +815,32 @@ When a number is added this is done after the adjustment to the last line of
 the fold.  This means these lines are additionally included in the range.  For
 example: >
    :3,4+2print
-On this text:
-	1 one ~
-	2 two ~
-	3 three ~
-	4 four FOLDED ~
-	5 five FOLDED ~
-	6 six ~
-	7 seven ~
-	8 eight ~
+On this text: >
+	1 one
+	2 two
+	3 three
+	4 four FOLDED
+	5 five FOLDED
+	6 six
+	7 seven
+	8 eight
+<
 Where lines four and five are a closed fold, ends up printing lines 3 to 7.
 The 7 comes from the "4" in the range, which is adjusted to the end of the
 closed fold, which is 5, and then the offset 2 is added.
 
 An example for subtracting (which isn't very useful): >
    :2,4-1print
-On this text:
-	1 one ~
-	2 two ~
-	3 three FOLDED ~
-	4 four FOLDED ~
-	5 five FOLDED ~
-	6 six FOLDED ~
-	7 seven ~
-	8 eight ~
+On this text: >
+	1 one
+	2 two
+	3 three FOLDED
+	4 four FOLDED
+	5 five FOLDED
+	6 six FOLDED
+	7 seven
+	8 eight
+<
 Where lines three to six are a closed fold, ends up printing lines 2 to 6.
 The 6 comes from the "4" in the range, which is adjusted to the end of the
 closed fold, which is 6, and then 1 is subtracted, then this is still in the
@@ -891,7 +893,9 @@ Reverse Range						*E493*
 
 A range should have the lower line number first.  If this is not the case, Vim
 will ask you if it should swap the line numbers.
-	Backwards range given, OK to swap ~
+>
+	Backwards range given, OK to swap
+<
 This is not done within the global command ":g".
 
 You can use ":silent" before a command to avoid the question, the range will
@@ -925,6 +929,7 @@ Visual Mode and Range
 These flags are supported by a selection of Ex commands.  They print the line
 that the cursor ends up after executing the command:
 
+	Flag	Meaning ~
 	l	output like for |:list|
 	#	add line number
 	p	output like for |:print|
@@ -976,10 +981,12 @@ that contain a quote and wildcards): >
 To avoid the special meaning of '%' and '#' insert a backslash before it.
 Detail: The special meaning is always escaped when there is a backslash before
 it, no matter how many backslashes.
+
 	you type:		result	~
 	   #			alternate.file
 	   \#			#
 	   \\#			\#
+
 Also see |`=|.
 
 							*E499* *E500*
@@ -1234,6 +1241,7 @@ CLOSE
 
 There are several ways to leave the command-line window:
 
+Key		Action ~
 <Enter>		Execute the command-line under the cursor, then close the
 		window(s) where cmdwin is visible.  Works both in Insert and
 		in Normal mode.
@@ -1260,6 +1268,8 @@ command-line window open again, you may find this mapping useful: >
 VARIOUS
 
 Buffer and window options set on cmdwin open:
+
+Option		Value ~
 'bufhidden'	"wipe"
 'buflisted'	off
 'buftype'	"nofile"
@@ -1309,6 +1319,8 @@ See also |cmdline-autocompletion|.
 
 					*cmdline-char* *cmdwin-char*
 The character used for the pattern indicates the type of command-line:
+
+	Char	Type ~
 	:	normal Ex command
 	>	debug mode command |debug-mode|
 	/	forward search string

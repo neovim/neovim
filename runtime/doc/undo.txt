@@ -141,11 +141,12 @@ This is explained in the user manual: |usr_32.txt|.
 
 							*:undol* *:undolist*
 :undol[ist]		List the leafs in the tree of changes.  Example:
-			   number changes  when               saved ~
-			       88      88  2010/01/04 14:25:53
-			      108     107  08/07 12:47:51
-			      136      46  13:33:01             7
-			      166     164  3 seconds ago
+
+			number	changes	when			saved ~
+			88	88	2010/01/04 14:25:53
+			108	107	08/07 12:47:51
+			136	46	13:33:01		7
+			166	164	3 seconds ago
 
 			The "number" column is the change number.  This number
 			continuously increases and can be used to identify a
@@ -206,41 +207,41 @@ making a new change.
 
 EXAMPLE
 
-Start with this text:
-	one two three ~
-
-Delete the first word by pressing "x" three times:
-	ne two three ~
-	e two three ~
-	 two three ~
-
-Now undo that by pressing "u" three times:
-	e two three ~
-	ne two three ~
-	one two three ~
-
-Delete the second word by pressing "x" three times:
-	one wo three ~
-	one o three ~
-	one  three ~
-
-Now undo that by using "g-" three times:
-	one o three ~
-	one wo three ~
-	 two three ~
-
+Start with this text: >
+	one two three
+<
+Delete the first word by pressing "x" three times: >
+	ne two three
+	e two three
+	 two three
+<
+Now undo that by pressing "u" three times: >
+	e two three
+	ne two three
+	one two three
+<
+Delete the second word by pressing "x" three times: >
+	one wo three
+	one o three
+	one  three
+<
+Now undo that by using "g-" three times: >
+	one o three
+	one wo three
+	 two three
+<
 You are now back in the first undo branch, after deleting "one".  Repeating
-"g-" will now bring you back to the original text:
-	e two three ~
-	ne two three ~
-	one two three ~
-
-Jump to the last change with ":later 1h":
-	one  three ~
-
-And back to the start again with ":earlier 1h":
-	one two three ~
-
+"g-" will now bring you back to the original text: >
+	e two three
+	ne two three
+	one two three
+<
+Jump to the last change with ":later 1h": >
+	one  three
+<
+And back to the start again with ":earlier 1h": >
+	one two three
+<
 
 Note that using "u" and CTRL-R will not get you to all possible text states
 while repeating "g-" and "g+" does.

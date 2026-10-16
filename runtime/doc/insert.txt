@@ -98,6 +98,7 @@ CTRL-K {char1} [char2]
 		<C-K><S-Space> (two keys).  Neither char is considered for
 		mapping.
 
+Key		Action ~
 CTRL-N		Find next keyword (see |i_CTRL-N|).
 CTRL-P		Find previous keyword (see |i_CTRL-P|).
 
@@ -352,7 +353,6 @@ last change can be redone, and it behaves like an "i" command.  The |quote.|
 register always holds just the text typed after the last cursor-move.
 
 char		action					     tag ~
------------------------------------------------------------------------ ~
 <Up>		cursor one line up	                     *i_<Up>*
 <Down>		cursor one line down	                     *i_<Down>*
 CTRL-G <Up>	cursor one line up, insert start column	     *i_CTRL-G_<Up>*
@@ -1221,6 +1221,8 @@ maintain responsiveness.
 Each list item can either be a string or a Dictionary.  When it is a string it
 is used as the completion.  When it is a Dictionary it can contain these
 items:
+
+	Key		Description ~
 	word		the text that will be inserted, mandatory
 	abbr		abbreviation of "word"; when not empty it is used in
 			the menu instead of "word"
@@ -1284,6 +1286,8 @@ lines, but 'previewheight' is used when it has a value of 1 or 2.
 The "kind" item uses a single letter to indicate the kind of completion.  This
 may be used to show the completion differently (different color or icon).
 Currently these types can be used:
+
+	Kind	Meaning ~
 	v	variable
 	f	function or method
 	m	member of a struct or class
@@ -1425,6 +1429,8 @@ something else then <Enter> inserts a line break.
 
 
 The colors of the menu can be changed with these highlight groups:
+
+Group		Used for ~
 Pmenu		normal item  |hl-Pmenu|
 PmenuSel	selected item  |hl-PmenuSel|
 PmenuSbar	scrollbar  |hl-PmenuSbar|
@@ -2123,10 +2129,11 @@ remains, you may want to delete it.
 
 							*file-read*
 The 'fileformat' option sets the <EOL> style for a file:
-'fileformat'    characters	   name				~
-  "dos"		<CR><NL> or <NL>   DOS format
-  "unix"	<NL>		   Unix format
-  "mac"		<CR>		   Mac format
+
+'fileformat'	characters		name ~
+  "dos"		<CR><NL> or <NL>	DOS format
+  "unix"	<NL>			Unix format
+  "mac"		<CR>			Mac format
 
 If 'fileformat' is "dos", a <CR> in front of an <NL> is ignored and a CTRL-Z
 at the end of the file is ignored.

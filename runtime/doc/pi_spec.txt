@@ -17,7 +17,7 @@ email address and build a format string by itself.
 ==============================================================================
 1. How to use it				*spec-how-to-use-it*
 
-The spec_chglog plugin provides a map like the following:
+The spec_chglog plugin provides a map like the following: >vim
 
 	:map <buffer> <LocalLeader>c <Plug>SpecChangelog
 

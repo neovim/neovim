@@ -431,6 +431,7 @@ CmdAtom				After a user action (an "atom" of input): any
 				Event is |deferred|.
 
 				Only for user input, not programmatic input:
+
 					INPUT			ATOM ~
 					Typed keys		yes
 					Mapping, macro "@q"	yes
@@ -604,6 +605,8 @@ CompleteChanged						*CompleteChanged*
 				that.
 
 				Sets these |v:event| keys:
+
+				    Key			Description ~
 				    completed_item	See |complete-items|.
 				    height		nr of items visible
 				    width		screen cells
@@ -1713,6 +1716,8 @@ if the buffer does not have a name and when the name does not match a specific
 pattern.  But it also means they must be explicitly added to each buffer.
 
 Instead of a pattern buffer-local autocommands use one of these forms:
+
+	Pattern		Matches ~
 	<buffer>	current buffer
 	<buffer=99>	buffer number 99
 	<buffer=abuf>	using <abuf> (only when executing autocommands)

@@ -62,7 +62,7 @@ and its immediate subdirectories are searched for Hare files. The maximum
 search depth may be adjusted with: >
 	let g:haredoc_search_depth = 2
 <
-	Value		Effect~
+	Value		Effect ~
 	0		Only search the current directory.
 	1		Search the current directory and immediate
 			subdirectories.

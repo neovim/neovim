@@ -111,6 +111,7 @@ See |sign_define()| for the equivalent Vim script function.
 		a full path.  The bitmap should fit in the place of two
 		characters.  This is not checked.  If the bitmap is too big it
 		will cause redraw problems.
+
 			toolkit		supports ~
 			Win32		.bmp, .ico, .cur
 
@@ -182,6 +183,8 @@ See |sign_place()| for the equivalent Vim script function.
 
 		The following optional sign attributes can be specified before
 		"file=":
+
+			Argument	Meaning ~
 			group={group}	Place sign in sign group {group}
 			priority={prio}	Assign priority {prio} to sign
 

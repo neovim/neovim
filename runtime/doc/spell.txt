@@ -18,6 +18,8 @@ This command switches on spell checking: >
 This switches on the 'spell' option and specifies to check for US English.
 
 The words that are not recognized are highlighted with one of these:
+
+	Group		Meaning					See ~
 	SpellBad	word not recognized			|hl-SpellBad|
 	SpellCap	word not capitalised			|hl-SpellCap|
 	SpellRare	rare word				|hl-SpellRare|
@@ -244,6 +246,7 @@ REGIONS
 A word may be spelled differently in various regions.  For example, English
 comes in (at least) these variants:
 
+	Name		Region ~
 	en		all regions
 	en_au		Australia
 	en_ca		Canada
@@ -264,6 +267,8 @@ region (not counting files specified by their .spl name).
 
 							*spell-german*
 Specific exception: For German these special regions are used:
+
+	Name		Region ~
 	de		all German words accepted
 	de_de		old and new spelling
 	de_19		old spelling
@@ -273,6 +278,8 @@ Specific exception: For German these special regions are used:
 
 							*spell-russian*
 Specific exception: For Russian these special regions are used:
+
+	Name		Region ~
 	ru		all Russian words accepted
 	ru_ru		"IE" letter spelling
 	ru_yo		"YO" letter spelling
@@ -299,11 +306,14 @@ SPELL FILES						*spell-load*
 
 Vim searches for spell files in the "spell" subdirectory of the directories in
 'runtimepath'.  The name is: LL.EEE.spl, where:
+
+	Part	Meaning ~
 	LL	the language name
 	EEE	the value of 'encoding'
 
 The value for "LL" comes from 'spelllang', but excludes the region name.
 Examples:
+
 	'spelllang'	LL ~
 	en_us		en
 	en-rare		en-rare
@@ -440,6 +450,7 @@ VIM SCRIPTS
 If you want to write a Vim script that does something with spelling, you may
 find these functions useful:
 
+    Function		Description ~
     spellbadword()	find badly spelled word at the cursor
     spellsuggest()	get list of spelling suggestions
     soundfold()		get the sound-a-like version of a word
@@ -672,17 +683,20 @@ The words must appear one per line.  That is all that is required.
 Additionally the following items are recognized:
 
 - Empty and blank lines are ignored.
-
-	# comment ~
+>
+	# comment
+<
 - Lines starting with a # are ignored (comment lines).
-
-	/encoding=utf-8 ~
+>
+	/encoding=utf-8
+<
 - A line starting with "/encoding=", before any word, specifies the encoding
   of the file.  After the second '=' comes an encoding name.  This tells Vim
   to setup conversion from the specified encoding to 'encoding'.  Thus you can
   use one word list for several target encodings.
-
-	/regions=usca ~
+>
+	/regions=usca
+<
 - A line starting with "/regions=" specifies the region names that are
   supported.  Each region name must be two ASCII letters.  The first one is
   region 1.  Thus "/regions=usca" has region 1 "us" and region 2 "ca".
@@ -702,6 +716,7 @@ Additionally the following items are recognized:
 
 Example:
 
+	Line					Meaning ~
 	# This is an example word list		comment
 	/encoding=latin1			encoding of the file
 	/regions=uscagb				regions "us", "ca" and "gb"
@@ -770,10 +785,9 @@ ignored, all other white space matters.  The encoding is specified in the
 affix file |spell-SET|.
 
 Comment lines start with '#' or '/'.  See the example lines 8 and 12.  Note
-that putting a comment after a word is NOT allowed:
-
-		someword   # comment that causes an error! ~
-
+that putting a comment after a word is NOT allowed: >
+		someword   # comment that causes an error!
+<
 After the word there is an optional slash and flags.  Most of these flags are
 letters that indicate the affixes that can be used with this word.  These are
 specified with SFX and PFX lines in the .aff file, see |spell-SFX| and
@@ -813,16 +827,14 @@ will be "TCP,IP".
 AFFIX FILE FORMAT			*spell-aff-format* *spell-affix-vim*
 
 							*spell-affix-comment*
-Comment lines in the .aff file start with a '#':
-
-	# comment line ~
-
+Comment lines in the .aff file start with a '#': >
+	# comment line
+<
 Items with a fixed number of arguments can be followed by a comment.  But only
 if none of the arguments can contain white space.  The comment must start with
-a "#" character.  Example:
-
-	KEEPCASE =  # fix case for words with this flag ~
-
+a "#" character.  Example: >
+	KEEPCASE =  # fix case for words with this flag
+<
 
 ENCODING							*spell-SET*
 
@@ -833,10 +845,9 @@ in some cases the current locale should also be set properly at the time
 
 The encoding should be specified before anything where the encoding matters.
 The encoding applies both to the affix file and the dictionary file.  It is
-done with a SET line:
-
-	SET utf-8 ~
-
+done with a SET line: >
+	SET utf-8
+<
 The encoding can be different from the value of the 'encoding' option at the
 time ":mkspell" is used.  Vim will then convert everything to 'encoding' and
 generate a spell file for 'encoding'.  If some of the used characters to not
@@ -878,12 +889,11 @@ support a locale with this encoding and isalpha() won't work.  For example
 when using "cp1250" on Unix.
 						*E761* *E762* *spell-FOL*
 						*spell-LOW* *spell-UPP*
-Three lines in the affix file are needed.  Simplistic example:
-
-	FOL  áëñ ~
-	LOW  áëñ ~
-	UPP  ÁËÑ ~
-
+Three lines in the affix file are needed.  Simplistic example: >
+	FOL  áëñ
+	LOW  áëñ
+	UPP  ÁËÑ
+<
 All three lines must have exactly the same number of characters.
 
 The "FOL" line specifies the case-folded characters.  These are used to
@@ -932,10 +942,9 @@ the word.  This is needed to detect a spelling error such as they'are.  That
 should be they're, but since "they" and "are" are words themselves that would
 go unnoticed.
 
-These characters are defined with MIDWORD in the .aff file.  Example:
-
-	MIDWORD	'- ~
-
+These characters are defined with MIDWORD in the .aff file.  Example: >
+	MIDWORD	'-
+<
 
 FLAG TYPES						*spell-FLAG*
 
@@ -944,6 +953,7 @@ other properties of the word.  Normally single-character flags are used.  This
 limits the number of possible flags, especially for 8-bit encodings.  The FLAG
 item can be used if more affixes are to be used.  Possible values:
 
+	Value		Meaning ~
 	FLAG long	use two-character flags
 	FLAG num	use numbers, from 1 up to 65000
 	FLAG caplong	use one-character flags without A-Z and two-character
@@ -969,11 +979,11 @@ The usual PFX (prefix) and SFX (suffix) lines are supported (see the Myspell
 documentation or the Aspell manual:
 http://aspell.net/man-html/Affix-Compression.html).
 
-Summary:
-	SFX L Y 2 ~
-	SFX L 0 re [^x] ~
-	SFX L 0 ro x ~
-
+Summary: >
+	SFX L Y 2
+	SFX L 0 re [^x]
+	SFX L 0 ro x
+<
 The first line is a header and has four fields:
 	SFX {flag} {combine} {count}
 
@@ -1026,38 +1036,35 @@ For PFX the fields are the same, but the {strip}, {add} and {condition} apply
 to the start of the word.
 
 Note: Myspell ignores any extra text after the relevant info.  Vim requires
-this text to start with a "#" so that mistakes don't go unnoticed.  Example:
-
-	SFX F 0 in   [^i]n      # Spion > Spionin  ~
-	SFX F 0 nen  in		# Bauerin > Bauerinnen ~
-
+this text to start with a "#" so that mistakes don't go unnoticed.  Example: >
+	SFX F 0 in   [^i]n      # Spion > Spionin
+	SFX F 0 nen  in		# Bauerin > Bauerinnen
+<
 However, to avoid lots of errors in affix files written for Myspell, you can
 add the IGNOREEXTRA flag.
 
 Apparently Myspell allows an affix name to appear more than once.  Since this
 might also be a mistake, Vim checks for an extra "S".  The affix files for
-Myspell that use this feature apparently have this flag.  Example:
+Myspell that use this feature apparently have this flag.  Example: >
+	SFX a Y 1 S
+	SFX a 0 an .
 
-	SFX a Y 1 S ~
-	SFX a 0 an . ~
-
-	SFX a Y 2 S ~
-	SFX a 0 en . ~
-	SFX a 0 on . ~
-
+	SFX a Y 2 S
+	SFX a 0 en .
+	SFX a 0 on .
+<
 
 AFFIX FLAGS						*spell-affix-flags*
 
 This is a feature that comes from Hunspell: The affix may specify flags.  This
 works similar to flags specified on a basic word.  The flags apply to the
-basic word plus the affix (but there are restrictions).  Example:
+basic word plus the affix (but there are restrictions).  Example: >
+	SFX S Y 1
+	SFX S 0 s .
 
-	SFX S Y 1 ~
-	SFX S 0 s . ~
-
-	SFX A Y 1 ~
-	SFX A 0 able/S . ~
-
+	SFX A Y 1
+	SFX A 0 able/S .
+<
 When the dictionary file contains "drink/AS" then these words are possible:
 
 	drink
@@ -1110,10 +1117,9 @@ When an affix file has very many prefixes that apply to many words it's not
 possible to build the whole word list in memory.  This applies to Hebrew (a
 list with all words is over a Gbyte).  In that case applying prefixes must be
 postponed.  This makes spell checking slower.  It is indicated by this keyword
-in the .aff file:
-
-	PFXPOSTPONE ~
-
+in the .aff file: >
+	PFXPOSTPONE
+<
 Only prefixes without a chop string and without flags can be postponed.
 Prefixes with a chop string or with flags will still be included in the word
 list.  An exception if the chop string is one character and equal to the last
@@ -1135,10 +1141,9 @@ Any other use of the backslash is reserved for future expansion.
 KEEP-CASE WORDS						*spell-KEEPCASE*
 
 In the affix file a KEEPCASE line can be used to define the affix name used
-for keep-case words.  Example:
-
-	KEEPCASE = ~
-
+for keep-case words.  Example: >
+	KEEPCASE =
+<
 This flag is not supported by Myspell.  It has the meaning that case matters.
 This can be used if the word does not have the first letter in upper case at
 the start of a sentence.  Example:
@@ -1154,10 +1159,9 @@ upper-case letters.
 RARE WORDS						*spell-RARE*
 
 In the affix file a RARE line can be used to define the affix name used for
-rare words.  Example:
-
-	RARE ? ~
-
+rare words.  Example: >
+	RARE ?
+<
 Rare words are highlighted differently from bad words.  This is to be used for
 words that are correct for the language, but are hardly ever used and could be
 a typing mistake anyway.
@@ -1171,15 +1175,13 @@ be marked as rare.
 BAD WORDS						*spell-BAD*
 
 In the affix file a BAD line can be used to define the affix name used for
-bad words.  Example:
-
-	BAD ! ~
-
+bad words.  Example: >
+	BAD !
+<
 This can be used to exclude words that would otherwise be good.  For example
-"the the" in the .dic file:
-
-	the the/! ~
-
+"the the" in the .dic file: >
+	the the/!
+<
 Once a word has been marked as bad it won't be undone by encountering the same
 word as good.
 
@@ -1191,10 +1193,9 @@ FORBIDDENWORD can be used just like BAD.  For compatibility with Hunspell.
 
 							*spell-NEEDAFFIX*
 The NEEDAFFIX flag is used to require that a word is used with an affix.  The
-word itself is not a good word (unless there is an empty affix).  Example:
-
-	NEEDAFFIX + ~
-
+word itself is not a good word (unless there is an empty affix).  Example: >
+	NEEDAFFIX +
+<
 
 COMPOUND WORDS						*spell-compound*
 
@@ -1207,23 +1208,23 @@ any affix IDs used.
 							*spell-COMPOUNDFLAG*
 The Myspell compatible method uses one flag, specified with COMPOUNDFLAG.  All
 words with this flag combine in any order.  This means there is no control
-over which word comes first.  Example:
-	COMPOUNDFLAG c ~
-
+over which word comes first.  Example: >
+	COMPOUNDFLAG c
+<
 							*spell-COMPOUNDRULE*
 A more advanced method to specify how compound words can be formed uses
 multiple items with multiple flags.  This is not compatible with Myspell 3.0.
-Let's start with an example:
-	COMPOUNDRULE c+ ~
-	COMPOUNDRULE se ~
-
+Let's start with an example: >
+	COMPOUNDRULE c+
+	COMPOUNDRULE se
+<
 The first line defines that words with the "c" flag can be concatenated in any
 order.  The second line defines compound words that are made of one word with
-the "s" flag and one word with the "e" flag.  With this dictionary:
-	bork/c ~
-	onion/s ~
-	soup/e ~
-
+the "s" flag and one word with the "e" flag.  With this dictionary: >
+	bork/c
+	onion/s
+	soup/e
+<
 You can make these words:
 	bork
 	borkbork
@@ -1257,16 +1258,17 @@ examples with the sequence of word flags they require:
     COMPOUNDRULE s[xyz]*e  se sxe sxye sxyxe sye syze sze szye szyxe  etc.
 
 A specific example: Allow a compound to be made of two words and a dash:
-	In the .aff file:
-	    COMPOUNDRULE sde ~
-	    NEEDAFFIX x ~
-	    COMPOUNDWORDMAX 3 ~
-	    COMPOUNDMIN 1 ~
-	In the .dic file:
-	    start/s ~
-	    end/e ~
-	    -/xd ~
-
+	In the .aff file: >
+	    COMPOUNDRULE sde
+	    NEEDAFFIX x
+	    COMPOUNDWORDMAX 3
+	    COMPOUNDMIN 1
+<
+	In the .dic file: >
+	    start/s
+	    end/e
+	    -/xd
+<
 This allows for the word "start-end", but not "startend".
 
 An additional implied rule is that, without further flags, a word with a
@@ -1277,28 +1279,27 @@ on the inside of a compound word.  This can be changed with the
 
 							*spell-NEEDCOMPOUND*
 The NEEDCOMPOUND flag is used to require that a word is used as part of a
-compound word.  The word itself is not a good word.  Example:
-
-	NEEDCOMPOUND & ~
-
+compound word.  The word itself is not a good word.  Example: >
+	NEEDCOMPOUND &
+<
 							*spell-ONLYINCOMPOUND*
 The ONLYINCOMPOUND does exactly the same as NEEDCOMPOUND.  Supported for
 compatibility with Hunspell.
 
 							*spell-COMPOUNDMIN*
 The minimal character length of a word used for compounding is specified with
-COMPOUNDMIN.  Example:
-	COMPOUNDMIN 5 ~
-
+COMPOUNDMIN.  Example: >
+	COMPOUNDMIN 5
+<
 When omitted there is no minimal length.  Obviously you could just leave out
 the compound flag from short words instead, this feature is present for
 compatibility with Myspell.
 
 							*spell-COMPOUNDWORDMAX*
 The maximum number of words that can be concatenated into a compound word is
-specified with COMPOUNDWORDMAX.  Example:
-	COMPOUNDWORDMAX 3 ~
-
+specified with COMPOUNDWORDMAX.  Example: >
+	COMPOUNDWORDMAX 3
+<
 When omitted there is no maximum.  It applies to all compound words.
 
 To set a limit for words with specific flags make sure the items in
@@ -1306,9 +1307,9 @@ COMPOUNDRULE where they appear don't allow too many words.
 
 							*spell-COMPOUNDSYLMAX*
 The maximum number of syllables that a compound word may contain is specified
-with COMPOUNDSYLMAX.  Example:
-	COMPOUNDSYLMAX 6 ~
-
+with COMPOUNDSYLMAX.  Example: >
+	COMPOUNDSYLMAX 6
+<
 This has no effect if there is no SYLLABLE item.  Without COMPOUNDSYLMAX there
 is no limit on the number of syllables.
 
@@ -1319,16 +1320,17 @@ COMPOUNDWORDMAX words or contains up to COMPOUNDSYLMAX syllables.
 						    *spell-COMPOUNDFORBIDFLAG*
 The COMPOUNDFORBIDFLAG specifies a flag that can be used on an affix.  It
 means that the word plus affix cannot be used in a compound word.  Example:
-	affix file:
-		COMPOUNDFLAG c ~
-		COMPOUNDFORBIDFLAG x ~
-		SFX a Y 2 ~
-		SFX a 0 s   . ~
-		SFX a 0 ize/x . ~
-	dictionary:
-		word/c ~
-		util/ac ~
-
+	affix file: >
+		COMPOUNDFLAG c
+		COMPOUNDFORBIDFLAG x
+		SFX a Y 2
+		SFX a 0 s   .
+		SFX a 0 ize/x .
+<
+	dictionary: >
+		word/c
+		util/ac
+<
 This allows for "wordutil" and "wordutils" but not "wordutilize".
 Note: this doesn't work for postponed prefixes yet.
 
@@ -1348,9 +1350,9 @@ word.
 						*spell-CHECKCOMPOUNDPATTERN*
 CHECKCOMPOUNDPATTERN is used to define patterns that, when matching at the
 position where two words are compounded together forbids the compound.
-For example:
-	CHECKCOMPOUNDPATTERN o e ~
-
+For example: >
+	CHECKCOMPOUNDPATTERN o e
+<
 This forbids compounding if the first word ends in "o" and the second word
 starts with "e".
 
@@ -1364,14 +1366,14 @@ This item indicates that using compounding to make suggestions is not a good
 idea.  Use this when compounding is used with very short or one-character
 words.  E.g. to make numbers out of digits.  Without this flag creating
 suggestions would spend most time trying all kind of weird compound words.
-
-	NOCOMPOUNDSUGS ~
-
+>
+	NOCOMPOUNDSUGS
+<
 							*spell-SYLLABLE*
 The SYLLABLE item defines characters or character sequences that are used to
-count the number of syllables in a word.  Example:
-	SYLLABLE aáeéiíoóöõuúüûy/aa/au/ea/ee/ei/ie/oa/oe/oo/ou/uu/ui ~
-
+count the number of syllables in a word.  Example: >
+	SYLLABLE aáeéiíoóöõuúüûy/aa/au/ea/ee/ei/ie/oa/oe/oo/ou/uu/ui
+<
 Before the first slash is the set of characters that are counted for one
 syllable, also when repeated and mixed, until the next character that is not
 in this set.  After the slash come sequences of characters that are counted
@@ -1389,19 +1391,18 @@ UNLIMITED COMPOUNDING					*spell-NOBREAK*
 
 For some languages, such as Thai, there is no space in between words.  This
 looks like all words are compounded.  To specify this use the NOBREAK item in
-the affix file, without arguments:
-	NOBREAK ~
-
+the affix file, without arguments: >
+	NOBREAK
+<
 Vim will try to figure out where one word ends and a next starts.  When there
 are spelling mistakes this may not be quite right.
 
 
 							*spell-COMMON*
 Common words can be specified with the COMMON item.  This will give better
-suggestions when editing a short file.  Example:
-
-	COMMON  the of to and a in is it you that he she was for on are ~
-
+suggestions when editing a short file.  Example: >
+	COMMON  the of to and a in is it you that he she was for on are
+<
 The words must be separated by white space, up to 25 per line.
 When multiple regions are specified in a ":mkspell" command the common words
 for all regions are combined and used for all regions.
@@ -1410,28 +1411,27 @@ for all regions are combined and used for all regions.
 This item indicates that splitting a word to make suggestions is not a good
 idea.  Split-word suggestions will appear only when there are few similar
 words.
-
-	NOSPLITSUGS ~
-
+>
+	NOSPLITSUGS
+<
 							*spell-NOSUGGEST*
 The flag specified with NOSUGGEST can be used for words that will not be
 suggested.  Can be used for obscene words.
-
-	NOSUGGEST % ~
-
+>
+	NOSUGGEST %
+<
 
 REPLACEMENTS						*spell-REP*
 
 In the affix file REP items can be used to define common mistakes.  This is
 used to make spelling suggestions.  The items define the "from" text and the
-"to" replacement.  Example:
-
-	REP 4 ~
-	REP f ph ~
-	REP ph f ~
-	REP k ch ~
-	REP ch k ~
-
+"to" replacement.  Example: >
+	REP 4
+	REP f ph
+	REP ph f
+	REP k ch
+	REP ch k
+<
 The first line specifies the number of REP lines following.  Vim ignores the
 number, but it must be there (for compatibility with Myspell).
 
@@ -1439,21 +1439,19 @@ Don't include simple one-character replacements or swaps.  Vim will try these
 anyway.  You can include whole words if you want to, but you might want to use
 the "file:" item in 'spellsuggest' instead.
 
-You can include a space by using an underscore:
-
-	REP the_the the ~
-
+You can include a space by using an underscore: >
+	REP the_the the
+<
 
 SIMILAR CHARACTERS					*spell-MAP* *E783*
 
 In the affix file MAP items can be used to define letters that are very much
 alike.  This is mostly used for a letter with different accents.  This is used
-to prefer suggestions with these letters substituted.  Example:
-
-	MAP 2 ~
-	MAP eéëêè ~
-	MAP uüùúû ~
-
+to prefer suggestions with these letters substituted.  Example: >
+	MAP 2
+	MAP eéëêè
+	MAP uüùúû
+<
 The first line specifies the number of MAP lines following.  Vim ignores the
 number, but the line must be there.
 
@@ -1469,10 +1467,9 @@ suggestions by their sound-a-like form quickly.  At the cost of a lot of
 memory (the amount depends on the number of words, |:mkspell| will display an
 estimate when it's done).
 
-To avoid producing a .sug file use this item in the affix file:
-
-	NOSUGFILE ~
-
+To avoid producing a .sug file use this item in the affix file: >
+	NOSUGFILE
+<
 Users can simply omit the .sug file if they don't want to use it.
 
 
@@ -1507,11 +1504,10 @@ both SAL items and simple soundfolding.
 
 There are two items required: one to specify the characters that are mapped
 and one that specifies the characters they are mapped to.  They must have
-exactly the same number of characters.  Example:
-
-    SOFOFROM abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ~
-    SOFOTO   ebctefghejklnnepkrstevvkesebctefghejklnnepkrstevvkes ~
-
+exactly the same number of characters.  Example: >
+    SOFOFROM abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
+    SOFOTO   ebctefghejklnnepkrstevvkesebctefghejklnnepkrstevvkes
+<
 In the example all vowels are mapped to the same character 'e'.  Another
 method would be to leave out all vowels.  Some characters that sound nearly
 the same and are often mixed up, such as 'm' and 'n', are mapped to the same

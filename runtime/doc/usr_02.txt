@@ -213,70 +213,63 @@ DELETING A LINE BREAK
 
 In Vim you can join two lines together, which means that the line break
 between them is deleted.  The "J" command does this.
-   Take these two lines:
-
-	A young intelligent ~
-	turtle ~
-
-Move the cursor to the first line and press "J":
-
-	A young intelligent turtle ~
-
+   Take these two lines: >
+	A young intelligent
+	turtle
+<
+Move the cursor to the first line and press "J": >
+	A young intelligent turtle
+<
 ==============================================================================
 *02.5*	Undo and Redo
 
 Suppose you delete too much.  Well, you can type it in again, but an easier
 way exists.  The "u" command undoes the last edit.  Take a look at this in
 action: After using "dd" to delete the first line, "u" brings it back.
-   Another one: Move the cursor to the A in the first line:
-
-	A young intelligent turtle ~
-
-Now type xxxxxxx to delete "A young".  The result is as follows:
-
-	 intelligent turtle ~
-
+   Another one: Move the cursor to the A in the first line: >
+	A young intelligent turtle
+<
+Now type xxxxxxx to delete "A young".  The result is as follows: >
+	 intelligent turtle
+<
 Type "u" to undo the last delete.  That delete removed the g, so the undo
 restores the character.
-
-	g intelligent turtle ~
-
-The next "u" command restores the next-to-last character deleted:
-
-	ng intelligent turtle ~
-
-The next "u" command gives you the u, and so on:
-
-	ung intelligent turtle ~
-	oung intelligent turtle ~
-	young intelligent turtle ~
-	 young intelligent turtle ~
-	A young intelligent turtle ~
-
+>
+	g intelligent turtle
+<
+The next "u" command restores the next-to-last character deleted: >
+	ng intelligent turtle
+<
+The next "u" command gives you the u, and so on: >
+	ung intelligent turtle
+	oung intelligent turtle
+	young intelligent turtle
+	 young intelligent turtle
+	A young intelligent turtle
+<
 REDO
 
 If you undo too many times, you can press CTRL-R (redo) to reverse the
 preceding command.  In other words, it undoes the undo.  To see this in
-action, press CTRL-R twice.  The character A and the space after it disappear:
-
-	young intelligent turtle ~
-
+action, press CTRL-R twice.  The character A and the space after it disappear: >
+	young intelligent turtle
+<
 There's a special version of the undo command, the "U" (undo line) command.
 The undo line command undoes all the changes made on the last line that was
 edited.  Typing this command twice cancels the preceding "U".
-
-	A very intelligent turtle ~
+>
+	A very intelligent turtle
 	  xxxx				Delete very
 
-	A intelligent turtle ~
+	A intelligent turtle
 		      xxxxxx		Delete turtle
 
-	A intelligent ~
+	A intelligent
 					Restore line with "U"
-	A very intelligent turtle ~
+	A very intelligent turtle
 					Undo "U" with "u"
-	A intelligent ~
-
+	A intelligent
+<
 The "U" command is a change by itself, which the "u" command undoes and CTRL-R
 redoes.  This might be a bit confusing.  Don't worry, with "u" and CTRL-R you
 can go to any of the situations you had.  More about that in section |32.2|.
@@ -295,41 +288,40 @@ That works fine; but what happens if you want to add stuff to the end of the
 line?  For that you need to insert text after the cursor.  This is done with
 the "a" (append) command.
    For example, to change the line
-
-	and that's not saying much for the turtle. ~
+>
+	and that's not saying much for the turtle.
+<
 to
-	and that's not saying much for the turtle!!! ~
-
+>
+	and that's not saying much for the turtle!!!
+<
 move the cursor over to the dot at the end of the line.  Then type "x" to
 delete the period.  The cursor is now positioned at the end of the line on the
 e in turtle.  Now type >
 
 	a!!!<Esc>
 
-to append three exclamation points after the e in turtle:
-
-	and that's not saying much for the turtle!!! ~
-
+to append three exclamation points after the e in turtle: >
+	and that's not saying much for the turtle!!!
+<
 
 OPENING UP A NEW LINE
 
 The "o" command creates a new, empty line below the cursor and puts Vim in
 Insert mode.  Then you can type the text for the new line.
-   Suppose the cursor is somewhere in the first of these two lines:
-
-	A very intelligent turtle ~
-	Found programming Unix a hurdle ~
-
+   Suppose the cursor is somewhere in the first of these two lines: >
+	A very intelligent turtle
+	Found programming Unix a hurdle
+<
 If you now use the "o" command and type new text: >
 
 	oThat liked using Vim<Esc>
 
-The result is:
-
-	A very intelligent turtle ~
-	That liked using Vim ~
-	Found programming Unix a hurdle ~
-
+The result is: >
+	A very intelligent turtle
+	That liked using Vim
+	Found programming Unix a hurdle
+<
 The "O" command (uppercase) opens a line above the cursor.
 
 
@@ -370,10 +362,9 @@ are the colon (:), which enters Command-line mode; the q command, which tells
 the editor to quit; and the override command modifier (!).
    The override command modifier is needed because Vim is reluctant to throw
 away changes.  If you were to just type ":q", Vim would display an error
-message and refuse to exit:
-
-	E37: No write since last change (use ! to override) ~
-
+message and refuse to exit: >
+	E37: No write since last change (use ! to override)
+<
 By specifying the override, you are in effect telling Vim, "I know that what
 I'm doing looks stupid, but I really want to do this."
 
@@ -474,10 +465,9 @@ in Insert mode, for instance, use this command: >
 
 	:help i_<Up>
 
-If you see an error message that you don't understand, for example:
-
-	E37: No write since last change (use ! to override) ~
-
+If you see an error message that you don't understand, for example: >
+	E37: No write since last change (use ! to override)
+<
 You can use the error ID at the start to find help about it: >
 
 	:help E37

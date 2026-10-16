@@ -6,6 +6,10 @@ Nvim documentation
 If you are new to Nvim, see |nvim-intro|. (To go to a help link, move the
 cursor to it and hit CTRL-], or right-click with mouse. Try it here: |bars|.)
 
+This documentation is available online:
+- HTML: https://neovim.io/doc/user/
+- PDF: https://neovim.io/doc/user/nvim-help.pdf
+
 ------------------------------------------------------------------------------
 About Nvim						*reference_toc* *Q_ct*
 

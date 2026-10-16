@@ -57,29 +57,30 @@ The Number and String types are converted automatically, depending on how they
 are used.
 
 Conversion from a Number to a String is by making the ASCII representation of
-the Number.  Examples:
-	Number 123	-->	String "123" ~
-	Number 0	-->	String "0" ~
-	Number -1	-->	String "-1" ~
+the Number.  Examples: >
+	Number 123	-->	String "123"
+	Number 0	-->	String "0"
+	Number -1	-->	String "-1"
+<
 							*octal*
 Conversion from a String to a Number is done by converting the first digits to
 a number.  Hexadecimal "0xf9", Octal "017" or "0o17", and Binary "0b10"
 numbers are recognized.  If the String doesn't start with digits, the result
-is zero. Examples:
-	String "456"	-->	Number 456 ~
-	String "6bar"	-->	Number 6 ~
-	String "foo"	-->	Number 0 ~
-	String "0xf1"	-->	Number 241 ~
-	String "0100"	-->	Number 64 ~
-	String "0o100"	-->	Number 64 ~
-	String "0b101"	-->	Number 5 ~
-	String "-8"	-->	Number -8 ~
-	String "+8"	-->	Number 0 ~
-
+is zero. Examples: >
+	String "456"	-->	Number 456
+	String "6bar"	-->	Number 6
+	String "foo"	-->	Number 0
+	String "0xf1"	-->	Number 241
+	String "0100"	-->	Number 64
+	String "0o100"	-->	Number 64
+	String "0b101"	-->	Number 5
+	String "-8"	-->	Number -8
+	String "+8"	-->	Number 0
+<
 To force conversion from String to Number, add zero to it: >
 	:echo "0100" + 0
-<	64 ~
-
+	64
+<
 To avoid a leading zero to cause octal conversion, or for using a different
 base, use |str2nr()|.
 
@@ -1004,7 +1005,8 @@ if it evaluates to true.
 			*expr-<?*  *expr-<=?* *expr-=~?* *expr-!~?*
 			*expr-is* *expr-isnot* *expr-is#* *expr-isnot#*
 			*expr-is?* *expr-isnot?*
-		use 'ignorecase'    match case	   ignore case ~
+
+ 			'ignorecase'	match case	ignore case ~
 equal			==		==#		==?
 not equal		!=		!=#		!=?
 greater than		>		>#		>?
@@ -1331,6 +1333,7 @@ number			number constant			*expr-number*
 			*0x* *hex-number* *0o* *octal-number* *0b* *binary-number*
 Integer numbers can be written in multiple forms:
 
+	Notation	Base ~
 	{N}		decimal
 	0x{N} or 0X{N}	hexadecimal
 	0o{N} or 0O{N}	octal
@@ -1374,6 +1377,8 @@ Examples:
 	3.1416e+88
 
 These are INVALID:
+
+	Example		Problem ~
 	3.		empty {M}
 	1e40		missing .{M}
 
@@ -1414,6 +1419,8 @@ string					*string* *String* *expr-string* *E114*
 Note that double quotes are used.
 
 A string constant accepts these special characters:
+
+Escape	Meaning ~
 \...	three-digit octal number (e.g., "\316")
 \..	two-digit octal number (must be followed by non-digit)
 \.	one-digit octal number (must be followed by non-digit)
@@ -1489,15 +1496,17 @@ closing brace '}' will result in an error.
 
 Examples: >
 	let your_name = input("What's your name? ")
-<	What's your name?  Peter ~
+	What's your name?  Peter
+<
 >
 	echo
 	echo $"Hello, {your_name}!"
-<	Hello, Peter! ~
+	Hello, Peter!
+<
 >
 	echo $"The square root of {{9}} is {sqrt(9)}"
-<	The square root of {9} is 3.0 ~
-
+	The square root of {9} is 3.0
+<
 						*string-offset-encoding*
 A string consists of multiple characters.  UTF-8 uses one byte for ASCII
 characters, two bytes for other latin characters and more bytes for other
@@ -1528,6 +1537,7 @@ a string respectively.
 ------------------------------------------------------------------------------
 option						*expr-option* *E112* *E113*
 
+Expression		Value ~
 &option			option value, local value if possible
 &g:option		global option value
 &l:option		local option value
@@ -2135,6 +2145,8 @@ text...
 :let {var-name}	...	List the value of variable {var-name}.  Multiple
 			variable names may be given.  Special names recognized
 			here:				*E738*
+
+			  Prefix	Scope ~
 			  g:	global variables
 			  b:	local buffer variables
 			  w:	local window variables
@@ -3008,10 +3020,9 @@ the original error exception value, you can use the |:echoerr| command: >
 	:  echo v:exception
 	:endtry
 
-This code displays
-
-	Vim(echoerr):Vim:E492: Not an editor command:	asdf ~
-
+This code displays >
+	Vim(echoerr):Vim:E492: Not an editor command:	asdf
+<
 
 CLEANUP CODE						*try-finally*
 
@@ -3833,7 +3844,6 @@ It returns |TRUE| or |FALSE| to indicate whether the plugin should run the given
 executable.  It takes the following arguments:
 
 	argument	type ~
-
 	filetype	string
 	executable	string
 

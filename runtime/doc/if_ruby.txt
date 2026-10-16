@@ -127,6 +127,7 @@ VIM::Buffer objects represent vim buffers.
 
 Class Methods:
 
+Method		Description ~
 current		Returns the current buffer object.
 count		Returns the number of buffers.
 self[{n}]	Returns the buffer object for the number {n}.  The first
@@ -157,6 +158,7 @@ VIM::Window objects represent vim windows.
 
 Class Methods:
 
+Method		Description ~
 current		Returns the current window object.
 count		Returns the number of windows.
 self[{n}]	Returns the window object for the number {n}.  The first
@@ -179,6 +181,7 @@ cursor = [{row}, {col}]
 
 There are two global variables.
 
+Variable	Description ~
 $curwin		The current window object.
 $curbuf		The current buffer object.
 

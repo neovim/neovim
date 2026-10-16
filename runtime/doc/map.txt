@@ -514,6 +514,8 @@ When listing mappings the characters in the first two columns are:
 	t	Terminal-Job
 
 Just before the {rhs} a special character can appear:
+
+	Char	Meaning ~
 	*	indicates that it is not remappable
 	&	indicates that only script-local mappings are remappable
 	@	indicates a buffer-local mapping
@@ -660,6 +662,7 @@ use `|"`, since this starts a new, empty command with a comment.
 Since the '|' character is used to separate a map command from the next
 command, you will have to do something special to include  a '|' in {rhs}.
 There are three methods:
+
    use	     works when			   example	~
    <Bar>     always			   :map _l :!ls <Bar> more^M
    \|	     'b' is not in 'cpoptions'	   :map _l :!ls \| more^M

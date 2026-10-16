@@ -62,6 +62,8 @@ For inserting text see |insert.txt|.
 :[range]d[elete] [x]	Delete [range] lines (default: current line) [into
 			register x].
 			Note these weird abbreviations:
+
+			  Command	Meaning ~
 			  :dl		delete and list
 			  :dell		idem
 			  :delel	idem
@@ -692,25 +694,27 @@ The flags that you can use for the substitute commands:
 
 [c]	Confirm each substitution.  Vim highlights the matching string (with
 	|hl-IncSearch|).  You can type:				*:s_c*
-	    'y'	    to substitute this match
-	    'l'	    to substitute this match and then quit ("last")
-	    'n'	    to skip this match
-	    <Esc>   to quit substituting
-	    'a'	    to substitute this and all remaining matches
-	    'q'	    to quit substituting
-	    CTRL-E  to scroll the screen up
-	    CTRL-Y  to scroll the screen down
+
+	    Key		Action ~
+	    'y'		to substitute this match
+	    'l'		to substitute this match and then quit ("last")
+	    'n'		to skip this match
+	    <Esc>	to quit substituting
+	    'a'		to substitute this and all remaining matches
+	    'q'		to quit substituting
+	    CTRL-E	to scroll the screen up
+	    CTRL-Y	to scroll the screen down
 
 							*:s_e*
 [e]     When the search pattern fails, do not issue an error message and, in
 	particular, continue in maps as if no error occurred.  This is most
 	useful to prevent the "No match" error from breaking a mapping.  Vim
 	does not suppress the following error messages, however:
-		Regular expressions can't be delimited by letters
-		\ should be followed by /, ? or &
-		No previous substitute regular expression
-		Trailing characters
-		Interrupted
+	- Regular expressions can't be delimited by letters
+	- \ should be followed by /, ? or &
+	- No previous substitute regular expression
+	- Trailing characters
+	- Interrupted
 
 							*:s_g*
 [g]	Replace all occurrences in the line.  Without this argument,
@@ -812,7 +816,7 @@ Otherwise these characters in {string} have a special meaning:
 				pair of ()
 *s~*		~	\~	replaced with the {string} of the previous
 				substitute
-*s/\~*		\~	~	replaced with ~
+*s/\~*		\~	~	replaced with `~`
 *s/\u*		\u	\u	next character made uppercase
 *s/\U*		\U	\U	following characters made uppercase, until \E
 *s/\l*		\l	\l	next character made lowercase
@@ -887,27 +891,30 @@ characters.  For example ":sce" works like ":s ce".  The table lists the
 possible combinations, not all flags are possible, because the command is
 short for another command.
 
-     List of :substitute commands
-     |      c    e    g    i    I    n    p    l    r
-     | c  :sc  :sce :scg :sci :scI :scn :scp :scl
-     | e
-     | g  :sgc :sge :sg  :sgi :sgI :sgn :sgp :sgl :sgr
-     | i  :sic :sie      :si  :siI :sin :sip      :sir
-     | I  :sIc :sIe :sIg :sIi :sI  :sIn :sIp :sIl :sIr
-     | n
-     | p
-     | l
-     | r  :src      :srg :sri :srI :srn :srp :srl :sr
+List of :substitute commands:
+
+	 	c	e	g	i	I	n	p	l	r ~
+	c	:sc	:sce	:scg	:sci	:scI	:scn	:scp	:scl
+	e	 
+	g	:sgc	:sge	:sg	:sgi	:sgI	:sgn	:sgp	:sgl	:sgr
+	i	:sic	:sie	 	:si	:siI	:sin	:sip	 	:sir
+	I	:sIc	:sIe	:sIg	:sIi	:sI	:sIn	:sIp	:sIl	:sIr
+	n	 
+	p	 
+	l	 
+	r	:src	 	:srg	:sri	:srI	:srn	:srp	:srl	:sr
 
 Exceptions:
-     :scr  is  `:scriptnames`
-     :se   is  `:set`
-     :sig  is  `:sign`
-     :sil  is  `:silent`
-     :sn   is  `:snext`
-     :sp   is  `:split`
-     :sl   is  `:sleep`
-     :sre  is  `:srewind`
+
+	Abbreviation	Command ~
+	:scr		`:scriptnames`
+	:se		`:set`
+	:sig		`:sign`
+	:sil		`:silent`
+	:sn		`:snext`
+	:sp		`:split`
+	:sl		`:sleep`
+	:sre		`:srewind`
 
 
 Substitute with an expression			*sub-replace-expression*
@@ -1756,11 +1763,13 @@ B	When joining lines, don't insert a space between two multibyte
 	"utf-8".
 							*fo-j*
 j	Where it makes sense, remove a comment leader when joining lines.  For
-	example, joining:
-		int i;   // the index ~
-			 // in the list ~
-	Becomes:
-		int i;   // the index in the list ~
+	example, joining: >
+		int i;   // the index
+			 // in the list
+<
+	Becomes: >
+		int i;   // the index in the list
+<
 							*fo-p*
 p	Don't break lines at single spaces that follow periods.  This is
 	intended to complement 'joinspaces' and |cpo-J|, for prose with
@@ -1776,6 +1785,7 @@ p	Don't break lines at single spaces that follow periods.  This is
 
 
 With 't' and 'c' you can specify when Vim performs auto-wrapping:
+
 value	action	~
 ""	no automatic formatting (you can use "gq" for manual formatting)
 "t"	automatic formatting of text, but not comments

@@ -179,8 +179,8 @@ the editor.
 
 	KEY		DESCRIPTION ~
 	`cursor_shape`:	"block", "horizontal", "vertical"
-	`cell_percentage`: Cell % occupied by the cursor.
-	`blinkwait`, `blinkon`, `blinkoff`: See |cursor-blinking|.
+	`cell_percentage`:	Cell % occupied by the cursor.
+	`blinkwait`, `blinkon`, `blinkoff`:	See |cursor-blinking|.
 	`attr_id`:	Cursor attribute id (defined by `hl_attr_define`).
 			When attr_id is 0, the background and foreground
 			colors should be swapped.
@@ -193,6 +193,7 @@ the editor.
 
 	The following keys are deprecated:
 
+	Key		Description ~
 	`hl_id`:	Use `attr_id` instead.
 	`id_lm`:	Use `attr_id_lm` instead.
 
@@ -332,6 +333,7 @@ numerical highlight ids to the actual attributes.
 	attributes specified by the `rgb_attr` and `cterm_attr` dicts, with the
 	following (all optional) keys.
 
+	Key			Description ~
 	`foreground`:		foreground color.
 	`background`:		background color.
 	`special`:		color to use for various underlines, when
@@ -507,6 +509,7 @@ is not active. New UIs should implement |ui-linegrid| instead.
 	to its default value. Color defaults are set by the `update_fg` etc
 	updates. All boolean keys default to false.
 
+	Key		Description ~
 	`foreground`:	foreground color.
 	`background`:	background color.
 	`special`:	color to use for various underlines, when present.
@@ -514,7 +517,7 @@ is not active. New UIs should implement |ui-linegrid| instead.
 			switched.
 	`italic`:	italic text.
 	`bold`:		bold text.
-	`strikethrough`:  struckthrough text.
+	`strikethrough`:	struckthrough text.
 	`underline`:	underlined text. The line has `special` color.
 	`undercurl`:	undercurled text. The curl has `special` color.
 	`underdouble`:	double underlined text. The lines have `special` color.
@@ -587,17 +590,16 @@ The `info` parameter in `hl_attr_define` contains a semantic description of
 the highlights. Because highlight groups can be combined, this is an array
 where the highest-priority item is last. Each item is a dict with these keys:
 
-    `kind`:	always present. One of the following values:
-	"ui":       Builtin UI highlight. |highlight-groups|
-	"syntax":   Highlight applied to a buffer by a syntax declaration or
-		    other runtime/plugin functionality such as
-		    |nvim_buf_set_extmark()|
-	"terminal": highlight from a process running in a |terminal-emulator|.
-		    Contains no further semantic information.
-    `ui_name`:	Highlight name from |highlight-groups|. Only for "ui" kind.
-    `hi_name`:	Name of the final |:highlight| group where the used
-		attributes are defined.
-    `id`:	Unique numeric id representing this item.
+• `kind`: always present. One of the following values:
+  • "ui": Builtin UI highlight. |highlight-groups|
+  • "syntax": Highlight applied to a buffer by a syntax declaration or other
+    runtime/plugin functionality such as |nvim_buf_set_extmark()|
+  • "terminal": highlight from a process running in a |terminal-emulator|.
+    Contains no further semantic information.
+• `ui_name`: Highlight name from |highlight-groups|. Only for "ui" kind.
+• `hi_name`: Name of the final |:highlight| group where the used attributes
+  are defined.
+• `id`: Unique numeric id representing this item.
 
 Note: "ui" items will have both `ui_name` and `hi_name` present. These can
 differ, because the builtin group was linked to another group |:hi-link| , or
@@ -850,71 +852,70 @@ must handle.
 	Display a message to the user. Update (replace) any existing message
 	matching `id`.
 
-	kind
-	    Name indicating the message kind:
-		"" (empty)	Unknown (consider a |feature-request|)
-		"empty"		Empty message (`:echo ""`), with empty `content`.
-				Should clear messages sharing the 'cmdheight'
-				area if it is the only message in a batch.
-		"confirm"	Message preceding a prompt (|:confirm|,
-				|confirm()|, |inputlist()|, |z=|, …)
-		"emsg"		Error (|errors|, internal error, |:throw|, …)
-		"echo"		|:echo| message
-		"echomsg"	|:echomsg| message
-		"echoerr"	|:echoerr| message
-		"completion"    |ins-completion-menu| message
-		"list_cmd"	List output for various commands (|:ls|, |:set|, …)
-		"lua_error"	Error in |:lua| code
-		"lua_print"	|print()| from |:lua| code
-		"progress"	Progress message emitted by |nvim_echo()|.
-				Internal progress messages use these ids:
-			          - `nvim.bufwrite "<filename>"`
-			          - `nvim.completion`
-			          - `nvim.indent`
-		"quickfix"	Quickfix navigation message
-		"rpc_error"	Error response from |rpcrequest()|
-		"search_cmd"	Entered search command
-		"search_count"	Search count message ("S" flag of 'shortmess')
-		"shell_cmd"	|:!cmd| executed command
-		"shell_err"	|:!cmd| shell stderr output
-		"shell_out"	|:!cmd| shell stdout output
-		"shell_ret"	|:!cmd| shell return code
-		"undo"		|:undo| and |:redo| message
-		"verbose"	'verbose' message
-		"wildlist"	'wildmode' "list" message
-		"wmsg"		Warning ("search hit BOTTOM", |W10|, …)
-	    New kinds may be added in the future; clients should treat unknown
-	    kinds as the empty kind.
+	• kind
+	    Name indicating the message kind. New kinds may be added in the
+	    future; clients should treat unknown kinds as the empty kind.
+	      • "" (empty): Unknown (consider a |feature-request|)
+	      • "empty": Empty message (`:echo ""`), with empty `content`. Should
+	        clear messages sharing the 'cmdheight' area if it is the only
+	        message in a batch.
+	      • "confirm": Message preceding a prompt (|:confirm|, |confirm()|,
+	        |inputlist()|, |z=|, …)
+	      • "emsg": Error (|errors|, internal error, |:throw|, …)
+	      • "echo": |:echo| message
+	      • "echomsg": |:echomsg| message
+	      • "echoerr": |:echoerr| message
+	      • "completion": |ins-completion-menu| message
+	      • "list_cmd": List output for various commands (|:ls|, |:set|, …)
+	      • "lua_error": Error in |:lua| code
+	      • "lua_print": |print()| from |:lua| code
+	      • "progress": Progress message emitted by |nvim_echo()|. Internal
+	        progress messages use these ids:
+		• `nvim.bufwrite "<filename>"`
+		• `nvim.completion`
+		• `nvim.indent`
+	      • "quickfix": Quickfix navigation message
+	      • "rpc_error": Error response from |rpcrequest()|
+	      • "search_cmd": Entered search command
+	      • "search_count": Search count message ("S" flag of 'shortmess')
+	      • "shell_cmd": |:!cmd| executed command
+	      • "shell_err": |:!cmd| shell stderr output
+	      • "shell_out": |:!cmd| shell stdout output
+	      • "shell_ret": |:!cmd| shell return code
+	      • "undo": |:undo| and |:redo| message
+	      • "verbose": 'verbose' message
+	      • "wildlist": 'wildmode' "list" message
+	      • "wmsg": Warning ("search hit BOTTOM", |W10|, …)
 
-	content
+	• content
 	    Array of `[attr_id, text_chunk, hl_id]` tuples, building up the
 	    message text of chunks with different highlights. No extra spacing
 	    should be added between chunks, the `text_chunk` by itself
 	    contains any necessary whitespace. Messages can contain line
 	    breaks "\n".
 
-	replace_last
+	• replace_last
 	    Decides how multiple messages should be displayed:
-	    false: Display the message together with all previous messages
-		   that are still visible.
-	    true:  Replace the message in the most-recent `msg_show` call,
-		   but any other visible message should still remain.
+	      • false: Display the message together with all previous messages
+	        that are still visible.
+	      • true: Replace the message in the most-recent `msg_show` call, but
+	        any other visible message should still remain.
 
-	history
+	• history
 	    True if the message was added to the |:messages| history.
 
-	append
+	• append
 	    True if the message should be appended to the previous message,
 	    rather than started on a new line. Is set for |:echon|.
 
-	id
+	• id
 	    Unique identifier for the message. It can either be an integer or
 	    string. A (visible) message with the same id should be replaced.
 
-	trigger
+	• trigger
 	    Type of action that triggered the message:
-		"" (empty)      Unknown (consider a |feature-request|)
-		"typed_cmd"     Interactively typed command on the |cmdline|
+	      • "" (empty): Unknown (consider a |feature-request|)
+	      • "typed_cmd": Interactively typed command on the |cmdline|
 
 ["msg_clear"] ~
 	Clear all messages currently displayed by "msg_show", emitted after

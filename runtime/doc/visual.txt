@@ -80,12 +80,12 @@ CTRL-Z the highlighting stops and the editor is suspended or a new shell is
 started |CTRL-Z|.
 
 	      new mode after typing:		*v_v* *v_CTRL-V* *v_V*
-old mode	     "v"	      "CTRL-V"		     "V"	~
 
-Normal		    Visual	   blockwise Visual	  linewise Visual
-Visual		    Normal	   blockwise Visual	  linewise Visual
-blockwise Visual    Visual	   Normal		  linewise Visual
-linewise Visual     Visual	   blockwise Visual	  Normal
+old mode		"v"	"CTRL-V"		"V" ~
+Normal			Visual	blockwise Visual	linewise Visual
+Visual			Normal	blockwise Visual	linewise Visual
+blockwise Visual	Visual	Normal			linewise Visual
+linewise Visual		Visual	blockwise Visual	Normal
 
 						*gv* *v_gv* *reselect-Visual*
 gv			Starts Visual mode with the previous Visual area and
@@ -219,6 +219,8 @@ the end in another.  You can then use <RightMouse> (or <S-LeftMouse> when
 4. Operating on the Visual area				*visual-operators*
 
 The operators that can be used are:
+
+	Key	Action						See ~
 	~	switch case					|v_~|
 	d	delete						|v_d|
 	c	change (4)					|v_c|
@@ -230,6 +232,8 @@ The operators that can be used are:
 	gq	format lines to 'textwidth' length (1)		|v_gq|
 
 The objects that can be used are:
+
+	Key	Object						See ~
 	aw	a word (with white space)			|v_aw|
 	iw	inner word					|v_iw|
 	aW	a WORD (with white space)			|v_aW|
@@ -258,6 +262,8 @@ The objects that can be used are:
 	i`	inner string in backticks			|v_i`|
 
 Additionally the following commands can be used:
+
+	Key	Action						See ~
 	:	start Ex command for highlighted lines (1)	|v_:|
 	r	change (4)					|v_r|
 	s	change						|v_s|
@@ -431,6 +437,8 @@ Here is an example, to replace the selected text with the output of "date": >
 need to remove the 'B' flag from 'cpoptions')
 
 What this does is:
+
+Key		Action ~
 <Esc>		stop Visual mode
 `>		go to the end of the Visual area
 a<CR><Esc>	break the line after the Visual area

@@ -431,15 +431,16 @@ use the location list.
 			List all errors.
 
 :cl[ist]! +{count}	List the current and next {count} error lines.  This
+>
 			is useful to see unrecognized lines after the current
 			one.  For example, if ":clist" shows:
-	8384 testje.java:252: error: cannot find symbol ~
+	8384 testje.java:252: error: cannot find symbol
 			Then using ":cl! +3" shows the reason:
-	8384 testje.java:252: error: cannot find symbol ~
-	8385:   ZexitCode = Fmainx(); ~
-	8386:               ^ ~
-	8387:   symbol:   method Fmainx() ~
-
+	8384 testje.java:252: error: cannot find symbol
+	8385:   ZexitCode = Fmainx();
+	8386:               ^
+	8387:   symbol:   method Fmainx()
+<
 :lli[st] [from] [, [to]]				*:lli* *:llist*
 			Same as ":clist", except the location list for the
 			current window is used instead of the quickfix list.
@@ -2033,11 +2034,10 @@ match occurs.
 							*efm-%>*
 The %> item can be used to avoid trying patterns that appear earlier in
 'errorformat'.  This is useful for patterns that match just about anything.
-For example, if the error looks like this:
-
-	Error in line 123 of foo.c: ~
-	unknown variable "i" ~
-
+For example, if the error looks like this: >
+	Error in line 123 of foo.c:
+	unknown variable "i"
+<
 This can be found with: >
 	:set efm=xxx,%E%>Error in line %l of %f:,%Z%m
 Where "xxx" has a pattern that would also match the second line.
@@ -2101,6 +2101,8 @@ Ignoring and using whole messages			*efm-ignore*
 
 The codes '+' or '-' can be combined with the uppercase codes above; in that
 case they have to precede the letter, e.g. '%+A' or '%-G':
+
+	Prefix		Meaning ~
 	%-		do not include the matching multi-line in any output
 	%+		include the whole matching line in the %m error string
 
@@ -2168,6 +2170,7 @@ For example, the format of the output from the Amiga Aztec compiler is:
 
 	filename>linenumber:columnnumber:errortype:errornumber:errormessage
 
+	Field		Meaning ~
 	filename	name of the file in which the error was detected
 	linenumber	line number where the error was detected
 	columnnumber	column number where the error was detected
@@ -2480,6 +2483,7 @@ to a Vim function.  This function will be called with a dict argument and
 should return a List of strings to be displayed in the quickfix or location
 list window.  The dict argument will have the following fields:
 
+    Key		Description ~
     quickfix	set to 1 when called for a quickfix list and 0 when called for
 		a location list.
     winid	for a location list, set to the id of the window with the
