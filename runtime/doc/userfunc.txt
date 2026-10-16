@@ -11,8 +11,7 @@ This is introduced in section |41.7| of the user manual.
 				      Type |gO| to see the table of contents.
 
 ==============================================================================
-
-1. Defining a function ~
+1. Defining a function
 						*define-function*
 New functions can be defined.  These can be called just like builtin
 functions.  The function executes a sequence of Ex commands.  Normal mode
@@ -302,8 +301,7 @@ This function can then be called with: >
   :endif
 <
 ==============================================================================
-
-2. Calling a function ~
+2. Calling a function
 						*:cal* *:call* *E107* *E117*
 :[range]cal[l] {name}([arguments])
 		Call a function.  The name of the function and its arguments
@@ -358,8 +356,7 @@ is used as a method: >
 	let y = GetList()->Filter()
 <
 ==============================================================================
-
-3. Cleaning up in a function ~
+3. Cleaning up in a function
 							*:defe* *:defer*
 :defe[r] {func}({args})	Call {func} when the current function is done.
 			{args} are evaluated here.
@@ -417,8 +414,7 @@ No range is accepted.  The function can be a partial with extra arguments, but
 not with a dictionary. *E1300*
 
 ==============================================================================
-
-4. Automatically loading functions ~
+4. Automatically loading functions
 							*autoload-functions*
 When using many or large functions, it's possible to automatically define them
 only when they are used.  There are two methods: with an autocommand and with

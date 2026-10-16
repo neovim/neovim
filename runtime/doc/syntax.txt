@@ -3170,8 +3170,7 @@ vimrc file: >
 (Adapted from the html.vim help text by Claudio Fleiner <claudio@fleiner.com>)
 
 
-		*ft-posix-syntax* *ft-dash-syntax*
-SH		*ft-sh-syntax*  *ft-bash-syntax*  *ft-ksh-syntax*
+SH		*ft-sh-syntax*  *ft-bash-syntax*  *ft-ksh-syntax*  *ft-posix-syntax*  *ft-dash-syntax*
 
 This covers syntax highlighting for the older Unix (Bourne) sh, and newer
 shells such as bash, dash, posix, and the Korn shells.

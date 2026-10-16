@@ -1049,7 +1049,6 @@ access to objects with no metatables does not fail (it simply results
 in `nil`).
 
 "add":                                                                 *__add()*
-------
 the `+` operation.
 
 The function `getbinhandler` below defines how Lua chooses a handler for a
@@ -1078,29 +1077,23 @@ By using this function, the behavior of the `op1 + op2` is
        end
 <
 "sub":                                                                 *__sub()*
-------
 the `-` operation. Behavior similar to the "add" operation.
 
 "mul":                                                                 *__mul()*
-------
 the `*` operation. Behavior similar to the "add" operation.
 
 "div":                                                                 *__div()*
-------
 the `/` operation. Behavior similar to the "add" operation.
 
 "mod":                                                                 *__mod()*
-------
 the `%` operation. Behavior similar to the "add" operation, with the
 operation `o1 - floor(o1/o2)*o2` as the primitive operation.
 
 "pow":                                                                 *__pow()*
-------
 the `^` (exponentiation) operation. Behavior similar to the "add" operation,
 with the function `pow` (from the C math library) as the primitive operation.
 
 "unm":                                                                 *__unm()*
-------
 the unary `-` operation.
 >lua
        function unm_event (op)
@@ -1120,7 +1113,6 @@ the unary `-` operation.
        end
 <
 "concat":                                                           *__concat()*
----------
 the `..` (concatenation) operation.
 >lua
        function concat_event (op1, op2)
@@ -1138,7 +1130,6 @@ the `..` (concatenation) operation.
        end
 <
 "len":                                                                 *__len()*
-------
 the `#` operation.
 >lua
        function len_event (op)
@@ -1158,7 +1149,6 @@ the `#` operation.
        end
 <
 "eq":                                                                   *__eq()*
------
 the `==` operation.
 
 The function `getcomphandler` defines how Lua chooses a metamethod for
@@ -1194,7 +1184,6 @@ The "eq" event is defined as follows:
 `a ~= b` is equivalent to `not (a == b)`.
 
 "lt":                                                                   *__lt()*
------
 the `<` operation.
 >lua
        function lt_event (op1, op2)
@@ -1215,7 +1204,6 @@ the `<` operation.
 `a > b` is equivalent to `b < a`.
 
 "le":                                                                   *__le()*
------
 the `<=` operation.
 >lua
        function le_event (op1, op2)
@@ -1243,7 +1231,6 @@ metamethod, Lua tries the "lt", assuming that `a <= b` is equivalent
 to `not (b < a)`.
 
 "index":                                                             *__index()*
---------
 The indexing access `table[key]`.
 >lua
        function gettable_event (table, key)
@@ -1265,7 +1252,6 @@ The indexing access `table[key]`.
        end
 <
 "newindex":                                                       *__newindex()*
------------
 The indexing assignment `table[key] = value`.
 >lua
        function settable_event (table, key, value)
@@ -1287,7 +1273,6 @@ The indexing assignment `table[key] = value`.
        end
 <
 "call":                                                               *__call()*
--------
 called when Lua calls a value.
 >lua
        function function_event (func, ...)

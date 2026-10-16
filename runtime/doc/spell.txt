@@ -1020,7 +1020,7 @@ The basic format for the following lines is:
 
 {extra}		Optional extra text:
 		    # comment		Comment is ignored
-		    -			Hunspell uses this, ignored
+		    `-`			Hunspell uses this, ignored
 
 For PFX the fields are the same, but the {strip}, {add} and {condition} apply
 to the start of the word.
