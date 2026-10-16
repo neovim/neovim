@@ -273,7 +273,7 @@ local function apply_defaults(item, defaults, apply_kind)
       and vim.tbl_extend('force', defaults.data, item.data)
     or vim.nonnil(item.data, defaults.data)
 
-  if defaults.editRange then
+  if defaults.editRange and not item.textEdit then
     local textEdit = item.textEdit or {}
     item.textEdit = textEdit --[[@as lsp.TextEdit|lsp.InsertReplaceEdit]]
     textEdit.newText = textEdit.newText
