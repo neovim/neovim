@@ -1746,6 +1746,7 @@ static void mb_decompose(int c, int *c1, int *c2, int *c3)
 
 /// Compare two strings, ignore case if rex.reg_ic set.
 /// Return 0 if strings match, non-zero otherwise.
+/// "*n" is the byte length of s1 on entry and of the match in s2 on success.
 /// Correct the length "*n" when composing characters are ignored
 /// or when both utf codepoints are considered equal because of
 /// case-folding but have different length (e.g. 's' and 'ſ')
@@ -1774,7 +1775,7 @@ static int cstrncmp(char *s1, char *s2, int *n)
     n2 = (int)(p - s2);
 
     result = utf_strnicmp(s1, s2, (size_t)(*n), (size_t)n2);
-    if (result == 0 && n2 < *n) {
+    if (result == 0) {
       *n = n2;
     }
   }
@@ -7806,14 +7807,16 @@ static int bt_regexec_both(uint8_t *line, colnr_T startcol, proftime_T *tm, int 
     // the loop to avoid overhead of conditions.
     if (!rex.reg_ic) {
       while ((s = (uint8_t *)vim_strchr((char *)s, c)) != NULL) {
-        if (cstrncmp((char *)s, (char *)prog->regmust, &prog->regmlen) == 0) {
+        int len = prog->regmlen;
+        if (cstrncmp((char *)s, (char *)prog->regmust, &len) == 0) {
           break;  // Found it.
         }
         MB_PTR_ADV(s);
       }
     } else {
       while ((s = (uint8_t *)cstrchr((char *)s, c)) != NULL) {
-        if (cstrncmp((char *)s, (char *)prog->regmust, &prog->regmlen) == 0) {
+        int len = prog->regmlen;
+        if (cstrncmp((char *)s, (char *)prog->regmust, &len) == 0) {
           break;  // Found it.
         }
         MB_PTR_ADV(s);
@@ -14206,18 +14209,12 @@ static int skip_to_start(int c, colnr_T *colp)
 static int find_match_text(colnr_T *startcol, int regstart, uint8_t *match_text)
 {
   colnr_T col = *startcol;
-  const int regstart_len = utf_char2len(regstart);
 
   while (true) {
     bool match = true;
     uint8_t *s1 = match_text;
-    // skip regstart
-    int regstart_len2 = regstart_len;
-    if (regstart_len2 > 1 && utf_ptr2len((char *)rex.line + col) != regstart_len2) {
-      // because of case-folding of the previously matched text, we may need
-      // to skip fewer bytes than utf_char2len(regstart)
-      regstart_len2 = utf_char2len(utf_fold(regstart));
-    }
+    // Skip the input character: case-folding can change its byte length.
+    const int regstart_len2 = utf_ptr2len((char *)rex.line + col);
     uint8_t *s2 = rex.line + col + regstart_len2;
     while (*s1) {
       int c1_len = utf_ptr2len((char *)s1);
@@ -14249,7 +14246,7 @@ static int find_match_text(colnr_T *startcol, int regstart, uint8_t *match_text)
     }
 
     // Try finding regstart after the current match.
-    col += regstart_len;  // skip regstart
+    col += regstart_len2;  // skip the input character
     if (skip_to_start(regstart, &col) == FAIL) {
       break;
     }

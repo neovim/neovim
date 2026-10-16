@@ -649,6 +649,36 @@ func Test_combining_chars_in_collection()
   bw!
 endfunc
 
+func Test_search_literal_casefold_width()
+  CheckFeature multi_byte
+  let save_encoding = &encoding
+  try
+    set encoding=utf-8
+    new
+    for [text, literal, expected] in [
+          \ ['Ka', 'ka', 0], ['ſa', 'sa', 0],
+          \ ['ka', 'Ka', 0], ['sa', 'ſa', 0],
+          \ ['kxka', 'Ka', 2], ['ssa', 'ſa', 1],
+          \ ['KxKa', 'ka', 4], ['ſxſa', 'sa', 3],
+          \ ['KA', 'ka', 0], ['ka', 'ka', 0]]
+      call setline(1, text)
+      for engine in [0, 1, 2]
+        let pattern = '\%#=' .. engine .. literal
+        let context = string([text, literal, engine])
+        call assert_equal(expected, match(text, pattern .. '\c'), context)
+        call cursor(1, 1)
+        call assert_equal([1, expected + 1],
+              \ searchpos(pattern .. '\c', 'Wc'), context)
+        call assert_equal(stridx(text, literal),
+              \ match(text, pattern .. '\C'), context)
+      endfor
+    endfor
+  finally
+    bwipe!
+    let &encoding = save_encoding
+  endtry
+endfunc
+
 func Test_search_multibyte_match_ascii()
   new
   " Match single 'ſ' and 's'
@@ -755,6 +785,48 @@ func Test_recognize_char_class_multibyte_old_engine()
   " The positive classes must not match the multibyte character.
   call assert_equal('12', matchstr('12' .. mb, '\%#=1[0-9]\+'))
   call assert_equal('ab', matchstr('ab' .. mb, '\%#=1[a-zA-Z0-9_]\+'))
+endfunc
+
+func Test_regexp_casefold_match_length()
+  CheckFeature multi_byte
+  let save_encoding = &encoding
+  try
+    set encoding=utf-8
+    new
+    let longs = "\u017f"   " LATIN SMALL LETTER LONG S
+    let kelvin = "\u212a"  " KELVIN SIGN
+    for [text, literal] in [
+          \ [longs .. 'a', 'sa'], [kelvin .. 'a', 'ka'],
+          \ ['s' .. longs, 'ss'], ['k' .. kelvin, 'kk'],
+          \ ['sa', longs .. 'a'], ['ka', kelvin .. 'a'],
+          \ ['Sa', 'sa'], ["\u00e9a", "\u00c9a"]]
+      for engine in [1, 2]
+        let pat = '\%#=' .. engine .. '\c' .. literal
+        let context = string([text, literal, engine])
+        call assert_equal([text, 0, strlen(text)], matchstrpos(text, pat),
+              \ context)
+        call assert_equal('X', substitute(text, pat, 'X', ''), context)
+        call assert_equal('X', substitute(text, pat, 'X', 'g'), context)
+        call setline(1, text)
+        execute 's/' .. pat .. '/X/'
+        call assert_equal('X', getline(1), context)
+      endfor
+    endfor
+
+    " The helper also supplies the byte length consumed by backreferences.
+    for engine in [1, 2]
+      let pat = '\%#=' .. engine .. '\c\([sk]\)\1'
+      for text in ['s' .. longs, 'k' .. kelvin, longs .. 's', kelvin .. 'k']
+        call assert_equal([text, 0, strlen(text)], matchstrpos(text, pat),
+              \ string([text, engine]))
+        call assert_equal('X', substitute(text, pat, 'X', ''),
+              \ string([text, engine]))
+      endfor
+    endfor
+  finally
+    bwipe!
+    let &encoding = save_encoding
+  endtry
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
