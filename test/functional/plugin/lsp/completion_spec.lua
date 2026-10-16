@@ -1997,8 +1997,15 @@ describe("vim.lsp.completion: omnifunc + 'autocomplete'", function()
   end
 
   it('merges with other completions', function()
-    feed('ihillo<cr><esc>ih')
+    exec_lua(function()
+      vim.o.complete = 'o,b'
+      local buf = vim.api.nvim_create_buf(true, false)
+      vim.api.nvim_buf_set_name(buf, 'Xcompletion-source')
+      vim.api.nvim_buf_set_lines(buf, 0, -1, false, { 'hillo' })
+    end)
+    feed('ih')
     assert_matches({ 'hillo', 'hallo', 'hello' })
+    eq('Xcompletion-source', exec_lua('return vim.fn.complete_info({ "items" })').items[1].menu)
   end)
 
   it('fuzzy matches without duplication', function()
