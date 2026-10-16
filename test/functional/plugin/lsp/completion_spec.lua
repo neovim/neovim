@@ -1396,6 +1396,16 @@ describe('vim.lsp.completion: protocol', function()
     end)
     eq({ triggerKind = 3 }, exec_lua('return _G.contexts[2]'))
   end)
+
+  it('leaves no state behind for an invalid client ID', function()
+    t.matches(
+      'invalid client ID',
+      t.pcall_err(exec_lua, function()
+        vim.lsp.completion.enable(true, 999, 0, { autotrigger = true })
+      end)
+    )
+    eq({}, n.api.nvim_get_autocmds({ buf = 0, event = { 'LspDetach', 'InsertCharPre' } }))
+  end)
 end)
 
 describe('vim.lsp.completion: integration', function()
