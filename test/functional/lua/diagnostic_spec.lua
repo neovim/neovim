@@ -1383,6 +1383,36 @@ describe('vim.diagnostic', function()
       )
     end)
 
+    for _, case in ipairs({
+      { edit = 'insert', count = 2, start = { 1, 0 }, expected = { 5, 1 } },
+      { edit = 'delete', count = -2, start = { 5, 0 }, expected = { 1, 1 } },
+    }) do
+      it('uses logical positions for counted jumps after ' .. case.edit, function()
+        exec_lua(function(edit)
+          vim.diagnostic.set(_G.diagnostic_ns, 0, {
+            _G.make_error('First diagnostic', 1, 1, 1, 3),
+            _G.make_error('Second diagnostic', 3, 1, 3, 3),
+          })
+          if edit == 'insert' then
+            vim.api.nvim_buf_set_lines(0, 0, 0, false, { 'new line' })
+          else
+            vim.api.nvim_buf_set_lines(0, 0, 1, false, {})
+          end
+        end, case.edit)
+
+        local function jump(count)
+          return exec_lua(function(start, count0)
+            vim.api.nvim_win_set_cursor(0, start)
+            vim.diagnostic.jump({ count = count0, wrap = false })
+            return vim.api.nvim_win_get_cursor(0)
+          end, case.start, count)
+        end
+
+        eq(case.expected, jump(case.count))
+        eq(case.expected, jump(case.count > 0 and math.huge or -math.huge))
+      end)
+    end
+
     it('can filter by severity', function()
       eq(
         { 3, 0 },
