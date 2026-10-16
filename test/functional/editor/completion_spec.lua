@@ -1200,10 +1200,16 @@ describe('completion', function()
         pos = -1,
       },
     })
-    eq(
-      { completed_item = {}, width = 0, height = 2, size = 2, col = 0, row = 4, scrollbar = false },
-      eval('g:event')
-    )
+    eq({
+      completed_item = {},
+      width = 0,
+      height = 2,
+      size = 2,
+      col = 0,
+      row = 4,
+      scrollbar = false,
+      complete_leader = 'f',
+    }, eval('g:event'))
     feed('oob')
     screen:expect({
       grid = [[
@@ -1220,10 +1226,16 @@ describe('completion', function()
         pos = -1,
       },
     })
-    eq(
-      { completed_item = {}, width = 0, height = 1, size = 1, col = 0, row = 4, scrollbar = false },
-      eval('g:event')
-    )
+    eq({
+      completed_item = {},
+      width = 0,
+      height = 1,
+      size = 1,
+      col = 0,
+      row = 4,
+      scrollbar = false,
+      complete_leader = 'foob',
+    }, eval('g:event'))
     feed('<Esc>')
     screen:set_option('ext_popupmenu', false)
 
@@ -1238,10 +1250,16 @@ describe('completion', function()
       {1:~                                                           }|
       {5:-- Keyword completion (^N^P) }{19:Back at original}               |
     ]])
-    eq(
-      { completed_item = {}, width = 15, height = 2, size = 2, col = 0, row = 4, scrollbar = false },
-      eval('g:event')
-    )
+    eq({
+      completed_item = {},
+      width = 15,
+      height = 2,
+      size = 2,
+      col = 0,
+      row = 4,
+      scrollbar = false,
+      complete_leader = 'f',
+    }, eval('g:event'))
     feed('<C-N>')
     screen:expect([[
       foo                                                         |
@@ -1971,5 +1989,19 @@ describe('completion', function()
     eq(1, items[2].preselect)
     eq('(', items[3].commit_chars)
     eq({ nil, nil, nil }, { items[4].equal, items[4].preselect, items[4].commit_chars })
+  end)
+
+  it("reports the common prefix as complete_leader with 'longest'", function()
+    source([[
+      call setline(1, ['foobar', 'foobaz', ''])
+      set complete=. completeopt=menuone,longest
+      function! OnPumChange()
+        let g:leader = get(v:event, 'complete_leader', v:null)
+      endfunction
+      autocmd! CompleteChanged * :call OnPumChange()
+      call cursor(3, 1)
+    ]])
+    feed('Sfo<C-N>')
+    eq('fooba', eval('g:leader'))
   end)
 end)
