@@ -246,6 +246,8 @@ vim.tabpages						*python-tabpages*
 vim.current						*python-current*
 	An object providing access (via specific attributes) to various
 	"current" objects available in vim:
+
+		Object			Description			Type ~
 		vim.current.line	The current line (RW)		String
 		vim.current.buffer	The current buffer (RW)		Buffer
 		vim.current.window	The current window (RW)		Window
@@ -417,6 +419,8 @@ line numbers, which start from 1.  This is particularly relevant when dealing
 with marks (see below) which use vim line numbers.
 
 The buffer object attributes are:
+
+	Attribute	Description ~
 	b.vars		Dictionary-like object used to access
 			|buffer-variable|s.
 	b.options	Mapping object (supports item getting, setting and
@@ -483,6 +487,8 @@ can, of course, change as a result of slice assignments, line deletions, or
 the range.append() method).
 
 The range object attributes are:
+
+	Attribute	Description ~
 	r.start		Index of first line into the buffer
 	r.end		Index of last line into the buffer
 
@@ -515,6 +521,8 @@ You can manipulate window objects only through their attributes.  They have no
 methods, and no sequence or other interface.
 
 Window attributes are:
+
+	Attribute		Description ~
 	buffer (read-only)	The buffer displayed in this window
 	cursor (read-write)	The current cursor position in the window
 				This is a tuple, (row,col).
@@ -558,6 +566,8 @@ You can use this object to access tab page windows. They have no methods and
 no sequence or other interfaces.
 
 Tab page attributes are:
+
+	Attribute	Description ~
 	number		The tab page number like the one returned by
 			|tabpagenr()|.
 	windows		Like |python-windows|, but for current tab page.

@@ -122,6 +122,8 @@ windows and reading the files, that's only done when they are really entered.
 							*status-line*
 A status line will be used to separate windows.  The 'laststatus' option tells
 when the last window also has a status line:
+
+	Setting			Meaning ~
 	'laststatus' = 0	never a status line
 	'laststatus' = 1	status line if there is more than one window
 	'laststatus' = 2	always a status line
@@ -1101,6 +1103,8 @@ command, or by deleting it with the ":bdelete" command.
 The 'hidden' is global, it is used for all buffers.  The 'bufhidden' option
 can be used to make an exception for a specific buffer.  It can take these
 values:
+
+	Value		Meaning ~
 	<empty>		Use the value of 'hidden'.
 	hide		Hide this buffer, also when 'hidden' is not set.
 	unload		Don't hide but unload this buffer, also when 'hidden'
@@ -1133,6 +1137,8 @@ list of buffers. |unlisted-buffer|
 		or "N CTRL-^", where N is the buffer number.
 
 		For the file name these special values are used:
+
+			Name		Meaning ~
 			"[Prompt]"	|prompt-buffer|
 			"[Scratch]"	'buftype' is "nofile"
 			"[No Name]"	no file name specified
@@ -1412,6 +1418,8 @@ the 'readonly' flag each time the file is read.
 
 Instead of containing the text of a file, buffers can also be used for other
 purposes.  A few options can be set to change the behavior of a buffer:
+
+	Option		Description ~
 	'bufhidden'	what happens when the buffer is no longer displayed
 			in a window.
 	'buftype'	what kind of a buffer this is

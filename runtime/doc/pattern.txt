@@ -168,6 +168,8 @@ For the |:s| command the "e" flag can be used to avoid the error message
 
 					*search-options*
 The following options affect how a search is performed in Vim:
+
+    Option		Description ~
     'hlsearch'		highlight matches
     'ignorecase'	ignore case when searching
     'imsearch'		use IME when entering the search pattern
@@ -390,6 +392,7 @@ Vim will automatically select the right engine for you.  However, if you run
 into a problem or want to specifically select one engine or the other, you can
 prepend one of the following to the pattern:
 
+	Item	Meaning ~
 	\%#=0	Force automatic selection.  Only has an effect when
 		'regexpengine' has been set to a non-zero value.
 	\%#=1	Force using the old engine.
@@ -429,6 +432,7 @@ Use of "\V" means that after it, only a backslash and the terminating
 character (usually / or ?) have special meaning: "very nomagic"
 
 Examples:
+
 after:	  \v	   \m	    \M	     \V		matches ~
 		'magic' 'nomagic'
 	  a	   a	    a	     a		literal 'a'
@@ -453,27 +457,25 @@ or not by putting "\m" or "\M" at the start of the pattern.
 Overview of multi items.				*/multi* *E61* *E62*
 More explanation and examples below, follow the links.		*E64* *E871*
 
-	  multi ~
-     'magic' 'nomagic'	matches of the preceding atom ~
+ 	magic	nomagic	matches of the preceding atom ~
 |/star|	*	\*	0 or more	as many as possible
 |/\+|	\+	\+	1 or more	as many as possible
 |/\=|	\=	\=	0 or 1		as many as possible
 |/\?|	\?	\?	0 or 1		as many as possible
-
+------------------------------------------------------------------------------
 |/\{|	\{n,m}	\{n,m}	n to m		as many as possible
-	\{n}	\{n}	n		exactly
-	\{n,}	\{n,}	at least n	as many as possible
-	\{,m}	\{,m}	0 to m		as many as possible
-	\{}	\{}	0 or more	as many as possible (same as "*")
-
+ 	\{n}	\{n}	n		exactly
+ 	\{n,}	\{n,}	at least n	as many as possible
+ 	\{,m}	\{,m}	0 to m		as many as possible
+ 	\{}	\{}	0 or more	as many as possible (same as "*")
+------------------------------------------------------------------------------
 |/\{-|	\{-n,m}	\{-n,m}	n to m		as few as possible
-	\{-n}	\{-n}	n		exactly
-	\{-n,}	\{-n,}	at least n	as few as possible
-	\{-,m}	\{-,m}	0 to m		as few as possible
-	\{-}	\{-}	0 or more	as few as possible
-
-							*E59*
-|/\@>|	\@>	\@>	1, like matching a whole pattern
+ 	\{-n}	\{-n}	n		exactly
+ 	\{-n,}	\{-n,}	at least n	as few as possible
+ 	\{-,m}	\{-,m}	0 to m		as few as possible
+ 	\{-}	\{-}	0 or more	as few as possible
+------------------------------------------------------------------------------
+|/\@>|	\@>	\@>	1, like matching a whole pattern	*E59*
 |/\@=|	\@=	\@=	nothing, requires a match |/zero-width|
 |/\@!|	\@!	\@!	nothing, requires NO match |/zero-width|
 |/\@<=|	\@<=	\@<=	nothing, requires a match behind |/zero-width|
@@ -483,7 +485,6 @@ More explanation and examples below, follow the links.		*E64* *E871*
 Overview of ordinary atoms.				*/ordinary-atom*
 More explanation and examples below, follow the links.
 
-      ordinary atom ~
  	magic	nomagic	matches ~
 |/^|	^	^	start-of-line (at start of pattern) |/zero-width|
 |/\^|	\^	\^	literal '^'
@@ -507,6 +508,7 @@ More explanation and examples below, follow the links.
 |/\%v|	\%23v	\%23v	in virtual column 23 |/zero-width|
 
 Character classes:					*/character-classes*
+
  	magic	nomagic	matches ~
 |/\i|	\i	\i	identifier character (see 'isident' option)
 |/\I|	\I	\I	like "\i", but excluding digits

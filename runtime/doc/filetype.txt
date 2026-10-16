@@ -261,7 +261,7 @@ C. If your file type can be detected by the file name or extension.
       example, for Unix: >
 	:w ~/.config/nvim/filetype.vim
 
-<   3. To use the new filetype detection you must restart Vim.
+<  3. To use the new filetype detection you must restart Vim.
 
    Your filetype.vim will be sourced before the default FileType autocommands
    have been installed.  Your autocommands will match first, and the
@@ -514,6 +514,8 @@ Allows for easy entrance of Changelog entries in Changelog files.  There are
 some commands, mappings, and variables worth exploring:
 
 Options:
+
+Option			Setting ~
 'comments'		is made empty to not mess up formatting.
 'textwidth'		is set to 78, which is standard.
 'formatoptions'		the 't' flag is added to wrap when inserting text.
@@ -870,6 +872,8 @@ You can enable folding of Luau block constructs using |fold-expr| by: >
 MAIL							*ft-mail-plugin*
 
 Options:
+
+Option		Setting ~
 'modeline'	is switched off to avoid the danger of trojan horses, and to
 		avoid that a Subject line with "Vim:" in it will cause an
 		error message.

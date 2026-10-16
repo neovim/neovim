@@ -915,6 +915,7 @@ A mark is not visible in any way.  It is just a position in the file that is
 remembered.  Do not confuse marks with named registers, they are totally
 unrelated.
 
+Mark		Description ~
 'a - 'z		lowercase marks, valid within one file
 'A - 'Z		uppercase marks, also called file marks, valid between files
 '0 - '9		numbered marks, set from |shada| file
@@ -1293,22 +1294,20 @@ remembered.
 			current position.  Just after a change it is below the
 			newest entry, indicating that `g;` takes you to the
 			newest entry position.  The first column indicates the
-			count needed to take you to this position.  Example:
-
-				change line  col text ~
+			count needed to take you to this position.  Example: >
+				change line  col text
 				    3     9    8 bla bla bla
 				    2    11   57 foo is a bar
 				    1    14   54 the latest changed line
 				>
-
+<
 			The `3g;` command takes you to line 9.  Then the
-			output of `:changes` is:
-
-				change line  col text ~
+			output of `:changes` is: >
+				change line  col text
 				>   0     9    8 bla bla bla
 				    1    11   57 foo is a bar
 				    2    14   54 the latest changed line
-
+<
 			Now you can use "g," to go to line 11 and "2g," to go
 			to line 14.
 

@@ -307,11 +307,15 @@ vim.go.bk = vim.go.backup
 --- done.  This is a comma-separated list of words.
 ---
 --- The main values are:
+---
+--- Value	Meaning ~
 --- "yes"	make a copy of the file and overwrite the original one
 --- "no"	rename the file and write a new one
 --- "auto"	one of the previous, what works best
 ---
 --- Extra values that can be combined with the ones above are:
+---
+--- Value		Meaning ~
 --- "breaksymlink"	always break symlinks when writing
 --- "breakhardlink"	always break hardlinks when writing
 ---
@@ -1626,6 +1630,7 @@ vim.wo.cuc = vim.wo.cursorcolumn
 
 --- Highlighting used for the line the cursor is on:
 ---
+--- Group			Highlights ~
 --- CursorLine		the text line `hl-CursorLine`
 --- CursorLineFold		the fold column `hl-CursorLineFold`
 --- CursorLineSign		the sign column `hl-CursorLineSign`
@@ -3468,6 +3473,8 @@ vim.bo.ims = vim.bo.imsearch
 --- type.
 ---
 --- Possible values:
+---
+--- 	Value	Meaning ~
 --- 	nosplit	Shows the effects of a command incrementally in the
 --- 		buffer.
 --- 	split	Like "nosplit", but also shows partial off-screen
@@ -4608,6 +4615,8 @@ vim.go.more = vim.o.more
 --- the mouse.
 ---
 --- Mouse support can be enabled for different modes:
+---
+--- 	Flag	Mode ~
 --- 	n	Normal mode
 --- 	v	Visual mode
 --- 	i	Insert mode
@@ -4632,6 +4641,8 @@ vim.go.more = vim.o.more
 --- "* register if possible. See also 'clipboard'.
 ---
 --- Related options:
+---
+--- Option		Description ~
 --- 'mousefocus'	window focus follows mouse pointer
 --- 'mousemodel'	what mouse button does which action
 --- 'mousehide'	hide mouse pointer while typing text
@@ -6624,8 +6635,10 @@ vim.bo.spo = vim.bo.spelloptions
 --- 		separated by a slash.  The first column contains the
 --- 		bad word, the second column the suggested good word.
 --- 		Example:
---- 			theribal/terrible ~
---- 		Use this for common mistakes that do not appear at the
+--- ```
+--- 			theribal/terrible
+--- ```
+--- Use this for common mistakes that do not appear at the
 --- 		top of the suggestion list with the internal methods.
 --- 		Lines without a slash are ignored, use this for
 --- 		comments.
@@ -6642,8 +6655,10 @@ vim.bo.spo = vim.bo.spelloptions
 --- 		must evaluate to a List of Lists, each with a
 --- 		suggestion and a score.
 --- 		Example:
---- 			[['the', 33], ['that', 44]] ~
---- 		Set 'verbose' and use `z=` to see the scores that the
+--- ```
+--- 			[['the', 33], ['that', 44]]
+--- ```
+--- Set 'verbose' and use `z=` to see the scores that the
 --- 		internal methods use.  A lower score is better.
 --- 		This may invoke `spellsuggest()` if you temporarily
 --- 		set 'spellsuggest' to exclude the "expr:" part.
@@ -6677,6 +6692,8 @@ vim.go.sb = vim.go.splitbelow
 --- closing or resizing horizontal splits.
 ---
 --- Possible values are:
+---
+---   Value		Meaning ~
 ---   cursor	Keep the same relative cursor position.
 ---   screen	Keep the text on the same screen line.
 ---   topline	Keep the topline the same.
@@ -6726,6 +6743,7 @@ vim.go.sol = vim.go.startofline
 --- Some of the items from the 'statusline' format are different for
 --- 'statuscolumn':
 ---
+--- Item	Meaning ~
 --- %l	line number column for currently drawn line
 --- %s	sign column for currently drawn line
 --- %C	fold column for currently drawn line
@@ -7206,6 +7224,8 @@ vim.bo.syn = vim.bo.syntax
 --- `:tabclose`).  When empty Vim goes to the next (right) tabpage.
 ---
 --- Possible values (comma-separated list):
+---
+---    Value	Meaning ~
 ---    left		If included, go to the previous tabpage instead of
 --- 		the next one.
 ---    uselast	If included, go to the previously used tabpage if
@@ -7854,7 +7874,6 @@ vim.bo.vts = vim.bo.vartabstop
 --- messages:
 ---
 --- Level	Messages ~
---- ----------------------------------------------------------------------
 --- 1	Enables Lua tracing (see above). Does not produce messages.
 --- 2	When a file is ":source"'ed, or `shada` file is read or written.
 --- 3	UI info, terminal capabilities.
@@ -8164,6 +8183,8 @@ vim.go.wmnu = vim.go.wildmenu
 --- "noinsert" is specified.
 ---
 --- Some useful combinations of colon-separated values:
+---
+--- Value			Meaning ~
 --- "longest:full"		Start with the longest common string and show
 --- 			'wildmenu' (if enabled).  Does not cycle
 --- 			through full matches.

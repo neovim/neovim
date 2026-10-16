@@ -61,6 +61,7 @@ Copyright 2005-2017:					*tar-copyright*
 
    The following (buffer-local) mappings are available in a tar buffer:
 
+	Key		Action ~
 	<CR>		Open selected file for editing, any changes will be
 			written back to the archive.
 	<LeftMouse>	same as <CR>

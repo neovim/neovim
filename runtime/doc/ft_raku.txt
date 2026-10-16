@@ -25,26 +25,26 @@ the list. A convenient way to read the list of digraphs is to save them in a
 file. From the shell: >
         vim +'redir >/tmp/vim-digraphs-listing.txt' +digraphs +'redir END' +q
 
-Some of them are available with standard Vim digraphs:
-	<< «    /0 ∅    !< ≮  ~
-	>> »    Ob ∘    !> ≯  ~
-	., …    00 ∞    (C ⊂  ~
-	(U ∩    -: ÷    )C ⊃  ~
-	)U ∪    (_ ⊆    >= ≥  ~
-	?= ≅    )_ ⊇    =< ≤  ~
-	(- ∈    ?= ≅    != ≠  ~
-	-) ∋    ?- ≃  ~
-
+Some of them are available with standard Vim digraphs: >
+	<< «    /0 ∅    !< ≮
+	>> »    Ob ∘    !> ≯
+	., …    00 ∞    (C ⊂
+	(U ∩    -: ÷    )C ⊃
+	)U ∪    (_ ⊆    >= ≥
+	?= ≅    )_ ⊇    =< ≤
+	(- ∈    ?= ≅    != ≠
+	-) ∋    ?- ≃
+<
 The Greek alphabet is available with "*" followed by a similar Latin symbol: >
 	*p π
 	*t τ
 	*X ×
 
-Numbers, subscripts and superscripts are available with 's' and 'S':
-	0s ₀    0S ⁰  ~
-	1s ₁    1S ¹  ~
-	2s ₂    9S ⁹  ~
-
+Numbers, subscripts and superscripts are available with 's' and 'S': >
+	0s ₀    0S ⁰
+	1s ₁    1S ¹
+	2s ₂    9S ⁹
+<
 But some don't come defined by default. Those are digraph definitions you can
 add in your ~/.vimrc file. >
 	exec 'digraph \\ ' .. char2nr('∖')

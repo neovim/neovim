@@ -556,6 +556,8 @@ The following are highlighted differently in a Vim help file:
 
 The word "Note", "Notes" and similar automagically receive distinctive
 highlighting.  So do these:
+
+	Group	Meaning ~
 	Todo	something to do
 	Error	something wrong
 

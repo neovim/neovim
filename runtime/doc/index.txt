@@ -10,9 +10,9 @@ short description.  The lists are sorted on ASCII value.
 Tip: When looking for certain functionality, use a search command.  E.g.,
 to look for deleting something, use: "/delete".
 
-For an overview of options see |option-list|.
-For an overview of built-in functions see |functions|.
-For a list of Vim variables see |vvars|.
+- For an overview of options see |option-list|.
+- For an overview of built-in functions see |functions|.
+- For a list of Vim variables see |vvars|.
 
                                       Type |gO| to see the table of contents.
 
@@ -20,7 +20,6 @@ For a list of Vim variables see |vvars|.
 1. Insert mode						*insert-index*
 
 Tag		Char		Insert-mode action	~
------------------------------------------------------------------------------- ~
 |i_CTRL-@|	CTRL-@		insert previously inserted text and stop
 				insert
 |i_CTRL-A|	CTRL-A		insert previously inserted text
@@ -137,7 +136,6 @@ Tag		Char		Insert-mode action	~
 commands in CTRL-X submode				*i_CTRL-X_index*
 
 Tag			Char		CTRL-X submode action	~
------------------------------------------------------------------------------- ~
 |i_CTRL-X_CTRL-D|	CTRL-X CTRL-D	complete defined identifiers
 |i_CTRL-X_CTRL-E|	CTRL-X CTRL-E	scroll up
 |i_CTRL-X_CTRL-F|	CTRL-X CTRL-F	complete file names
@@ -160,7 +158,6 @@ Tag			Char		CTRL-X submode action	~
 commands in completion mode (see |popupmenu-keys|)
 
 Tag		Char		Completion-mode action	~
------------------------------------------------------------------------------- ~
 |complete_CTRL-E|	CTRL-E	stop completion and go back to original text
 |complete_CTRL-Y|	CTRL-Y	accept selected match and stop completion
  		CTRL-L		insert one character from the current match
@@ -176,17 +173,17 @@ Tag		Char		Completion-mode action	~
 ==============================================================================
 2. Normal mode						*normal-index*
 
-CHAR	 any non-blank character
-WORD	 a sequence of non-blank characters
-N	 a number entered before the command
-{motion} a cursor movement command
-Nmove	 the text that is moved over with a {motion}
-SECTION	 a section that possibly starts with '}' instead of '{'
+Notation	Meaning ~
+CHAR		any non-blank character
+WORD		a sequence of non-blank characters
+N		a number entered before the command
+{motion}	a cursor movement command
+Nmove		the text that is moved over with a {motion}
+SECTION		a section that possibly starts with '}' instead of '{'
 
 note: 1 = cursor movement command; 2 = can be undone/redone
 
 Tag		Char	      Note Normal-mode action	~
------------------------------------------------------------------------------- ~
  		CTRL-@		   not used
 |CTRL-A|	CTRL-A		2  add N to number at/after cursor
 |CTRL-B|	CTRL-B		1  scroll N screens Backwards
@@ -477,7 +474,6 @@ Tag		Char	      Note Normal-mode action	~
 These can be used after an operator or in Visual mode to select an object.
 
 Tag		Command		   Op-pending and Visual-mode action	~
------------------------------------------------------------------------------- ~
 |v_aquote|	a"		   double quoted string
 |v_a'|		a'		   single quoted string
 |v_a(|		a(		   same as ab
@@ -521,7 +517,6 @@ Tag		Command		   Op-pending and Visual-mode action	~
 2.2 Window commands						*CTRL-W*
 
 Tag		Command		   Normal-mode action	~
------------------------------------------------------------------------------- ~
 |CTRL-W_CTRL-B|	CTRL-W CTRL-B	   same as "CTRL-W b"
 |CTRL-W_CTRL-C|	CTRL-W CTRL-C	   no-op
 |CTRL-W_CTRL-D|	CTRL-W CTRL-D	   same as "CTRL-W d"
@@ -619,7 +614,6 @@ Tag		Command		   Normal-mode action	~
 2.3 Square bracket commands					*[* *]*
 
 Tag		Char	      Note Normal-mode action	~
------------------------------------------------------------------------------- ~
 |[_CTRL-D|	[ CTRL-D	   jump to first #define found in current and
 				   included files matching the word under the
 				   cursor, start searching at beginning of
@@ -711,7 +705,6 @@ Tag		Char	      Note Normal-mode action	~
 2.4 Commands starting with 'g'						*g*
 
 Tag		Char	      Note Normal-mode action	~
------------------------------------------------------------------------------- ~
 |g_CTRL-A|	g CTRL-A	   insert an ascending number at each
 				   multicursor ("counter")
 |g_CTRL-G|	g CTRL-G	   show information about current cursor
@@ -814,7 +807,6 @@ Tag		Char	      Note Normal-mode action	~
 2.5 Commands starting with 'z'						*z*
 
 Tag		Char	      Note Normal-mode action	~
------------------------------------------------------------------------------- ~
 |z<CR>|		z<CR>		   redraw, cursor line to top of window,
 				   cursor on first non-blank
 |zN<CR>|	z{height}<CR>	   redraw, make window {height} lines high
@@ -888,7 +880,6 @@ Tag		Char	      Note Normal-mode action	~
 These can be used after an operator, but before a {motion} has been entered.
 
 Tag		Char		Operator-pending-mode action	~
------------------------------------------------------------------------------- ~
 |o_v|		v		force operator to work charwise
 |o_V|		V		force operator to work linewise
 |o_CTRL-V|	CTRL-V		force operator to work blockwise
@@ -900,7 +891,6 @@ Most commands in Visual mode are the same as in Normal mode.  The ones listed
 here are those that are different.
 
 Tag		Command	      Note Visual-mode action	~
------------------------------------------------------------------------------- ~
 |v_CTRL-\_CTRL-N|	CTRL-\ CTRL-N	   stop Visual mode
 |v_CTRL-\_CTRL-G|	CTRL-\ CTRL-G	   go to Normal mode
 |v_CTRL-A|	CTRL-A		2  add N to number in highlighted text
@@ -1021,7 +1011,6 @@ Normal characters are inserted at the current cursor position.
 file names, tags, commands etc. as appropriate.
 
 Tag		Command		Command-line editing-mode action	~
------------------------------------------------------------------------------- ~
  		CTRL-@		not used
 |c_CTRL-A|	CTRL-A		do completion on the pattern in front of the
 				cursor and insert all matches
@@ -1112,7 +1101,6 @@ Tag		Command		Command-line editing-mode action	~
 commands in wildmenu mode (see 'wildmenu')
 
 		Char		Wildmenu action	~
------------------------------------------------------------------------------- ~
 		<Up>		move up to parent
 		<Down>		move down to submenu
 		<Left>		select the previous match
@@ -1125,7 +1113,6 @@ commands in wildmenu mode (see 'wildmenu')
 commands in wildmenu mode with 'wildoptions' set to "pum"
 
 		Char		Wildmenu action	~
------------------------------------------------------------------------------- ~
 		<PageUp>	select a match several entries back
 		<PageDown>	select a match several entries forward
 
@@ -1134,10 +1121,8 @@ commands in wildmenu mode with 'wildoptions' set to "pum"
 
 In a |terminal| buffer all keys except CTRL-\ are forwarded to the terminal
 job.  If CTRL-\ is pressed, the next key is forwarded unless it is CTRL-N
-or CTRL-O.
-Use |CTRL-\_CTRL-N| to go to Normal mode.
-Use |t_CTRL-\_CTRL-O| to execute one normal mode command and then return
-to terminal mode.
+or CTRL-O. Use |CTRL-\_CTRL-N| to go to Normal mode. Use |t_CTRL-\_CTRL-O| to
+execute one normal mode command and then return to terminal mode.
 
 
 You found it, Arthur!				*holy-grail*
@@ -1150,7 +1135,6 @@ mentioning any arguments.  The optional part of the command name is inside [].
 The commands are sorted on the non-optional part of their name.
 
 Tag		Command		Action ~
------------------------------------------------------------------------------- ~
 |:|		:		nothing
 |:range|	:{range}	go to last line in {range}
 |:!|		:!		filter lines or execute an external command

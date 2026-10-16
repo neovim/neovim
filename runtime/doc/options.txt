@@ -8,8 +8,10 @@ Options							*options*
 
 For an overview of options see quickref.txt |option-list|.
 
-Vim has a number of internal variables and switches which can be set to
-achieve special effects.  These options come in three forms:
+Nvim has many options which can be set to achieve special effects.  These
+options come in three forms:
+
+	Kind		Meaning ~
 	boolean		can only be on or off		*boolean* *toggle*
 	number		has a numeric value
 	string		has a string value
@@ -133,27 +135,27 @@ and the following arguments will be ignored.
 When 'verbose' is non-zero, displaying an option value will also tell where it
 was last set.  Example: >
 	:verbose set shiftwidth cindent?
-<  shiftwidth=4 ~
-	  Last set from modeline line 1 ~
-  cindent ~
-	  Last set from /usr/local/share/vim/vim60/ftplugin/c.vim line 30 ~
+  shiftwidth=4
+	  Last set from modeline line 1
+  cindent
+	  Last set from /usr/local/share/vim/vim60/ftplugin/c.vim line 30
+<
 This is only done when specific option values are requested, not for ":verbose
 set all" or ":verbose set" without an argument.
 When the option was set by hand there is no "Last set" message.
 When the option was set while executing a function, user command or
 autocommand, the script in which it was defined is reported.
 A few special texts:
-	Last set from modeline line 1 ~
-		Option was set in a |modeline|.
-	Last set from --cmd argument ~
-		Option was set with command line argument |--cmd| or +.
-	Last set from -c argument ~
-		Option was set with command line argument |-c|, +, |-S| or
-		|-q|.
-	Last set from environment variable ~
-		Option was set from $VIMINIT.
-	Last set from error handler ~
-		Option was cleared when evaluating it resulted in an error.
+
+	Message					Meaning ~
+	Last set from modeline line 1		Option was set in a |modeline|.
+	Last set from --cmd argument		Option was set with command line
+						argument |--cmd| or +.
+	Last set from -c argument		Option was set with command line
+						argument |-c|, +, |-S| or |-q|.
+	Last set from environment variable	Option was set from $VIMINIT.
+	Last set from error handler		Option was cleared when evaluating
+						it resulted in an error.
 
 							*option-backslash*
 To include white space in a string option value it has to be preceded with a
@@ -540,9 +542,11 @@ automatically in various ways:
 5. 'modeline' settings found at the beginning or end of the file. See below.
 
 					*modeline* *vim:* *vi:* *ex:* *E520*
-There are two forms of modelines.  The first form:
+There are two forms of modelines.  The first form: >
 	[text{white}]{vi:|vim:|ex:}[white]{options}
+<
 
+Part			Meaning ~
 [text{white}]		empty or any text followed by at least one blank
 			character (<Space> or <Tab>); "ex:" always requires at
 			least one blank character
@@ -552,14 +556,15 @@ There are two forms of modelines.  The first form:
 			or ':', where each part between ':' is the argument
 			for a ":set" command (can be empty)
 
-Examples:
-   vi:noai:sw=3 ts=6 ~
-   vim: tw=77 ~
-
+Examples: >
+   vi:noai:sw=3 ts=6
+   vim: tw=77
+<
 The second form (this is compatible with some versions of Vi):
 
 	[text{white}]{vi:|vim:|Vim:|ex:}[white]se[t] {options}:[text]
 
+Part			Meaning ~
 [text{white}]		empty or any text followed by at least one blank
 			character (<Space> or <Tab>); "ex:" always requires at
 			least one blank character
@@ -605,7 +610,7 @@ in another window.  But window-local options will be set.
 
 							*modeline-version*
 If the modeline is only to be used for some versions of Vim, the version
-number can be specified where "vim:" or "Vim:" is used:
+number can be specified where "vim:" or "Vim:" is used: >
 	vim{vers}:	version {vers} or later
 	vim<{vers}:	version before {vers}
 	vim={vers}:	version {vers}
@@ -672,6 +677,7 @@ file.  These can have a different value for each file or buffer.  For example
 the 'textwidth' option can be 78 for a normal text file and 0 for a C
 program.
 
+	Scope			Meaning ~
 	global			one option for all buffers and windows
 	local to window		each window has its own copy of this option
 	local to buffer		each buffer has its own copy of this option
@@ -947,11 +953,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	done.  This is a comma-separated list of words.
 
 	The main values are:
+
+	Value	Meaning ~
 	"yes"	make a copy of the file and overwrite the original one
 	"no"	rename the file and write a new one
 	"auto"	one of the previous, what works best
 
 	Extra values that can be combined with the ones above are:
+
+	Value		Meaning ~
 	"breaksymlink"	always break symlinks when writing
 	"breakhardlink"	always break hardlinks when writing
 
@@ -2102,6 +2112,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			local to window
 	Highlighting used for the line the cursor is on:
 
+	Group			Highlights ~
 	CursorLine		the text line |hl-CursorLine|
 	CursorLineFold		the fold column |hl-CursorLineFold|
 	CursorLineSign		the sign column |hl-CursorLineSign|
@@ -3661,6 +3672,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	type.
 
 	Possible values:
+
+		Value	Meaning ~
 		nosplit	Shows the effects of a command incrementally in the
 			buffer.
 		split	Like "nosplit", but also shows partial off-screen
@@ -4570,6 +4583,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the mouse.
 
 	Mouse support can be enabled for different modes:
+
+		Flag	Mode ~
 		n	Normal mode
 		v	Visual mode
 		i	Insert mode
@@ -4594,6 +4609,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"* register if possible. See also 'clipboard'.
 
 	Related options:
+
+	Option		Description ~
 	'mousefocus'	window focus follows mouse pointer
 	'mousemodel'	what mouse button does which action
 	'mousehide'	hide mouse pointer while typing text
@@ -6278,9 +6295,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	file:{filename} Read file {filename}, which must have two columns,
 			separated by a slash.  The first column contains the
 			bad word, the second column the suggested good word.
-			Example:
-				theribal/terrible ~
-			Use this for common mistakes that do not appear at the
+			Example: >
+				theribal/terrible
+<			Use this for common mistakes that do not appear at the
 			top of the suggestion list with the internal methods.
 			Lines without a slash are ignored, use this for
 			comments.
@@ -6296,9 +6313,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 			|v:val| holds the badly spelled word.  The expression
 			must evaluate to a List of Lists, each with a
 			suggestion and a score.
-			Example:
-				[['the', 33], ['that', 44]] ~
-			Set 'verbose' and use |z=| to see the scores that the
+			Example: >
+				[['the', 33], ['that', 44]]
+<			Set 'verbose' and use |z=| to see the scores that the
 			internal methods use.  A lower score is better.
 			This may invoke |spellsuggest()| if you temporarily
 			set 'spellsuggest' to exclude the "expr:" part.
@@ -6323,6 +6340,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	closing or resizing horizontal splits.
 
 	Possible values are:
+
+	  Value		Meaning ~
 	  cursor	Keep the same relative cursor position.
 	  screen	Keep the text on the same screen line.
 	  topline	Keep the topline the same.
@@ -6364,6 +6383,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Some of the items from the 'statusline' format are different for
 	'statuscolumn':
 
+	Item	Meaning ~
 	%l	line number column for currently drawn line
 	%s	sign column for currently drawn line
 	%C	fold column for currently drawn line
@@ -6767,6 +6787,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|:tabclose|).  When empty Vim goes to the next (right) tabpage.
 
 	Possible values (comma-separated list):
+
+	   Value	Meaning ~
 	   left		If included, go to the previous tabpage instead of
 			the next one.
 	   uselast	If included, go to the previously used tabpage if
@@ -7286,7 +7308,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	messages:
 
 	Level	Messages ~
-	----------------------------------------------------------------------
 	1	Enables Lua tracing (see above). Does not produce messages.
 	2	When a file is ":source"'ed, or |shada| file is read or written.
 	3	UI info, terminal capabilities.
@@ -7544,6 +7565,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"noinsert" is specified.
 
 	Some useful combinations of colon-separated values:
+
+	Value			Meaning ~
 	"longest:full"		Start with the longest common string and show
 				'wildmenu' (if enabled).  Does not cycle
 				through full matches.

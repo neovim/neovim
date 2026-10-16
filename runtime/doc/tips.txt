@@ -21,13 +21,14 @@ Editing C programs					*C-editing*
 There are quite a few features in Vim to help you edit C program files.  Here
 is an overview with tags to jump to:
 
+Tag			Description ~
 |usr_29.txt|		Moving through programs chapter in the user manual.
 |usr_30.txt|		Editing programs chapter in the user manual.
 |C-indenting|		Automatically set the indent of a line while typing
 			text.
 |=|			Re-indent a few lines.
 |format-comments|	Format comments.
-
+------------------------------------------------------------------------------
 |:checkpath|		Show all recursively included files.
 |[i|			Search for identifier under cursor in current and
 			included files.
@@ -36,17 +37,17 @@ is an overview with tags to jump to:
 			identifier under the cursor matches.
 |[d|			Search for define under cursor in current and included
 			files.
-
+------------------------------------------------------------------------------
 |CTRL-]|		Jump to tag under cursor (e.g., definition of a
 			function).
 |CTRL-T|		Jump back to before a CTRL-] command.
 |:tselect|		Select one tag out of a list of matching tags.
-
+------------------------------------------------------------------------------
 |gd|			Go to Declaration of local variable under cursor.
 |gD|			Go to Declaration of global variable under cursor.
-
+------------------------------------------------------------------------------
 |gf|			Go to file name under the cursor.
-
+------------------------------------------------------------------------------
 |%|			Go to matching (), {}, [], `/* */`, #if, #else, #endif.
 |[/|			Go to previous start of comment.
 |]/|			Go to next end of comment.
@@ -56,7 +57,7 @@ is an overview with tags to jump to:
 |])|			Go forward to unclosed ')'
 |[{|			Go back to unclosed '{'
 |]}|			Go forward to unclosed '}'
-
+------------------------------------------------------------------------------
 |v_ab|			Select "a block" from "[(" to "])", including braces
 |v_ib|			Select "inner block" from "[(" to "])"
 |v_aB|			Select "a block" from `[{` to `]}`, including brackets
@@ -179,6 +180,8 @@ Breaking up saving the position:
 	mt	store this position in the 't' mark
 
 Breaking up restoring the position:
+
+	Command	Action ~
 	't	go to the line previously at the top of the window
 	zt	scroll to move this line to the top of the window
 	`s	jump to the original position of the cursor

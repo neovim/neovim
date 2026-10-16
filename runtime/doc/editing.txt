@@ -305,13 +305,13 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			used in the output of `:verbose command UserCmd`
 			White space between the filename, the separator and
 			the number is ignored.
-			Examples:
-				eval.c:10 ~
-				eval.c @ 20 ~
-				eval.c (30) ~
-				eval.c 40 ~
-				eval.c line 50 ~
-
+			Examples: >
+				eval.c:10
+				eval.c @ 20
+				eval.c (30)
+				eval.c 40
+				eval.c line 50
+<
 							*v_gF*
 {Visual}[count]gF	Same as "v_gf", but if a colon and a number appear
 			immediately after the end of the selected text,
@@ -563,6 +563,8 @@ single <NL> characters are unexpectedly replaced with <CR><NL>.
 END-OF-LINE AND END-OF-FILE				*eol-and-eof*
 
 Vim has several options to control the file format:
+
+	Option		Controls ~
 	'fileformat'	the <EOL> style: Unix, DOS, Mac
 	'endofline'	whether the last line ends with a <EOL>
 	'endoffile'	whether the file ends with a CTRL-Z

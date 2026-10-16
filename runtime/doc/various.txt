@@ -66,20 +66,22 @@ ga			Print the ascii value of the character under the
 			cursor in decimal, hexadecimal and octal.
 			Mnemonic: Get Ascii value.
 
-			For example, when the cursor is on a 'R':
-				<R>  82,  Hex 52,  Octal 122 ~
+			For example, when the cursor is on a 'R': >
+				<R>  82,  Hex 52,  Octal 122
+<
 			When the character is a non-standard ASCII character,
 			the non-printable version is also given.
 
-			When the character is larger than 127:
-				<<81>>  129,  Hex 0081,  Octal 201 ~
-				 <p>    254,  Hex 00fe,  Octal 376 ~
+			When the character is larger than 127: >
+				<<81>>  129,  Hex 0081,  Octal 201
+				 <p>    254,  Hex 00fe,  Octal 376
+<
 			(where <p> is a special character)
 
 			The <Nul> character in a file is stored internally as
-			<NL>, but it will be shown as:
-				<^@>  0,  Hex 00,  Octal 000 ~
-
+			<NL>, but it will be shown as: >
+				<^@>  0,  Hex 00,  Octal 000
+<
 			If the character has composing characters these are
 			also shown.  The value of 'maxcombine' doesn't matter.
 
@@ -94,9 +96,9 @@ g8			Print the hex values of the bytes used in the
 			character under the cursor, assuming it is in |UTF-8|
 			encoding.  This also shows composing characters.  The
 			value of 'maxcombine' doesn't matter.
-			Example of a character with two composing characters:
-				e0 b8 81 + e0 b8 b9 + e0 b9 89 ~
-
+			Example of a character with two composing characters: >
+				e0 b8 81 + e0 b8 b9 + e0 b9 89
+<
 							*8g8*
 8g8			Find an illegal UTF-8 byte sequence at or after the
 			cursor.
@@ -513,11 +515,11 @@ gx			Opens the current filepath, URL (decided by
 <			When concatenating another command, the ":verbose"
 			only applies to the first one: >
 				:4verbose set verbose | set verbose
-<				  verbose=4 ~
-				  verbose=0 ~
+				  verbose=4
+				  verbose=0
 			For logging verbose messages in a file use the
 			'verbosefile' option.
-
+<
 							*:verbose-cmd*
 When 'verbose' is non-zero, listing the value of a Vim option or a key map or
 an abbreviation or a user-defined function or a command or a highlight group

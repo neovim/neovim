@@ -22,6 +22,8 @@ the existing folds.  This can be used to first define the folds automatically
 and then change them manually.
 
 There are six methods to select folds:
+
+	Method		Description ~
 	manual		manually define folds
 	indent		more indent means a higher fold level
 	expr		specify an expression to define folds
@@ -567,6 +569,8 @@ Errors are ignored.  For debugging set the 'debug' option to "throw".
 The default value is |foldtext()|.  This returns a reasonable text for most
 types of folding.  If you don't like it, you can specify your own 'foldtext'
 expression.  It can use these special Vim variables:
+
+	Variable	Meaning ~
 	v:foldstart	line number of first line in the fold
 	v:foldend	line number of last line in the fold
 	v:folddashes	a string that contains dashes to represent the
@@ -617,6 +621,7 @@ fold column:
 
 OTHER OPTIONS
 
+Option			Description ~
 'foldenable'  'fen':	Open all folds while not set.
 'foldexpr'    'fde':	Expression used for "expr" folding.
 'foldignore'  'fdi':	Characters used for "indent" folding.

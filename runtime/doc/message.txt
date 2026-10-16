@@ -870,6 +870,7 @@ any other typed key to dismiss it.
      G						down all the way, until the
 						hit-enter prompt
 
+     Key					Action ~
      <BS> or k or <Up>				one line back
      u						up a page (half a screen)
      b or <PageUp> or CTRL-B			back a screen

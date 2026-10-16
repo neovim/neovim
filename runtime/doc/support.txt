@@ -11,16 +11,16 @@ Support                                                              *support*
 ==============================================================================
 Supported platforms					 *supported-platforms*
 
-`System`          `Tier`      `Versions`                  `Tested versions`
-Linux (x86_64)   1      >= 2.6.32, glibc >= 2.12     Ubuntu 24.04
-Linux (arm64)    1      >= 2.6.32, glibc >= 2.12     Ubuntu 24.04
-macOS (x86_64)   1      >= 11                        macOS 15
-macOS (arm64)    1      >= 11                        macOS 26
-Windows 64-bit   1      >= Windows 10 Version 2004   Windows Server 2025
-FreeBSD          2      >= 10
-OpenBSD          2      >= 7
-MinGW            2      MinGW-w64
-Windows 64-bit   3      < Windows 10 Version 2004
+System		Tier	Versions			Tested versions ~
+Linux (x86_64)	1	>= 2.6.32, glibc >= 2.12	Ubuntu 24.04
+Linux (arm64)	1	>= 2.6.32, glibc >= 2.12	Ubuntu 24.04
+macOS (x86_64)	1	>= 11				macOS 15
+macOS (arm64)	1	>= 11				macOS 26
+Windows 64-bit	1	>= Windows 10 Version 2004	Windows Server 2025
+FreeBSD		2	>= 10
+OpenBSD		2	>= 7
+MinGW		2	MinGW-w64
+Windows 64-bit	3	< Windows 10 Version 2004
 
 Note: Windows 10 "Version 2004" or later is required for |:terminal|. To check
 your Windows version, run the "winver" command and look for "Version xxxx"

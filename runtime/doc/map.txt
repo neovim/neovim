@@ -514,6 +514,8 @@ When listing mappings the characters in the first two columns are:
 	t	Terminal-Job
 
 Just before the {rhs} a special character can appear:
+
+	Char	Meaning ~
 	*	indicates that it is not remappable
 	&	indicates that only script-local mappings are remappable
 	@	indicates a buffer-local mapping

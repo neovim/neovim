@@ -182,6 +182,8 @@ See |sign_place()| for the equivalent Vim script function.
 
 		The following optional sign attributes can be specified before
 		"file=":
+
+			Argument	Meaning ~
 			group={group}	Place sign in sign group {group}
 			priority={prio}	Assign priority {prio} to sign
 

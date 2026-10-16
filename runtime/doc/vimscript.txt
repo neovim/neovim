@@ -63,6 +63,8 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
 			When [where] is omitted only 'runtimepath' is used.
 			Other values:
+
+				Value	Meaning ~
 				START	search only under "start" in 'packpath'
 				OPT	search only under "opt" in 'packpath'
 				PACK	search under "start" and "opt" in
@@ -470,14 +472,14 @@ About the additional commands in debug mode:
 - When you want to use the Ex command with the same name, prepend a colon:
   ":cont", ":next", ":finish" (or shorter).
 
-The backtrace shows the hierarchy of function calls, e.g.:
-	>bt ~
-	  3 function One[3] ~
-	  2 Two[3] ~
-	->1 Three[3] ~
-	  0 Four ~
-	line 1: let four = 4 ~
-
+The backtrace shows the hierarchy of function calls, e.g.: >
+	>bt
+	  3 function One[3]
+	  2 Two[3]
+	->1 Three[3]
+	  0 Four
+	line 1: let four = 4
+<
 The "->" points to the current frame.  Use "up", "down" and "frame N" to
 select another frame.
 
@@ -663,20 +665,19 @@ function: >
 	profile func MyFunc
 
 Here is an example of the output, with line
-numbers prepended for the explanation:
-
-  1 FUNCTION  Test2() ~
-  2 Called 1 time ~
-  3 Total time:   0.155251 ~
-  4  Self time:   0.002006 ~
-  5  ~
-  6 count  total (s)   self (s) ~
-  7	9	       0.000096   for i in range(8) ~
-  8	8   0.153655   0.000410     call Test3() ~
-  9	8	       0.000070   endfor ~
- 10				  " Ask a question ~
- 11	1	       0.001341   echo input("give me an answer: ") ~
-
+numbers prepended for the explanation: >
+  1 FUNCTION  Test2()
+  2 Called 1 time
+  3 Total time:   0.155251
+  4  Self time:   0.002006
+  5
+  6 count  total (s)   self (s)
+  7	9	       0.000096   for i in range(8)
+  8	8   0.153655   0.000410     call Test3()
+  9	8	       0.000070   endfor
+ 10				  " Ask a question
+ 11	1	       0.001341   echo input("give me an answer: ")
+<
 The header (lines 1-4) gives the time for the whole function.  The "Total"
 time is the time passed while the function was executing.  The "Self" time is
 the "Total" time reduced by time spent in:

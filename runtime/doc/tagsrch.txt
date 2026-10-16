@@ -147,6 +147,7 @@ An indent is removed and a long line is truncated to fit in the window.
 
 You can jump to previously used tags with several commands.  Some examples:
 
+	Command			Goes to ~
 	":pop" or CTRL-T	to position before previous tag
 	{count}CTRL-T		to position before {count} older tag
 	":tag"			to newer tag
@@ -619,17 +620,18 @@ The first lines in the tags file can contain lines that start with
 These are sorted to the first lines, only rare tags that start with "!" can
 sort to before them.  Vim recognizes two items.  The first one is the line
 that indicates if the file was sorted.  When this line is found, Vim uses
-binary searching for the tags file:
-	!_TAG_FILE_SORTED<Tab>1<Tab>{anything} ~
-
+binary searching for the tags file: >
+	!_TAG_FILE_SORTED<Tab>1<Tab>{anything}
+<
 A tag file may be case-fold sorted to avoid a linear search when case is
 ignored.  (Case is ignored when 'ignorecase' is set and 'tagcase' is
 "followic", or when 'tagcase' is "ignore".)  See 'tagbsearch' for details.
-The value '2' should be used then:
-	!_TAG_FILE_SORTED<Tab>2<Tab>{anything} ~
-
-The other tag that Vim recognizes is the encoding of the tags file:
-	!_TAG_FILE_ENCODING<Tab>utf-8<Tab>{anything} ~
+The value '2' should be used then: >
+	!_TAG_FILE_SORTED<Tab>2<Tab>{anything}
+<
+The other tag that Vim recognizes is the encoding of the tags file: >
+	!_TAG_FILE_ENCODING<Tab>utf-8<Tab>{anything}
+<
 Here "utf-8" is the encoding used for the tags.  Vim will then convert the tag
 being searched for from 'encoding' to the encoding of the tags file.  And when
 listing tags the reverse happens.  When the conversion fails the unconverted

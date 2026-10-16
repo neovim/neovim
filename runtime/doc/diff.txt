@@ -44,6 +44,7 @@ If you always prefer horizontal splits include "horizontal" in 'diffopt'.
 
 In each of the edited files these options are set:
 
+	Option		Value ~
 	'diff'		on
 	'scrollbind'	on
 	'cursorbind'	on
@@ -130,6 +131,7 @@ using `:diffsplit`, `:diffpatch`, `:diffthis`, or starting Vim in diff mode.
 When using `:diffoff` twice the last saved values are restored.
 Otherwise they are set to their default value:
 
+	Option		Value ~
 	'diff'		off
 	'scrollbind'	off
 	'cursorbind'	off
@@ -319,6 +321,7 @@ The autocommand must not change buffers.
 The [bufspec] argument above can be a buffer number, a pattern for a buffer
 name or a part of a buffer name.  Examples:
 
+	Command			Effect ~
 	:diffget		Use the other buffer which is in diff mode
 	:diffget 3		Use buffer 3
 	:diffget v2		Use the buffer which matches "v2" and is in
@@ -500,6 +503,7 @@ The "7c7" item replaces the line "GGG" with "ggg".
 When 'diffexpr' is not empty, Vim evaluates it to obtain a diff file in the
 format mentioned.  These variables are set to the file names used:
 
+	Variable		Meaning ~
 	v:fname_in		original file
 	v:fname_new		new version of the same file
 	v:fname_out		where to write the resulting diff file
@@ -566,6 +570,7 @@ CR in the middle of a line may cause problems, it is seen as a line break.
 If the default doesn't work for you, set the 'patchexpr' to an expression that
 will have the same effect.  These variables are set to the file names used:
 
+	Variable		Meaning ~
 	v:fname_in		original file
 	v:fname_diff		patch file
 	v:fname_out		resulting patched file
