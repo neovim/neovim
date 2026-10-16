@@ -1373,6 +1373,14 @@ func Test_cmdline_complete_various()
   call assert_equal("\"au XTest.test", @:)
   augroup! XTest.test
 
+  " command completion after "++once" and "++nested" in :autocmd
+  call feedkeys(":au BufEnter * ++once setl filety\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"au BufEnter * ++once setl filetype", @:)
+  call feedkeys(":au BufEnter * ++nested ++once setl filety\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"au BufEnter * ++nested ++once setl filetype", @:)
+  call feedkeys(":au BufEnter * nested setl filety\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"au BufEnter * nested setl filetype", @:)
+
   " completion for the :unlet command
   call feedkeys(":unlet one two\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal("\"unlet one two", @:)
