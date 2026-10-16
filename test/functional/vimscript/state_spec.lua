@@ -3,10 +3,13 @@ local n = require('test.functional.testnvim')()
 
 local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
+local command = n.command
 local eq = t.eq
+local matches = t.matches
 local exec = n.exec
 local exec_lua = n.exec_lua
 local feed = n.feed
+local fn = n.fn
 local api = n.api
 local poke_eventloop = n.poke_eventloop
 
@@ -85,5 +88,42 @@ describe('state() function', function()
     api.nvim_get_mode() -- Process pending input and luv timer callback
     feed('<CR>')
     eq({ 'Ss', 'r' }, exec_lua('return _G.res'))
+  end)
+
+  it('has "l" while text is locked', function()
+    exec_lua([[
+      function _G.Get_locked()
+        _G.res = { vim.fn.state('l'), vim.fn.state() }
+        return ''
+      end
+    ]])
+    eq('', fn.state('l'))
+
+    -- Evaluating an expression mapping
+    command('nnoremap <expr> ;l v:lua.Get_locked()')
+    feed(';l')
+    local res = exec_lua('return _G.res')
+    eq('l', res[1])
+    matches('l', res[2])
+    eq('', fn.state('l'))
+
+    -- Running an InsertCharPre autocommand
+    exec_lua('_G.res = nil')
+    command('autocmd InsertCharPre * call v:lua.Get_locked()')
+    feed('ix<Esc>')
+    res = exec_lua('return _G.res')
+    eq('l', res[1])
+    matches('l', res[2])
+    eq('', fn.state('l'))
+  end)
+
+  it('does not have "l" when text is not locked', function()
+    exec_lua([[
+      function _G.Get_state()
+        _G.res = vim.fn.state()
+      end
+    ]])
+    feed([[:call v:lua.Get_state()<CR>]])
+    eq('S', exec_lua('return _G.res'))
   end)
 end)
