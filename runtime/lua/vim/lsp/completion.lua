@@ -965,15 +965,16 @@ end
 
 local function on_complete_done()
   local completed_item = api.nvim_get_vvar('completed_item')
-  if not completed_item or not completed_item.user_data or not completed_item.user_data.nvim then
+  local user_data = completed_item and vim.tbl_get(completed_item, 'user_data', 'nvim', 'lsp')
+  if not user_data then
     Context:reset()
     return
   end
 
   local cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(0)) --- @type integer, integer
   cursor_row = cursor_row - 1
-  local completion_item = completed_item.user_data.nvim.lsp.completion_item --- @type lsp.CompletionItem
-  local client_id = completed_item.user_data.nvim.lsp.client_id --- @type integer
+  local completion_item = user_data.completion_item --- @type lsp.CompletionItem
+  local client_id = user_data.client_id --- @type integer
   if not completion_item or not client_id then
     Context:reset()
     return
