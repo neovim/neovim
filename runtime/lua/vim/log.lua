@@ -194,7 +194,7 @@ function M:open_file()
     return false
   end
 
-  self.logfile, self.openerr = io.open(self.filename, 'a+')
+  self.logfile, self.openerr = io.open(self.filename, 'a')
   if not self.logfile then
     local err_msg = string.format('Failed to open %s log file: %s', self.name, self.openerr)
     notify(err_msg, M.levels.ERROR)
