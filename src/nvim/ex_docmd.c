@@ -7037,8 +7037,10 @@ static void ex_join(exarg_T *eap)
   }
 
   size_t count = (size_t)(eap->line2 - eap->line1) + 1;
+  colnr_T col1 = (eap->addr_type == ADDR_POSITIONS) ? eap->col1 : 0;
+  colnr_T col2 = (eap->addr_type == ADDR_POSITIONS) ? eap->col2 : MAXCOL;
 
-  do_join(count, !eap->forceit, true, true, true);
+  do_join(count, col1, col2, !eap->forceit, true, true, true);
   beginline(BL_WHITE | BL_FIX);
   ex_may_print(eap);
 }

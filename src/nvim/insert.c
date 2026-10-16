@@ -734,6 +734,7 @@ static int insert_execute(VimState *state, int key)
 
 static int insert_handle_key(InsertState *s)
 {
+  exarg_T ea;
   // The big switch to handle a character in insert mode.
   switch (s->c) {
   case ESC:           // End input mode
@@ -963,7 +964,7 @@ static int insert_handle_key(InsertState *s)
         Ins.dont_sync_undo = kNone;
       }
     } else if (s->c == K_COMMAND) {
-      exarg_T ea = {
+      ea = (exarg_T) {
         .cmd = NULL,
         .line1 = 1,
         .line2 = 1,
@@ -1797,7 +1798,8 @@ static bool del_char_after_col(int limit_col)
     if (*get_cursor_pos_ptr() == NUL || curwin->w_cursor.col == ecol) {
       return false;
     }
-    del_bytes(ecol - curwin->w_cursor.col, false, true);
+    del_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col, ecol - curwin->w_cursor.col, false,
+              true);
   } else {
     del_char(false);
   }
@@ -3368,7 +3370,7 @@ static void ins_del(void)
   if (gchar_cursor() == NUL) {          // delete newline
     const int temp = curwin->w_cursor.col;
     if (!can_bs(BS_EOL)  // only if "eol" included
-        || do_join(2, false, true, false, false) == FAIL) {
+        || do_join(2, 0, MAXCOL, false, true, false, false) == FAIL) {
       vim_beep(kOptBoFlagBackspace);
     } else {
       mc_ins_join();
@@ -3500,7 +3502,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
           }
         }
 
-        do_join(2, false, false, false, false);
+        do_join(2, 0, MAXCOL, false, false, false, false);
         if (temp == NUL && gchar_cursor() != NUL) {
           inc_cursor();
         }
@@ -4165,7 +4167,7 @@ static bool ins_tab(void)
       // In MODE_VREPLACE state, we haven't changed anything yet.  Do it
       // now by backspacing over the changed spacing and then inserting
       // the new spacing.
-      if (State & VREPLACE_FLAG) {
+      if ((State & VREPLACE_FLAG) && saved_line != NULL) {
         // Backspace from real cursor to change_col
         backspace_until_column(change_col);
 

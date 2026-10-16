@@ -669,7 +669,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
       feed('vjwd')
 
       check_events {
-        { 'test1', 'bytes', 1, 10, 0, 1, 1, 1, 9, 23, 0, 0, 0 },
+        { 'test1', 'bytes', 1, 6, 0, 1, 1, 1, 9, 23, 0, 0, 0 },
       }
     end)
 
@@ -1205,8 +1205,8 @@ describe('lua: nvim_buf_attach on_bytes', function()
       -- Actually testing
       feed [[v%p]]
       check_events {
-        { 'test1', 'bytes', 1, 8, 0, 4, 4, 1, 1, 3, 0, 0, 0 },
-        { 'test1', 'bytes', 1, 8, 0, 4, 4, 0, 0, 0, 2, 0, 3 },
+        { 'test1', 'bytes', 1, 4, 0, 4, 4, 1, 1, 3, 0, 0, 0 },
+        { 'test1', 'bytes', 1, 5, 0, 4, 4, 0, 0, 0, 2, 0, 3 },
       }
     end)
 
@@ -1214,8 +1214,8 @@ describe('lua: nvim_buf_attach on_bytes', function()
       local check_events = setup_eventcheck(verify, { 'abc', '{', 'def', '}' })
       feed('ggyyjjvi{p')
       check_events {
-        { 'test1', 'bytes', 1, 6, 2, 0, 6, 1, 0, 4, 0, 0, 0 },
-        { 'test1', 'bytes', 1, 6, 2, 0, 6, 0, 0, 0, 2, 0, 5 },
+        { 'test1', 'bytes', 1, 3, 2, 0, 6, 1, 0, 4, 0, 0, 0 },
+        { 'test1', 'bytes', 1, 4, 2, 0, 6, 0, 0, 0, 2, 0, 5 },
       }
     end)
 
