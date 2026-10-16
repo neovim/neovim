@@ -135,7 +135,7 @@ local function check_config()
     )
   end
 
-  if vim.o.paste == 1 then
+  if vim.o.paste then
     ok = false
     health.error(
       "'paste' is enabled. This option is only for pasting text.\nIt should not be set in your config.",
