@@ -979,7 +979,7 @@ local function on_complete_done()
 
   local bufnr = api.nvim_get_current_buf()
   local expand_snippet = completion_item.insertTextFormat == protocol.InsertTextFormat.Snippet
-    and (completion_item.textEdit ~= nil or completion_item.insertText ~= nil)
+    and (completion_item.textEdit ~= nil or nonempty(completion_item.insertText) ~= nil)
 
   Context:reset()
 
