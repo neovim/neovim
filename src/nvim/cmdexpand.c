@@ -3423,8 +3423,8 @@ static void expand_shellcmd(char *filepat, char ***matches, int *numMatches, int
   flags |= EW_FILE | EW_EXEC | EW_SHELLCMD;
 
   bool mustfree = false;  // Track memory allocation for *path.
-  if (pat[0] == '.' && (vim_ispathsep(pat[1])
-                        || (pat[1] == '.' && vim_ispathsep(pat[2])))) {
+  if (pat[0] == '.' && (path_is_sep(pat[1])
+                        || (pat[1] == '.' && path_is_sep(pat[2])))) {
     path = ".";
   } else {
     // For an absolute name we don't use $PATH.
@@ -3876,39 +3876,31 @@ static int wildmenu_process_key_menunames(CmdlineInfo *cclp, int key, expand_T *
 /// (EXPAND_SHELLCMD) is displayed.
 static int wildmenu_process_key_filenames(CmdlineInfo *cclp, int key, expand_T *xp)
 {
-  char upseg[5];
-  upseg[0] = PATHSEP;
-  upseg[1] = '.';
-  upseg[2] = '.';
-  upseg[3] = PATHSEP;
-  upseg[4] = NUL;
+  const char *buff = cclp->cmdbuff;
+  int j = cclp->cmdpos;
 
   if (key == K_DOWN
-      && cclp->cmdpos > 0
-      && cclp->cmdbuff[cclp->cmdpos - 1] == PATHSEP
-      && (cclp->cmdpos < 3
-          || cclp->cmdbuff[cclp->cmdpos - 2] != '.'
-          || cclp->cmdbuff[cclp->cmdpos - 3] != '.')) {
+      && j > 0
+      && path_is_sep(buff[j - 1])
+      && (j < 3 || !path_with_component(buff + j - 3, ".."))) {
     // go down a directory
     key = (int)p_wc;
     KeyTyped = true;  // in case the key was mapped
-  } else if (strncmp(xp->xp_pattern, upseg + 1, 3) == 0 && key == K_DOWN) {
+  } else if (key == K_DOWN && path_with_component(xp->xp_pattern, "..") == kPathCompSep) {
     // If in a direct ancestor, strip off one ../ to go down
     bool found = false;
 
-    int j = cclp->cmdpos;
-    int i = (int)(xp->xp_pattern - cclp->cmdbuff);
+    int i = (int)(xp->xp_pattern - buff);
     while (--j > i) {
-      j -= utf_head_off(cclp->cmdbuff, cclp->cmdbuff + j);
-      if (vim_ispathsep(cclp->cmdbuff[j])) {
+      if (path_is_sep(buff[j])) {
         found = true;
         break;
       }
     }
     if (found
-        && cclp->cmdbuff[j - 1] == '.'
-        && cclp->cmdbuff[j - 2] == '.'
-        && (vim_ispathsep(cclp->cmdbuff[j - 3]) || j == i + 2)) {
+        && buff[j - 1] == '.'
+        && buff[j - 2] == '.'
+        && (path_is_sep(buff[j - 3]) || j == i + 2)) {
       cmdline_del(cclp, j - 2);
       key = (int)p_wc;
       KeyTyped = true;  // in case the key was mapped
@@ -3917,13 +3909,12 @@ static int wildmenu_process_key_filenames(CmdlineInfo *cclp, int key, expand_T *
     // go up a directory
     bool found = false;
 
-    int j = cclp->cmdpos - 1;
-    int i = (int)(xp->xp_pattern - cclp->cmdbuff);
+    j -= 1;
+    int i = (int)(xp->xp_pattern - buff);
     while (--j > i) {
-      j -= utf_head_off(cclp->cmdbuff, cclp->cmdbuff + j);
-      if (vim_ispathsep(cclp->cmdbuff[j])
+      if (path_is_sep(buff[j])
 #ifdef BACKSLASH_IN_FILENAME
-          && vim_strchr(" *?[{`$%#", (uint8_t)cclp->cmdbuff[j + 1]) == NULL
+          && vim_strchr(" *?[{`$%#", (uint8_t)buff[j + 1]) == NULL
 #endif
           ) {
         if (found) {
@@ -3937,10 +3928,9 @@ static int wildmenu_process_key_filenames(CmdlineInfo *cclp, int key, expand_T *
 
     if (!found) {
       j = i;
-    } else if (strncmp(cclp->cmdbuff + j, upseg, 4) == 0) {
+    } else if (path_with_component(buff + i, "..") == kPathCompSep && path_is_sep(buff[j])) {
       j += 4;
-    } else if (strncmp(cclp->cmdbuff + j, upseg + 1, 3) == 0
-               && j == i) {
+    } else if (path_with_component(buff + i, "..") == kPathCompSep && j == i) {
       j += 3;
     } else {
       j = 0;
@@ -3948,9 +3938,13 @@ static int wildmenu_process_key_filenames(CmdlineInfo *cclp, int key, expand_T *
 
     if (j > 0) {
       // TODO(tarruda): this is only for DOS/Unix systems - need to put in
-      // machine-specific stuff here and in upseg init
+      // machine-specific stuff here
       cmdline_del(cclp, j);
-      put_on_cmdline(upseg + 1, 3, false);
+#ifdef BACKSLASH_IN_FILENAME
+      put_on_cmdline(p_ssl ? "../" : "..\\", 3, false);
+#else
+      put_on_cmdline("../", 3, false);
+#endif
     } else if (cclp->cmdpos > i) {
       cmdline_del(cclp, i);
     }

@@ -825,7 +825,7 @@ static bool path_is_after(char *buf, size_t buflen)
   // vim8 considers all dirs like "foo/bar_after", "Xafter" etc, as an
   // "after" dir in SOME codepaths not in ALL codepaths.
   return buflen >= 5
-         && (!(buflen >= 6) || vim_ispathsep(buf[buflen - 6]))
+         && (buflen < 6 || path_is_sep(buf[buflen - 6]))  // "c:after" doesn't seem useful
          && strcmp(buf + buflen - 5, "after") == 0;
 }
 
@@ -1038,8 +1038,8 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
   char *p2 = p1;
   char *p3 = p1;
   char *p4 = p1;
-  for (char *p = p1; *p; MB_PTR_ADV(p)) {
-    if (vim_ispathsep_nocolon(*p)) {
+  for (char *p = p1; *p; p++) {
+    if (path_is_sep(*p)) {
       p4 = p3;
       p3 = p2;
       p2 = p1;
@@ -1083,8 +1083,8 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
     char *p = strstr(buf.data, "after");
     bool is_after = p != NULL
                     && p > buf.data
-                    && vim_ispathsep(p[-1])
-                    && (vim_ispathsep(p[5]) || p[5] == NUL || p[5] == ',');
+                    && path_is_sep(p[-1])
+                    && (path_is_sep(p[5]) || p[5] == NUL);
 
     if (is_after) {
       if (insp == NULL) {
@@ -1505,7 +1505,7 @@ expand:
 
   int pat_pathsep_cnt = 0;
   for (size_t i = 0; i < pat_len; i++) {
-    if (vim_ispathsep(pat[i])) {
+    if (path_is_sep(pat[i])) {
       pat_pathsep_cnt++;
     }
   }
@@ -1520,9 +1520,9 @@ expand:
       *e = NUL;
     }
 
-    int match_pathsep_cnt = (e > s && e[-1] == '/') ? -1 : 0;
-    for (s = e; s > match; MB_PTR_BACK(match, s)) {
-      if (vim_ispathsep(*s) && ++match_pathsep_cnt > pat_pathsep_cnt) {
+    int match_pathsep_cnt = (e > s && e[-1] == PATHSEP) ? -1 : 0;
+    for (s = e; s > match; s--) {
+      if (path_is_sep(*s) && ++match_pathsep_cnt > pat_pathsep_cnt) {
         break;
       }
     }

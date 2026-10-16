@@ -3438,8 +3438,8 @@ int readdir_core(garray_T *gap, const char *path, void *context, CheckItem check
       break;
     }
 
-    bool ignore = (p[0] == '.' && (p[1] == NUL || (p[1] == '.' && p[2] == NUL)));
-    if (!ignore && checkitem != NULL) {
+    bool ignore = false;  // uv_fs_scandir_next doesn't return "." and ".."
+    if (checkitem != NULL) {
       varnumber_T r = checkitem(context, p);
       if (r < 0) {
         break;
