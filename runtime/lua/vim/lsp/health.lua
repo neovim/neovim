@@ -77,7 +77,7 @@ local function check_active_features()
     report_info(table.concat({
       capname,
       '- Active buffers:',
-      vim.tbl_isempty(buf_infos) and '  (none)' or string.format(table.concat(buf_infos, '\n')),
+      vim.tbl_isempty(buf_infos) and '  (none)' or table.concat(buf_infos, '\n'),
     }, '\n'))
   end
 end
