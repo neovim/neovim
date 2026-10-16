@@ -7073,7 +7073,7 @@ M.funcs = {
       A match happens with a mapping that starts with {name} and
       with a mapping which is equal to the start of {name}.
 
-      	matches mapping "a"	"ab"	"abc" ~
+         matches mapping	"a"	"ab"	"abc" ~
          mapcheck("a")	yes	yes	 yes
          mapcheck("abc")	yes	yes	 yes
          mapcheck("ax")	yes	no	 no

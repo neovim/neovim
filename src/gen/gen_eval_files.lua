@@ -1028,6 +1028,7 @@ local CONFIG = {
       'For functions grouped by what they are used for see |function-list|.',
       '',
       '\t\t\t\t      Type |gO| to see the table of contents.',
+      '',
       '==============================================================================',
       '1. Details					*vimscript-functions-details*',
       '',

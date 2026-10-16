@@ -51,7 +51,7 @@ including getchar() input. This is signficant: it reflects the semantic
 intent. `CmdAtom.keys` reveals the low-level internal commands that were
 produced.
 
-	INPUT (`lhs`)	RESOLUTION (`keys`) ~
+	INPUT (`lhs`)	RESOLUTION (`keys`)	  ~
 	dw		"dw"		Not translated.
 	zfa{		"zfa{"		Not an edit (`changed=false`).
 	x		"dl"		Translated builtin.

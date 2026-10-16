@@ -1987,13 +1987,12 @@ These can be used with '+' and '-', see |efm-ignore| below.
 Using "\n" in the pattern won't work to match multi-line messages.
 
 Example: Your compiler happens to write out errors in the following format
-(leading line numbers not being part of the actual output):
-
-     1	Error 275 ~
-     2	line 42 ~
-     3	column 3 ~
-     4	' ' expected after '--' ~
-
+(leading line numbers not being part of the actual output): >
+     1	Error 275
+     2	line 42
+     3	column 3
+     4	' ' expected after '--'
+<
 The appropriate error format string has to look like this: >
    :set efm=%EError\ %n,%Cline\ %l,%Ccolumn\ %c,%Z%m
 

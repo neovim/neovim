@@ -799,38 +799,38 @@ The substitution is limited in recursion to 4 levels. *E1290*
 
 Otherwise these characters in {string} have a special meaning:
 
-magic	nomagic	  action    ~
-  &	  \&	  replaced with the whole matched pattern	     *s/\&*
- \&	   &	  replaced with &
-      \0	  replaced with the whole matched pattern	   *\0* *s/\0*
-      \1	  replaced with the matched pattern in the first
-		  pair of ()					     *s/\1*
-      \2	  replaced with the matched pattern in the second
-		  pair of ()					     *s/\2*
-      ..	  ..						     *s/\3*
-      \9	  replaced with the matched pattern in the ninth
-		  pair of ()					     *s/\9*
-  ~	  \~	  replaced with the {string} of the previous
-		  substitute					     *s~*
- \~	   ~	  replaced with ~				     *s/\~*
-      \u	  next character made uppercase			     *s/\u*
-      \U	  following characters made uppercase, until \E      *s/\U*
-      \l	  next character made lowercase			     *s/\l*
-      \L	  following characters made lowercase, until \E      *s/\L*
-      \e	  end of \u, \U, \l and \L (NOTE: not <Esc>!)	     *s/\e*
-      \E	  end of \u, \U, \l and \L			     *s/\E*
-      <CR>	  split line in two at this point
-		  (Type the <CR> as CTRL-V <Enter>)		     *s<CR>*
-      \r	  idem						     *s/\r*
-      \<CR>	  insert a carriage-return (CTRL-M)
-		  (Type the <CR> as CTRL-V <Enter>)		     *s/\<CR>*
-      \n	  insert a <NL> (<NUL> in the file)
-		  (does NOT break the line)			     *s/\n*
-      \b	  insert a <BS>					     *s/\b*
-      \t	  insert a <Tab>				     *s/\t*
-      \\	  insert a single backslash			     *s/\\*
-      \x	  where x is any character not mentioned above:
-		  Reserved for future expansion
+ 		magic	nomagic	action ~
+*s/\&*		&	\&	replaced with the whole matched pattern
+ 		\&	&	replaced with &
+*\0* *s/\0*	\0	\0	replaced with the whole matched pattern
+*s/\1*		\1	\1	replaced with the matched pattern in the first
+				pair of ()
+*s/\2*		\2	\2	replaced with the matched pattern in the second
+				pair of ()
+*s/\3*		..	..	..
+*s/\9*		\9	\9	replaced with the matched pattern in the ninth
+				pair of ()
+*s~*		~	\~	replaced with the {string} of the previous
+				substitute
+*s/\~*		\~	~	replaced with ~
+*s/\u*		\u	\u	next character made uppercase
+*s/\U*		\U	\U	following characters made uppercase, until \E
+*s/\l*		\l	\l	next character made lowercase
+*s/\L*		\L	\L	following characters made lowercase, until \E
+*s/\e*		\e	\e	end of \u, \U, \l and \L (NOTE: not <Esc>!)
+*s/\E*		\E	\E	end of \u, \U, \l and \L
+*s<CR>*		<CR>	<CR>	split line in two at this point
+				(Type the <CR> as CTRL-V <Enter>)
+*s/\r*		\r	\r	idem
+*s/\<CR>*	\<CR>	\<CR>	insert a carriage-return (CTRL-M)
+				(Type the <CR> as CTRL-V <Enter>)
+*s/\n*		\n	\n	insert a <NL> (<NUL> in the file)
+				(does NOT break the line)
+*s/\b*		\b	\b	insert a <BS>
+*s/\t*		\t	\t	insert a <Tab>
+*s/\\*		\\	\\	insert a single backslash
+ 		\x	\x	where x is any character not mentioned above:
+				Reserved for future expansion
 
 The special meaning is also used inside the third argument {sub} of
 the |substitute()| function with the following exceptions:
@@ -1670,7 +1670,7 @@ You can use the 'formatoptions' option  to influence how Vim formats text.
 'formatoptions' is a string that can contain any of the letters below.  You
 can separate the option letters with commas for readability.
 
-letter	 meaning when present in 'formatoptions'    ~
+letter   meaning when present in 'formatoptions'    ~
 							*fo-t*
 t	Auto-wrap text using 'textwidth'
 							*fo-c*

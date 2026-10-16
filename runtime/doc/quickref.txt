@@ -129,7 +129,7 @@ N is used to indicate an optional count that can be given before the command.
 
 |pattern|		Special characters in search patterns
 
-			meaning		      magic   nomagic	~
+			meaning			magic	nomagic ~
 		matches any single character	.	\.
 		       matches start of line	^	^
 			       matches <EOL>	$	$

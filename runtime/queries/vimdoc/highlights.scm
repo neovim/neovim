@@ -18,7 +18,7 @@
   (line
     (column_heading
       (heading) @markup.underline
-      (#match? @markup.underline "\\S\\t")))
+      (#lua-match? @markup.underline "%S\t")))
   .
   (line))
 

@@ -135,7 +135,7 @@ When the same extension is used for multiple filetypes, Vim tries to guess
 what kind of file it is.  This doesn't always work.  A number of global
 variables can be used to overrule the filetype used for certain extensions:
 
-	file name	variable ~
+	file name	variable		  ~
 	`*.al`		g:filetype_al
 	`*.app`		g:filetype_app
 	`*.as`		g:filetype_as

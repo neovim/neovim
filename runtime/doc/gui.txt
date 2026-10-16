@@ -169,63 +169,58 @@ Overview of what the mouse buttons do, when 'mousemodel' is "extend":
 
                *<S-LeftMouse>* *<A-RightMouse>* *<S-RightMouse>* *<RightDrag>*
                                                  *<RightRelease>* *<LeftDrag>*
-Normal Mode: >
-  event         position     selection        change  action
-                 cursor                       window
-  ---------------------------------------------------------------------------
-  <LeftMouse>     yes          end              yes
-  <C-LeftMouse>   no        no change           no     toggle multicursor
-  <S-LeftMouse>   yes       no change           yes    "*" (2)
-  <LeftDrag>      yes     start or extend (1)   no
-  <LeftRelease>   yes     start or extend (1)   no
-  <MiddleMouse>   yes       if not active       no     put
-  <MiddleMouse>   yes       if active           no     yank and put
-  <RightMouse>    yes     start or extend       yes
-  <A-RightMouse>  yes start or extend blockw.   yes
-  <S-RightMouse>  yes        no change          yes    "#" (2)
-  <C-RightMouse>  no         no change          no     "CTRL-T"
-  <RightDrag>     yes         extend            no
-  <RightRelease>  yes         extend            no
+Normal Mode:
 
-Insert or Replace Mode: >
-  event         position     selection        change  action
-                 cursor                       window
-  ---------------------------------------------------------------------------
-  <LeftMouse>     yes     (cannot be active)    yes
-  <C-LeftMouse>   no      (cannot be active)    no     no-op
-  <S-LeftMouse>   yes     (cannot be active)    yes    "CTRL-O*" (2)
-  <LeftDrag>      yes     start or extend (1)   no     like CTRL-O (1)
-  <LeftRelease>   yes     start or extend (1)   no     like CTRL-O (1)
-  <MiddleMouse>   no      (cannot be active)    no     put register
-  <RightMouse>    yes     start or extend       yes    like CTRL-O
-  <A-RightMouse>  yes start or extend blockw.   yes
-  <S-RightMouse>  yes     (cannot be active)    yes    "CTRL-O#" (2)
-  <C-RightMouse>  no      (cannot be active)    no     "CTRL-O CTRL-T"
+  event		position cursor	selection	  change window	action ~
+  <LeftMouse>		yes	end			yes
+  <C-LeftMouse>		no	no change		no	toggle multicursor
+  <S-LeftMouse>		yes	no change		yes	"*" (2)
+  <LeftDrag>		yes	start or extend (1)	no
+  <LeftRelease>		yes	start or extend (1)	no
+  <MiddleMouse>		yes	if not active		no	put
+  <MiddleMouse>		yes	if active		no	yank and put
+  <RightMouse>		yes	start or extend		yes
+  <A-RightMouse>	yes	start or extend blockw.	yes
+  <S-RightMouse>	yes	no change		yes	"#" (2)
+  <C-RightMouse>	no	no change		no	"CTRL-T"
+  <RightDrag>		yes	extend			no
+  <RightRelease>	yes	extend			no
 
-In a help window: >
-  event         position     selection        change  action
-                 cursor                       window
-  ---------------------------------------------------------------------------
-  <2-LeftMouse>   yes     (cannot be active)    no     "^]" (jump to help tag)
+Insert or Replace Mode:
+
+  event		position cursor	selection	  change window	action ~
+  <LeftMouse>		yes	(cannot be active)	yes
+  <C-LeftMouse>		no	(cannot be active)	no	no-op
+  <S-LeftMouse>		yes	(cannot be active)	yes	"CTRL-O*" (2)
+  <LeftDrag>		yes	start or extend (1)	no	like CTRL-O (1)
+  <LeftRelease>		yes	start or extend (1)	no	like CTRL-O (1)
+  <MiddleMouse>		no	(cannot be active)	no	put register
+  <RightMouse>		yes	start or extend		yes	like CTRL-O
+  <A-RightMouse>	yes	start or extend blockw.	yes
+  <S-RightMouse>	yes	(cannot be active)	yes	"CTRL-O#" (2)
+  <C-RightMouse>	no	(cannot be active)	no	"CTRL-O CTRL-T"
+
+In a help window:
+
+  event		position cursor	selection	  change window	action ~
+  <2-LeftMouse>		yes	(cannot be active)	no	"^]" (jump to help tag)
 
 When 'mousemodel' is "popup", these are different:
 
                                                                *<A-LeftMouse>*
-Normal Mode: >
-  event         position     selection        change  action
-                 cursor                       window
-  ---------------------------------------------------------------------------
-  <S-LeftMouse>   yes     start or extend (1)   no
-  <A-LeftMouse>   yes     start/extend blockw   no
-  <RightMouse>    no      popup menu            no
+Normal Mode:
 
-Insert or Replace Mode: >
-  event         position     selection        change  action
-                 cursor                       window
-  ---------------------------------------------------------------------------
-  <S-LeftMouse>   yes     start or extend (1)   no     like CTRL-O (1)
-  <A-LeftMouse>   yes     start/extend blockw   no
-  <RightMouse>    no      popup menu            no
+  event		position cursor	selection	  change window	action ~
+  <S-LeftMouse>		yes	start or extend (1)	no
+  <A-LeftMouse>		yes	start/extend blockw	no
+  <RightMouse>		no	popup menu		no
+
+Insert or Replace Mode:
+
+  event		position cursor	selection	  change window	action ~
+  <S-LeftMouse>		yes	start or extend (1)	no	like CTRL-O (1)
+  <A-LeftMouse>		yes	start/extend blockw	no
+  <RightMouse>		no	popup menu		no
 
 (1) only if mouse pointer moved since press
 (2) only if click is in same buffer
@@ -257,13 +252,12 @@ alt key is pressed (it may move the window).
 
                 *double-click* *<2-LeftMouse>* *<3-LeftMouse>* *<4-LeftMouse>*
 Double, triple and quadruple clicks are supported.  For selecting text, extra
-clicks extend the selection: >
+clicks extend the selection:
 
-        click           select
-        ---------------------------------
-        double          word or % match
-        triple          line
-        quadruple       rectangular block
+	click		select ~
+	double		word or % match
+	triple		line
+	quadruple	rectangular block
 
 Exception: In a :help window, double-click jumps to help for the word that is
 clicked on.
@@ -292,24 +286,24 @@ This is like using CTRL-O in Insert mode.  Select mode is used when the
                                                 *X1Mouse* *X1Drag* *X1Release*
                                                 *X2Mouse* *X2Drag* *X2Release*
                                               *<MiddleRelease>* *<MiddleDrag>*
-Mouse clicks can be mapped using these |keycodes|: >
-      code           mouse button              normal action
-  ---------------------------------------------------------------------------
-  <LeftMouse>     left pressed               set cursor position
-  <LeftDrag>      left moved while pressed   extend selection
-  <LeftRelease>   left released              set selection end
-  <MiddleMouse>   middle pressed             paste text at cursor position
-  <MiddleDrag>    middle moved while pressed -
-  <MiddleRelease> middle released            -
-  <RightMouse>    right pressed              extend selection
-  <RightDrag>     right moved while pressed  extend selection
-  <RightRelease>  right released             set selection end
-  <X1Mouse>       X1 button pressed          -
-  <X1Drag>        X1 moved while pressed     -
-  <X1Release>     X1 button release          -
-  <X2Mouse>       X2 button pressed          -
-  <X2Drag>        X2 moved while pressed     -
-  <X2Release>     X2 button release          -
+Mouse clicks can be mapped using these |keycodes|:
+
+  code			mouse button			normal action ~
+  <LeftMouse>		left pressed			set cursor position
+  <LeftDrag>		left moved while pressed	extend selection
+  <LeftRelease>		left released			set selection end
+  <MiddleMouse>		middle pressed			paste text at cursor position
+  <MiddleDrag>		middle moved while pressed	-
+  <MiddleRelease>	middle released			-
+  <RightMouse>		right pressed			extend selection
+  <RightDrag>		right moved while pressed	extend selection
+  <RightRelease>	right released			set selection end
+  <X1Mouse>		X1 button pressed		-
+  <X1Drag>		X1 moved while pressed		-
+  <X1Release>		X1 button release		-
+  <X2Mouse>		X2 button pressed		-
+  <X2Drag>		X2 moved while pressed		-
+  <X2Release>		X2 button release		-
 
 The X1 and X2 buttons refer to the extra buttons found on some mice (e.g. the
 right thumb).

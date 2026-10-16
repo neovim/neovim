@@ -32,8 +32,8 @@ If you are working in a special language mode when inserting text, see the
 'langmap' option, 'langmap', on how to avoid switching this mode on and off
 all the time.
 
-char		action	~
------------------------------------------------------------------------
+char            action  ~
+----------------------------------------------------------------------- ~
 						*i_CTRL-[* *i_<Esc>*
 <Esc> or CTRL-[	End insert or Replace mode, go back to Normal mode.  Finish
 		abbreviation.
@@ -267,7 +267,7 @@ CTRL-]		Trigger abbreviation, without inserting a character.
 						*i_<Insert>*
 <Insert>	Toggle between Insert and Replace mode.
 
------------------------------------------------------------------------
+----------------------------------------------------------------------- ~
 						*i_backspacing*
 The effect of the <BS>, CTRL-W, and CTRL-U depend on the 'backspace' option
 (unless 'revins' is set).  This is a comma-separated list of items:
@@ -292,12 +292,12 @@ With CTRL-V the decimal, octal or hexadecimal value of a character can be
 entered directly.  This way you can enter any character, except a line break
 (<NL>, value 10).  There are five ways to enter the character value:
 
-first char	mode	     max nr of chars   max value ~
-(none)		decimal		   3		255
-o or O		octal		   3		377	 (255)
-x or X		hexadecimal	   2		ff	 (255)
-u		hexadecimal	   4		ffff	 (65535)
-U		hexadecimal	   8		7fffffff (2147483647)
+first char	mode		max nr of chars	max value ~
+(none)		decimal		3		255
+o or O		octal		3		377 (255)
+x or X		hexadecimal	2		ff (255)
+u		hexadecimal	4		ffff (65535)
+U		hexadecimal	8		7fffffff (2147483647)
 
 Normally you would type the maximum number of characters.  Thus to enter a
 space (value 32) you would type <C-V>032.  You can omit the leading zero, in
@@ -351,47 +351,47 @@ including cursor-moves.  After a jump (mouse, scroll, <PageUp>, …) only the
 last change can be redone, and it behaves like an "i" command.  The |quote.|
 register always holds just the text typed after the last cursor-move.
 
-char		action	~
------------------------------------------------------------------------
-<Up>		cursor one line up			     *i_<Up>*
-<Down>		cursor one line down			     *i_<Down>*
+char		action					     tag ~
+----------------------------------------------------------------------- ~
+<Up>		cursor one line up	                     *i_<Up>*
+<Down>		cursor one line down	                     *i_<Down>*
 CTRL-G <Up>	cursor one line up, insert start column	     *i_CTRL-G_<Up>*
 CTRL-G k	cursor one line up, insert start column	     *i_CTRL-G_k*
 CTRL-G CTRL-K	cursor one line up, insert start column	     *i_CTRL-G_CTRL-K*
-CTRL-G <Down>	cursor one line down, insert start column    *i_CTRL-G_<Down>*
-CTRL-G j	cursor one line down, insert start column    *i_CTRL-G_j*
-CTRL-G CTRL-J	cursor one line down, insert start column    *i_CTRL-G_CTRL-J*
-<Left>		cursor one character left		     *i_<Left>*
-<Right>		cursor one character right		     *i_<Right>*
+CTRL-G <Down>	cursor one line down, insert start column	*i_CTRL-G_<Down>*
+CTRL-G j	cursor one line down, insert start column	*i_CTRL-G_j*
+CTRL-G CTRL-J	cursor one line down, insert start column	*i_CTRL-G_CTRL-J*
+<Left>		cursor one character left	             *i_<Left>*
+<Right>		cursor one character right	             *i_<Right>*
 <S-Left>	cursor one word back (like "b" command)	     *i_<S-Left>*
 <C-Left>	cursor one word back (like "b" command)	     *i_<C-Left>*
-<S-Right>	cursor one word forward (like "w" command)   *i_<S-Right>*
-<C-Right>	cursor one word forward (like "w" command)   *i_<C-Right>*
+<S-Right>	cursor one word forward (like "w" command)	*i_<S-Right>*
+<C-Right>	cursor one word forward (like "w" command)	*i_<C-Right>*
 <Home>		cursor to first char in the line	     *i_<Home>*
 <End>		cursor to after last char in the line	     *i_<End>*
 <C-Home>	cursor to first char in the file	     *i_<C-Home>*
 <C-End>		cursor to after last char in the file	     *i_<C-End>*
 <LeftMouse>	cursor to position of mouse click	     *i_<LeftMouse>*
-<S-Up>		move window one page up			     *i_<S-Up>*
-<PageUp>	move window one page up			     *i_<PageUp>*
-<S-Down>	move window one page down		     *i_<S-Down>*
-<PageDown>	move window one page down		     *i_<PageDown>*
-<ScrollWheelDown>    move window three lines down	*i_<ScrollWheelDown>*
-<S-ScrollWheelDown>  move window one page down		*i_<S-ScrollWheelDown>*
-<ScrollWheelUp>      move window three lines up		*i_<ScrollWheelUp>*
-<S-ScrollWheelUp>    move window one page up		*i_<S-ScrollWheelUp>*
-<ScrollWheelLeft>    move window six columns left	*i_<ScrollWheelLeft>*
-<S-ScrollWheelLeft>  move window one page left		*i_<S-ScrollWheelLeft>*
-<ScrollWheelRight>   move window six columns right	*i_<ScrollWheelRight>*
-<S-ScrollWheelRight> move window one page right		*i_<S-ScrollWheelRight>*
-CTRL-O		execute one command, return to Insert mode   *i_CTRL-O*
+<S-Up>		move window one page up	                     *i_<S-Up>*
+<PageUp>	move window one page up	                     *i_<PageUp>*
+<S-Down>	move window one page down	             *i_<S-Down>*
+<PageDown>	move window one page down	             *i_<PageDown>*
+<ScrollWheelDown>	move window three lines down	     *i_<ScrollWheelDown>*
+<S-ScrollWheelDown>	move window one page down	     *i_<S-ScrollWheelDown>*
+<ScrollWheelUp>	move window three lines up	             *i_<ScrollWheelUp>*
+<S-ScrollWheelUp>	move window one page up	             *i_<S-ScrollWheelUp>*
+<ScrollWheelLeft>	move window six columns left	     *i_<ScrollWheelLeft>*
+<S-ScrollWheelLeft>	move window one page left	     *i_<S-ScrollWheelLeft>*
+<ScrollWheelRight>	move window six columns right	     *i_<ScrollWheelRight>*
+<S-ScrollWheelRight>	move window one page right	             *i_<S-ScrollWheelRight>*
+CTRL-O		execute one command, return to Insert mode	*i_CTRL-O*
 CTRL-\ CTRL-O	like CTRL-O but don't move the cursor	     *i_CTRL-\_CTRL-O*
 CTRL-G u	close undo sequence, start new change	     *i_CTRL-G_u*
-CTRL-G U	don't start a new undo block with the next   *i_CTRL-G_U*
-		left/right cursor movement, if the cursor
-		stays within the same line
+CTRL-G U	don't start a new undo block with the next	*i_CTRL-G_U*
+ 		left/right cursor movement, if the cursor
+ 		stays within the same line
 
------------------------------------------------------------------------
+----------------------------------------------------------------------- ~
 
 The CTRL-O command sometimes has a side effect: If the cursor was beyond the
 end of the line, it will be put on the last character in the line.  In
@@ -2161,20 +2161,20 @@ self explanatory.  Using the long or the short version depends on the
 
 	long		short		meaning ~
 	[readonly]	{RO}		the file is write protected
-	[fifo/socket]			using a stream
-	[fifo]				using a fifo stream
-	[socket]			using a socket stream
-	[CR missing]			reading with "dos" 'fileformat' and a
+	[fifo/socket]	 		using a stream
+	[fifo]		 		using a fifo stream
+	[socket]	 		using a socket stream
+	[CR missing]	 		reading with "dos" 'fileformat' and a
 					NL without a preceding CR was found.
-	[NL found]			reading with "mac" 'fileformat' and a
+	[NL found]	 		reading with "mac" 'fileformat' and a
 					NL was found (could be "unix" format)
-	[long lines split]		at least one line was split in two
-	[NOT converted]			conversion from 'fileencoding' to
+	[long lines split]	 	at least one line was split in two
+	[NOT converted]	 		conversion from 'fileencoding' to
 					'encoding' was desired but not
 					possible
-	[converted]			conversion from 'fileencoding' to
+	[converted]	 		conversion from 'fileencoding' to
 					'encoding' done
-	[READ ERRORS]			not all of the file could be read
+	[READ ERRORS]	 		not all of the file could be read
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

@@ -173,19 +173,18 @@ one to jump to: >
 
 	:tselect tagname
 
-Vim will present you with a list of choices:
-
-	  # pri kind tag	       file ~
-	  1 F	f    mch_init	       os_amiga.c ~
-		       mch_init() ~
-	  2 F	f    mch_init	       os_mac.c ~
-		       mch_init() ~
-	  3 F	f    mch_init	       os_msdos.c ~
-		       mch_init(void) ~
-	  4 F	f    mch_init	       os_riscos.c ~
-		       mch_init() ~
-	Enter nr of choice (<CR> to abort):  ~
-
+Vim will present you with a list of choices: >
+	  # pri kind tag	       file
+	  1 F	f    mch_init	       os_amiga.c
+		       mch_init()
+	  2 F	f    mch_init	       os_mac.c
+		       mch_init()
+	  3 F	f    mch_init	       os_msdos.c
+		       mch_init(void)
+	  4 F	f    mch_init	       os_riscos.c
+		       mch_init()
+	Enter nr of choice (<CR> to abort):
+<
 You can now enter the number (in the first column) of the match that you would
 like to jump to.  The information in the other columns give you a good idea of
 where the match is defined.
