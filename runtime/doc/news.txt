@@ -298,8 +298,8 @@ EDITOR
     normally. Async plugins no longer need special |CmdwinLeave| workarounds.
   • The |cmdwin-char| is shown via 'statuscolumn'.
 • |gf| and |<cfile>| support `file://…` URIs.
-• |:help| files render tables (example: |api-types|).
-  • Spec: https://github.com/neovim/tree-sitter-vimdoc#tables
+• |:help| files can contain tables, see |help-table|. Example:
+  |supported-platforms| (https://neovim.io/doc/user/support/#supported-platforms).
 • |:help| documentation is available as PDF via:
   https://neovim.io/doc/user/nvim-help.pdf
 • |:log| opens log files.

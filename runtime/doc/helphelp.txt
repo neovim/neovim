@@ -465,7 +465,7 @@ Hints for translators:
   languages in the specified directory.
 
 ==============================================================================
-Writing help files					*help-writing*
+Writing help files						*help-writing*
 
 For ease of use, a Vim help file for a plugin should follow the format of the
 standard Vim help files, except for the first line.  If you are writing a new
@@ -484,9 +484,8 @@ file.  Check there that it shows up properly: |local-additions|.
 If you want to add a version number or last modification date, put it in the
 second line, right aligned.
 
-At the bottom of the help file, place a Vim modeline to set the 'textwidth'
-and 'tabstop' options and the 'filetype' to "help".  Never set a global option
-in such a modeline, that can have undesired consequences.
+At the bottom of the help file, after a blank line, place a Vim modeline to
+set the 'textwidth' and 'tabstop' options and the 'filetype' to "help".
 
 
 STYLE
@@ -507,15 +506,22 @@ Always use |:retab| after you have finished editing.  Don't blindly use
 |:retab!|, always review what will be changed to avoid unwanted changes.
 
 
-TAGS
+------------------------------------------------------------------------------
+Help format specification (vimdoc)				*help-spec*
 
-To define a help tag, place the name between asterisks ("*tag-name*").  The
+The :help files are written in a simple Markdown-like document format,
+referred to as "vimdoc", specified below.
+
+
+TAGS							*help-tag*
+
+To define a help tag, place the name between asterisks (`*tag-name*`).  The
 tag-name should be different from all the Vim help tag names and ideally
 should begin with the name of the Vim plugin.  The tag name is usually right
 aligned on a line.
 
 When referring to an existing help tag and to create a hot-link, place the
-name between two bars ("|") eg. |help-writing|.
+name between two bars ("|") eg.
 
 When referring to a Vim option in the help file, place the option name between
 two single quotes, eg. 'statusline'
@@ -524,23 +530,91 @@ When referring to any other technical term or symbol, such as a filename or
 function parameter, surround it in backticks, eg. `~/.path/to/init.vim`. This
 renders it as "inline" code (as opposed to a "codeblock" |help-codeblock|).
 
+							*help-url*
+URLs (e.g. https://neovim.io) are links.  A trailing ".", ",", ":" or ")" is
+not part of the URL, and "]" ends it (URL-encode a "]" as "%5D").
+
+
+BLOCKS							*help-block*
+
+A block is a group of adjacent lines, ended by a blank line or
+a codeblock-terminating "<" (|help-codeblock|). In "flow" layout (HTML, and
+a future "presentation mode"), blocks are un-hardwrapped: their contents
+dynamically adapt to the viewport.
+
+
+HEADINGS			  *help-heading* *help-h1* *help-h2* *help-h3*
+
+Headings divide a help file into sections (|gO| |[[|). A heading must be the
+first line of a block (|help-block|), i.e. preceded by a blank line.
+
+- h1: 12 or more "=" characters starting at column 1, followed by a line with
+  the heading text and optional tags: >
+
+	==============================================================================
+	1. Introduction						*foo-intro*
+
+- h2: Same as h1, with "-" instead of "=": >
+
+	------------------------------------------------------------------------------
+	Options							*foo-options*
+
+- h3: UPPERCASE words starting at column 1, followed by optional tags: >
+
+	DEFAULT MAPPINGS					*foo-mappings*
+
+- h4: *help-h4* *help-column-heading* Line ending with tilde, preceded by
+  a space (" ~"). Primarily intended for table headings |help-table|, but also
+  commonly used as "h4". Example: >
+
+	Column heading ~
+<
+
+LISTS							*help-list*
+
+A listitem is a line starting with "-", "•", or a number followed by "." (e.g.
+"1."), then <Space>. May be nested within a block.  "+" and "*" are not list
+markers.  A listitem continues until a blank line, a "<" line, or the next
+listitem.  Indent a listitem to nest it under the previous one.
+
+May contain a codeblock.  A "<" followed by indented text (on the same or next
+line) continues the listitem after its codeblock: >
+
+	- foo: >
+	    code
+	<
+	  still foo
+	- bar
+<
+
+TABLES							*help-table*
+
+A table is a block (|help-block|) whose first line is a |help-column-heading|
+with ≥2 cells, followed by rows.  Cells are delimited by <Tab> characters;
+whitespace following <Tab> is ignored, so it can be used for alignment.
+Example (also |supported-platforms|):
+
+	Key	Meaning ~
+	foo	a cell that is too long for one line
+		continues on the next line
+	--------------------------------------------
+	bar	starts a new group of rows
+
+- A line with a single cell (no <Tab> after its leading whitespace) continues
+  the last cell of the previous row.
+- A line containing only `[-=~ ]` chars is a "separator". Useful for visually
+  separating groups of rows without terminating the table.
+- To indicate an empty cell use a non-breaking space (CTRL-K NS, see
+  |digraphs|).
+- A row cannot start with a listitem marker (|help-list|); use backticks.
+
 
 HIGHLIGHTING
 
-To define a column heading, use a tilde character at the end of the line,
-preceded by a space. This will highlight the column heading in a different
-color.  E.g.
-
-Column heading ~
-
-To separate sections in a help file, place a series of '=' characters in a
-line starting from the first column.  The section separator line is
-highlighted differently.
-
 							      *help-codeblock*
 To quote a block of ex-commands verbatim, place a greater than (>) character
-at the end of the line before the block and a less than (<) character as the
-first non-blank on a line following the block.  Any line starting in column 1
+at the end of the line before the block and a less than (<) character in the
+first column of a line following the block.  Any line starting in column 1
 also implicitly stops the block of ex-commands before it.  E.g. >
 	function Example_Func()
 	  echo "Example"
@@ -552,6 +626,10 @@ annotation (e.g. "vim") after a greater than (>) character.  E.g. >vim
 	  echo "Example"
 	endfunction
 <
+The ">" must be preceded by a space, and can end any line, including a list
+item (|help-list|).  Codeblock lines must be indented, and are shown verbatim
+(no tags or links).  Text after "<" on the same line starts a new block.
+
 						*help-notation*
 The following are highlighted differently in a Vim help file:
   - a special key name expressed either in <> notation as in <PageDown>, or
