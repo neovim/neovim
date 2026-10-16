@@ -87,8 +87,8 @@ local function system(cmd, args)
 
   local res = vim.fn.jobwait({ jobid }, math.floor(vim.nonnil(args.timeout, 30) * 1000))
   if res[1] == -1 then
-    error('Command timed out: ' .. shellify(cmd))
     vim.fn.jobstop(jobid)
+    error('Command timed out: ' .. shellify(cmd))
   elseif shell_error_code ~= 0 and not ignore_error then
     local emsg = string.format(
       'Command error (job=%d, exit code %d): %s (in %s)',
