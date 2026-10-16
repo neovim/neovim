@@ -275,7 +275,7 @@ and the line number where the cursor was the last time.
 	  a	Buffer is loaded and displayed.
 	  h	Buffer is loaded but hidden.
 	   =	Buffer is read-only.
-	   -	Buffer is not modifiable, the 'modifiable' option is off.
+	   `-`	Buffer is not modifiable, the 'modifiable' option is off.
 	    +	Buffer has been modified.
 
 

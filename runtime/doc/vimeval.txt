@@ -1556,7 +1556,6 @@ evaluates to.  Use |eval()| to evaluate it.
 
 
 nesting							*expr-nesting* *E110*
--------
 (expr1)			nested expression
 
 

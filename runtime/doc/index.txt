@@ -93,18 +93,18 @@ Tag		Char		Insert-mode action	~
 |i_CTRL-]|	CTRL-]		trigger abbreviation
 |i_CTRL-^|	CTRL-^		toggle use of |:lmap| mappings
 |i_CTRL-_|	CTRL-_		When 'allowrevins' set: toggle 'revins'
- -----------------------------------------------------------------------------
+------------------------------------------------------------------------------
  		<Space> to '~'	not used, except '0' and '^' followed by
 				CTRL-D
- -----------------------------------------------------------------------------
+------------------------------------------------------------------------------
 |i_0_CTRL-D|	0 CTRL-D	delete all indent in the current line
 |i_^_CTRL-D|	^ CTRL-D	delete all indent in the current line, restore
 				it in the next line
- -----------------------------------------------------------------------------
+------------------------------------------------------------------------------
 |i_<Del>|	<Del>		delete character under the cursor
- -----------------------------------------------------------------------------
+------------------------------------------------------------------------------
  		Meta characters (0x80 to 0xff, 128 to 255)	not used
- -----------------------------------------------------------------------------
+------------------------------------------------------------------------------
 |i_<Left>|	<Left>		cursor one character left
 |i_<S-Left>|	<S-Left>	cursor one word left
 |i_<C-Left>|	<C-Left>	cursor one word left
@@ -232,7 +232,7 @@ Tag		Char	      Note Normal-mode action	~
 |CTRL-<Tab>|	CTRL-<Tab>	   same as `g<Tab>` : go to last accessed tab
 				   page
  		CTRL-_		   not used
- -----------------------------------------------------------------------------
+------------------------------------------------------------------------------
 |<Space>|	<Space>		1  same as "l"
 |!|		!{motion}{filter}	 
 				2  filter Nmove text through the {filter}
@@ -665,7 +665,7 @@ Tag		Char	      Note Normal-mode action	~
 |[z|		[z		1  move to start of open fold
 |[{|		[{		1  cursor N times back to unmatched '{'
 |[<MiddleMouse>|	[<MiddleMouse>	2  same as "[p"
- -----------------------------------------------------------------------------
+------------------------------------------------------------------------------
 |]_CTRL-D|	] CTRL-D	   jump to first #define found in current and
 				   included files matching the word under the
 				   cursor, start searching at cursor position
@@ -1089,7 +1089,7 @@ Tag		Command		Command-line editing-mode action	~
 |c_CTRL-]|	CTRL-]		trigger abbreviation
 |c_CTRL-^|	CTRL-^		toggle use of |:lmap| mappings
 |c_<Del>|	<Del>		delete the character under the cursor
- -----------------------------------------------------------------------------
+------------------------------------------------------------------------------
 |c_<Left>|	<Left>		cursor left
 |c_<S-Left>|	<S-Left>	cursor one word left
 |c_<C-Left>|	<C-Left>	cursor one word left

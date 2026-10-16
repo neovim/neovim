@@ -7853,7 +7853,7 @@ vim.bo.vts = vim.bo.vartabstop
 --- If greater than or equal to a given level, Nvim produces the following
 --- messages:
 ---
---- Level   Messages ~
+--- Level	Messages ~
 --- ----------------------------------------------------------------------
 --- 1	Enables Lua tracing (see above). Does not produce messages.
 --- 2	When a file is ":source"'ed, or `shada` file is read or written.

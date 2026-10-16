@@ -14,8 +14,7 @@ contain links. To stand out from the rest of the text, links are underlined.
 You can follow them by placing the cursor over them and pressing <Enter>, or
 by double-clicking them.
 
-1.1 Commands
-------------
+1.1 COMMANDS
 								      *:Tutor*
 :Tutor {tutorial}	Opens a tutorial. Command-line completion for
 			{tutorial} is provided, the candidates are a list of

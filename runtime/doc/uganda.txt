@@ -4,8 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
-			*uganda* *Uganda* *copying* *copyright* *license*
-SUMMARY
+SUMMARY			*uganda* *Uganda* *copying* *copyright* *license*
 							*Kuwasha*
 Vim is Charityware.  You can use and copy it as much as you like, but you are
 encouraged to make a donation for needy children in Uganda.  Please see |kcc|

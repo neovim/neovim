@@ -6913,7 +6913,7 @@ function vim.fn.prevnonblank(lnum) end
 ---         numeric conversion (d, o, x, and X), the 0 flag
 ---         is ignored.
 ---
----     -        A negative field width flag; the converted value
+---     `-`        A negative field width flag; the converted value
 ---         is to be left adjusted on the field boundary.
 ---         The converted value is padded on the right with
 ---         blanks, rather than on the left with blanks or

@@ -429,7 +429,7 @@ the space bar):
 			     your |init.vim| >
                                 let g:ftplugin_sql_omni_key_right = '<Right>'
                                 let g:ftplugin_sql_omni_key_left  = '<Left>'
-
+<
 The SQL completion plugin caches various lists that are displayed in
 the popup window.  This makes the re-displaying of these lists very
 fast.  If new tables or columns are added to the database it may become
