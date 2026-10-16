@@ -188,6 +188,36 @@ function vim.api.nvim__stats() end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- Captures the rendered terminal state (scrollback and visible screen)
+--- as ANSI escape sequences.
+---
+--- Returns an empty string if {buf} is not a terminal buffer.
+---
+--- Examples:
+---
+--- ```lua
+--- -- Capture everything (scrollback + visible screen):
+--- local ansi = vim.api.nvim__term_capture(buf, 1, 0)
+---
+--- -- Capture lines:
+--- local ansi = vim.api.nvim__term_capture(buf, 5, 10)
+---
+--- -- sb = scrollback line count (buffer lines - screen height):
+--- local sb = vim.api.nvim_buf_line_count(buf) - vim.api.nvim_win_get_height(win)
+--- -- Capture only the scrollback:
+--- local scrollback = vim.api.nvim__term_capture(buf, 1, sb)
+--- -- Capture only the visible screen:
+--- local screen = vim.api.nvim__term_capture(buf, sb + 1, 0)
+--- ```
+---
+--- @param buf integer Buffer handle of a terminal buffer.
+--- @param start integer 1-based line number to start from (1 for first line).
+--- @param end_ integer 1-based line number to end at (inclusive), or 0 for all remaining.
+--- @return string # ANSI escape sequences.
+function vim.api.nvim__term_capture(buf, start, end_) end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- @param str string
 --- @return any
 function vim.api.nvim__unpack(str) end
