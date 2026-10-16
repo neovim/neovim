@@ -5649,7 +5649,7 @@ void free_findfunc_option(void)
 
 /// Mark the global 'findfunc' callback with "copyID" so that it is not
 /// garbage collected.
-bool set_ref_in_findfunc(int copyID)
+bool set_ref_in_findfunc(int64_t copyID)
 {
   return set_ref_in_callback(&p_ffu, copyID, NULL, NULL);
 }

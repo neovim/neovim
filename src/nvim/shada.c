@@ -2357,7 +2357,7 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
         continue;
       case VAR_DICT: {
         dict_T *di = vartv.vval.v_dict;
-        int copyID = get_copyID();
+        int64_t copyID = get_copyID();
         if (!set_ref_in_ht(&di->dv_hashtab, copyID, NULL)
             && copyID == di->dv_copyID) {
           tv_clear(&vartv);
@@ -2367,7 +2367,7 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
       }
       case VAR_LIST: {
         list_T *l = vartv.vval.v_list;
-        int copyID = get_copyID();
+        int64_t copyID = get_copyID();
         if (!set_ref_in_list_items(l, copyID, NULL)
             && copyID == l->lv_copyID) {
           tv_clear(&vartv);

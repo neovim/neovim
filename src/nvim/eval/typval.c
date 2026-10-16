@@ -597,7 +597,7 @@ void tv_list_append_number(list_T *const l, const varnumber_T n)
 /// @return Copied list. May be NULL in case original list is NULL or some
 ///         failure happens. The refcount of the new list is set to 1.
 list_T *tv_list_copy(const vimconv_T *const conv, list_T *const orig, const bool deep,
-                     const int copyID)
+                     const int64_t copyID)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (orig == NULL) {
@@ -2919,7 +2919,7 @@ bool tv_dict_equal(dict_T *const d1, dict_T *const d2, const bool ic)
 ///         or some failure happens. The refcount of the new dictionary is set
 ///         to 1.
 dict_T *tv_dict_copy(const vimconv_T *const conv, dict_T *const orig, const bool deep,
-                     const int copyID)
+                     const int64_t copyID)
 {
   if (orig == NULL) {
     return NULL;
@@ -3566,7 +3566,7 @@ static inline int _nothing_conv_func_start(typval_T *const tv, char *const fun)
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len)
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len)
 
-static inline void _nothing_conv_func_end(typval_T *const tv, const int copyID)
+static inline void _nothing_conv_func_end(typval_T *const tv, const int64_t copyID)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   if (tv->v_type == VAR_PARTIAL) {

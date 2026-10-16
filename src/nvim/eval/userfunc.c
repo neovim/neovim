@@ -3278,7 +3278,7 @@ static inline bool fc_referenced(const funccall_T *const fc)
 
 /// @return true if items in "fc" do not have "copyID".  That means they are not
 /// referenced from anywhere that is in use.
-static bool can_free_funccal(funccall_T *fc, int copyID)
+static bool can_free_funccal(funccall_T *fc, int64_t copyID)
 {
   return fc->fc_l_varlist.lv_copyID != copyID
          && fc->fc_l_vars.dv_copyID != copyID
@@ -3901,7 +3901,7 @@ int current_func_returned(void)
   return current_funccal->fc_returned;
 }
 
-bool free_unref_funccal(int copyID, int testing)
+bool free_unref_funccal(int64_t copyID, int testing)
 {
   bool did_free = false;
   bool did_free_funccal = false;
@@ -4094,7 +4094,7 @@ dictitem_T *find_var_in_scoped_ht(const char *name, const size_t namelen, int no
 }
 
 /// Set "copyID + 1" in previous_funccal and callers.
-bool set_ref_in_previous_funccal(int copyID)
+bool set_ref_in_previous_funccal(int64_t copyID)
 {
   for (funccall_T *fc = previous_funccal; fc != NULL;
        fc = fc->fc_caller) {
@@ -4108,7 +4108,7 @@ bool set_ref_in_previous_funccal(int copyID)
   return false;
 }
 
-static bool set_ref_in_funccal(funccall_T *fc, int copyID)
+static bool set_ref_in_funccal(funccall_T *fc, int64_t copyID)
 {
   if (fc->fc_copyID != copyID) {
     fc->fc_copyID = copyID;
@@ -4123,7 +4123,7 @@ static bool set_ref_in_funccal(funccall_T *fc, int copyID)
 }
 
 /// Set "copyID" in all local vars and arguments in the call stack.
-bool set_ref_in_call_stack(int copyID)
+bool set_ref_in_call_stack(int64_t copyID)
 {
   for (funccall_T *fc = current_funccal; fc != NULL;
        fc = fc->fc_caller) {
@@ -4147,7 +4147,7 @@ bool set_ref_in_call_stack(int copyID)
 }
 
 /// Set "copyID" in all functions available by name.
-bool set_ref_in_functions(int copyID)
+bool set_ref_in_functions(int64_t copyID)
 {
   int todo = (int)func_hashtab.ht_used;
   for (hashitem_T *hi = func_hashtab.ht_array; todo > 0 && !got_int; hi++) {
@@ -4164,7 +4164,7 @@ bool set_ref_in_functions(int copyID)
 }
 
 /// Set "copyID" in all function arguments.
-bool set_ref_in_func_args(int copyID)
+bool set_ref_in_func_args(int64_t copyID)
 {
   for (int i = 0; i < funcargs.ga_len; i++) {
     if (set_ref_in_item(((typval_T **)funcargs.ga_data)[i],
@@ -4180,7 +4180,7 @@ bool set_ref_in_func_args(int copyID)
 /// "ht_stack" is used to add hashtabs to be marked.  Can be NULL.
 ///
 /// @return  true if setting references failed somehow.
-bool set_ref_in_func(char *name, ufunc_T *fp_in, int copyID)
+bool set_ref_in_func(char *name, ufunc_T *fp_in, int64_t copyID)
 {
   ufunc_T *fp = fp_in;
   int error = FCERR_NONE;
