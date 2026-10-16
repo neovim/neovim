@@ -708,6 +708,24 @@ describe('vim.lsp.completion: item conversion', function()
     eq(2, item.insertTextFormat)
     eq('item-property-has-priority', item.data)
     eq({ line = 1, character = 1 }, item.textEdit.range.start)
+
+    local default_range = completion_list.itemDefaults.editRange
+    local item_range = vim.deepcopy(default_range)
+    item_range.start.character = 0
+    for _, edit_range in ipairs({
+      default_range,
+      { insert = default_range, replace = default_range },
+    }) do
+      for _, text_edit in ipairs({
+        { range = item_range, newText = 'hello' },
+        { insert = item_range, replace = item_range, newText = 'hello' },
+      }) do
+        completion_list.itemDefaults.editRange = edit_range
+        completion_list.items[1].textEdit = text_edit
+        result = complete('|', completion_list)
+        eq(text_edit, result.items[1].user_data.nvim.lsp.completion_item.textEdit)
+      end
+    end
   end)
 
   it(
