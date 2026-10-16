@@ -227,3 +227,12 @@ function(check_lua_module LUA_PRG_PATH MODULE RESULT_VAR)
     set(${RESULT_VAR} TRUE PARENT_SCOPE)
   endif()
 endfunction()
+
+# Check if the current build is targeting Emscripten/WASM
+function(check_emscripten RESULT_VAR)
+  if(CMAKE_C_COMPILER MATCHES "emcc$" OR CMAKE_C_COMPILER MATCHES "em\\+\\+$" OR DEFINED EMSCRIPTEN)
+    set(${RESULT_VAR} TRUE PARENT_SCOPE)
+  else()
+    set(${RESULT_VAR} FALSE PARENT_SCOPE)
+  endif()
+endfunction()
