@@ -1109,9 +1109,69 @@ RecordingLeave			When a macro stops recording.
 				register.
 				|reg_recorded()| is only updated after this
 				event.
+				The register itself is already written, so
+				calling |getreg()| on it returns the
+				just-recorded macro.
 				Sets these |v:event| keys:
 				    regcontents
 				    regname
+
+							*RegisterChanged*
+RegisterChanged			After a register was written.  The
+				|autocmd-pattern| is matched against the
+				register name (e.g. `a,b` matches `a` or `b`,
+				`*` matches all).  Register names are
+				lowercase (`"Ayy` fires an event for `a`).  To
+				match the selection register, escape the glob:
+				>vim
+				  au RegisterChanged \* echo 'written'
+<
+				Event is |deferred| and fires once per write.
+
+				The |event-data| has these keys (type:
+				`vim.event.registerchanged.data`):
+				- regname: Register name.
+				- operator: Operator if `reason` is "yank" or
+				  "delete", otherwise "".
+				- visual: Visual-mode operator.
+				- reason: What wrote the register: "yank",
+				  "delete", "shift" (rotation of `"1`-`"9`),
+				  "record", "setreg", "redir", "shada",
+				  "search", "expr", "cmdline", "insert".
+				- points_to: Unnamed register only: the
+				  register it resolves to, see |getreginfo()|.
+
+				The contents of the register are not included.
+				Use |getreginfo()| to get the register
+				contents.  Use `getreg('=', 1)` to get the
+				register's expression rather than its result.
+				For `"*` and `"+`, |getreg()| will get the
+				contents from the |clipboard| provider.
+
+				The unnamed register fires when the register
+				it points to is written or when it is
+				repointed.  `":` fires only for typed
+				commands.  Does not fire for |quote_|, `"%`,
+				`"#`, clipboard reads, |nvim_load_context()|,
+				or during |startup|.  With |multicursor|, the
+				other cursors' writes do not fire; the joined
+				result fires when the cursors are cleared.
+
+				A single command can end up writing a register
+				many times. To help performance, you can batch
+				the handlers. For example: >lua
+				  local pending = false
+				  vim.api.nvim_create_autocmd('RegisterChanged', {
+				    callback = function()
+				      if pending then return end
+				      pending = true
+				      vim.schedule(function()
+				        pending = false
+				        -- e.g. redraw from getreginfo()
+				      end)
+				    end,
+				  })
+<
 
 							*RemoteReply*
 RemoteReply			When a reply from a Vim that functions as

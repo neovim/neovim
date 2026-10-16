@@ -2295,6 +2295,7 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
     xfree(last_insert.data);
     last_insert = redo;  // structure copy
     last_insert_skip = added < 0 ? 0 : Ins.new_insert_skip;
+    register_changed('.', kRegChangedInsert, NULL);
   } else {
     xfree(redo.data);
   }
@@ -2427,6 +2428,7 @@ void set_last_insert(int c)
   *s = NUL;
   last_insert.size = (size_t)(s - last_insert.data);
   last_insert_skip = 0;
+  register_changed('.', kRegChangedInsert, NULL);
 }
 
 #ifdef EXITFREE
