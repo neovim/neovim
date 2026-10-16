@@ -390,6 +390,7 @@ local function select_tabstop(tabstop)
       ('<Cmd>call cursor(%s,%s)<CR>'):format(range[1] + 1, range[2] + 1),
       'v',
       ('<Cmd>call cursor(%s,%s)<CR>'):format(range[3] + 1, range[4]),
+      vim.o.selection == 'exclusive' and 'l' or '',
       'o<c-g><c-r>_',
     }
     feedkeys(table.concat(keys))
