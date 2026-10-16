@@ -58,16 +58,16 @@ Tag		Char		Insert-mode action	~
 				the cursor
 |i_CTRL-Q|	CTRL-Q		same as CTRL-V, unless used for terminal
 				control flow
-|i_CTRL-SHIFT-Q|  CTRL-SHIFT-Q {char}
+|i_CTRL-SHIFT-Q|	CTRL-SHIFT-Q {char}	 
 				like CTRL-Q unless |tui-modifyOtherKeys| is active
 |i_CTRL-R|	CTRL-R {register}	 
 				insert the contents of a register
-|i_CTRL-R_CTRL-R| CTRL-R CTRL-R {register}
+|i_CTRL-R_CTRL-R|	CTRL-R CTRL-R {register}	 
 				insert the contents of a register literally
-|i_CTRL-R_CTRL-O| CTRL-R CTRL-O {register}
+|i_CTRL-R_CTRL-O|	CTRL-R CTRL-O {register}	 
 				insert the contents of a register literally
 				and don't auto-indent
-|i_CTRL-R_CTRL-P| CTRL-R CTRL-P {register}
+|i_CTRL-R_CTRL-P|	CTRL-R CTRL-P {register}	 
 				insert the contents of a register literally
 				and fix indent.
  		CTRL-S		not used or used for terminal control flow
@@ -76,9 +76,9 @@ Tag		Char		Insert-mode action	~
 |i_CTRL-U|	CTRL-U		delete all entered characters in the current
 				line
 |i_CTRL-V|	CTRL-V {char}	insert next non-digit literally
-|i_CTRL-SHIFT-V|  CTRL-SHIFT-V {char}
+|i_CTRL-SHIFT-V|	CTRL-SHIFT-V {char}	 
 				like CTRL-V unless |tui-modifyOtherKeys| is active
-|i_CTRL-V_digit| CTRL-V {number} insert three digit decimal number as a single
+|i_CTRL-V_digit|	CTRL-V {number}	insert three digit decimal number as a single
 				byte.
 |i_CTRL-W|	CTRL-W		delete word before the cursor
 |i_CTRL-X|	CTRL-X {mode}	enter CTRL-X sub mode, see |i_CTRL-X_index|
@@ -569,7 +569,7 @@ Tag		Command		   Normal-mode action	~
 |CTRL-W_F|	CTRL-W F	   split window and edit file name under the
 				   cursor and jump to the line number
 				   following the file name.
-|CTRL-W_g_CTRL-]| CTRL-W g CTRL-]  split window and do |:tjump| to tag under
+|CTRL-W_g_CTRL-]|	CTRL-W g CTRL-]	split window and do |:tjump| to tag under
 				   cursor
 |CTRL-W_g]|	CTRL-W g ]	   split window and do |:tselect| for tag
 				   under cursor
@@ -1052,8 +1052,8 @@ Tag		Command		Command-line editing-mode action	~
 |c_CTRL-R|	CTRL-R {regname}	 
 				insert the contents of a register or object
 				under the cursor as if typed
-|c_CTRL-R_CTRL-R| CTRL-R CTRL-R {regname}
-|c_CTRL-R_CTRL-O| CTRL-R CTRL-O {regname}
+|c_CTRL-R_CTRL-R|	CTRL-R CTRL-R {regname}	 
+|c_CTRL-R_CTRL-O|	CTRL-R CTRL-O {regname}	 
 				insert the contents of a register or object
 				under the cursor literally
  		CTRL-S		not used, or used for terminal control flow
@@ -1444,7 +1444,7 @@ Tag		Command		Action ~
 |:marks|	:marks		list all marks
 |:match|	:mat[ch]	define a match to highlight
 |:menu|		:me[nu]		enter a new menu item
-|:menutranslate|  :menut[ranslate] add a menu translation item
+|:menutranslate|	:menut[ranslate]	add a menu translation item
 |:messages|	:mes[sages]	view previously displayed messages
 |:mkexrc|	:mk[exrc]	write current mappings and settings to a file
 |:mksession|	:mks[ession]	write session info to a file
@@ -1531,7 +1531,7 @@ Tag		Command		Action ~
 |:redraw|	:redr[aw]	force a redraw of the display
 |:redrawstatus|	:redraws[tatus]	force a redraw of the status line(s) and
 				window bar(s)
-|:redrawtabline|  :redrawt[abline]  force a redraw of the tabline
+|:redrawtabline|	:redrawt[abline]	force a redraw of the tabline
 |:registers|	:reg[isters]	display the contents of registers
 |:resize|	:res[ize]	change current window height
 |:restart|	:restart	restart the Nvim server
@@ -1572,7 +1572,7 @@ Tag		Command		Action ~
 |:sbrewind|	:sbr[ewind]	split window and go to first file in the
 				buffer list
 |:scriptnames|	:scr[iptnames]	list names of all sourced Vim scripts
-|:scriptencoding| :scripte[ncoding]  encoding used in sourced Vim script
+|:scriptencoding|	:scripte[ncoding]	encoding used in sourced Vim script
 |:set|		:se[t]		show or set options
 |:setfiletype|	:setf[iletype]	set 'filetype', unless it was set already
 |:setglobal|	:setg[lobal]	show global values of options
@@ -1613,7 +1613,7 @@ Tag		Command		Action ~
 |:stop|		:st[op]		suspend the editor or escape to a shell
 |:stag|		:sta[g]		split window and jump to a tag
 |:startinsert|	:star[tinsert]	start Insert mode
-|:startgreplace|  :startg[replace] start Virtual Replace mode
+|:startgreplace|	:startg[replace]	start Virtual Replace mode
 |:startreplace|	:startr[eplace]	start Replace mode
 |:stopinsert|	:stopi[nsert]	stop Insert mode
 |:stjump|	:stj[ump]	do ":tjump" and split window

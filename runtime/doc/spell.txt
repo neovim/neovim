@@ -313,6 +313,7 @@ Vim searches for spell files in the "spell" subdirectory of the directories in
 
 The value for "LL" comes from 'spelllang', but excludes the region name.
 Examples:
+
 	'spelllang'	LL ~
 	en_us		en
 	en-rare		en-rare

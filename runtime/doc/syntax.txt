@@ -85,11 +85,13 @@ To put this into a mapping, you can use: >
 Details:
 The ":syntax" commands are implemented by sourcing a file.  To see exactly how
 this works, look in the file:
+
     command		file ~
     :syntax enable	$VIMRUNTIME/syntax/syntax.vim
     :syntax on		$VIMRUNTIME/syntax/syntax.vim
     :syntax manual	$VIMRUNTIME/syntax/manual.vim
     :syntax off		$VIMRUNTIME/syntax/nosyntax.vim
+
 Also see |syntax-loading|.
 
 NOTE: If displaying long lines is slow and switching off syntax highlighting
@@ -195,8 +197,9 @@ be preferred names for highlight groups that are common for many languages.
 These are the suggested group names (if syntax highlighting works properly
 you can see the actual color, except for "Ignore"):
 
+Group name	Meaning ~
 Comment		any comment
-
+------------------------------------------------------------------------------
 Constant	any constant
 String		a string constant: "this is a string"
 Character	a character constant: 'c', '\n'
@@ -204,10 +207,10 @@ Number		a number constant: 234, 0xff
 Boolean		a boolean constant: TRUE, false
 Regexp		a regular expression constant: /ab*c/
 Float		a floating point constant: 2.3e10
-
+------------------------------------------------------------------------------
 Identifier	any variable name
 Function	function name (also: methods for classes)
-
+------------------------------------------------------------------------------
 Statement	any statement
 Conditional	if, then, else, endif, switch, etc.
 Repeat		for, do, while, etc.
@@ -215,38 +218,38 @@ Label		case, default, etc.
 Operator	"sizeof", "+", "*", etc.
 Keyword		any other keyword
 Exception	try, catch, throw
-
+------------------------------------------------------------------------------
 PreProc		generic Preprocessor
 Include		preprocessor #include
 Define		preprocessor #define
 Macro		same as Define
 PreCondit	preprocessor #if, #else, #endif, etc.
-
+------------------------------------------------------------------------------
 Type		int, long, char, etc.
 StorageClass	static, register, volatile, etc.
 Structure	struct, union, enum, etc.
 Typedef		a typedef
-
+------------------------------------------------------------------------------
 Special		any special symbol
 SpecialChar	special character in a constant
 Tag		you can use CTRL-] on this
 Delimiter	character that needs attention
 SpecialComment	special things inside a comment
 Debug		debugging statements
-
+------------------------------------------------------------------------------
 Underlined	text that stands out, HTML links
 Bold		bold text
 Italic		italic text
 BoldItalic	bold and italic text
 Dimmed		text that is de-emphasized
-
+------------------------------------------------------------------------------
 Ignore		left blank, hidden  |hl-Ignore|
-
+------------------------------------------------------------------------------
 Error		any erroneous construct
-
+------------------------------------------------------------------------------
 Todo		anything that needs extra attention; mostly the
 		keywords TODO FIXME and XXX
-
+------------------------------------------------------------------------------
 Added		added line in a diff
 Changed		changed line in a diff
 Removed		removed line in a diff
@@ -364,7 +367,7 @@ any value to the respective variable.  Example: >
 	:let abel_obsolete_ok=1
 To disable them use ":unlet".  Example: >
 	:unlet abel_obsolete_ok
-
+<
 Variable			Highlight ~
 abel_obsolete_ok		obsolete keywords are statements, not errors
 abel_cpp_comments_illegal	do not interpret '//' as inline comment leader
@@ -467,7 +470,7 @@ To enable a feature: >
 	:let   {variable}=1|set syntax=nasm
 To disable a feature: >
 	:unlet {variable}  |set syntax=nasm
-
+<
 Variable		Highlight ~
 nasm_loose_syntax	unofficial parser allowed syntax not as Error
 			  (parser dependent; not recommended)
@@ -580,7 +583,7 @@ Setting the value to zero doesn't work!
 
 An alternative is to switch to the C++ highlighting: >
 	:set filetype=cpp
-
+<
 Variable		Highlight ~
 *c_gnu*			GNU gcc specific items
 *c_comment_strings*	strings and numbers inside a comment
@@ -690,6 +693,7 @@ CHILL							*ft-chill-syntax*
 Chill syntax highlighting is similar to C.  See |ft-c-syntax| for all the
 settings that are available.  Additionally there is:
 
+Variable		Meaning ~
 chill_space_errors	like c_space_errors
 chill_comment_string	like c_comment_strings
 chill_minlines		like c_minlines
@@ -1012,13 +1016,13 @@ Variable			Default	Effect ~
 g:doxygen_enhanced_color	 	 
 g:doxygen_enhanced_colour	0	Use non-standard highlighting for
 					doxygen comments.
-
+------------------------------------------------------------------------------
 doxygen_my_rendering		0	Disable rendering of HTML bold, italic
 					and html_my_rendering underline.
-
+------------------------------------------------------------------------------
 doxygen_javadoc_autobrief	1	Set to 0 to disable javadoc autobrief
 					colour highlighting.
-
+------------------------------------------------------------------------------
 doxygen_end_punctuation		'[.]'	Set to regexp match for the ending
 					punctuation of brief
 
@@ -1662,7 +1666,6 @@ are disabled by defining idl_no_ms_extensions.
 The more complex of the extensions are disabled by defining idl_no_extensions.
 
 Variable			Effect ~
-
 idl_no_ms_extensions		Disable some of the Microsoft specific
 				extensions
 idl_no_extensions		Disable complex extensions
@@ -2176,11 +2179,11 @@ Variable			Highlight ~
 *modula2_iso_allow_lowline*	allow low line in identifiers
 *modula2_iso_disallow_octals*	disallow octal integer literals
 *modula2_iso_disallow_synonyms*	disallow "@", "&" and "~" synonyms
-
+------------------------------------------------------------------------------
 *modula2_pim_allow_lowline*	allow low line in identifiers
 *modula2_pim_disallow_octals*	disallow octal integer literals
 *modula2_pim_disallow_synonyms*	disallow "&" and "~" synonyms
-
+------------------------------------------------------------------------------
 *modula2_r10_allow_lowline*	allow low line in identifiers
 
 MOO							*ft-moo-syntax*
@@ -3013,10 +3016,9 @@ You can set "ruby_foldable_groups" to restrict which groups are foldable: >
 
 	:let ruby_foldable_groups = 'if case %'
 <
-The value is a space-separated list of keywords:
-
-    keyword       meaning ~
-    --------  ------------------------------------- ~
+The value is a space-separated list of keywords: >
+    keyword       meaning
+    --------  -------------------------------------
     ALL        Most block syntax (default)
     NONE       Nothing
     if	       "if" or "unless" block
@@ -3036,7 +3038,7 @@ The value is a space-separated list of keywords:
     #	       Multiline comment
     <<	       Here documents
     __END__    Source code after "__END__" directive
-
+<
 						*ruby_no_expensive*
  Ruby: Reducing expensive operations ~
 
@@ -3871,6 +3873,7 @@ DEFINING FOLDLEVEL					*:syn-foldlevel*
 	This defines how the foldlevel of a line is computed when using
 	foldmethod=syntax (see |fold-syntax| and |:syn-fold|):
 
+	Value		Meaning ~
 	start:		Use level of item containing start of line.
 	minimum:	Use lowest local-minimum level of items on line.
 
@@ -3891,6 +3894,7 @@ SPELL CHECKING						*:syn-spell*
 	This defines where spell checking is to be done for text that is not
 	in a syntax item:
 
+	Value		Meaning ~
 	toplevel:	Text is spell checked.
 	notoplevel:	Text is not spell checked.
 	default:	When there is a @Spell cluster no spell checking.
@@ -3912,6 +3916,7 @@ SYNTAX ISKEYWORD SETTING				*:syn-iskeyword*
 	This defines the keyword characters.  It's like the 'iskeyword' option
 	for but only applies to syntax highlighting.
 
+	Argument	Meaning ~
 	clear:		Syntax specific iskeyword setting is disabled and the
 			buffer-local 'iskeyword' setting is used.
 	{option}	Set the syntax 'iskeyword' option to a new value.
@@ -3939,6 +3944,7 @@ DEFINING KEYWORDS					*:syn-keyword*
 
 	This defines a number of keywords.
 
+	Argument	Meaning ~
 	{group-name}	Is a syntax group name such as "Comment".
 	[{options}]	See |:syn-arguments| below.
 	{keyword} ...	Is a list of keywords which are part of this group.
@@ -3996,6 +4002,7 @@ DEFINING MATCHES					*:syn-match*
 
 	This defines one match.
 
+	Argument		Meaning ~
 	{group-name}		A syntax group name such as "Comment".
 	[{options}]		See |:syn-arguments| below.
 	[excludenl]		Don't make a pattern with the end-of-line "$"
@@ -4474,6 +4481,8 @@ skipempty						*:syn-skipempty*
 
 These arguments are only used in combination with "nextgroup".	They can be
 used to allow the next group to match after skipping some text:
+
+	Argument	Meaning ~
 	skipwhite	skip over space and tab characters
 	skipnl		skip over the end of a line
 	skipempty	skip over empty lines (implies a "skipnl")
@@ -4544,6 +4553,7 @@ pattern can be used to tell where to continue looking for an end pattern.
 The offset takes the form of "{what}={offset}"
 The {what} can be one of seven strings:
 
+What	Name		Offset for ~
 ms	Match Start	offset for the start of the matched text
 me	Match End	offset for the end of the matched text
 hs	Highlight Start	offset for where the highlighting starts
@@ -4554,6 +4564,7 @@ lc	Leading Context	offset past "leading context" of pattern
 
 The {offset} can be:
 
+Offset	Meaning ~
 s	start of the matched pattern
 s+{nr}	start of the matched pattern plus {nr} chars to the right
 s-{nr}	start of the matched pattern plus {nr} chars to the left
@@ -5085,14 +5096,16 @@ result is like this single command has been used: >
 When listing a highlight group and 'verbose' is non-zero, the listing will
 also tell where it was last set.  Example: >
 	:verbose hi Comment
-<	Comment        xxx ctermfg=4 guifg=Blue ~
-	   Last set from /home/mool/vim/vim7/runtime/syntax/syncolor.vim ~
-
+	Comment        xxx ctermfg=4 guifg=Blue
+	   Last set from /home/mool/vim/vim7/runtime/syntax/syncolor.vim
+<
 When ":hi clear" is used then the script where this command is used will be
 mentioned for the default values.  See |:verbose-cmd| for more information.
 
 					*highlight-args* *E416* *E417* *E423*
 There are two types of UIs for highlighting:
+
+UI	Description ~
 cterm	terminal UI (|TUI|)
 gui	GUI or RGB-capable TUI ('termguicolors')
 
@@ -5728,6 +5741,8 @@ it took to match them against the text.
 			the output.
 
 			The list is sorted by total time.  The columns are:
+
+			Column		Meaning ~
 			TOTAL		Total time in seconds spent on
 					matching this pattern.
 			COUNT		Number of times the pattern was used.
@@ -5747,6 +5762,7 @@ When using the "\@<=" and "\@<!" items, add a maximum size to avoid trying at
 all positions in the current and previous line.  For example, if the item is
 literal text specify the size of that text (in bytes):
 
+Pattern		Meaning ~
 "<\@<=span"	Matches "span" in "<span".  This tries matching with "<" in
 		many places.
 "<\@1<=span"	Matches the same, but only tries one byte before "span".

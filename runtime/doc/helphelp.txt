@@ -13,20 +13,20 @@ Help tag conventions					*help-context*
 
 Get specific help:  It is possible to go directly to whatever you want help
 on, by giving an argument to the |:help| command. Prepend something to specify
-the context: >
+the context:
 
-	  WHAT			PREPEND    EXAMPLE
-      Normal mode command		   :help x
-      Visual mode command	  v_	   :help v_u
-      Insert mode command	  i_	   :help i_<Esc>
-      Command-line command	  :	   :help :quit
-      Command-line editing	  c_	   :help c_<Del>
-      Vim command argument	  -	   :help -r
-      Option			  '	   :help 'textwidth'
-      Regular expression	  /	   :help /[
+	What			Prepend	Example ~
+	Normal mode command	 	:help x
+	Visual mode command	`v_`	:help v_u
+	Insert mode command	`i_`	:help i_<Esc>
+	Command-line command	`:`	:help :quit
+	Command-line editing	`c_`	:help c_<Del>
+	Vim command argument	`-`	:help -r
+	Option			`'`	:help 'textwidth'
+	Regular expression	`/`	:help /[
 
-See |help-summary| for more contexts and an explanation.
-See |notation| for an explanation of the help syntax.
+- See |help-summary| for more contexts and an explanation.
+- See |notation| for an explanation of the help syntax.
 
 SEARCH FOR HELP
 
@@ -179,12 +179,12 @@ Help commands						*online-help*
 				:help options
 
 <			{subject} can include wildcards such as "*", "?" and
-			"[a-z]":
+			"[a-z]": >
 			   :help z?	jump to help for any "z" command
 			   :help z.	jump to the help for "z."
-			But when a tag exists it is taken literally:
+<			But when a tag exists it is taken literally: >
 			   :help :?	jump to help for ":?"
-
+<
 			If there is no full match for the pattern, or there
 			are several matches, the "best" match will be used.
 			A sophisticated algorithm is used to decide which
@@ -313,9 +313,12 @@ If you would like to open the help in the current window, see this tip:
 
 The initial height of the help window can be set with the 'helpheight' option
 (default 20).
+
 						*help-buffer-options*
 When the help buffer is created, several local options are set to make sure
 the help text is displayed as it was intended:
+
+    Option		Value ~
     'iskeyword'		nearly all ASCII chars except ' ', "*", '"' and '|'
     'foldmethod'	"manual"
     'tabstop'		8
@@ -396,28 +399,29 @@ It is possible to add translated help files, next to the original English help
 files.  Vim will search for all help in "doc" directories in 'runtimepath'.
 
 At this moment translations are available for:
-	Chinese  - multiple authors
-	French   - translated by David Blanchet
-	Italian  - translated by Antonio Colombo
-	Japanese - multiple authors
-	Polish   - translated by Mikolaj Machowski
-	Russian  - translated by Vassily Ragosin
+
+	Language	Translated by ~
+	Chinese		multiple authors
+	French		David Blanchet
+	Italian		Antonio Colombo
+	Japanese	multiple authors
+	Polish		Mikolaj Machowski
+	Russian		Vassily Ragosin
+
 See the Vim website to find them: https://www.vim.org/translations.php
 
-A set of translated help files consists of these files:
-
+A set of translated help files consists of these files: >
 	help.abx
 	howto.abx
 	...
 	tags-ab
-
-"ab" is the two-letter language code.  Thus for Italian the names are:
-
+<
+"ab" is the two-letter language code.  Thus for Italian the names are: >
 	help.itx
 	howto.itx
 	...
 	tags-it
-
+<
 The 'helplang' option can be set to the preferred language(s).  The default is
 set according to the environment.  Vim will first try to find a matching tag
 in the preferred language(s).  English is used when it cannot be found.

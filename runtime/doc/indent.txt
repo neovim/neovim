@@ -809,15 +809,15 @@ do: >
       :call HtmlIndent_CheckUserSettings()
 
 Detail:
-  Calculation of indent inside "blocktags" with "alien" content:
-      BLOCKTAG   INDENT EXPR	    WHEN APPLICABLE ~
+  Calculation of indent inside "blocktags" with "alien" content: >
+      BLOCKTAG   INDENT EXPR	    WHEN APPLICABLE
       <script> : {customizable}	    if first line of block
 	       : cindent(v:lnum)    if attributes empty or contain "java"
 	       : -1		    else (vbscript, tcl, ...)
       <style>  : {customizable}	    if first line of block
 	       : GetCSSIndent()	    else
       <!-- --> : -1
-
+<
 IDRIS2							*ft-idris2-indent*
 
 Idris 2 indentation can be configured with several variables that control the

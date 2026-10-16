@@ -816,7 +816,7 @@ Otherwise these characters in {string} have a special meaning:
 				pair of ()
 *s~*		~	\~	replaced with the {string} of the previous
 				substitute
-*s/\~*		\~	~	replaced with ~
+*s/\~*		\~	~	replaced with `~`
 *s/\u*		\u	\u	next character made uppercase
 *s/\U*		\U	\U	following characters made uppercase, until \E
 *s/\l*		\l	\l	next character made lowercase
@@ -1785,6 +1785,7 @@ p	Don't break lines at single spaces that follow periods.  This is
 
 
 With 't' and 'c' you can specify when Vim performs auto-wrapping:
+
 value	action	~
 ""	no automatic formatting (you can use "gq" for manual formatting)
 "t"	automatic formatting of text, but not comments

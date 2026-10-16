@@ -8114,6 +8114,7 @@ function vim.fn.search(pattern, flags, stopline, timeout, skip) end
 ---   call searchcount()
 --- <
 --- {options} must be a |Dictionary|.  It can contain:
+---
 ---   key    type    meaning ~
 ---   recompute  |Boolean|  if |TRUE|, recompute the count
 ---         like |n| or |N| was executed.

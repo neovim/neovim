@@ -307,6 +307,8 @@ LOOPING OVER TABPAGES:
 							*tabline-menu*
 The GUI tabpages line has a popup menu.  It is accessed with a right click.
 The entries are:
+
+	Entry		Action ~
 	Close		Close the tabpage under the mouse pointer.  The
 			current one if there is no label under the mouse
 			pointer.

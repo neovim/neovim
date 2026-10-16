@@ -80,12 +80,12 @@ CTRL-Z the highlighting stops and the editor is suspended or a new shell is
 started |CTRL-Z|.
 
 	      new mode after typing:		*v_v* *v_CTRL-V* *v_V*
-old mode	     "v"	      "CTRL-V"		     "V"	~
 
-Normal		    Visual	   blockwise Visual	  linewise Visual
-Visual		    Normal	   blockwise Visual	  linewise Visual
-blockwise Visual    Visual	   Normal		  linewise Visual
-linewise Visual     Visual	   blockwise Visual	  Normal
+old mode		"v"	"CTRL-V"		"V" ~
+Normal			Visual	blockwise Visual	linewise Visual
+Visual			Normal	blockwise Visual	linewise Visual
+blockwise Visual	Visual	Normal			linewise Visual
+linewise Visual		Visual	blockwise Visual	Normal
 
 						*gv* *v_gv* *reselect-Visual*
 gv			Starts Visual mode with the previous Visual area and

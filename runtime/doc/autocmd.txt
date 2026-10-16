@@ -431,6 +431,7 @@ CmdAtom				After a user action (an "atom" of input): any
 				Event is |deferred|.
 
 				Only for user input, not programmatic input:
+
 					INPUT			ATOM ~
 					Typed keys		yes
 					Mapping, macro "@q"	yes

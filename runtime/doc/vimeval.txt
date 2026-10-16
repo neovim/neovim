@@ -57,25 +57,26 @@ The Number and String types are converted automatically, depending on how they
 are used.
 
 Conversion from a Number to a String is by making the ASCII representation of
-the Number.  Examples:
-	Number 123	-->	String "123" ~
-	Number 0	-->	String "0" ~
-	Number -1	-->	String "-1" ~
+the Number.  Examples: >
+	Number 123	-->	String "123"
+	Number 0	-->	String "0"
+	Number -1	-->	String "-1"
+<
 							*octal*
 Conversion from a String to a Number is done by converting the first digits to
 a number.  Hexadecimal "0xf9", Octal "017" or "0o17", and Binary "0b10"
 numbers are recognized.  If the String doesn't start with digits, the result
-is zero. Examples:
-	String "456"	-->	Number 456 ~
-	String "6bar"	-->	Number 6 ~
-	String "foo"	-->	Number 0 ~
-	String "0xf1"	-->	Number 241 ~
-	String "0100"	-->	Number 64 ~
-	String "0o100"	-->	Number 64 ~
-	String "0b101"	-->	Number 5 ~
-	String "-8"	-->	Number -8 ~
-	String "+8"	-->	Number 0 ~
-
+is zero. Examples: >
+	String "456"	-->	Number 456
+	String "6bar"	-->	Number 6
+	String "foo"	-->	Number 0
+	String "0xf1"	-->	Number 241
+	String "0100"	-->	Number 64
+	String "0o100"	-->	Number 64
+	String "0b101"	-->	Number 5
+	String "-8"	-->	Number -8
+	String "+8"	-->	Number 0
+<
 To force conversion from String to Number, add zero to it: >
 	:echo "0100" + 0
 	64
@@ -1004,7 +1005,8 @@ if it evaluates to true.
 			*expr-<?*  *expr-<=?* *expr-=~?* *expr-!~?*
 			*expr-is* *expr-isnot* *expr-is#* *expr-isnot#*
 			*expr-is?* *expr-isnot?*
-		use 'ignorecase'    match case	   ignore case ~
+
+ 			'ignorecase'	match case	ignore case ~
 equal			==		==#		==?
 not equal		!=		!=#		!=?
 greater than		>		>#		>?

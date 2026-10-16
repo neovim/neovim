@@ -981,10 +981,12 @@ that contain a quote and wildcards): >
 To avoid the special meaning of '%' and '#' insert a backslash before it.
 Detail: The special meaning is always escaped when there is a backslash before
 it, no matter how many backslashes.
+
 	you type:		result	~
 	   #			alternate.file
 	   \#			#
 	   \\#			\#
+
 Also see |`=|.
 
 							*E499* *E500*

@@ -199,13 +199,14 @@ Command-line editing and history.			|cmdline-editing|
 Command-line completion.				|cmdline-completion|
 	While entering a command-line (on the bottom line of the screen)
 	<Tab> can be typed to complete
-	   what		example		~
-	- command	:e<Tab>
-	- tag		:ta scr<Tab>
-	- option	:set sc<Tab>
-	- option value  :set hf=<Tab>
-	- file name	:e ve<Tab>
-	- etc.
+
+	what		example ~
+	command		:e<Tab>
+	tag		:ta scr<Tab>
+	option		:set sc<Tab>
+	option value	:set hf=<Tab>
+	file name	:e ve<Tab>
+	etc.		 
 
 	If there are multiple matches, CTRL-N (next) and CTRL-P (previous)
 	will walk through the matches.  <Tab> works like CTRL-N, but wraps

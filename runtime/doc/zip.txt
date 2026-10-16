@@ -20,7 +20,7 @@ Reading an entry from an encrypted archive prompts for its password.
 To disable the built-in zip browser, set this before startup: >lua
 
     vim.g.loaded_nvim_zip_plugin = 1
-<
+
 MAPPINGS                                                       *zip-mappings*
 
 The standard |dir-buffer-mappings|, plus:

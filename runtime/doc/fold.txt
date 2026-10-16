@@ -107,6 +107,7 @@ These are the conditions with which the expression is evaluated:
 - The variable "v:lnum" is set to the line number.
 
 The result of foldexpr then determines the fold level as follows:
+
   value			meaning ~
   0			the line is not in a fold
   1, 2, ..		the line is in a fold with this level

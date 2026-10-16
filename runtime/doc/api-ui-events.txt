@@ -179,8 +179,8 @@ the editor.
 
 	KEY		DESCRIPTION ~
 	`cursor_shape`:	"block", "horizontal", "vertical"
-	`cell_percentage`: Cell % occupied by the cursor.
-	`blinkwait`, `blinkon`, `blinkoff`: See |cursor-blinking|.
+	`cell_percentage`:	Cell % occupied by the cursor.
+	`blinkwait`, `blinkon`, `blinkoff`:	See |cursor-blinking|.
 	`attr_id`:	Cursor attribute id (defined by `hl_attr_define`).
 			When attr_id is 0, the background and foreground
 			colors should be swapped.

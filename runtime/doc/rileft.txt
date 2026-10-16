@@ -41,23 +41,18 @@ and how it would work when fixed, please create an issue on github, see
 ------------------------------------------------------------------------------
 Highlights
 
-o  Editing left-to-right files as in the original Vim, no change.
-
-o  Viewing and editing files in right-to-left windows.  File orientation
+-  Editing left-to-right files as in the original Vim, no change.
+-  Viewing and editing files in right-to-left windows.  File orientation
    is per window, so it is possible to view the same file in right-to-left
    and left-to-right modes, simultaneously.  (Useful for editing mixed files
    in which both right-to-left and left-to-right text exist).
-
-o  Compatibility to the original Vim.  Almost all features work in
+-  Compatibility to the original Vim.  Almost all features work in
    right-to-left mode (see Bugs below).
-
-o  Backing from reverse insert mode to the correct place in the file
+-  Backing from reverse insert mode to the correct place in the file
    (if possible).
-
-o  No special terminal with right-to-left capabilities is required.  The
+-  No special terminal with right-to-left capabilities is required.  The
    right-to-left changes are completely hardware independent.
-
-o  Many languages use and require right-to-left support.  These languages
+-  Many languages use and require right-to-left support.  These languages
    can quite easily be supported given the inclusion of their required
    keyboard mappings and some possible minor code change.  Some of the
    current supported languages include - |l10n-arabic.txt| and |l10n-hebrew.txt|.
@@ -66,7 +61,7 @@ o  Many languages use and require right-to-left support.  These languages
 ------------------------------------------------------------------------------
 Of Interest...
 
-o  Invocations
+Invocations
 
    + 'rightleft' ('rl') sets window orientation to right-to-left.
    + 'delcombine' ('deco'), boolean, if editing UTF-8 encoded languages,
@@ -75,7 +70,7 @@ o  Invocations
    + 'rightleftcmd' ('rlc') sets the command-line within certain modes
      (such as search) to be utilized in right-to-left orientation as well.
 
-o  Typing backwards					*ins-reverse*
+Typing backwards					*ins-reverse*
 
    In lieu of using the full-fledged 'rightleft' option, one can opt for
    reverse insertion.  When the 'revins' (reverse insert) option is set,
@@ -91,7 +86,7 @@ o  Typing backwards					*ins-reverse*
    If the 'showmode' option is set, "-- REVERSE INSERT --" will be shown
    in the status line when reverse Insert mode is active.
 
-o  Pasting when in a rightleft window
+Pasting when in a rightleft window
 
    When cutting text with the mouse and pasting it in a rightleft window
    the text will be reversed, because the characters come from the cut buffer
@@ -102,21 +97,17 @@ o  Pasting when in a rightleft window
 ------------------------------------------------------------------------------
 Bugs
 
-o  Does not handle CTRL-A and CTRL-X commands (add and subtract) correctly
+-  Does not handle CTRL-A and CTRL-X commands (add and subtract) correctly
    when in rightleft window.
-
-o  Does not support reverse insert and rightleft modes on the command-line.
+-  Does not support reverse insert and rightleft modes on the command-line.
    However, functionality of the editor is not reduced, because it is
    possible to enter mappings, abbreviations and searches typed from the
    left to the right on the command-line.
-
-o  Somewhat slower in right-to-left mode, because right-to-left motion is
+-  Somewhat slower in right-to-left mode, because right-to-left motion is
    emulated inside Vim, not by the controlling terminal.
-
-o  When both 'rightleft' and 'revins' are on: 'textwidth' does not work.
+-  When both 'rightleft' and 'revins' are on: 'textwidth' does not work.
    Lines do not wrap at all; you just get a single, long line.
-
-o  There is no full bidirectionality (bidi) support.
+-  There is no full bidirectionality (bidi) support.
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

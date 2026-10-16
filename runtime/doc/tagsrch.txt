@@ -639,10 +639,10 @@ tag is used.
 
 							*tag-search*
 The command can be any Ex command, but often it is a search command.
-Examples:
-	tag1	file1	/^main(argc, argv)/ ~
-	tag2	file2	108 ~
-
+Examples: >
+	tag1	file1	/^main(argc, argv)/
+	tag2	file2	108
+<
 The command is always executed with 'magic' not set.  The only special
 characters in a search pattern are "^" (begin-of-line) and "$" (<EOL>).
 See |pattern|.  Note that you must put a backslash before each backslash in
