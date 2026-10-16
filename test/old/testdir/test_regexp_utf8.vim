@@ -649,6 +649,36 @@ func Test_combining_chars_in_collection()
   bw!
 endfunc
 
+func Test_search_literal_casefold_width()
+  CheckFeature multi_byte
+  let save_encoding = &encoding
+  try
+    set encoding=utf-8
+    new
+    for [text, literal, expected] in [
+          \ ['Ka', 'ka', 0], ['ſa', 'sa', 0],
+          \ ['ka', 'Ka', 0], ['sa', 'ſa', 0],
+          \ ['kxka', 'Ka', 2], ['ssa', 'ſa', 1],
+          \ ['KxKa', 'ka', 4], ['ſxſa', 'sa', 3],
+          \ ['KA', 'ka', 0], ['ka', 'ka', 0]]
+      call setline(1, text)
+      for engine in [0, 1, 2]
+        let pattern = '\%#=' .. engine .. literal
+        let context = string([text, literal, engine])
+        call assert_equal(expected, match(text, pattern .. '\c'), context)
+        call cursor(1, 1)
+        call assert_equal([1, expected + 1],
+              \ searchpos(pattern .. '\c', 'Wc'), context)
+        call assert_equal(stridx(text, literal),
+              \ match(text, pattern .. '\C'), context)
+      endfor
+    endfor
+  finally
+    bwipe!
+    let &encoding = save_encoding
+  endtry
+endfunc
+
 func Test_search_multibyte_match_ascii()
   new
   " Match single 'ſ' and 's'

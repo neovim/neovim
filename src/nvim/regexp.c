@@ -14206,18 +14206,12 @@ static int skip_to_start(int c, colnr_T *colp)
 static int find_match_text(colnr_T *startcol, int regstart, uint8_t *match_text)
 {
   colnr_T col = *startcol;
-  const int regstart_len = utf_char2len(regstart);
 
   while (true) {
     bool match = true;
     uint8_t *s1 = match_text;
-    // skip regstart
-    int regstart_len2 = regstart_len;
-    if (regstart_len2 > 1 && utf_ptr2len((char *)rex.line + col) != regstart_len2) {
-      // because of case-folding of the previously matched text, we may need
-      // to skip fewer bytes than utf_char2len(regstart)
-      regstart_len2 = utf_char2len(utf_fold(regstart));
-    }
+    // Skip the input character: case-folding can change its byte length.
+    const int regstart_len2 = utf_ptr2len((char *)rex.line + col);
     uint8_t *s2 = rex.line + col + regstart_len2;
     while (*s1) {
       int c1_len = utf_ptr2len((char *)s1);
@@ -14249,7 +14243,7 @@ static int find_match_text(colnr_T *startcol, int regstart, uint8_t *match_text)
     }
 
     // Try finding regstart after the current match.
-    col += regstart_len;  // skip regstart
+    col += regstart_len2;  // skip the input character
     if (skip_to_start(regstart, &col) == FAIL) {
       break;
     }
