@@ -11,6 +11,6 @@ let b:did_ftplugin = 1
 
 setlocal comments=:#
 setlocal commentstring=#\ %s
-setlocal keywordprg=git\ show
+setlocal keywordprg=git\ show\ --end-of-options
 
 let b:undo_ftplugin = "setl comments< commentstring< keywordprg<"
