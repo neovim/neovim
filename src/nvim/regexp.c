@@ -1746,6 +1746,7 @@ static void mb_decompose(int c, int *c1, int *c2, int *c3)
 
 /// Compare two strings, ignore case if rex.reg_ic set.
 /// Return 0 if strings match, non-zero otherwise.
+/// "*n" is the byte length of s1 on entry and of the match in s2 on success.
 /// Correct the length "*n" when composing characters are ignored
 /// or when both utf codepoints are considered equal because of
 /// case-folding but have different length (e.g. 's' and 'ſ')
@@ -1774,7 +1775,7 @@ static int cstrncmp(char *s1, char *s2, int *n)
     n2 = (int)(p - s2);
 
     result = utf_strnicmp(s1, s2, (size_t)(*n), (size_t)n2);
-    if (result == 0 && n2 < *n) {
+    if (result == 0) {
       *n = n2;
     }
   }
@@ -7806,14 +7807,16 @@ static int bt_regexec_both(uint8_t *line, colnr_T startcol, proftime_T *tm, int 
     // the loop to avoid overhead of conditions.
     if (!rex.reg_ic) {
       while ((s = (uint8_t *)vim_strchr((char *)s, c)) != NULL) {
-        if (cstrncmp((char *)s, (char *)prog->regmust, &prog->regmlen) == 0) {
+        int len = prog->regmlen;
+        if (cstrncmp((char *)s, (char *)prog->regmust, &len) == 0) {
           break;  // Found it.
         }
         MB_PTR_ADV(s);
       }
     } else {
       while ((s = (uint8_t *)cstrchr((char *)s, c)) != NULL) {
-        if (cstrncmp((char *)s, (char *)prog->regmust, &prog->regmlen) == 0) {
+        int len = prog->regmlen;
+        if (cstrncmp((char *)s, (char *)prog->regmust, &len) == 0) {
           break;  // Found it.
         }
         MB_PTR_ADV(s);
