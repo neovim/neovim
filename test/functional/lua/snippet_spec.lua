@@ -105,7 +105,14 @@ describe('vim.snippet', function()
   end)
 
   it('inserts known variable value', function()
-    test_expand_success({ '; print($TM_CURRENT_LINE)' }, { 'foo; print(foo)' }, nil, 'foo')
+    local dir = fn.getcwd()
+    api.nvim_buf_set_name(0, dir .. '/Xsnippet.lua')
+    test_expand_success(
+      { '; print($TM_CURRENT_LINE, $TM_DIRECTORY)' },
+      { 'foo; print(foo, ' .. dir .. ')' },
+      nil,
+      'foo'
+    )
   end)
 
   it('uses default when variable is not set', function()

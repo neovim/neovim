@@ -58,7 +58,7 @@ local function resolve_variable(var, default)
   elseif var == 'TM_FILENAME_BASE' then
     return expand_or_default('%:t:r')
   elseif var == 'TM_DIRECTORY' then
-    return expand_or_default('%:p:h:t')
+    return expand_or_default('%:p:h')
   elseif var == 'TM_FILEPATH' then
     return expand_or_default('%:p')
   end
