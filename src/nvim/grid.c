@@ -1095,19 +1095,17 @@ static void grid_draw_bordertext(VirtText vt, int col, int winbl, const int *hl_
     }
     // Skip characters from the beginning when title overflows available width.
     if (overflow > 0) {
-      int cells = (int)mb_string2cells(text);
-      // Skip entire chunk if overflow is larger than chunk width.
-      if (overflow >= cells) {
-        overflow -= cells;
-        continue;
+      StrCharInfo ci = utf_ptr2StrCharInfo(text);
+      while (*ci.ptr != NUL && overflow > 0) {
+        ClusterInfo cli = utf_ClusterInfo(ci);
+        overflow -= cli.cells;
+        ci = cli.next;
       }
-      // Skip partial characters within the chunk.
-      char *p = text;
-      while (*p && overflow > 0) {
-        overflow -= utf_ptr2cells(p);
-        p += utfc_ptr2len(p);
+
+      text = (char *)ci.ptr;
+      if (*text == NUL) {
+        continue;  // skipped the entire chunk
       }
-      text = p;
     }
     if (attr == -1) {  // No highlight specified.
       attr = default_attr;

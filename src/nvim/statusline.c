@@ -201,7 +201,7 @@ void stl_fill_click_defs(StlClickDefinition *click_defs, StlClickRecord *click_r
     .type = kStlClickDisabled,
   };
   for (int i = 0; click_recs[i].start != NULL; i++) {
-    len += vim_strnsize(buf, (int)(click_recs[i].start - buf));
+    len += mb_string2cells_len(buf, (size_t)(click_recs[i].start - buf));
     assert(len <= width);
     if (col < len) {
       while (col < len) {

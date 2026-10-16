@@ -1026,7 +1026,7 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
       // If the text didn't reach until the first window
       // column we need to skip cells.
       if (wlv->skip_cells > 0) {
-        int virt_text_width = (int)mb_string2cells(wlv->p_extra);
+        int virt_text_width = mb_string2cells(wlv->p_extra);
         if (virt_text_width > wlv->skip_cells) {
           int skip_cells_remaining = wlv->skip_cells;
           // Skip cells in the text.
