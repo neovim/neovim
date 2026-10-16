@@ -126,8 +126,8 @@ function M.query(caps, opts, on_response)
       end
     end,
   }, function(resp)
-    local k, rest = resp:match('^\027P1%+r(%x+)(.*)$')
-    if not k or not rest then
+    local status, k, rest = resp:match('^\027P([01])%+r(%x+)(.*)$')
+    if not status or not k or not rest then
       return
     end
     local cap = vim.text.hexdecode(k)
@@ -138,7 +138,7 @@ function M.query(caps, opts, on_response)
     end
 
     local seq ---@type string?
-    if rest:match('^=%x+$') then
+    if status == '1' and rest:match('^=%x+$') then
       seq = vim.text.hexdecode(rest:sub(2))
       if not seq then
         return -- Ignore malformed responses and leave the capability pending.
@@ -146,7 +146,7 @@ function M.query(caps, opts, on_response)
       seq = seq:gsub('\\E', '\027'):gsub('%%p%d', ''):gsub('\\(%d+)', string.char)
     end
 
-    on_response(cap, true, seq)
+    on_response(cap, status == '1', seq)
     pending[cap] = nil
 
     return next(pending) == nil
