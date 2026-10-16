@@ -391,6 +391,9 @@ describe('vim.fs', function()
       mkdir(root)
       -- realpath() so a symlinked tmpdir (macOS /tmp -> /private/tmp) doesn't consume a hop.
       root = vim.fs.normalize(assert(vim.uv.fs_realpath(root)))
+      finally(function()
+        rmdir(root)
+      end)
       mkdir(root .. '/real')
       t.write_file(root .. '/real/target', '')
       -- Directory symlink: follow=true descends into it, follow=false does not.
@@ -421,6 +424,16 @@ describe('vim.fs', function()
       end
       eq({ root .. '/other/target' }, find_up(true))
       eq({}, find_up(false))
+
+      local opts = { path = root .. '/other', upward = true, stop = root, type = 'link' }
+      eq({ root .. '/other/target' }, vim.fs.find('target', opts))
+      opts.type = 'file'
+      eq({}, vim.fs.find('target', opts))
+      opts.follow = true
+      eq({ root .. '/other/target' }, vim.fs.find({ 'target' }, opts))
+      assert(vim.uv.fs_symlink(root .. '/missing', root .. '/other/broken'))
+      opts.type = 'link'
+      eq({ root .. '/other/broken' }, vim.fs.find('broken', opts))
     end)
 
     it('follow=true handles symlink loop', function()
