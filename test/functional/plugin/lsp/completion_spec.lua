@@ -1848,6 +1848,20 @@ describe('vim.lsp.completion: integration', function()
     end)
   end)
 
+  it('ignores non-LSP completion metadata on acceptance', function()
+    n.command('set completeopt=menuone,noselect')
+    create_server('dummy', {})
+    feed('i')
+    exec_lua(function()
+      vim.v.errmsg = ''
+      vim.fn.complete(1, { { word = 'other', user_data = { nvim = {} } } })
+    end)
+    wait_for_pum()
+    feed('<C-n><C-y>')
+    eq('other', n.api.nvim_get_current_line())
+    eq('', n.api.nvim_get_vvar('errmsg'))
+  end)
+
   it('omnifunc works without enable() #38252', function()
     local completion_list = {
       isIncomplete = false,
