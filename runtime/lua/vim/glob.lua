@@ -278,7 +278,7 @@ local function class(inv, ranges)
     patt = patt + (type(v) == 'table' and m.utfR(to_codepoint(v[1]), to_codepoint(v[2])) or m.P(v))
   end
   if inv == '!' then
-    patt = m.P(1) - patt --[[@as vim.lpeg.Pattern]]
+    patt = any_utf8 - patt --[[@as vim.lpeg.Pattern]]
   end
   return patt - m.P '/'
 end
@@ -318,7 +318,7 @@ g = {
   Boundary = #m.P'/' * m.Cc(#m.P'/') + eof,
   Token    = m.V'Ques' + m.V'Class' + m.V'Escape' + m.V'Literal',
   Star     = m.P'*',
-  Ques     = m.P'?' * m.Cc(notslash),
+  Ques     = m.P'?' * m.Cc(any_utf8 - m.P'/'),
   Escape   = escape / m.P,
   Literal  = m.C(letter^1) / m.P,
 
