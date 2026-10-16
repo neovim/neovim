@@ -293,6 +293,18 @@ describe('UI event channels', function()
     session2:request('nvim_ui_term_event', 'termresponse', 'accepted')
     eq({ 'accepted' }, exec_lua('return _G.filtered'))
 
+    exec_lua([[
+      _G.capabilities = {}
+      vim.tty.query({ 'kcuu1', 'kcud1' }, { timeout = 0 }, function(cap, found, seq)
+        table.insert(_G.capabilities, { cap, found, seq })
+      end)
+    ]])
+    request('nvim_ui_term_event', 'termresponse', '\027P1+r6b63757531=1b4f41;6b63756431=1b4f42')
+    eq({
+      { 'kcuu1', true, '\027OA' },
+      { 'kcud1', true, '\027OB' },
+    }, exec_lua('return _G.capabilities'))
+
     session2:close()
   end)
 end)
