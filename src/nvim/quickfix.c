@@ -4473,6 +4473,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
       ml_delete(lnum + 1);
     }
 
+    tv_list_unref(qftf_list);
     qfga_clear();
   }
 
