@@ -51,7 +51,7 @@ local mopt = { maxrows = 0, msgsep = ' ', pager = nil, timeout = 4000 } ---@type
 
 --- Resolves the option values used by this module.
 function M.on_option_changed()
-  local fcs = assert(vim.opt.fcs:get())
+  local fcs = assert(vim.opt_global.fcs:get())
   mopt.msgsep = fcs.msgsep or ' '
   local v = vim.opt.messagesopt:get() --[[@as table<string,string|boolean>]]
   mopt.maxrows = math.ceil(o.lines * (tonumber(v.maxheight) or 50) / 100)

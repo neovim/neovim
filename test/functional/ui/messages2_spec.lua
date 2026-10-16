@@ -323,6 +323,41 @@ describe('messages2', function()
     ]])
   end)
 
+  it("uses global 'fillchars'", function()
+    command('set fillchars=msgsep:+')
+    command([[echo "foo\nbar"]])
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*10
+      {3:+++++++++++++++++++++++++++++++++++++++++++++++++++++}|
+      foo                                                  |
+      bar                                                  |
+    ]])
+
+    command('wincmd v | setlocal fillchars=msgsep:!')
+    command([[echo "bar\nbaz"]])
+    screen:expect([[
+      ^                          │                          |
+      {1:~                         }│{1:~                         }|*8
+      {3:+++++++++++++++++++++++++++++++++++++++++++++++++++++}|
+      foo                                                  |
+      bar                                                  |*2
+      baz                                                  |
+    ]])
+
+    command('wincmd w')
+    command([[echo "baz\nqux"]])
+    screen:expect([[
+                                │^                          |
+      {1:~                         }│{1:~                         }|*6
+      {3:+++++++++++++++++++++++++++++++++++++++++++++++++++++}|
+      foo                                                  |
+      bar                                                  |*2
+      baz                                                  |*2
+      qux                                                  |
+    ]])
+  end)
+
   it('screenclear and empty message clears messages', function()
     command('echo "foo"')
     screen:expect([[
