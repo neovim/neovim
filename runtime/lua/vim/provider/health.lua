@@ -38,12 +38,12 @@ end
 local function system_handler(self, _, data, event)
   if event == 'stderr' then
     if self.add_stderr_to_output then
-      self.output = self.output .. table.concat(data, '')
+      self.output = self.output .. table.concat(data, '\n')
     else
-      self.stderr = self.stderr .. table.concat(data, '')
+      self.stderr = self.stderr .. table.concat(data, '\n')
     end
   elseif event == 'stdout' then
-    self.output = self.output .. table.concat(data, '')
+    self.output = self.output .. table.concat(data, '\n')
   end
 end
 
@@ -64,12 +64,14 @@ local function system(cmd, args)
     add_stderr_to_output = stderr,
     output = '',
     stderr = '',
-    on_stdout = system_handler,
-    on_stderr = system_handler,
     on_exit = function(_, data)
       shell_error_code = data
     end,
   }
+  opts.on_stdout = function(...)
+    system_handler(opts, ...)
+  end
+  opts.on_stderr = opts.on_stdout
   local jobid = vim.fn.jobstart(cmd, opts)
 
   if jobid < 1 then
@@ -104,7 +106,7 @@ local function system(cmd, args)
     error(emsg)
   end
 
-  return vim.trim(vim.fn.system(cmd)), shell_error_code
+  return vim.trim(opts.output), shell_error_code
 end
 
 ---@param provider string
