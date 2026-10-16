@@ -269,7 +269,8 @@ function M.jump(opts)
     end
 
     -- Update cursor position
-    opts.pos = { next.lnum + 1, next.col }
+    local lnum, col = shared.get_logical_pos(next)
+    opts.pos = { lnum + 1, col }
 
     if count > 0 then
       count = count - 1
