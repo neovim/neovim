@@ -375,7 +375,8 @@ local function generate_kind(item)
         vim._assert_integer(g),
         vim._assert_integer(b)
       )
-    or doc:match('#?([%da-fA-F]+)')
+    or doc:match('#(%x+)')
+    or doc:match('^%s*(%x+)%s*$')
 
   if not hex then
     return
