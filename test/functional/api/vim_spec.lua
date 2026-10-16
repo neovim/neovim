@@ -2443,6 +2443,8 @@ describe('API', function()
         { 'keymap', 'bad/name', 'E474:' },
         { 'isident', '256', 'E474:' },
         { 'iskeyword', '256', 'E474:' },
+        { 'iskeyword', '1-100000000000000000000000', 'E474:' },
+        { 'iskeyword', '4294967361', 'E474:' },
         { 'isfname', '256', 'E474:' },
         { 'isprint', '256', 'E519:' },
         { 'spelllang', 'en/gb', 'E474:' },
