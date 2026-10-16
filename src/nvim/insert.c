@@ -13,6 +13,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
+#include "nvim/bidi.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
@@ -705,7 +706,7 @@ static int insert_execute(VimState *state, int key)
     }
   }
 
-  if (curwin->w_p_rl) {
+  if (curwin->w_p_rl || bidi_invert_horizontal(curwin)) {
     switch (s->c) {
     case K_LEFT:
       s->c = K_RIGHT; break;

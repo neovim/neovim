@@ -642,6 +642,7 @@ Short explanation of each option:		*option-list*
 'backupext'	  'bex'     extension used for the backup file
 'backupskip'	  'bsk'     no backup for files that match these patterns
 'belloff'	  'bo'	    do not ring the bell for these reasons
+'bidi'			    display bidirectional text in visual order
 'binary'	  'bin'     read/write/edit file in binary mode
 'bomb'			    prepend a Byte Order Mark to the file
 'breakat'	  'brk'     characters that may cause a line break
