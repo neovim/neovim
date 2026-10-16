@@ -110,6 +110,13 @@ describe('glob', function()
       eq(true, match('/??', '/ab'))
       eq(true, match('/?b', '/ab'))
       eq(false, match('foo?bar', 'foo/bar'))
+      eq(false, match('?', '/'))
+      for _, char in ipairs({ 'é', '中', '🤠' }) do
+        eq(true, match('?', char))
+        eq(false, match('??', char))
+        eq(true, match('*?', char))
+        eq(false, match('*??', char))
+      end
     end)
 
     it('should match ** wildcards', function()
@@ -234,6 +241,15 @@ describe('glob', function()
       eq(false, match('[!a-zA-Z0-9]', 'A'))
       eq(false, match('[!a-zA-Z0-9]', '0'))
       eq(true, match('[!a-zA-Z0-9]', '!'))
+      eq(false, match('[!a]', '/'))
+      for _, char in ipairs({ 'é', '中', '🤠' }) do
+        eq(true, match('[!a]', char))
+        eq(false, match('[!' .. char .. ']', char))
+        eq(false, match('*[!' .. char .. ']', char))
+        eq(true, match('*[!' .. char .. ']', char .. 'a'))
+      end
+      eq(true, match('[!à-ê]', '中'))
+      eq(false, match('*[!à-ê]', 'é'))
     end)
 
     it('should handle long patterns', function()
