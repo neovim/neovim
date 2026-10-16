@@ -3705,7 +3705,7 @@ static bool sub_joining_lines(exarg_T *eap, String pat, const char *sub, const c
                                   // plus one extra line if not at the end of file.
                                   + (eap->line2 < curbuf->b_ml.ml_line_count ? 1 : 0);
     if (joined_lines_count > 1) {
-      do_join((size_t)joined_lines_count, false, true, false, true);
+      do_join((size_t)joined_lines_count, 0, MAXCOL, false, true, false, true);
       sub_nsubs = joined_lines_count - 1;
       sub_nlines = 1;
       do_sub_msg(false);

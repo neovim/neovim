@@ -342,7 +342,7 @@ describe('incremental synchronization', function()
   describe('multi line edit', function()
     it('deletion and insertion', function()
       local expected_text_changes = {
-        -- delete "_fsda" from end of line 1
+        -- delete from line 1 char 4 to line 3 char 9 and replace with " asdf"
         {
           range = {
             ['start'] = {
@@ -351,71 +351,11 @@ describe('incremental synchronization', function()
             },
             ['end'] = {
               character = 9,
-              line = 1,
-            },
-          },
-          rangeLength = 5,
-          text = '',
-        },
-        -- delete "hello world\n" from line 2
-        {
-          range = {
-            ['start'] = {
-              character = 0,
-              line = 2,
-            },
-            ['end'] = {
-              character = 0,
               line = 3,
             },
           },
-          rangeLength = 12,
-          text = '',
-        },
-        -- delete "1234" from beginning of line 2
-        {
-          range = {
-            ['start'] = {
-              character = 0,
-              line = 2,
-            },
-            ['end'] = {
-              character = 4,
-              line = 2,
-            },
-          },
-          rangeLength = 4,
-          text = '',
-        },
-        -- add " asdf" to end of line 1
-        {
-          range = {
-            ['start'] = {
-              character = 4,
-              line = 1,
-            },
-            ['end'] = {
-              character = 4,
-              line = 1,
-            },
-          },
-          rangeLength = 0,
+          rangeLength = 27,
           text = ' asdf',
-        },
-        -- delete " asdf\n" from line 2
-        {
-          range = {
-            ['start'] = {
-              character = 0,
-              line = 2,
-            },
-            ['end'] = {
-              character = 0,
-              line = 3,
-            },
-          },
-          rangeLength = 6,
-          text = '',
         },
         -- undo entire deletion
         {

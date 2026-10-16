@@ -6534,7 +6534,7 @@ static void nv_join(cmdarg_T *cap)
   }
 
   prep_redo_cmd(cap);
-  do_join((size_t)cap->count0, cap->nchar == NUL, true, true, true);
+  do_join((size_t)cap->count0, 0, MAXCOL, cap->nchar == NUL, true, true, true);
 }
 
 /// "P", "gP", "p" and "gp" commands.
