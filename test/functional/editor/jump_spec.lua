@@ -92,6 +92,45 @@ describe('jumplist', function()
   end)
 end)
 
+describe('jump view with virtual lines', function()
+  local source = 'Xjump-view-virt-source'
+  local target = 'Xjump-view-virt-target'
+  local tags = 'Xjump-view-virt-tags'
+
+  before_each(clear)
+  after_each(function()
+    os.remove(source)
+    os.remove(target)
+    os.remove(tags)
+  end)
+
+  it('does not discard target virtual lines after repeated tag jumps', function()
+    local screen = Screen.new(40, 12)
+    write_file(source, 'test2')
+    write_file(target, 'test2')
+    write_file(tags, 'test2\t' .. target .. '\t1;"\n')
+    command('set jumpoptions+=view')
+    command('set tags=' .. tags)
+    command('edit ' .. target)
+    command('edit ' .. source)
+
+    local target_buf = fn.bufnr(target)
+    local ns = api.nvim_create_namespace('jump-view-virt-lines')
+    feed('<C-]>')
+    api.nvim_buf_set_extmark(target_buf, ns, 0, 0, {
+      virt_lines = { { { '1 file reference', 'LspCodeLens' } } },
+      virt_lines_above = true,
+    })
+    fn.winrestview({ topline = 1, topfill = 1 })
+    screen:expect({ any = 'test2' })
+    eq(1, fn.winsaveview().topfill)
+    feed('<C-O>')
+    feed('<C-]>')
+    screen:expect({ any = 'test2' })
+    eq(1, fn.winsaveview().topfill)
+  end)
+end)
+
 describe("jumpoptions=stack behaves like 'tagstack'", function()
   before_each(function()
     clear()
@@ -382,8 +421,33 @@ describe('jumpoptions=view', function()
   it('restores the view', function()
     local screen = Screen.new(12, 8)
     command('edit ' .. file1)
+    local ns = api.nvim_create_namespace('jump-view-topfill')
+    api.nvim_buf_set_extmark(0, ns, 11, 0, {
+      virt_lines = {
+        { { 'virtual 1' } },
+        { { 'virtual 2' } },
+        { { 'virtual 3' } },
+      },
+      virt_lines_above = true,
+    })
     feed('12Gztj')
+    fn.winrestview({ topfill = 3 })
     feed('gg<C-o>')
+    screen:expect([[
+      virtual 1   |
+      virtual 2   |
+      virtual 3   |
+      12 line     |
+      ^13 line     |
+      14 line     |
+      15 line     |
+                  |
+    ]])
+
+    feed('<C-i>')
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    feed('<C-o>')
+    eq(0, fn.winsaveview().topfill)
     screen:expect([[
       12 line     |
       ^13 line     |
@@ -392,6 +456,96 @@ describe('jumpoptions=view', function()
       16 line     |
       17 line     |
       18 line     |
+                  |
+    ]])
+  end)
+
+  it('keeps the restored topline when topfill exceeds the window height', function()
+    local screen = Screen.new(12, 6)
+    command('edit ' .. file1)
+    api.nvim_buf_set_extmark(0, api.nvim_create_namespace('jump-view-topfill'), 9, 0, {
+      virt_lines = {
+        { { 'virtual 1' } },
+        { { 'virtual 2' } },
+        { { 'virtual 3' } },
+        { { 'virtual 4' } },
+      },
+      virt_lines_above = true,
+    })
+    api.nvim_win_set_cursor(0, { 10, 0 })
+    fn.winrestview({ topline = 10, topfill = 4 })
+    feed('G')
+
+    screen:try_resize(12, 3)
+    feed('<C-o>')
+    local view = fn.winsaveview()
+    eq({ 10, 1 }, { view.topline, view.topfill })
+    screen:expect([[
+      virtual 4   |
+      ^10 line     |
+                  |
+    ]])
+  end)
+
+  it('clamps saved diff filler that no longer exists', function()
+    local screen = Screen.new(30, 8)
+    command('edit ' .. file1)
+    local left = api.nvim_get_current_buf()
+    command('vsplit ' .. file2)
+    local right = api.nvim_get_current_buf()
+    api.nvim_buf_set_lines(right, 9, 9, false, { 'extra 1', 'extra 2', 'extra 3' })
+    command('diffthis')
+    command('wincmd p')
+    command('diffthis')
+    command('diffupdate')
+
+    eq(left, api.nvim_get_current_buf())
+    eq(3, fn.diff_filler(10))
+    api.nvim_win_set_cursor(0, { 10, 0 })
+    fn.winrestview({ topline = 10, topfill = 3 })
+    feed('G<C-o>')
+    eq(3, fn.winsaveview().topfill)
+    screen:expect({ any = '10 line' })
+
+    feed('<C-i>')
+    api.nvim_buf_set_lines(right, 9, 12, false, {})
+    command('diffupdate')
+    screen:expect({ any = '6 lines: 25' })
+    feed('<C-o>')
+    eq(0, fn.winsaveview().topfill)
+    screen:expect({ any = '10 line' })
+  end)
+
+  it('accounts for smoothscroll skipcol when fitting topfill', function()
+    local screen = Screen.new(12, 8)
+    command('edit ' .. file1)
+    command('setlocal smoothscroll')
+    command([[call setline(10, repeat('a', 55))]])
+    api.nvim_buf_set_extmark(0, api.nvim_create_namespace('jump-view-topfill'), 9, 0, {
+      virt_lines = {
+        { { 'virtual 1' } },
+        { { 'virtual 2' } },
+        { { 'virtual 3' } },
+      },
+      virt_lines_above = true,
+    })
+    feed('12Gzz')
+    fn.winrestview({ topfill = 3 })
+    local saved = fn.winsaveview()
+    eq({ 10, 3 }, { saved.topline, saved.topfill })
+    eq(true, saved.skipcol > 0)
+
+    feed('G<C-o>')
+    local restored = fn.winsaveview()
+    eq({ 10, 3, saved.skipcol }, { restored.topline, restored.topfill, restored.skipcol })
+    screen:expect([[
+      {1:<<<}tual 1   |
+      virtual 2   |
+      virtual 3   |
+      aaaaaaaaaaaa|
+      aaaaaaa     |
+      11 line     |
+      ^12 line     |
                   |
     ]])
   end)

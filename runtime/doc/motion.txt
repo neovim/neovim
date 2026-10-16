@@ -830,9 +830,10 @@ Jumping to a mark can be done in two ways:
 			  the motion is linewise.
 						*mark-view*
 3. Apart from the above if 'jumpoptions' contains "view", they will also try to
-restore the mark view. This is the number of lines between the cursor position
-and the window topline (first buffer line displayed in the window) when it was
-set.
+restore the mark view. This includes the number of lines between the cursor
+position and the window topline (first buffer line displayed in the window),
+the horizontal scroll offset for a wrapped topline, and filler lines above the
+topline when the mark was set.
 
 						*m* *mark* *Mark*
 m{a-zA-Z}		Set mark {a-zA-Z} at cursor position (does not move
