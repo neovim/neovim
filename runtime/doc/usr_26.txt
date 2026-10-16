@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-				  Repeating
+==============================================================================
+Repeating
 
 
 An editing task is hardly ever unstructured.  A change often needs to be made

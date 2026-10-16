@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Patterns and search commands				*pattern-searches*
 
 The very basics can be found in section |03.9| of the user manual.  A few more

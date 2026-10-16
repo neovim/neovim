@@ -4,6 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Support                                                              *support*
 
                                       Type |gO| to see the table of contents.

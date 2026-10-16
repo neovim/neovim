@@ -1,7 +1,7 @@
 *ft_hare.txt*	Support for the Hare programming language
 
 ==============================================================================
-CONTENTS								*hare*
+Hare filetype plugin						*hare*
 
 1. Introduction							  |hare-intro|
 2. Filetype plugin						 |hare-plugin|

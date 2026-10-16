@@ -1,5 +1,8 @@
 *pi_spec.txt*   Nvim
 
+==============================================================================
+RPM spec filetype plugin
+
 by Gustavo Niemeyer ~
 
 This is a filetype plugin to work with rpm spec files.

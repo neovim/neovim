@@ -2,6 +2,7 @@
 
                             NVIM REFERENCE MANUAL
 
+==============================================================================
 Merging patches from Vim                                    *dev-vimpatch*
 
 

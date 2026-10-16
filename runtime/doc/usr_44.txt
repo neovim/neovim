@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			 Your own syntax highlighted
+==============================================================================
+Your own syntax highlighted
 
 
 Vim comes with highlighting for a couple of hundred different file types.  If

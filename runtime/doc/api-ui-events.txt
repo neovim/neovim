@@ -4,6 +4,7 @@
 			    NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Nvim UI protocol					*UI* *ui* *api-ui-events*
 
 This document describes the UI protocol. See |gui| and |tui| for user-facing

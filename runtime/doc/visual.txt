@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Visual mode				*Visual* *Visual-mode* *visual-mode*
 
 Visual mode is a flexible and easy way to select a piece of text for an

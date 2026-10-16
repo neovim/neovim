@@ -4,6 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Development of Nvim                                     *development* *dev*
 
 This reference describes design constraints and guidelines, for developing

@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Expression evaluation			*expression* *expr* *E15* *eval* *eval.txt*
 
 Using expressions is introduced in chapter 41 of the user manual |usr_41.txt|.
@@ -866,9 +867,9 @@ Expression syntax summary, from least to most significant:
 	expr7 %	 expr7 ...	number modulo
 
 |expr7|	expr8
-	! expr7			logical NOT
-	- expr7			unary minus
-	+ expr7			unary plus
+	!expr7			logical NOT
+	-expr7			unary minus
+	+expr7			unary plus
 
 |expr8|	expr9
 	expr8[expr1]		byte of a String or item of a |List|
@@ -1152,9 +1153,9 @@ None of these work for |Funcref|s.
 ------------------------------------------------------------------------------
 expr7							*expr7*
 
-! expr7			logical NOT		*expr-!*
-- expr7			unary minus		*expr-unary--*
-+ expr7			unary plus		*expr-unary-+*
+!expr7			logical NOT		*expr-!*
+-expr7			unary minus		*expr-unary--*
++expr7			unary plus		*expr-unary-+*
 
 For '!' |TRUE| becomes |FALSE|, |FALSE| becomes |TRUE| (one).
 For '-' the sign of the number is changed.

@@ -1,8 +1,7 @@
 *pi_tar.txt*	Nvim
 
-		       +====================+
-		       | Tar File Interface |
-		       +====================+
+==============================================================================
+Tar file interface
 
 Original Author:  Charles E. Campbell
 Copyright 2005-2017:					*tar-copyright*

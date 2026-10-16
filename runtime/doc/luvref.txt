@@ -1,9 +1,9 @@
 *luvref.txt*               Nvim
 
 
-                    LUV REFERENCE MANUAL
+==============================================================================
+Luv reference manual                                                    *luvref*
 
-                                                                        *luvref*
 This file documents the Lua bindings for the LibUV library which is used for
 Nvim's event-loop and is accessible from Lua via |vim.uv| (e.g., |uv.version()|
 is exposed as `vim.uv.version()`).

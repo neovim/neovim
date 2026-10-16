@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Undo and redo						*undo-redo*
 
 The basics are explained in section |02.5| of the user manual.

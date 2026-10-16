@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Differences between Vim and Vi				*vi-differences*
 
                                       Type |gO| to see the table of contents.

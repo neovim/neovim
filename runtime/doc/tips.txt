@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Tips and ideas for using Vim				*tips*
 
 These are just a few that we thought would be helpful for many users.

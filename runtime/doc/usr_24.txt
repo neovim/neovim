@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			     Inserting quickly
+==============================================================================
+Inserting quickly
 
 
 When entering text, Vim offers various ways to reduce the number of keystrokes

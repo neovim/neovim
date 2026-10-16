@@ -4,7 +4,8 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
-Editing with windows in multiple tabpages.		*tab-page* *tabpage*
+==============================================================================
+Editing with windows in multiple tabpages		*tab-page* *tabpage*
 
 The commands which have been added to use multiple tabpages are explained
 here.  Additionally, there are explanations for commands that work differently

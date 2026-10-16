@@ -4,7 +4,9 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
-							*diff* *diff-mode*
+==============================================================================
+Diff mode						*diff* *diff-mode*
+
 This file describes the diff feature: Showing differences between two to
 eight versions of the same file.
 

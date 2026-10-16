@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			  Editing more than one file
+==============================================================================
+Editing more than one file
 
 
 No matter how many files you have, you can edit them without leaving Vim.

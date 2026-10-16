@@ -4,6 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Tools and techniques for developing Nvim                        *dev-tools*
 
 This is for developing or debugging Nvim itself.

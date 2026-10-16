@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			      Add new menus
+==============================================================================
+Add new menus
 
 
 By now you know that Vim is very flexible.  This includes the menus used in

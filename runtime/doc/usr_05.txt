@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			      Set your settings
+==============================================================================
+Set your settings
 
 
 Vim can be tuned to work like you want it to.  This chapter shows you how to

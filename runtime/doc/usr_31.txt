@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			      Exploiting the GUI
+==============================================================================
+Exploiting the GUI
 
 
 Vim works well in a terminal, but the GUI has a few extra items.  A file

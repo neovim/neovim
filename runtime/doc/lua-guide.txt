@@ -2,7 +2,8 @@
 
                             NVIM REFERENCE MANUAL
 
-                          Guide to using Lua in Nvim
+==============================================================================
+Using Lua in Nvim
 
 
                                        Type |gO| to see the table of contents.

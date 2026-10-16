@@ -4,6 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Nvim                                              *nvim* *neovim* *nvim-intro*
 
 Nvim is based on Vim by Bram Moolenaar. Nvim is emphatically a fork of Vim,

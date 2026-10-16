@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Vim client-server communication				*client-server*
 
                                       Type |gO| to see the table of contents.

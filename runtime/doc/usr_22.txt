@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			   Finding the file to edit
+==============================================================================
+Finding the file to edit
 
 
 Files can be found everywhere.  So how do you find them?  Vim offers various

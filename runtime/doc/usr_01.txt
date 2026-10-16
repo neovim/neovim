@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			      About the manuals
+==============================================================================
+About the manuals
 
 
 This chapter introduces the manuals available with Vim.  Read this to know the

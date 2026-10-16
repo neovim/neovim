@@ -3,6 +3,7 @@
 
 		  VIM REFERENCE MANUAL	  by Shugo Maeda
 
+==============================================================================
 The Ruby Interface to Vim				*if_ruby* *ruby* *Ruby*
 
 See |provider-ruby| for more information.

@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			       Using filetypes
+==============================================================================
+Using filetypes
 
 
 When you are editing a file of a certain type, for example a C program or a

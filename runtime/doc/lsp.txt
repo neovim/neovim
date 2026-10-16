@@ -4,6 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
+==============================================================================
 LSP client/framework                                     *lsp* *LSP* *vim.lsp*
 
 Nvim supports the Language Server Protocol (LSP), which means it acts as

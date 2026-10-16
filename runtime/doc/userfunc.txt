@@ -4,7 +4,8 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
-Defining and using functions.
+==============================================================================
+Defining and using functions
 
 This is introduced in section |41.7| of the user manual.
 
