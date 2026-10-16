@@ -108,7 +108,7 @@ int parse_isopt(const char *var, uint64_t *chartab)
 
     int c;
     if (ascii_isdigit(*p)) {
-      c = getdigits_int((char **)&p, true, 0);
+      c = getdigits_int((char **)&p, false, 0);
     } else {
       c = mb_ptr2char_adv(&p);
     }
@@ -118,7 +118,7 @@ int parse_isopt(const char *var, uint64_t *chartab)
       p++;
 
       if (ascii_isdigit(*p)) {
-        c2 = getdigits_int((char **)&p, true, 0);
+        c2 = getdigits_int((char **)&p, false, 0);
       } else {
         c2 = mb_ptr2char_adv(&p);
       }
