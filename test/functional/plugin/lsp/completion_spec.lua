@@ -1873,7 +1873,8 @@ describe('vim.lsp.completion: integration', function()
       isIncomplete = false,
       items = {
         { label = 'hello' },
-        { label = 'hallo' },
+        -- Empty snippet insertText must fall back to the label on acceptance.
+        { label = 'hallo', insertText = '', insertTextFormat = 2 },
       },
     }
     exec_lua(function()
