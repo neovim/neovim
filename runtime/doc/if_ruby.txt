@@ -55,16 +55,16 @@ To see what version of Ruby you have: >
 	:ruby print RUBY_VERSION
 <
 
-						*:rubydo* *:rubyd* *E265*
-:[range]rubyd[o] {cmd}	Evaluate Ruby command {cmd} for each line in the
+:[range]rubyd[o] {cmd}				*:rubydo* *:rubyd* *E265*
+			Evaluate Ruby command {cmd} for each line in the
 			[range], with $_ being set to the text of each line in
 			turn, without a trailing <EOL>.  Setting $_ will
 			change the text, but note that it is not possible to
 			add or delete lines using this command.
 			The default for [range] is the whole file: "1,$".
 
-							*:rubyfile* *:rubyf*
-:rubyf[ile] {file}	Execute the Ruby script in {file}.  This is the same
+:rubyf[ile] {file}					*:rubyfile* *:rubyf*
+			Execute the Ruby script in {file}.  This is the same
 			as `:ruby load 'file'`, but allows file name completion.
 
 Executing Ruby commands is not possible in the |sandbox|.
@@ -99,22 +99,18 @@ Overview >
 
 Module Functions:
 
-							*ruby-message*
-VIM::message({msg})
+VIM::message({msg})					*ruby-message*
 	Displays the message {msg}.
 
-							*ruby-set_option*
-VIM::set_option({arg})
+VIM::set_option({arg})					*ruby-set_option*
 	Sets a vim option.  {arg} can be any argument that the ":set" command
 	accepts.  Note that this means that no spaces are allowed in the
 	argument!  See |:set|.
 
-							*ruby-command*
-VIM::command({cmd})
+VIM::command({cmd})					*ruby-command*
 	Executes Ex command {cmd}.
 
-							*ruby-evaluate*
-VIM::evaluate({expr})
+VIM::evaluate({expr})					*ruby-evaluate*
 	Evaluates {expr} using the vim internal expression evaluator (see
 	|expression|).  Returns the expression result as a string.
 	A |List| is turned into a string by joining the items and inserting

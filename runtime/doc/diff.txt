@@ -83,8 +83,8 @@ While already in Vim you can start diff mode in three ways.
 		as for "nvim -d" for the current and the newly opened window.
 		Also see 'diffexpr'.
 
-							*:difft* *:diffthis*
-:difft[his]	Make the current window part of the diff windows.  This sets
+:difft[his]						*:difft* *:diffthis*
+		Make the current window part of the diff windows.  This sets
 		the options as for "nvim -d".
 
 :diffp[atch] {patchfile}			 *E816* *:diffp* *:diffpatch*
@@ -114,8 +114,8 @@ There can be up to eight buffers with 'diff' set.
 Since the option values are remembered with the buffer, you can edit another
 file for a moment and come back to the same file and be in diff mode again.
 
-							*:diffo* *:diffoff*
-:diffo[ff]	Switch off diff mode for the current window.  Resets related
+:diffo[ff]						*:diffo* *:diffoff*
+		Switch off diff mode for the current window.  Resets related
 		options also when 'diff' was not set.
 
 :diffo[ff]!	Switch off diff mode for the current window and in all windows
@@ -182,8 +182,8 @@ hidden buffers.  You can use ":hide" to close a window without unloading the
 buffer.  If you don't want a buffer to remain used for the diff do ":set
 nodiff" before hiding it.
 
-						*:dif* *:diff* *:diffupdate*
-:dif[fupdate][!]		Update the diff highlighting and folds.
+:dif[fupdate][!]				*:dif* *:diff* *:diffupdate*
+				Update the diff highlighting and folds.
 
 Vim attempts to keep the differences updated when you make changes to the
 text.  This mostly takes care of inserted and deleted lines.  Changes within a
@@ -262,8 +262,7 @@ It is an error if there is no change for the cursor to move to.
 There are two commands to copy text from one buffer to another.  The result is
 that the buffers will be equal within the specified range.
 
-							*:diffg* *:diffget*
-:[range]diffg[et] [bufspec]
+:[range]diffg[et] [bufspec]				*:diffg* *:diffget*
 		Modify the current buffer to undo difference with another
 		buffer.  If [bufspec] is given, that buffer is used.  If
 		[bufspec] refers to the current buffer then nothing happens.
@@ -271,8 +270,7 @@ that the buffers will be equal within the specified range.
 		mode.
 		See below for [range].
 
-						*:diffpu* *:diffput* *E793*
-:[range]diffpu[t] [bufspec]
+:[range]diffpu[t] [bufspec]			*:diffpu* *:diffput* *E793*
 		Modify another buffer to undo difference with the current
 		buffer.  Just like ":diffget" but the other buffer is modified
 		instead of the current one.
@@ -280,15 +278,15 @@ that the buffers will be equal within the specified range.
 		buffer in diff mode where 'modifiable' is set this fails.
 		See below for [range].
 
-							*do*
-[count]do	Same as ":diffget" without range.  The "o" stands for "obtain"
+[count]do						*do*
+		Same as ":diffget" without range.  The "o" stands for "obtain"
 		("dg" can't be used, it could be the start of "dgg"!).  Note:
 		this doesn't work in Visual mode.
 		If you give a [count], it is used as the [bufspec] argument
 		for ":diffget".
 
-							*dp*
-[count]dp	Same as ":diffput" without range.  Note: this doesn't work in
+[count]dp						*dp*
+		Same as ":diffput" without range.  Note: this doesn't work in
 		Visual mode.
 		If you give a [count], it is used as the [bufspec] argument
 		for ":diffput".

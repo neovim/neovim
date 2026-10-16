@@ -66,8 +66,8 @@ Notes:
 There is an automatic completion of names on the command-line; see
 |cmdline-completion|.
 
-							*c_CTRL-V*
-CTRL-V		Insert next non-digit literally.  Up to three digits form the
+CTRL-V							*c_CTRL-V*
+		Insert next non-digit literally.  Up to three digits form the
 		decimal value of a single byte.  The non-digit and the three
 		digits are not considered for mapping.  This works the same
 		way as in Insert mode (see above, |i_CTRL-V|).
@@ -80,8 +80,9 @@ CTRL-V		Insert next non-digit literally.  Up to three digits form the
 CTRL-Q		Same as CTRL-V.  But with some terminals it is used for
 		control flow, it doesn't work then.
 
-CTRL-SHIFT-V				*c_CTRL-SHIFT-V* *c_CTRL-SHIFT-Q*
-CTRL-SHIFT-Q	Works just like CTRL-V, but do not try to include the CTRL
+CTRL-SHIFT-V						*c_CTRL-SHIFT-V*
+CTRL-SHIFT-Q						*c_CTRL-SHIFT-Q*
+		Works just like CTRL-V, but do not try to include the CTRL
 		modifier into the key.
 		Note: When CTRL-SHIFT-V is intercepted by your system (e.g.,
 		to paste text) you can often use CTRL-SHIFT-Q instead.
@@ -132,7 +133,7 @@ CTRL-U		Remove all characters between the cursor position and
 						*c_<Insert>* *c_Insert*
 <Insert>	Toggle between insert and overstrike.
 
-{char1} <BS> {char2}	or				*c_digraph*
+{char1} <BS> {char2}					*c_digraph*
 CTRL-K {char1} {char2}					*c_CTRL-K*
 		enter digraph (see |digraphs|).  When {char1} is a special
 		key, the code for that key is inserted in <> form.
@@ -239,14 +240,14 @@ CTRL-\ e {expr}						*c_CTRL-\_e*
 <		This doesn't work recursively, thus not when already editing
 		an expression.  But it is possible to use in a mapping.
 
-							*c_CTRL-Y*
-CTRL-Y		When there is a modeless selection, copy the selection into
+CTRL-Y							*c_CTRL-Y*
+		When there is a modeless selection, copy the selection into
 		the clipboard.
 		If there is no selection CTRL-Y is inserted as a character.
 		See 'wildmenu' for behavior during wildmenu completion mode.
 
-							*c_CTRL-Z*
-CTRL-Z		Trigger 'wildmode'. Same as 'wildcharm', but always available.
+CTRL-Z							*c_CTRL-Z*
+		Trigger 'wildmode'. Same as 'wildcharm', but always available.
 
 CTRL-M or CTRL-J		*c_CTRL-M* *c_CTRL-J* *c_<NL>* *c_<CR>* *c_CR*
 <CR> or <NL>	start entered command
@@ -288,8 +289,8 @@ CTRL-P		command-line completion (see |cmdline-completion|)
 CTRL-A		command-line completion (see |cmdline-completion|)
 CTRL-L		command-line completion (see |cmdline-completion|)
 
-							*c_CTRL-^*
-CTRL-^		Toggle the use of language |:lmap| mappings and/or Input
+CTRL-^							*c_CTRL-^*
+		Toggle the use of language |:lmap| mappings and/or Input
 		Method.
 		When typing a pattern for a search command and 'imsearch' is
 		not -1, VAL is the value of 'imsearch', otherwise VAL is the
@@ -312,8 +313,8 @@ CTRL-^		Toggle the use of language |:lmap| mappings and/or Input
 		switching it on with CTRL-^, the new state is not used again
 		for the next command or Search pattern.
 
-						*c_CTRL-]*
-CTRL-]		Trigger abbreviation, without inserting a character.
+CTRL-]							*c_CTRL-]*
+		Trigger abbreviation, without inserting a character.
 
 For Emacs-style editing on the command-line see |emacs-keys|.
 
@@ -326,8 +327,8 @@ The same could be done by typing <S-Up> a number of times until the desired
 command-line is shown.  (Note: the shifted arrow keys do not work on all
 terminals)
 
-							*:his* *:history*
-:his[tory]	Print the history of last entered commands.
+:his[tory]						*:his* *:history*
+		Print the history of last entered commands.
 
 :his[tory] [{name}] [{first}][, [{last}]]
 		List the contents of history {name} which can be:
@@ -390,16 +391,15 @@ see |cmdline-autocompletion|.
 
 These are the commands that can be used:
 
-							*c_CTRL-D*
-CTRL-D		List names that match the pattern in front of the cursor.
+CTRL-D							*c_CTRL-D*
+		List names that match the pattern in front of the cursor.
 		When showing file names, directories are highlighted (see
 		|highlight-groups|).  Names where 'suffixes' matches are moved
 		to the end.
 		The 'wildoptions' option can be set to "tagfile" to list the
 		file of matching tags.
 
-				*c_CTRL-I* *c_wildchar* *c_<Tab>* */_<Tab>*
-'wildchar' option
+'wildchar' option		*c_CTRL-I* *c_wildchar* *c_<Tab>* */_<Tab>*
 		A match is done on the pattern in front of the cursor.  The
 		match (if there are several, the first match) is inserted
 		in place of the pattern.  (Note: does not work inside a
@@ -418,22 +418,22 @@ CTRL-D		List names that match the pattern in front of the cursor.
 <S-Tab>		Like 'wildchar' or <Tab>, but begin with the last match and
 		then go to the previous match.
 
-							*c_CTRL-N*
-CTRL-N		After using 'wildchar' which got multiple matches, go to next
+CTRL-N							*c_CTRL-N*
+		After using 'wildchar' which got multiple matches, go to next
 		match.  Otherwise recall more recent command-line from
 		history.
 
-							*c_CTRL-P*
-CTRL-P		After using 'wildchar' which got multiple matches, go to
+CTRL-P							*c_CTRL-P*
+		After using 'wildchar' which got multiple matches, go to
 		previous match.  Otherwise recall older command-line from
 		history.
 
-							*c_CTRL-A*
-CTRL-A		All names that match the pattern in front of the cursor are
+CTRL-A							*c_CTRL-A*
+		All names that match the pattern in front of the cursor are
 		inserted.
 
-							*c_CTRL-L*
-CTRL-L		A match is done on the pattern in front of the cursor.  If
+CTRL-L							*c_CTRL-L*
+		A match is done on the pattern in front of the cursor.  If
 		there is one match, it is inserted in place of the pattern.
 		If there are multiple matches the longest common part is
 		inserted in place of the pattern.  If the result is shorter
@@ -446,8 +446,8 @@ CTRL-L		A match is done on the pattern in front of the cursor.  If
 		no uppercase characters, the added character is converted to
 		lowercase.
 
-	                                            *c_CTRL-G* */_CTRL-G*
-CTRL-G		While the "/" or "?" 'incsearch' prompt is active, CTRL-G
+CTRL-G							*c_CTRL-G* */_CTRL-G*
+		While the "/" or "?" 'incsearch' prompt is active, CTRL-G
 		moves to the next match (without changing the |jumplist|).
 		The |search-offset| is applied when <CR> is pressed, but does
 		not affect the match highlighting.
@@ -455,8 +455,8 @@ CTRL-G		While the "/" or "?" 'incsearch' prompt is active, CTRL-G
 		Use CTRL-T to move to the previous match.
 		Mnemonic: on a regular keyboard G is below T.
 
-	                                            *c_CTRL-T* */_CTRL-T*
-CTRL-T		While the "/" or "?" 'incsearch' prompt is active, CTRL-T
+CTRL-T							*c_CTRL-T* */_CTRL-T*
+		While the "/" or "?" 'incsearch' prompt is active, CTRL-T
 		moves to the previous match (without changing the |jumplist|).
 		The |search-offset| is applied when <CR> is pressed, but does
 		not affect the match highlighting.
@@ -1046,7 +1046,7 @@ Note: these are typed literally, they are not special keys!
 		   the script line number in any situation.  *E961*
 
 							 *filename-modifiers*
-*:_%:* *::8* *::p* *::.* *::~* *::h* *::t* *::r* *::e* *::s* *::gs* *::S*
+     *:_%:* *::8* *::p* *::.* *::~* *::h* *::t* *::r* *::e* *::s* *::gs* *::S*
      *%:8* *%:p* *%:.* *%:~* *%:h* *%:t* *%:r* *%:e* *%:s* *%:gs* *%:S*
 The file name modifiers can be used after "%", "#", "#n", "<cfile>",
 "<script>", "<afile>" or "<abuf>".  They are also used with the |fnamemodify()|

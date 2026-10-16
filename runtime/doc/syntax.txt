@@ -534,8 +534,8 @@ defines/constants are supported.
 Some special violation of coding standards will be signalled when one specify
 in ones |init.vim|: >
 	let baan_code_stds=1
-
-*baan-folding*
+<
+							*baan-folding*
 
 Syntax folding can be enabled at various levels through the variables
 mentioned below (Set those in your |init.vim|).  The more complex folding on
@@ -5021,8 +5021,8 @@ groups, but colorschemes are expected to cover all of them. Under each tag,
 the corresponding highlight groups are highlighted using the current
 colorscheme.
 
-						*:colo* *:colorscheme* *E185*
-:colo[rscheme]		Output the name of the currently active color scheme.
+:colo[rscheme]					*:colo* *:colorscheme* *E185*
+			Output the name of the currently active color scheme.
 			This is basically the same as >
 				:echo g:colors_name
 <			In case g:colors_name has not been defined :colo will
@@ -5057,8 +5057,8 @@ colorscheme.
 :hi[ghlight] {group-name}
 			List one highlight group.
 
-						*highlight-clear* *:hi-clear*
-:hi[ghlight] clear	Reset all highlighting to the defaults.  Removes all
+:hi[ghlight] clear				*highlight-clear* *:hi-clear*
+			Reset all highlighting to the defaults.  Removes all
 			highlighting for groups added by the user.
 			Uses the current value of 'background' to decide which
 			default colors to use.
@@ -5557,18 +5557,18 @@ scrollbars and tooltips.  They don't have defaults.  This doesn't work for the
 Win32 GUI.  Only three highlight arguments have any effect here: font, guibg,
 and guifg.
 
-							*hl-Menu*
-Menu		Current font, background and foreground colors of the menus.
+Menu							*hl-Menu*
+		Current font, background and foreground colors of the menus.
 		Also used for the toolbar.
 		Applicable highlight arguments: font, guibg, guifg.
 
-							*hl-Scrollbar*
-Scrollbar	Current background and foreground of the main window's
+Scrollbar						*hl-Scrollbar*
+		Current background and foreground of the main window's
 		scrollbars.
 		Applicable highlight arguments: guibg, guifg.
 
-							*hl-Tooltip*
-Tooltip		Current font, background and foreground of the tooltips.
+Tooltip							*hl-Tooltip*
+		Current font, background and foreground of the tooltips.
 		Applicable highlight arguments: font, guibg, guifg.
 
 ==============================================================================

@@ -868,8 +868,8 @@ you must create a mapping that first sets the 'operatorfunc' option and then
 invoke the |g@| operator.  After the user types the {motion} command the
 specified function will be called.
 
-							*g@* *E774* *E775*
-g@{motion}		Call the function set by the 'operatorfunc' option.
+g@{motion}						*g@* *E774* *E775*
+			Call the function set by the 'operatorfunc' option.
 			The '[ mark is positioned at the start of the text
 			moved over by {motion}, the '] mark on the last
 			character of the text.
@@ -1069,8 +1069,8 @@ Just like mappings, abbreviations can be local to a buffer.  This is mostly
 used in a |filetype-plugin| file.  Example for a C plugin file: >
 	:abb <buffer> FF  for (i = 0; i < ; ++i)
 <
-						*:ab* *:abbreviate*
-:ab[breviate]		list all abbreviations.  The character in the first
+:ab[breviate]						*:ab* *:abbreviate*
+			list all abbreviations.  The character in the first
 			column indicates the mode where the abbreviation is
 			used: 'i' for insert mode, 'c' for Command-line
 			mode, '!' for both.  These are the same as for
@@ -1098,52 +1098,44 @@ See |:verbose-cmd| for more information.
 			See |:map-<expr>| for the optional <expr> argument.
 			See |:map-<buffer>| for the optional <buffer> argument.
 
-						*:una* *:unabbreviate*
-:una[bbreviate] [<buffer>] {lhs}
+:una[bbreviate] [<buffer>] {lhs}			*:una* *:unabbreviate*
 			Remove abbreviation for {lhs} from the list.  If none
 			is found, remove abbreviations in which {lhs} matches
 			with the {rhs}.  This is done so that you can even
 			remove abbreviations after expansion.  To avoid
 			expansion insert a CTRL-V (type it twice).
 
-						*:norea* *:noreabbrev*
-:norea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
+:norea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]		*:norea* *:noreabbrev*
 			same as ":ab", but no remapping for this {rhs}
 
-						*:ca* *:cab* *:cabbrev*
-:ca[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
+:ca[bbrev] [<expr>] [<buffer>] [lhs] [rhs]		*:ca* *:cab* *:cabbrev*
 			same as ":ab", but for Command-line mode only.
 
-						*:cuna* *:cunabbrev*
-:cuna[bbrev] [<buffer>] {lhs}
+:cuna[bbrev] [<buffer>] {lhs}				*:cuna* *:cunabbrev*
 			Same as ":una", but for Command-line mode only.
 
-						*:cnorea* *:cnoreabbrev*
-:cnorea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
+:cnorea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]		*:cnorea* *:cnoreabbrev*
 			same as ":ab", but for Command-line mode only and no
 			remapping for this {rhs}
 
-						*:ia* *:iabbrev*
-:ia[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
+:ia[bbrev] [<expr>] [<buffer>] [lhs] [rhs]		*:ia* *:iabbrev*
 			same as ":ab", but for Insert mode only.
 
-						*:iuna* *:iunabbrev*
-:iuna[bbrev] [<buffer>] {lhs}
+:iuna[bbrev] [<buffer>] {lhs}				*:iuna* *:iunabbrev*
 			Same as ":una", but for insert mode only.
 
-						*:inorea* *:inoreabbrev*
-:inorea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
+:inorea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]		*:inorea* *:inoreabbrev*
 			same as ":ab", but for Insert mode only and no
 			remapping for this {rhs}
 
-							*:abc* *:abclear*
-:abc[lear] [<buffer>]	Remove all abbreviations.
+:abc[lear] [<buffer>]					*:abc* *:abclear*
+			Remove all abbreviations.
 
-							*:iabc* *:iabclear*
-:iabc[lear] [<buffer>]	Remove all abbreviations for Insert mode.
+:iabc[lear] [<buffer>]					*:iabc* *:iabclear*
+			Remove all abbreviations for Insert mode.
 
-							*:cabc* *:cabclear*
-:cabc[lear] [<buffer>]	Remove all abbreviations for Command-line mode.
+:cabc[lear] [<buffer>]					*:cabc* *:cabclear*
+			Remove all abbreviations for Command-line mode.
 
 							*using_CTRL-V*
 It is possible to use special characters in the rhs of an abbreviation.
@@ -1305,8 +1297,7 @@ last defined and any completion argument.  Example: >
 <
 See |:verbose-cmd| for more information.
 
-							*E174* *E182*
-:com[mand][!] [{attr}...] {cmd} {repl}
+:com[mand][!] [{attr}...] {cmd} {repl}			*E174* *E182*
 			Define a user command.  The name of the command is
 			{cmd} and its replacement text is {repl}.  The
 			command's attributes (see below) are {attr}.  If the

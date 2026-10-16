@@ -27,8 +27,7 @@ directories (for Unix): >
 Unfortunately, upper/lowercase differences matter.  Also watch out for the
 use of "-" and "_".
 
-					    *:lan* *:lang* *:language* *E197*
-:lan[guage]
+:lan[guage]				*:lan* *:lang* *:language* *E197*
 :lan[guage] mes[sages]
 :lan[guage] cty[pe]
 :lan[guage] tim[e]
@@ -156,8 +155,7 @@ in a Vim script.  For a language that has no translation yet, please consider
 becoming the maintainer and make your translations available to all Vim users.
 Send an e-mail to the Vim maintainer <maintainer@vim.org>.
 
-					*:menut* *:menutrans* *:menutranslate*
-:menut[ranslate] clear
+:menut[ranslate] clear			*:menut* *:menutrans* *:menutranslate*
 			Clear all menu translations.
 
 :menut[ranslate] {english} {mylang}

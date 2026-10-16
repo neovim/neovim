@@ -325,8 +325,7 @@ assert_exception({error} [, {msg}])                         *assert_exception()*
                 Return: ~
                   (`0|1`)
 
-                                                                *assert_fails()*
-assert_fails({cmd} [, {error} [, {msg} [, {lnum} [, {context}]]]])
+assert_fails({cmd} [, {error} [, {msg} [, {lnum} [, {context}]]]])  *assert_fails()*
 		Run {cmd} and add an error message to |v:errors| if it does
 		NOT produce an error or when {error} is not found in the
 		error message.  Also see |assert-return|.
@@ -3764,8 +3763,7 @@ getcursorcharpos([{winid}])                                 *getcursorcharpos()*
                 Return: ~
                   (`any`)
 
-                                              *getcwd()* *E5000* *E5002* *E5006* *E5007*
-getcwd([{winnr} [, {tabnr} [, {bufnr}]]])
+getcwd([{winnr} [, {tabnr} [, {bufnr}]]])     *getcwd()* *E5000* *E5002* *E5006* *E5007*
 		Without arguments, returns the effective |current-directory|.
 		With {winnr} (|window-number| or |window-ID|), {tabnr} or
 		{bufnr} the working directory of that scope is returned,
@@ -6739,8 +6737,7 @@ match({expr}, {pat} [, {start} [, {count}]])                           *match()*
                 Return: ~
                   (`integer`)
 
-                                                *matchadd()* *E798* *E799* *E801* *E957*
-matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])
+matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])  *matchadd()* *E798* *E799* *E801* *E957*
 		Defines a pattern to be highlighted in the current window (a
 		"match").  It will be highlighted with {group}.  Returns an
 		identification number (ID), which can be used to delete the
@@ -8914,7 +8911,7 @@ screenstring({row}, {col})                                      *screenstring()*
                 Return: ~
                   (`string`)
 
-search({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]]) *search()*
+search({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])  *search()*
 		Search for regexp pattern {pattern}.  The search starts at the
 		cursor position (you can use |cursor()| to set it).
 
@@ -9185,8 +9182,7 @@ searchdecl({name} [, {global} [, {thisblock}]])                   *searchdecl()*
                 Return: ~
                   (`any`)
 
-                                                                  *searchpair()*
-searchpair({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeout}]]]])
+searchpair({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeout}]]]])  *searchpair()*
 		Search for the match of a nested start-end pair.  This can be
 		used to find the "endif" that matches an "if", while other
 		if/endif pairs in between are ignored.
@@ -9283,8 +9279,7 @@ searchpair({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeo
                 Return: ~
                   (`integer`)
 
-                                                               *searchpairpos()*
-searchpairpos({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeout}]]]])
+searchpairpos({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeout}]]]])  *searchpairpos()*
 		Same as |searchpair()|, but returns a |List| with the line and
 		column position of the match.  The first element of the |List|
 		is the line number and the second element is the byte index of
@@ -9307,8 +9302,7 @@ searchpairpos({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {ti
                 Return: ~
                   (`[integer, integer]`)
 
-                                                                   *searchpos()*
-searchpos({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])
+searchpos({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])  *searchpos()*
 		Same as |search()|, but returns a |List| with the line and
 		column position of the match.  The first element of the |List|
 		is the line number and the second element is the byte index of

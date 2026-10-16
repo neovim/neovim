@@ -34,32 +34,32 @@ word.  Note: this slows down the appearance of the popup menu.
 
 To search for the next misspelled word:
 
-							*]s*
-]s			Move to next misspelled word after the cursor.
+]s							*]s*
+			Move to next misspelled word after the cursor.
 			A count before the command can be used to repeat.
 			'wrapscan' applies.
 
-							*[s*
-[s			Like "]s" but search backwards, find the misspelled
+[s							*[s*
+			Like "]s" but search backwards, find the misspelled
 			word before the cursor.  Doesn't recognize words
 			split over two lines, thus may stop at words that are
 			not highlighted as bad.  Does not stop at word with
 			missing capital at the start of a line.
 
-							*]S*
-]S			Like "]s" but only stop at bad words, not at rare
+]S							*]S*
+			Like "]s" but only stop at bad words, not at rare
 			words or words for another region.
 
-							*[S*
-[S			Like "]S" but search backwards.
+[S							*[S*
+			Like "]S" but search backwards.
 
-							*]r*
-]r			Move to next "rare" word after the cursor.
+]r							*]r*
+			Move to next "rare" word after the cursor.
 			A count before the command can be used to repeat.
 			'wrapscan' applies.
 
-							*[r*
-[r			Like "]r" but search backwards, find the "rare"
+[r							*[r*
+			Like "]r" but search backwards, find the "rare"
 			word before the cursor.  Doesn't recognize words
 			split over two lines, thus may stop at words that are
 			not highlighted as rare.
@@ -67,8 +67,8 @@ To search for the next misspelled word:
 
 To add words to your own word list:
 
-							*zg*
-zg			Add word under the cursor as a good word to the first
+zg							*zg*
+			Add word under the cursor as a good word to the first
 			name in 'spellfile'.  A count may precede the command
 			to indicate the entry in 'spellfile' to be used.  A
 			count of two uses the second entry.
@@ -83,30 +83,31 @@ zg			Add word under the cursor as a good word to the first
 			If the word is explicitly marked as bad word in
 			another spell file the result is unpredictable.
 
-							*zG*
-zG			Like "zg" but add the word to the internal word list
+zG							*zG*
+			Like "zg" but add the word to the internal word list
 			|internal-wordlist|.
 
-							*zw*
-zw			Like "zg" but mark the word as a wrong (bad) word.
+zw							*zw*
+			Like "zg" but mark the word as a wrong (bad) word.
 			If the word already appears in 'spellfile' it is
 			turned into a comment line.  See |spellfile-cleanup|
 			for getting rid of those.
 
-							*zW*
-zW			Like "zw" but add the word to the internal word list
+zW							*zW*
+			Like "zw" but add the word to the internal word list
 			|internal-wordlist|.
 
-zuw							*zug* *zuw*
-zug			Undo |zw| and |zg|, remove the word from the entry in
+zuw							*zuw*
+zug							*zug*
+			Undo |zw| and |zg|, remove the word from the entry in
 			'spellfile'.  Count used as with |zg|.
 
-zuW							*zuG* *zuW*
-zuG			Undo |zW| and |zG|, remove the word from the internal
+zuW							*zuW*
+zuG							*zuG*
+			Undo |zW| and |zG|, remove the word from the internal
 			word list.  Count used as with |zg|.
 
-						*:spe* *:spellgood* *E1280*
-:[count]spe[llgood] {word}
+:[count]spe[llgood] {word}			*:spe* *:spellgood* *E1280*
 			Add {word} as a good word to 'spellfile', like with
 			|zg|.  Without count the first name is used, with a
 			count of two the second entry, etc.
@@ -114,8 +115,7 @@ zuG			Undo |zW| and |zG|, remove the word from the internal
 :spe[llgood]! {word}	Add {word} as a good word to the internal word list,
 			like with |zG|.
 
-							*:spellw* *:spellwrong*
-:[count]spellw[rong] {word}
+:[count]spellw[rong] {word}			*:spellw* *:spellwrong*
 			Add {word} as a wrong (bad) word to 'spellfile', as
 			with |zw|.  Without count the first name is used, with
 			a count of two the second entry, etc.
@@ -123,8 +123,7 @@ zuG			Undo |zW| and |zG|, remove the word from the internal
 :spellw[rong]! {word}	Add {word} as a wrong (bad) word to the internal word
 			list, like with |zW|.
 
-							*:spellra* *:spellrare*
-:[count]spellra[re] {word}
+:[count]spellra[re] {word}			*:spellra* *:spellrare*
 			Add {word} as a rare word to 'spellfile', similar to
 			|zw|.  Without count the first name is used, with
 			a count of two the second entry, etc.
@@ -200,8 +199,8 @@ z=			For the word under/after the cursor suggest correctly
 			the good word and <Esc>.  This does NOT work for Thai
 			and other languages without spaces between words.
 
-					*:spellr* *:spellrepall* *E752* *E753*
-:spellr[epall]		Repeat the replacement done by |z=| for all matches
+:spellr[epall]				*:spellr* *:spellrepall* *E752* *E753*
+			Repeat the replacement done by |z=| for all matches
 			with the replaced word in the current window.
 
 In Insert mode, when the cursor is after a badly spelled word, you can use
@@ -514,8 +513,7 @@ when using an MS-Windows codepage on Unix) add tables to the .aff file
 table of the currently active spelling is used.  If spelling is not active
 then Vim will try to guess.
 
-							*:mksp* *:mkspell*
-:mksp[ell][!] [-ascii] {outname} {inname} ...
+:mksp[ell][!] [-ascii] {outname} {inname} ...		*:mksp* *:mkspell*
 			Generate a Vim spell file from word lists.  Example: >
 		:mkspell /tmp/nl nl_NL.words
 <								*E751*
@@ -625,8 +623,8 @@ SPELL FILE DUMP
 If for some reason you want to check what words are supported by the currently
 used spelling files, use this command:
 
-							*:spelldump* *:spelld*
-:spelld[ump]		Open a new window and fill it with all currently valid
+:spelld[ump]						*:spelldump* *:spelld*
+			Open a new window and fill it with all currently valid
 			words.  Compound words are not included.
 			Note: For some languages the result may be enormous,
 			causing Vim to run out of memory.
@@ -876,8 +874,8 @@ right encoding.
 These fields are put in the .spl file as-is.  The |:spellinfo| command can be
 used to view the info.
 
-							*:spellinfo* *:spelli*
-:spelli[nfo]		Display the information for the spell file(s) used for
+:spelli[nfo]						*:spellinfo* *:spelli*
+			Display the information for the spell file(s) used for
 			the current buffer.
 
 

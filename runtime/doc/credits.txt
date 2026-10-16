@@ -103,7 +103,7 @@ Vim would never have become what it is now, without the help of these people!
 I wish to thank all the people that sent me bug reports and suggestions.  The
 list is too long to mention them all here.  Vim would not be the same without
 the ideas from all these people: They keep Vim alive!
-*love* *peace* *friendship* *gross-national-happiness*
+			*love* *peace* *friendship* *gross-national-happiness*
 
 
 Documentation may refer to other versions of Vi:

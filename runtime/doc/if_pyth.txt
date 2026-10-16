@@ -13,8 +13,7 @@ See |provider-python| for more information.
 ==============================================================================
 Commands						*python-commands*
 
-					*:python* *:py* *E263* *E264* *E887*
-:[range]py[thon] {stmt}
+:[range]py[thon] {stmt}			*:python* *:py* *E263* *E264* *E887*
 			Execute Python statement {stmt}.  A simple check if
 			the `:python` command is working: >vim
 				:python print("Hello")
@@ -52,8 +51,8 @@ https://docs.python.org/3/library/os.html#os.environ
 Note: Python is very sensitive to indenting.  Make sure the "class" line and
 "EOF" do not have any indent.
 
-							*:pydo*
-:[range]pydo {body}	Execute Python function "def _vim_pydo(line, linenr):
+:[range]pydo {body}					*:pydo*
+			Execute Python function "def _vim_pydo(line, linenr):
 			{body}" for each line in the [range], with the
 			function arguments being set to the text of each line
 			in turn, without a trailing <EOL>, and the current
@@ -79,8 +78,7 @@ python.  For example: >vim
 	EOF
 	:'<,'>py3do return py_vim_string_replace(line)
 <
-							*:pyfile* *:pyf*
-:[range]pyf[ile] {file}
+:[range]pyf[ile] {file}					*:pyfile* *:pyf*
 			Execute the Python script in {file}.  The whole
 			argument is used as a single file name.
 
@@ -593,13 +591,12 @@ with "python3" in the current version. However, code that aims to support older
 versions of Nvim, as well as Vim, should prefer to use "python3" variants
 explicitly if Python 3 is required.
 
-							*:py3* *:python3*
-:[range]py3 {stmt}
+:[range]py3 {stmt}					*:py3*
 :[range]py3 << [trim] [{endmarker}]
 {script}
 {endmarker}
 
-:[range]python3 {stmt}
+:[range]python3 {stmt}					*:python3*
 :[range]python3 << [trim] [{endmarker}]
 {script}
 {endmarker}
@@ -610,8 +607,8 @@ explicitly if Python 3 is required.
 	To see what version of Python you have: >vim
 		:py3 import sys
 		:py3 print(sys.version)
-<							*:py3file*
-:[range]py3f[ile] {file}
+<
+:[range]py3f[ile] {file}				*:py3file*
 	The `:py3file` command works similar to `:pyfile`.
 							*:py3do*
 :[range]py3do {body}

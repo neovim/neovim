@@ -25,13 +25,13 @@ The following commands move the edit window (the part of the buffer that you
 see) downwards (this means that more lines downwards in the text buffer can be
 seen):
 
-							*CTRL-E*
-CTRL-E			Scroll window [count] lines downwards in the buffer.
+CTRL-E							*CTRL-E*
+			Scroll window [count] lines downwards in the buffer.
 			The text moves upwards on the screen.
 			Mnemonic: Extra lines.
 
-							*CTRL-D*
-CTRL-D			Scroll window Downwards in the buffer.  The number of
+CTRL-D							*CTRL-D*
+			Scroll window Downwards in the buffer.  The number of
 			lines comes from the 'scroll' option (default: half a
 			screen).  If [count] given, first set 'scroll' option
 			to [count].  The cursor is moved the same number of
@@ -41,17 +41,18 @@ CTRL-D			Scroll window Downwards in the buffer.  The number of
 			the buffer nothing happens and a beep is produced.
 			See also 'startofline' option.
 
-<S-Down>	or				*<S-Down>* *<kPageDown>*
-<PageDown>	or				*<PageDown>* *CTRL-F*
-<S-CR>	or					*<S-CR>* *<S-NL>*
-<S-+>	or					*SHIFT-+* *<S-Plus>*
-CTRL-F			Scroll window [count] pages Forwards (downwards) in
+<S-Down>						*<S-Down>*
+<PageDown>						*<PageDown>* *<kPageDown>*
+<S-CR>							*<S-CR>* *<S-NL>*
+<S-+>							*SHIFT-+* *<S-Plus>*
+CTRL-F							*CTRL-F*
+			Scroll window [count] pages Forwards (downwards) in
 			the buffer.  See also 'startofline' option.
 			When there is only one window the 'window' option
 			might be used.
 
-							*z+*
-z+			Without [count]: Redraw with the line just below the
+z+							*z+*
+			Without [count]: Redraw with the line just below the
 			window at the top of the window.  Put the cursor in
 			that line, at the first non-blank in the line.
 			With [count]: just like "z<CR>".
@@ -63,14 +64,14 @@ The following commands move the edit window (the part of the buffer that you
 see) upwards (this means that more lines upwards in the text buffer can be
 seen):
 
-							*CTRL-Y*
-CTRL-Y			Scroll window [count] lines upwards in the buffer.
+CTRL-Y							*CTRL-Y*
+			Scroll window [count] lines upwards in the buffer.
 			The text moves downwards on the screen.
 			Note: When using the MS-Windows key bindings CTRL-Y is
 			remapped to redo.
 
-							*CTRL-U*
-CTRL-U			Scroll window Upwards in the buffer.  The number of
+CTRL-U							*CTRL-U*
+			Scroll window Upwards in the buffer.  The number of
 			lines comes from the 'scroll' option (default: half a
 			screen).  If [count] given, first set the 'scroll'
 			option to [count].  The cursor is moved the same
@@ -80,16 +81,17 @@ CTRL-U			Scroll window Upwards in the buffer.  The number of
 			line of the buffer nothing happens and a beep is
 			produced.  See also 'startofline' option.
 
-<S-Up>		or					*<S-Up>* *<kPageUp>*
-<PageUp>	or					*<PageUp>* *CTRL-B*
-<S-->		or				*<S-Minus>* *SHIFT-MINUS*
-CTRL-B			Scroll window [count] pages Backwards (upwards) in the
+<S-Up>							*<S-Up>*
+<PageUp>						*<PageUp>* *<kPageUp>*
+<S-->							*<S-Minus>* *SHIFT-MINUS*
+CTRL-B							*CTRL-B*
+			Scroll window [count] pages Backwards (upwards) in the
 			buffer.  See also 'startofline' option.
 			When there is only one window the 'window' option
 			might be used.
 
-							*z^*
-z^			Without [count]: Redraw with the line just above the
+z^							*z^*
+			Without [count]: Redraw with the line just above the
 			window at the bottom of the window.  Put the cursor in
 			that line, at the first non-blank in the line.
 			With [count]: First scroll the text to put the [count]
@@ -105,38 +107,38 @@ The following commands reposition the edit window (the part of the buffer that
 you see) while keeping the cursor on the same line.  Note that the 'scrolloff'
 option may cause context lines to show above and below the cursor.
 
-							*z<CR>*
-z<CR>			Redraw, line [count] at top of window (default
+z<CR>							*z<CR>*
+			Redraw, line [count] at top of window (default
 			cursor line).  Put cursor at first non-blank in the
 			line.
 
-							*zt*
-zt			Like "z<CR>", but leave the cursor in the same
+zt							*zt*
+			Like "z<CR>", but leave the cursor in the same
 			column.
 
-							*zN<CR>*
-z{height}<CR>		Redraw, make window {height} lines tall.  This is
+z{height}<CR>						*zN<CR>*
+			Redraw, make window {height} lines tall.  This is
 			useful to make the number of lines small when screen
 			updating is very slow.  Cannot make the height more
 			than the physical screen height.
 
-							*z.*
-z.			Redraw, line [count] at center of window (default
+z.							*z.*
+			Redraw, line [count] at center of window (default
 			cursor line).  Put cursor at first non-blank in the
 			line.
 
-							*zz*
-zz			Like "z.", but leave the cursor in the same column.
+zz							*zz*
+			Like "z.", but leave the cursor in the same column.
 			Careful: If caps-lock is on, this command becomes
 			"ZZ": write buffer and exit!
 
-							*z-*
-z-			Redraw, line [count] at bottom of window (default
+z-							*z-*
+			Redraw, line [count] at bottom of window (default
 			cursor line).  Put cursor at first non-blank in the
 			line.
 
-							*zb*
-zb			Like "z-", but leave the cursor in the same column.
+zb							*zb*
+			Like "z-", but leave the cursor in the same column.
 
 ==============================================================================
 4. Scrolling horizontally				*scroll-horizontal*
@@ -146,36 +148,38 @@ character that the cursor is on is moved off the screen, the cursor is moved
 to the closest character that is on the screen.  The value of 'sidescroll' is
 not used.
 
-z<Right>    or						*zl* *z<Right>*
-zl			Move the view on the text [count] characters to the
+z<Right>						*z<Right>*
+zl							*zl*
+			Move the view on the text [count] characters to the
 			right, thus scroll the text [count] characters to the
 			left.  This only works when 'wrap' is off.
 
-z<Left>      or						*zh* *z<Left>*
-zh			Move the view on the text [count] characters to the
+z<Left>							*z<Left>*
+zh							*zh*
+			Move the view on the text [count] characters to the
 			left, thus scroll the text [count] characters to the
 			right.  This only works when 'wrap' is off.
 
-							*zL*
-zL			Move the view on the text half a screenwidth to the
+zL							*zL*
+			Move the view on the text half a screenwidth to the
 			right, thus scroll the text half a screenwidth to the
 			left.  This only works when 'wrap' is off.
 
-							*zH*
-zH			Move the view on the text half a screenwidth to the
+zH							*zH*
+			Move the view on the text half a screenwidth to the
 			left, thus scroll the text half a screenwidth to the
 			right.  This only works when 'wrap' is off.
 
 For the following two commands the cursor is not moved in the text, only the
 text scrolls on the screen.
 
-							*zs*
-zs			Scroll the text horizontally to position the cursor
+zs							*zs*
+			Scroll the text horizontally to position the cursor
 			at the start (left side) of the screen.  This only
 			works when 'wrap' is off.
 
-							*ze*
-ze			Scroll the text horizontally to position the cursor
+ze							*ze*
+			Scroll the text horizontally to position the cursor
 			at the end (right side) of the screen.  This only
 			works when 'wrap' is off.
 
@@ -213,8 +217,8 @@ jump to a location where the current window's relative offset is valid.  This
 behavior can be changed by clearing the "jump" flag from the 'scrollopt'
 option.
 
-						*syncbind* *:syncbind* *:sync*
-:syncbind		Force all 'scrollbind' windows to have the same
+:syncbind					*syncbind* *:syncbind* *:sync*
+			Force all 'scrollbind' windows to have the same
 			relative offset.  I.e., when any of the 'scrollbind'
 			windows is scrolled to the top of its buffer, all of
 			the 'scrollbind' windows will also be at the top of

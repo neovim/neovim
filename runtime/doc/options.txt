@@ -21,8 +21,8 @@ options come in three forms:
 ==============================================================================
 1. Setting options					*set-option* *E764*
 
-							*:se* *:set*
-:se[t][!]		Show all options that differ from their default value.
+:se[t][!]						*:se* *:set*
+			Show all options that differ from their default value.
 			When [!] is present every option is on a separate
 			line.
 
@@ -30,8 +30,8 @@ options come in three forms:
 			When [!] is present every option is on a separate
 			line.
 
-								*E518* *E519*
-:se[t] {option}?	Show value of {option}.
+:se[t] {option}?					*E518* *E519*
+			Show value of {option}.
 			NOTE: some legacy options were removed. |nvim-removed|
 
 :se[t] {option}		Toggle option: set, switch it on.
@@ -40,14 +40,17 @@ options come in three forms:
 
 :se[t] no{option}	Toggle option: Reset, switch it off.
 
-							   *:set-!* *:set-inv*
-:se[t] {option}!   or
-:se[t] inv{option}	Toggle option: Invert value.
+:se[t] {option}!					*:set-!*
+:se[t] inv{option}					*:set-inv*
+			Toggle option: Invert value.
 
-				*:set-default* *:set-&* *:set-&vi* *:set-&vim*
-:se[t] {option}&	Reset option to its default value.
-:se[t] {option}&vi	Reset option to its Vi default value.
-:se[t] {option}&vim	Reset option to its Vim default value.
+
+:se[t] {option}&					*:set-default* *:set-&*
+                        Reset option to its default value.
+:se[t] {option}&vi					*:set-&vi*
+                        Reset option to its Vi default value.
+:se[t] {option}&vim					*:set-&vim*
+			Reset option to its Vim default value.
 
 :se[t] all&		Set all options to their default value.  The values of
 			these options are not changed:
@@ -55,8 +58,7 @@ options come in three forms:
 			  'lines'
 			Warning: This may have a lot of side effects.
 
-					    *:set-args* *:set=* *E487* *E521*
-:se[t] {option}={value}		or
+:se[t] {option}={value}					*:set-args* *:set=* *E487* *E521*
 :se[t] {option}:{value}
 			Set string or number option to {value}.
 			For numeric options the value can be given in decimal,
@@ -313,8 +315,8 @@ created, thus they behave slightly differently:
 	'readonly'	will be detected automatically
 	'modified'	will be detected automatically
 
-							*:setl* *:setlocal*
-:setl[ocal][!] ...	Like ":set" but set only the value local to the
+:setl[ocal][!] ...					*:setl* *:setlocal*
+			Like ":set" but set only the value local to the
 			current buffer or window.  Not all options have a
 			local value.  If the option does not have a local
 			value the global value is set.
@@ -342,8 +344,8 @@ created, thus they behave slightly differently:
 Note that the behaviour for |global-local| options is slightly different
 between string and number-based options.
 
-							*:setg* *:setglobal*
-:setg[lobal][!] ...	Like ":set" but set only the global value for a local
+:setg[lobal][!] ...					*:setg* *:setglobal*
+			Like ":set" but set only the global value for a local
 			option without changing the local value.
 			When displaying an option, the global value is shown.
 			With the "all" argument: display global values for all
@@ -482,9 +484,10 @@ Setting the filetype
 			detections that are just a guess.  |did_filetype()|
 			will return false after this command.
 
-				*option-window* *optwin*
-:bro[wse] se[t]			*:set-browse* *:browse-set* *:opt* *:options*
-:opt[ions]		Open a window for viewing and setting all options.
+							*option-window* *optwin*
+:bro[wse] se[t]						*:set-browse* *:browse-set*
+:opt[ions]						*:opt* *:options*
+			Open a window for viewing and setting all options.
 			Options are grouped by function.
 			Offers short help for each option.  Hit <CR> on the
 			short help to open a help window with more help for
@@ -4690,7 +4693,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    "g<LeftMouse>"  is "<C-LeftMouse>	(jump to tag under mouse click)
 	    "g<RightMouse>" is "<C-RightMouse>	("CTRL-T")
 
-*'mousemoveevent'* *'mousemev'* *'nomousemoveevent'* *'nomousemev'* *mouse-hover*
+	*'mousemoveevent'* *'mousemev'* *'nomousemoveevent'* *'nomousemev'* *mouse-hover*
 'mousemoveevent' 'mousemev'	boolean	(default off)
 			global
 	When on, mouse move events are delivered to the input queue and are

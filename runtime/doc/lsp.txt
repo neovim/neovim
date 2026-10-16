@@ -907,7 +907,7 @@ LspTokenUpdate                                                *LspTokenUpdate*
 ==============================================================================
 Lua module: vim.lsp                                                 *lsp-core*
 
-*vim.lsp.Config*
+vim.lsp.Config                                                *vim.lsp.Config*
     Extends: |vim.lsp.ClientConfig|
 
 
@@ -1015,8 +1015,7 @@ buf_notify({bufnr}, {method}, {params})                 *vim.lsp.buf_notify()*
     Return: ~
         (`boolean`) success true if any client returns true; false otherwise
 
-                                                   *vim.lsp.buf_request_all()*
-buf_request_all({bufnr}, {method}, {params}, {handler})
+buf_request_all({bufnr}, {method}, {params}, {handler})  *vim.lsp.buf_request_all()*
     Sends an async request for all active clients attached to the buffer and
     executes the `handler` callback with the combined result.
 
@@ -1037,8 +1036,7 @@ buf_request_all({bufnr}, {method}, {params}, {handler})
     Return: ~
         (`function`) cancel Function that cancels all requests.
 
-                                                  *vim.lsp.buf_request_sync()*
-buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
+buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})  *vim.lsp.buf_request_sync()*
     Sends a request to all server and waits for the response of all of them.
 
     Calls |vim.lsp.buf_request_all()| but blocks Nvim while awaiting the
@@ -1449,7 +1447,7 @@ The `vim.lsp.buf_…` functions perform operations for LSP clients attached to
 the current buffer.
 
 
-*vim.lsp.ListOpts*
+vim.lsp.ListOpts                                            *vim.lsp.ListOpts*
 
     Fields: ~
       • {loclist}?  (`boolean`) Whether to use the |location-list| or the
@@ -1510,14 +1508,14 @@ the current buffer.
       • {pos}?      (`vim.Pos`, default: cursor position) Position on a buffer
                     to request.
 
-*vim.lsp.buf.hover.Opts*
+vim.lsp.buf.hover.Opts                                *vim.lsp.buf.hover.Opts*
     Extends: |vim.lsp.util.open_floating_preview.Opts|
 
 
     Fields: ~
       • {silent}?  (`boolean`)
 
-*vim.lsp.buf.signature_help.Opts*
+vim.lsp.buf.signature_help.Opts              *vim.lsp.buf.signature_help.Opts*
     Extends: |vim.lsp.util.open_floating_preview.Opts|
 
 
@@ -1525,8 +1523,7 @@ the current buffer.
       • {silent}?  (`boolean`)
 
 
-                                          *vim.lsp.buf.add_workspace_folder()*
-add_workspace_folder({workspace_folder})
+add_workspace_folder({workspace_folder})  *vim.lsp.buf.add_workspace_folder()*
     Add the folder at path to the workspace folders. If {path} is not
     provided, the user will be prompted for a path using |input()|.
 
@@ -1699,8 +1696,7 @@ references({context}, {opts})                       *vim.lsp.buf.references()*
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
 
-                                       *vim.lsp.buf.remove_workspace_folder()*
-remove_workspace_folder({workspace_folder})
+remove_workspace_folder({workspace_folder})  *vim.lsp.buf.remove_workspace_folder()*
     Remove the folder at path from the workspace folders. If {path} is not
     provided, the user will be prompted for a path using |input()|.
 
@@ -1722,8 +1718,7 @@ rename({new_name}, {opts})                              *vim.lsp.buf.rename()*
                     • {name}? (`string`) Restrict clients used for rename to
                       ones where client.name matches this field.
 
-                                               *vim.lsp.buf.selection_range()*
-selection_range({direction}, {timeout_ms})
+selection_range({direction}, {timeout_ms})     *vim.lsp.buf.selection_range()*
                                                    *lsp-incremental-selection*
 
     Expands or contracts a |Visual| selection at cursor, based on ranges given
@@ -1788,7 +1783,7 @@ workspace_symbol({query}, {opts})             *vim.lsp.buf.workspace_symbol()*
 ==============================================================================
 Lua module: vim.lsp.client                                        *lsp-client*
 
-*vim.lsp.Client*
+vim.lsp.Client                                                *vim.lsp.Client*
 
     Fields: ~
       • {attached_buffers}      (`table<integer,string>`) Each buffer's last
@@ -1867,14 +1862,14 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {workspace_folders}     (`lsp.WorkspaceFolder[]?`) See
                                 |vim.lsp.ClientConfig|.
 
-*vim.lsp.Client.Progress*
+vim.lsp.Client.Progress                              *vim.lsp.Client.Progress*
     Extends: |vim.Ringbuf|
 
 
     Fields: ~
       • {pending}  (`table<lsp.ProgressToken,lsp.LSPAny>`)
 
-*vim.lsp.ClientConfig*
+vim.lsp.ClientConfig                                    *vim.lsp.ClientConfig*
 
     Fields: ~
       • {before_init}?         (`fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)`)
@@ -2079,8 +2074,7 @@ Client:on_attach({bufnr})                                 *Client:on_attach()*
     Parameters: ~
       • {bufnr}  (`integer`) Buffer number
 
-                                                            *Client:request()*
-Client:request({method}, {params}, {handler}, {bufnr})
+Client:request({method}, {params}, {handler}, {bufnr})      *Client:request()*
     Sends a request to the server.
 
     This is a thin wrapper around {client.rpc.request} with some additional
@@ -2101,8 +2095,7 @@ Client:request({method}, {params}, {handler}, {bufnr})
     See also: ~
       • |vim.lsp.buf_request_all()|
 
-                                                       *Client:request_sync()*
-Client:request_sync({method}, {params}, {timeout_ms}, {bufnr})
+Client:request_sync({method}, {params}, {timeout_ms}, {bufnr})  *Client:request_sync()*
     Sends a request to the server and synchronously waits for the response.
 
     This is a wrapper around |Client:request()|
@@ -2265,8 +2258,7 @@ inserts the character. To disable this: >lua
 <
 
 
-                                                 *vim.lsp.completion.enable()*
-enable({enable}, {client_id}, {bufnr}, {opts})
+enable({enable}, {client_id}, {bufnr}, {opts})   *vim.lsp.completion.enable()*
     Enables or disables completions from the given language client in the
     given buffer. Effects of enabling completions are:
     • Calling |vim.lsp.completion.get()| uses the enabled clients to retrieve
@@ -2346,8 +2338,7 @@ from({diagnostics})                                *vim.lsp.diagnostic.from()*
     Return: ~
         (`lsp.Diagnostic[]`)
 
-                                          *vim.lsp.diagnostic.get_namespace()*
-get_namespace({client_id}, {is_pull}, {pull_id})
+get_namespace({client_id}, {is_pull}, {pull_id})  *vim.lsp.diagnostic.get_namespace()*
     Get the diagnostic namespace associated with an LSP client
     |vim.diagnostic| for diagnostics
 
@@ -2358,8 +2349,7 @@ get_namespace({client_id}, {is_pull}, {pull_id})
       • {pull_id}    (`string?`) (default: nil) Optional identifier for pull
                      diagnostic providers. Only used if `is_pull` is `true`.
 
-                                          *vim.lsp.diagnostic.on_diagnostic()*
-on_diagnostic({error}, {result}, {ctx})
+on_diagnostic({error}, {result}, {ctx})   *vim.lsp.diagnostic.on_diagnostic()*
     |lsp-handler| for the method "textDocument/diagnostic"
 
     See |vim.diagnostic.config()| for configuration options.
@@ -2369,8 +2359,7 @@ on_diagnostic({error}, {result}, {ctx})
       • {result}  (`lsp.DocumentDiagnosticReport`)
       • {ctx}     (`lsp.HandlerContext`)
 
-                                 *vim.lsp.diagnostic.on_publish_diagnostics()*
-on_publish_diagnostics({_}, {params}, {ctx})
+on_publish_diagnostics({_}, {params}, {ctx})  *vim.lsp.diagnostic.on_publish_diagnostics()*
     |lsp-handler| for the method "textDocument/publishDiagnostics"
 
     See |vim.diagnostic.config()| for configuration options.
@@ -2540,7 +2529,7 @@ To try it out, here is a quickstart example using Copilot:       *lsp-copilot*
 6. Set a keymap for `vim.lsp.inline_completion.get()` and invoke the keymap.
 
 
-*vim.lsp.inline_completion.Item*
+vim.lsp.inline_completion.Item                *vim.lsp.inline_completion.Item*
 
     Fields: ~
       • {client_id}    (`integer`) Client ID
@@ -2731,7 +2720,7 @@ enable({enable}, {filter})               *vim.lsp.on_type_formatting.enable()*
 ==============================================================================
 Lua module: vim.lsp.rpc                                              *lsp-rpc*
 
-*vim.lsp.rpc.Client*
+vim.lsp.rpc.Client                                        *vim.lsp.rpc.Client*
     Client RPC object
 
     Fields: ~
@@ -2770,8 +2759,7 @@ format_rpc_error({err})                       *vim.lsp.rpc.format_rpc_error()*
     Return: ~
         (`string`) error_message The formatted error message
 
-                                            *vim.lsp.rpc.rpc_response_error()*
-rpc_response_error({code}, {message}, {data})
+rpc_response_error({code}, {message}, {data})  *vim.lsp.rpc.rpc_response_error()*
     Creates an RPC response table `error` to be sent to the LSP response.
 
     Parameters: ~
@@ -2844,8 +2832,7 @@ force_refresh({bufnr})               *vim.lsp.semantic_tokens.force_refresh()*
       • {bufnr}  (`integer?`) filter by buffer. All buffers if nil, current
                  buffer if 0
 
-                                        *vim.lsp.semantic_tokens.get_at_pos()*
-get_at_pos({bufnr}, {row}, {col})
+get_at_pos({bufnr}, {row}, {col})       *vim.lsp.semantic_tokens.get_at_pos()*
     Return the semantic token(s) at the given position. If called without
     arguments, returns the token under the cursor.
 
@@ -2866,8 +2853,7 @@ get_at_pos({bufnr}, {row}, {col})
           readonly = true }
         • client_id (integer)
 
-                                   *vim.lsp.semantic_tokens.highlight_token()*
-highlight_token({token}, {bufnr}, {client_id}, {hl_group}, {opts})
+highlight_token({token}, {bufnr}, {client_id}, {hl_group}, {opts})  *vim.lsp.semantic_tokens.highlight_token()*
     Highlight a semantic token.
 
     Apply an extmark with a given highlight group for a semantic token. The
@@ -2901,7 +2887,7 @@ is_enabled({filter})                    *vim.lsp.semantic_tokens.is_enabled()*
 ==============================================================================
 Lua module: vim.lsp.util                                            *lsp-util*
 
-*vim.lsp.util.open_floating_preview.Opts*
+vim.lsp.util.open_floating_preview.Opts  *vim.lsp.util.open_floating_preview.Opts*
 
     Fields: ~
       • {anchor_bias}?   (`'auto'|'above'|'below'`, default: `'auto'`) Adjusts
@@ -2939,9 +2925,7 @@ Lua module: vim.lsp.util                                            *lsp-util*
       • {zindex}?        (`integer`) override `zindex`, defaults to 50
 
 
-                                     *vim.lsp.util.apply_text_document_edit()*
-apply_text_document_edit({text_document_edit}, {index}, {position_encoding},
-                         {change_annotations})
+apply_text_document_edit({text_document_edit}, {index}, {position_encoding}, {change_annotations})  *vim.lsp.util.apply_text_document_edit()*
     Applies a `TextDocumentEdit`, which is a list of changes to a single
     document.
 
@@ -2955,9 +2939,7 @@ apply_text_document_edit({text_document_edit}, {index}, {position_encoding},
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
 
-                                             *vim.lsp.util.apply_text_edits()*
-apply_text_edits({text_edits}, {bufnr}, {position_encoding},
-                 {change_annotations}, {opts})
+apply_text_edits({text_edits}, {bufnr}, {position_encoding}, {change_annotations}, {opts})  *vim.lsp.util.apply_text_edits()*
     Applies a list of text edits to a buffer. Note: this mutates `text_edits`
     (sorts in-place and adds `_index` fields).
 
@@ -2974,8 +2956,7 @@ apply_text_edits({text_edits}, {bufnr}, {position_encoding},
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 
-                                         *vim.lsp.util.apply_workspace_edit()*
-apply_workspace_edit({workspace_edit}, {position_encoding})
+apply_workspace_edit({workspace_edit}, {position_encoding})  *vim.lsp.util.apply_workspace_edit()*
     Applies a `WorkspaceEdit`.
 
     Parameters: ~
@@ -2991,8 +2972,7 @@ buf_clear_references({bufnr})            *vim.lsp.util.buf_clear_references()*
     Parameters: ~
       • {bufnr}  (`integer?`) Buffer id
 
-                                     *vim.lsp.util.buf_highlight_references()*
-buf_highlight_references({bufnr}, {references}, {position_encoding})
+buf_highlight_references({bufnr}, {references}, {position_encoding})  *vim.lsp.util.buf_highlight_references()*
     Shows a list of document highlights for a certain buffer.
 
     Parameters: ~
@@ -3003,8 +2983,7 @@ buf_highlight_references({bufnr}, {references}, {position_encoding})
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
 
-                              *vim.lsp.util.convert_input_to_markdown_lines()*
-convert_input_to_markdown_lines({input}, {contents})
+convert_input_to_markdown_lines({input}, {contents})  *vim.lsp.util.convert_input_to_markdown_lines()*
     Converts any of `MarkedString` | `MarkedString[]` | `MarkupContent` into a
     list of lines containing valid markdown. Useful to populate the hover
     window for `textDocument/hover`, for parsing the result of
@@ -3025,8 +3004,7 @@ convert_input_to_markdown_lines({input}, {contents})
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
 
-                     *vim.lsp.util.convert_signature_help_to_markdown_lines()*
-convert_signature_help_to_markdown_lines({signature_help}, {ft}, {triggers})
+convert_signature_help_to_markdown_lines({signature_help}, {ft}, {triggers})  *vim.lsp.util.convert_signature_help_to_markdown_lines()*
     Converts `textDocument/signatureHelp` response to markdown lines.
 
     Parameters: ~
@@ -3057,8 +3035,7 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
     See also: ~
       • 'shiftwidth'
 
-                                           *vim.lsp.util.locations_to_items()*
-locations_to_items({locations}, {position_encoding})
+locations_to_items({locations}, {position_encoding})  *vim.lsp.util.locations_to_items()*
     Returns the items with the byte position calculated correctly and in
     sorted order, for display in quickfix and location lists.
 
@@ -3075,8 +3052,7 @@ locations_to_items({locations}, {position_encoding})
     Return: ~
         (`vim.quickfix.entry[]`) See |setqflist()| for the format
 
-                                  *vim.lsp.util.make_floating_popup_options()*
-make_floating_popup_options({width}, {height}, {opts})
+make_floating_popup_options({width}, {height}, {opts})  *vim.lsp.util.make_floating_popup_options()*
     Creates a table with sensible default options for a floating window. The
     table can be passed to |nvim_open_win()|.
 
@@ -3088,8 +3064,7 @@ make_floating_popup_options({width}, {height}, {opts})
     Return: ~
         (`vim.api.keyset.win_config`)
 
-                                       *vim.lsp.util.make_formatting_params()*
-make_formatting_params({options})
+make_formatting_params({options})      *vim.lsp.util.make_formatting_params()*
     Creates a `DocumentFormattingParams` object for the current buffer and
     cursor position.
 
@@ -3103,8 +3078,7 @@ make_formatting_params({options})
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
 
-                                      *vim.lsp.util.make_given_range_params()*
-make_given_range_params({start_pos}, {end_pos}, {bufnr}, {position_encoding})
+make_given_range_params({start_pos}, {end_pos}, {bufnr}, {position_encoding})  *vim.lsp.util.make_given_range_params()*
     Using the given range in the current buffer, creates an object that is
     similar to |vim.lsp.util.make_range_params()|.
 
@@ -3122,8 +3096,7 @@ make_given_range_params({start_pos}, {end_pos}, {bufnr}, {position_encoding})
     Return: ~
         (`{ textDocument: { uri: lsp.DocumentUri }, range: lsp.Range }`)
 
-                                         *vim.lsp.util.make_position_params()*
-make_position_params({win}, {position_encoding})
+make_position_params({win}, {position_encoding})  *vim.lsp.util.make_position_params()*
     Creates a `TextDocumentPositionParams` object for the current buffer and
     cursor position.
 
@@ -3138,8 +3111,7 @@ make_position_params({win}, {position_encoding})
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
 
-                                            *vim.lsp.util.make_range_params()*
-make_range_params({win}, {position_encoding})
+make_range_params({win}, {position_encoding})  *vim.lsp.util.make_range_params()*
     Using the current position in the current buffer, creates an object that
     can be used as a building block for several LSP requests, such as
     `textDocument/codeAction`, `textDocument/colorPresentation`,
@@ -3153,8 +3125,7 @@ make_range_params({win}, {position_encoding})
     Return: ~
         (`{ textDocument: { uri: lsp.DocumentUri }, range: lsp.Range }`)
 
-                                    *vim.lsp.util.make_text_document_params()*
-make_text_document_params({bufnr})
+make_text_document_params({bufnr})  *vim.lsp.util.make_text_document_params()*
     Creates a `TextDocumentIdentifier` object for the current buffer.
 
     Parameters: ~
@@ -3166,8 +3137,7 @@ make_text_document_params({bufnr})
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentIdentifier
 
-                                        *vim.lsp.util.make_workspace_params()*
-make_workspace_params({added}, {removed})
+make_workspace_params({added}, {removed})  *vim.lsp.util.make_workspace_params()*
     Create the workspace params
 
     Parameters: ~
@@ -3177,8 +3147,7 @@ make_workspace_params({added}, {removed})
     Return: ~
         (`lsp.DidChangeWorkspaceFoldersParams`)
 
-                                        *vim.lsp.util.open_floating_preview()*
-open_floating_preview({contents}, {syntax}, {opts})
+open_floating_preview({contents}, {syntax}, {opts})  *vim.lsp.util.open_floating_preview()*
     Shows contents in a floating window.
 
     Parameters: ~
@@ -3227,8 +3196,7 @@ rename({old_fname}, {new_fname}, {opts})               *vim.lsp.util.rename()*
                      • {ignoreIfExists}? (`boolean`)
                      • {overwrite}? (`boolean`)
 
-                                                *vim.lsp.util.show_document()*
-show_document({location}, {position_encoding}, {opts})
+show_document({location}, {position_encoding}, {opts})  *vim.lsp.util.show_document()*
     Shows document and optionally jumps to the location.
 
     Parameters: ~
@@ -3243,8 +3211,7 @@ show_document({location}, {position_encoding}, {opts})
     Return: ~
         (`boolean`) `true` if succeeded
 
-                                             *vim.lsp.util.symbols_to_items()*
-symbols_to_items({symbols}, {bufnr}, {position_encoding})
+symbols_to_items({symbols}, {bufnr}, {position_encoding})  *vim.lsp.util.symbols_to_items()*
     Converts symbols to quickfix list items.
 
     Parameters: ~
@@ -3261,16 +3228,14 @@ symbols_to_items({symbols}, {bufnr}, {position_encoding})
 ==============================================================================
 Lua module: vim.lsp.protocol                                    *lsp-protocol*
 
-                                 *vim.lsp.protocol.make_client_capabilities()*
-make_client_capabilities()
+make_client_capabilities()       *vim.lsp.protocol.make_client_capabilities()*
     Gets a new ClientCapabilities object describing the LSP client
     capabilities.
 
     Return: ~
         (`lsp.ClientCapabilities`)
 
-                                     *vim.lsp.protocol.resolve_capabilities()*
-resolve_capabilities({server_capabilities})
+resolve_capabilities({server_capabilities})  *vim.lsp.protocol.resolve_capabilities()*
     Creates a normalized object describing LSP server capabilities.
 
     Parameters: ~

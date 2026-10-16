@@ -98,13 +98,13 @@ task with a deadline, and `vim.async.semaphore(permits)` creates a
 section at once.
 
 
-*vim.async.Closable*
+vim.async.Closable                                        *vim.async.Closable*
 
     Fields: ~
       • {close}        (`fun(self, callback?: fun())`)
       • {is_closing}?  (`fun(self): boolean`)
 
-*vim.async.Semaphore*
+vim.async.Semaphore                                      *vim.async.Semaphore*
     A semaphore manages an internal permit counter. |Semaphore:acquire()|
     consumes one permit and |Semaphore:release()| returns one permit. If no
     permits are available, `acquire()` suspends the current task until another
@@ -147,7 +147,7 @@ section at once.
       • {with}     (`fun(self: vim.async.Semaphore, fn: async fun(): R...): R...`)
                    See |Semaphore:with()|.
 
-*vim.async.Task*
+vim.async.Task                                                *vim.async.Task*
     Extends: |vim.async.Closable|
 
     A coroutine-backed async operation and concurrency scope.

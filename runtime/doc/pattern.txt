@@ -14,16 +14,16 @@ explanations are in chapter 27 |usr_27.txt|.
 ==============================================================================
 1. Search commands				*search-commands*
 
-							*/*
-/{pattern}[/]<CR>	Search forward for the [count]'th occurrence of
+/{pattern}[/]<CR>					*/*
+			Search forward for the [count]'th occurrence of
 			{pattern} |exclusive|.
 
 /{pattern}/{offset}<CR>	Search forward for the [count]'th occurrence of
 			{pattern} and go |{offset}| lines up or down.
 			|linewise|.
 
-							*/<CR>*
-/<CR>			Search forward for the [count]'th occurrence of the
+/<CR>							*/<CR>*
+			Search forward for the [count]'th occurrence of the
 			latest used pattern |last-pattern| with latest used
 			|{offset}|.
 
@@ -31,16 +31,16 @@ explanations are in chapter 27 |usr_27.txt|.
 			latest used pattern |last-pattern| with new
 			|{offset}|.  If {offset} is empty no offset is used.
 
-							*?*
-?{pattern}[?]<CR>	Search backward for the [count]'th previous
+?{pattern}[?]<CR>					*?*
+			Search backward for the [count]'th previous
 			occurrence of {pattern} |exclusive|.
 
 ?{pattern}?{offset}<CR>	Search backward for the [count]'th previous
 			occurrence of {pattern} and go |{offset}| lines up or
 			down |linewise|.
 
-							*?<CR>*
-?<CR>			Search backward for the [count]'th occurrence of the
+?<CR>							*?<CR>*
+			Search backward for the [count]'th occurrence of the
 			latest used pattern |last-pattern| with latest used
 			|{offset}|.
 
@@ -48,18 +48,18 @@ explanations are in chapter 27 |usr_27.txt|.
 			latest used pattern |last-pattern| with new
 			|{offset}|.  If {offset} is empty no offset is used.
 
-							*n*
-n			Repeat the latest "/" or "?" [count] times.
+n							*n*
+			Repeat the latest "/" or "?" [count] times.
 			If the cursor doesn't move the search is repeated with
 			count + 1.
 			|last-pattern|
 
-							*N*
-N			Repeat the latest "/" or "?" [count] times in
+N							*N*
+			Repeat the latest "/" or "?" [count] times in
 			opposite direction. |last-pattern|
 
-							*star* *E348* *E349*
-*			Search forward for the [count]'th occurrence of the
+*							*star* *E348* *E349*
+			Search forward for the [count]'th occurrence of the
 			word nearest to the cursor.  The word used for the
 			search is the first of:
 				1. the keyword under the cursor 'iskeyword'
@@ -75,8 +75,8 @@ N			Repeat the latest "/" or "?" [count] times in
 {Visual}*		In Visual mode, search forward for the current selection.
 			|default-mappings|
 
-							*#*
-#			Same as "*", but search backward.  The pound sign
+#							*#*
+			Same as "*", but search backward.  The pound sign
 			(character 163) also works.  If the "#" key works as
 			backspace, try using "stty erase <BS>" before starting
 			Vim (<BS> is CTRL-H or a real backspace).
@@ -84,18 +84,18 @@ N			Repeat the latest "/" or "?" [count] times in
 {Visual}#		In Visual mode, search backward for the current selection.
 			|default-mappings|
 
-							*gstar*
-g*			Like "*", but don't put "\<" and "\>" around the word.
+g*							*gstar*
+			Like "*", but don't put "\<" and "\>" around the word.
 			This makes the search also find matches that are not a
 			whole word.
 
-							*g#*
-g#			Like "#", but don't put "\<" and "\>" around the word.
+g#							*g#*
+			Like "#", but don't put "\<" and "\>" around the word.
 			This makes the search also find matches that are not a
 			whole word.
 
-							*gd*
-gd			Goto local Declaration.  When the cursor is on a local
+gd							*gd*
+			Goto local Declaration.  When the cursor is on a local
 			variable, this command will jump to its declaration.
 			This was made to work for C code, in other languages
 			it may not work well.
@@ -113,23 +113,23 @@ gd			Goto local Declaration.  When the cursor is on a local
 			After this command |n| searches forward for the next
 			match (not backward).
 
-							*gD*
-gD			Goto global Declaration.  When the cursor is on a
+gD							*gD*
+			Goto global Declaration.  When the cursor is on a
 			global variable that is defined in the file, this
 			command will jump to its declaration.  This works just
 			like "gd", except that the search for the keyword
 			always starts in line 1.
 
-							*1gd*
-1gd			Like "gd", but ignore matches inside a {} block that
+1gd							*1gd*
+			Like "gd", but ignore matches inside a {} block that
 			ends before the cursor position.
 
-							*1gD*
-1gD			Like "gD", but ignore matches inside a {} block that
+1gD							*1gD*
+			Like "gD", but ignore matches inside a {} block that
 			ends before the cursor position.
 
-							*:noh* *:nohlsearch*
-:noh[lsearch]		Stop the highlighting for the 'hlsearch' option.  It
+:noh[lsearch]						*:noh* *:nohlsearch*
+			Stop the highlighting for the 'hlsearch' option.  It
 			is automatically turned back on when using a search
 			command, or setting the 'hlsearch' option.
 			This command doesn't work in an autocommand, because
@@ -603,8 +603,7 @@ An atom can be followed by an indication of how many times the atom can be
 matched and in what way.  This is called a multi.  See |/multi| for an
 overview.
 
-							*/star* */\star*
-*	(use \* when 'magic' is not set)
+*	(use \* when 'magic' is not set)		*/star* */\star*
 	Matches 0 or more of the preceding atom, as many as possible.
 	Example  'nomagic'	matches >
 	a*	   a\*		"", "a", "aa", "aaa", etc.
@@ -623,21 +622,21 @@ overview.
 	the end of the file and then tries matching "END", backing up one
 	character at a time.
 
-							*/\+*
-\+	Matches 1 or more of the preceding atom, as many as possible.
+\+							*/\+*
+	Matches 1 or more of the preceding atom, as many as possible.
 
 	Example		matches ~
 	^.\+$		any non-empty line
 	\s\+		white space of at least one character
 
-							*/\=*
-\=	Matches 0 or 1 of the preceding atom, as many as possible.
+\=							*/\=*
+	Matches 0 or 1 of the preceding atom, as many as possible.
 
 	Example		matches ~
 	foo\=		"fo" and "foo"
 
-							*/\?*
-\?	Just like \=.  Cannot be used when searching backwards with the "?"
+\?							*/\?*
+	Just like \=.  Cannot be used when searching backwards with the "?"
 	command.
 
 					*/\{* *E60* *E554* *E870*
@@ -673,8 +672,8 @@ overview.
 
 	The } may optionally be preceded with a backslash: \{n,m\}.
 
-							*/\@=*
-\@=	Matches the preceding atom with zero width.
+\@=							*/\@=*
+	Matches the preceding atom with zero width.
 	Like "(?=pattern)" in Perl.
 
 	Example			matches ~
@@ -694,8 +693,8 @@ overview.
 	parentheses.
 
 
-							*/\@!*
-\@!	Matches with zero width if the preceding atom does NOT match at the
+\@!							*/\@!*
+	Matches with zero width if the preceding atom does NOT match at the
 	current position. |/zero-width|
 	Like "(?!pattern)" in Perl.
 
@@ -725,8 +724,8 @@ overview.
 	reject the pattern.  When there is no match any "foo" will be found.
 	The "\zs" is to have the match start just before "foo".
 
-							*/\@<=*
-\@<=	Matches with zero width if the preceding atom matches just before what
+\@<=							*/\@<=*
+	Matches with zero width if the preceding atom matches just before what
 	follows. |/zero-width|
 	Like "(?<=pattern)" in Perl, but Vim allows non-fixed-width patterns.
 
@@ -771,8 +770,8 @@ overview.
 	are not counted (this is just to keep it simple).
 	The number zero is the same as no limit.
 
-							*/\@<!*
-\@<!	Matches with zero width if the preceding atom does NOT match just
+\@<!							*/\@<!*
+	Matches with zero width if the preceding atom does NOT match just
 	before what follows.  Thus this matches if there is no position in the
 	current or previous line where the atom matches such that it ends just
 	before what follows.  |/zero-width|
@@ -790,8 +789,8 @@ overview.
 	matches that are known to fail and make executing the pattern very
 	slow.
 
-							*/\@>*
-\@>	Matches the preceding atom like matching a whole pattern.
+\@>							*/\@>*
+	Matches the preceding atom like matching a whole pattern.
 	Like "(?>pattern)" in Perl.
 
 	Example		matches ~
@@ -811,36 +810,36 @@ overview.
 
 An ordinary atom can be:
 
-							*/^*
-^	At beginning of pattern or after "\|", "\(", "\%(" or "\n": matches
+^							*/^*
+	At beginning of pattern or after "\|", "\(", "\%(" or "\n": matches
 	start-of-line; at other positions, matches literal '^'. |/zero-width|
 
 	Example		matches ~
 	^beep(		the start of the C function "beep" (probably).
 
-							*/\^*
-\^	Matches literal '^'.  Can be used at any position in the pattern, but
+\^							*/\^*
+	Matches literal '^'.  Can be used at any position in the pattern, but
 	not inside [].
 
-							*/\_^*
-\_^	Matches start-of-line. |/zero-width|  Can be used at any position in
+\_^							*/\_^*
+	Matches start-of-line. |/zero-width|  Can be used at any position in
 	the pattern, but not inside [].
 
 	Example		matches ~
 	\_s*\_^foo	white space and blank lines and then "foo" at
 			start-of-line
 
-							*/$*
-$	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
+$							*/$*
+	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	matches end-of-line <EOL>; at other positions, matches literal '$'.
 	|/zero-width|
 
-							*/\$*
-\$	Matches literal '$'.  Can be used at any position in the pattern, but
+\$							*/\$*
+	Matches literal '$'.  Can be used at any position in the pattern, but
 	not inside [].
 
-							*/\_$*
-\_$	Matches end-of-line. |/zero-width|  Can be used at any position in the
+\_$							*/\_$*
+	Matches end-of-line. |/zero-width|  Can be used at any position in the
 	pattern, but not inside [].  Note that "a\_$b" never matches, since
 	"b" cannot match an end-of-line.  Use "a\nb" instead |/\n|.
 
@@ -851,22 +850,22 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 .	(with 'nomagic': \.)				*/.* */\.*
 	Matches any single character, but not an end-of-line.
 
-							*/\_.*
-\_.	Matches any single character or end-of-line.
+\_.							*/\_.*
+	Matches any single character or end-of-line.
 	Careful: `\_.*` matches all text to the end of the buffer!
 
-							*/\<*
-\<	Matches the beginning of a word: The next char is the first char of a
+\<							*/\<*
+	Matches the beginning of a word: The next char is the first char of a
 	word.  The 'iskeyword' option specifies what is a word character.
 	|/zero-width|
 
-							*/\>*
-\>	Matches the end of a word: The previous char is the last char of a
+\>							*/\>*
+	Matches the end of a word: The previous char is the last char of a
 	word.  The 'iskeyword' option specifies what is a word character.
 	|/zero-width|
 
-							*/\zs*
-\zs	Matches at any position, but not inside [], and sets the start of the
+\zs							*/\zs*
+	Matches at any position, but not inside [], and sets the start of the
 	match there: The next char is the first char of the whole match.
 	|/zero-width|
 	Example: >
@@ -878,8 +877,8 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 <	Finds the third occurrence of "Fab".
 	This cannot be followed by a multi. *E888*
 
-							*/\ze*
-\ze	Matches at any position, but not inside [], and sets the end of the
+\ze							*/\ze*
+	Matches at any position, but not inside [], and sets the end of the
 	match there: The previous char is the last char of the whole match.
 	|/zero-width|
 	Can be used multiple times, the last one encountered in a matching
@@ -888,14 +887,14 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	"endfor".
 	This cannot be followed by a multi. |E888|
 
-						*/\%^* *start-of-file*
-\%^	Matches start of the file.  When matching with a string, matches the
+\%^							*/\%^* *start-of-file*
+	Matches start of the file.  When matching with a string, matches the
 	start of the string.
 	For example, to find the first "VIM" in a file: >
 		/\%^\_.\{-}\zsVIM
 <
-						*/\%$* *end-of-file*
-\%$	Matches end of the file.  When matching with a string, matches the
+\%$							*/\%$* *end-of-file*
+	Matches end of the file.  When matching with a string, matches the
 	end of the string.
 	Note that this does NOT find the last "VIM" in a file: >
 		/VIM\_.\{-}\%$
@@ -906,8 +905,8 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	position after the first "VIM".
 	Searching from the end of the file backwards is easier!
 
-						*/\%V*
-\%V	Match inside the Visual area.  When Visual mode has already been
+\%V							*/\%V*
+	Match inside the Visual area.  When Visual mode has already been
 	stopped match in the area that |gv| would reselect.
 	This is a |/zero-width| match.  To make sure the whole pattern is
 	inside the Visual area put it at the start and just before the end of
@@ -918,8 +917,8 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 <	would match "foo bar" if the Visual selection continues after the "r".
 	Only works for the current buffer.
 
-						*/\%#* *cursor-position*
-\%#	Matches with the cursor position.  Only works when matching in a
+\%#						*/\%#* *cursor-position*
+	Matches with the cursor position.  Only works when matching in a
 	buffer displayed in a window.
 	WARNING: When the cursor is moved after the pattern was used, the
 	result becomes invalid.  Vim doesn't automatically update the matches.
@@ -1071,10 +1070,11 @@ match ASCII characters, as indicated by the range.
 	NOTE: 'ignorecase', "\c" and "\C" are not used by character classes.
 
 			*/\_* *E63* */\_i* */\_I* */\_k* */\_K* */\_f* */\_F*
-			*/\_p* */\_P* */\_s* */\_S* */\_d* */\_D* */\_x* */\_X*
+			*/\_p* */\_P* */\_s* */\_S* */\_d* */\_D* **/\_X*
 			*/\_o* */\_O* */\_w* */\_W* */\_h* */\_H* */\_a* */\_A*
 			*/\_l* */\_L* */\_u* */\_U*
-\_x	Where "x" is any of the characters above: The character class with
+\_x							*/\_x*
+	Where "x" is any of the characters above: The character class with
 	end-of-line added
 (end of character classes)
 
@@ -1110,8 +1110,8 @@ match ASCII characters, as indicated by the range.
 
 x	A single character, with no special meaning, matches itself
 
-							*/\* */\\*
-\x	A backslash followed by a single character, with no special meaning,
+\x							*/\* */\\*
+	A backslash followed by a single character, with no special meaning,
 	is reserved for future expansions
 
 []	(with 'nomagic': \[])		*/[]* */\[]* */\_[]* */collection* *E76*
@@ -1241,8 +1241,8 @@ x	A single character, with no special meaning, matches itself
 	  much faster than "[0-9]" and matches the same characters.  However,
 	  the new |NFA| regexp engine deals with this better than the old one.
 
-						*/\%[]* *E69* *E70* *E369*
-\%[]	A sequence of optionally matched atoms.  This always matches.
+\%[]							*/\%[]* *E69* *E70* *E369*
+	A sequence of optionally matched atoms.  This always matches.
 	It matches as much of the list of atoms it contains as possible.  Thus
 	it stops at the first atom that doesn't match.  For example: >
 		/r\%[ead]
@@ -1421,8 +1421,7 @@ Finally, these constructs are unique to Perl:
 		syntax rules and functions like |synconcealed()| and the
 		other way around.
 
-							*:mat* *:match*
-:mat[ch] {group} /{pattern}/
+:mat[ch] {group} /{pattern}/				*:mat* *:match*
 		Define a pattern to highlight in the current window.  It will
 		be highlighted with {group}.  Example: >
 			:highlight MyGroup ctermbg=green guibg=green

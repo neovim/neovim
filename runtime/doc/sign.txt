@@ -210,8 +210,7 @@ See |sign_place()| for the equivalent Vim script function.
 			:sign place 10 line=99 name=sign3
 			:sign place 10 line=99 name=sign3 buffer=3
 <
-							*E885*
-:sig[n] place {id} name={name} file={fname}
+:sig[n] place {id} name={name} file={fname}		*E885*
 		Change the placed sign {id} in file {fname} to use the defined
 		sign {name}.  See remark above about {fname} |:sign-fname|.
 		This can be used to change the displayed sign without moving

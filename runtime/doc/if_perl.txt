@@ -12,8 +12,7 @@ See |provider-perl| for more information.
 ==============================================================================
 1. Commands						*perl-commands*
 
-							*:perl*
-:[range]perl {stmt}
+:[range]perl {stmt}					*:perl*
 			Execute perl statement {stmt}.  The current package is
 			"main".  A simple check if the `:perl` command is
 			working: >
@@ -46,8 +45,8 @@ To see what version of perl you have: >
 
 	:perl print $^V
 <
-							*:perldo*
-:[range]perldo {cmd}	Execute perl command {cmd} for each line in the[range],
+:[range]perldo {cmd}					*:perldo*
+			Execute perl command {cmd} for each line in the[range],
 			with $_ being set to the test of each line in turn,
 			without a trailing <EOL>.  In addition to $_, $line
 			and $linenr is also set to the line content and line
@@ -78,8 +77,7 @@ perl. For example: >
 	:let @b='newvalue'
 	:'<,'>perldo $_ = perl_vim_string_replace($_)
 <
-							*:perlfile*
-:[range]perlfile {file}
+:[range]perlfile {file}					*:perlfile*
 			Execute the perl script in {file}.  The whole
 			argument is used as a single file name.
 
@@ -145,17 +143,16 @@ Overview >
 
 Module Functions:
 
-							*perl-Msg*
-VIM::Msg({msg})
+VIM::Msg({msg})						*perl-Msg*
 			Displays the message {msg}.
 
-							*perl-SetOption*
-VIM::SetOption({arg})	Sets a vim option.  {arg} can be any argument that the
+VIM::SetOption({arg})					*perl-SetOption*
+			Sets a vim option.  {arg} can be any argument that the
 			":set" command accepts.  Note that this means that no
 			spaces are allowed in the argument!  See |:set|.
 
-							*perl-Buffers*
-VIM::Buffers([{bn}...])	With no arguments, returns a list of all the buffers
+VIM::Buffers([{bn}...])					*perl-Buffers*
+			With no arguments, returns a list of all the buffers
 			in an array context or returns the number of buffers
 			in a scalar context.  For a list of buffer names or
 			numbers {bn}, returns a list of the buffers matching
@@ -164,8 +161,8 @@ VIM::Buffers([{bn}...])	With no arguments, returns a list of all the buffers
 			WARNING: the list becomes invalid when |:bwipe| is
 			used.
 
-							*perl-Windows*
-VIM::Windows([{wn}...])	With no arguments, returns a list of all the windows
+VIM::Windows([{wn}...])					*perl-Windows*
+			With no arguments, returns a list of all the windows
 			in an array context or returns the number of windows
 			in a scalar context.  For a list of window numbers
 			{wn}, returns a list of the windows with those
@@ -173,11 +170,11 @@ VIM::Windows([{wn}...])	With no arguments, returns a list of all the windows
 			WARNING: the list becomes invalid when a window is
 			closed.
 
-							*perl-DoCommand*
-VIM::DoCommand({cmd})	Executes Ex command {cmd}.
+VIM::DoCommand({cmd})					*perl-DoCommand*
+			Executes Ex command {cmd}.
 
-							*perl-Eval*
-VIM::Eval({expr})	Evaluates {expr} and returns (success, value) in list
+VIM::Eval({expr})					*perl-Eval*
+			Evaluates {expr} and returns (success, value) in list
 			context or just value in scalar context.
 			success=1 indicates that val contains the value of
 			{expr}; success=0 indicates a failure to evaluate
@@ -189,42 +186,38 @@ VIM::Eval({expr})	Evaluates {expr} and returns (success, value) in list
 			A |List| is turned into a string by joining the items
 			and inserting line breaks.
 
-							*perl-Blob*
-VIM::Blob({expr})	Return Blob literal string 0zXXXX from scalar value.
+VIM::Blob({expr})					*perl-Blob*
+			Return Blob literal string 0zXXXX from scalar value.
 
 ==============================================================================
 3. VIM::Buffer objects					*perl-buffer*
 
 Methods:
 
-							*perl-Buffer-Name*
-Name()		Returns the filename for the Buffer.
+Name()							*perl-Buffer-Name*
+		Returns the filename for the Buffer.
 
-							*perl-Buffer-Number*
-Number()	Returns the number of the Buffer.
+Number()						*perl-Buffer-Number*
+		Returns the number of the Buffer.
 
-							*perl-Buffer-Count*
-Count()		Returns the number of lines in the Buffer.
+Count()							*perl-Buffer-Count*
+		Returns the number of lines in the Buffer.
 
-							*perl-Buffer-Get*
-Get({lnum}, {lnum}?, ...)
+Get({lnum}, {lnum}?, ...)				*perl-Buffer-Get*
 			Returns a text string of line {lnum} in the Buffer
 			for each {lnum} specified.  An array can be passed
 			with a list of {lnum}'s specified.
 
-							*perl-Buffer-Delete*
-Delete({lnum}, {lnum}?)
+Delete({lnum}, {lnum}?)					*perl-Buffer-Delete*
 			Deletes line {lnum} in the Buffer.  With the second
 			{lnum}, deletes the range of lines from the first
 			{lnum} to the second {lnum}.
 
-							*perl-Buffer-Append*
-Append({lnum}, {line}, {line}?, ...)
+Append({lnum}, {line}, {line}?, ...)			*perl-Buffer-Append*
 			Appends each {line} string after Buffer line {lnum}.
 			The list of {line}s can be an array.
 
-							*perl-Buffer-Set*
-Set({lnum}, {line}, {line}?, ...)
+Set({lnum}, {line}, {line}?, ...)			*perl-Buffer-Set*
 			Replaces one or more Buffer lines with specified
 			{lines}s, starting at Buffer line {lnum}.  The list of
 			{line}s can be an array.  If the arguments are
@@ -234,13 +227,11 @@ Set({lnum}, {line}, {line}?, ...)
 4. VIM::Window objects					*perl-window*
 
 Methods:
-							*perl-Window-SetHeight*
-SetHeight({height})
+SetHeight({height})				*perl-Window-SetHeight*
 			Sets the Window height to {height}, within screen
 			limits.
 
-							*perl-Window-GetCursor*
-Cursor({row}?, {col}?)
+Cursor({row}?, {col}?)				*perl-Window-GetCursor*
 			With no arguments, returns a (row, col) array for the
 			current cursor position in the Window.  With {row} and
 			{col} arguments, sets the Window's cursor position to

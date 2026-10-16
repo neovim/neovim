@@ -84,11 +84,11 @@ o  Installation of fonts for X Window systems (Unix/Linux)
 
    Depending on your system, copy your_ARABIC_FONT file into a
    directory of your choice.  Change to the directory containing
-   the Arabic fonts and execute the following commands:
+   the Arabic fonts and execute the following commands: >
 
      %	mkfontdir
      %	xset +fp path_name_of_arabic_fonts_directory
-
+<
 
 ------------------------------------------------------------------------------
 Usage

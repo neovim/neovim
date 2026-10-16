@@ -13,14 +13,14 @@ Chapter 26 of the user manual introduces repeating |usr_26.txt|.
 ==============================================================================
 Single repeat						*single-repeat*
 
-							*.* *dot-repeat*
-.			Repeat last change, with count replaced with [count].
+.							*.* *dot-repeat*
+			Repeat last change, with count replaced with [count].
 			Also repeat a yank command, when the 'y' flag is
 			included in 'cpoptions'.  Does not repeat a
 			command-line command.
 
-							*@:*
-@:			Repeat last command-line [count] times.
+@:							*@:*
+			Repeat last command-line [count] times.
 
 Simple changes (edits) can be repeated with the "." command.  Without a count,
 the count of the last change is used.  If you enter a count, it will replace
@@ -193,8 +193,7 @@ like that, you can use this snippet to get Vim's behavior instead: >lua
 ==============================================================================
 Multiple repeat					*multi-repeat*
 
-						*:g* *:global* *E148*
-:[range]g[lobal]/{pattern}/[cmd]
+:[range]g[lobal]/{pattern}/[cmd]			*:g* *:global* *E148*
 			Execute the Ex command [cmd] (default ":p") on the
 			lines within [range] where {pattern} matches.
 
@@ -202,8 +201,7 @@ Multiple repeat					*multi-repeat*
 			Execute the Ex command [cmd] (default ":p") on the
 			lines within [range] where {pattern} does NOT match.
 
-							*:v* *:vglobal*
-:[range]v[global]/{pattern}/[cmd]
+:[range]v[global]/{pattern}/[cmd]			*:v* *:vglobal*
 			Same as :g!.
 
 Example: >
@@ -261,8 +259,8 @@ Which is two characters shorter!
 ==============================================================================
 Complex repeat						*complex-repeat*
 
-							*q* *recording* *macro*
-q{0-9a-zA-Z"}		Record typed characters into register {0-9a-zA-Z"}
+q{0-9a-zA-Z"}					*q* *recording* *macro*
+			Record typed characters into register {0-9a-zA-Z"}
 			(uppercase to append).  The 'q' command is disabled
 			while executing a register, and it doesn't work inside
 			a mapping and |:normal|.
@@ -283,8 +281,8 @@ q			Stops recording.
 			not stored in the register, unless it was the result
 			of a mapping
 
-							*@*
-@{0-9a-z".=*+}		Execute the contents of register {0-9a-z".=*+} [count]
+@{0-9a-z".=*+}						*@*
+			Execute the contents of register {0-9a-z".=*+} [count]
 			times.  Note that register '%' (name of the current
 			file) and '#' (name of the alternate file) cannot be
 			used.
@@ -295,16 +293,17 @@ q			Stops recording.
 			result of the expression is then executed.
 			See also |@:|.
 
-							*@@* *E748*
-@@			Repeat the previous @{0-9a-z":*} [count] times.
+@@							*@@* *E748*
+			Repeat the previous @{0-9a-z":*} [count] times.
 
-							*v_@-default*
-{Visual}@{0-9a-z".=*+}	In linewise Visual mode, execute the contents of the
-{Visual}@@		register for each selected line.
+{Visual}@{0-9a-z".=*+}					*v_@-default*
+{Visual}@@
+			In linewise Visual mode, execute the contents of the
+			register for each selected line.
 			See |visual-repeat|, |default-mappings|.
 
-							*:@*
-:[addr]@{0-9a-z".=*+}	Execute the contents of register {0-9a-z".=*+} as an
+:[addr]@{0-9a-z".=*+}					*:@*
+			Execute the contents of register {0-9a-z".=*+} as an
 			Ex command.  First set cursor at line [addr] (default
 			is current line).  When the last line in the register
 			does not have a <CR> it will be added automatically
@@ -319,12 +318,13 @@ q			Stops recording.
 			useful for yanking and executing parts of a Vim
 			script.
 
-							*:@:*
-:[addr]@:		Repeat last command-line.  First set cursor at line
+:[addr]@:						*:@:*
+			Repeat last command-line.  First set cursor at line
 			[addr] (default is current line).
 
 :[addr]@						*:@@*
-:[addr]@@		Repeat the previous :@{register}.  First set cursor at
+:[addr]@@
+			Repeat the previous :@{register}.  First set cursor at
 			line [addr] (default is current line).
 
 ==============================================================================
@@ -373,8 +373,8 @@ Q			Toggles a multicursor at the current cursor position.
 			Use [count] to force (un)placement instead of toggling:
 			"1Q" adds, "2Q" removes.
 
-							*zq*
-zq{motion}		Places a cursor at {motion}, repeated from the current
+zq{motion}						*zq*
+			Places a cursor at {motion}, repeated from the current
 			position until end of buffer (or limited to a Visual
 			selection: |v_zq|). Think of it like `%:g` as an operator.
 
@@ -393,8 +393,8 @@ zq{motion}		Places a cursor at {motion}, repeated from the current
 			- Lua, |<Cmd>| or ":" mappings (except |:map-<expr>|).
 
 
-							*v_zq*
-{Visual}zq{motion}	Like |zq|, but limited to the Visual range.
+{Visual}zq{motion}					*v_zq*
+			Like |zq|, but limited to the Visual range.
 
 			|blockwise-visual| acts on each line of the block,
 			from the block's left column (or the end of a short
@@ -406,8 +406,8 @@ zq{motion}		Places a cursor at {motion}, repeated from the current
 			- "vipzq*": each match.
 			- "<C-V>3jzql": each line of the blockwise column.
 
-							*v_Q*
-{Visual}Q		Places a cursor on each line of the selection, at the
+{Visual}Q						*v_Q*
+			Places a cursor on each line of the selection, at the
 			cursor column. Same as "{Visual}zqj". |v_zq|
 			Enables 'follow' mode.
 
@@ -416,8 +416,8 @@ zq{motion}		Places a cursor at {motion}, repeated from the current
 			moving the primary cursor (or changing windows). No-op
 			in Insert-mode.
 
-							*q=*
-q=			Toggles 'follow' mode: cursor-relative motions ("w",
+q=							*q=*
+			Toggles 'follow' mode: cursor-relative motions ("w",
 			"fx", "*", …) are replayed per-cursor. Cursors
 			arriving at the same position (e.g. "9j" on the last
 			line) are merged (deduplicated).
@@ -430,30 +430,30 @@ q=			Toggles 'follow' mode: cursor-relative motions ("w",
 			Use [count] to force the mode instead of toggling:
 			"1q=" on, "2q=" off.
 
-							*mcursor-clear*
-CTRL-L			Clears multicursors in the current buffer.
+CTRL-L							*mcursor-clear*
+			Clears multicursors in the current buffer.
 			|CTRL-L-default|
 
 			Cursors can also be cleared by clearing the namespace: >lua
 			    local mc_ns = vim.api.nvim_create_namespace('nvim.multicursor')
 			    vim.api.nvim_buf_clear_namespace(0, mc_ns, 0, -1)
 <
-							*gQ*
-gQ			Restores the previous multicursors, and the primary
+gQ							*gQ*
+			Restores the previous multicursors, and the primary
 			cursor position. No-op during a multicursor session.
 
-							*g_CTRL-A*
-g CTRL-A		During a multicursor session, inserts an ascending
+g CTRL-A						*g_CTRL-A*
+			During a multicursor session, inserts an ascending
 			number ("counter") at each cursor, so a column of
 			cursors becomes 1, 2, 3, …. Use [count] to choose the
 			initial number.
 
-							*]C*
-]C			Jump to the [count]'th next cursor.
+]C							*]C*
+			Jump to the [count]'th next cursor.
 			Hint: "]CQ" removes cursors one at a time.
 
-							*[C*
-[C			Jump to the [count]'th previous cursor.
+[C							*[C*
+			Jump to the [count]'th previous cursor.
 
 			Without a multicursor session, "]C" and "[C" jump to
 			the previous session's cursors (|gQ|), and work as an
