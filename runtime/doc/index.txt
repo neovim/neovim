@@ -459,6 +459,7 @@ Tag		Char	      Note Normal-mode action	~
 |<S-Up>|	<S-Up>		1  same as CTRL-B
 |<Undo>|	<Undo>		2  same as "u"
 |<Up>|		<Up>		1  same as "k"
+							   *mouse-scroll-keys*
 *<ScrollWheelDown>*	<ScrollWheelDown>	move window three lines down
 *<S-ScrollWheelDown>*	<S-ScrollWheelDown>	move window one page down
 *<ScrollWheelUp>*	<ScrollWheelUp>		move window three lines up

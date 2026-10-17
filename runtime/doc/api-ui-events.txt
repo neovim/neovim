@@ -248,6 +248,7 @@ the editor.
 	Indicates to the UI that it must stop rendering the cursor. This event
 	is misnamed and does not actually have anything to do with busyness.
 
+							*ui-event-connect*
 ["connect", server_addr] ~
 	User invoked the |:connect| command. Nvim detached the current UI.
 

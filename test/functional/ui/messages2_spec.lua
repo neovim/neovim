@@ -443,11 +443,17 @@ describe('messages2', function()
     ]])
   end)
 
-  it('does not draw the message seperator with cmdheight=0', function()
-    command('set laststatus=2 statusline=%f')
+  it('does not draw MsgSeparator with cmdheight=0', function()
+    command('set laststatus=2 statusline=all-good')
     command('set cmdheight=0')
-    command('echo "hello"')
 
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      {3:all-good                                             }|
+    ]])
+
+    command('echo "hello"')
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
@@ -1254,7 +1260,7 @@ describe('messages2', function()
     ]])
   end)
 
-  it('no modal/blocking prompt on exit', function()
+  it('no hit-enter prompt on unsaved :quit', function()
     api.nvim_buf_set_lines(0, 0, -1, true, { 'one' })
     feed(':quit<CR>')
     screen:expect([[

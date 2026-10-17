@@ -337,6 +337,8 @@ Commands:
 - |:uptime|
 
 Editor:
+- Tempfiles |tempname()| share a common root amongst all Nvim sessions for the
+  current user.
 - |ins-repeat| replays the full Insert session, including cursor-moves:
   "iab<Left>c<Esc>." produces "acb", not "c".
 - |visual-repeat| is "semantic" instead of "fixed-size". If you prefer Vim's
@@ -743,6 +745,7 @@ These legacy Vim features are not yet implemented:
 - *'guitablabel'* *'gtl'*
 - *'guitabtooltip'* *'gtt'*
 - *'mouseshape'* *'mouses'*
+- *quote~* *<Drop>*
 
 ==============================================================================
 Removed legacy features                                  *nvim-removed*

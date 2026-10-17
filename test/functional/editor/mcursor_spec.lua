@@ -3689,7 +3689,7 @@ describe('multicursor', function()
     end)
   end)
 
-  describe(']C and [C', function()
+  describe(']C [C', function()
     local function cur()
       return { fn.line('.'), fn.col('.') - 1 }
     end
@@ -3762,7 +3762,7 @@ describe('multicursor', function()
       eq({ 1, 0 }, cur())
     end)
 
-    it('without a session, jumps to the previous cursors #42166', function()
+    it('without a session, jumps to last-session cursors #42166', function()
       cursors({ 'aaa bbb', 'ccc ddd', 'eee fff' }, 'wQjQj')
       clear_cursors()
       feed('gg0]C')
@@ -3785,7 +3785,7 @@ describe('multicursor', function()
       eq({ 'bbb', 'ccc ddd', 'eee fff' }, get_lines())
     end)
 
-    it('without a session, skips a duplicate previous primary-cursor position', function()
+    it('without a session, skips a duplicate last-session primary-cursor position', function()
       cursors({ 'aaa', 'bbb', 'ccc' }, 'QjQ') -- The primary shares line 2 with a cursor.
       clear_cursors()
       feed('G0')
@@ -3881,33 +3881,7 @@ describe('multicursor', function()
   end)
 
   describe('clipboard', function()
-    it("does not crash after jumping to an empty line with 'clipboard'", function()
-      n.exec_lua([[
-        _G.content = {}
-        vim.g.clipboard = {
-          name = 'test',
-          copy = {
-            ['+'] = function(lines)
-              _G.content = lines
-            end,
-          },
-          paste = {
-            ['+'] = function()
-              return _G.content
-            end,
-          },
-        }
-        vim.o.clipboard = 'unnamedplus'
-      ]])
-      cursors({ '', 'aa' }, 'QjQ') -- Cursors on both lines, primary on the non-empty line.
-      feed(']C') -- Make the empty-line cursor primary.
-      feed('C')
-      n.assert_alive()
-      feed('<Esc>')
-      eq({ '', '' }, get_lines())
-    end)
-
-    it('clipboard: implicit clipboard=unnamed[plus], explicit "+', function()
+    local function fake_clipboard_provider()
       n.exec_lua([[
         _G.copies, _G.pastes = 0, 0
         _G.content = {}
@@ -3927,6 +3901,22 @@ describe('multicursor', function()
           },
         }
       ]])
+    end
+
+    it('clipboard=unnamedplus: no crash after jumping to an empty line', function()
+      fake_clipboard_provider()
+      vim.o.clipboard = 'unnamedplus'
+      cursors({ '', 'aa' }, 'QjQ') -- Cursors on both lines, primary on the non-empty line.
+      feed(']C') -- Make the empty-line cursor primary.
+      feed('C')
+      n.assert_alive()
+      feed('<Esc>')
+      eq({ '', '' }, get_lines())
+    end)
+
+    it('clipboard: implicit clipboard=unnamed[plus], explicit "+', function()
+      fake_clipboard_provider()
+
       local function provider()
         return n.exec_lua('return { _G.copies, _G.pastes, _G.content }')
       end

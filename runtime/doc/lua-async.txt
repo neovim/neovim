@@ -2,16 +2,24 @@
 ==============================================================================
 Lua module: vim.async                                    *lua-async* *vim.async*
 
-Structured async API for Lua code that waits on event-loop work.
+`vim.async` provides an API for waiting on async work (timers, callbacks,
+coroutines, …), without blocking Nvim's event loop. Async work is structured
+as "tasks", which can pause at checkpoints and manage child tasks, optionally
+surfacing errors and cancellations.
 
-`vim.async` lets Lua code wait for timers, callbacks, and other tasks without
-blocking Nvim's event loop. Async work runs inside tasks, which can pause at
-checkpoints and manage child tasks created while they are running.
+Use |vim.async.run()| to create a task (an "async context"). Inside a task,
+use |vim.async.await()| to wait for callback-style APIs or other tasks without
+blocking the |event-loop|. Use |vim.async.pawait()| to get a result without
+raising an error.
 
-Start async work with |vim.async.run()|. Inside a task, use
-|vim.async.await()| to wait for callback-style APIs or other tasks without
-blocking the event loop. Use |vim.async.pawait()| when an awaited operation
-can fail and the current task should continue.
+Key idea: Calling an async function from a task suspends the task until it
+returns, so async code reads sequentially: there is no `await` at the call
+site. |vim.async.await()| is instead the adapter that turns a callback-style
+API, or another task, into such a suspension point.
+
+Concurrency is the thing you opt into, mirroring javascript: there a call runs
+concurrently and `await` opts back into sequencing; here a call is sequential
+and |vim.async.run()| opts into concurrency.
 
 Examples in this help use `local async = vim.async` for brevity.
 

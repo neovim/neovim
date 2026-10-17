@@ -328,7 +328,7 @@ q			Stops recording.
 			line [addr] (default is current line).
 
 ==============================================================================
-Multiple cursors					*mcursor* *multicursor*
+Multiple cursors 🐙					*mcursor* *multicursor*
 
 You can place extra cursors ("multicursor") in a buffer, to repeat operations
 at each cursor as-you-type. Unlike a |macro| (a stream of keys without any
@@ -449,15 +449,20 @@ g CTRL-A		During a multicursor session, inserts an ascending
 			initial number.
 
 							*]C*
-]C			Jump to the [count]'th next cursor.
+]C			Jump to the [count]'th next cursor in the current
+			session, or the last session |gQ| if multicursor is
+			not active.
+
 			Hint: "]CQ" removes cursors one at a time.
 
 							*[C*
-[C			Jump to the [count]'th previous cursor.
+[C			Jump to the [count]'th previous cursor in the current
+			session, or the last session |gQ| if multicursor is
+			not active.
 
 			Without a multicursor session, "]C" and "[C" jump to
-			the previous session's cursors (|gQ|), and work as an
-			|exclusive| motion: "d]C" deletes to the next one.
+			the last session's cursors |gQ| and behave as an
+			|exclusive| motion (so "d]C" deletes until the target).
 
 
 API								 *mcursor-api*
@@ -517,6 +522,7 @@ Example: place a cursor at every match, using the API: >lua
 
 LIMITATIONS						*mcursor-limitations*
 
+- An action that does not edit/move the primary cursor does not cascade.
 - During Insert-mode completion, live mirroring pauses if a preview could
   shift or overlap the primary's completion (same-line edits before the
   primary, or line insertions/deletions before it).

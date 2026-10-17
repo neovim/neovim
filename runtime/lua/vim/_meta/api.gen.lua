@@ -1471,9 +1471,10 @@ function vim.api.nvim_get_keymap(mode) end
 --- not set.
 function vim.api.nvim_get_mark(name, opts) end
 
---- Gets the current mode. `mode()`
---- "blocking" is true if Nvim is waiting for input.
+--- Gets the current `mode()`. "blocking" is true if Nvim is waiting for input.
 ---
+---
+--- @see `:help state()`
 --- @return vim.api.keyset.get_mode # Dict { "mode": String, "blocking": Boolean }
 function vim.api.nvim_get_mode() end
 

@@ -132,8 +132,8 @@ Connect UI to a different server
                 Attaches the UI to another Nvim instance: detaches from the
                 current server, then attaches to {address}.
 
-                Note: If the current UI hasn't implemented the "connect" UI
-                event, this command is equivalent to |:detach|.
+                Note: The UI must implement |ui-event-connect|, otherwise this
+                command is equivalent to |:detach|.
 
 :connect! {address}
                 Same as |:connect| but it also stops the detached server if

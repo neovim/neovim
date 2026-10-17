@@ -165,8 +165,7 @@ function M.enable(enable)
   end
 end
 
---- ]C/[C: Jumps to the [count]'th next/previous cursor.
---- Without a session, jumps to the previous session's cursors ("gQ").
+--- ]C/[C: Jumps to the [count]'th next/previous cursor (of the current/last session).
 --- @param forward boolean
 --- @param count integer?
 --- @return boolean moved
