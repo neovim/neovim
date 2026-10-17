@@ -3167,7 +3167,14 @@ static void nv_colon(cmdarg_T *cap)
     cmd_result = map_execute_lua(true, false);
   } else {
     // get a command line and execute it
-    cmd_result = do_cmdline(NULL, is_cmdkey ? getcmdkeycmd : getexline, NULL,
+    exarg_T ea = {
+      .cmd = NULL,
+      .line1 = 1,
+      .line2 = 1,
+      .ea_getline = is_cmdkey ? getcmdkeycmd : getexline,
+      .cookie = NULL
+    };
+    cmd_result = do_cmdline(&ea,
                             cap->oap->op_type != OP_NOP ? DOCMD_KEEPLINE : 0);
   }
   msg_ext_set_trigger("");
@@ -6518,7 +6525,7 @@ static void nv_join(cmdarg_T *cap)
   }
 
   prep_redo_cmd(cap);
-  do_join((size_t)cap->count0, cap->nchar == NUL, true, true, true);
+  do_join((size_t)cap->count0, 0, MAXCOL, cap->nchar == NUL, true, true, true);
 }
 
 /// "P", "gP", "p" and "gp" commands.
