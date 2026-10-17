@@ -243,6 +243,9 @@ end
 --- See [vim.lsp.ClientConfig].
 --- @field workspace_folders lsp.WorkspaceFolder[]?
 ---
+--- Reserved for users and plugins.
+--- @field data table?
+---
 --- @field _enabled_capabilities table<vim.lsp.capability.Name, boolean?>
 ---
 --- Whether on-type formatting is enabled for this client.
