@@ -199,7 +199,7 @@ local function toggle_globally(enable)
   end
 
   -- If disabling, only clear the attachment autocmd. If enabling, create it as well.
-  local group = api.nvim_create_augroup('nvim.lsp.on_type_formatting', { clear = true })
+  local group = api.nvim_create_augroup('nvim.lsp.on_type_formatting.enable', { clear = true })
   if enable then
     nvim_on('LspAttach', group, {
       desc = 'Enable on-type formatting for ALL clients by default.',
