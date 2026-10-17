@@ -1,3 +1,8 @@
+if vim.bo.filetype == 'c' then
+  vim.treesitter.start()
+  vim.b.undo_ftplugin = (vim.b.undo_ftplugin or '') .. '\n call v:lua.vim.treesitter.stop()'
+end
+
 -- These are the default option values in Vim, but not in Nvim, so must be set explicitly.
 vim.bo.commentstring = '// %s'
 vim.bo.define = '^\\s*#\\s*define'
