@@ -347,7 +347,7 @@ g = {
 
   -- Character class handling
   Class    = m.P'[' * m.C(m.P'!'^-1) * m.Ct(
-              (m.Ct(m.C(any_utf8) * m.P'-' * m.C(any_utf8 - m.P']')) + m.C(any_utf8 - m.P']'))^0
+              (m.Ct(m.C(any_utf8 - m.P']') * m.P'-' * m.C(any_utf8 - m.P']')) + m.C(any_utf8 - m.P']'))^0
             ) * m.P']' / class,
 
   -- Deterministic first character extraction for optimization
