@@ -168,6 +168,20 @@ void changed_internal(buf_T *buf)
 static void changed_lines_invalidate_win(win_T *wp, linenr_T lnum, colnr_T col, linenr_T lnume,
                                          linenr_T xtra)
 {
+  linenr_T const last = lnume + xtra - 1;  // last line after the change
+
+  // Reset "w_skipcol" if the topline length has become smaller to
+  // such a degree that nothing will be visible anymore, accounting
+  // for 'smoothscroll' <<< or 'listchars' "precedes" marker.
+  if (wp->w_skipcol > 0
+      && (last < wp->w_topline
+          || (wp->w_topline >= lnum
+              && wp->w_topline < lnume
+              && (linetabsize_conceal_eol(wp, wp->w_topline)
+                  <= wp->w_skipcol + sms_marker_overlap(wp, -1))))) {
+    wp->w_skipcol = 0;
+  }
+
   // If the changed line is in a range of previously folded lines,
   // compare with the first line in that range.
   if (wp->w_cursor.lnum <= lnum) {
@@ -355,18 +369,6 @@ static void changed_common(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnum
       }
 
       linenr_T last = lnume + xtra - 1;  // last line after the change
-
-      // Reset "w_skipcol" if the topline length has become smaller to
-      // such a degree that nothing will be visible anymore, accounting
-      // for 'smoothscroll' <<< or 'listchars' "precedes" marker.
-      if (wp->w_skipcol > 0
-          && (last < wp->w_topline
-              || (wp->w_topline >= lnum
-                  && wp->w_topline < lnume
-                  && (linetabsize_eol(wp, wp->w_topline)
-                      <= wp->w_skipcol + sms_marker_overlap(wp, -1))))) {
-        wp->w_skipcol = 0;
-      }
 
       // Check if a change in the buffer has invalidated the cached
       // values for the cursor.

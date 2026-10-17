@@ -126,18 +126,19 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
         && wp->w_view_width != 0
         && wcol >= (colnr_T)width
         && width > 0) {
-      csize = linetabsize_eol(wp, pos->lnum);
+      csize = linetabsize_conceal_eol(wp, pos->lnum);
       if (csize > 0) {
         csize--;
       }
 
-      if (wcol / width > (colnr_T)csize / width
-          && ((State & MODE_INSERT) == 0 || (int)wcol > csize + 1)) {
+      colnr_T const disp_wcol = vcol2disp_vcol(wp, pos->lnum, wcol);
+      if (disp_wcol / width > (colnr_T)csize / width
+          && ((State & MODE_INSERT) == 0 || (int)disp_wcol > csize + 1)) {
         // In case of line wrapping don't move the cursor beyond the
         // right screen edge.  In Insert mode allow going just beyond
         // the last character (like what happens when typing and
         // reaching the right window edge).
-        wcol = (csize / width + 1) * width - 1;
+        wcol = disp_vcol2vcol(wp, pos->lnum, (csize / width + 1) * width - 1);
       }
     }
 

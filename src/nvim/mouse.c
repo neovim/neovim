@@ -285,7 +285,7 @@ static int get_fpos_of_mouse(pos_T *mpos, win_T **wpp)
     return IN_UNKNOWN;
   }
 
-  mpos->col = vcol2col(wp, mpos->lnum, col, &mpos->coladd);
+  mpos->col = vcol2col(wp, mpos->lnum, disp_vcol2vcol(wp, mpos->lnum, col), &mpos->coladd);
   return IN_BUFFER;
 }
 
@@ -1373,6 +1373,9 @@ retnomove:
 
   win_T *old_curwin = curwin;
   pos_T old_cursor = curwin->w_cursor;
+  win_T *resolved = NULL;  // Window the click was resolved in.
+  linenr_T lnum = 0;
+  int mouse_fold_flags = 0;
   if (!keep_focus) {
     if (on_winbar) {
       return IN_OTHER_WIN | MOUSE_WINBAR;
@@ -1414,14 +1417,20 @@ retnomove:
 
     // Before jumping to another buffer, or moving the cursor for a left
     // click, stop Visual mode.
-    if (Visual.active
-        && (wp->w_buffer != curwin->w_buffer
-            || (!status_line_offset
-                && !sep_line_offset
-                && (wp->w_p_rl
-                    ? col < wp->w_view_width - fdc
-                    : col >= fdc)
-                && (flags & MOUSE_MAY_STOP_VIS)))) {
+    bool const stop_visual = Visual.active
+                             && (wp->w_buffer != curwin->w_buffer
+                                 || (!status_line_offset
+                                     && !sep_line_offset
+                                     && (wp->w_p_rl
+                                         ? col < wp->w_view_width - fdc
+                                         : col >= fdc)
+                                     && (flags & MOUSE_MAY_STOP_VIS)));
+    // Ending Visual mode or entering the window can change what is concealed.
+    if (!status_line_offset && !sep_line_offset) {
+      resolved = wp;
+      mouse_past_bottom = mouse_resolve(wp, &row, &col, &lnum, &mouse_fold_flags);
+    }
+    if (stop_visual) {
       end_visual_mode();
       redraw_curbuf_later(UPD_INVERTED);  // delete the inversion
     }
@@ -1449,8 +1458,6 @@ retnomove:
       }
       return IN_SEP_LINE | CURSOR_MOVED;
     }
-
-    curwin->w_cursor.lnum = curwin->w_topline;
   } else if (status_line_offset) {
     if (which_button == MOUSE_LEFT && dragwin != NULL) {
       // Drag the status line
@@ -1564,14 +1571,12 @@ retnomove:
   }
 
 foldclick:;
-  colnr_T col_from_screen = -1;
-  int mouse_fold_flags = 0;
-  mouse_check_grid(&col_from_screen, &mouse_fold_flags);
-
   // compute the position in the buffer line from the posn on the screen
-  if (mouse_comp_pos(curwin, &row, &col, &curwin->w_cursor.lnum)) {
-    mouse_past_bottom = true;
+  if (resolved != curwin) {
+    mouse_fold_flags = 0;
+    mouse_past_bottom = mouse_resolve(curwin, &row, &col, &lnum, &mouse_fold_flags);
   }
+  curwin->w_cursor.lnum = lnum;
 
   // Start Visual mode before coladvance(), for when 'sel' != "old"
   if ((flags & MOUSE_MAY_VIS) && !Visual.active) {
@@ -1585,10 +1590,6 @@ foldclick:;
     if (p_smd && msg_silent == 0) {
       redraw_cmdline = true;            // show visual mode later
     }
-  }
-
-  if (col_from_screen >= 0) {
-    col = col_from_screen;
   }
 
   curwin->w_curswant = col;
@@ -1979,7 +1980,7 @@ static linenr_T find_longest_lnum(void)
 }
 
 /// Check clicked cell on its grid
-static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
+static void mouse_check_grid(win_T *wp, colnr_T *vcolp, int *flagsp)
   FUNC_ATTR_NONNULL_ALL
 {
   int click_grid = mouse_grid;
@@ -1987,15 +1988,15 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
   int click_col = mouse_col;
 
   // XXX: this doesn't change click_grid if it is 1, even with multigrid
-  if (mouse_find_win_inner(&click_grid, &click_row, &click_col) != curwin
+  if (mouse_find_win_inner(&click_grid, &click_row, &click_col) != wp
       // Only use vcols[] after the window was redrawn.  Mainly matters
       // for tests, a user would not click before redrawing.
-      || curwin->w_redr_type != 0) {
+      || wp->w_redr_type != 0) {
     return;
   }
   int start_row = 0;
   int start_col = 0;
-  ScreenGrid *gp = grid_adjust(&curwin->w_grid, &start_row, &start_col);
+  ScreenGrid *gp = grid_adjust(&wp->w_grid, &start_row, &start_col);
   if (gp->handle != click_grid || gp->chars == NULL) {
     return;
   }
@@ -2020,6 +2021,21 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
   } else if (col_from_screen == -3) {
     *flagsp |= MOUSE_FOLD_CLOSE;
   }
+}
+
+/// Resolves a click at `row`/`col` of `wp` to a buffer line and raw vcol, as `wp` is drawn.
+///
+/// @return  Whether the click is below the last line.
+static bool mouse_resolve(win_T *wp, int *rowp, int *colp, linenr_T *lnump, int *flagsp)
+{
+  colnr_T col_from_screen = -1;
+  mouse_check_grid(wp, &col_from_screen, flagsp);
+  bool const past_bottom = mouse_comp_pos(wp, rowp, colp, lnump);
+  if (col_from_screen >= 0) {
+    *colp = col_from_screen;
+  }
+  *colp = disp_vcol2vcol(wp, *lnump, *colp);
+  return past_bottom;
 }
 
 /// "getmousepos()" function
@@ -2052,7 +2068,7 @@ void f_getmousepos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       wincol = col + 1 + wp->w_wincol_off;  // Adjust by 1 for left border
       if (row >= 0 && row < wp->w_height && col >= 0 && col < wp->w_width) {
         mouse_comp_pos(wp, &row, &col, &lnum);
-        col = vcol2col(wp, lnum, col, &coladd);
+        col = vcol2col(wp, lnum, disp_vcol2vcol(wp, lnum, col), &coladd);
         column = col + 1;
       }
     }
