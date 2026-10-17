@@ -3691,7 +3691,9 @@ static void fill_complete_info_dict(dict_T *di, compl_T *match, bool add_match)
 {
   tv_dict_add_str_len(di, S_LEN("word"), match->cp_str.data, (int)match->cp_str.size);
   tv_dict_add_str(di, S_LEN("abbr"), match->cp_text[CPT_ABBR]);
-  tv_dict_add_str(di, S_LEN("menu"), match->cp_text[CPT_MENU]);
+  // Preserve the filename fallback displayed in the popup menu when items are reused.
+  tv_dict_add_str(di, S_LEN("menu"), match->cp_text[CPT_MENU] != NULL
+                  ? match->cp_text[CPT_MENU] : match->cp_fname);
   tv_dict_add_str(di, S_LEN("kind"), match->cp_text[CPT_KIND]);
   tv_dict_add_str(di, S_LEN("info"), match->cp_text[CPT_INFO]);
   tv_dict_add_str(di, S_LEN("abbr_hlgroup"), syn_id2name(match->cp_user_abbr_hl_id));

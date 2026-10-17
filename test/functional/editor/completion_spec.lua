@@ -1949,6 +1949,15 @@ describe('completion', function()
     eq('foobar(', n.api.nvim_get_current_line())
   end)
 
+  it('complete_info() reports the source file name of item', function()
+    command('set hidden complete=b completeopt=menuone,noselect')
+    command('file Xcompletion-source')
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'foobar' })
+    command('enew')
+    feed('ifoo<C-n>')
+    eq('Xcompletion-source', fn.complete_info({ 'items' }).items[1].menu)
+  end)
+
   it('complete_info() reports equal, preselect and commit_chars', function()
     command('set completeopt=menuone,noinsert')
     source([[
