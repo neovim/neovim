@@ -353,6 +353,36 @@ ScreenGrid *ui_comp_get_grid_at_coord(int row, int col)
   return &default_grid;
 }
 
+/// Get the visible cell below layer `layer` at screen coordinates.
+static void cell_below(size_t layer, Integer row, int col, schar_T *sc, sattr_T *attr)
+{
+  for (size_t i = layer; i-- > 1;) {
+    ScreenGrid *g = kv_A(layers, i);
+    if (!g->comp_disabled && row >= g->comp_row && row < g->comp_row + MIN(g->rows, g->comp_height)
+        && col >= g->comp_col && col < g->comp_col + MIN(g->cols, g->comp_width)) {
+      size_t off = g->line_offset[row - g->comp_row] + (size_t)(col - g->comp_col);
+      *sc = g->chars[off];
+      *attr = g->attrs[off];
+      if (g->blending) {
+        schar_T bg_sc;
+        sattr_T bg_attr;
+        cell_below(i, row, col, &bg_sc, &bg_attr);
+        // Only let single-width chars through, doublewidth chars stay whole.
+        bool thru = (*sc == schar_from_ascii(' ') || *sc == schar_from_char(L'\u2800'))
+                    && bg_sc != NUL && schar_cells(bg_sc) == 1;
+        *attr = (sattr_T)hl_blend_attrs(bg_attr, *attr, &thru);
+        if (thru) {
+          *sc = bg_sc;
+        }
+      }
+      return;
+    }
+  }
+  size_t off = default_grid.line_offset[row] + (size_t)col;
+  *sc = default_grid.chars[off];
+  *attr = default_grid.attrs[off];
+}
+
 /// Baseline implementation. This is always correct, but we can sometimes
 /// do something more efficient (where efficiency means smaller deltas to
 /// the downstream UI.)
@@ -376,10 +406,6 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
 
   int col = (int)startcol;
   ScreenGrid *grid = NULL;
-  schar_T *bg_line = &default_grid.chars[default_grid.line_offset[row]
-                                         + (size_t)startcol];
-  sattr_T *bg_attrs = &default_grid.attrs[default_grid.line_offset[row]
-                                          + (size_t)startcol];
 
   while (col < endcol) {
     int until = 0;
@@ -438,21 +464,30 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
       int width;
       for (int i = col - (int)startcol; i < until - startcol; i += width) {
         width = 1;
+        bool next = i + 1 < endcol - startcol;
+        schar_T bg_line[2] = { 0 };
+        sattr_T bg_attrs[2] = { 0 };
+        cell_below(grid->comp_index, row, (int)startcol + i, &bg_line[0], &bg_attrs[0]);
+        if (next) {
+          cell_below(grid->comp_index, row, (int)startcol + i + 1, &bg_line[1], &bg_attrs[1]);
+        }
         // negative space
         bool thru = (linebuf[i] == schar_from_ascii(' ')
-                     || linebuf[i] == schar_from_char(L'\u2800')) && bg_line[i] != NUL;
-        if (i + 1 < endcol - startcol && bg_line[i + 1] == NUL) {
+                     || linebuf[i] == schar_from_char(L'\u2800')) && bg_line[0] != NUL;
+        if (next && bg_line[1] == NUL) {
           width = 2;
           thru &= (linebuf[i + 1] == schar_from_ascii(' ')
                    || linebuf[i + 1] == schar_from_char(L'\u2800'));
         }
-        attrbuf[i] = (sattr_T)hl_blend_attrs(bg_attrs[i], attrbuf[i], &thru);
+        // A grid edge below can cut a doublewidth char.
+        thru = thru && (!next || schar_cells(bg_line[0]) == width);
+        attrbuf[i] = (sattr_T)hl_blend_attrs(bg_attrs[0], attrbuf[i], &thru);
         if (width == 2) {
-          attrbuf[i + 1] = (sattr_T)hl_blend_attrs(bg_attrs[i + 1],
+          attrbuf[i + 1] = (sattr_T)hl_blend_attrs(bg_attrs[1],
                                                    attrbuf[i + 1], &thru);
         }
         if (thru) {
-          memcpy(linebuf + i, bg_line + i, (size_t)width * sizeof(linebuf[i]));
+          memcpy(linebuf + i, bg_line, (size_t)width * sizeof(linebuf[i]));
         }
       }
     }
