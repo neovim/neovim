@@ -126,28 +126,29 @@ function M.query(caps, opts, on_response)
       end
     end,
   }, function(resp)
-    local k, rest = resp:match('^\027P1%+r(%x+)(.*)$')
-    if not k or not rest then
-      return
-    end
-    local cap = vim.text.hexdecode(k)
-    if not cap or not pending[cap] then
-      -- Received a response for a capability we didn't request. This can happen if there are
-      -- multiple concurrent XTGETTCAP requests
+    local body = resp:match('^\027P1%+r(.*)$')
+    if not body then
       return
     end
 
-    local seq ---@type string?
-    if rest:match('^=%x+$') then
-      seq = vim.text.hexdecode(rest:sub(2))
-      if not seq then
-        return -- Ignore malformed responses and leave the capability pending.
+    for pair in vim.gsplit(body, ';') do
+      local k, rest = pair:match('^(%x+)(.*)$')
+      local cap = k and vim.text.hexdecode(k)
+      -- Ignore capabilities we didn't request: concurrent queries share TermResponse.
+      if cap and rest and pending[cap] then
+        local seq ---@type string?
+        if rest:match('^=%x+$') then
+          seq = vim.text.hexdecode(rest:sub(2))
+          if not seq then
+            return -- Ignore malformed responses and leave the capability pending.
+          end
+          seq = seq:gsub('\\E', '\027'):gsub('%%p%d', ''):gsub('\\(%d+)', string.char)
+        end
+
+        on_response(cap, true, seq)
+        pending[cap] = nil
       end
-      seq = seq:gsub('\\E', '\027'):gsub('%%p%d', ''):gsub('\\(%d+)', string.char)
     end
-
-    on_response(cap, true, seq)
-    pending[cap] = nil
 
     return next(pending) == nil
   end)
