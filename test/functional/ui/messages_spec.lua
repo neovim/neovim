@@ -1495,6 +1495,89 @@ stack traceback:
     n.assert_alive()
   end)
 
+  describe("'rulerformat' with stacked highlights #42014", function()
+    local fn = n.fn
+
+    -- Redraws and returns the chunks of the resulting msg_ruler event by text.
+    local function ruler()
+      local content = exec_lua(function()
+        _G.ruler = nil
+        vim.cmd('redraw!')
+        vim.wait(1000, function()
+          return _G.ruler ~= nil
+        end)
+        return _G.ruler
+      end)
+      local chunks = {}
+      for _, chunk in ipairs(content) do
+        chunks[chunk[2]] = chunk
+      end
+      return chunks
+    end
+
+    before_each(function()
+      exec_lua(function()
+        vim.o.ruler = true
+        vim.o.laststatus = 0
+        vim.ui_attach(vim.api.nvim_create_namespace(''), { ext_messages = true }, function(ev, c)
+          if ev == 'msg_ruler' then
+            _G.ruler = c
+          end
+        end)
+      end)
+      command('hi User1 guibg=#0000ff | hi User2 guifg=#ff0000 | hi User3 guifg=#00ff00')
+    end)
+
+    it('is emitted as a group that combines the stacked groups', function()
+      command('set rulerformat=s%$User3$t%#User1#a%$User2$b%#User2#c%*d')
+      local r = ruler()
+      -- Chunks that are not stacked keep their group, also after a stack.
+      eq(fn.hlID('MsgArea'), r.s[3])
+      eq(fn.hlID('User1'), r.a[3])
+      eq(fn.hlID('User2'), r.c[3])
+      eq(fn.hlID('MsgArea'), r.d[3])
+      -- The first group in a stack is the one in effect before it.
+      eq('MsgArea+User3', fn.synIDattr(r.t[3], 'name'))
+      eq('User1+User2', fn.synIDattr(r.b[3], 'name'))
+      eq({ bg = 0x0000ff, fg = 0xff0000 }, api.nvim_get_hl(0, { id = r.b[3] }))
+    end)
+
+    it('uses one group per stack, which follows the stacked groups', function()
+      command('set rulerformat=%#User1#%$User2$x')
+      local id = ruler().x[3]
+      eq(id, ruler().x[3])
+      command('hi User1 guibg=#00ff00')
+      eq(id, ruler().x[3])
+      eq({ bg = 0x00ff00, fg = 0xff0000 }, api.nvim_get_hl(0, { id = id }))
+      -- A colorscheme clears the groups and defines them again.
+      command('hi clear | hi User1 guibg=#00ff00 | hi User2 guifg=#ff0000')
+      eq(id, ruler().x[3])
+      eq({ bg = 0x00ff00, fg = 0xff0000 }, api.nvim_get_hl(0, { id = id }))
+    end)
+
+    it('is not listed or found by name', function()
+      command('set rulerformat=%#User1#%$User2$x')
+      local id = ruler().x[3]
+      eq('User1+User2', fn.synIDattr(id, 'name'))
+      eq(nil, exec_capture('hi'):find('User1+User2', 1, true))
+      eq(nil, api.nvim_get_hl(0, {})['User1+User2'])
+      eq(false, vim.tbl_contains(fn.getcompletion('', 'highlight'), 'User1+User2'))
+      eq(0, fn.hlexists('User1+User2'))
+      eq(
+        'Vim:E5248: Invalid character in group name',
+        t.pcall_err(api.nvim_set_hl, 0, 'User1+User2', { fg = '#ffffff' })
+      )
+      -- A pattern for group names matches the stacked groups, but not the hidden one.
+      eq(
+        'Vim(syntax):E409: Unknown group name: User1.User2',
+        t.pcall_err(command, 'syn region Foo start=/a/ end=/b/ contains=User1.User2')
+      )
+      command('syn region Foo start=/a/ end=/b/ contains=User[12]')
+      eq(nil, exec_capture('syn list Foo'):find('User1+User2', 1, true))
+      neq(nil, exec_capture('syn list Foo'):find('User1', 1, true))
+    end)
+  end)
+
   it(':digraph contains newlines', function()
     command('digraph')
     screen:expect({

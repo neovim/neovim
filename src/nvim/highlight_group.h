@@ -7,6 +7,7 @@
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
 enum { MAX_HL_ID = 20000, };  ///< maximum value for a highlight ID.
+enum { MAX_HL_STACK = 10, };  ///< maximum number of stacked groups in a hidden group.
 
 typedef struct {
   char *name;
