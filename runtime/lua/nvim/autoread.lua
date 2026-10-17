@@ -166,8 +166,8 @@ end
 function M.enable()
   local group = vim.api.nvim_create_augroup('nvim.autoread', { clear = true })
 
-  -- (Re)start watcher when a file is loaded or written.
-  nvim_on({ 'BufReadPost', 'BufWritePost' }, group, function(args)
+  -- (Re)start watcher when a file is loaded, written, or renamed.
+  nvim_on({ 'BufReadPost', 'BufWritePost', 'BufFilePost' }, group, function(args)
     ensure_watcher(args.buf)
   end)
 
