@@ -109,8 +109,10 @@ end
 --- @package
 --- @param signal? vim.SystemSig
 function SystemObj:_timeout(signal)
-  self._state.done = 'timeout'
-  self:kill(signal or SIG.TERM)
+  if self._state.handle and self._state.handle:is_active() then
+    self._state.done = 'timeout'
+    self:kill(signal or SIG.TERM)
+  end
 end
 
 --- Waits for the process to complete or until the specified timeout elapses.
