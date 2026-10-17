@@ -106,7 +106,7 @@ describe('autoread file watcher', function()
     eq({ 'local change' }, api.nvim_buf_get_lines(0, 0, -1, true))
   end)
 
-  it('tracks autoread option changes', function()
+  it('tracks autoread option and buffer name changes', function()
     local path = open_watched('original\n')
 
     command('setlocal noautoread')
@@ -125,6 +125,23 @@ describe('autoread file watcher', function()
     write_file(path, 'after reenable\n')
     retry(nil, 3000, function()
       eq({ 'after reenable' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    end)
+
+    -- Renaming must move the subscription to the new file.
+    local renamed = t.tmpname()
+    write_file(renamed, 'renamed\n')
+    api.nvim_buf_set_name(0, renamed)
+    n.exec_lua([[require('nvim.autoread')._set_debounce(5000)]])
+    write_file(renamed, 'changed renamed\n')
+    retry(nil, 3000, function()
+      eq(1, api.nvim_get_option_value('busy', { buf = 0 }))
+    end)
+
+    -- A nonexistent name stops the subscription and clears pending work.
+    api.nvim_buf_set_name(0, renamed .. '.missing')
+    eq(false, is_watching())
+    retry(nil, 3000, function()
+      eq(0, api.nvim_get_option_value('busy', { buf = 0 }))
     end)
   end)
 
