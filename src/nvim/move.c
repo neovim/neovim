@@ -854,21 +854,14 @@ void validate_cheight(win_T *wp)
   wp->w_valid |= VALID_CHEIGHT;
 }
 
-// Validate w_wcol and w_virtcol only.
-void validate_cursor_col(win_T *wp)
+/// Convert a virtual column to a window column, without conceal.
+colnr_T vcol2wcol(win_T *wp, colnr_T col)
 {
-  validate_virtcol(wp);
-
-  if (wp->w_valid & VALID_WCOL) {
-    return;
-  }
-
-  colnr_T col = wp->w_virtcol;
   colnr_T off = win_col_off(wp);
   col += off;
   int width = wp->w_view_width - off + win_col_off2(wp);
 
-  // long line wrapping, adjust wp->w_wrow
+  // Account for wrapped screen lines.
   if (wp->w_p_wrap && col >= (colnr_T)wp->w_view_width && width > 0) {
     // use same formula as what is used in curs_columns()
     col -= ((col - wp->w_view_width) / width + 1) * width;
@@ -878,8 +871,19 @@ void validate_cursor_col(win_T *wp)
   } else {
     col = 0;
   }
-  wp->w_wcol = col;
+  return col;
+}
 
+// Validate w_wcol and w_virtcol only.
+void validate_cursor_col(win_T *wp)
+{
+  validate_virtcol(wp);
+
+  if (wp->w_valid & VALID_WCOL) {
+    return;
+  }
+
+  wp->w_wcol = vcol2wcol(wp, wp->w_virtcol);
   wp->w_valid |= VALID_WCOL;
 }
 

@@ -1897,21 +1897,8 @@ void ins_compl_show_pum(void)
   // part of the screen would be updated.  We do need to redraw here.
   dollar_vcol = -1;
 
-  // Compute the screen column of the start of the completed text.
-  // Use the cursor to get all wrapping and other settings right.
-  const colnr_T col = curwin->w_cursor.col;
-  curwin->w_cursor.col = compl_col;
   compl_selected_item = cur;
   pum_display(compl_match_array, compl_match_arraysize, cur, array_changed, 0);
-  curwin->w_cursor.col = col;
-
-  // The cursor was temporarily moved to "compl_col" above to position the
-  // menu, so the screen update left w_wcol conceal-corrected for that column
-  // rather than for the real cursor.  Redraw the cursor line so the caret is
-  // positioned correctly when the cursor line has concealed text.
-  if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)) {
-    redrawWinline(curwin, curwin->w_cursor.lnum);
-  }
 
   // After adding leader, set the current match to shown match.
   if (compl_started && compl_curr_match != compl_shown_match) {

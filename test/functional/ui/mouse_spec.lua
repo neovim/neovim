@@ -1904,6 +1904,28 @@ describe('ui/mouse/input', function()
       end)
     end)
 
+    it('clicks with conceal before a tab', function()
+      screen:try_resize(40, 6)
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'a\tHIDDEN\tend' })
+      exec([[
+        syntax match Hidden /HIDDEN/ conceal
+        set conceallevel=2 concealcursor=nvic tabstop=8 nowrap
+      ]])
+      for _, list in ipairs({ 'nolist', 'list listchars=tab:>-' }) do
+        command('set ' .. list)
+        for _, virtual in ipairs({ false, true }) do
+          command(('set virtualedit=%s'):format(virtual and 'all' or ''))
+          feed('gg0')
+          screen:expect({ any = '%^a.*end' })
+          for col = 8, 15 do
+            feed(('<Esc><LeftMouse><%d,0>'):format(col))
+            eq({ 1, 8 }, api.nvim_win_get_cursor(0))
+            eq(virtual and col == 15 and 1 or 0, fn.getcurpos()[4])
+          end
+        end
+      end
+    end)
+
     it('virtual text does not change cursor placement on concealed line', function()
       command('%delete')
       insert('aaaaaaaaaa|hidden|bbbbbbbbbb|hidden|cccccccccc')
