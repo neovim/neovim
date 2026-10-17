@@ -1,5 +1,6 @@
 local M = {}
 
+local async = require('vim.async') --- @type vim.async._core
 local health = vim.health
 
 local function get_lockfile_path()
@@ -10,6 +11,7 @@ local function get_plug_dir()
   return vim.fs.joinpath(vim.fn.stdpath('data'), 'site', 'pack', 'core', 'opt')
 end
 
+---@async
 --- @param cmd string[]
 --- @param cwd string
 local function git_cmd(cmd, cwd)
@@ -17,13 +19,16 @@ local function git_cmd(cmd, cwd)
   local env = vim.fn.environ() --- @type table<string,string>
   env.GIT_DIR, env.GIT_WORK_TREE, env.GIT_INDEX_FILE = nil, nil, nil
   local sys_opts = { cwd = cwd, text = true, env = env, clear_env = true }
-  local out = vim.system(cmd, sys_opts):wait() --- @type vim.SystemCompleted
+  --- @diagnostic disable-next-line: assign-type-mismatch
+  local out = async.await(3, vim.system, cmd, sys_opts) --- @type vim.SystemCompleted
+  async.await(vim.schedule)
   if out.code ~= 0 then
     return false, ((out.stderr or ''):gsub('\n+$', ''))
   end
   return true, ((out.stdout or ''):gsub('\n+$', ''))
 end
 
+---@async
 local function check_basics()
   health.start('vim.pack: basics')
 
@@ -79,6 +84,7 @@ local function failed_git_cmd(plug_name, plug_path)
   return false
 end
 
+---@async
 --- @param plug_name any
 --- @param lock_data any
 --- @return boolean Whether a check is successful
@@ -164,6 +170,7 @@ local function check_plugin_lock_data(plug_name, lock_data)
   return true
 end
 
+---@async
 local function check_lockfile()
   health.start('vim.pack: lockfile')
 
@@ -249,6 +256,7 @@ local function check_manifest(manifest, plug_name, plug_path)
   return true
 end
 
+---@async
 --- @param plug_name string
 --- @return boolean Whether a check is successful
 local function check_installed_plugin(plug_name)
@@ -307,6 +315,7 @@ local function check_installed_plugin(plug_name)
   return true
 end
 
+---@async
 local function check_plug_dir()
   health.start('vim.pack: plugin directory')
 
@@ -326,6 +335,7 @@ local function check_plug_dir()
   end
 end
 
+---@async
 function M.check()
   local has_lockfile, has_plug_dir = check_basics()
   if has_lockfile then
