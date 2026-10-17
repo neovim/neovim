@@ -531,7 +531,10 @@ function M.find(names, opts)
         end
         for _, name in ipairs(names) do
           local f = M.joinpath(p, name)
-          local stat = uv.fs_stat(f)
+          local stat = uv.fs_lstat(f)
+          if stat and stat.type == 'link' and opts.follow then
+            stat = uv.fs_stat(f) or stat
+          end
           if stat and (not opts.type or opts.type == stat.type) then
             t[#t + 1] = f
           end
