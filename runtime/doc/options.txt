@@ -6986,7 +6986,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	(unless explicitly disabled by the user).
 
 					*'termpastefilter'* *'tpf'*
-'termpastefilter' 'tpf'	string	(default "BS,HT,ESC,DEL")
+'termpastefilter' 'tpf'	string	(default "BS,ESC,DEL")
 			global
 	A comma-separated list of options for specifying control characters
 	to be removed from the text pasted into the terminal window. The

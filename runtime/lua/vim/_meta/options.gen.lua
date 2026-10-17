@@ -7488,7 +7488,7 @@ vim.go.tgc = vim.go.termguicolors
 ---    C1	    Control characters 0x80...0x9F
 ---
 --- @type string
-vim.o.termpastefilter = "BS,HT,ESC,DEL"
+vim.o.termpastefilter = "BS,ESC,DEL"
 vim.o.tpf = vim.o.termpastefilter
 vim.go.termpastefilter = vim.o.termpastefilter
 vim.go.tpf = vim.go.termpastefilter

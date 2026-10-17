@@ -9937,7 +9937,7 @@ local options = {
     {
       abbreviation = 'tpf',
       validation_cb = 'validate_str_generic',
-      defaults = 'BS,HT,ESC,DEL',
+      defaults = 'BS,ESC,DEL',
       schema = {
         flags = { 'BS', 'HT', 'FF', 'ESC', 'DEL', 'C0', 'C1' },
       },
