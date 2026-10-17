@@ -4,7 +4,8 @@
                             NVIM REFERENCE MANUAL
 
 
-Nvim                                                    *ref* *reference*
+==============================================================================
+Nvim reference manual                               *ref* *reference*
 
                                       Type |gO| to see the table of contents.
 
@@ -125,75 +126,73 @@ Keycodes                                 *key-notation* *key-codes* *keycodes*
 These names for keys are used in the documentation.  They can also be used
 with the ":map" command.
 
-notation        meaning             equivalent  decimal value(s)        ~
-<Nul>           Zero                    CTRL-@    0 (stored as 10) *<Nul>*
-<BS>            Backspace               CTRL-H    8     *backspace*
-<Tab>           Tab                     CTRL-I    9     *tab* *Tab*
-                                                        *linefeed*
-<NL>            Linefeed                CTRL-J   10 (used for <Nul>)
-<CR>            Carriage return         CTRL-M   13     *carriage-return*
-<Return>        Same as <CR>                            *<Return>*
-<Enter>         Same as <CR>                            *<Enter>*
-<Esc>           Escape                  CTRL-[   27     *escape* *<Esc>*
-<Space>         Space                            32     *space*
-<lt>            Less-than               <        60     *<lt>*
-<Bslash>        Backslash               \        92     *backslash* *<Bslash>*
-<Bar>           Vertical bar            |       124     *<Bar>*
-<Del>           Delete                          127
-<CSI>           Command sequence intro  ALT-Esc 155     *<CSI>*
-
-<EOL>           End-of-line (can be <CR>, <NL> or <CR><NL>,
-                Depends on system and 'fileformat')     *<EOL>*
-<Ignore>        Cancel wait-for-character               *<Ignore>*
-<NOP>           Do nothing (no-op). Useful in mappings. *<Nop>*
-                <Ignore> is a key, <NOP> is "absence of a key".
-
-<Up>            Cursor-up                       *cursor-up* *cursor_up*
-<Down>          Cursor-down                     *cursor-down* *cursor_down*
-<Left>          Cursor-left                     *cursor-left* *cursor_left*
-<Right>         Cursor-right                    *cursor-right* *cursor_right*
-<S-Up>          Shift-cursor-up
-<S-Down>        Shift-cursor-down
-<S-Left>        Shift-cursor-left
-<S-Right>       Shift-cursor-right
-<C-Left>        Control-cursor-left
-<C-Right>       Control-cursor-right
-<F1> - <F12>    Function keys 1 to 12           *function_key* *function-key*
-<S-F1> - <S-F12> Shift-function keys 1 to 12    *<S-F1>*
-<Help>          Help key
-<Undo>          Undo key
-<Find>          Find key
-<Select>        Select key
-<Insert>        Insert key
-<Home>          Home                            *home*
-<End>           End                             *end*
-<PageUp>        Page-up                         *page_up* *page-up*
-<PageDown>      Page-down                       *page_down* *page-down*
-<kUp>           Keypad cursor-up                *keypad-cursor-up*
-<kDown>         Keypad cursor-down              *keypad-cursor-down*
-<kLeft>         Keypad cursor-left              *keypad-cursor-left*
-<kRight>        Keypad cursor-right             *keypad-cursor-right*
-<kHome>         Keypad home (upper left)        *keypad-home*
-<kEnd>          Keypad end (lower left)         *keypad-end*
-<kOrigin>       Keypad origin (middle)          *keypad-origin*
-<kPageUp>       Keypad page-up (upper right)    *keypad-page-up*
-<kPageDown>     Keypad page-down (lower right)  *keypad-page-down*
-<kDel>          Keypad delete                   *keypad-delete*
-<kPlus>         Keypad +                        *keypad-plus*
-<kMinus>        Keypad -                        *keypad-minus*
-<kMultiply>     Keypad *                        *keypad-multiply*
-<kDivide>       Keypad /                        *keypad-divide*
-<kPoint>        Keypad .                        *keypad-point*
-<kComma>        Keypad ,                        *keypad-comma*
-<kEqual>        Keypad =                        *keypad-equal*
-<kEnter>        Keypad Enter                    *keypad-enter*
-<k0> - <k9>     Keypad 0 to 9                   *keypad-0* *keypad-9*
-<S-…>           Shift-key                       *shift* *<S-*
-<C-…>           Control-key                     *control* *ctrl* *<C-*
-<M-…>           Alt-key or meta-key             *META* *ALT* *<M-*
-<A-…>           Same as <M-…>                   *<A-*
-<T-…>           Meta-key, when it's not alt     *<T-*
-<D-…>           Command-key or "super" key      *<D-*
+Notation	Meaning			Equiv.	Decimal	Note ~
+<Nul>		Zero			CTRL-@	  0	(stored as 10) *<Nul>*
+<BS>		Backspace		CTRL-H	  8	*backspace*
+<Tab>		Tab			CTRL-I	  9	*tab* *Tab*
+<NL>		Linefeed		CTRL-J	 10	(used for <Nul>) *linefeed*
+<CR>		Carriage return		CTRL-M	 13	*carriage-return*
+<Return>	Same as <CR>		 	 	*<Return>*
+<Enter>		Same as <CR>		 	 	*<Enter>*
+<Esc>		Escape			CTRL-[	 27	*escape* *<Esc>*
+<Space>		Space			 	 32	*space*
+<lt>		Less-than		<	 60	*<lt>*
+<Bslash>	Backslash		\	 92	*backslash* *<Bslash>*
+<Bar>		Vertical bar		|	124	*<Bar>*
+<Del>		Delete			 	127	 
+<CSI>		Command sequence intro	ALT-Esc	155	*<CSI>*
+------------------------------------------------------------------------------
+<EOL>		End-of-line		 	 	(depends on 'fileformat') *<EOL>*
+<Ignore>	Cancel wait-for-char	 	 	*<Ignore>*
+<NOP>		Do nothing (no-op)	 	 	*<Nop>* Useful in mappings.
+							<Ignore> is a key, <NOP> is "absence of a key".
+------------------------------------------------------------------------------
+<Up>		Cursor-up		 	 	*cursor-up* *cursor_up*
+<Down>		Cursor-down		 	 	*cursor-down* *cursor_down*
+<Left>		Cursor-left		 	 	*cursor-left* *cursor_left*
+<Right>		Cursor-right		 	 	*cursor-right* *cursor_right*
+<S-Up>		Shift-cursor-up		 	 	 
+<S-Down>	Shift-cursor-down	 	 	 
+<S-Left>	Shift-cursor-left	 	 	 
+<S-Right>	Shift-cursor-right	 	 	 
+<C-Left>	Control-cursor-left	 	 	 
+<C-Right>	Control-cursor-right	 	 	 
+<F1> - <F12>	Function keys 1 to 12	 	 	*function_key* *function-key*
+<S-F1> - <S-F12>	Shift-F1 to F12	 	 	*<S-F1>*
+<Help>		Help key		 	 	 
+<Undo>		Undo key		 	 	 
+<Find>		Find key		 	 	 
+<Select>	Select key		 	 	 
+<Insert>	Insert key		 	 	 
+<Home>		Home			 	 	*home*
+<End>		End			 	 	*end*
+<PageUp>	Page-up			 	 	*page_up* *page-up*
+<PageDown>	Page-down		 	 	*page_down* *page-down*
+<kUp>		Keypad cursor-up	 	 	*keypad-cursor-up*
+<kDown>		Keypad cursor-down	 	 	*keypad-cursor-down*
+<kLeft>		Keypad cursor-left	 	 	*keypad-cursor-left*
+<kRight>	Keypad cursor-right	 	 	*keypad-cursor-right*
+<kHome>		Keypad home		 	 	(upper left) *keypad-home*
+<kEnd>		Keypad end		 	 	(lower left) *keypad-end*
+<kOrigin>	Keypad origin		 	 	(middle) *keypad-origin*
+<kPageUp>	Keypad page-up		 	 	(upper right) *keypad-page-up*
+<kPageDown>	Keypad page-down	 	 	(lower right) *keypad-page-down*
+<kDel>		Keypad delete		 	 	*keypad-delete*
+<kPlus>		Keypad +		 	 	*keypad-plus*
+<kMinus>	Keypad -		 	 	*keypad-minus*
+<kMultiply>	Keypad *		 	 	*keypad-multiply*
+<kDivide>	Keypad /		 	 	*keypad-divide*
+<kPoint>	Keypad .		 	 	*keypad-point*
+<kComma>	Keypad ,		 	 	*keypad-comma*
+<kEqual>	Keypad =		 	 	*keypad-equal*
+<kEnter>	Keypad Enter		 	 	*keypad-enter*
+<k0> - <k9>	Keypad 0 to 9		 	 	*keypad-0* *keypad-9*
+<S-…>		Shift-key		 	 	*shift* *<S-*
+<C-…>		Control-key		 	 	*control* *ctrl* *<C-*
+<M-…>		Alt-key or meta-key	 	 	*META* *ALT* *<M-*
+<A-…>		Same as <M-…>		 	 	*<A-*
+<T-…>		Meta-key		 	 	(when it's not alt) *<T-*
+<D-…>		Command or "super" key	 	 	*<D-*
 
 
 Note:

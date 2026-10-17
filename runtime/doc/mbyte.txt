@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar et al.
 
 
+==============================================================================
 Multi-byte support				*multibyte* *multi-byte*
 						*Chinese* *Japanese* *Korean*
 This is about editing text in languages which have many characters that can

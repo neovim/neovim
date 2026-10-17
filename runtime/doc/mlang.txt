@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Multi-language features				*multilang* *multi-lang*
 
 This is about using messages and menus in various languages.  For editing

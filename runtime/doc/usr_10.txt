@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			     Making big changes
+==============================================================================
+Making big changes
 
 
 In chapter 4 several ways to make small changes were explained.  This chapter

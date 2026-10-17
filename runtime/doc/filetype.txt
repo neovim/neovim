@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Filetypes						*filetype* *file-type*
 
 Also see |autocmd.txt|.

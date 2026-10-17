@@ -4,7 +4,8 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
-Key mapping, abbreviations and user-defined commands.
+==============================================================================
+Key mapping, abbreviations and user-defined commands
 
 This subject is introduced in sections |05.3|, |24.7| and |40.1| of the user
 manual.

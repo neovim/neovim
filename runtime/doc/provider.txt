@@ -4,6 +4,7 @@
 		 NVIM REFERENCE MANUAL	  by Thiago de Arruda
 
 
+==============================================================================
 Providers					*provider*
 
 Nvim delegates some features to dynamic "providers". This document describes

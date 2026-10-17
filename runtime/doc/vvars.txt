@@ -4,6 +4,7 @@
                 NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Predefined variables					  *vvars* *v:var* *v:*
 
 Most variables are read-only, when a variable can be set by the user, it will

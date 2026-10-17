@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Help on help files					*helphelp*
 
                                       Type |gO| to see the table of contents.

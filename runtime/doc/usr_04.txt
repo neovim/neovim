@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			     Making small changes
+==============================================================================
+Making small changes
 
 
 This chapter shows you several ways of making corrections and moving text

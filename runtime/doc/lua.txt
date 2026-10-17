@@ -4,6 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Lua engine                                                           *lua* *Lua*
 
                                        Type |gO| to see the table of contents.

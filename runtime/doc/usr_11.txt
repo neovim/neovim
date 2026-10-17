@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			   Recovering from a crash
+==============================================================================
+Recovering from a crash
 
 
 Did your computer crash?  And you just spent hours editing?  Don't panic!  Vim

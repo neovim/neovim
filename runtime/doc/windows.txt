@@ -4,7 +4,8 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
-Editing with multiple windows and buffers.		*windows* *buffers*
+==============================================================================
+Editing with multiple windows and buffers		*windows* *buffers*
 
 The commands which have been added to use multiple windows and buffers are
 explained here.  Additionally, there are explanations for commands that work

@@ -3,7 +3,7 @@
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
-
+==============================================================================
 Options							*options*
 
 For an overview of options see quickref.txt |option-list|.

@@ -1,10 +1,10 @@
 *sign.txt*      Nvim
 
 
-		  VIM REFERENCE MANUAL	  by Gordon Prieur
-					  and Bram Moolenaar
+	  VIM REFERENCE MANUAL  by Gordon Prieur and Bram Moolenaar
 
 
+==============================================================================
 Sign Support Features				*sign-support*
 
                                       Type |gO| to see the table of contents.

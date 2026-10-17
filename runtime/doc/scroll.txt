@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Scrolling						*scrolling*
 
 These commands move the contents of the window.  If the cursor position is

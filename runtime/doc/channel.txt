@@ -4,6 +4,7 @@
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
+==============================================================================
 Nvim asynchronous IO					*channel*
 
 				      Type |gO| to see the table of contents.
@@ -43,10 +44,10 @@ a job channel using RPC, bytes can still be read over its stderr. Similarly,
 only bytes can be written to Nvim's own stderr.
 
 					*channel-callback* *E904* *E906* *E921* *E5407*
-- on_stdout({chan-id}, {data}, {name})		*on_stdout*
-- on_stderr({chan-id}, {data}, {name})		*on_stderr*
-- on_stdin({chan-id}, {data}, {name})		*on_stdin*
-- on_data({chan-id}, {data}, {name})		*on_data*
+on_stdout({chan-id}, {data}, {name})		*on_stdout*
+on_stderr({chan-id}, {data}, {name})		*on_stderr*
+on_stdin({chan-id}, {data}, {name})		*on_stdin*
+on_data({chan-id}, {data}, {name})		*on_data*
 
     Scripts can react to channel activity (received data) via callback
     functions assigned to the `on_stdout`, `on_stderr`, `on_stdin`, or

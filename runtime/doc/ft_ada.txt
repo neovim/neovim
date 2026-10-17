@@ -1,9 +1,8 @@
 *ft_ada.txt*	Nvim
 
 
-		    ADA FILE TYPE PLUG-INS REFERENCE MANUAL~
-
-ADA								*ft-ada-syntax*
+==============================================================================
+Ada filetype plugins						*ft-ada-syntax*
 
                                       Type |gO| to see the table of contents.
 

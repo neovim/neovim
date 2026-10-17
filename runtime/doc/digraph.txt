@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Digraphs					*digraph* *digraphs* *Digraphs*
 
 Digraphs are used to enter characters that normally cannot be entered by

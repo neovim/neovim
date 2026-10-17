@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-				Using the GUI
+==============================================================================
+Using the GUI
 
 
 Vim works in an ordinary terminal, while gVim has a Graphical User Interface

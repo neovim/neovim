@@ -3,6 +3,7 @@
 
 		  VIM REFERENCE MANUAL	  by Jacques Germishuys
 
+==============================================================================
 The perl Interface to Vim				*if_perl* *perl*
 
 See |provider-perl| for more information.

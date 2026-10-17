@@ -4,6 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Vimscript and debugging						*vimscript*
 
 This reference describes commands for running and debugging Vimscript.

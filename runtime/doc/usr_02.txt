@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			    The first steps in Vim
+==============================================================================
+The first steps in Vim
 
 
 This chapter provides just enough information to edit a file with Vim.  Not

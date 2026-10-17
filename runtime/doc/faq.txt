@@ -3,6 +3,7 @@
                             NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Frequently asked Questions                                        *faq*
 
                                   Type |gO| to see the table of contents.

@@ -4,6 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Builtin plugin: zip                                                      *zip*
 
 Nvim opens a read-only listing when |:edit| is used with a zip archive. The

@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Cursor motions					*cursor-motions* *navigation*
 
 These commands move the cursor position.  If the new position is off of the

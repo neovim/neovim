@@ -2,8 +2,8 @@
 
                             NVIM REFERENCE MANUAL
 
-                                Extending Nvim
-
+==============================================================================
+Extending Nvim
 
                                        Type |gO| to see the table of contents.
 

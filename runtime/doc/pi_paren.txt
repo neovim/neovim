@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Highlighting matching parens			*matchparen*
 
 The functionality mentioned here is a |standard-plugin|.

@@ -4,6 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Notable changes since Nvim 0.8                                       *news-0.9*
 
                                        Type |gO| to see the table of contents.

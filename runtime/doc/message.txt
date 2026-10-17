@@ -4,6 +4,9 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
+Messages
+
 This file contains an alphabetical list of messages and error messages that
 Vim produces.  You can use this if you don't understand what the message
 means.  It is not complete though.

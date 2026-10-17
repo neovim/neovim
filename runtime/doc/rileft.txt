@@ -1,10 +1,10 @@
 *rileft.txt*    Nvim
 
 
-		  VIM REFERENCE MANUAL	  by Avner Lottem
-					  updated by Nadim Shaikli
+	  VIM REFERENCE MANUAL  by Avner Lottem, updated by Nadim Shaikli
 
 
+==============================================================================
 Right to Left display mode for Vim				*rileft*
 
 

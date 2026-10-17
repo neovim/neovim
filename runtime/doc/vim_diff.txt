@@ -4,6 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Differences between Nvim and Vim                               *vim-differences*
 
 Nvim differs from Vim in many ways, although editor and Vimscript (not

@@ -4,6 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Writing tests for Nvim                                              *dev-test*
 
                                   Type |gO| to see the table of contents.
