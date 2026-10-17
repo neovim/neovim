@@ -409,17 +409,22 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
   // readfile() returns NOTDONE without firing BufReadPost when it did not read a
   // file (e.g. a directory). Since BufReadPost is what normally runs filetype
   // detection, do it here so FileType fires before the BufEnter below.
-  if (retval == NOTDONE && *curbuf->b_p_ft == NUL
-      && curbuf->b_ffname != NULL
+  if (retval == NOTDONE && curbuf->b_ffname != NULL
       && after_pathsep(curbuf->b_ffname,
                        curbuf->b_ffname + strlen(curbuf->b_ffname))) {
-    if (augroup_exists("filetypedetect")) {
-      bufref_T bufref;
-      set_bufref(&bufref, curbuf);
-      do_doautocmd("filetypedetect BufRead", false, NULL);
-      if (!bufref_valid(&bufref) || curbuf != old_curbuf.br_buf || aborting()) {
-        return FAIL;
+    bufref_T bufref;
+    set_bufref(&bufref, curbuf);
+    if (*curbuf->b_p_ft == NUL) {
+      if (augroup_exists("filetypedetect")) {
+        do_doautocmd("filetypedetect BufRead", false, NULL);
       }
+    } else if (!curbuf->b_au_did_filetype) {
+      // EVENT_FILETYPE was not triggered but the buffer already has a
+      // filetype (e.g. on reload).  Trigger EVENT_FILETYPE using the existing filetype.
+      apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname, true, curbuf);
+    }
+    if (!bufref_valid(&bufref) || curbuf != old_curbuf.br_buf || aborting()) {
+      return FAIL;
     }
   }
 
