@@ -355,6 +355,7 @@ typedef struct {
   String filetype;
   String operation;
   Boolean dry_run;
+  Boolean _convert;
 } Dict(option);
 
 typedef struct {
