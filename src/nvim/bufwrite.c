@@ -1728,10 +1728,7 @@ restore_backup:
         xstrlcat(IObuff, shortmess(kShmWri) ? _(" [w]") : _(" written"), IOSIZE);
       }
     }
-    // Hide cursor while emitting "written" message, so cursor doesn't flicker in cmdline. #25974
-    ui_busy_start();
     set_keep_msg(msg_progress(IObuff, msg_id, "success", 0, true, true, false), 0);
-    ui_busy_stop();
   }
 
   // When written everything correctly: reset 'modified'.  Unless not
