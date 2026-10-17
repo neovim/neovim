@@ -55,6 +55,7 @@ local bit = require('bit')
 --- @field termkey_lookup_keyname fun(any, any, any):any
 --- @field termkey_new_abstract fun(string, integer):any
 --- @field termkey_push_bytes fun(any, string, integer):integer
+--- @field termkey_response_pending fun(any):boolean
 --- @field termkey_set_buffer_size fun(any, integer):integer
 --- @field termkey_set_canonflags fun(any, any):any
 --- @field termkey_set_flags fun(any, integer)
@@ -960,16 +961,41 @@ describe('termkey', function()
 
     t.eq(termkey.TERMKEY_RES_NONE, termkey.termkey_getkey(tk, key)) -- getkey again yields RES_NONE
 
+    -- Split response
+    termkey.termkey_push_bytes(tk, '\x1b]52;c;SGVs', 11)
+
+    t.eq(termkey.TERMKEY_RES_AGAIN, termkey.termkey_getkey(tk, key)) -- getkey yields RES_AGAIN for split response
+    t.eq(true, termkey.termkey_response_pending(tk)) -- response is pending
+
+    termkey.termkey_push_bytes(tk, 'bG8=\x1b\\', 6)
+
+    t.eq(termkey.TERMKEY_RES_KEY, termkey.termkey_getkey(tk, key)) -- getkey yields RES_KEY for split response
+    t.eq(termkey.TERMKEY_TYPE_OSC, key.type) -- key.type for split response
+
     -- False alarm
     termkey.termkey_push_bytes(tk, '\x1bP', 2)
 
     t.eq(termkey.TERMKEY_RES_AGAIN, termkey.termkey_getkey(tk, key)) -- getkey yields RES_AGAIN for false alarm
+    t.eq(false, termkey.termkey_response_pending(tk)) -- no response is pending
 
     t.eq(termkey.TERMKEY_RES_KEY, termkey.termkey_getkey_force(tk, key)) -- getkey_force yields RES_KEY for false alarm
 
     t.eq(termkey.TERMKEY_TYPE_UNICODE, key.type) -- key.type for false alarm
     t.eq(string.byte('P'), key.code.codepoint) -- key.code.codepoint for false alarm
     t.eq(termkey.TERMKEY_KEYMOD_ALT, key.modifiers) -- key.modifiers for false alarm
+
+    -- Keys typed after Alt-]
+    termkey.termkey_push_bytes(tk, '\x1b]j', 3)
+
+    t.eq(termkey.TERMKEY_RES_AGAIN, termkey.termkey_getkey(tk, key)) -- getkey yields RES_AGAIN for Alt-]
+    t.eq(false, termkey.termkey_response_pending(tk)) -- no response is pending
+
+    termkey.termkey_getkey_force(tk, key) -- <M-]>
+    termkey.termkey_getkey_force(tk, key) -- j
+    termkey.termkey_push_bytes(tk, '\x1b]5\r', 4)
+
+    t.eq(termkey.TERMKEY_RES_AGAIN, termkey.termkey_getkey(tk, key)) -- getkey yields RES_AGAIN for Alt-]
+    t.eq(false, termkey.termkey_response_pending(tk)) -- no response is pending
 
     termkey.termkey_destroy(tk)
   end)
