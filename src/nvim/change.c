@@ -2184,6 +2184,9 @@ int get_last_leader_offset(char *line, char **flags)
           continue;
         }
         char *string = vim_strchr(part_buf2, ':');
+        if (string == NULL) {  // Missing ':'; ignore this part
+          continue;
+        }
         string++;
         while (ascii_iswhite(*string)) {
           string++;
