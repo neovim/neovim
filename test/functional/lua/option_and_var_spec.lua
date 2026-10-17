@@ -950,6 +950,27 @@ describe('lua stdlib', function()
             return vim.bo.tabstop
           end)
         end)
+
+        it(':get() does not fail in a non-modifiable buffer #42393', function()
+          command('setlocal fileencoding=utf-8 fileformat=unix')
+          command('setlocal nomodifiable')
+          eq_exec_lua({ 'utf-8', 'utf-8', 'unix' }, function()
+            return {
+              vim.opt_local.fileencoding:get(),
+              vim.opt.fileencoding:get(),
+              vim.opt_local.fileformat:get(),
+            }
+          end)
+          matches(
+            'E21:',
+            pcall_err(
+              api.nvim_set_option_value,
+              'fileencoding',
+              'latin1',
+              { scope = 'local', dry_run = true }
+            )
+          )
+        end)
       end)
 
       describe('key:value style options', function()

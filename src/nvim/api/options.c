@@ -433,7 +433,8 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
     }
   }
 
-  if (dry_run) {
+  // `_convert`: return the structured value without validation (used by vim.opt:get()).
+  if (dry_run && !opts->_convert) {
     const CharBuf errbuf = { (char[IOSIZE]){ 0 }, IOSIZE };
     optset_T args = {
       .os_idx = opt_idx,
@@ -451,7 +452,7 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
       optval_free(merged_val);
       return NIL;
     }
-  } else {
+  } else if (!dry_run) {
     WITH_SCRIPT_CONTEXT(channel_id, {
       set_option_value_for(opt_idx, merged_val, opt_flags, scope, to, operation == OP_NONE, err);
     });

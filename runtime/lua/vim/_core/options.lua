@@ -302,10 +302,11 @@ local function create_option_accessor(scope)
   option_mt = {
     get = function(self)
       -- `nvim_set_option_value(dry_run)` returns the value in its structured form.
+      -- `_convert` skips validation, e.g. 'fileencoding' with 'nomodifiable'. #42393
       return api.nvim_set_option_value(
         self._name,
         self._value,
-        { operation = 'set', scope = scope, dry_run = true }
+        { operation = 'set', scope = scope, dry_run = true, _convert = true }
       )
     end,
 
