@@ -56,7 +56,7 @@ describe('mbyte', function()
     local function test_seq(seq)
       local firstc = ffi.new('int[1]')
       local buf = ffi.new('char[32]')
-      lib.schar_get(buf, lib.utfc_ptr2schar(to_string(seq), firstc))
+      lib.schar_get(buf, lib.unittest_schar_from_cluster(to_string(seq), firstc))
       local str = ffi.string(buf)
       if 1 > 2 then -- for debugging
         local tbl = {}
@@ -79,7 +79,7 @@ describe('mbyte', function()
         eq(byte(c), test_seq { c })
       end
       for c = 128, 255 do
-        eq({ '', c }, test_seq { c })
+        eq({ '', -1 }, test_seq { c })
       end
     end)
 
@@ -90,11 +90,11 @@ describe('mbyte', function()
       eq(byte(0x7f), test_seq { 0x7f, 0x80 })
 
       -- No UTF-8 sequence
-      eq({ '', 0xc2 }, test_seq { 0xc2, 0x7f })
+      eq({ '', -1 }, test_seq { 0xc2, 0x7f })
       -- One UTF-8 character
       eq({ '\xc2\x80', 0x80 }, test_seq { 0xc2, 0x80 })
       -- No UTF-8 sequence
-      eq({ '', 0xc2 }, test_seq { 0xc2, 0xc0 })
+      eq({ '', -1 }, test_seq { 0xc2, 0xc0 })
     end)
 
     itp('3-byte sequences', function()
@@ -109,7 +109,7 @@ describe('mbyte', function()
       eq({ '\x7f', 0x7f }, test_seq { 0x7f, 0xcc, 0x80 })
 
       -- No UTF-8 sequence
-      eq({ '', 0xc2 }, test_seq { 0xc2, 0x7f, 0xcc })
+      eq({ '', -1 }, test_seq { 0xc2, 0x7f, 0xcc })
       -- Incomplete combining character
       eq({ '\xc2\x80', 0x80 }, test_seq { 0xc2, 0x80, 0xcc })
 
@@ -128,7 +128,7 @@ describe('mbyte', function()
       eq({ '\x29\xcc\x80', 0x29 }, test_seq { 0x29, 0xcc, 0x80, 0xcc })
 
       -- No UTF-8 sequence
-      eq({ '', 0xc2 }, test_seq { 0xc2, 0x7f, 0xcc, 0x80 })
+      eq({ '', -1 }, test_seq { 0xc2, 0x7f, 0xcc, 0x80 })
       -- No following UTF-8 character
       eq({ '\xc2\x80', 0x80 }, test_seq { 0xc2, 0x80, 0xcc, 0xcc })
       -- Combining character U+0301
@@ -201,7 +201,7 @@ describe('mbyte', function()
       )
 
       -- No UTF-8 sequence
-      eq({ '', 0xc2 }, test_seq { 0xc2, 0x7f, 0xcc, 0x80, 0x80 })
+      eq({ '', -1 }, test_seq { 0xc2, 0x7f, 0xcc, 0x80, 0x80 })
       -- No following UTF-8 character
       eq({ '\xc2\xbc', 0xbc }, test_seq { 0xc2, 0xbc, 0xcc, 0xcc, 0x80 })
       -- Combining character U+0301

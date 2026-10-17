@@ -133,6 +133,15 @@ static inline int basechar_cells_impl(CharInfo c)
   return c.value < 0 ? 4 : (c.value < 0x80 ? ascii2cells(c.value) : utf_char2cells(c.value));
 }
 
+/// When "c" is the first char of a string, determine if it needs to be prefixed
+/// by a space byte to be drawn correctly, and not merge with the space left of
+/// the string.
+static inline bool utf_iscomposing_first(int c)
+  FUNC_ATTR_PURE
+{
+  return c >= 128 && !utf8proc_grapheme_break(' ', c);
+}
+
 /// Return information about the cluster width next character.
 /// Composing and combining characters are considered a part of the current character.
 ///
@@ -146,6 +155,7 @@ static inline ClusterInfo utf_ClusterInfo(StrCharInfo cur)
     return (ClusterInfo) {
       .next = cur,
       .cells = dy_escape_width,
+      .first_compose = false,
     };
   }
 
@@ -157,7 +167,8 @@ static inline ClusterInfo utf_ClusterInfo(StrCharInfo cur)
         .ptr = (char *)next,
         .chr = (CharInfo){ .value = *next, .len = 1 },
       },
-      .cells = basechar_cells_impl(cur.chr)
+      .cells = basechar_cells_impl(cur.chr),
+      .first_compose = utf_iscomposing_first(cur.chr.value),
     };
   }
   int scratch = INT_MAX;
@@ -167,34 +178,22 @@ static inline ClusterInfo utf_ClusterInfo(StrCharInfo cur)
 static inline ClusterInfo utf_ClusterInfo_len(StrCharInfo cur, int *size)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
 {
-  // TODO(bfredl): this is knowingly a bit inconsistent with utf_ClusterInfo
-  // w.r.t control chars and truncated sequences
-  // main consumer of mb_string2cells_len is currently str_to_reg, and once
-  // it has been changed to behave more like buffer text, these edge cases
-  // will disappear.
-
   *size -= cur.chr.len;
-  uint8_t *next = (uint8_t *)(cur.ptr + cur.chr.len);
-  if (EXPECT(*size == 0, false)) {
+  uint8_t *nextptr = (uint8_t *)(cur.ptr + cur.chr.len);
+  int nextval = (*size == 0) ? -1 : *nextptr;
+
+  // handle ASCII and EOS case inline
+  if (EXPECT(nextval < 0x80, true)) {
     return (ClusterInfo) {
       .next = (StrCharInfo){
-        .ptr = (const char *)next,  // one past the end, but caller should check
-        .chr = (CharInfo){ .value = -1, .len = 1 },
+        .ptr = (const char *)nextptr,
+        .chr = (CharInfo){ .value = nextval, .len = 1 },
       },
       .cells = basechar_cells_impl(cur.chr),
+      .first_compose = utf_iscomposing_first(cur.chr.value),
     };
   }
 
-  // handle ASCII case inline
-  if (EXPECT(*next < 0x80U, true)) {
-    return (ClusterInfo) {
-      .next = (StrCharInfo){
-        .ptr = (char *)next,
-        .chr = (CharInfo){ .value = *next, .len = 1 },
-      },
-      .cells = basechar_cells_impl(cur.chr),
-    };
-  }
   return utf_ClusterInfo_impl(cur, size);
 }
 

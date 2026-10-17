@@ -71,6 +71,7 @@ typedef struct {
 typedef struct {
   StrCharInfo next;  ///< char after cluster
   int cells;         ///< cell width of cluster
+  bool first_compose;
 } ClusterInfo;
 
 typedef struct {
