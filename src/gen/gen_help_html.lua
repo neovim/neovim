@@ -148,6 +148,7 @@ local new_layout = {
   ['starting.txt'] = true,
   ['support.txt'] = true,
   ['terminal.txt'] = true,
+  ['treesitter.txt'] = true,
   ['tui.txt'] = true,
   ['ui.txt'] = true,
   ['vim_diff.txt'] = true,
