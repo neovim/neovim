@@ -2248,6 +2248,16 @@ describe('TUI', function()
       {109:^^^^^^^                                           }|
       {5:-- TERMINAL --}                                    |*2
     ]])
+
+    -- Default 'termpastefilter' keeps TAB chars.
+    feed_data('\027[200~\ttab\027[201~')
+    screen:expect([[
+      tty ready                                         |
+      hallo   tab^                                       |
+                                                        |*2
+      {109:^^^^^^^                                           }|
+      {5:-- TERMINAL --}                                    |*2
+    ]])
   end)
 
   it('paste: normal-mode (+CRLF #10872)', function()

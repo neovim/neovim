@@ -266,6 +266,8 @@ DEFAULTS
 
 • 'rulerformat' default is exposed as a statusline expression (previously it
   was implemented as an internal C routine).
+• 'termpastefilter' no longer removes TAB chars ("HT") when pasting into
+  |:terminal|.
 
 DIAGNOSTICS
 
