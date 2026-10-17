@@ -8,7 +8,7 @@ local nvim_on = require('vim._core.util').nvim_on
 local M = {}
 
 local debounce_ms = 100
---- @type table<integer, fun()> bufnr -> cancel function
+--- @type table<integer, { path: string, cancel: fun() }> bufnr -> watched file
 local watchers = {}
 --- @type table<integer, uv.uv_timer_t> bufnr -> debounce timer
 local timers = {}
@@ -27,9 +27,9 @@ end
 
 --- @private
 --- @param bufnr integer
---- @return boolean
-function M._is_watching(bufnr)
-  return watchers[bufnr] ~= nil
+--- @return string? path Watched file, if any.
+function M._watched_path(bufnr)
+  return watchers[bufnr] and watchers[bufnr].path
 end
 
 --- Sets the 'busy' option on a `pending` buffer. Idempotent: if `pending` and `pending_busy`
@@ -100,9 +100,9 @@ end
 --- @param bufnr integer
 local function stop_watcher(bufnr)
   set_pending(bufnr, false)
-  local cancel = watchers[bufnr]
-  if cancel then
-    cancel()
+  local watcher = watchers[bufnr]
+  if watcher then
+    watcher.cancel()
     watchers[bufnr] = nil
   end
   local timer = timers[bufnr]
@@ -160,14 +160,14 @@ local function ensure_watcher(bufnr)
     end)
   end)
 
-  watchers[bufnr] = cancel
+  watchers[bufnr] = { path = name, cancel = cancel }
 end
 
 function M.enable()
   local group = vim.api.nvim_create_augroup('nvim.autoread', { clear = true })
 
-  -- (Re)start watcher when a file is loaded or written.
-  nvim_on({ 'BufReadPost', 'BufWritePost' }, group, function(args)
+  -- (Re)start watcher when a file is loaded, written, or renamed.
+  nvim_on({ 'BufReadPost', 'BufWritePost', 'BufFilePost' }, group, function(args)
     ensure_watcher(args.buf)
   end)
 
