@@ -143,7 +143,9 @@ function M.query(caps, opts, on_response)
       if not seq then
         return -- Ignore malformed responses and leave the capability pending.
       end
-      seq = seq:gsub('\\E', '\027'):gsub('%%p%d', ''):gsub('\\(%d+)', string.char)
+      seq = seq:gsub('\\E', '\027'):gsub('%%p%d', ''):gsub('\\([0-7][0-7][0-7])', function(digits)
+        return string.char(assert(tonumber(digits, 8)))
+      end)
     end
 
     on_response(cap, true, seq)
