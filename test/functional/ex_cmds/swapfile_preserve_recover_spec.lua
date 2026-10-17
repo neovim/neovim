@@ -31,6 +31,10 @@ local retry = t.retry
 local write_file = t.write_file
 local expect_exitcode = tt.expect_exitcode
 
+local function slug(file, ext)
+  return vim.fs.slug(fn.fnamemodify(file, ':p'), { maxlen = 64 }) .. (ext or '.swp')
+end
+
 describe(':recover', function()
   before_each(clear)
 
@@ -96,9 +100,9 @@ describe("preserve and (R)ecover with custom 'directory'", function()
 
     expect('sometext')
     -- swapfile from session 1 should end in .swp
-    eq(testfile .. '.swp', string.match(swappath1, '[^%%]+$'))
+    eq(slug(testfile), string.match(swappath1, '[^/]+$'))
     -- swapfile from session 2 should end in .swo
-    eq(testfile .. '.swo', string.match(swappath2, '[^%%]+$'))
+    eq(slug(testfile, '.swo'), string.match(swappath2, '[^/]+$'))
     -- Verify that :swapname was not truncated (:help 'shortmess').
     ok(nil == string.find(swappath1, '%.%.%.'))
     ok(nil == string.find(swappath2, '%.%.%.'))
@@ -323,16 +327,12 @@ describe('swapfile detection', function()
     exec(init)
     command('autocmd! nvim.swapfile') -- Delete the default handler (which skips the dialog).
 
+    local expected_name = ('.*/Xtest_swapdialog_dir/%s'):format(pesc(slug(testfile)))
     -- With shortmess+=F
     command('set shortmess+=F')
     feed(':edit ' .. testfile .. '<CR>')
     screen2:expect {
-      any = [[E325: ATTENTION.*]]
-        .. '\n'
-        .. [[Found a swap file by the name ".*]]
-        .. [[Xtest_swapdialog_dir[/\].*]]
-        .. testfile
-        .. [[%.swp"]],
+      any = ([[Found a swap file by the name "%s"]]):format(expected_name),
     }
     feed('e') -- Chose "Edit" at the swap dialog.
     screen2:expect(expected_no_dialog)
@@ -340,10 +340,7 @@ describe('swapfile detection', function()
     -- With :silent and shortmess+=F
     feed(':silent edit %<CR>')
     screen2:expect {
-      any = [[Found a swap file by the name ".*]]
-        .. [[Xtest_swapdialog_dir[/\].*]]
-        .. testfile
-        .. [[%.swp"]],
+      any = ([[Found a swap file by the name "%s"]]):format(expected_name),
     }
     feed('e') -- Chose "Edit" at the swap dialog.
     screen2:expect(expected_no_dialog)
@@ -351,10 +348,7 @@ describe('swapfile detection', function()
     -- With :silent! and shortmess+=F
     feed(':silent! edit %<CR>')
     screen2:expect {
-      any = [[Found a swap file by the name ".*]]
-        .. [[Xtest_swapdialog_dir[/\].*]]
-        .. testfile
-        .. [[%.swp"]],
+      any = ([[Found a swap file by the name "%s"]]):format(expected_name),
     }
     feed('e') -- Chose "Edit" at the swap dialog.
     screen2:expect(expected_no_dialog)
@@ -362,10 +356,7 @@ describe('swapfile detection', function()
     -- With API (via eval/Vimscript) call and shortmess+=F
     feed(':call nvim_command("edit %")<CR>')
     screen2:expect {
-      any = [[Found a swap file by the name ".*]]
-        .. [[Xtest_swapdialog_dir[/\].*]]
-        .. testfile
-        .. [[%.swp"]],
+      any = ([[Found a swap file by the name "%s"]]):format(expected_name),
     }
     feed('e') -- Chose "Edit" at the swap dialog.
     screen2:expect({ any = pesc('E5555: API call: Vim(edit):E325: ATTENTION') })
@@ -375,10 +366,7 @@ describe('swapfile detection', function()
     -- With API call and shortmess+=F
     async_meths.nvim_command('edit %')
     screen2:expect {
-      any = [[Found a swap file by the name ".*]]
-        .. [[Xtest_swapdialog_dir[/\].*]]
-        .. testfile
-        .. [[%.swp"]],
+      any = ([[Found a swap file by the name "%s"]]):format(expected_name),
     }
     feed('e') -- Chose "Edit" at the swap dialog.
     expect_msg_seq({
@@ -789,7 +777,7 @@ describe('swapfile', function()
       },
       merge = false,
     })
-    local escaped_name = ('%s/%s.swp'):format(swapdir, dos_path:gsub('[:/]', '%%'))
+    local escaped_name = ('%s/%s'):format(swapdir, slug(dos_path))
     eq(escaped_name, fn.swapname('%'))
 
     command('bw!')
@@ -804,7 +792,7 @@ describe('swapfile', function()
     command('bw!')
     local device_unc_path = ('//?/UNC/localhost/%s$%s/file.txt'):format(drive, path)
     api.nvim_buf_set_name(0, device_unc_path)
-    eq(('%s/%%%s.swp'):format(swapdir, device_unc_path:sub(8):gsub('/', '%%')), fn.swapname('%'))
+    eq(('%s/%s'):format(swapdir, slug(device_unc_path)), fn.swapname('%'))
 
     command('bw!')
     -- Volume GUID form, like \\?\Volume{d4857377-2ac4-45d8-a4cb-9b2e447fd02e}\
