@@ -33,7 +33,6 @@ If you are working in a special language mode when inserting text, see the
 all the time.
 
 char            action  ~
------------------------------------------------------------------------ ~
 						*i_CTRL-[* *i_<Esc>*
 <Esc> or CTRL-[	End insert or Replace mode, go back to Normal mode.  Finish
 		abbreviation.
@@ -47,11 +46,11 @@ CTRL-C		Quit insert mode, go back to Normal mode.  Do not check for
 		abbreviations.  Does not trigger the |InsertLeave| autocommand
 		event.
 
-						*i_CTRL-@*
-CTRL-@		Insert previously inserted text and stop insert.
+CTRL-@							*i_CTRL-@*
+		Insert previously inserted text and stop insert.
 
-						*i_CTRL-A*
-CTRL-A		Insert previously inserted text.
+CTRL-A							*i_CTRL-A*
+		Insert previously inserted text.
 
 						*i_CTRL-H* *i_<BS>* *i_BS*
 <BS> or CTRL-H	Delete the character before the cursor (see |i_backspacing|
@@ -183,23 +182,23 @@ CTRL-R CTRL-P {register}			*i_CTRL-R_CTRL-P*
 		text from the register.
 		Does not replace characters in |Replace-mode|!
 
-						*i_CTRL-T*
-CTRL-T		Insert one shiftwidth of indent at the start of the current
+CTRL-T							*i_CTRL-T*
+		Insert one shiftwidth of indent at the start of the current
 		line.  The indent is always rounded to a 'shiftwidth'.
 						*i_CTRL-D*
 CTRL-D		Delete one shiftwidth of indent at the start of the current
 		line.  The indent is always rounded to a 'shiftwidth'.
 
-						*i_0_CTRL-D*
-0 CTRL-D	Delete all indent in the current line.
+0 CTRL-D						*i_0_CTRL-D*
+		Delete all indent in the current line.
 
-						*i_^_CTRL-D*
-^ CTRL-D	Delete all indent in the current line.  The indent is
+^ CTRL-D						*i_^_CTRL-D*
+		Delete all indent in the current line.  The indent is
 		restored in the next line.  This is useful when inserting a
 		label.
 
-						*i_CTRL-V*
-CTRL-V		Insert next non-digit literally.  It's also possible to enter
+CTRL-V							*i_CTRL-V*
+		Insert next non-digit literally.  It's also possible to enter
 		the decimal, octal or hexadecimal value of a character
 		|i_CTRL-V_digit|.
 		The characters typed right after CTRL-V are not considered for
@@ -210,13 +209,14 @@ CTRL-V		Insert next non-digit literally.  It's also possible to enter
 		Note: When CTRL-V is mapped (e.g., to paste text) you can
 		often use CTRL-Q instead |i_CTRL-Q|.
 
-						*i_CTRL-Q*
-CTRL-Q		Same as CTRL-V.
+CTRL-Q							*i_CTRL-Q*
+		Same as CTRL-V.
 		Note: Some terminal connections may eat CTRL-Q, it doesn't
 		work then.  It does work in the GUI.
 
-CTRL-SHIFT-V				*i_CTRL-SHIFT-V* *i_CTRL-SHIFT-Q*
-CTRL-SHIFT-Q	Works just like CTRL-V, but do not try to include the CTRL
+CTRL-SHIFT-V						*i_CTRL-SHIFT-V*
+CTRL-SHIFT-Q						*i_CTRL-SHIFT-Q*
+		Works just like CTRL-V, but do not try to include the CTRL
 		modifier into the key.
 		Note: When CTRL-SHIFT-V is intercepted by your system (e.g.,
 		to paste text) you can often use CTRL-SHIFT-Q instead.
@@ -227,15 +227,15 @@ CTRL-X		Enter CTRL-X mode.  This is a sub-mode where commands can
 		be given to complete words or scroll the window.  See
 		|i_CTRL-X| and |ins-completion|.
 
-						*i_CTRL-E*
-CTRL-E		Insert the character which is below the cursor.
+CTRL-E							*i_CTRL-E*
+		Insert the character which is below the cursor.
 						*i_CTRL-Y*
 CTRL-Y		Insert the character which is above the cursor.
 		Note that for CTRL-E and CTRL-Y 'textwidth' is not used, to be
 		able to copy characters from a long line.
 
-						*i_CTRL-_*
-CTRL-_		Switch between insert direction, by toggling 'revins'.
+CTRL-_							*i_CTRL-_*
+		Switch between insert direction, by toggling 'revins'.
 
 		CTRL-_ moves the cursor to the end of the typed text.
 
@@ -244,8 +244,8 @@ CTRL-_		Switch between insert direction, by toggling 'revins'.
 		Please refer to |rileft.txt| for more information about
 		right-to-left mode.
 
-						*i_CTRL-^*
-CTRL-^		Toggle the use of typing language characters.
+CTRL-^							*i_CTRL-^*
+		Toggle the use of typing language characters.
 		When language |:lmap| mappings are defined:
 		- If 'iminsert' is 1 (langmap mappings used) it becomes 0 (no
 		  langmap mappings used).
@@ -262,8 +262,8 @@ CTRL-^		Toggle the use of typing language characters.
 		that are different from what the keyboard produces.  The
 		'keymap' option can be used to install a whole number of them.
 
-						*i_CTRL-]*
-CTRL-]		Trigger abbreviation, without inserting a character.
+CTRL-]							*i_CTRL-]*
+		Trigger abbreviation, without inserting a character.
 
 						*i_<Insert>*
 <Insert>	Toggle between Insert and Replace mode.
@@ -321,12 +321,12 @@ commands do keyword completion; see |ins-completion|.
 Two commands can be used to scroll the window up or down, without exiting
 insert mode:
 
-						*i_CTRL-X_CTRL-E*
-CTRL-X CTRL-E		scroll window one line up.
+CTRL-X CTRL-E						*i_CTRL-X_CTRL-E*
+			scroll window one line up.
 			When doing completion look here: |complete_CTRL-E|
 
-						*i_CTRL-X_CTRL-Y*
-CTRL-X CTRL-Y		scroll window one line down.
+CTRL-X CTRL-Y						*i_CTRL-X_CTRL-Y*
+			scroll window one line down.
 			When doing completion look here: |complete_CTRL-Y|
 
 After CTRL-X is pressed, each CTRL-E (CTRL-Y) scrolls the window up (down) by
@@ -717,8 +717,8 @@ completion operation: >lua
 
 Completing whole lines					*compl-whole-line*
 
-							*i_CTRL-X_CTRL-L*
-CTRL-X CTRL-L		Search backwards for a line that starts with the
+CTRL-X CTRL-L						*i_CTRL-X_CTRL-L*
+			Search backwards for a line that starts with the
 			same characters as those in the current line before
 			the cursor.  Indent is ignored.  The matching line is
 			inserted in front of the cursor.
@@ -739,9 +739,8 @@ CTRL-X CTRL-L		Search backwards for a line that starts with the
 
 Completing keywords in current file			*compl-current*
 
-							*i_CTRL-X_CTRL-P*
-							*i_CTRL-X_CTRL-N*
-CTRL-X CTRL-N		Search forwards for words that start with the keyword
+CTRL-X CTRL-N				*i_CTRL-X_CTRL-P* *i_CTRL-X_CTRL-N*
+			Search forwards for words that start with the keyword
 			in front of the cursor.  The found keyword is inserted
 			in front of the cursor.
 
@@ -817,8 +816,8 @@ for those lines starting with this word.
 
 Completing keywords in 'dictionary'			*compl-dictionary*
 
-							*i_CTRL-X_CTRL-K*
-CTRL-X CTRL-K		Search the files given with the 'dictionary' option
+CTRL-X CTRL-K						*i_CTRL-X_CTRL-K*
+			Search the files given with the 'dictionary' option
 			for words that start with the keyword in front of the
 			cursor.  This is like CTRL-N, but only the dictionary
 			files are searched, not the current file.  The found
@@ -840,8 +839,8 @@ CTRL-X CTRL-K		Search the files given with the 'dictionary' option
 
 Completing words in 'thesaurus'				*compl-thesaurus*
 
-							*i_CTRL-X_CTRL-T*
-CTRL-X CTRL-T		Works as CTRL-X CTRL-K, but in a special way.  It uses
+CTRL-X CTRL-T						*i_CTRL-X_CTRL-T*
+			Works as CTRL-X CTRL-K, but in a special way.  It uses
 			the 'thesaurus' option instead of 'dictionary'.  If a
 			match is found in the thesaurus file, all the
 			remaining words on the same line are included as
@@ -912,8 +911,8 @@ Completing keywords in the current and included files	*compl-keyword*
 The 'include' option is used to specify a line that contains an include file
 name.  The 'path' option is used to search for include files.
 
-							*i_CTRL-X_CTRL-I*
-CTRL-X CTRL-I		Search for the first keyword in the current and
+CTRL-X CTRL-I						*i_CTRL-X_CTRL-I*
+			Search for the first keyword in the current and
 			included files that starts with the same characters
 			as those before the cursor.  The matched keyword is
 			inserted in front of the cursor.
@@ -973,8 +972,8 @@ The 'define' option is used to specify a line that contains a definition.
 The 'include' option is used to specify a line that contains an include file
 name.  The 'path' option is used to search for include files.
 
-							*i_CTRL-X_CTRL-D*
-CTRL-X CTRL-D		Search in the current and included files for the
+CTRL-X CTRL-D						*i_CTRL-X_CTRL-D*
+			Search in the current and included files for the
 			first definition (or macro) name that starts with
 			the same characters as before the cursor.  The found
 			definition name is inserted in front of the cursor.
@@ -998,8 +997,8 @@ Completion is context-sensitive.  It works like on the Command-line.  It
 completes an Ex command as well as its arguments.  This is useful when writing
 a Vim script.
 
-							*i_CTRL-X_CTRL-V*
-CTRL-X CTRL-V		Guess what kind of item is in front of the cursor and
+CTRL-X CTRL-V						*i_CTRL-X_CTRL-V*
+			Guess what kind of item is in front of the cursor and
 			find the first match for it.
 			Note: When CTRL-V is mapped you can often use CTRL-Q
 			instead of |i_CTRL-Q|.
@@ -1040,8 +1039,8 @@ Completion is done by a function that can be defined by the user with the
 'completefunc' option.  See below for how the function is called and an
 example |complete-functions|.
 
-							*i_CTRL-X_CTRL-U*
-CTRL-X CTRL-U		Guess what kind of item is in front of the cursor and
+CTRL-X CTRL-U						*i_CTRL-X_CTRL-U*
+			Guess what kind of item is in front of the cursor and
 			find the first match for it.
 	CTRL-U	or
 	CTRL-N		Use the next match.  This match replaces the previous
@@ -1061,8 +1060,8 @@ For remarks about specific filetypes see |compl-omni-filetypes|.
 More completion scripts will appear, check www.vim.org.  Currently there is a
 first version for C++.
 
-							*i_CTRL-X_CTRL-O*
-CTRL-X CTRL-O		Guess what kind of item is in front of the cursor and
+CTRL-X CTRL-O						*i_CTRL-X_CTRL-O*
+			Guess what kind of item is in front of the cursor and
 			find the first match for it.
 	CTRL-O	or
 	CTRL-N		Use the next match.  This match replaces the previous
@@ -1082,9 +1081,9 @@ before the cursor is used for suggestions, even though it isn't badly spelled.
 NOTE: CTRL-S suspends display in many Unix terminals.  Use 's' instead.  Type
 CTRL-Q to resume displaying.
 
-						*i_CTRL-X_CTRL-S* *i_CTRL-X_s*
-CTRL-X CTRL-S   or
-CTRL-X s		Locate the word in front of the cursor and find the
+CTRL-X CTRL-S						*i_CTRL-X_CTRL-S*
+CTRL-X s						*i_CTRL-X_s*
+			Locate the word in front of the cursor and find the
 			first spell suggestion for it.
 	CTRL-S	or
 	CTRL-N		Use the next suggestion.  This replaces the previous
@@ -1096,15 +1095,15 @@ CTRL-X s		Locate the word in front of the cursor and find the
 
 Completing from different sources			*compl-generic*
 
-							*i_CTRL-N*
-CTRL-N			Find the next match for a word ending at the cursor,
+CTRL-N							*i_CTRL-N*
+			Find the next match for a word ending at the cursor,
 			using the sources specified in the 'complete' option.
 			All sources complete from keywords, except functions,
 			which may complete from non-keyword.  The matched
 			text is inserted before the cursor.
 
-							*i_CTRL-P*
-CTRL-P			Same as CTRL-N, but find the previous match.
+CTRL-P							*i_CTRL-P*
+			Same as CTRL-N, but find the previous match.
 
 	CTRL-N		Search forward through the matches and insert the
 			next one.
@@ -1120,8 +1119,8 @@ CTRL-P			Same as CTRL-N, but find the previous match.
 
 Stop completion						*compl-stop*
 
-							*i_CTRL-X_CTRL-Z*
-CTRL-X CTRL-Z		Stop completion without changing the text.
+CTRL-X CTRL-Z						*i_CTRL-X_CTRL-Z*
+			Stop completion without changing the text.
 
 
 AUTOCOMPLETION						*ins-autocompletion*
@@ -1949,30 +1948,31 @@ to get the name of the last open tag (b:unaryTagsStack has to be defined): >
 The following commands can be used to insert new text into the buffer.  They
 can all be undone and repeated with the "." command.
 
-							*a*
-a			Append text after the cursor [count] times.  If the
+a							*a*
+			Append text after the cursor [count] times.  If the
 			cursor is in the first column of an empty line Insert
 			starts there.  But not when 'virtualedit' is set!
 
-							*A*
-A			Append text at the end of the line [count] times.
+A							*A*
+			Append text at the end of the line [count] times.
 			For using "A" in Visual block mode see |v_b_A|.
 
-<insert>	or				*i* *insert* *<Insert>*
-i			Insert text before the cursor [count] times.
+<insert>						*<Insert>*
+i							*i* *insert*
+			Insert text before the cursor [count] times.
 			When using CTRL-O in Insert mode |i_CTRL-O| the count
 			is not supported.
 
-							*I*
-I			Insert text before the first non-blank in the line
+I							*I*
+			Insert text before the first non-blank in the line
 			[count] times.
 			For using "I" in Visual block mode see |v_b_I|.
 
-							*gI*
-gI			Insert text in column 1 [count] times.
+gI							*gI*
+			Insert text in column 1 [count] times.
 
-							*gi*
-gi			Insert text in the same position as where Insert mode
+gi							*gi*
+			Insert text in the same position as where Insert mode
 			was stopped last time in the current buffer.
 			This uses the |'^| mark.  It's different from "`^i"
 			when the mark is past the end of the line.
@@ -1981,12 +1981,12 @@ gi			Insert text in the same position as where Insert mode
 			When the |:keepjumps| command modifier is used the |'^|
 			mark won't be changed.
 
-							*o*
-o			Begin a new line below the cursor and insert text,
+o							*o*
+			Begin a new line below the cursor and insert text,
 			repeat [count] times.
 
-							*O*
-O			Begin a new line above the cursor and insert text,
+O							*O*
+			Begin a new line above the cursor and insert text,
 			repeat [count] times.
 
 These commands are used to start inserting text.  You can end insert mode with
@@ -1995,12 +1995,12 @@ The effect of [count] takes place after Insert mode is exited.
 
 The following |default-mappings| insert text, but stay in normal mode:
 
-							*]<Space>*
-]<Space>		Insert an empty line below the cursor without leaving
+]<Space>						*]<Space>*
+			Insert an empty line below the cursor without leaving
 			Normal mode, repeat [count] times.
 
-							*[<Space>*
-[<Space>		Insert an empty line above the cursor without leaving
+[<Space>						*[<Space>*
+			Insert an empty line above the cursor without leaving
 			Normal mode, repeat [count] times.
 
 When 'autoindent' is on, the indent for a new line is obtained from the
@@ -2017,15 +2017,15 @@ too long when appending characters a line break is automatically inserted.
 ==============================================================================
 9. Ex insert commands					*inserting-ex*
 
-							*:a* *:append*
-:{range}a[ppend][!]	Insert several lines of text below the specified
+:{range}a[ppend][!]					*:a* *:append*
+			Insert several lines of text below the specified
 			line.  If the {range} is missing, the text will be
 			inserted after the current line.
 			Adding [!] toggles 'autoindent' for the time this
 			command is executed.
 
-							*:i* *:in* *:insert*
-:{range}i[nsert][!]	Insert several lines of text above the specified
+:{range}i[nsert][!]					*:i* *:in* *:insert*
+			Insert several lines of text above the specified
 			line.  If the {range} is missing, the text will be
 			inserted before the current line.
 			Adding [!] toggles 'autoindent' for the time this
@@ -2049,8 +2049,8 @@ NOTE: These commands cannot be used with |:global| or |:vglobal|.
 ":append" and ":insert" don't work properly in between ":if" and
 ":endif", ":for" and ":endfor", ":while" and ":endwhile".
 
-							*:start* *:startinsert*
-:star[tinsert][!]	Start Insert mode (or |Terminal-mode| in a |terminal|
+:star[tinsert][!]				*:start* *:startinsert*
+			Start Insert mode (or |Terminal-mode| in a |terminal|
 			buffer) just after executing this command.
 			Works like typing "i" in Normal mode.  When the ! is
 			included it works like "A", append to the line.
@@ -2060,14 +2060,14 @@ NOTE: These commands cannot be used with |:global| or |:vglobal|.
 			or script is finished.
 			This command does not work from |:normal|.
 
-							*:stopi* *:stopinsert*
-:stopi[nsert]		Stop Insert mode or |Terminal-mode| as soon as
+:stopi[nsert]						*:stopi* *:stopinsert*
+			Stop Insert mode or |Terminal-mode| as soon as
 			possible.  Works like typing <Esc> in Insert mode.
 			Can be used in an autocommand, example: >
 				:au BufEnter scratch stopinsert
 <
-					*replacing-ex* *:startreplace*
-:startr[eplace][!]	Start Replace mode just after executing this command.
+:startr[eplace][!]				*replacing-ex* *:startreplace*
+			Start Replace mode just after executing this command.
 			Works just like typing "R" in Normal mode.  When the
 			! is included it acts just like "$R" had been typed
 			(ie. begin replace mode at the end-of-line).  Other-
@@ -2076,15 +2076,14 @@ NOTE: These commands cannot be used with |:global| or |:vglobal|.
 			script that the replacement will only start after
 			the function or script is finished.
 
-							*:startgreplace*
-:startg[replace][!]	Just like |:startreplace|, but use Virtual Replace
+:startg[replace][!]					*:startgreplace*
+			Just like |:startreplace|, but use Virtual Replace
 			mode, like with |gR|.
 
 ==============================================================================
 10. Inserting a file					*inserting-file*
 
-							*:r* *:re* *:read*
-:r[ead] [++opt] [name]
+:r[ead] [++opt] [name]					*:r* *:re* *:read*
 			Insert the file [name] (default: current file) below
 			the cursor.
 			See |++opt| for the possible values of [++opt].
@@ -2094,8 +2093,7 @@ NOTE: These commands cannot be used with |:global| or |:vglobal|.
 			the specified line.
 			See |++opt| for the possible values of [++opt].
 
-							*:r!* *:read!*
-:[range]r[ead] [++opt] !{cmd}
+:[range]r[ead] [++opt] !{cmd}				*:r!* *:read!*
 			Execute {cmd} and insert its standard output below
 			the cursor or the specified line.  A temporary file is
 			used to store the output of the command which is then

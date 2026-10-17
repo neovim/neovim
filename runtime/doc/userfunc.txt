@@ -36,8 +36,8 @@ instead of "s:" when the mapping is expanded outside of the script.
 There are only script-local functions, no buffer-local or window-local
 functions.
 
-			*:fu* *:function* *E128* *E129* *E123* *E454* *E1058* *E1068*
-:fu[nction]		List all functions and their arguments.
+:fu[nction]	*:fu* *:function* *E128* *E129* *E123* *E454* *E1058* *E1068*
+			List all functions and their arguments.
 
 :fu[nction][!] {name}	List function {name}, annotated with line numbers
 			unless "!" is given.
@@ -147,8 +147,7 @@ See |:verbose-cmd| for more information.
 			implies that the effect of |:nohlsearch| is undone
 			when the function returns.
 
-				*:endf* *:endfunction* *E126* *E193* *W22*
-:endf[unction] [argument]
+:endf[unction] [argument]	*:endf* *:endfunction* *E126* *E193* *W22*
 			The end of a function definition.  Best is to put it
 			on a line by its own, without [argument].
 
@@ -166,8 +165,7 @@ See |:verbose-cmd| for more information.
 			command, use line breaks instead of |:bar|: >
 				:exe "func Foo()\necho 'foo'\nendfunc"
 <
-				*:delf* *:delfunction* *E130* *E131* *E933*
-:delf[unction][!] {name}
+:delf[unction][!] {name}	*:delf* *:delfunction* *E130* *E131* *E933*
 			Delete function {name}.
 			{name} can also be a |Dictionary| entry that is a
 			|Funcref|: >

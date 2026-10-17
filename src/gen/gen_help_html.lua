@@ -98,17 +98,22 @@ local new_layout = {
   ['dev_tools.txt'] = true,
   ['dev_vimpatch.txt'] = true,
   ['diagnostic.txt'] = true,
+  ['digraph.txt'] = true,
   ['faq.txt'] = true,
+  ['fold.txt'] = true,
   ['ft_hare.txt'] = true,
   ['ft_ps1.txt'] = true,
   ['ft_raku.txt'] = true,
+  ['ft_rust.txt'] = true,
   ['gui.txt'] = true,
   ['health.txt'] = true,
   ['help.txt'] = true,
   ['helphelp.txt'] = true,
+  ['if_perl.txt'] = true,
   ['index.txt'] = true,
   ['intro.txt'] = true,
   ['job_control.txt'] = true,
+  ['l10n-arabic.txt'] = true,
   ['l10n-russian.txt'] = true,
   ['l10n-vietnamese.txt'] = true,
   ['lsp.txt'] = true,
@@ -119,6 +124,7 @@ local new_layout = {
   ['lua.txt'] = true,
   ['luaref.txt'] = true,
   ['luvref.txt'] = true,
+  ['mlang.txt'] = true,
   ['news-0.10.txt'] = true,
   ['news-0.11.txt'] = true,
   ['news-0.12.txt'] = true,
@@ -133,11 +139,16 @@ local new_layout = {
   ['pi_tutor.txt'] = true,
   ['plugins.txt'] = true,
   ['provider.txt'] = true,
+  ['recover.txt'] = true,
+  ['remote.txt'] = true,
   ['remote_plugin.txt'] = true,
+  ['repeat.txt'] = true,
   ['rileft.txt'] = true,
+  ['scroll.txt'] = true,
   ['starting.txt'] = true,
   ['support.txt'] = true,
   ['terminal.txt'] = true,
+  ['treesitter.txt'] = true,
   ['tui.txt'] = true,
   ['ui.txt'] = true,
   ['vim_diff.txt'] = true,
@@ -355,14 +366,6 @@ local function get_helppage_html(f, with_extension)
   end
 
   return (f:gsub('%.txt$', '')) .. (with_extension and '.html' or '/')
-end
-
---- Counts leading spaces (tab=8) to decide the indent size of multiline text.
----
---- Blank lines (empty or whitespace-only) are ignored.
-local function get_indent(s)
-  local _, indent = vim.text.indent(0, s, { expandtab = 8 })
-  return indent
 end
 
 --- Removes the common indent level, after expanding tabs to 8 spaces.
@@ -720,6 +723,7 @@ local function ts_node_to_html(root, level, lang_tree, headings, opt, stats)
   end
 
   local text = ''
+  local parts = {} ---@type string[] HTML of each named child.
   local trimmed ---@type string
   if root:named_child_count() == 0 or node_name == 'ERROR' then
     text = node_text()
@@ -729,10 +733,10 @@ local function ts_node_to_html(root, level, lang_tree, headings, opt, stats)
     -- Process children and join them with whitespace.
     for node, _ in root:iter_children() do
       if node:named() then
-        local r = ts_node_to_html(node, level + 1, lang_tree, headings, opt, stats)
-        text = string.format('%s%s', text, r)
+        parts[#parts + 1] = ts_node_to_html(node, level + 1, lang_tree, headings, opt, stats)
       end
     end
+    text = table.concat(parts)
     trimmed = trim(text)
   end
 
@@ -827,6 +831,23 @@ local function ts_node_to_html(root, level, lang_tree, headings, opt, stats)
     if parent == 'codeblock' or parent == 'code' then
       return text -- Includes its newline.
     end
+
+    -- Tags at EOL (not listitem) after Tab/2+ spaces are right-aligned, own div. |help-tag-heading|
+    local t = #parts + 1 -- First trailing tag.
+    while t > 1 and assert(root:named_child(t - 2)):type() == 'tag' do
+      t = t - 1
+    end
+    local tags = table.concat(parts, '', t)
+    local gap = tags:match('^%s*')
+    local before = table.concat(parts, '', 1, t - 1)
+    local tagspan = ('<span class="help-tag-right">%s</span>'):format(trim(tags))
+    local is_heading = parent == 'block' and trim(tags) ~= '' and (#gap >= 2 or gap:find('\t'))
+    if is_heading and opt.old then
+      return ('%s%s%s\n'):format(before, gap, tagspan) -- Preformatted: the newline ends the line.
+    elseif is_heading then
+      return ('<div class="help-tag-heading">%s%s</div>\n'):format(before, tagspan)
+    end
+
     -- XXX: Avoid newlines (too much whitespace) after block elements in old (preformatted) layout.
     local div = opt.old
       and root:child(0)
@@ -923,14 +944,11 @@ local function ts_node_to_html(root, level, lang_tree, headings, opt, stats)
       code = ('<pre>%s</pre>'):format(trim(trim_indent(text), 2))
     end
     return code
-  elseif node_name == 'tag' then -- anchor, h4 pseudo-heading
+  elseif node_name == 'tag' then -- anchor
     if root:has_error() then
       return text
     end
     local in_heading = vim.list_contains({ 'h1', 'h2', 'h3' }, parent)
-    local raw = getws(root, opt.buf) .. node_text(root, false) -- Without `conceal` padding.
-    local h4 = not in_heading and not next_ and get_indent(raw) > 8 -- h4 pseudo-heading
-    local cssclass = h4 and 'help-tag-right' or 'help-tag'
     local tagname = node_text(root:child(1), false)
     if vim.tbl_count(stats.first_tags) < 2 then
       -- Force the first 2 tags in the doc to be anchored at the main heading.
@@ -939,11 +957,10 @@ local function ts_node_to_html(root, level, lang_tree, headings, opt, stats)
     end
     local el = 'span'
     local encoded_tagname = url_encode(tagname)
-    local s = ('%s<%s id="%s" class="%s"><a href="#%s">%s</a></%s>'):format(
+    local s = ('%s<%s id="%s" class="help-tag"><a href="#%s">%s</a></%s>'):format(
       ws(),
       el,
       encoded_tagname,
-      cssclass,
       encoded_tagname,
       trimmed,
       el
@@ -958,7 +975,7 @@ local function ts_node_to_html(root, level, lang_tree, headings, opt, stats)
       -- End the <span> container for tags in a heading.
       return string.format('%s</span>', s)
     end
-    return s .. (h4 and '<br>' or '') -- HACK: <br> avoids h4 pseudo-heading mushing with text.
+    return s
   elseif node_name == 'delimiter' or node_name == 'modeline' then
     return ''
   elseif node_name == 'ERROR' then
@@ -1476,10 +1493,6 @@ function M._test()
   ok(is_noise([[          NVIM  REFERENCE  MANUAL     by  Thiago  de  Arruda      ]]))
   ok(not is_noise([[vim:tw=78]]))
 
-  eq(0, get_indent('a'))
-  eq(1, get_indent(' a'))
-  eq(2, get_indent('  a\n  b\n  c\n'))
-  eq(5, get_indent('     a\n      \n        b\n      c\n      d\n      e\n'))
   eq(
     'a\n        \n   b\n c\n d\n e\n',
     trim_indent('     a\n             \n        b\n      c\n      d\n      e\n')
@@ -1569,6 +1582,7 @@ local print_css = [[
   .help-li-num::before { counter-increment: li; content: counter(li) ". "; margin-left: -1em; }
   .help-tag, .help-tag-right { color: #0a6b52; }
   .help-tag-right { float: right; }
+  .help-tag-heading { display: flow-root; }
   .help-column_heading { font-weight: bold; }
   .help-table { border-collapse: collapse; margin: 0.6em 0; break-inside: avoid; }
   .help-table th, .help-table td { padding: 0.15em 0.8em; text-align: left; vertical-align: top; border-bottom: 1px solid #ccc; }

@@ -5,13 +5,11 @@
 ---     make doc
 ---
 --- The generated :help text for each function is formatted as follows:
---- - Max width of 78 columns (`TEXT_WIDTH`).
+--- - Max width of 78 columns (`TEXT_WIDTH`), except long function signatures.
 --- - Indent with spaces (not tabs).
 --- - Indent of 4 columns for body text (`INDENTATION`).
---- - Function signature and helptag (right-aligned) on the same line.
----   - Signature and helptag must have a minimum of 8 spaces between them.
----   - If the signature is too long, it is placed on the line after the helptag.
----     Signature wraps with subsequent lines indented to the open parenthesis.
+--- - Function signature and helptag on the same line: helptag right-aligned, or after two spaces if
+---   the signature is too long.
 ---   - Subsection bodies are indented an additional 4 spaces.
 --- - Body consists of function description, parameters, return description, and
 ---   C declaration (`INCLUDE_C_DECL`).
@@ -26,7 +24,6 @@ local lint = require('gen.lint')
 
 local fmt = string.format
 
-local wrap = util.wrap
 local md_to_vimdoc = util.md_to_vimdoc
 local align_tags = util.align_tags
 
@@ -787,7 +784,12 @@ local function render_class(class, classes, hidden_fields, cfg)
 
   local ret = {} --- @type string[]
 
-  table.insert(ret, fmt('*%s*\n', class.name))
+  -- Plaintext name + helptag, like a function signature. |help-tag-heading|
+  -- Example:
+  --        vim.Diagnostic <whitespace> *vim.Diagnostic*
+  local tag = fmt('*%s*', class.name)
+  local pad = (' '):rep(math.max(2, TEXT_WIDTH - #class.name - #tag))
+  table.insert(ret, fmt('%s%s%s\n', class.name, pad, tag))
 
   if class.parent then
     local txt = fmt('Extends: |%s|', class.parent)
@@ -844,8 +846,6 @@ end
 --- @param fun nvim.luacats.parser.fun
 --- @param cfg nvim.gen_vimdoc.Config
 local function render_fun_header(fun, cfg)
-  local ret = {} --- @type string[]
-
   local args = {} --- @type string[]
   for _, p in ipairs(fun.params or {}) do
     if p.name ~= 'self' then
@@ -868,21 +868,8 @@ local function render_fun_header(fun, cfg)
 
   local tag = '*' .. cfg.fn_helptag_fmt(fun) .. '*'
 
-  if #proto + #tag > TEXT_WIDTH - 8 then
-    table.insert(ret, fmt('%78s\n', tag))
-    local name, pargs = proto:match('([^(]+%()(.*)')
-    if name then
-      table.insert(ret, name)
-      table.insert(ret, wrap(pargs, 0, #name, TEXT_WIDTH))
-    else
-      table.insert(ret, proto)
-    end
-  else
-    local pad = TEXT_WIDTH - #proto - #tag
-    table.insert(ret, proto .. string.rep(' ', pad) .. tag)
-  end
-
-  return table.concat(ret)
+  local pad = math.max(2, TEXT_WIDTH - #proto - #tag)
+  return ('%s%s%s'):format(proto, (' '):rep(pad), tag)
 end
 
 --- @param returns nvim.luacats.parser.return[]

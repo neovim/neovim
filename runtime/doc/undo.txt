@@ -13,12 +13,13 @@ The basics are explained in section |02.5| of the user manual.
 ==============================================================================
 1. Undo and redo commands				*undo-commands*
 
-<Undo>		or					*undo* *<Undo>* *u*
-u			Undo [count] changes. The cursor returns to its
+<Undo>							*<Undo>*
+u							*u* *undo*
+			Undo [count] changes. The cursor returns to its
 			original position.
 
-							*:u* *:un* *:undo*
-:u[ndo]			Undo one change.
+:u[ndo]							*:u* *:un* *:undo*
+			Undo one change.
 								*E830*
 :u[ndo] {N}		Jump to after change number {N}.  See |undo-branches|
 			for the meaning of {N}.
@@ -31,14 +32,14 @@ u			Undo [count] changes. The cursor returns to its
 			branch, not to redo or switch to a different undo
 			branch.
 
-							*CTRL-R*
-CTRL-R			Redo [count] changes which were undone.
+CTRL-R							*CTRL-R*
+			Redo [count] changes which were undone.
 
-							*:red* *:redo* *redo*
-:red[o]			Redo one change which was undone.
+:red[o]							*:red* *:redo* *redo*
+			Redo one change which was undone.
 
-							*U*
-U			Undo all latest changes on one line, the line where
+U							*U*
+			Undo all latest changes on one line, the line where
 			the latest change was made. |U| itself also counts as
 			a change, and thus |U| undoes a previous |U|.
 
@@ -92,8 +93,8 @@ undone together.
 If you want to write a function or script that doesn't create a new undoable
 change but joins in with the previous change use this command:
 
-						*:undoj* *:undojoin* *E790*
-:undoj[oin]		Join further changes with the previous undo block.
+:undoj[oin]						*:undoj* *:undojoin* *E790*
+			Join further changes with the previous undo block.
 			Warning: Use with care, it may prevent the user from
 			properly undoing changes.  Don't use this after undo
 			or redo.
@@ -139,8 +140,8 @@ interactively applied using |:Undotree|.
 
 This is explained in the user manual: |usr_32.txt|.
 
-							*:undol* *:undolist*
-:undol[ist]		List the leafs in the tree of changes.  Example:
+:undol[ist]						*:undol* *:undolist*
+			List the leafs in the tree of changes.  Example:
 
 			number	changes	when			saved ~
 			88	88	2010/01/04 14:25:53
@@ -164,8 +165,8 @@ This is explained in the user manual: |usr_32.txt|.
 			be used with the |:later| and |:earlier| commands.
 			For more details use the |undotree()| function.
 
-							*g-*
-g-			Go to older text state.  With a count repeat that many
+g-							*g-*
+			Go to older text state.  With a count repeat that many
 			times.
 							*:ea* *:earlier*
 :ea[rlier] {count}	Go to older text state {count} times.
@@ -183,8 +184,8 @@ g-			Go to older text state.  With a count repeat that many
 			the file was not written, ":earlier 1f" will go to
 			before the first change.
 
-							*g+*
-g+			Go to newer text state.  With a count repeat that many
+g+							*g+*
+			Go to newer text state.  With a count repeat that many
 			times.
 							*:lat* *:later*
 :lat[er] {count}	Go to newer text state {count} times.
@@ -287,8 +288,8 @@ respectively:
 		name.  So it is not possible to overwrite an existing undofile
 		in a write-protected directory.
 
-							*:rund* *:rundo*
-:rund[o] {file}	Read undo history from {file}.
+:rund[o] {file}						*:rund* *:rundo*
+		Read undo history from {file}.
 
 You can use these in autocommands to explicitly specify the name of the
 history file.  E.g.: >

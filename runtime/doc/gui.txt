@@ -96,8 +96,7 @@ Stop or detach the current UI
 ------------------------------------------------------------------------------
 Restart Nvim
 
-                                                *:restart* *:restart!* *E5201*
-:restart[!] [+cmd] [command]
+:restart[!] [+cmd] [command]			*:restart* *:restart!* *E5201*
                 Restarts Nvim. Saves and restores the current session, unless
                 [!] is given. Sets |v:exitreason|. See also |ZR|.
 
@@ -127,8 +126,7 @@ Restart Nvim
 ------------------------------------------------------------------------------
 Connect UI to a different server
 
-                                                *:connect*
-:connect {address}
+:connect {address}					*:connect*
                 Attaches the UI to another Nvim instance: detaches from the
                 current server, then attaches to {address}.
 
@@ -142,8 +140,7 @@ Connect UI to a different server
 ------------------------------------------------------------------------------
 GUI commands
 
-                                                *:winp* *:winpos* *E188*
-:winp[os]
+:winp[os]					*:winp* *:winpos* *E188*
                 Display current position of the top left corner of the GUI vim
                 window in pixels.  Does not work in all versions.
                 Also see |getwinpos()|, |getwinposx()| and |getwinposy()|.
@@ -156,8 +153,7 @@ GUI commands
                 remembered until the window is opened.  The position is
                 adjusted to make the window fit on the screen (if possible).
 
-                                            *:wi* *:win* *:winsize* *E465*
-:win[size] {width} {height}
+:win[size] {width} {height}			*:wi* *:win* *:winsize* *E465*
                 Set the window height to {width} by {height} characters.
                 Obsolete, use ":set lines=11 columns=22".
 

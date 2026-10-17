@@ -1,5 +1,5 @@
 *pi_tutor.txt* Interactive tutorials.
-*vim-tutor-mode*
+							*vim-tutor-mode*
 
 vim-tutor-mode provides a system to follow and create interactive tutorials
 for vim and third party plugins. It replaces the venerable `vimtutor` system.

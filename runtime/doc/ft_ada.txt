@@ -154,53 +154,42 @@ separately for all projects.
 								*gnat_members*
 GNAT OBJECT ~
 
-							       *g:gnat.Make()*
-g:gnat.Make()
+g:gnat.Make()						*g:gnat.Make()*
 		Calls |g:gnat.Make_Command| and displays the result inside a
 		|quickfix| window.
 
-							     *g:gnat.Pretty()*
-g:gnat.Pretty()
+g:gnat.Pretty()						*g:gnat.Pretty()*
 		Calls |g:gnat.Pretty_Program|
 
-							       *g:gnat.Find()*
-g:gnat.Find()
+g:gnat.Find()						*g:gnat.Find()*
 		Calls |g:gnat.Find_Program|
 
-							       *g:gnat.Tags()*
-g:gnat.Tags()
+g:gnat.Tags()						*g:gnat.Tags()*
 		Calls |g:gnat.Tags_Command|
 
-						   *g:gnat.Set_Project_File()*
-g:gnat.Set_Project_File([{file}])
+g:gnat.Set_Project_File([{file}])		*g:gnat.Set_Project_File()*
 		Set gnat project file and load associated session.  An open
 		project will be closed and the session written.  If called
 		without file name the file selector opens for selection of a
 		project file. If called with an empty string then the project
 		and associated session are closed.
 
-							 *g:gnat.Project_File*
-g:gnat.Project_File	string
+g:gnat.Project_File	string				*g:gnat.Project_File*
 		Current project file.
 
-							 *g:gnat.Make_Command*
-g:gnat.Make_Command	string
+g:gnat.Make_Command	string				*g:gnat.Make_Command*
 		External command used for |g:gnat.Make()| ('makeprg').
 
-						       *g:gnat.Pretty_Program*
-g:gnat.Pretty_Program	string
+g:gnat.Pretty_Program	string			*g:gnat.Pretty_Program*
 		External command used for |g:gnat.Pretty()|
 
-							 *g:gnat.Find_Program*
-g:gnat.Find_Program	string
+g:gnat.Find_Program	string				*g:gnat.Find_Program*
 		External command used for |g:gnat.Find()|
 
-							 *g:gnat.Tags_Command*
-g:gnat.Tags_Command	string
+g:gnat.Tags_Command	string				*g:gnat.Tags_Command*
 		External command used for |g:gnat.Tags()|
 
-							 *g:gnat.Error_Format*
-g:gnat.Error_Format	string
+g:gnat.Error_Format	string				*g:gnat.Error_Format*
 		Error format ('errorformat')
 
 ------------------------------------------------------------------------------
@@ -220,21 +209,17 @@ as separators.
 							      *decada_members*
 DEC ADA OBJECT ~
 
-							     *g:decada.Make()*
-g:decada.Make()		function
+g:decada.Make()		function			*g:decada.Make()*
 		Calls |g:decada.Make_Command| and displays the result inside a
 		|quickfix| window.
 
-							*g:decada.Unit_Name()*
-g:decada.Unit_Name()	function
+g:decada.Unit_Name()	function			*g:decada.Unit_Name()*
 		Get the Unit name for the current file.
 
-						       *g:decada.Make_Command*
-g:decada.Make_Command	string
+g:decada.Make_Command	string				*g:decada.Make_Command*
 		External command used for |g:decada.Make()| ('makeprg').
 
-						       *g:decada.Error_Format*
-g:decada.Error_Format	string
+g:decada.Error_Format	string				*g:decada.Error_Format*
 		Error format ('errorformat').
 
 ==============================================================================
@@ -245,15 +230,11 @@ g:decada.Error_Format	string
 5.1 Options ~
 							      *ft-ada-options*
 
-							*g:ada_standard_types*
-g:ada_standard_types	bool (true when exists)
+g:ada_standard_types	bool (true when exists)		*g:ada_standard_types*
 		Highlight types in package Standard (e.g., "Float").
 
-							  *g:ada_space_errors*
-						  *g:ada_no_trail_space_error*
-						    *g:ada_no_tab_space_error*
-							 *g:ada_all_tab_usage*
-g:ada_space_errors	 bool (true when exists)
+			*g:ada_no_tab_space_error* *g:ada_all_tab_usage*
+g:ada_space_errors	 bool (true when exists)  *g:ada_space_errors* *g:ada_no_trail_space_error*
 		Highlight extraneous errors in spaces ...
 		g:ada_no_trail_space_error
 		    - but ignore trailing spaces at the end of a line
@@ -262,18 +243,15 @@ g:ada_space_errors	 bool (true when exists)
 		g:ada_all_tab_usage
 		    - highlight all tab use
 
-							   *g:ada_line_errors*
-g:ada_line_errors	  bool (true when exists)
+g:ada_line_errors	  bool (true when exists)	*g:ada_line_errors*
 		Highlight lines which are too long. Note: This highlighting
 		option is quite CPU intensive.
 
-							 *g:ada_rainbow_color*
-g:ada_rainbow_color	  bool (true when exists)
+g:ada_rainbow_color	  bool (true when exists)	*g:ada_rainbow_color*
 		Use rainbow colours for '(' and ')'. You need the
 		rainbow_parenthesis for this to work.
 
-							       *g:ada_folding*
-g:ada_folding		  set ("sigpft")
+g:ada_folding		  set ("sigpft")		*g:ada_folding*
 		Use folding for Ada sources.
 		    's':    activate syntax folding on load
 			'p':    fold packages
@@ -296,30 +274,25 @@ g:ada_folding		  set ("sigpft")
 		For indent folding to work the following settings are
 		suggested: shiftwidth=3 softtabstop=3
 
-								*g:ada_abbrev*
-g:ada_abbrev		  bool (true when exists)
+g:ada_abbrev		  bool (true when exists)	*g:ada_abbrev*
 		Add some abbreviations. This feature is more or less superseded
 		by the various completion methods.
 
-						      *g:ada_withuse_ordinary*
-g:ada_withuse_ordinary	  bool (true when exists)
+g:ada_withuse_ordinary	  bool (true when exists)  *g:ada_withuse_ordinary*
 		Show "with" and "use" as ordinary keywords (when used to
 		reference other compilation units they're normally highlighted
 		specially).
 
-							 *g:ada_begin_preproc*
-g:ada_begin_preproc	  bool (true when exists)
+g:ada_begin_preproc	  bool (true when exists)	*g:ada_begin_preproc*
 		Show all begin-like keywords using the colouring of C
 		preprocessor commands.
 
-						    *g:ada_omni_with_keywords*
-g:ada_omni_with_keywords
+g:ada_omni_with_keywords			*g:ada_omni_with_keywords*
 		Add Keywords, Pragmas, Attributes to omni-completions
 		(|compl-omni|). Note: You can always complete then with user
 		completion (|i_CTRL-X_CTRL-U|).
 
-						      *g:ada_extended_tagging*
-g:ada_extended_tagging	  enum ("jump", "list")
+g:ada_extended_tagging	  enum ("jump", "list")	*g:ada_extended_tagging*
 		use extended tagging, two options are available
 		    "jump": use tjump to jump.
 		    "list": add tags quick fix list.
@@ -327,23 +300,19 @@ g:ada_extended_tagging	  enum ("jump", "list")
 		overloading as these features are not available in C and
 		tagging was originally developed for C.
 
-						   *g:ada_extended_completion*
-g:ada_extended_completion
+g:ada_extended_completion			*g:ada_extended_completion*
 		Uses extended completion for <C-N> and <C-R> completions
 		(|i_CTRL-N|). In this mode the '.' is used as part of the
 		identifier so that 'Object.Method' or 'Package.Procedure' are
 		completed together.
 
-						       *g:ada_gnat_extensions*
-g:ada_gnat_extensions	  bool (true when exists)
+g:ada_gnat_extensions	  bool (true when exists)  *g:ada_gnat_extensions*
 		 Support GNAT extensions.
 
-					       *g:ada_with_gnat_project_files*
-g:ada_with_gnat_project_files	 bool (true when exists)
+g:ada_with_gnat_project_files	 bool (true when exists)  *g:ada_with_gnat_project_files*
 		 Add gnat project file keywords and Attributes.
 
-						      *g:ada_default_compiler*
-g:ada_default_compiler	  string
+g:ada_default_compiler	  string		*g:ada_default_compiler*
 		set default compiler. Currently supported are "gnat" and
 		"decada".
 
@@ -387,15 +356,13 @@ makes no difference.
 5.3 Variables ~
 							    *ft-ada-variables*
 
-								      *g:gnat*
-g:gnat			    object
+g:gnat			    object			*g:gnat*
 		Control object which manages GNAT compiles.  The object
 		is created when the first Ada source code is loaded provided
 		that |g:ada_default_compiler| is set to "gnat". See
 		|gnat_members| for details.
 
-								    *g:decada*
-g:decada		      object
+g:decada		      object			*g:decada*
 		Control object which manages Dec Ada compiles.	The object
 		is created when the first Ada source code is loaded provided
 		that |g:ada_default_compiler| is set to "decada". See
@@ -407,25 +374,20 @@ g:decada		      object
 
 All constants are locked. See |:lockvar| for details.
 
-							     *g:ada#WordRegex*
-g:ada#WordRegex		string
+g:ada#WordRegex		string				*g:ada#WordRegex*
 		Regular expression to search for Ada words.
 
-							  *g:ada#DotWordRegex*
-g:ada#DotWordRegex	string
+g:ada#DotWordRegex	string				*g:ada#DotWordRegex*
 		Regular expression to search for Ada words separated by dots.
 
-							       *g:ada#Comment*
-g:ada#Comment		string
+g:ada#Comment		string				*g:ada#Comment*
 		Regular expression to search for Ada comments.
 
-							      *g:ada#Keywords*
-g:ada#Keywords		list of dictionaries
+g:ada#Keywords		list of dictionaries		*g:ada#Keywords*
 		List of keywords, attributes etc. pp. in the format used by
 		omni completion. See |complete-items| for details.
 
-							   *g:ada#Ctags_Kinds*
-g:ada#Ctags_Kinds	dictionary of lists
+g:ada#Ctags_Kinds	dictionary of lists		*g:ada#Ctags_Kinds*
 		Dictionary of the various kinds of items which the Ada support
 		for Ctags generates.
 
@@ -458,8 +420,7 @@ gnat#Insert_Tags_Header()			   *gnat#Insert_Tags_Header()*
 ada#Switch_Syntax_Option ({option})		  *ada#Switch_Syntax_Option()*
 		Toggles highlighting options on or off. Used for the Ada menu.
 
-								  *gnat#New()*
-gnat#New ()
+gnat#New ()						*gnat#New()*
 		Create a new gnat object. See |g:gnat| for details.
 
 

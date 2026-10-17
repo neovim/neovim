@@ -437,7 +437,7 @@ Example: >lua
 ==============================================================================
 Lua module: vim.diagnostic                                    *diagnostic-api*
 
-*vim.Diagnostic*
+vim.Diagnostic                                                *vim.Diagnostic*
     Extends: |vim.Diagnostic.Set|
 
                                                         *diagnostic-structure*
@@ -457,7 +457,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {severity}    (`vim.diagnostic.Severity`) The severity of the
                       diagnostic |vim.diagnostic.severity|
 
-*vim.Diagnostic.Set*
+vim.Diagnostic.Set                                        *vim.Diagnostic.Set*
     Diagnostics use the same indexing as the rest of the Nvim API (i.e.
     0-based rows, and columns given as 0-based byte indices). |api-indexing|
 
@@ -477,7 +477,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {source}?     (`string`) The source of the diagnostic
       • {user_data}?  (`any`) arbitrary data plugins can add
 
-*vim.diagnostic.GetOpts*
+vim.diagnostic.GetOpts                                *vim.diagnostic.GetOpts*
     A table with the following keys:
 
     Fields: ~
@@ -492,7 +492,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {severity}?   (`vim.diagnostic.SeverityFilter`) See
                       |diagnostic-severity|.
 
-*vim.diagnostic.JumpOpts*
+vim.diagnostic.JumpOpts                              *vim.diagnostic.JumpOpts*
     Extends: |vim.diagnostic.GetOpts|
 
     Configuration table with the keys listed below. Some parameters can have
@@ -520,7 +520,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {wrap}?        (`boolean`, default: `true`) Whether to loop around
                        file or not. Similar to 'wrapscan'.
 
-*vim.diagnostic.NS*
+vim.diagnostic.NS                                          *vim.diagnostic.NS*
 
     Fields: ~
       • {disabled}?  (`boolean`)
@@ -528,7 +528,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {opts}       (`vim.diagnostic.Opts`)
       • {user_data}  (`table`)
 
-*vim.diagnostic.Opts*
+vim.diagnostic.Opts                                      *vim.diagnostic.Opts*
     Many of the configuration options below accept one of the following:
     • `false`: Disable this feature
     • `true`: Enable this feature, use default settings.
@@ -571,7 +571,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                              per diagnostic + the last diagnostic message are
                              shown.
 
-*vim.diagnostic.Opts.Float*
+vim.diagnostic.Opts.Float                          *vim.diagnostic.Opts.Float*
     Extends: |vim.lsp.util.open_floating_preview.Opts|
 
 
@@ -632,7 +632,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                           diagnostic instead of prepending it. Overrides the
                           setting from |vim.diagnostic.config()|.
 
-*vim.diagnostic.Opts.Jump*
+vim.diagnostic.Opts.Jump                            *vim.diagnostic.Opts.Jump*
 
     Fields: ~
       • {on_jump}?   (`fun(diagnostic:vim.Diagnostic?, bufnr:integer)`)
@@ -643,7 +643,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {wrap}?      (`boolean`, default: true) Default value of the {wrap}
                      parameter of |vim.diagnostic.jump()|.
 
-*vim.diagnostic.Opts.Signs*
+vim.diagnostic.Opts.Signs                          *vim.diagnostic.Opts.Signs*
 
     Fields: ~
       • {linehl}?    (`table<vim.diagnostic.Severity,string>`) A table mapping
@@ -669,7 +669,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                          })
 <
 
-*vim.diagnostic.Opts.Status*
+vim.diagnostic.Opts.Status                        *vim.diagnostic.Opts.Status*
 
     Fields: ~
       • {format}?  (`fun(counts:table<vim.diagnostic.Severity,integer>): string`)
@@ -700,14 +700,14 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                        })
 <
 
-*vim.diagnostic.Opts.Underline*
+vim.diagnostic.Opts.Underline                  *vim.diagnostic.Opts.Underline*
 
     Fields: ~
       • {severity}?  (`vim.diagnostic.SeverityFilter`) Only underline
                      diagnostics matching the given severity
                      |diagnostic-severity|.
 
-*vim.diagnostic.Opts.VirtualLines*
+vim.diagnostic.Opts.VirtualLines            *vim.diagnostic.Opts.VirtualLines*
 
     Fields: ~
       • {current_line}?  (`boolean`, default: `false`) Only show diagnostics
@@ -730,7 +730,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                          in the buffer. Otherwise, any truthy value means to
                          always show the diagnostic source.
 
-*vim.diagnostic.Opts.VirtualText*
+vim.diagnostic.Opts.VirtualText              *vim.diagnostic.Opts.VirtualText*
 
     Fields: ~
       • {current_line}?       (`boolean`, default: `nil`) Show or hide
@@ -946,8 +946,7 @@ jump({opts})                                           *vim.diagnostic.jump()*
     Return: ~
         (`vim.Diagnostic?`) The diagnostic that was moved to.
 
-                                                      *vim.diagnostic.match()*
-match({str}, {pat}, {groups}, {severity_map}, {defaults})
+match({str}, {pat}, {groups}, {severity_map}, {defaults})  *vim.diagnostic.match()*
     Parse a diagnostic from a string.
 
     For example, consider a line of output from a linter: >

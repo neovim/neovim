@@ -369,120 +369,121 @@ The following is a list of standard captures used in queries for Nvim,
 highlighted according to the current colorscheme (use |:Inspect| on one to see
 the exact definition):
 
-@variable                       various variable names
-@variable.builtin               built-in variable names (e.g. `this`, `self`)
-@variable.parameter             parameters of a function
-@variable.parameter.builtin     special parameters (e.g. `_`, `it`)
-@variable.member                object and struct fields
-
-@constant               constant identifiers
-@constant.builtin       built-in constant values
-@constant.macro         constants defined by the preprocessor
-
-@module                 modules or namespaces
-@module.builtin         built-in modules or namespaces
-@label                  `GOTO` and other labels (e.g. `label:` in C), including heredoc labels
-
-@string                 string literals
-@string.documentation   string documenting code (e.g. Python docstrings)
-@string.regexp          regular expressions
-@string.escape          escape sequences
-@string.special         other special strings (e.g. dates)
-@string.special.symbol  symbols or atoms
-@string.special.path    filenames
-@string.special.url     URIs (e.g. hyperlinks)
-
-@character              character literals
-@character.special      special characters (e.g. wildcards)
-
-@boolean                boolean literals
-@number                 numeric literals
-@number.float           floating-point number literals
-
-@type                   type or class definitions and annotations
-@type.builtin           built-in types
-@type.definition        identifiers in type definitions (e.g. `typedef <type> <identifier>` in C)
-
-@attribute              attribute annotations (e.g. Python decorators, Rust lifetimes)
-@attribute.builtin      builtin annotations (e.g. `@property` in Python)
-@property               the key in key/value pairs
-
-@function               function definitions
-@function.builtin       built-in functions
-@function.call          function calls
-@function.macro         preprocessor macros
-
-@function.method        method definitions
-@function.method.call   method calls
-
-@constructor            constructor calls and definitions
-@operator               symbolic operators (e.g. `+`, `*`)
-
-@keyword                keywords not fitting into specific categories
-@keyword.coroutine      keywords related to coroutines (e.g. `go` in Go, `async/await` in Python)
-@keyword.function       keywords that define a function (e.g. `func` in Go, `def` in Python)
-@keyword.operator       operators that are English words (e.g. `and`, `or`)
-@keyword.import         keywords for including or exporting modules (e.g. `import`, `from` in Python)
-@keyword.type           keywords describing namespaces and composite types (e.g. `struct`, `enum`)
-@keyword.modifier       keywords modifying other constructs (e.g. `const`, `static`, `public`)
-@keyword.repeat         keywords related to loops (e.g. `for`, `while`)
-@keyword.return         keywords like `return` and `yield`
-@keyword.debug          keywords related to debugging
-@keyword.exception      keywords related to exceptions (e.g. `throw`, `catch`)
-
-@keyword.conditional         keywords related to conditionals (e.g. `if`, `else`)
-@keyword.conditional.ternary ternary operator (e.g. `?`, `:`)
-
-@keyword.directive           various preprocessor directives and shebangs
-@keyword.directive.define    preprocessor definition directives
-
-@punctuation.delimiter  delimiters (e.g. `;`, `.`, `,`)
-@punctuation.bracket    brackets (e.g. `()`, `{}`, `[]`)
-@punctuation.special    special symbols (e.g. `{}` in string interpolation)
-
-@comment                line and block comments
-@comment.documentation  comments documenting code
-
-@comment.error          error-type comments (e.g. `ERROR`, `FIXME`, `DEPRECATED`)
-@comment.warning        warning-type comments (e.g. `WARNING`, `FIX`, `HACK`)
-@comment.todo           todo-type comments (e.g. `TODO`, `WIP`)
-@comment.note           note-type comments (e.g. `NOTE`, `INFO`, `XXX`)
-
-@markup.strong          bold text
-@markup.italic          italic text
-@markup.strikethrough   struck-through text
-@markup.underline       underlined text (only for literal underline markup!)
-
-@markup.heading         headings, titles (including markers)
-@markup.heading.1       top-level heading
-@markup.heading.2       section heading
-@markup.heading.3       subsection heading
-@markup.heading.4       and so on
-@markup.heading.5       and so forth
-@markup.heading.6       six levels ought to be enough for anybody
-
-@markup.quote           block quotes
-@markup.math            math environments (e.g. `$ ... $` in LaTeX)
-
-@markup.link            text references, footnotes, citations, etc.
-@markup.link.label      link, reference descriptions
-@markup.link.url        URL-style links
-
-@markup.raw             literal or verbatim text (e.g. inline code)
-@markup.raw.block       literal or verbatim text as a stand-alone block
-
-@markup.list            list markers
-@markup.list.checked    checked todo-style list markers
-@markup.list.unchecked  unchecked todo-style list markers
-
-@diff.plus              added text (for diff files)
-@diff.minus             deleted text (for diff files)
-@diff.delta             changed text (for diff files)
-
-@tag                    XML-style tag names (e.g. in XML, HTML, etc.)
-@tag.builtin            builtin tag names (e.g. HTML5 tags)
-@tag.attribute          XML-style tag attributes
-@tag.delimiter          XML-style tag delimiters
+Capture			Meaning ~
+@variable			various variable names
+@variable.builtin		built-in variable names (e.g. `this`, `self`)
+@variable.parameter		parameters of a function
+@variable.parameter.builtin	special parameters (e.g. `_`, `it`)
+@variable.member		object and struct fields
+------------------------------------------------------------------------------
+@constant		constant identifiers
+@constant.builtin	built-in constant values
+@constant.macro		constants defined by the preprocessor
+------------------------------------------------------------------------------
+@module			modules or namespaces
+@module.builtin		built-in modules or namespaces
+@label			`GOTO` and other labels (e.g. `label:` in C), including heredoc labels
+------------------------------------------------------------------------------
+@string			string literals
+@string.documentation	string documenting code (e.g. Python docstrings)
+@string.regexp		regular expressions
+@string.escape		escape sequences
+@string.special		other special strings (e.g. dates)
+@string.special.symbol	symbols or atoms
+@string.special.path	filenames
+@string.special.url	URIs (e.g. hyperlinks)
+------------------------------------------------------------------------------
+@character		character literals
+@character.special	special characters (e.g. wildcards)
+------------------------------------------------------------------------------
+@boolean		boolean literals
+@number			numeric literals
+@number.float		floating-point number literals
+------------------------------------------------------------------------------
+@type			type or class definitions and annotations
+@type.builtin		built-in types
+@type.definition	identifiers in type definitions (e.g. `typedef <type> <identifier>` in C)
+------------------------------------------------------------------------------
+@attribute		attribute annotations (e.g. Python decorators, Rust lifetimes)
+@attribute.builtin	builtin annotations (e.g. `@property` in Python)
+@property		the key in key/value pairs
+------------------------------------------------------------------------------
+@function		function definitions
+@function.builtin	built-in functions
+@function.call		function calls
+@function.macro		preprocessor macros
+------------------------------------------------------------------------------
+@function.method	method definitions
+@function.method.call	method calls
+------------------------------------------------------------------------------
+@constructor		constructor calls and definitions
+@operator		symbolic operators (e.g. `+`, `*`)
+------------------------------------------------------------------------------
+@keyword		keywords not fitting into specific categories
+@keyword.coroutine	keywords related to coroutines (e.g. `go` in Go, `async/await` in Python)
+@keyword.function	keywords that define a function (e.g. `func` in Go, `def` in Python)
+@keyword.operator	operators that are English words (e.g. `and`, `or`)
+@keyword.import		keywords for including or exporting modules (e.g. `import`, `from` in Python)
+@keyword.type		keywords describing namespaces and composite types (e.g. `struct`, `enum`)
+@keyword.modifier	keywords modifying other constructs (e.g. `const`, `static`, `public`)
+@keyword.repeat		keywords related to loops (e.g. `for`, `while`)
+@keyword.return		keywords like `return` and `yield`
+@keyword.debug		keywords related to debugging
+@keyword.exception	keywords related to exceptions (e.g. `throw`, `catch`)
+------------------------------------------------------------------------------
+@keyword.conditional	keywords related to conditionals (e.g. `if`, `else`)
+@keyword.conditional.ternary	ternary operator (e.g. `?`, `:`)
+------------------------------------------------------------------------------
+@keyword.directive	various preprocessor directives and shebangs
+@keyword.directive.define	preprocessor definition directives
+------------------------------------------------------------------------------
+@punctuation.delimiter	delimiters (e.g. `;`, `.`, `,`)
+@punctuation.bracket	brackets (e.g. `()`, `{}`, `[]`)
+@punctuation.special	special symbols (e.g. `{}` in string interpolation)
+------------------------------------------------------------------------------
+@comment		line and block comments
+@comment.documentation	comments documenting code
+------------------------------------------------------------------------------
+@comment.error		error-type comments (e.g. `ERROR`, `FIXME`, `DEPRECATED`)
+@comment.warning	warning-type comments (e.g. `WARNING`, `FIX`, `HACK`)
+@comment.todo		todo-type comments (e.g. `TODO`, `WIP`)
+@comment.note		note-type comments (e.g. `NOTE`, `INFO`, `XXX`)
+------------------------------------------------------------------------------
+@markup.strong		bold text
+@markup.italic		italic text
+@markup.strikethrough	struck-through text
+@markup.underline	underlined text (only for literal underline markup!)
+------------------------------------------------------------------------------
+@markup.heading		headings, titles (including markers)
+@markup.heading.1	top-level heading
+@markup.heading.2	section heading
+@markup.heading.3	subsection heading
+@markup.heading.4	and so on
+@markup.heading.5	and so forth
+@markup.heading.6	six levels ought to be enough for anybody
+------------------------------------------------------------------------------
+@markup.quote		block quotes
+@markup.math		math environments (e.g. `$ ... $` in LaTeX)
+------------------------------------------------------------------------------
+@markup.link		text references, footnotes, citations, etc.
+@markup.link.label	link, reference descriptions
+@markup.link.url	URL-style links
+------------------------------------------------------------------------------
+@markup.raw		literal or verbatim text (e.g. inline code)
+@markup.raw.block	literal or verbatim text as a stand-alone block
+------------------------------------------------------------------------------
+@markup.list		list markers
+@markup.list.checked	checked todo-style list markers
+@markup.list.unchecked	unchecked todo-style list markers
+------------------------------------------------------------------------------
+@diff.plus		added text (for diff files)
+@diff.minus		deleted text (for diff files)
+@diff.delta		changed text (for diff files)
+------------------------------------------------------------------------------
+@tag			XML-style tag names (e.g. in XML, HTML, etc.)
+@tag.builtin		builtin tag names (e.g. HTML5 tags)
+@tag.attribute		XML-style tag attributes
+@tag.delimiter		XML-style tag delimiters
 
                                                   *treesitter-highlight-spell*
 The special `@spell` capture can be used to indicate that a node should be
@@ -713,8 +714,7 @@ TSNode:child_count()                                    *TSNode:child_count()*
     Return: ~
         (`integer`)
 
-                                              *TSNode:child_with_descendant()*
-TSNode:child_with_descendant({descendant})
+TSNode:child_with_descendant({descendant})    *TSNode:child_with_descendant()*
     Get the node's child that contains {descendant} (includes {descendant}).
 
     For example, with the following node hierarchy: >
@@ -731,8 +731,7 @@ TSNode:child_with_descendant({descendant})
     Return: ~
         (`TSNode?`)
 
-                                               *TSNode:descendant_for_range()*
-TSNode:descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
+TSNode:descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})  *TSNode:descendant_for_range()*
     Get the smallest node within this node that spans the given range of (row,
     column) positions
 
@@ -849,9 +848,7 @@ TSNode:named_children()                              *TSNode:named_children()*
     Return: ~
         (`TSNode[]`)
 
-                                         *TSNode:named_descendant_for_range()*
-TSNode:named_descendant_for_range({start_row}, {start_col}, {end_row},
-                                  {end_col})
+TSNode:named_descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})  *TSNode:named_descendant_for_range()*
     Get the smallest named node within this node that spans the given range of
     (row, column) positions
 
@@ -955,7 +952,7 @@ TSNode:type()                                                  *TSNode:type()*
 ==============================================================================
 Lua module: vim.treesitter                               *lua-treesitter-core*
 
-*vim.treesitter.CaptureInfo*
+vim.treesitter.CaptureInfo                        *vim.treesitter.CaptureInfo*
 
     Fields: ~
       • {capture}     (`string`) Capture name
@@ -1062,8 +1059,7 @@ get_node_range({node_or_range})              *vim.treesitter.get_node_range()*
         (`integer`) end_row
         (`integer`) end_col (byte offset)
 
-                                              *vim.treesitter.get_node_text()*
-get_node_text({node}, {source}, {opts})
+get_node_text({node}, {source}, {opts})       *vim.treesitter.get_node_text()*
     Gets the text corresponding to a given node
 
     Parameters: ~
@@ -1114,8 +1110,7 @@ get_range({node}, {source}, {metadata})           *vim.treesitter.get_range()*
         • {[5]} (`integer`) end column
         • {[6]} (`integer`) end bytes
 
-                                          *vim.treesitter.get_string_parser()*
-get_string_parser({str}, {lang}, {opts})
+get_string_parser({str}, {lang}, {opts})  *vim.treesitter.get_string_parser()*
     Returns a string parser
 
     Parameters: ~
@@ -1167,8 +1162,7 @@ is_ancestor({dest}, {source})                   *vim.treesitter.is_ancestor()*
     Return: ~
         (`boolean`) True if {dest} is an ancestor of {source}
 
-                                           *vim.treesitter.is_in_node_range()*
-is_in_node_range({node}, {line}, {col})
+is_in_node_range({node}, {line}, {col})    *vim.treesitter.is_in_node_range()*
     Determines whether (line, col) position is in node range
 
     Parameters: ~
@@ -1403,8 +1397,7 @@ LanguageTree:invalidate({reload})                  *LanguageTree:invalidate()*
     Parameters: ~
       • {reload}  (`boolean?`)
 
-                                                     *LanguageTree:is_valid()*
-LanguageTree:is_valid({exclude_children}, {range})
+LanguageTree:is_valid({exclude_children}, {range})   *LanguageTree:is_valid()*
     Returns whether this LanguageTree is valid, i.e., |LanguageTree:trees()|
     reflects the latest state of the source. If invalid, user should call
     |LanguageTree:parse()|.
@@ -1425,8 +1418,7 @@ LanguageTree:lang()                                      *LanguageTree:lang()*
     Return: ~
         (`string`)
 
-                                           *LanguageTree:language_for_range()*
-LanguageTree:language_for_range({range})
+LanguageTree:language_for_range({range})   *LanguageTree:language_for_range()*
     Gets the appropriate language that contains {range}.
 
     Parameters: ~
@@ -1439,8 +1431,7 @@ LanguageTree:language_for_range({range})
     Return: ~
         (`vim.treesitter.LanguageTree`) tree Managing {range}
 
-                                         *LanguageTree:named_node_for_range()*
-LanguageTree:named_node_for_range({range}, {opts})
+LanguageTree:named_node_for_range({range}, {opts})  *LanguageTree:named_node_for_range()*
     Gets the smallest named node that contains {range}.
 
     Parameters: ~
@@ -1456,8 +1447,7 @@ LanguageTree:named_node_for_range({range}, {opts})
     Return: ~
         (`TSNode?`)
 
-                                               *LanguageTree:node_for_range()*
-LanguageTree:node_for_range({range}, {opts})
+LanguageTree:node_for_range({range}, {opts})   *LanguageTree:node_for_range()*
     Gets the smallest node that contains {range}.
 
     Parameters: ~
@@ -1517,8 +1507,7 @@ LanguageTree:parse({range}, {on_parse})                 *LanguageTree:parse()*
     Return: ~
         (`table<integer, TSTree>?`)
 
-                                                 *LanguageTree:register_cbs()*
-LanguageTree:register_cbs({cbs}, {recursive})
+LanguageTree:register_cbs({cbs}, {recursive})    *LanguageTree:register_cbs()*
     Registers callbacks for the |LanguageTree|.
 
     Parameters: ~
@@ -1547,8 +1536,7 @@ LanguageTree:source()                                  *LanguageTree:source()*
     Return: ~
         (`integer|string`)
 
-                                               *LanguageTree:tree_for_range()*
-LanguageTree:tree_for_range({range}, {opts})
+LanguageTree:tree_for_range({range}, {opts})   *LanguageTree:tree_for_range()*
     Gets the tree that contains {range}.
 
     Parameters: ~
@@ -1582,7 +1570,7 @@ This Lua |treesitter-query| interface allows you to create queries and use
 them to parse text. See |vim.treesitter.query.parse()| for a working example.
 
 
-*TSQuery*
+TSQuery                                                              *TSQuery*
     Extends: |userdata|
 
     Reference to an object held by the treesitter library that is used as a
@@ -1597,7 +1585,7 @@ them to parse text. See |vim.treesitter.query.parse()| for a working example.
       • {disable_pattern}  (`fun(self: TSQuery, pattern_index: integer)`) See
                            |TSQuery:disable_pattern()|.
 
-*vim.treesitter.Query*
+vim.treesitter.Query                                    *vim.treesitter.Query*
     Parsed query, see |vim.treesitter.query.parse()|
 
     Fields: ~
@@ -1617,8 +1605,7 @@ them to parse text. See |vim.treesitter.query.parse()| for a working example.
       • {query}                    (`TSQuery`) userdata query object
 
 
-                                        *vim.treesitter.query.add_directive()*
-add_directive({name}, {handler}, {opts})
+add_directive({name}, {handler}, {opts})  *vim.treesitter.query.add_directive()*
     Adds a new directive to be used in queries
 
     Handlers can set match level data by setting directly on the metadata
@@ -1640,8 +1627,7 @@ add_directive({name}, {handler}, {opts})
                    • {force}? (`boolean`) Override an existing predicate of
                      the same name
 
-                                        *vim.treesitter.query.add_predicate()*
-add_predicate({name}, {handler}, {opts})
+add_predicate({name}, {handler}, {opts})  *vim.treesitter.query.add_predicate()*
     Adds a new predicate to be used in queries
 
     Parameters: ~
@@ -1679,8 +1665,7 @@ get({lang}, {query_name})                         *vim.treesitter.query.get()*
         (`vim.treesitter.Query?`) Parsed query. `nil` if no query files are
         found.
 
-                                            *vim.treesitter.query.get_files()*
-get_files({lang}, {query_name}, {is_included})
+get_files({lang}, {query_name}, {is_included})  *vim.treesitter.query.get_files()*
     Gets the list of files used to make up a query
 
     Parameters: ~
@@ -1773,8 +1758,7 @@ parse({lang}, {query})                          *vim.treesitter.query.parse()*
     See also: ~
       • |vim.treesitter.query.get()|
 
-                                                       *Query:iter_captures()*
-Query:iter_captures({node}, {source}, {start_row}, {end_row}, {opts})
+Query:iter_captures({node}, {source}, {start_row}, {end_row}, {opts})  *Query:iter_captures()*
     Iterates over all captures from all matches in {node}.
 
     {source} is required if the query contains predicates; then the caller
@@ -1828,8 +1812,7 @@ Query:iter_captures({node}, {source}, {start_row}, {end_row}, {opts})
         (`fun(end_line: integer?, end_col: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
         capture-id, capture-node, metadata, match, tree
 
-                                                        *Query:iter_matches()*
-Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
+Query:iter_matches({node}, {source}, {start}, {stop}, {opts})  *Query:iter_matches()*
     Iterates the matches of self on a given range.
 
     Iterate over all matches within a {node}. The arguments are the same as

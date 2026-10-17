@@ -533,6 +533,17 @@ local function render_eval_meta(f, funs, write)
   write(render_fun_sig(funname, params))
 end
 
+--- Appends `tags` to `line`, right-aligned (min 2 preceding spaces). |help-tag-heading|
+--- @param line string
+--- @param tags string[] E.g. `{ '*foo*', '*bar*' }`.
+--- @return string
+local function with_tags(line, tags)
+  local tag = table.concat(tags, ' ')
+  local conceal_offset = 2 * (#tags - 1)
+  local pad = 80 - vim.fn.strdisplaywidth(line) - #tag + conceal_offset
+  return fmt('%s%s%s', line, (' '):rep(math.max(2, pad)), tag)
+end
+
 --- Generates vimdoc heading for a Vimscript "eval" function signature.
 --- @param name string
 --- @param name_tag boolean
@@ -551,22 +562,7 @@ local function render_sig_and_tag(name, name_tag, fun, write)
     end
   end
 
-  if #tags == 0 then
-    write(fun.signature)
-    return
-  end
-
-  local tag = table.concat(tags, ' ')
-  local siglen = #fun.signature
-  local conceal_offset = 2 * (#tags - 1)
-  local tag_pad_len = math.max(1, 80 - #tag + conceal_offset)
-
-  if siglen + #tag > 80 then
-    write(string.rep(' ', tag_pad_len) .. tag)
-    write(fun.signature)
-  else
-    write(fmt('%s%s%s', fun.signature, string.rep(' ', tag_pad_len - siglen), tag))
-  end
+  write(#tags == 0 and fun.signature or with_tags(fun.signature, tags))
 end
 
 --- Generates vimdoc for a Vimscript "eval" function.
@@ -905,7 +901,7 @@ local function render_option_doc(_f, opt, write)
   local tags = build_option_tags(opt)
   local tag_str = table.concat(tags, ' ')
   local conceal_offset = 2 * (#tags - 1)
-  local tag_pad = string.rep('\t', math.ceil((64 - #tag_str + conceal_offset) / 8))
+  local tag_pad = string.rep('\t', math.max(1, math.ceil((64 - #tag_str + conceal_offset) / 8)))
   -- local pad = string.rep(' ', 80 - #tag_str + conceal_offset)
   write(tag_pad .. tag_str)
 
@@ -960,27 +956,17 @@ local function render_vvar_doc(_f, vvar, write)
     tags[i] = '*' .. t .. '*'
   end
 
-  local tag_str = table.concat(tags, ' ')
-  local conceal_offset = 2 * (#tags - 1)
-
-  local tag_pad = string.rep('\t', math.ceil((64 - #tag_str + conceal_offset) / 8))
-  write(tag_pad .. tag_str)
-
+  write(with_tags('v:' .. name, tags))
   local desc = split(vvar.desc)
-
-  if (#desc == 1 or #desc == 2 and desc[2]:match('^%s*$')) and #name < 10 then
-    -- single line
-    write('v:' .. name .. '\t' .. desc[1]:gsub('^%s*', ''))
-    write('')
-  else
-    write('v:' .. name)
-    for _, l in ipairs(desc) do
-      if l == '<' or l:match('^<%s') then
-        write(l)
-      else
-        write('\t\t' .. l:gsub('\\<', '<'))
-      end
+  for _, l in ipairs(desc) do
+    if l == '<' or l:match('^<%s') then
+      write(l)
+    else
+      write('\t\t' .. l:gsub('\\<', '<'))
     end
+  end
+  if not desc[#desc]:match('^%s*$') then
+    write('')
   end
 end
 

@@ -461,7 +461,7 @@ A simple example: >json
 <
 
 
-*vim.pack.Manifest*
+vim.pack.Manifest                                          *vim.pack.Manifest*
 
     Fields: ~
       • {description}?  (`string`) Plugin description
@@ -478,7 +478,7 @@ A simple example: >json
                         • {preupdate}? (`string`) Pre update script.
                         • {update}? (`string`) Post update script.
 
-*vim.pack.Spec*
+vim.pack.Spec                                                  *vim.pack.Spec*
 
     Fields: ~
       • {data}?     (`any`) Arbitrary data associated with a plugin.

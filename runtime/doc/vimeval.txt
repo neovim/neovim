@@ -22,8 +22,8 @@ Using expressions is introduced in chapter 41 of the user manual |usr_41.txt|.
 					*E5299* *E5300* *E5401* *E5420* *E6000*
 There are seven types of variables:
 
-							*Number* *Integer*
-Number		A 32 or 64 bit signed number.  |expr-number|
+Number							*Number* *Integer*
+		A 32 or 64 bit signed number.  |expr-number|
 		The number of bits is available in |v:numbersize|.
 		Examples:  -123  0x10  0177  0o177  0b1011
 
@@ -2056,12 +2056,12 @@ This does NOT work: >
 			Like above, but add/subtract/append the value for each
 			|List| item.
 
-						*:let=<<* *:let-heredoc*
-					*E990* *E991* *E172* *E221* *E1145*
-:let {var-name} =<< [trim] [eval] {endmarker}
+							*E990* *E991* *E172* *E221* *E1145*
+:let {var-name} =<< [trim] [eval] {endmarker}  *:let=<<* *:let-heredoc*
 text...
 text...
 {endmarker}
+
 			Set internal variable {var-name} to a |List|
 			containing the lines of text bounded by the string
 			{endmarker}.
@@ -2141,8 +2141,8 @@ text...
 				   let n = {MyFunc(3, 4)}
 				CODE
 <
-								*E121*
-:let {var-name}	...	List the value of variable {var-name}.  Multiple
+:let {var-name}	...					*E121*
+			List the value of variable {var-name}.  Multiple
 			variable names may be given.  Special names recognized
 			here:				*E738*
 
@@ -2187,8 +2187,7 @@ text...
 			If the system does not support deleting an environment
 			variable, it is made empty.
 
-						*:cons* *:const*
-:cons[t] {var-name} = {expr1}
+:cons[t] {var-name} = {expr1}				*:cons* *:const*
 :cons[t] [{name1}, {name2}, ...] = {expr1}
 :cons[t] [{name}, ..., ; {lastname}] = {expr1}
 :cons[t] {var-name} =<< [trim] [eval] {endmarker}
@@ -2288,8 +2287,9 @@ text...
 
 			No error is given if {name} does not exist.
 
-:if {expr1}			*:if* *:end* *:endif* *:en* *E171* *E579* *E580*
-:en[dif]		Execute the commands until the next matching `:else`
+:if {expr1}						*:if* *E171* *E579* *E580*
+:en[dif]						*:end* *:endif* *:en*
+			Execute the commands until the next matching `:else`
 			or `:endif` if {expr1} evaluates to non-zero.
 			Although the short forms work, it is recommended to
 			always use `:endif` to avoid confusion and to make
@@ -2319,18 +2319,19 @@ text...
 			NOTE: The `:append` and `:insert` commands don't work
 			properly in between `:if` and `:endif`.
 
-						*:else* *:el* *E581* *E583*
-:el[se]			Execute the commands until the next matching `:else`
+:el[se]						*:else* *:el* *E581* *E583*
+			Execute the commands until the next matching `:else`
 			or `:endif` if they previously were not being
 			executed.
 
-					*:elseif* *:elsei* *E582* *E584*
-:elsei[f] {expr1}	Short for `:else` `:if`, with the addition that there
+:elsei[f] {expr1}			*:elseif* *:elsei* *E582* *E584*
+			Short for `:else` `:if`, with the addition that there
 			is no extra `:endif`.
 
-:wh[ile] {expr1}			*:while* *:endwhile* *:wh* *:endw*
 						*E170* *E585* *E588* *E733*
-:endw[hile]		Repeat the commands between `:while` and `:endwhile`,
+:wh[ile] {expr1}					*:while* *:wh*
+:endw[hile]						*:endwhile*  *:endw*
+			Repeat the commands between `:while` and `:endwhile`,
 			as long as {expr1} evaluates to non-zero.
 			When an error is detected from a command inside the
 			loop, execution continues after the `endwhile`.
@@ -2387,8 +2388,8 @@ text...
 				   :echo getline(lnum)[col]
 				:endfor
 <
-						*:continue* *:con* *E586*
-:con[tinue]		When used inside a `:while` or `:for` loop, jumps back
+:con[tinue]					*:continue* *:con* *E586*
+			When used inside a `:while` or `:for` loop, jumps back
 			to the start of the loop.
 
 			If it is used after a `:try` inside the loop but
@@ -2398,8 +2399,8 @@ text...
 			all nested `:try`s inside the loop.  The outermost
 			`:endtry` then jumps back to the start of the loop.
 
-						*:break* *:brea* *E587*
-:brea[k]		When used inside a `:while` or `:for` loop, skips to
+:brea[k]					*:break* *:brea* *E587*
+			When used inside a `:while` or `:for` loop, skips to
 			the command after the matching `:endwhile` or
 			`:endfor`.
 			If it is used after a `:try` inside the loop but
@@ -2409,8 +2410,9 @@ text...
 			all nested `:try`s inside the loop.  The outermost
 			`:endtry` then jumps to the command after the loop.
 
-:try				*:try* *:endt* *:endtry* *E600* *E601* *E602*
-:endt[ry]		Change the error handling for the commands between
+:try							*:try* *E600* *E601* *E602*
+:endt[ry]						*:endt* *:endtry*
+			Change the error handling for the commands between
 			`:try` and `:endtry` including everything being
 			executed across `:source` commands, function calls,
 			or autocommand invocations.
@@ -2445,9 +2447,8 @@ text...
 		try | sleep 100 | catch /^Vim:Interrupt$/ | endtry
 		try | edit | catch /^Vim(edit):E\d\+/ | echo "error" | endtry
 <
-					*:cat* *:catch*
-					*E603* *E604* *E605* *E654*
-:cat[ch] [/{pattern}/]	The following commands until the next `:catch`,
+:cat[ch] [/{pattern}/]		*:cat* *:catch* *E603* *E604* *E605* *E654*
+			The following commands until the next `:catch`,
 			`:finally`, or `:endtry` that belongs to the same
 			`:try` as the `:catch` are executed when an exception
 			matching {pattern} is being thrown and has not yet
@@ -2477,16 +2478,16 @@ text...
 			an error message because it may vary in different
 			locales.
 
-					*:fina* *:finally* *E606* *E607*
-:fina[lly]		The following commands until the matching `:endtry`
+:fina[lly]				*:fina* *:finally* *E606* *E607*
+			The following commands until the matching `:endtry`
 			are executed whenever the part between the matching
 			`:try` and the `:finally` is left:  either by falling
 			through to the `:finally` or by a `:continue`,
 			`:break`, `:finish`, or `:return`, or by an error or
 			interrupt or exception (see `:throw`).
 
-							*:th* *:throw* *E608*
-:th[row] {expr1}	The {expr1} is evaluated and thrown as an exception.
+:th[row] {expr1}					*:th* *:throw* *E608*
+			The {expr1} is evaluated and thrown as an exception.
 			If the `:throw` is used after a `:try` but before the
 			first corresponding `:catch`, commands are skipped
 			until the first `:catch` matching {expr1} is reached.
@@ -2507,8 +2508,8 @@ text...
 			for when an error causes the parsing to skip the whole
 			line and not see the "|" that separates the commands.
 
-							*:ec* *:echo*
-:ec[ho] {expr1} ...	Echoes each {expr1}, with a space in between.  The
+:ec[ho] {expr1} ...					*:ec* *:echo*
+			Echoes each {expr1}, with a space in between.  The
 			first {expr1} starts on a new line.
 			Also see |:comment|.
 			Use "\n" to start a new line.  Use "\r" to move the
@@ -2540,8 +2541,8 @@ text...
 			echo "[[[...@1]]]" because l first occurs at second
 			level.
 
-							*:echon*
-:echon {expr1} ...	Echoes each {expr1}, without anything added.  Also see
+:echon {expr1} ...					*:echon*
+			Echoes each {expr1}, without anything added.  Also see
 			|:comment|.
 			Uses the highlighting set by the `:echohl` command.
 			Cannot be followed by a comment.
@@ -2563,16 +2564,16 @@ text...
 		:echo expand("%")	--> filename
 <			This calls the expand() function to expand the '%'.
 
-							*:echoh* *:echohl*
-:echoh[l] {name}	Use the highlight group {name} for the following
+:echoh[l] {name}					*:echoh* *:echohl*
+			Use the highlight group {name} for the following
 			`:echo`, `:echon` and `:echomsg` commands.  Also used
 			for the `input()` prompt.  Example: >
 		:echohl WarningMsg | echo "Don't panic!" | echohl None
 <			Don't forget to set the group back to "None",
 			otherwise all following echo's will be highlighted.
 
-							*:echom* *:echomsg*
-:echom[sg] {expr1} ...	Echo the expression(s) as a true message, saving the
+:echom[sg] {expr1} ...					*:echom* *:echomsg*
+			Echo the expression(s) as a true message, saving the
 			message in the |message-history|.
 			Spaces are placed between the arguments as with the
 			`:echo` command.  But unprintable characters are
@@ -2588,8 +2589,8 @@ text...
 <			See |:echo-redraw| to avoid the message disappearing
 			when the screen is redrawn.
 
-							*:echoe* *:echoerr*
-:echoe[rr] {expr1} ...	Echo the expression(s) as an error message, saving the
+:echoe[rr] {expr1} ...					*:echoe* *:echoerr*
+			Echo the expression(s) as an error message, saving the
 			message in the |message-history|.  When used in a
 			script or function the line number will be added.
 			Spaces are placed between the arguments as with the
@@ -2620,8 +2621,8 @@ text...
 			command, since "|" is seen as part of the expression.
 
 
-							*:exe* *:execute*
-:exe[cute] {expr1} ...	Executes the string that results from the evaluation
+:exe[cute] {expr1} ...					*:exe* *:execute*
+			Executes the string that results from the evaluation
 			of {expr1} as an Ex command.
 			Multiple arguments are concatenated, with a space in
 			between.  To avoid the extra space use the ".."
@@ -3787,8 +3788,8 @@ These items are not allowed in the sandbox:
 	- executing Python, Perl, etc. commands
 This is not guaranteed 100% secure, but it should block most attacks.
 
-							*:san* *:sandbox*
-:san[dbox] {cmd}	Execute {cmd} in the sandbox.  Useful to evaluate an
+:san[dbox] {cmd}					*:san* *:sandbox*
+			Execute {cmd} in the sandbox.  Useful to evaluate an
 			option that may have been set from a modeline, e.g.
 			'foldexpr'.
 

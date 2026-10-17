@@ -272,8 +272,7 @@ arguments separated by " " (space) instead of "\t" (tab).
         print(string.format(
             'unix time: %s', os.time()))
 <
-                                                                *:lua-heredoc*
-:lua << [trim] [{endmarker}]
+:lua << [trim] [{endmarker}]                                    *:lua-heredoc*
 {script}
 {endmarker}
     Executes Lua script {script} from within Vimscript. You can omit
@@ -1183,7 +1182,7 @@ vim.wo[{winid}][{bufnr}]                                              *vim.wo*
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
 
-*vim.Ringbuf*
+vim.Ringbuf                                                      *vim.Ringbuf*
 
     Fields: ~
       • {clear}  (`fun()`) See |Ringbuf:clear()|.
@@ -1326,8 +1325,7 @@ vim.defer_fn({fn}, {timeout})                                 *vim.defer_fn()*
     Return: ~
         (`uv.uv_timer_t`) timer luv timer object
 
-                                                             *vim.deprecate()*
-vim.deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
+vim.deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})  *vim.deprecate()*
     Shows a deprecation message to the user.
 
     Parameters: ~
@@ -1945,8 +1943,7 @@ vim.startswith({s}, {prefix})                               *vim.startswith()*
     Return: ~
         (`boolean`) `true` if `prefix` is a prefix of `s`
 
-                                                         *vim.str_byteindex()*
-vim.str_byteindex({s}, {encoding}, {index}, {strict_indexing})
+vim.str_byteindex({s}, {encoding}, {index}, {strict_indexing})  *vim.str_byteindex()*
     Convert UTF-32, UTF-16 or UTF-8 {index} to byte index. If
     {strict_indexing} is false then an out of range index will return byte
     length instead of throwing an error.
@@ -1964,8 +1961,7 @@ vim.str_byteindex({s}, {encoding}, {index}, {strict_indexing})
     Return: ~
         (`integer`)
 
-                                                          *vim.str_utfindex()*
-vim.str_utfindex({s}, {encoding}, {index}, {strict_indexing})
+vim.str_utfindex({s}, {encoding}, {index}, {strict_indexing})  *vim.str_utfindex()*
     Convert byte index to UTF-32, UTF-16 or UTF-8 indices. If {index} is not
     supplied, the length of the string is used. All indices are zero-based.
 
@@ -2176,8 +2172,7 @@ vim.trim({s})                                                     *vim.trim()*
       • |lua-pattern|s
       • https://www.lua.org/pil/20.2.html
 
-                                                              *vim.validate()*
-vim.validate({name}, {value}, {validator}, {optional}, {message})
+vim.validate({name}, {value}, {validator}, {optional}, {message})  *vim.validate()*
     Validate function arguments.
 
     This function has two valid forms:
@@ -2302,7 +2297,7 @@ vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
 ==============================================================================
 Lua module: vim.inspector                                      *vim.inspector*
 
-*vim.inspect_pos.ExtmarkItem*
+vim.inspect_pos.ExtmarkItem                      *vim.inspect_pos.ExtmarkItem*
     Extends: |vim.inspect_pos.Item|
 
     `opts.hl_group_link` is deprecated; use the top-level `hl_group_link`
@@ -2315,7 +2310,7 @@ Lua module: vim.inspector                                      *vim.inspector*
       • {opts}   (`vim.api.keyset.extmark_details & { hl_group_link?: string }`)
                  raw extmark details from |nvim_buf_get_extmarks()|.
 
-*vim.inspect_pos.Item*
+vim.inspect_pos.Item                                    *vim.inspect_pos.Item*
 
     Fields: ~
       • {col}             (`integer`) start byte column (0-based)
@@ -2326,7 +2321,7 @@ Lua module: vim.inspector                                      *vim.inspector*
                           links), if any
       • {row}             (`integer`) start row (0-based)
 
-*vim.inspect_pos.SyntaxItem*
+vim.inspect_pos.SyntaxItem                        *vim.inspect_pos.SyntaxItem*
     Extends: |vim.inspect_pos.Item|
 
 
@@ -2335,7 +2330,7 @@ Lua module: vim.inspector                                      *vim.inspector*
       • {hl_group_link}  (`string`) resolved highlight group (after following
                          links)
 
-*vim.inspect_pos.TSItem*
+vim.inspect_pos.TSItem                                *vim.inspect_pos.TSItem*
     Extends: |vim.treesitter.CaptureInfo|
 
 
@@ -2551,8 +2546,7 @@ vim.filetype.add({filetypes})                             *vim.filetype.add()*
                      • {filename}? (`vim.filetype.mapping`)
                      • {pattern}? (`vim.filetype.mapping`)
 
-                                                   *vim.filetype.get_option()*
-vim.filetype.get_option({filetype}, {option})
+vim.filetype.get_option({filetype}, {option})      *vim.filetype.get_option()*
     Get the default option value for a {filetype}.
 
     The returned value is what would be set in a new buffer after 'filetype'
@@ -3166,8 +3160,7 @@ vim.hl.priorities                                          *vim.hl.priorities*
     • `user`: `200`, used for user-triggered highlights such as LSP document
       symbols or `hl_op` autocommands
 
-                                                              *vim.hl.range()*
-vim.hl.range({buf}, {ns}, {hlgroup}, {start}, {finish}, {opts})
+vim.hl.range({buf}, {ns}, {hlgroup}, {start}, {finish}, {opts})  *vim.hl.range()*
     Apply highlight group to range of text.
 
     Parameters: ~
@@ -4092,7 +4085,7 @@ You can also provide a custom formatter function to customize the log output
 format.
 
 
-*vim.Log*
+vim.Log                                                              *vim.Log*
 
     Fields: ~
       • {debug}  (`fun(...:any): boolean?`) Writes a message at
@@ -4586,14 +4579,13 @@ vim.mpack.encode({obj})                                   *vim.mpack.encode()*
 ==============================================================================
 Lua module: vim.net                                                  *vim.net*
 
-*vim.net.request.Response*
+vim.net.request.Response                            *vim.net.request.Response*
 
     Fields: ~
       • {body}  (`string`) The HTTP body of the request
 
 
-                                                           *vim.net.request()*
-vim.net.request({method}, {url}, {opts}, {on_response})
+vim.net.request({method}, {url}, {opts}, {on_response})    *vim.net.request()*
     Makes an HTTP request to the given URL, asynchronously passing the result
     to the specified `on_response`, `outpath` or `outbuf`.
 
@@ -4675,7 +4667,7 @@ Provides operations to compare, calculate, and convert positions represented
 by |vim.Pos| objects.
 
 
-*vim.Pos*
+vim.Pos                                                              *vim.Pos*
     Represents a buffer position based on |api-indexing| (0-indexed,
     end-exclusive ranges). Call `vim.pos()` to create a new `vim.Pos` by
     passing the {buf}, {row}, and {col} of a position.
@@ -4901,7 +4893,7 @@ Provides operations to compare, calculate, and convert ranges represented by
 |vim.Range| objects.
 
 
-*vim.Range*
+vim.Range                                                          *vim.Range*
     Represents a range based on |api-indexing| (0-indexed, end-exclusive).
     Call `vim.range()` to create a new range by passing start and end
     positions (|vim.Pos|).
@@ -4936,8 +4928,7 @@ Provides operations to compare, calculate, and convert ranges represented by
       • {start_row}  (`integer`) 0-based byte index.
 
 
-                                                         *vim.range.extmark()*
-extmark({buf}, {start_row}, {start_col}, {end_row}, {end_col})
+extmark({buf}, {start_row}, {start_col}, {end_row}, {end_col})  *vim.range.extmark()*
     Creates a new |vim.Range| from extmark range (see |api-indexing|).
 
     Example: >lua
@@ -5005,8 +4996,7 @@ lsp({buf}, {range}, {position_encoding})                     *vim.range.lsp()*
     Return: ~
         (`vim.Range`)
 
-                                                            *vim.range.mark()*
-mark({buf}, {start_lnum}, {start_col}, {end_lnum}, {end_col})
+mark({buf}, {start_lnum}, {start_col}, {end_lnum}, {end_col})  *vim.range.mark()*
     Creates a new |vim.Range| from "mark-indexed" range (see |api-indexing|).
 
     Example: >lua
@@ -5165,8 +5155,7 @@ The `vim.regex` interface allows Lua code to use Vim regexes.
   context.
 
 
-                                                          *regex:match_line()*
-regex:match_line({buf}, {line_idx}, {start}, {end_})
+regex:match_line({buf}, {line_idx}, {start}, {end_})      *regex:match_line()*
     Matches line at `line_idx` (zero-based) in buffer `buf`. Match is
     restricted to byte index range `start` and `end_` if given, otherwise see
     |regex:match_str()|. Returned byte indices are relative to `start` if
@@ -5276,7 +5265,7 @@ manage sessions yourself), clear it: >lua
 Heads-up: |vim.snippet.jump()| re-registers them on every jump.
 
 
-*vim.snippet.ActiveFilter*
+vim.snippet.ActiveFilter                            *vim.snippet.ActiveFilter*
 
     Fields: ~
       • {direction}  (`vim.snippet.Direction`) Navigation direction. -1 for
@@ -5366,7 +5355,7 @@ vim.spell.check({str})                                     *vim.spell.check()*
 ==============================================================================
 Lua module: vim.system                                        *lua-vim-system*
 
-*vim.SystemCompleted*
+vim.SystemCompleted                                      *vim.SystemCompleted*
 
     Fields: ~
       • {code}     (`integer`)
@@ -5376,7 +5365,7 @@ Lua module: vim.system                                        *lua-vim-system*
       • {stdout}?  (`string`) `nil` if stdout is disabled or has a custom
                    handler.
 
-*vim.SystemObj*
+vim.SystemObj                                                  *vim.SystemObj*
 
     Fields: ~
       • {cmd}         (`string[]`) Command name and args
@@ -5984,7 +5973,7 @@ versions (1.2.3-rc1) are not matched. >
 <
 
 
-*vim.VersionRange*
+vim.VersionRange                                            *vim.VersionRange*
 
     Fields: ~
       • {from}  (`vim.Version`)

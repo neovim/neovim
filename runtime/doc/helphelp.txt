@@ -147,9 +147,9 @@ and <> are part of what you type, the context should make this clear.
 ==============================================================================
 Help commands						*online-help*
 
-			*help* *<Help>* *:h* *:help* *<F1>* *i_<F1>* *i_<Help>*
-<Help>		or
-:h[elp]			Open a window and display the help file in read-only
+<Help>							*<Help>* *<F1>* *i_<F1>* *i_<Help>*
+:h[elp]							*help* *:h* *:help*
+			Open a window and display the help file in read-only
 			mode.  If there is a help window open already, use
 			that one.  Otherwise, if the current window uses the
 			full width of the screen or is at least 80 characters
@@ -161,8 +161,8 @@ Help commands						*online-help*
 
 			Type |gO| to see the table of contents.
 
-							*:help!*
-:h[elp]!		Guesses a help tag from the |WORD| at cursor, in DWIM ("Do
+:h[elp]!						*:help!*
+			Guesses a help tag from the |WORD| at cursor, in DWIM ("Do
 			What I Mean") fashion: trims punctuation using various
 			heuristics until a valid help tag is found.
 
@@ -173,8 +173,8 @@ Help commands						*online-help*
 <
 			Then compare to `:exe 'help' expand('<cword>')`.
 
-						*{subject}* *E149* *E661*
-:h[elp] {subject}	Like ":help", additionally jump to the tag {subject}.
+:h[elp] {subject}				*{subject}* *E149* *E661*
+			Like ":help", additionally jump to the tag {subject}.
 			For example:  >
 				:help options
 
@@ -251,15 +251,14 @@ Help commands						*online-help*
 
 			Unrelated to |:help!| (no {subject}).
 
-							*:helpc* *:helpclose*
-:helpc[lose]		Close one help window, if there is one.
+:helpc[lose]						*:helpc* *:helpclose*
+			Close one help window, if there is one.
 			Vim will try to restore the window layout (including
 			cursor position) to the same layout it was before
 			opening the help window initially.  This might cause
 			triggering several autocommands.
 
-							*:helpg* *:helpgrep*
-:helpg[rep] {pattern}[@xx]
+:helpg[rep] {pattern}[@xx]				*:helpg* *:helpgrep*
 			Search all help text files and make a list of lines
 			in which {pattern} matches.  Jumps to the first match.
 			The optional [@xx] specifies that only matches in the
@@ -286,8 +285,7 @@ Help commands						*online-help*
 			Compressed help files will not be searched (Fedora
 			compresses the help files).
 
-							*:lh* *:lhelpgrep*
-:lh[elpgrep] {pattern}[@xx]
+:lh[elpgrep] {pattern}[@xx]				*:lh* *:lhelpgrep*
 			Same as ":helpgrep", except the location list is used
 			instead of the quickfix list.  If the help window is
 			already opened, then the location list for that window
@@ -296,12 +294,12 @@ Help commands						*online-help*
 			location list for the current window is not changed
 			then.
 
-							*:exu* *:exusage*
-:exu[sage]		Show help on Ex commands.  Added to simulate the Nvi
+:exu[sage]						*:exu* *:exusage*
+			Show help on Ex commands.  Added to simulate the Nvi
 			command.
 
-							*:viu* *:viusage*
-:viu[sage]		Show help on Normal mode commands.  Added to simulate
+:viu[sage]						*:viu* *:viusage*
+			Show help on Normal mode commands.  Added to simulate
 			the Nvi command.
 
 When no argument is given to |:help| the file given with the 'helpfile' option
@@ -365,9 +363,8 @@ This is done when viewing the file in Vim, the file itself is not changed.  It
 is done by going through all help files and obtaining the first line of each
 file.  The files in $VIMRUNTIME/doc are skipped.
 
-					*:helpt* *:helptags*
-			*E150* *E151* *E152* *E153* *E154* *E670* *E856*
-:helpt[ags] [++t] {dir}
+							*E150* *E151* *E152* *E153* *E154* *E670* *E856*
+:helpt[ags] [++t] {dir}					*:helpt* *:helptags*
 			Generate the help tags file(s) for directory {dir}.
 			When {dir} is ALL then all "doc" directories in
 			'runtimepath' will be used.
@@ -517,8 +514,8 @@ TAGS							*help-tag*
 
 To define a help tag, place the name between asterisks (`*tag-name*`).  The
 tag-name should be different from all the Vim help tag names and ideally
-should begin with the name of the Vim plugin.  The tag name is usually right
-aligned on a line.
+should begin with the name of the Vim plugin.  The tag name is usually
+right-aligned at the end of a line, see |help-tag-heading|.
 
 When referring to an existing help tag and to create a hot-link, place the
 name between two bars ("|") eg.
@@ -545,8 +542,8 @@ dynamically adapt to the viewport.
 
 HEADINGS			  *help-heading* *help-h1* *help-h2* *help-h3*
 
-Headings divide a help file into sections (|gO| |[[|). A heading must be the
-first line of a block (|help-block|), i.e. preceded by a blank line.
+Headings divide a help file into sections (|gO| |[[|). A h1/h2/h3 heading must
+be the first line of a block (|help-block|), i.e. preceded by a blank line.
 
 - h1: 12 or more "=" characters starting at column 1, followed by a line with
   the heading text and optional tags: >
@@ -563,11 +560,20 @@ first line of a block (|help-block|), i.e. preceded by a blank line.
 
 	DEFAULT MAPPINGS					*foo-mappings*
 
-- h4: *help-h4* *help-column-heading* Line ending with tilde, preceded by
-  a space (" ~"). Primarily intended for table headings |help-table|, but also
-  commonly used as "h4". Example: >
+- h4: *help-h4* Two variants: a table "column heading" or a "tag heading".
+  - *help-column-heading* Line ending with space + tilde (" ~"). Primarily
+    intended to begin a |help-table|, but also commonly used as generic "h4".
+    Example: >
 
 	Column heading ~
+<
+  - *help-tag-heading* *help-definition* Line (not a listitem) ending with
+    a tag(s) after ≥2 spaces or a Tab.  The tags are right-aligned when
+    rendering (HTML or a future "presentation mode"). Used to document
+    a command/function/…, with the description following it: >
+
+	:[count]verb[ose] {command}			*:verb* *:verbose*
+				Execute {command} with 'verbose' set to [count].
 <
 
 LISTS							*help-list*

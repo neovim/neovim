@@ -11,8 +11,7 @@ be mentioned at the variable description below.  The type cannot be changed.
 
                                        Type |gO| to see the table of contents.
 
-						*v:argf* *argf-variable*
-v:argf
+v:argf                                                    *v:argf* *argf-variable*
 		File arguments (expanded to absolute paths) given at startup.
 
 		Unlike |v:argv|, this does not include option arguments
@@ -25,38 +24,32 @@ v:argf
 		  " ['/path/to/cwd/file1.txt', '/path/to/cwd/file2.txt']
 <
 
-						*v:argv* *argv-variable*
-v:argv
+v:argv                                                    *v:argv* *argv-variable*
 		Command line arguments (`-u`, `--cmd`, `+cmd`, …) Nvim was
 		invoked with.  The first item is the Nvim command.
 
 		See |v:progpath| to get the full path to Nvim.
 		See |v:argf| to get only file args, without other options.
 
-				*v:cascading* *cascading-variable*
-v:cascading
+v:cascading                                     *v:cascading* *cascading-variable*
 		|v:true| during |multicursor| cascade, |v:false| otherwise.
 		Read-only.
 
-						*v:char* *char-variable*
-v:char
+v:char                                                    *v:char* *char-variable*
 		Argument for evaluating 'formatexpr' and used for the typed
 		character when using <expr> in an abbreviation |:map-<expr>|.
 		It is also used by the |InsertCharPre|, |InsertEnter|,
 		|CmdlineLeave| and |CmdlineLeavePre| events.
 
-			*v:charconvert_from* *charconvert_from-variable*
-v:charconvert_from
+v:charconvert_from                *v:charconvert_from* *charconvert_from-variable*
 		The name of the character encoding of a file to be converted.
 		Only valid while evaluating the 'charconvert' option.
 
-			*v:charconvert_to* *charconvert_to-variable*
-v:charconvert_to
+v:charconvert_to                      *v:charconvert_to* *charconvert_to-variable*
 		The name of the character encoding of a file after conversion.
 		Only valid while evaluating the 'charconvert' option.
 
-					*v:cmdarg* *cmdarg-variable*
-v:cmdarg
+v:cmdarg                                              *v:cmdarg* *cmdarg-variable*
 		The extra arguments ("++p", "++enc=", "++ff=") given to a file
 		read/write command.  This is set before an autocommand event
 		for a file read/write command is triggered.  There is a
@@ -64,15 +57,13 @@ v:cmdarg
 		directly after the read/write command. Note: "+cmd" isn't
 		included here, because it will be executed anyway.
 
-					*v:cmdbang* *cmdbang-variable*
-v:cmdbang
+v:cmdbang                                           *v:cmdbang* *cmdbang-variable*
 		Set like v:cmdarg for a file read/write command.  When a "!"
 		was used the value is 1, otherwise it is 0.  Note that this
 		can only be used in autocommands.  For user commands |<bang>|
 		can be used.
 
-					*v:collate* *collate-variable*
-v:collate
+v:collate                                           *v:collate* *collate-variable*
 		The current locale setting for collation order of the runtime
 		environment.  This allows Vim scripts to be aware of the
 		current locale encoding.  Technical: it's the value of
@@ -81,8 +72,7 @@ v:collate
 		command.
 		See |multi-lang|.
 
-			*v:completed_item* *completed_item-variable*
-v:completed_item
+v:completed_item                      *v:completed_item* *completed_item-variable*
 		Dictionary containing the |complete-items| for the most
 		recently completed word after |CompleteDone|.  Empty if the
 		completion failed, or after leaving and re-entering insert
@@ -90,8 +80,7 @@ v:completed_item
 		Note: Plugins can modify the value to emulate the builtin
 		|CompleteDone| event behavior.
 
-					*v:count* *count-variable*
-v:count
+v:count                                                 *v:count* *count-variable*
 		The count given for the last Normal mode command.  Can be used
 		to get the count before a mapping.  Read-only.  Example: >vim
 		  :map _x :<C-U>echo "the count is " .. v:count<CR>
@@ -102,13 +91,11 @@ v:count
 		just like what happens in the command, "d6w" for the example.
 		Also used for evaluating the 'formatexpr' option.
 
-					*v:count1* *count1-variable*
-v:count1
+v:count1                                              *v:count1* *count1-variable*
 		Just like "v:count", but defaults to one when no count is
 		used.
 
-					*v:ctype* *ctype-variable*
-v:ctype
+v:ctype                                                 *v:ctype* *ctype-variable*
 		The current locale setting for characters of the runtime
 		environment.  This allows Vim scripts to be aware of the
 		current locale encoding.  Technical: it's the value of
@@ -117,8 +104,7 @@ v:ctype
 		command.
 		See |multi-lang|.
 
-					*v:dying* *dying-variable*
-v:dying
+v:dying                                                 *v:dying* *dying-variable*
 		Normally zero.  When a deadly signal is caught it's set to
 		one.  When multiple signals are caught the number increases.
 		Can be used in an autocommand to check if Vim didn't
@@ -129,8 +115,7 @@ v:dying
 		Note: if another deadly signal is caught when v:dying is one,
 		VimLeave autocommands will not be executed.
 
-				*v:echospace* *echospace-variable*
-v:echospace
+v:echospace                                     *v:echospace* *echospace-variable*
 		Number of screen cells that can be used for an `:echo` message
 		in the last screen line before causing the |hit-enter| prompt
 		(no longer applicable when |ui2| is enabled).
@@ -139,8 +124,7 @@ v:echospace
 		check 'cmdheight' for whether there are full-width lines
 		available above the last line.
 
-					*v:errmsg* *errmsg-variable*
-v:errmsg
+v:errmsg                                              *v:errmsg* *errmsg-variable*
 		Last error message that occurred (not necessarily displayed).
 		Modifiable (can be set).
 		Example: >vim
@@ -150,8 +134,7 @@ v:errmsg
 		    " ... handle error
 <
 
-			*v:errors* *errors-variable* *assert-return*
-v:errors
+v:errors                                *v:errors* *errors-variable* *assert-return*
 		Errors found by assert functions, such as |assert_true()|.
 		This is a list of strings.
 		The assert functions append an item when an assert fails.
@@ -163,8 +146,7 @@ v:errors
 		If v:errors is set to anything but a list it is made an empty
 		list by the assert function.
 
-					*v:event* *event-variable*
-v:event
+v:event                                                 *v:event* *event-variable*
 		Dictionary of event data for the current |autocommand|.  Valid
 		only during the event lifetime; storing or passing v:event is
 		invalid!  Copy it instead: >vim
@@ -216,8 +198,7 @@ v:event
 		  width            Width of popup menu on |CompleteChanged|
 		  windows          List of window IDs that changed on |WinResized|
 
-				*v:exception* *exception-variable*
-v:exception
+v:exception                                     *v:exception* *exception-variable*
 		The value of the exception most recently caught and not
 		finished.  See also |v:stacktrace|, |v:throwpoint|, and
 		|throw-variables|.
@@ -230,16 +211,14 @@ v:exception
 <
 		Output: "caught oops".
 
-					*v:exiting* *exiting-variable*
-v:exiting
+v:exiting                                           *v:exiting* *exiting-variable*
 		Exit code, or |v:null| before invoking the |VimLeavePre|
 		and |VimLeave| autocmds.  See |:q|, |:x| and |:cquit|.
 		Example: >vim
 		  :au VimLeave * echo "Exit code is " .. v:exiting
 <
 
-				*v:exitreason* *exitreason-variable*
-v:exitreason
+v:exitreason                                  *v:exitreason* *exitreason-variable*
 		Reason for the current exit. Set before |QuitPre|. Reset if
 		exit was canceled.
 
@@ -254,16 +233,14 @@ v:exitreason
 <
 		Read-only.
 
-					*v:false* *false-variable*
-v:false
+v:false                                                 *v:false* *false-variable*
 		Special value used to put "false" in JSON and msgpack.  See
 		|json_encode()|.  This value is converted to "v:false" when used
 		as a String (e.g. in |expr5| with string concatenation
 		operator) and to zero when used as a Number (e.g. in |expr5|
 		or |expr7| when used with numeric operators).  Read-only.
 
-				*v:fcs_choice* *fcs_choice-variable*
-v:fcs_choice
+v:fcs_choice                                  *v:fcs_choice* *fcs_choice-variable*
 		What should happen after a |FileChangedShell| event was
 		triggered.  Can be used in an autocommand to tell Vim what to
 		do with the affected buffer:
@@ -283,8 +260,7 @@ v:fcs_choice
 		The default is empty.  If another (invalid) value is used then
 		Vim behaves like it is empty, there is no warning message.
 
-				*v:fcs_reason* *fcs_reason-variable*
-v:fcs_reason
+v:fcs_reason                                  *v:fcs_reason* *fcs_reason-variable*
 		The reason why the |FileChangedShell| event was triggered.
 		Can be used in an autocommand to decide what to do and/or what
 		to set v:fcs_choice to.  Possible values:
@@ -295,18 +271,15 @@ v:fcs_reason
 		- mode      mode of file changed
 		- time      only file timestamp changed
 
-					*v:fname* *fname-variable*
-v:fname
+v:fname                                                 *v:fname* *fname-variable*
 		When evaluating 'includeexpr': the file name that was
 		detected.  Empty otherwise.
 
-				*v:fname_diff* *fname_diff-variable*
-v:fname_diff
+v:fname_diff                                  *v:fname_diff* *fname_diff-variable*
 		The name of the diff (patch) file.  Only valid while
 		evaluating 'patchexpr'.
 
-					*v:fname_in* *fname_in-variable*
-v:fname_in
+v:fname_in                                        *v:fname_in* *fname_in-variable*
 		The name of the input file.  Valid while evaluating:
 		  option         used for ~
 		  'charconvert'  file to be converted
@@ -314,13 +287,11 @@ v:fname_in
 		  'patchexpr'    original file
 		And set to the swap file name for |SwapExists|.
 
-				*v:fname_new* *fname_new-variable*
-v:fname_new
+v:fname_new                                     *v:fname_new* *fname_new-variable*
 		The name of the new version of the file.  Only valid while
 		evaluating 'diffexpr'.
 
-				*v:fname_out* *fname_out-variable*
-v:fname_out
+v:fname_out                                     *v:fname_out* *fname_out-variable*
 		The name of the output file.  Only valid while
 		evaluating:
 		  option           used for ~
@@ -332,29 +303,24 @@ v:fname_out
 		for a read command (e.g., ":e file") it will be a temporary
 		file and different from v:fname_in.
 
-				*v:folddashes* *folddashes-variable*
-v:folddashes
+v:folddashes                                  *v:folddashes* *folddashes-variable*
 		Used for 'foldtext': dashes representing foldlevel of a closed
 		fold.
 		Read-only in the |sandbox|. |fold-foldtext|
 
-					*v:foldend* *foldend-variable*
-v:foldend
+v:foldend                                           *v:foldend* *foldend-variable*
 		Used for 'foldtext': last line of closed fold.
 		Read-only in the |sandbox|. |fold-foldtext|
 
-				*v:foldlevel* *foldlevel-variable*
-v:foldlevel
+v:foldlevel                                     *v:foldlevel* *foldlevel-variable*
 		Used for 'foldtext': foldlevel of closed fold.
 		Read-only in the |sandbox|. |fold-foldtext|
 
-				*v:foldstart* *foldstart-variable*
-v:foldstart
+v:foldstart                                     *v:foldstart* *foldstart-variable*
 		Used for 'foldtext': first line of closed fold.
 		Read-only in the |sandbox|. |fold-foldtext|
 
-					*v:hlsearch* *hlsearch-variable*
-v:hlsearch
+v:hlsearch                                        *v:hlsearch* *hlsearch-variable*
 		Variable that indicates whether search highlighting is on.
 		Setting it makes sense only if 'hlsearch' is enabled.  Setting
 		this variable to zero acts like the |:nohlsearch| command,
@@ -364,22 +330,19 @@ v:hlsearch
 		Note that the value is restored when returning from a
 		function. |function-search-undo|.
 
-				*v:insertmode* *insertmode-variable*
-v:insertmode
+v:insertmode                                  *v:insertmode* *insertmode-variable*
 		Used for the |InsertEnter| and |InsertChange| autocommand
 		events.  Values:
 		  i    Insert mode
 		  r    Replace mode
 		  v    Virtual Replace mode
 
-						*v:key* *key-variable*
-v:key
+v:key                                                       *v:key* *key-variable*
 		Key of the current item of a |Dictionary|.  Only valid while
 		evaluating the expression used with |map()| and |filter()|.
 		Read-only.
 
-						*v:lang* *lang-variable*
-v:lang
+v:lang                                                    *v:lang* *lang-variable*
 		The current locale setting for messages of the runtime
 		environment.  This allows Vim scripts to be aware of the
 		current language.  Technical: it's the value of LC_MESSAGES.
@@ -390,65 +353,55 @@ v:lang
 		in a different language than what is used for character
 		encoding.  See |multi-lang|.
 
-					*v:lc_time* *lc_time-variable*
-v:lc_time
+v:lc_time                                           *v:lc_time* *lc_time-variable*
 		The current locale setting for time messages of the runtime
 		environment.  This allows Vim scripts to be aware of the
 		current language.  Technical: it's the value of LC_TIME.
 		This variable can not be set directly, use the |:language|
 		command.  See |multi-lang|.
 
-						*v:lnum* *lnum-variable*
-v:lnum
+v:lnum                                                    *v:lnum* *lnum-variable*
 		Line number for the 'foldexpr' |fold-expr|, 'formatexpr',
 		'indentexpr' and 'statuscolumn' expressions, tab page number
 		for 'guitablabel' and 'guitabtooltip'.  Only valid while one of
 		these expressions is being evaluated.  Read-only when in the
 		|sandbox|.
 
-						*v:lua* *lua-variable*
-v:lua
+v:lua                                                       *v:lua* *lua-variable*
 		Prefix for calling Lua functions from expressions.
 		See |v:lua-call| for more information.
 
-					*v:maxcol* *maxcol-variable*
-v:maxcol
+v:maxcol                                              *v:maxcol* *maxcol-variable*
 		Maximum line length.  Depending on where it is used it can be
 		screen columns, characters or bytes.  The value currently is
 		2147483647 on all systems.
 
-				*v:mouse_col* *mouse_col-variable*
-v:mouse_col
+v:mouse_col                                     *v:mouse_col* *mouse_col-variable*
 		Column number for a mouse click obtained with |getchar()|.
 		This is the screen column number, like with |virtcol()|.  The
 		value is zero when there was no mouse button click.
 
-				*v:mouse_lnum* *mouse_lnum-variable*
-v:mouse_lnum
+v:mouse_lnum                                  *v:mouse_lnum* *mouse_lnum-variable*
 		Line number for a mouse click obtained with |getchar()|.
 		This is the text line number, not the screen line number.  The
 		value is zero when there was no mouse button click.
 
-				*v:mouse_win* *mouse_win-variable*
-v:mouse_win
+v:mouse_win                                     *v:mouse_win* *mouse_win-variable*
 		Window number for a mouse click obtained with |getchar()|.
 		First window has number 1, like with |winnr()|.  The value is
 		zero when there was no mouse button click.
 
-				*v:mouse_winid* *mouse_winid-variable*
-v:mouse_winid
+v:mouse_winid                               *v:mouse_winid* *mouse_winid-variable*
 		|window-ID| for a mouse click obtained with |getchar()|.
 		The value is zero when there was no mouse button click.
 
-			*v:msgpack_types* *msgpack_types-variable*
-v:msgpack_types
+v:msgpack_types                         *v:msgpack_types* *msgpack_types-variable*
 		Dictionary containing msgpack types used by |msgpackparse()|
 		and |msgpackdump()|. All types inside dictionary are fixed
 		(not editable) empty lists. To check whether some list is one
 		of msgpack types, use |is| operator.
 
-						*v:null* *null-variable*
-v:null
+v:null                                                    *v:null* *null-variable*
 		Special value used to put "null" in JSON and NIL in msgpack.
 		See |json_encode()|.  This value is converted to "v:null" when
 		used as a String (e.g. in |expr5| with string concatenation
@@ -458,19 +411,17 @@ v:null
 		that is not set.  That is slightly different than an empty
 		List, Dict, etc.
 
-				*v:numbermax* *numbermax-variable*
-v:numbermax	Maximum value of a number.
+v:numbermax                                     *v:numbermax* *numbermax-variable*
+		Maximum value of a number.
 
-				*v:numbermin* *numbermin-variable*
-v:numbermin	Minimum value of a number (negative).
+v:numbermin                                     *v:numbermin* *numbermin-variable*
+		Minimum value of a number (negative).
 
-				*v:numbersize* *numbersize-variable*
-v:numbersize
+v:numbersize                                  *v:numbersize* *numbersize-variable*
 		Number of bits in a Number.  This is normally 64, but on some
 		systems it may be 32.
 
-					*v:oldfiles* *oldfiles-variable*
-v:oldfiles
+v:oldfiles                                        *v:oldfiles* *oldfiles-variable*
 		List of file names that is loaded from the |shada| file on
 		startup.  These are the files that Vim remembers marks for.
 		The length of the List is limited by the ' argument of the
@@ -481,8 +432,7 @@ v:oldfiles
 		stored in the |shada| file later.  If you use values other
 		than String this will cause trouble.
 
-					*v:operator* *operator-variable*
-v:operator
+v:operator                                        *v:operator* *operator-variable*
 		The last operator given in Normal mode.  This is a single
 		character except for commands starting with <g> or <z>,
 		in which case it is two characters.  Best used alongside
@@ -496,8 +446,7 @@ v:operator
 		commands.
 		Read-only.
 
-			*v:option_command* *option_command-variable*
-v:option_command
+v:option_command                      *v:option_command* *option_command-variable*
 		Command used to set the option.  Valid while executing an
 		|OptionSet| autocommand.
 		  value        option was set via ~
@@ -506,35 +455,29 @@ v:option_command
 		  "set"        |:set| or |:let|
 		  "modeline"   |modeline|
 
-				*v:option_new* *option_new-variable*
-v:option_new
+v:option_new                                  *v:option_new* *option_new-variable*
 		New value of the option.  Valid while executing an |OptionSet|
 		autocommand.
 
-				*v:option_old* *option_old-variable*
-v:option_old
+v:option_old                                  *v:option_old* *option_old-variable*
 		Old value of the option.  Valid while executing an |OptionSet|
 		autocommand.  Depending on the command used for setting and
 		the kind of option this is either the local old value or the
 		global old value.
 
-			*v:option_oldglobal* *option_oldglobal-variable*
-v:option_oldglobal
+v:option_oldglobal                *v:option_oldglobal* *option_oldglobal-variable*
 		Old global value of the option.  Valid while executing an
 		|OptionSet| autocommand.
 
-			*v:option_oldlocal* *option_oldlocal-variable*
-v:option_oldlocal
+v:option_oldlocal                   *v:option_oldlocal* *option_oldlocal-variable*
 		Old local value of the option.  Valid while executing an
 		|OptionSet| autocommand.
 
-				*v:option_type* *option_type-variable*
-v:option_type
+v:option_type                               *v:option_type* *option_type-variable*
 		Scope of the set command.  Valid while executing an
 		|OptionSet| autocommand.  Can be either "global" or "local"
 
-				*v:prevcount* *prevcount-variable*
-v:prevcount
+v:prevcount                                     *v:prevcount* *prevcount-variable*
 		The count given for the last but one Normal mode command.
 		This is the v:count value of the previous command.  Useful if
 		you want to cancel Visual or Operator-pending mode and then
@@ -543,23 +486,19 @@ v:prevcount
 <
 		Read-only.
 
-				*v:profiling* *profiling-variable*
-v:profiling
+v:profiling                                     *v:profiling* *profiling-variable*
 		Normally zero.  Set to one after using ":profile start".
 		See |profiling|.
 
-					*v:progname* *progname-variable*
-v:progname
+v:progname                                        *v:progname* *progname-variable*
 		The name by which Nvim was invoked (with path removed).
 		Read-only.
 
-					*v:progpath* *progpath-variable*
-v:progpath
+v:progpath                                        *v:progpath* *progpath-variable*
 		Absolute path to the current running Nvim.
 		Read-only.
 
-					*v:register* *register-variable*
-v:register
+v:register                                        *v:register* *register-variable*
 		The name of the register in effect for the current normal mode
 		command (regardless of whether that command actually used a
 		register).  Or for the currently executing normal mode mapping
@@ -569,20 +508,17 @@ v:register
 		"*" or '+'.
 		Also see |getreg()| and |setreg()|
 
-					*v:relnum* *relnum-variable*
-v:relnum
+v:relnum                                              *v:relnum* *relnum-variable*
 		Relative line number for the 'statuscolumn' expression.
 		Read-only.
 
-				*v:scrollstart* *scrollstart-variable*
-v:scrollstart
+v:scrollstart                               *v:scrollstart* *scrollstart-variable*
 		String describing the script or function that caused the
 		screen to scroll up.  It's only set when it is empty, thus the
 		first reason is remembered.  It is set to "Unknown" for a
 		typed command.
 
-			*v:searchforward* *searchforward-variable*
-v:searchforward
+v:searchforward                         *v:searchforward* *searchforward-variable*
 		Search direction:  1 after a forward search, 0 after a
 		backward search.  It is reset to forward when directly setting
 		the last search pattern, see |quote/|.
@@ -590,8 +526,7 @@ v:searchforward
 		function. |function-search-undo|.
 		Read-write.
 
-				*v:servername* *servername-variable*
-v:servername
+v:servername                                  *v:servername* *servername-variable*
 		Primary listen-address of Nvim, the first item returned by
 		|serverlist()|. Usually this is the named pipe created by Nvim
 		at |startup| or given by |--listen| (or the deprecated
@@ -618,8 +553,7 @@ v:servername
 		  end
 <
 
-				*v:shell_error* *shell_error-variable*
-v:shell_error
+v:shell_error                               *v:shell_error* *shell_error-variable*
 		Result of the last shell command.  When non-zero, the last
 		shell command had an error.  When zero, there was no problem.
 		This only works when the shell returns the error code to Vim.
@@ -632,15 +566,13 @@ v:shell_error
 		  endif
 <
 
-				*v:stacktrace* *stacktrace-variable*
-v:stacktrace
+v:stacktrace                                  *v:stacktrace* *stacktrace-variable*
 		The stack trace of the exception most recently caught and
 		not finished.  Refer to |getstacktrace()| for the structure of
 		stack trace.  See also |v:exception|, |v:throwpoint|, and
 		|throw-variables|.
 
-				*v:startreason* *startreason-variable*
-v:startreason
+v:startreason                               *v:startreason* *startreason-variable*
 		The reason Nvim started. Possible values:
 		- "normal"    Normal startup, yearning for life, etc.
 		- "restart"   Started by |:restart|.
@@ -648,8 +580,7 @@ v:startreason
 
 		Read-only.
 
-				*v:starttime* *starttime-variable*
-v:starttime
+v:starttime                                     *v:starttime* *starttime-variable*
 		Timestamp (nanoseconds since UNIX epoch) when the Nvim process
 		started.
 
@@ -658,13 +589,11 @@ v:starttime
 <
 		Read-only.
 
-				*v:statusmsg* *statusmsg-variable*
-v:statusmsg
+v:statusmsg                                     *v:statusmsg* *statusmsg-variable*
 		Last given status message.
 		Modifiable (can be set).
 
-					*v:stderr* *stderr-variable*
-v:stderr
+v:stderr                                              *v:stderr* *stderr-variable*
 		|channel-id| corresponding to stderr. The value is always 2;
 		use this variable to make your code more descriptive.
 		Unlike stdin and stdout (see |stdioopen()|), stderr is always
@@ -672,8 +601,7 @@ v:stderr
 		:call chansend(v:stderr, "error: toaster empty\n")
 <
 
-				*v:swapchoice* *swapchoice-variable*
-v:swapchoice
+v:swapchoice                                  *v:swapchoice* *swapchoice-variable*
 		|SwapExists| autocommands can set this to the selected choice
 		for handling an existing swapfile:
 		  'o'    Open read-only
@@ -686,69 +614,63 @@ v:swapchoice
 		results in the user being asked, as would happen when there is
 		no SwapExists autocommand.  The default is empty.
 
-				*v:swapcommand* *swapcommand-variable*
-v:swapcommand
+v:swapcommand                               *v:swapcommand* *swapcommand-variable*
 		Normal mode command to be executed after a file has been
 		opened.  Can be used for a |SwapExists| autocommand to have
 		another Vim open the file and jump to the right place.  For
 		example, when jumping to a tag the value is ":tag tagname\r".
 		For ":edit +cmd file" the value is ":cmd\r".
 
-					*v:swapname* *swapname-variable*
-v:swapname
+v:swapname                                        *v:swapname* *swapname-variable*
 		Name of the swapfile found.
 		Only valid during |SwapExists| event.
 		Read-only.
 
-				*v:t_blob* *t_blob-variable* *v:t_TYPE*
-v:t_blob	Value of |Blob| type.  Read-only.  See: |type()|
+v:t_blob                                     *v:t_blob* *t_blob-variable* *v:t_TYPE*
+		Value of |Blob| type.  Read-only.  See: |type()|
 
-					*v:t_bool* *t_bool-variable*
-v:t_bool	Value of |Boolean| type.  Read-only.  See: |type()|
+v:t_bool                                              *v:t_bool* *t_bool-variable*
+		Value of |Boolean| type.  Read-only.  See: |type()|
 
-					*v:t_dict* *t_dict-variable*
-v:t_dict	Value of |Dictionary| type.  Read-only.  See: |type()|
+v:t_dict                                              *v:t_dict* *t_dict-variable*
+		Value of |Dictionary| type.  Read-only.  See: |type()|
 
-					*v:t_float* *t_float-variable*
-v:t_float	Value of |Float| type.  Read-only.  See: |type()|
+v:t_float                                           *v:t_float* *t_float-variable*
+		Value of |Float| type.  Read-only.  See: |type()|
 
-					*v:t_func* *t_func-variable*
-v:t_func	Value of |Funcref| type.  Read-only.  See: |type()|
+v:t_func                                              *v:t_func* *t_func-variable*
+		Value of |Funcref| type.  Read-only.  See: |type()|
 
-					*v:t_list* *t_list-variable*
-v:t_list	Value of |List| type.  Read-only.  See: |type()|
+v:t_list                                              *v:t_list* *t_list-variable*
+		Value of |List| type.  Read-only.  See: |type()|
 
-					*v:t_number* *t_number-variable*
-v:t_number	Value of |Number| type.  Read-only.  See: |type()|
+v:t_number                                        *v:t_number* *t_number-variable*
+		Value of |Number| type.  Read-only.  See: |type()|
 
-					*v:t_string* *t_string-variable*
-v:t_string	Value of |String| type.  Read-only.  See: |type()|
+v:t_string                                        *v:t_string* *t_string-variable*
+		Value of |String| type.  Read-only.  See: |type()|
 
-				*v:termrequest* *termrequest-variable*
-v:termrequest
+v:termrequest                               *v:termrequest* *termrequest-variable*
 		The value of the most recent OSC, DCS or APC control sequence
 		sent from a process running in the embedded |terminal|.
 		This can be read in a |TermRequest| event handler to respond
 		to queries from embedded applications.
 
-				*v:termresponse* *termresponse-variable*
-v:termresponse
+v:termresponse                            *v:termresponse* *termresponse-variable*
 		The most recent OSC, DCS, APC, or recognized CSI (DA1, kitty
 		multiple-cursors) control sequence received by Nvim from the
 		host-terminal. Can be read in a |TermResponse| event handler
 		after querying the terminal.
 
-					*v:testing* *testing-variable*
-v:testing	Must be set before using `test_garbagecollect_now()`.
+v:testing                                           *v:testing* *testing-variable*
+		Must be set before using `test_garbagecollect_now()`.
 
-				*v:this_session* *this_session-variable*
-v:this_session
+v:this_session                            *v:this_session* *this_session-variable*
 		Full filename of the last loaded or saved session file.
 		Empty when no session file has been saved.  See |:mksession|.
 		Modifiable (can be set).
 
-				*v:throwpoint* *throwpoint-variable*
-v:throwpoint
+v:throwpoint                                  *v:throwpoint* *throwpoint-variable*
 		The point where the exception most recently caught and not
 		finished was thrown.  Not set when commands are typed.  See
 		also |v:exception|, |v:stacktrace|, and |throw-variables|.
@@ -761,16 +683,14 @@ v:throwpoint
 <
 		Output: "Exception from test.vim, line 2"
 
-						*v:true* *true-variable*
-v:true
+v:true                                                    *v:true* *true-variable*
 		Special value used to put "true" in JSON and msgpack.  See
 		|json_encode()|.  This value is converted to "v:true" when used
 		as a String (e.g. in |expr5| with string concatenation
 		operator) and to one when used as a Number (e.g. in |expr5| or
 		|expr7| when used with numeric operators).  Read-only.
 
-			*v:useractive* *useractive-variable* *user-idle*
-v:useractive
+v:useractive                        *v:useractive* *useractive-variable* *user-idle*
 		Timestamp (nanoseconds since UNIX epoch) indicating the most
 		recent user activity, i.e. when a key is received from a UI
 		(TUI input or |nvim_input()|).
@@ -778,14 +698,12 @@ v:useractive
 		Initialized to 0 (no user activity since startup).
 		Read-only.
 
-						*v:val* *val-variable*
-v:val
+v:val                                                       *v:val* *val-variable*
 		Value of the current item of a |List| or |Dictionary|.  Only
 		valid while evaluating the expression used with |map()| and
 		|filter()|.  Read-only.
 
-					*v:version* *version-variable*
-v:version
+v:version                                           *v:version* *version-variable*
 		Vim version number: major version times 100 plus minor
 		version.  Vim 5.0 is 500, Vim 5.1 is 501.
 		Read-only.
@@ -793,8 +711,7 @@ v:version
 		  :if has("nvim-0.2.1")
 <
 
-				*v:versionlong* *versionlong-variable*
-v:versionlong
+v:versionlong                               *v:versionlong* *versionlong-variable*
 		Like v:version, but also including the patchlevel in the last
 		four digits.  Version 8.1 with patch 123 has value 8010123.
 		This can be used like this: >
@@ -806,34 +723,29 @@ v:versionlong
 		Use the has() function to make sure the patch is actually
 		included.
 
-			*v:vim_did_enter* *vim_did_enter-variable*
-v:vim_did_enter
+v:vim_did_enter                         *v:vim_did_enter* *vim_did_enter-variable*
 		0 during startup, 1 just before |VimEnter|.
 		See also |v:vim_did_init|, which is set earlier.
 		Read-only.
 
-				*v:vim_did_init* *vim_did_init-variable*
-v:vim_did_init
+v:vim_did_init                            *v:vim_did_init* *vim_did_init-variable*
 		0 during initialization, 1 after sourcing the user |vimrc|,
 		just before |load-plugins|.
 		See also |v:vim_did_enter|, which is set later.
 		Read-only.
 
-					*v:virtnum* *virtnum-variable*
-v:virtnum
+v:virtnum                                           *v:virtnum* *virtnum-variable*
 		Virtual line number for the 'statuscolumn' expression.
 		Negative when drawing the status column for virtual lines, zero
 		when drawing an actual buffer line, and positive when drawing
 		the wrapped part of a buffer line.
 		Read-only.
 
-				*v:warningmsg* *warningmsg-variable*
-v:warningmsg
+v:warningmsg                                  *v:warningmsg* *warningmsg-variable*
 		Last given warning message.
 		Modifiable (can be set).
 
-					*v:windowid* *windowid-variable*
-v:windowid
+v:windowid                                        *v:windowid* *windowid-variable*
 		Application-specific window "handle" which may be set by any
 		attached UI. Defaults to zero.
 		Note: For Nvim |windows| use |winnr()| or |win_getid()|, see

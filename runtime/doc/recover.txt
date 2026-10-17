@@ -12,9 +12,9 @@ next morning, and then disaster strikes: Your computer crashes.
 			DON'T PANIC!
 
 You can recover most of your changes from the files that Vim uses to store
-the contents of the file.  Mostly you can recover your work with one command:
+the contents of the file.  Mostly you can recover your work with one command: >
 	vim -r filename
-
+<
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
@@ -51,6 +51,7 @@ Advantages:
 - You will not pollute the directories with ".swp" files.
 - When the 'directory' is on another partition, reduce the risk of damaging
   the file system where the file is (in a crash).
+
 Disadvantages:
 - You can get name collisions from files with the same name but in different
   directories (although Vim tries to avoid that by comparing the path name).
@@ -60,7 +61,7 @@ Disadvantages:
   warning message.
 
 If you want to put swap files in a fixed place, put a command resembling the
-following ones in your vimrc:
+following ones in your vimrc: >
 	:set dir=~/tmp		(for Unix)
 	:set dir=c:\\tmp	(for Win32)
 This is also very handy when editing files on floppy.  Of course you will have
@@ -114,8 +115,8 @@ after this.
 If you want to make sure that your changes are in the swap file use this
 command:
 
-					*:pre* *:preserve* *E313* *E314*
-:pre[serve]		Write all text for the current buffer into its swap
+:pre[serve]				*:pre* *:preserve* *E313* *E314*
+			Write all text for the current buffer into its swap
 			file.  The original file is no longer needed for
 			recovery.
 
@@ -154,8 +155,8 @@ This is easy when you start Vim to edit a file and you get the "ATTENTION:
 Found a swap file ..." message.  In this case the single command ":recover"
 will do the work.  You can also give the name of the file or the swap file to
 the recover command:
-					*:rec* *:recover* *E305* *E306* *E307*
-:rec[over] [file]	Try to recover [file] from the swap file.  If [file]
+:rec[over] [file]		*:rec* *:recover* *E305* *E306* *E307*
+			Try to recover [file] from the swap file.  If [file]
 			is not given use the file name for the current
 			buffer.  The current contents of the buffer are lost.
 			This command fails if the buffer was modified.

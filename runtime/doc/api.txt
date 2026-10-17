@@ -1173,8 +1173,7 @@ nvim_input({keys})                                              *nvim_input()*
         (`integer`) Number of bytes actually written (can be fewer than
         requested if the buffer becomes full).
 
-                                                          *nvim_input_mouse()*
-nvim_input_mouse({button}, {action}, {modifier}, {grid}, {row}, {col})
+nvim_input_mouse({button}, {action}, {modifier}, {grid}, {row}, {col})  *nvim_input_mouse()*
     Send mouse event from GUI.
 
     Non-blocking: does not wait on any result, but queues the event to be
@@ -1403,8 +1402,7 @@ nvim_put({lines}, {type}, {after}, {follow})                      *nvim_put()*
                   before (like |P|).
       • {follow}  (`boolean`) If true place cursor at end of inserted text.
 
-                                                    *nvim_replace_termcodes()*
-nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
+nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})  *nvim_replace_termcodes()*
     Converts terminal codes and |keycodes| (<CR>, <Esc>, …) in a key
     sequence, to the internal representation. See also Lua |vim.keycode()|.
 
@@ -1427,8 +1425,7 @@ nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
       • replace_termcodes
       • cpoptions
 
-                                                *nvim_select_popupmenu_item()*
-nvim_select_popupmenu_item({item}, {insert}, {finish}, {opts})
+nvim_select_popupmenu_item({item}, {insert}, {finish}, {opts})  *nvim_select_popupmenu_item()*
     Selects an item in the completion popup menu.
 
     If neither |ins-completion| nor |cmdline-completion| popup menu is active
@@ -1451,8 +1448,7 @@ nvim_select_popupmenu_item({item}, {insert}, {finish}, {opts})
       • {opts}    (`vim.api.keyset.empty?`) Optional parameters. Reserved for
                   future use.
 
-                                                      *nvim_set_client_info()*
-nvim_set_client_info({name}, {version}, {type}, {methods}, {attributes})
+nvim_set_client_info({name}, {version}, {type}, {methods}, {attributes})  *nvim_set_client_info()*
     Self-identifies the client, and sets optional flags on the channel.
     Defines the `client` object returned by |nvim_get_chan_info()|.
 
@@ -1905,8 +1901,7 @@ nvim__redraw({opts})                                          *nvim__redraw()*
     See also: ~
       • |:redraw|
 
-                                                *nvim__set_restart_on_crash()*
-nvim__set_restart_on_crash({progpath}, {argv})
+nvim__set_restart_on_crash({progpath}, {argv})  *nvim__set_restart_on_crash()*
     WARNING: This feature is experimental/unstable.
 
 
@@ -1926,8 +1921,7 @@ nvim__stats()                                                  *nvim__stats()*
 ==============================================================================
 Vimscript Functions                                            *api-vimscript*
 
-                                                   *nvim_call_dict_function()*
-nvim_call_dict_function({dict}, {fn}, {args})
+nvim_call_dict_function({dict}, {fn}, {args})      *nvim_call_dict_function()*
     Calls a Vimscript |Dictionary-function| with the given arguments.
 
     On execution error: fails with Vimscript error, updates v:errmsg.
@@ -2475,8 +2469,7 @@ nvim_buf_call({buf}, {fn})                                   *nvim_buf_call()*
     Return: ~
         (`any`) Value(s) returned by `fn()`.
 
-                                                       *nvim_buf_del_keymap()*
-nvim_buf_del_keymap({buf}, {mode}, {lhs}, {opts})
+nvim_buf_del_keymap({buf}, {mode}, {lhs}, {opts})      *nvim_buf_del_keymap()*
     Unmaps a buffer-local |mapping| for the given mode.
 
     Attributes: ~
@@ -2585,8 +2578,7 @@ nvim_buf_get_keymap({buf}, {mode})                     *nvim_buf_get_keymap()*
         (`vim.api.keyset.get_keymap[]`) Array of |maparg()|-like dictionaries
         describing mappings. The "buf" key holds the associated buffer id.
 
-                                                        *nvim_buf_get_lines()*
-nvim_buf_get_lines({buf}, {start}, {end}, {strict_indexing})
+nvim_buf_get_lines({buf}, {start}, {end}, {strict_indexing})  *nvim_buf_get_lines()*
     Gets a line-range from the buffer.
 
     Indexing is zero-based, end-exclusive. Negative indices are interpreted as
@@ -2671,9 +2663,7 @@ nvim_buf_get_offset({buf}, {index})                    *nvim_buf_get_offset()*
     Return: ~
         (`integer`) Integer byte offset, or -1 for unloaded buffer.
 
-                                                         *nvim_buf_get_text()*
-nvim_buf_get_text({buf}, {start_row}, {start_col}, {end_row}, {end_col},
-                  {opts})
+nvim_buf_get_text({buf}, {start_row}, {start_col}, {end_row}, {end_col}, {opts})  *nvim_buf_get_text()*
     Gets a range from the buffer (may be partial lines, unlike
     |nvim_buf_get_lines()|).
 
@@ -2752,8 +2742,7 @@ nvim_buf_line_count({buf})                             *nvim_buf_line_count()*
     Return: ~
         (`integer`) Line count, or 0 for unloaded buffer. |api-buffer|
 
-                                                       *nvim_buf_set_keymap()*
-nvim_buf_set_keymap({buf}, {mode}, {lhs}, {rhs}, {opts})
+nvim_buf_set_keymap({buf}, {mode}, {lhs}, {rhs}, {opts})  *nvim_buf_set_keymap()*
     Sets a buffer-local |mapping| for the given mode.
 
     Attributes: ~
@@ -2769,8 +2758,7 @@ nvim_buf_set_keymap({buf}, {mode}, {lhs}, {rhs}, {opts})
     See also: ~
       • |nvim_set_keymap()|
 
-                                                        *nvim_buf_set_lines()*
-nvim_buf_set_lines({buf}, {start}, {end}, {strict_indexing}, {replacement})
+nvim_buf_set_lines({buf}, {start}, {end}, {strict_indexing}, {replacement})  *nvim_buf_set_lines()*
     Sets (replaces) a line-range in the buffer.
 
     Indexing is zero-based, end-exclusive. Negative indices are interpreted as
@@ -2798,8 +2786,7 @@ nvim_buf_set_lines({buf}, {start}, {end}, {strict_indexing}, {replacement})
     See also: ~
       • |nvim_buf_set_text()|
 
-                                                         *nvim_buf_set_mark()*
-nvim_buf_set_mark({buf}, {name}, {line}, {col}, {opts})
+nvim_buf_set_mark({buf}, {name}, {line}, {col}, {opts})  *nvim_buf_set_mark()*
     Sets a named mark in the given buffer, all marks are allowed
     file/uppercase, visual, last change, etc. See |mark-motions|.
 
@@ -2836,9 +2823,7 @@ nvim_buf_set_name({buf}, {name})                         *nvim_buf_set_name()*
       • {buf}   (`integer`) Buffer id, or 0 for current buffer
       • {name}  (`string`) Buffer name
 
-                                                         *nvim_buf_set_text()*
-nvim_buf_set_text({buf}, {start_row}, {start_col}, {end_row}, {end_col},
-                  {replacement})
+nvim_buf_set_text({buf}, {start_row}, {start_col}, {end_row}, {end_col}, {replacement})  *nvim_buf_set_text()*
     Sets (replaces) a range in the buffer
 
     This is recommended over |nvim_buf_set_lines()| when only modifying parts
@@ -2886,8 +2871,7 @@ nvim_buf_set_var({buf}, {name}, {value})                  *nvim_buf_set_var()*
 ==============================================================================
 Command Functions                                                *api-command*
 
-                                              *nvim_buf_create_user_command()*
-nvim_buf_create_user_command({buf}, {name}, {cmd}, {opts})
+nvim_buf_create_user_command({buf}, {name}, {cmd}, {opts})  *nvim_buf_create_user_command()*
     Creates a buffer-local command |user-commands|.
 
     Attributes: ~
@@ -2969,8 +2953,7 @@ nvim_cmd({cmd}, {opts})                                           *nvim_cmd()*
       • |nvim_exec2()|
       • |nvim_parse_cmd()|
 
-                                                  *nvim_create_user_command()*
-nvim_create_user_command({name}, {cmd}, {opts})
+nvim_create_user_command({name}, {cmd}, {opts})   *nvim_create_user_command()*
     Creates a global |user-commands| command.
 
     For Lua usage see |lua-guide-commands-create|.
@@ -3127,8 +3110,7 @@ nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
 ==============================================================================
 Extmark Functions                                                *api-extmark*
 
-                                                  *nvim_buf_clear_namespace()*
-nvim_buf_clear_namespace({buf}, {ns_id}, {line_start}, {line_end})
+nvim_buf_clear_namespace({buf}, {ns_id}, {line_start}, {line_end})  *nvim_buf_clear_namespace()*
     Clears |namespace|d objects (highlights, |extmarks|, virtual text) from a
     region.
 
@@ -3160,8 +3142,7 @@ nvim_buf_del_extmark({buf}, {ns_id}, {id})            *nvim_buf_del_extmark()*
     Return: ~
         (`boolean`) true if the extmark was found, else false
 
-                                                *nvim_buf_get_extmark_by_id()*
-nvim_buf_get_extmark_by_id({buf}, {ns_id}, {id}, {opts})
+nvim_buf_get_extmark_by_id({buf}, {ns_id}, {id}, {opts})  *nvim_buf_get_extmark_by_id()*
     Gets the position (0-indexed) of an |extmark|.
 
     Attributes: ~
@@ -3187,8 +3168,7 @@ nvim_buf_get_extmark_by_id({buf}, {ns_id}, {id}, {opts})
           the entirety of text span range is deleted. See also the key
           `invalidate` in |nvim_buf_set_extmark()|.
 
-                                                     *nvim_buf_get_extmarks()*
-nvim_buf_get_extmarks({buf}, {ns_id}, {start}, {end}, {opts})
+nvim_buf_get_extmarks({buf}, {ns_id}, {start}, {end}, {opts})  *nvim_buf_get_extmarks()*
     Gets |extmarks| in "traversal order" from a |charwise| region defined by
     buffer positions (inclusive, 0-indexed |api-indexing|).
 
@@ -3253,8 +3233,7 @@ nvim_buf_get_extmarks({buf}, {ns_id}, {start}, {end}, {opts})
         `[extmark_id, row, col, details?]` tuples in "traversal order". For
         the `details` dictionary, see |nvim_buf_get_extmark_by_id()|.
 
-                                                      *nvim_buf_set_extmark()*
-nvim_buf_set_extmark({buf}, {ns_id}, {line}, {col}, {opts})
+nvim_buf_set_extmark({buf}, {ns_id}, {line}, {col}, {opts})  *nvim_buf_set_extmark()*
     Creates or updates an |extmark|.
 
     By default a new extmark is created when no id is passed in, but it is
@@ -3436,8 +3415,7 @@ nvim_get_namespaces()                                  *nvim_get_namespaces()*
     Return: ~
         (`table<string,integer>`) dict that maps from names to namespace ids.
 
-                                              *nvim_set_decoration_provider()*
-nvim_set_decoration_provider({ns_id}, {opts})
+nvim_set_decoration_provider({ns_id}, {opts})  *nvim_set_decoration_provider()*
     Set or change decoration provider for a |namespace|
 
     This is a very general purpose interface for having Lua callbacks being
@@ -3614,8 +3592,7 @@ nvim_get_option_value({name}, {opts})                *nvim_get_option_value()*
     Return: ~
         (`any`) Option value
 
-                                                     *nvim_set_option_value()*
-nvim_set_option_value({name}, {value}, {opts})
+nvim_set_option_value({name}, {value}, {opts})       *nvim_set_option_value()*
     Sets the value of an option. The behavior of this function matches that of
     |:set|: for global-local options, both the global and local value are set
     unless otherwise specified with {scope}.
@@ -3744,8 +3721,7 @@ nvim_tabpage_list_wins({tabpage})                   *nvim_tabpage_list_wins()*
     Return: ~
         (`integer[]`) List of windows in `tabpage`
 
-                                                      *nvim_tabpage_set_var()*
-nvim_tabpage_set_var({tabpage}, {name}, {value})
+nvim_tabpage_set_var({tabpage}, {name}, {value})      *nvim_tabpage_set_var()*
     Sets a tab-scoped (t:) variable
 
     Attributes: ~
@@ -3800,8 +3776,7 @@ nvim_ui_detach()                                            *nvim_ui_detach()*
         |RPC| only
         Since: 0.1.0
 
-                                                    *nvim_ui_pum_set_bounds()*
-nvim_ui_pum_set_bounds({width}, {height}, {row}, {col})
+nvim_ui_pum_set_bounds({width}, {height}, {row}, {col})  *nvim_ui_pum_set_bounds()*
     Tells Nvim the geometry of the popupmenu, to align floating windows with
     an external popup menu.
 
@@ -3878,8 +3853,7 @@ nvim_ui_try_resize({width}, {height})                   *nvim_ui_try_resize()*
       • {width}   (`integer`)
       • {height}  (`integer`)
 
-                                                   *nvim_ui_try_resize_grid()*
-nvim_ui_try_resize_grid({grid}, {width}, {height})
+nvim_ui_try_resize_grid({grid}, {width}, {height})  *nvim_ui_try_resize_grid()*
     Tell Nvim to resize a grid. Triggers a grid_resize event with the
     requested grid size or the maximum size if it exceeds size limits.
 

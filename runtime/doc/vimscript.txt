@@ -16,8 +16,8 @@ Using Vimscript						*using-scripts*
 
 For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
-					*:so* *:source*
-:so[urce] {file}	Runs |Ex-command|s or Lua code (".lua" files) from
+:so[urce] {file}					*:so* *:source*
+			Runs |Ex-command|s or Lua code (".lua" files) from
 			{file}. Triggers the |SourcePre| autocommand.
 
 :[range]so[urce]	Read Ex commands or Lua code from the [range] of lines
@@ -36,14 +36,13 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			will be adjusted to the start and end of the fold,
 			but only if a two line specifiers range was used.
 
-							*:source!*
-:so[urce]! {file}	Runs |Normal-mode| commands from {file}. When used
+:so[urce]! {file}					*:source!*
+			Runs |Normal-mode| commands from {file}. When used
 			after |:global|, |:argdo|, |:windo|, |:bufdo|, in
 			a loop or when another command follows the display
 			won't be updated while executing the commands.
 
-							*:ru* *:runtime*
-:ru[ntime][!] [where] {file} ..
+:ru[ntime][!] [where] {file} ..				*:ru* *:runtime*
 			Sources |Ex| commands or Lua code (".lua" files) read
 			from {file} (a relative path) in each directory given
 			by 'runtimepath' and/or 'packpath'.
@@ -89,8 +88,8 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			When 'verbose' is two or higher, there is a message
 			about each searched file.
 
-							*:pa* *:packadd* *E919*
-:pa[ckadd][!] {name}	|pack-add| Search for an optional plugin directory in
+:pa[ckadd][!] {name}				*:pa* *:packadd* *E919*
+			|pack-add| Search for an optional plugin directory in
 			'packpath', source any plugin files found, and add it
 			to 'runtimepath'.  The directory must match: >
 				pack/*/opt/{name}
@@ -133,8 +132,8 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			force load plugin files as otherwise they won't be
 			loaded automatically).
 
-						*:packl* *:packloadall*
-:packl[oadall][!]	Load all packages in the "start" directory under each
+:packl[oadall][!]				*:packl* *:packloadall*
+			Load all packages in the "start" directory under each
 			entry in 'packpath'.
 
 			First all the directories found are added to
@@ -190,8 +189,8 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			Mark) in utf-8 format Vim will recognize it, no need
 			to use ":scriptencoding utf-8" then.
 
-						*:scr* *:scriptnames*
-:scr[iptnames]		List all sourced script names, in the order they were
+:scr[iptnames]						*:scr* *:scriptnames*
+			List all sourced script names, in the order they were
 			first sourced.  The number is used for the script ID
 			|<SID>|.
 			Also see `getscriptinfo()`.
@@ -202,8 +201,8 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			When the current buffer can't be |abandon|ed and the !
 			is not present, the command fails.
 
-						*:fini* *:finish* *E168*
-:fini[sh]		Stop sourcing a script.  Can only be used in a Vim
+:fini[sh]					*:fini* *:finish* *E168*
+			Stop sourcing a script.  Can only be used in a Vim
 			script file.  This is a quick way to skip the rest of
 			the file.  If it is used after a |:try| but before the
 			matching |:finally| (if present), the commands
@@ -583,8 +582,7 @@ LISTING BREAKPOINTS
 
 OBSCURE
 
-						*:debugg* *:debuggreedy*
-:debugg[reedy]
+:debugg[reedy]					*:debugg* *:debuggreedy*
 		Read debug mode commands from the normal input stream, instead
 		of getting them directly from the user.  Only useful for test
 		scripts.  Example: >
