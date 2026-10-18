@@ -24,7 +24,7 @@ To disable the built-in zip browser, set this before startup: >lua
 
 MAPPINGS                                                       *zip-mappings*
 
-The standard |dir-buffer-mappings|, plus:
+The standard |dir-mappings|, plus:
 
 • x extracts the entry under the cursor into the current directory, discarding
   its path inside the archive. It never overwrites an existing file.
