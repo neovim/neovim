@@ -10,6 +10,7 @@ local command = n.command
 local exec_lua = n.exec_lua
 
 local function injected(lines)
+  command('packadd nvim.diffhl')
   api.nvim_buf_set_lines(0, 0, -1, false, lines)
   return exec_lua(function()
     local parser = vim.treesitter.get_parser(0, 'diff')
@@ -58,40 +59,37 @@ describe('treesitter bundled parser: diff', function()
     local screen = Screen.new(44, 4)
     local colors = Screen.colors
     screen:add_extra_attr_ids({
-      [100] = { foreground = colors.SlateBlue, background = colors.NvimLightRed },
+      [100] = { foreground = colors.NvimDarkRed, background = colors.NvimLightRed },
       [101] = { foreground = colors.Brown, background = colors.NvimLightRed, bold = true },
-      [102] = { background = colors.NvimLightRed },
-      [103] = { foreground = colors.Cyan4, background = colors.NvimLightRed },
-      [104] = { foreground = colors.Magenta1, background = colors.NvimLightRed },
-      [105] = { foreground = colors.SlateBlue, background = colors.NvimLightGreen },
-      [106] = { foreground = colors.Brown, background = colors.NvimLightGreen, bold = true },
-      [107] = { background = colors.NvimLightGreen },
-      [108] = { foreground = colors.Cyan4, background = colors.NvimLightGreen },
-      [109] = { foreground = colors.Magenta1, background = colors.NvimLightGreen },
+      [102] = { foreground = colors.Cyan4, background = colors.NvimLightRed },
+      [103] = { foreground = colors.Magenta1, background = colors.NvimLightRed },
+      [104] = { foreground = colors.NvimDarkGreen, background = colors.NvimLightGreen },
+      [105] = { foreground = colors.Brown, background = colors.NvimLightGreen, bold = true },
+      [106] = { foreground = colors.Cyan4, background = colors.NvimLightGreen },
+      [107] = { foreground = colors.Magenta1, background = colors.NvimLightGreen },
     })
+    command('packadd nvim.diffhl')
     hunk()
 
     screen:expect([[
       ^ {15:local} {25:x} {15:=} {26:1}                                |
-      {100:-}{101:local}{102: }{103:y}{102: }{101:=}{102: }{104:2}                                |
-      {105:+}{106:local}{107: }{108:y}{107: }{106:=}{107: }{109:3}                                |
+      {100:-}{101:local}{100: }{102:y}{100: }{101:=}{100: }{103:2}                                |
+      {104:+}{105:local}{104: }{106:y}{104: }{105:=}{104: }{107:3}                                |
                                                   |
     ]])
   end)
 
-  it('drops the backgrounds when the specialized groups are cleared', function()
+  it('does not highlight hunk content without :packadd', function()
     local screen = Screen.new(44, 4)
     screen:add_extra_attr_ids({
       [100] = { foreground = Screen.colors.SeaGreen4 },
     })
-    command('hi clear @diff.plus.diff')
-    command('hi clear @diff.minus.diff')
     hunk()
 
     screen:expect([[
-      ^ {15:local} {25:x} {15:=} {26:1}                                |
-      {19:-}{15:local}{19: }{25:y}{19: }{15:=}{19: }{26:2}                                |
-      {100:+}{15:local}{100: }{25:y}{100: }{15:=}{100: }{26:3}                                |
+      ^ local x = 1                                |
+      {19:-local y = 2}                                |
+      {100:+local y = 3}                                |
                                                   |
     ]])
   end)

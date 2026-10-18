@@ -1,7 +1,3 @@
-if not vim.g.diffhl then
-  return
-end
-
 --- @param dark boolean
 --- @return table<string, vim.api.keyset.highlight>
 local function groups(dark)
