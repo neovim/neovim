@@ -3957,10 +3957,15 @@ describe('progress-message', function()
       return exec_lua(function(f, cmd)
         local out = {}
         vim.api.nvim_create_autocmd('Progress', {
+          group = vim.api.nvim_create_augroup('test_slow_write', {}),
           callback = function(ev)
             table.insert(out, ev.data.status)
             -- :bwipeout disallowed (E937) while writing.
             out.wiped = out.wiped or pcall(vim.cmd.bwipe, { bang = true })
+            if #out == 1 then
+              -- Progress handler (naughty) edits the buffer DURING :write.
+              vim.api.nvim_buf_set_lines(0, -1, -1, true, { 'not written' })
+            end
           end,
         })
         vim.api.nvim_buf_set_lines(0, 0, -1, true, vim.fn['repeat']({ ('x'):rep(99) }, 2000))
@@ -3978,6 +3983,8 @@ describe('progress-message', function()
     end
 
     eq({ 'running', 'success', false, 'ok' }, slow_write('cat'))
+    -- Buffer changed while writing: still 'modified'.
+    eq(true, api.nvim_get_option_value('modified', {}))
     eq({ 'running', 'failed', false, 'E514' }, slow_write('head -c 100000')) -- Write error (EPIPE).
   end)
 
