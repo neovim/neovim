@@ -201,6 +201,36 @@ example: >lua
 <
 
 ==============================================================================
+Builtin plugin: diffhl                                                *diffhl*
+
+Highlights the code in the hunks of a diff buffer (a buffer with 'filetype'
+set to "diff", such as `git diff` output or a `.patch` file) with the
+treesitter parser for the language of each file in the diff. Added and
+removed lines also get a green or red background.
+
+                                                                    *g:diffhl*
+
+diffhl is disabled by default. To enable it, add to your config: >lua
+    vim.g.diffhl = true
+<
+(Vimscript: `let g:diffhl = v:true`). diffhl applies to diff buffers with
+treesitter highlighting, see |vim.treesitter.start()|: >lua
+    vim.api.nvim_create_autocmd('FileType', {
+      pattern = 'diff',
+      callback = function(ev)
+        vim.treesitter.start(ev.buf)
+      end,
+    })
+<
+The code is highlighted only for languages that have a parser, see
+|treesitter-parsers|.
+
+Added and removed lines use the `@diff.plus.diff` and `@diff.minus.diff`
+highlight groups, see |treesitter-highlight-groups|. Change them with: >vim
+    hi @diff.plus.diff guibg=DarkGreen
+<
+
+==============================================================================
 Builtin plugin: difftool                                            *difftool*
 
 :DiffTool {left} {right}                                           *:DiffTool*
