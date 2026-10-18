@@ -612,10 +612,6 @@ local predicate_handlers = {
     end
     return false
   end,
-
-  ['diffhl?'] = function()
-    return not not vim.g.diffhl
-  end,
 }
 
 -- As we provide lua-match? also expose vim-match?

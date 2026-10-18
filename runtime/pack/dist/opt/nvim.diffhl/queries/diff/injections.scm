@@ -1,3 +1,5 @@
+; extends
+
 ; Code highlighting in diff hunks
 ; additions
 (block
@@ -14,7 +16,6 @@
           (change)
           (unrecognized)
         ]+)))
-  (#diffhl?)
   (#offset! @injection.content 0 1 0 1)
   (#gsub! @injection.filename "\t.*$" "")
   (#gsub! @injection.filename "^\"(.+)\"$" "%1"))
@@ -34,7 +35,6 @@
           (change)
           (unrecognized)
         ]+)))
-  (#diffhl?)
   (#offset! @injection.content 0 1 0 1)
   (#gsub! @injection.filename "\t.*$" "")
   (#gsub! @injection.filename "^\"(.+)\"$" "%1"))
