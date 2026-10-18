@@ -293,6 +293,15 @@ describe('UI event channels', function()
     session2:request('nvim_ui_term_event', 'termresponse', 'accepted')
     eq({ 'accepted' }, exec_lua('return _G.filtered'))
 
+    exec_lua([[
+      _G.capability = nil
+      vim.tty.query('missing', { timeout = 0 }, function(cap, found)
+        _G.capability = { cap, found }
+      end)
+    ]])
+    request('nvim_ui_term_event', 'termresponse', '\027P0+r6d697373696e67')
+    eq({ 'missing', false }, exec_lua('return _G.capability'))
+
     session2:close()
   end)
 end)
