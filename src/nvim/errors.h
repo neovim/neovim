@@ -19,6 +19,7 @@ EXTERN const char e_invalid_buffer_name_str[] INIT(= N_("E158: Invalid buffer na
 EXTERN const char e_command_too_recursive[] INIT(= N_("E169: Command too recursive"));
 EXTERN const char e_buffer_nr_invalid_buffer_number[] INIT(= N_("E680: <buffer=%d>: invalid buffer number"));
 EXTERN const char e_buffer_is_not_loaded[] INIT(= N_("E681: Buffer is not loaded"));
+EXTERN const char e_buffer_changed_unexpectedly[] INIT(= N_("E787: Buffer changed unexpectedly"));
 EXTERN const char e_endif[] INIT(= N_("E171: Missing :endif"));
 EXTERN const char e_endtry[] INIT(= N_("E600: Missing :endtry"));
 EXTERN const char e_endwhile[] INIT(= N_("E170: Missing :endwhile"));

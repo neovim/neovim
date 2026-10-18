@@ -1541,6 +1541,12 @@ restore_backup:
           progress = percent;
           add_quoted_fname(IObuff, IOSIZE, buf, msgname);
           msg_progress(IObuff, msg_id, "running", progress, 0, false, true, false);
+          if (buf_get_changedtick(buf) != write_tick) {
+            // Progress handler changed the text: the file would mix old and new lines.
+            err = set_err(_(e_buffer_changed_unexpectedly));
+            end = 0;
+            break;
+          }
         }
       }
     }
