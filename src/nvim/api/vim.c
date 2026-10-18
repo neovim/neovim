@@ -1502,7 +1502,7 @@ DictOf(Integer) nvim_get_color_map(Arena *arena)
 ///   or empty for unnamed buffers), and `winsize` (`height`, `width`). The first
 ///   entry has `root = true`; subsequent split windows have `split` ("vertical"
 ///   or "horizontal") and `split_from` (an earlier entry's numeric index).
-///   Floating windows have `floating = true` instead of split information.
+///   Floating windows are excluded.
 ///
 /// @param opts  Optional parameters.
 ///               - types:  List of context types (see above) to gather, or empty for "all".

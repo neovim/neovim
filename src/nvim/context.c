@@ -115,9 +115,10 @@ void ctx_free(Context *ctx)
   *ctx = (Context)CONTEXT_INIT;
 }
 
-/// Append a window using a snapshot-local index (API Dict keys must be strings).
+/// Append a split window using a snapshot-local index (API Dict keys must be strings).
 static size_t ctx_save_window(Dict *windows, win_T *wp, size_t split_from, const char *split)
 {
+  assert(!wp->w_floating);
   Dict window = ARRAY_DICT_INIT;
   Array cursor = ARRAY_DICT_INIT;
   ADD(cursor, INTEGER_OBJ(wp->w_cursor.lnum));
@@ -126,9 +127,7 @@ static size_t ctx_save_window(Dict *windows, win_T *wp, size_t split_from, const
   PUT(window, "file", STRING_OBJ(cstr_to_string(wp->w_buffer->b_ffname == NULL
                                               ? "" : wp->w_buffer->b_ffname)));
 
-  if (wp->w_floating) {
-    PUT(window, "floating", BOOLEAN_OBJ(true));
-  } else if (split_from == 0) {
+  if (split_from == 0) {
     PUT(window, "root", BOOLEAN_OBJ(true));
   } else {
     PUT(window, "split", STRING_OBJ(cstr_to_string(split)));
@@ -248,13 +247,9 @@ void ctx_save(Context *ctx, const CtxStateFlags flags)
   if (flags & kCtxWindows) {
     api_free_dict(ctx->windows);
     ctx->windows = (Dict)ARRAY_DICT_INIT;
+    // Only save the split layout: floating windows are not part of the frame tree.
     size_t root = ctx_save_window(&ctx->windows, ctx_frame_window(topframe), 0, NULL);
     ctx_save_window_splits(&ctx->windows, topframe, root);
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (wp->w_floating && !is_ctx_win(wp)) {
-        ctx_save_window(&ctx->windows, wp, 0, NULL);
-      }
-    }
   }
 
   if (flags & (kCtxFuncs | kCtxSFuncs)) {

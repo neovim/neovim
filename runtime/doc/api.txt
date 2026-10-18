@@ -928,8 +928,7 @@ nvim_get_context({opts})                                  *nvim_get_context()*
       (`height`, `width`). The first entry has `root = true`; subsequent split
       windows have `split` ("vertical" or "horizontal") and `split_from` (an
       earlier entry's numeric index). Splits are ordered for creation to the
-      right or below their parent. Floating windows have `floating = true`
-      instead of split information.
+      right or below their parent. Floating windows are excluded.
 
     Attributes: ~
         Since: 0.4.0
