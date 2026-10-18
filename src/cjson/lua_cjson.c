@@ -874,6 +874,38 @@ static void json_append_array(lua_State *l, json_encode_t *ctx, int current_dept
     strbuf_append_char(json, ']');
 }
 
+/* Append a signed decimal integer.  This is used instead of the "%.16g"
+ * round trip below for integral values; snprintf() costs roughly 100ns per
+ * call, which dominates number-heavy payloads. */
+static void json_append_integer(strbuf_t *json, long long value)
+{
+    char buf[24];
+    int len = 0;
+    unsigned long long u;
+
+    if (value < 0) {
+        buf[len++] = '-';
+        u = (unsigned long long)(-(value + 1)) + 1;
+    } else {
+        u = (unsigned long long)value;
+    }
+
+    int start = len;
+    do {
+        buf[len++] = (char)('0' + (int)(u % 10));
+        u /= 10;
+    } while (u != 0);
+    for (int i = start, j = len - 1; i < j; i++, j--) {
+        char tmp = buf[i];
+        buf[i] = buf[j];
+        buf[j] = tmp;
+    }
+
+    strbuf_ensure_empty_length(json, (size_t)len);
+    memcpy(strbuf_empty_ptr(json), buf, (size_t)len);
+    strbuf_extend_length(json, len);
+}
+
 static void json_append_number(lua_State *l, json_encode_t *ctx,
                                int lindex, int use_keybuf)
 {
@@ -919,6 +951,19 @@ static void json_append_number(lua_State *l, json_encode_t *ctx,
             strbuf_append_mem(json, "null", 4);
             return;
         }
+    }
+
+    /* Fast path: integral values that "%.16g" prints in fixed notation (that
+     * is, at most 16 digits).  Neovim uses LuaJIT, where LUA_VERSION_NUM is
+     * 501, so the lua_isinteger() branch above is compiled out and *every*
+     * number would otherwise pay for snprintf("%.16g").  "-0" is left to
+     * snprintf() because it has no integral spelling of its own. */
+    if (cfg->encode_number_precision == 16
+        && num > -1e16 && num < 1e16
+        && num == (double)(long long)num
+        && !(num == 0.0 && signbit(num))) {
+        json_append_integer(json, (long long)num);
+        return;
     }
 
     strbuf_ensure_empty_length(json, FPCONV_G_FMT_BUFSIZE);
