@@ -873,6 +873,7 @@ must handle.
 	      • "lua_print": |print()| from |:lua| code
 	      • "progress": Progress message emitted by |nvim_echo()|. Internal
 	        progress messages use these ids:
+		• `nvim.bufread "<filename>"` (slow file read, e.g. |:edit|)
 		• `nvim.bufwrite "<filename>"` (slow |:write|)
 		• `nvim.completion`
 		• `nvim.indent`

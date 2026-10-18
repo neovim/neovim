@@ -67,9 +67,6 @@ static const char e_write_error_file_system_full[]
 static const char e_no_matching_autocommands_for_buftype_str_buffer[]
   = N_("E676: No matching autocommands for buftype=%s buffer");
 
-/// If :write is slower than this, emit a progress-message.
-static const uint64_t slow_write_ns = NS_PER_SEC / 2;
-
 typedef struct {
   const char *num;
   char *msg;
@@ -1097,16 +1094,13 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   } else {
     msg_scroll = true;              // don't overwrite previous file message
   }
-  // Progress-msg id, e.g. `nvim.bufwrite "foo.txt"`.
-  char msg_id[MAXPATHL + 32];
 #ifndef UNIX
   char *msgname = sfname;
 #else
   char *msgname = fname;
 #endif
-  size_t id_len = xstrlcpy(msg_id, "nvim.bufwrite ", sizeof(msg_id));
-  add_quoted_fname(msg_id + id_len, sizeof(msg_id) - id_len, buf, msgname);
-  msg_id[strlen(msg_id) - 1] = NUL;  // add_quoted_fname() appends a space, for display only.
+  char msg_id[MAXPATHL + 32];  // Progress-msg id.
+  fname_msg_id(msg_id, sizeof(msg_id), "nvim.bufwrite", buf, msgname);
 
   // Hide the cursor until done writing, else it jumps to the filename message. #25974
   const bool show_msg = !filtering && msg_silent == 0;
@@ -1543,7 +1537,7 @@ restore_backup:
       if (show_msg && nchars != progress_nchars) {
         progress_nchars = nchars;
         const int percent = (int)((int64_t)(lnum - start) * 100 / (end - start + 1));
-        if (percent != progress && (progress >= 0 || os_hrtime() - write_start > slow_write_ns)) {
+        if (percent != progress && (progress >= 0 || os_hrtime() - write_start > slow_io_ns())) {
           progress = percent;
           add_quoted_fname(IObuff, IOSIZE, buf, msgname);
           msg_progress(IObuff, msg_id, "running", progress, 0, false, true, false);
