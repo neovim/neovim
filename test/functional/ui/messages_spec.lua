@@ -100,7 +100,7 @@ describe('ui/ext_messages', function()
           content = { { writemsg } },
           history = true,
           id = 'nvim.bufwrite "Xtest_functional_ui_messages_spec"',
-          kind = 'progress',
+          kind = 'bufwrite',
         },
         {
           content = { { 'W10: Warning: Changing a readonly file', 19, 'WarningMsg' } },
@@ -1408,7 +1408,7 @@ stack traceback:
       messages = {
         {
           content = { { string.format('"%s" [New] 0L, 0B written', fname) } },
-          kind = 'progress',
+          kind = 'bufwrite',
           id = 'nvim.bufwrite "Xtest_functional_ui_messages_spec"',
           history = true,
         },
@@ -3934,39 +3934,51 @@ describe('progress-message', function()
     })
   end)
 
-  it('emitted by :write, not by :read #41193', function()
+  it('emitted by slow :write, but not :read #41193 #41713', function()
+    t.skip(t.is_os('win'), 'N/A for Windows') -- Using mkfifo to simulate slow :write.
     local fname = 'Xtest_progress_bufwrite'
     finally(function()
       os.remove(fname)
     end)
-    command('write ' .. fname)
-    assert_progress_autocmd({
-      data = {},
-      id = ('nvim.bufwrite "%s"'):format(fname),
-      source = 'nvim',
-      status = 'success',
-      text = { ('"%s" [New] 0L, 0B written'):format(fname) },
-      title = '',
-    })
 
-    -- ":read" is not a write: it must not start a progress that never ends.
+    -- ":write" faster than `slow_write_ns` does not emit a progress-msg.
+    command('write ' .. fname)
+    assert_progress_autocmd(nil)
+
+    -- ":read" does not emit a progress-msg.
     command('read ' .. fname)
     assert_progress_autocmd(nil)
 
-    -- A failed write ends the progress-msg.
-    local events = exec_lua(function(f)
-      local out = {}
-      vim.api.nvim_create_autocmd('Progress', {
-        callback = function(ev)
-          table.insert(out, { id = ev.data.id, status = ev.data.status, text = ev.data.text[1] })
-        end,
-      })
-      pcall(vim.cmd.write, ('%s/nodir'):format(f))
-      return out
-    end, fname)
-    eq({ 'running', 'failed' }, { events[1].status, events[2].status })
-    eq(events[1].id, events[2].id)
-    t.matches('^E%d+:', events[2].text)
+    os.remove(fname)
+    fn.system({ 'mkfifo', fname })
+
+    --- Slow :write. Simulated by writing to a fifo, read by `reader` after > `slow_write_ns`.
+    local function slow_write(reader)
+      return exec_lua(function(f, cmd)
+        local out = {}
+        vim.api.nvim_create_autocmd('Progress', {
+          callback = function(ev)
+            table.insert(out, ev.data.status)
+            -- :bwipeout disallowed (E937) while writing.
+            out.wiped = out.wiped or pcall(vim.cmd.bwipe, { bang = true })
+          end,
+        })
+        vim.api.nvim_buf_set_lines(0, 0, -1, true, vim.fn['repeat']({ ('x'):rep(99) }, 2000))
+        local proc = vim.system({
+          'sh',
+          '-c',
+          ('exec 3<"$1"; sleep 0.6; %s <&3 >/dev/null'):format(cmd),
+          'sh',
+          f,
+        })
+        local ok, err = pcall(vim.cmd.write, { f, bang = true })
+        proc:wait()
+        return { out[1], out[#out], out.wiped, ok and 'ok' or err:match('E%d+') }
+      end, fname, reader)
+    end
+
+    eq({ 'running', 'success', false, 'ok' }, slow_write('cat'))
+    eq({ 'running', 'failed', false, 'E514' }, slow_write('head -c 100000')) -- Write error (EPIPE).
   end)
 
   it('emitted by ins-completion scan', function()

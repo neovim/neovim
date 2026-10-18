@@ -1190,7 +1190,8 @@ describe('messages2', function()
 
   it('configured targets per kind', function()
     exec_lua(function()
-      local targets = { echo = 'msg', list_cmd = 'pager', bufwrite = 'cmd', lua_print = 'cmd' }
+      local targets = { echo = 'msg', list_cmd = 'pager', lua_print = 'cmd' }
+      targets['nvim%.bufwrite'] = 'msg' -- Matches the message ID, not the kind.
       require('vim._core.ui2').enable({ msg = { targets = targets } })
       print('foo') -- "lua_print" kind goes to cmd
       vim.cmd.echo('"bar"') -- "echo" kind goes to msg
@@ -1230,9 +1231,10 @@ describe('messages2', function()
     command('edit Xfile | write')
     screen:expect([[
       ^                                                     |
-      {1:~                                                    }|*11
-      {1:~                                              }{4:bar(2)}|
-      "Xfile" [New] 0L, 0B written                         |
+      {1:~                                                    }|*10
+      {1:~                        }{4:bar                         }|
+      {1:~                        }{4:"Xfile" [New] 0L, 0B written}|
+      foo(1)                                               |
     ]])
   end)
 

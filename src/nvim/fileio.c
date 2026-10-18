@@ -111,8 +111,7 @@ static const char *e_auchangedbuf = N_("E812: Autocommands changed buffer or buf
 /// Shows a message about file `name`, e.g. `"foo.txt" [New]`.
 ///
 /// @param s Info appended to the filename, e.g. "[New]".
-/// @param msg_id Emit as a progress-message with this id, or NULL for a plain message.
-///               Caller must emit a non-"running" status for `msg_id`, later.
+/// @param msg_id Emit as a "bufwrite" message with this id, or NULL for a plain message.
 static void filemess(buf_T *buf, char *name, char *s, const char *msg_id)
 {
   int prev_msg_col = msg_col;
@@ -144,7 +143,7 @@ static void filemess(buf_T *buf, char *name, char *s, const char *msg_id)
   msg_scrolled_ign = true;
   // may truncate the message to avoid a hit-return prompt
   if (msg_id != NULL) {
-    msg_progress(IObuff, (char *)msg_id, "running", 0, false, true, false);
+    msg_with_id(IObuff, (char *)msg_id, "bufwrite", NULL, 0, false, true, false);
   } else {
     msg_outtrans(msg_may_trunc(false, IObuff), 0, false);
   }
@@ -152,9 +151,9 @@ static void filemess(buf_T *buf, char *name, char *s, const char *msg_id)
   msg_scrolled_ign = false;
 }
 
-/// Shows the "busy" message for writing file `name`, as a progress-message. #39280
-/// Caller must end the progress by emitting a non-"running" status to the same `msg_id`.
-void filemess_progress(buf_T *buf, char *name, const char *msg_id)
+/// Shows file `name` before writing it, as a "bufwrite" message with `msg_id`, which buf_write()
+/// replaces when done (or with a progress-message, if slow).
+void filemess_bufwrite(buf_T *buf, char *name, const char *msg_id)
 {
   filemess(buf, name, "", msg_id);
 }
