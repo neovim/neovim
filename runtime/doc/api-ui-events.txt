@@ -857,6 +857,7 @@ must handle.
 	    Name indicating the message kind. New kinds may be added in the
 	    future; clients should treat unknown kinds as the empty kind.
 	      • "" (empty): Unknown (consider a |feature-request|)
+	      • "bufwrite": |:write| message. If :write is slow it emits "progress".
 	      • "empty": Empty message (`:echo ""`), with empty `content`. Should
 	        clear messages sharing the 'cmdheight' area if it is the only
 	        message in a batch.
@@ -872,7 +873,7 @@ must handle.
 	      • "lua_print": |print()| from |:lua| code
 	      • "progress": Progress message emitted by |nvim_echo()|. Internal
 	        progress messages use these ids:
-		• `nvim.bufwrite "<filename>"`
+		• `nvim.bufwrite "<filename>"` (slow |:write|)
 		• `nvim.completion`
 		• `nvim.indent`
 	      • "quickfix": Quickfix navigation message
