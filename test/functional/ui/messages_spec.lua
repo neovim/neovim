@@ -1728,28 +1728,31 @@ describe('ui/builtin messages', function()
     }
   end)
 
-  it('no cursor flicker during :write message (marks UI busy) #25974', function()
+  it('hides cursor during :write #25974', function()
     local fname = 'Xtest_write_busy'
     finally(function()
       os.remove(fname)
     end)
-    local busy_start, busy_stop = 0, 0
+    local busy_start = 0
     screen._handle_busy_start = (function(orig)
       return function()
         orig(screen)
         busy_start = busy_start + 1
       end
     end)(screen._handle_busy_start)
-    screen._handle_busy_stop = (function(orig)
-      return function()
-        orig(screen)
-        busy_stop = busy_stop + 1
-      end
-    end)(screen._handle_busy_stop)
+    -- Cursor ever shown in the cmdline ("writing"/"written" messages).
+    local cmdline_cursor = false
+    screen._handle_flush = function()
+      cmdline_cursor = cmdline_cursor or (not screen._busy and screen._cursor.row == 7)
+    end
     command('write ' .. fname)
-    screen:expect({ any = 'written' })
-    eq(true, busy_start >= 1) -- cursor was hidden while the message was emitted
-    eq(busy_start, busy_stop) -- balanced: cursor restored afterwards
+    screen:expect({ any = '^.*written' })
+    eq({ 1, false }, { busy_start, cmdline_cursor })
+
+    -- No message/busy if :silent.
+    command('silent write')
+    screen:expect({ any = '^.*written', unchanged = true })
+    eq(1, busy_start)
   end)
 
   it(':write message not clobbered by v:lua in statusline redraw #40616', function()

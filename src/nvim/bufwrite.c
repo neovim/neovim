@@ -1105,8 +1105,12 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   add_quoted_fname(msg_id + id_len, sizeof(msg_id) - id_len, buf, msgname);
   msg_id[strlen(msg_id) - 1] = NUL;  // add_quoted_fname() appends a space, for display only.
 
+  // Hide the cursor until done writing, else it jumps to the filename message. #25974
+  const bool hide_cursor = !filtering && msg_silent == 0;
+  if (hide_cursor) {
+    ui_busy_start();
+  }
   if (!filtering) {
-    // show that we are busy
     filemess_progress(buf, msgname, msg_id);
   }
   msg_scroll = false;               // always overwrite the file message now
@@ -1728,10 +1732,7 @@ restore_backup:
         xstrlcat(IObuff, shortmess(kShmWri) ? _(" [w]") : _(" written"), IOSIZE);
       }
     }
-    // Hide cursor while emitting "written" message, so cursor doesn't flicker in cmdline. #25974
-    ui_busy_start();
     set_keep_msg(msg_progress(IObuff, msg_id, "success", 0, true, true, false), 0);
-    ui_busy_stop();
   }
 
   // When written everything correctly: reset 'modified'.  Unless not
@@ -1813,6 +1814,9 @@ restore_backup:
 fail:
   no_wait_return--;             // may wait for return now
 nofail:
+  if (hide_cursor) {
+    ui_busy_stop();
+  }
 
   // Done saving, we accept changed buffer warnings again
   buf->b_saving = false;

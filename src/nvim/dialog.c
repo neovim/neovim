@@ -90,6 +90,7 @@ int prompt_for_input(char *prompt, int hl_id, bool one_key, bool *mouse_used)
   }
 
   cmdline_row = msg_row;
+  ui_call_busy_stop();  // Show the cursor, e.g. if a prompt interrupts :write.
   ui_flush();
 
   no_mapping++;  // don't map prompt input
