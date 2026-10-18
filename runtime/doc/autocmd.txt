@@ -1051,6 +1051,11 @@ Progress						*Progress*
 				- percent: how much progress has been made
 				- data: arbitrary data sent with the message
 
+				Emitted during a slow file read (|:edit|, |:read|)
+				or |:write|. While reading a file (id
+				`nvim.bufread "<filename>"`), handlers must
+				not change the current buffer or its text.
+
 				Usage example:
 >lua
 		vim.api.nvim_create_autocmd('Progress', {

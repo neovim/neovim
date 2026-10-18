@@ -151,7 +151,7 @@ EVENTS
 • |BufModifiedSet| has been removed. Use the |OptionSet| event with pattern
   "modified" instead.
 • |ui-messages| `msg_show.completion` messages are now `msg_show.progress`
-  events. If |:write| is slow it emits `msg_show.progress` events.
+  events. If :write or :edit is slow it emits `msg_show.progress` events.
 
 LSP
 

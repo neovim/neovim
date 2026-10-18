@@ -471,6 +471,7 @@ Number; !must be defined to function properly):
   suite run is killed
 
 - `NVIM_TEST` (FU) (D): lets Nvim process detect that it is running in a test.
+  With |v:testing| also set, all file I/O counts as slow (see `slow_io_ns()`).
 
 - `NVIM_LUA_NOTRACK` (F) (D): disable reference counting of Lua objects
 

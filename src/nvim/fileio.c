@@ -158,6 +158,24 @@ void filemess_bufwrite(buf_T *buf, char *name, const char *msg_id)
   filemess(buf, name, "", msg_id);
 }
 
+/// If a file read/write is slower than this, emit a progress-message.
+uint64_t slow_io_ns(void)
+{
+  // XXX: combine v:testing + $NVIM_TEST. this is a shitty hack but i dont want another gd flag.
+  return nvim_testing && get_vim_var_nr(VV_TESTING) ? 0 : NS_PER_SEC / 2;
+}
+
+/// Shows the progress-message of a slow readfile(). Locks `curbuf` so Progress handlers cannot
+/// accidentally unload it while it is loading.
+static char *readfile_progress(char *s, char *msg_id, char *status, int percent, bool hist)
+{
+  buf_T *buf = curbuf;
+  buf->b_locked++;
+  char *rv = msg_progress(s, msg_id, status, percent, 0, hist, s != NULL, false);
+  buf->b_locked--;
+  return rv;
+}
+
 /// Read lines from file "fname" into the buffer after line "from".
 ///
 /// 1. We allocate blocks with try_malloc, as big as possible.
@@ -681,11 +699,19 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   // Autocommands may add lines to the file, need to check if it is empty
   wasempty = (curbuf->b_ml.ml_flags & ML_EMPTY);
 
-  if (!recoverymode && !filtering && !(flags & READ_DUMMY) && !silent) {
-    if (!read_stdin && !read_buffer) {
-      filemess(curbuf, sfname, "", NULL);
-    }
+  // `silent` ('shortmess=F') skips file msg, but not the progress-message of a slow read.
+  const bool show_msg = !recoverymode && !filtering && !(flags & READ_DUMMY)
+                        && !read_stdin && !read_buffer && msg_silent == 0;
+  if (show_msg && !silent) {
+    filemess(curbuf, sfname, "", NULL);
   }
+
+  // Slow read: progress-message id, and last shown percent.
+  char msg_id[MAXPATHL + 32];
+  fname_msg_id(msg_id, sizeof(msg_id), "nvim.bufread", curbuf, sfname);
+  bool progress = false;
+  int percent = -1;  // -1: unknown size (fifo).
+  const uint64_t read_start = os_hrtime();
 
   msg_scroll = false;                   // overwrite the file message
 
@@ -1636,6 +1662,20 @@ rewind_retry:
       size = -1;
     }
     linerest = (ptr - line_start);
+
+    // Slow read: show a progress-message (with updated %).
+    if (show_msg && (progress || os_hrtime() - read_start > slow_io_ns())) {
+      FileInfo info;
+      const uint64_t total = os_fileinfo_fd(fd, &info) ? os_fileinfo_size(&info) : 0;
+      const int pct = total > 0 ? (int)MIN((uint64_t)filesize * 100 / total, 100) : -1;
+      if (!progress || pct != percent) {
+        progress = true;
+        percent = pct;
+        add_quoted_fname(IObuff, IOSIZE, curbuf, sfname);
+        readfile_progress(IObuff, msg_id, "running", percent, false);
+      }
+    }
+
     os_breakcheck();
   }
 
@@ -1751,6 +1791,9 @@ failed:
     }
 
     if (got_int) {
+      if (progress) {
+        readfile_progress(NULL, msg_id, "cancel", -1, false);
+      }
       if (!(flags & READ_DUMMY)) {
         filemess(curbuf, sfname, _(e_interr), NULL);
         if (newfile) {
@@ -1834,7 +1877,9 @@ failed:
         if (msg_col > 0) {
           msg_putchar('\r');  // overwrite previous message
         }
-        p = (uint8_t *)msg_trunc(IObuff, false, 0);
+        p = (uint8_t *)(progress
+                        ? readfile_progress(IObuff, msg_id, error ? "failed" : "success", -1, true)
+                        : msg_trunc(IObuff, false, 0));
       }
 
       if (read_stdin || read_buffer || restart_edit != 0
@@ -1847,6 +1892,8 @@ failed:
         set_keep_msg((char *)p, 0);
       }
       msg_scrolled_ign = false;
+    } else if (progress) {
+      readfile_progress(NULL, msg_id, error ? "failed" : "success", -1, false);
     }
 
     // with errors writing the file requires ":w!"
@@ -2182,6 +2229,17 @@ void add_quoted_fname(char *const ret_buf, const size_t bufsize, const buf_T *co
   ret_buf[len++] = '"';
   len += home_replace(buf, fname, ret_buf + len, bufsize - 4, true);
   xstrlcpy(ret_buf + len, "\" ", bufsize - len);
+}
+
+/// Sets progress-message id of reading/writing file `fname`, e.g. `nvim.bufread "foo.txt"`.
+/// Call this once per read/write, so its messages share a msg-id.
+void fname_msg_id(char *msg_id, size_t size, const char *prefix, const buf_T *buf,
+                  const char *fname)
+  FUNC_ATTR_NONNULL_ARG(1, 3)
+{
+  size_t len = (size_t)snprintf(msg_id, size, "%s ", prefix);
+  add_quoted_fname(msg_id + len, size - len, buf, fname);
+  msg_id[strlen(msg_id) - 1] = NUL;  // add_quoted_fname() appends a space, for display only.
 }
 
 /// Append message for text mode to IObuff.
