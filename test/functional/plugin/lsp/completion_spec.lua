@@ -1062,6 +1062,14 @@ describe('vim.lsp.completion: protocol', function()
     create_server('dummy1', { isIncomplete = false, items = { { label = 'hello' } } })
     create_server('dummy2', { isIncomplete = false, items = { { label = 'hallo' } } })
     create_server('dummy3', { { label = 'hallo' } })
+    local client_id =
+      create_server('dummy4', { isIncomplete = false, items = { { label = 'hola' } } })
+    exec_lua(function()
+      -- Mock the client so its request fails. Other clients should still work.
+      assert(vim.lsp.get_client_by_id(client_id)).request = function()
+        return false
+      end
+    end)
 
     feed('ih')
     trigger_at_pos({ 1, 1 })
