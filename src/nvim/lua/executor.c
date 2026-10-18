@@ -654,7 +654,11 @@ static int nlua_ex_docmd(lua_State *lstate)
   msg_scroll = true;
   need_wait_return = false;
   no_wait_return++;  // Don't wait for return, e.g. after "-V1" messages.
-  do_cmdline(NULL, nlua_ex_getline, &cookie, 0);
+  exarg_T ea = {
+    .ea_getline = nlua_ex_getline,
+    .cookie = &cookie,
+  };
+  do_cmdline(&ea, 0);
   no_wait_return--;
   nlua_unref_global(lstate, cookie.getline);
   lua_pushboolean(lstate, cookie.got_line);
@@ -2012,6 +2016,9 @@ void ex_luado(exarg_T *const eap)
 
   buf_T *const was_curbuf = curbuf;
 
+  bool is_charwise = (eap->addr_type == ADDR_POSITIONS
+                      && (eap->addr_mode == kOmCharWise || eap->col2 != MAXCOL));
+
   for (linenr_T l = eap->line1; l <= eap->line2; l++) {
     // Check the line number, the command may have deleted lines.
     if (l > curbuf->b_ml.ml_line_count) {
@@ -2022,7 +2029,18 @@ void ex_luado(exarg_T *const eap)
     const char *const old_line = ml_get_buf(curbuf, l);
     // Get length of old_line here as calling Lua code may free it.
     const colnr_T old_line_len = ml_get_buf_len(curbuf, l);
-    lua_pushstring(lstate, old_line);
+    colnr_T s_col = (is_charwise && l == eap->line1) ? eap->col1 : 0;
+    colnr_T e_col = (is_charwise && l == eap->line2) ? MIN(eap->col2, old_line_len) : old_line_len;
+
+    if (is_charwise) {
+      if (s_col <= e_col) {
+        lua_pushlstring(lstate, old_line + s_col, (size_t)(e_col - s_col) + 1);
+      } else {
+        lua_pushliteral(lstate, "");
+      }
+    } else {
+      lua_pushstring(lstate, old_line);
+    }
     lua_pushnumber(lstate, (lua_Number)l);
     if (nlua_pcall(lstate, 2, 1)) {
       nlua_error(lstate, _("E5111: Lua: %.*s"));
@@ -2044,8 +2062,18 @@ void ex_luado(exarg_T *const eap)
           new_line_transformed[i] = '\n';
         }
       }
-      ml_replace(l, new_line_transformed, false);
-      inserted_bytes(l, 0, old_line_len, (int)new_line_len);
+      if (is_charwise) {
+        pos_T start = { .lnum = l, .col = s_col };
+        pos_T end = { .lnum = l, .col = e_col + 1 };
+        char *lines[] = { new_line_transformed };
+        ptrdiff_t extra = 0;
+        ml_replace_text_range(curbuf, start, end, lines, 1, true, &extra, NULL, NULL, NULL);
+        changed_lines(curbuf, l, s_col, l + 1, (linenr_T)extra, true);
+        xfree(new_line_transformed);
+      } else {
+        ml_replace(l, new_line_transformed, false);
+        inserted_bytes(l, 0, old_line_len, (int)new_line_len);
+      }
     }
     lua_pop(lstate, 1);
   }

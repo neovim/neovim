@@ -210,17 +210,54 @@ void op_shift(oparg_T *oap, bool curs_top, int amount)
   }
 
   for (int i = oap->line_count - 1; i >= 0; i--) {
+    linenr_T lnum = oap->start.lnum + (linenr_T)i;
+    curwin->w_cursor.lnum = lnum;
     int first_char = (uint8_t)(*get_cursor_line_ptr());
     if (first_char == NUL) {  // empty line
       curwin->w_cursor.col = 0;
     } else if (oap->motion_type == kMTBlockWise) {
       shift_block(oap, amount);
+    } else if (oap->motion_type == kMTCharWise
+               && (oap->start.col > 0 || oap->end.col < ml_get_len(oap->end.lnum))) {
+      colnr_T s_col = (lnum == oap->start.lnum) ? oap->start.col : 0;
+      colnr_T end_len = ml_get_len(lnum);
+      colnr_T e_col = (lnum == oap->end.lnum) ? MIN(oap->end.col, end_len) : end_len;
+      if (s_col <= e_col) {
+        bool left = (oap->op_type == OP_LSHIFT);
+        int sw_val = get_sw_value_indent(curbuf, left);
+        int total_spaces = amount * sw_val;
+        char *line_text = ml_get(lnum);
+        char *sub = xstrnsave(line_text + s_col, (size_t)(e_col - s_col) + 1);
+
+        char *new_sub;
+        if (left) {
+          int count_spaces = 0;
+          while (count_spaces < total_spaces && sub[count_spaces] == ' ') {
+            count_spaces++;
+          }
+          new_sub = xstrdup(sub + count_spaces);
+        } else {
+          size_t sub_len = strlen(sub);
+          size_t new_len = (size_t)total_spaces + sub_len + 1;
+          new_sub = xmalloc(new_len);
+          memset(new_sub, ' ', (size_t)total_spaces);
+          memcpy(new_sub + total_spaces, sub, sub_len + 1);
+        }
+
+        pos_T start = { .lnum = lnum, .col = s_col };
+        pos_T end = { .lnum = lnum, .col = e_col + (oap->inclusive ? 1 : 0) };
+        char *lines[] = { new_sub };
+        curbuf_splice_pending++;
+        ml_replace_text_range(curbuf, start, end, lines, 1, true, NULL, NULL, NULL, NULL);
+        curbuf_splice_pending--;
+        xfree(new_sub);
+        xfree(sub);
+      }
     } else if (first_char != '#' || !preprocs_left()) {
       // Move the line right if it doesn't start with '#', 'smartindent'
       // isn't set or 'cindent' isn't set or '#' isn't in 'cino'.
       shift_line(oap->op_type == OP_LSHIFT, p_sr, amount, false);
     }
-    curwin->w_cursor.lnum++;
   }
 
   if (oap->motion_type == kMTBlockWise) {
@@ -986,41 +1023,45 @@ int op_delete(oparg_T *oap)
         }
       }
 
-      del_bytes((colnr_T)n, !virtual_op,
+      del_bytes(oap->start.lnum, oap->start.col, (colnr_T)n, !virtual_op,
                 oap->op_type == OP_DELETE && !oap->is_VIsual);
     } else {
       // delete characters between lines
-      pos_T curpos;
-
-      // save deleted and changed lines for undo
       if (u_save(curwin->w_cursor.lnum - 1,
                  curwin->w_cursor.lnum + oap->line_count) == FAIL) {
         return FAIL;
       }
 
+      pos_T end = oap->end;
+      if (oap->inclusive && end.col != MAXCOL) {
+        end.col++;
+      }
+      char *empty_lines[] = { "" };
+      ptrdiff_t extra = 0;
+      ptrdiff_t old_byte = 0;
+      ptrdiff_t new_byte = 0;
+      colnr_T last_len = 0;
+
+      colnr_T end_len = ml_get_buf_len(curbuf, end.lnum);
+      colnr_T end_c = (end.col == MAXCOL) ? end_len : MIN(end.col, end_len);
+      colnr_T col_extent = (colnr_T)(end_c
+                                     - ((end.lnum == oap->start.lnum) ? oap->start.col : 0));
+
       curbuf_splice_pending++;
-      pos_T startpos = curwin->w_cursor;  // start position for delete
-      bcount_t deleted_bytes = get_region_bytecount(curbuf, startpos.lnum, oap->end.lnum,
-                                                    startpos.col,
-                                                    oap->end.col) + oap->inclusive;
-      truncate_line(true);        // delete from cursor to end of line
+      ml_replace_text_range(curbuf, oap->start, end, empty_lines, 1, true, &extra,
+                            &old_byte, &new_byte, &last_len);
 
-      curpos = curwin->w_cursor;  // remember curwin->w_cursor
-      curwin->w_cursor.lnum++;
+      mark_adjust_buf(curbuf, oap->start.lnum + 1, end.lnum, MAXLNUM, (linenr_T)extra,
+                      true, kMarkAdjustNormal, kExtmarkNOOP);
 
-      del_lines(oap->line_count - 2, false);
-
-      // delete from start of line until op_end
-      int n = (oap->end.col + 1 - !oap->inclusive);
-      curwin->w_cursor.col = 0;
-      del_bytes((colnr_T)n, !virtual_op,
-                oap->op_type == OP_DELETE && !oap->is_VIsual);
-      curwin->w_cursor = curpos;  // restore curwin->w_cursor
-      do_join(2, false, false, false, false);
+      curwin->w_cursor = oap->start;
       curbuf_splice_pending--;
-      extmark_splice(curbuf, (int)startpos.lnum - 1, startpos.col,
-                     (int)oap->line_count - 1, n, deleted_bytes,
+
+      extmark_splice(curbuf, (int)oap->start.lnum - 1, oap->start.col,
+                     (int)(end.lnum - oap->start.lnum), col_extent, (bcount_t)old_byte,
                      0, 0, 0, kExtmarkUndo);
+
+      changed_lines(curbuf, oap->start.lnum, oap->start.col, end.lnum + 1, (linenr_T)extra, true);
     }
     if (oap->op_type == OP_DELETE) {
       auto_format(false, true);
@@ -1052,6 +1093,10 @@ static void mb_adjust_opend(oparg_T *oap)
   }
 
   const char *line = ml_get(oap->end.lnum);
+  colnr_T len = (colnr_T)strlen(line);
+  if (oap->end.col >= len) {
+    return;
+  }
   const char *ptr = line + oap->end.col;
   if (*ptr != NUL) {
     ptr -= utf_head_off(line, ptr);
@@ -1461,7 +1506,8 @@ bool swapchar(int op_type, pos_T *pos)
 
       curwin->w_cursor = *pos;
       // don't use del_char(), it also removes composing chars
-      del_bytes(utf_ptr2len(get_cursor_pos_ptr()), false, false);
+      del_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col, utf_ptr2len(get_cursor_pos_ptr()),
+                false, false);
       ins_char(nc);
       curwin->w_cursor = sp;
     } else {
@@ -1897,7 +1943,8 @@ char *skip_comment(char *line, bool process, bool include_space, bool *is_commen
 ///                           to set those marks.
 ///
 /// @return  FAIL for failure, OK otherwise
-int do_join(size_t count, bool insert_space, bool save_undo, bool use_formatoptions, bool setmark)
+int do_join(size_t count, colnr_T col1, colnr_T col2, bool insert_space, bool save_undo,
+            bool use_formatoptions, bool setmark)
 {
   char *curr = NULL;
   char *curr_start = NULL;
@@ -1910,6 +1957,9 @@ int do_join(size_t count, bool insert_space, bool save_undo, bool use_formatopti
   int *comments = NULL;
   bool remove_comments = use_formatoptions && has_format_option(kFoRemoveComs);
   bool prev_was_comment = false;
+  int slice_len = 0;
+  int suffix_len = 0;
+  int suffix_start = 0;
   assert(count >= 1);
 
   if (save_undo && u_save(curwin->w_cursor.lnum - 1,
@@ -1933,7 +1983,7 @@ int do_join(size_t count, bool insert_space, bool save_undo, bool use_formatopti
     if (t == 0 && setmark && (cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
       // Set the '[ mark.
       curwin->w_buffer->b_op_start.lnum = curwin->w_cursor.lnum;
-      curwin->w_buffer->b_op_start.col = (colnr_T)strlen(curr);
+      curwin->w_buffer->b_op_start.col = (col1 > 0) ? col1 : (colnr_T)strlen(curr);
     }
     if (remove_comments) {
       // We don't want to remove the comment leader if the
@@ -1979,10 +2029,24 @@ int do_join(size_t count, bool insert_space, bool save_undo, bool use_formatopti
                      0, spaces[t], spaces[t],
                      kExtmarkUndo);
     }
-    currsize = (int)strlen(curr);
+
+    int llen = ml_get_len(curwin->w_cursor.lnum + t);
+    if (t == (linenr_T)count - 1 && col2 != MAXCOL) {
+      int s_col = (int)(curr - curr_start);
+      int e_col = MIN((int)col2, llen > 0 ? llen - 1 : 0);
+      slice_len = (s_col <= e_col) ? (e_col - s_col + 1) : 0;
+      suffix_start = MIN((int)col2 + 1, llen);
+      suffix_len = llen - suffix_start;
+    } else {
+      slice_len = (int)strlen(curr);
+      suffix_start = llen;
+      suffix_len = 0;
+    }
+
+    currsize = slice_len + suffix_len;
     sumsize += currsize + spaces[t];
     endcurr1 = endcurr2 = NUL;
-    if (insert_space && currsize > 0) {
+    if (insert_space && currsize > 0 && t < (linenr_T)count - 1) {
       cend = curr + currsize;
       MB_PTR_BACK(curr, cend);
       endcurr1 = utf_ptr2char(cend);
@@ -2016,8 +2080,19 @@ int do_join(size_t count, bool insert_space, bool save_undo, bool use_formatopti
   curbuf_splice_pending++;
 
   for (linenr_T t = (linenr_T)count - 1;; t--) {
-    cend -= currsize;
-    memmove(cend, curr, (size_t)currsize);
+    if (t == (linenr_T)count - 1 && col2 != MAXCOL) {
+      if (suffix_len > 0) {
+        cend -= suffix_len;
+        memmove(cend, curr_start + suffix_start, (size_t)suffix_len);
+      }
+      if (slice_len > 0) {
+        cend -= slice_len;
+        memmove(cend, curr, (size_t)slice_len);
+      }
+    } else {
+      cend -= currsize;
+      memmove(cend, curr, (size_t)currsize);
+    }
 
     if (spaces[t] > 0) {
       cend -= spaces[t];
@@ -2054,12 +2129,12 @@ int do_join(size_t count, bool insert_space, bool save_undo, bool use_formatopti
   if (setmark && (cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // Set the '] mark.
     curwin->w_buffer->b_op_end.lnum = curwin->w_cursor.lnum;
-    curwin->w_buffer->b_op_end.col = sumsize;
+    curwin->w_buffer->b_op_end.col = (col2 != MAXCOL) ? (sumsize - suffix_len) : sumsize;
   }
 
   // Only report the change in the first line here, del_lines() will report
   // the deleted line.
-  changed_lines(curbuf, curwin->w_cursor.lnum, currsize,
+  changed_lines(curbuf, curwin->w_cursor.lnum, (col1 > 0 ? col1 : currsize),
                 curwin->w_cursor.lnum + 1, 0, true);
 
   // Delete following lines. To do this we move the cursor there
@@ -3212,6 +3287,10 @@ void cursor_pos_info(dict_T *dict)
 /// here. For OP_COLON/OP_FILTER the user types the rest after the stuffed part.
 static void op_colon(oparg_T *oap)
 {
+  if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
+    curbuf->b_op_start = oap->start;
+    curbuf->b_op_end = oap->end;
+  }
   if (oap->is_VIsual) {
     stuffReadbuff("'<,'>");
   } else {
@@ -3261,7 +3340,14 @@ static void op_colon(oparg_T *oap)
     stuffReadbuff("\n']");
   }
 
-  do_cmdline(NULL, getexline, NULL, 0);
+  exarg_T ea = {
+    .cmd = NULL,
+    .line1 = 1,
+    .line2 = 1,
+    .ea_getline = getexline,
+    .cookie = NULL,
+  };
+  do_cmdline(&ea, 0);
   // Keys stuffed past the cmdline ("']" for OP_FORMAT): internal cleanup, not an atom.
   atom_suppress(true);
   exec_stuffed(NULL);
@@ -3702,7 +3788,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           curbuf->b_ml.ml_line_count) {
         beep_flush();
       } else {
-        do_join((size_t)oap->line_count, oap->op_type == OP_JOIN,
+        do_join((size_t)oap->line_count, 0, MAXCOL, oap->op_type == OP_JOIN,
                 true, true, true);
         auto_format(false, true);
       }
