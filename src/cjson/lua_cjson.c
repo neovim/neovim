@@ -1492,6 +1492,25 @@ static void json_next_string_token(json_parse_t *json, json_token_t *token)
     /* Skip " */
     json->ptr++;
 
+    /* Fast path: a string without escape sequences can be handed to Lua as a
+     * slice of the input, skipping the copy through json->tmp.  This is the
+     * common case (keys and most values). */
+    {
+        const char *start = json->ptr;
+        const char *p = start;
+        while (*p != '"' && *p != '\\' && *p != '\0') {
+            p++;
+        }
+        if (*p == '"') {
+            json->ptr = (char *)p + 1;  /* Eat final quote (") */
+            token->type = T_STRING;
+            token->value.string = start;
+            token->string_len = (size_t)(p - start);
+            return;
+        }
+        /* Escapes present, or premature end: use the copying path below. */
+    }
+
     /* json->tmp is the temporary strbuf used to accumulate the
      * decoded string value.
      * json->tmp is sized to handle JSON containing only a string value.
