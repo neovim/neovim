@@ -491,35 +491,37 @@ describe('nvim.dir', function()
     eq('new:2', exec_lua('return vim.g.nvim_dir_provider_list'))
   end)
 
-  it('maps [count]- to open directories', function()
+  it('maps - only in directory buffers by default', function()
     make_fixture()
     n.clear({ args_rm = { '--cmd' }, args = { '--clean' } })
+
+    eq(1, fn.exists('g:loaded_nvim_dir_plugin')) -- Avoid false negatives.
+    edit(file)
+    eq('', fn.maparg('-', 'n'))
+
+    edit(root)
+    eq('<Plug>(nvim-dir-up)', fn.maparg('-', 'n'))
+    eq(1, fn.maparg('-', 'n', false, true).buffer)
+  end)
+
+  it('maps [count]- to open directories', function()
+    make_fixture()
+    n.clear({ args = { '--clean' } })
     local cwd = vim.fs.normalize(fn.getcwd())
 
-    edit(file)
+    edit(subdir)
     feed('-')
     poke_eventloop()
 
     assert_directory(root)
-    line_of('alpha.txt')
-
     -- Ensure the cursor stays on the entry we navigated up from.
-    eq('alpha.txt', api.nvim_get_current_line())
+    eq('subdir/', api.nvim_get_current_line())
 
-    edit(file)
-    feed('1-')
-    poke_eventloop()
-
-    assert_directory(cwd)
-
-    edit(file)
-    feed('-')
-    poke_eventloop()
     feed('1-')
     poke_eventloop()
     assert_directory(cwd)
 
-    edit(file)
+    edit(subdir)
     feed('2-')
     poke_eventloop()
 
@@ -527,9 +529,9 @@ describe('nvim.dir', function()
     eq(vim.fs.basename(root) .. '/', api.nvim_get_current_line())
   end)
 
-  it('maps - to open the current directory from a buffer with no path', function()
+  it('<Plug>(nvim-dir-up) opens the parent directory of any buffer', function()
     make_fixture()
-    n.clear({ args_rm = { '--cmd' }, args = { '--clean' } })
+    n.clear({ args = { '--clean' } })
     local cwd = fn.getcwd()
     command('terminal')
     eq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
@@ -538,22 +540,29 @@ describe('nvim.dir', function()
       cd(cwd)
     end)
 
-    feed('-')
+    feed('<Plug>(nvim-dir-up)')
     poke_eventloop()
 
     assert_directory(root)
 
     command('enew')
     eq('', api.nvim_buf_get_name(0))
-    feed('-')
+    feed('<Plug>(nvim-dir-up)')
     poke_eventloop()
 
     assert_directory(root)
+
+    edit(file)
+    feed('<Plug>(nvim-dir-up)')
+    poke_eventloop()
+
+    assert_directory(root)
+    eq('alpha.txt', api.nvim_get_current_line())
   end)
 
   it('preserves a modified unnamed buffer when opening the current directory', function()
     make_fixture()
-    n.clear({ args_rm = { '--cmd' }, args = { '--clean' } })
+    n.clear({ args = { '--clean' } })
     local cwd = fn.getcwd()
     cd(root)
     finally(function()
@@ -562,7 +571,7 @@ describe('nvim.dir', function()
     local old_buf = api.nvim_get_current_buf()
     api.nvim_buf_set_lines(old_buf, 0, -1, false, { 'unsaved' })
 
-    feed('-')
+    feed('<Plug>(nvim-dir-up)')
     poke_eventloop()
 
     assert_directory(root)
@@ -608,10 +617,10 @@ describe('nvim.dir', function()
 
   it('preserves alternate buffer when opening a parent directory', function()
     make_fixture()
-    n.clear({ args_rm = { '--cmd' }, args = { '--clean' } })
+    n.clear({ args = { '--clean' } })
 
     edit(file)
-    feed('-')
+    feed('<Plug>(nvim-dir-up)')
     poke_eventloop()
 
     assert_directory(root)

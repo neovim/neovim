@@ -350,7 +350,7 @@ function M._open_parent()
     provider.open_parent(buf, api.nvim_buf_get_name(buf))
     return
   end
-  -- Keep the global `-` mapping useful from regular file buffers.
+  -- Keep <Plug>(nvim-dir-up) useful from regular file buffers.
   require('nvim.dir.fs').open_parent_path(api.nvim_buf_get_name(buf))
 end
 

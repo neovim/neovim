@@ -61,18 +61,14 @@ To disable the built-in directory browser, set this before startup: >lua
     vim.g.loaded_nvim_dir_plugin = 1
 <
 
-GLOBAL MAPPINGS                                                 *dir-mappings*
-
-• - opens the parent directory of the current file or directory.
-• {count}- is like -, but a count of 1 opens the global working directory,
-  and a higher count goes up that many levels.
-
-BUFFER-LOCAL MAPPINGS                                    *dir-buffer-mappings*
+MAPPINGS                                                        *dir-mappings*
 
 • <CR> opens the file or directory under the cursor.
 • a opens the file or directory under the cursor in a vertical split.
 • o opens the file or directory under the cursor in a horizontal split.
 • - opens the parent directory.
+• {count}- is like -, but a count of 1 opens the global working directory,
+  and a higher count goes up that many levels.
 • R reloads the directory listing.
 
 a and o are available for local directories and keep focus in the listing.
@@ -83,6 +79,10 @@ These keys map to <Plug>(nvim-dir-open), <Plug>(nvim-dir-vsplit),
 to use different keys. Default mappings are skipped when the target <Plug>
 mapping is already mapped. The default "-", "a", and "o" mappings are also
 skipped when their keys are already mapped.
+
+To make "-" open the parent directory from any buffer: >lua
+    vim.keymap.set('n', '-', '<Plug>(nvim-dir-up)')
+<
 
                                                                  *dir-config*
 Directory buffers follow the global 'hidden' option by default. To delete them
@@ -102,7 +102,7 @@ The buffer is writable for the duration, so a handler can sort or filter it
 with ordinary commands, and the cursor is placed afterwards.
 
 Handlers may reorder or remove lines, but each remaining line must still be an
-entry name: |dir-buffer-mappings| resolve the line under the cursor against the
+entry name: |dir-mappings| resolve the line under the cursor against the
 buffer name, so rewriting line text makes <CR> open a nonexistent path.
 
 Sort directories last: >vim
@@ -192,13 +192,7 @@ To enable the legacy "netrw" plugin: >vim
     :packadd netrw
 
 The plugin and its mappings remain loaded (it is a core component used by
-other features such as |zip|). Define replacement keymaps explicitly, for
-example: >lua
-
-    vim.keymap.set('n', '-', function()
-      require('my_browser').open_parent()
-    end)
-<
+other features such as |zip|).
 
 ==============================================================================
 Builtin plugin: difftool                                            *difftool*
