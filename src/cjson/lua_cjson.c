@@ -1596,6 +1596,41 @@ static void json_next_number_token(json_parse_t *json, json_token_t *token)
 {
     char *endptr;
 
+    /* Fast path: a plain integer (no fraction, exponent or hex marker) is
+     * parsed here rather than through strtoll().  Anything else, including
+     * values that overflow, falls back to strtoll()/fpconv_strtod(). */
+    {
+        const char *p = json->ptr;
+        int neg = (*p == '-');
+        const char *q = p + neg;
+        if (*q >= '0' && *q <= '9') {
+            unsigned long long v = 0;
+            bool fits = true;
+            do {
+                unsigned d = (unsigned)(*q - '0');
+                if (v > (ULLONG_MAX - d) / 10) {
+                    fits = false;
+                    break;
+                }
+                v = v * 10 + d;
+                q++;
+            } while (*q >= '0' && *q <= '9');
+            if (fits && *q != '.' && *q != 'e' && *q != 'E' && *q != 'x'
+                && v <= (unsigned long long)LLONG_MAX + (unsigned)neg) {
+                long long tmpval = neg ? (long long)(0ULL - v) : (long long)v;
+                if (tmpval > PTRDIFF_MAX || tmpval < PTRDIFF_MIN) {
+                    token->type = T_NUMBER;
+                    token->value.number = (lua_Number)tmpval;
+                } else {
+                    token->type = T_INTEGER;
+                    token->value.integer = tmpval;
+                }
+                json->ptr = (char *)q;
+                return;
+            }
+        }
+    }
+
     long long tmpval = strtoll(json->ptr, &endptr, 10);
     if (json->ptr == endptr || *endptr == '.' || *endptr == 'e' ||
         *endptr == 'E' || *endptr == 'x') {
