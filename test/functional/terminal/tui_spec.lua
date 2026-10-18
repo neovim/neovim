@@ -4484,6 +4484,29 @@ describe('TUI', function()
     end)
   end)
 
+  it("enables 'termguicolors' before user config if $COLORTERM indicates truecolor", function()
+    clear()
+    local child_server = new_pipename()
+    screen = tt.setup_child_nvim({
+      '--clean',
+      '--listen',
+      child_server,
+      '--cmd',
+      'let g:tgc_before_config = &termguicolors',
+    }, {
+      env = {
+        VIMRUNTIME = os.getenv('VIMRUNTIME'),
+        COLORTERM = 'truecolor',
+      },
+    })
+
+    screen:expect({ any = '%[No Name%]' })
+
+    local child_session = n.connect(child_server)
+    eq({ true, 1 }, { child_session:request('nvim_eval', 'g:tgc_before_config') })
+    eq({ true, 1 }, { child_session:request('nvim_eval', '&termguicolors') })
+  end)
+
   it('does not query the terminal for truecolor support if $COLORTERM is set', function()
     clear()
     exec_lua([[

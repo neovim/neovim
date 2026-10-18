@@ -1014,8 +1014,11 @@ do
     local colorterm = os.getenv('COLORTERM')
     if ui.rgb or colorterm == 'truecolor' or colorterm == '24bit' then
       -- The TUI was able to determine truecolor support or $COLORTERM explicitly indicates
-      -- truecolor support
-      setoption('termguicolors', true)
+      -- truecolor support. This is known before user config runs, so set it now (like
+      -- 'background') for user config and startup buffers to see it.
+      if not vim.api.nvim_get_option_info2('termguicolors').was_set then
+        vim.o.termguicolors = true
+      end
     elseif (colorterm == nil or colorterm == '') and vim.o.ttyfast then
       -- Neither the TUI nor $COLORTERM indicate that truecolor is supported, so query the
       -- terminal
