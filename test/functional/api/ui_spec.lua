@@ -314,6 +314,15 @@ describe('UI event channels', function()
       { 'kcud1', true, '\027OB' },
     }, exec_lua('return _G.capabilities'))
 
+    exec_lua([[
+      _G.sequence = nil
+      vim.tty.query('kbs', { timeout = 0 }, function(_, _, seq)
+        _G.sequence = seq
+      end)
+    ]])
+    request('nvim_ui_term_event', 'termresponse', '\027P1+r6b6273=5c313737')
+    eq(string.char(127), exec_lua('return _G.sequence'))
+
     session2:close()
   end)
 end)
