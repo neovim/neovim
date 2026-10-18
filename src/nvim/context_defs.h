@@ -30,6 +30,7 @@ typedef struct {
   String bufs;       ///< Buffer list (shada msgpack string).
   String gvars;      ///< Global variables (shada msgpack string).
   Array funcs;       ///< Functions.
+  Dict windows;      ///< Current tab's windows, keyed by decimal snapshot index.
 } Context;
 typedef kvec_t(Context) ContextVec;
 
@@ -50,6 +51,7 @@ typedef kvec_t(Context) ContextVec;
   .bufs = STRING_INIT, \
   .gvars = STRING_INIT, \
   .funcs = ARRAY_DICT_INIT, \
+  .windows = ARRAY_DICT_INIT, \
 }
 
 typedef enum {
@@ -59,7 +61,8 @@ typedef enum {
   kCtxGVars = 8,      ///< Global variables
   kCtxSFuncs = 16,    ///< Script functions
   kCtxFuncs = 32,     ///< Functions
-  kCtxAll = kCtxRegs | kCtxJumps | kCtxBufs | kCtxGVars | kCtxSFuncs | kCtxFuncs,
+  kCtxWindows = 512,  ///< Windows in the current tab.
+  kCtxAll = kCtxRegs | kCtxJumps | kCtxBufs | kCtxGVars | kCtxSFuncs | kCtxFuncs | kCtxWindows,
 
   // In-memory only (TODO(justinmk): support this in dict/kCtxAll too):
   kCtxCursor = 64,    ///< Cursor position and curswant.

@@ -48,6 +48,7 @@
 #include "nvim/marktree.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
+#include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
@@ -110,7 +111,71 @@ void ctx_free(Context *ctx)
   api_free_string(ctx->bufs);
   api_free_string(ctx->gvars);
   api_free_array(ctx->funcs);
+  api_free_dict(ctx->windows);
   *ctx = (Context)CONTEXT_INIT;
+}
+
+/// Append a window using a snapshot-local index (API Dict keys must be strings).
+static size_t ctx_save_window(Dict *windows, win_T *wp, size_t split_from, const char *split)
+{
+  Dict window = ARRAY_DICT_INIT;
+  Array cursor = ARRAY_DICT_INIT;
+  ADD(cursor, INTEGER_OBJ(wp->w_cursor.lnum));
+  ADD(cursor, INTEGER_OBJ(wp->w_cursor.col));
+  PUT(window, "cursor", ARRAY_OBJ(cursor));
+  PUT(window, "file", STRING_OBJ(cstr_to_string(wp->w_buffer->b_ffname == NULL
+                                              ? "" : wp->w_buffer->b_ffname)));
+
+  if (wp->w_floating) {
+    PUT(window, "floating", BOOLEAN_OBJ(true));
+  } else if (split_from == 0) {
+    PUT(window, "root", BOOLEAN_OBJ(true));
+  } else {
+    PUT(window, "split", STRING_OBJ(cstr_to_string(split)));
+    PUT(window, "split_from", INTEGER_OBJ((Integer)split_from));
+  }
+
+  Dict winsize = ARRAY_DICT_INIT;
+  PUT(winsize, "height", INTEGER_OBJ(wp->w_height));
+  PUT(winsize, "width", INTEGER_OBJ(wp->w_width));
+  PUT(window, "winsize", DICT_OBJ(winsize));
+
+  size_t index = windows->size + 1;
+  char key[32];
+  snprintf(key, sizeof(key), "%zu", index);
+  PUT(*windows, key, DICT_OBJ(window));
+  return index;
+}
+
+/// The top-left window represents a subtree before its internal splits are saved.
+static win_T *ctx_frame_window(frame_T *frame)
+{
+  while (frame->fr_layout != FR_LEAF) {
+    frame = frame->fr_child;
+  }
+  return frame->fr_win;
+}
+
+/// Save siblings before their internal splits, so split_from always refers to an
+/// earlier entry and replaying right/below splits can reproduce nested layouts.
+static void ctx_save_window_splits(Dict *windows, frame_T *frame, size_t root)
+{
+  if (frame->fr_layout == FR_LEAF) {
+    return;
+  }
+
+  const char *split = frame->fr_layout == FR_ROW ? "vertical" : "horizontal";
+  size_t first_sibling = windows->size + 1;
+  size_t previous = root;
+  for (frame_T *child = frame->fr_child->fr_next; child != NULL; child = child->fr_next) {
+    previous = ctx_save_window(windows, ctx_frame_window(child), previous, split);
+  }
+
+  ctx_save_window_splits(windows, frame->fr_child, root);
+  size_t index = first_sibling;
+  for (frame_T *child = frame->fr_child->fr_next; child != NULL; child = child->fr_next) {
+    ctx_save_window_splits(windows, child, index++);
+  }
 }
 
 /// Saves the editor state (ALL THE THINGS!!!1) to a context.
@@ -178,6 +243,18 @@ void ctx_save(Context *ctx, const CtxStateFlags flags)
 
   if (flags & kCtxGVars) {
     ctx->gvars = shada_encode_gvars();
+  }
+
+  if (flags & kCtxWindows) {
+    api_free_dict(ctx->windows);
+    ctx->windows = (Dict)ARRAY_DICT_INIT;
+    size_t root = ctx_save_window(&ctx->windows, ctx_frame_window(topframe), 0, NULL);
+    ctx_save_window_splits(&ctx->windows, topframe, root);
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_floating && !is_ctx_win(wp)) {
+        ctx_save_window(&ctx->windows, wp, 0, NULL);
+      }
+    }
   }
 
   if (flags & (kCtxFuncs | kCtxSFuncs)) {
@@ -279,6 +356,20 @@ void ctx_load(Context *ctx, const CtxStateFlags flags, const CtxLoadFlags loadfl
       do_cmdline_cmd(ctx->funcs.items[i].data.string.data);
     }
   }
+
+  if ((flags & kCtxWindows) && ctx->windows.size > 0) {
+    // Window restoration is not implemented yet: display the saved table only.
+    typval_T windows_tv;
+    Error err = ERROR_INIT;
+    object_to_vim(DICT_OBJ(ctx->windows), &windows_tv, &err);
+    if (!ERROR_SET(&err)) {
+      char *text = encode_tv2echo(&windows_tv, NULL);
+      msg(text, 0);
+      xfree(text);
+    }
+    tv_clear(&windows_tv);
+    api_clear_error(&err);
+  }
 }
 
 /// Convert readfile()-style array to String
@@ -315,13 +406,14 @@ Dict ctx_to_dict(Context *ctx, Arena *arena)
 {
   assert(ctx != NULL);
 
-  Dict rv = arena_dict(arena, 5);
+  Dict rv = arena_dict(arena, 6);
 
   PUT_C(rv, "regs", ARRAY_OBJ(string_to_array(ctx->regs, false, arena)));
   PUT_C(rv, "jumps", ARRAY_OBJ(string_to_array(ctx->jumps, false, arena)));
   PUT_C(rv, "bufs", ARRAY_OBJ(string_to_array(ctx->bufs, false, arena)));
   PUT_C(rv, "gvars", ARRAY_OBJ(string_to_array(ctx->gvars, false, arena)));
   PUT_C(rv, "funcs", ARRAY_OBJ(copy_array(ctx->funcs, arena)));
+  PUT_C(rv, "windows", DICT_OBJ(copy_dict(ctx->windows, arena)));
 
   return rv;
 }
@@ -341,6 +433,16 @@ CtxStateFlags ctx_from_dict(Dict dict, Context *ctx, Error *err)
   CtxStateFlags types = 0;
   for (size_t i = 0; i < dict.size && !ERROR_SET(err); i++) {
     KeyValuePair item = dict.items[i];
+    if (strequal(item.key.data, "windows")) {
+      if (item.value.type != kObjectTypeDict) {
+        api_set_error(err, kErrorTypeValidation, "windows must be a Dictionary");
+        break;
+      }
+      types |= kCtxWindows;
+      api_free_dict(ctx->windows);
+      ctx->windows = copy_dict(item.value.data.dict, NULL);
+      continue;
+    }
     if (item.value.type != kObjectTypeArray) {
       continue;
     }

@@ -1497,6 +1497,12 @@ DictOf(Integer) nvim_get_color_map(Arena *arena)
 /// - "jumps"   [jumplist]
 /// - "regs"    [registers]
 /// - "sfuncs"  Vimscript [script-local] functions
+/// - "windows" Windows in the current tab, as a dictionary keyed by decimal indices.
+///   Each entry contains `cursor` (1-based row, 0-based column), `file` (full path,
+///   or empty for unnamed buffers), and `winsize` (`height`, `width`). The first
+///   entry has `root = true`; subsequent split windows have `split` ("vertical"
+///   or "horizontal") and `split_from` (an earlier entry's numeric index).
+///   Floating windows have `floating = true` instead of split information.
 ///
 /// @param opts  Optional parameters.
 ///               - types:  List of context types (see above) to gather, or empty for "all".
@@ -1528,6 +1534,8 @@ Dict nvim_get_context(Dict(context) *opts, Arena *arena, Error *err)
           int_types |= kCtxSFuncs;
         } else if (strequal(s, "funcs")) {
           int_types |= kCtxFuncs;
+        } else if (strequal(s, "windows")) {
+          int_types |= kCtxWindows;
         } else {
           VALIDATE_S(false, "type", s, {
             return (Dict)ARRAY_DICT_INIT;
@@ -1545,6 +1553,7 @@ Dict nvim_get_context(Dict(context) *opts, Arena *arena, Error *err)
 }
 
 /// Sets the current editor state from the given map.
+/// The "windows" entry is currently only printed, without restoring windows.
 ///
 /// @param dict  Msgpack-encoded editor state, in the form returned by [nvim_get_context()].
 Object nvim_load_context(Dict dict, Error *err)
