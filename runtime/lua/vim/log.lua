@@ -230,11 +230,11 @@ function M:create_writer(level)
     if argc == 0 then
       return true
     end
-    if not self:open_file() then
-      return false
-    end
     local message = self.format_func(self.level, level, ...)
     if message then
+      if not self:open_file() then
+        return false
+      end
       assert(self.logfile)
       self.logfile:write(message)
       self.logfile:flush()

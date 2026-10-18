@@ -129,9 +129,13 @@ describe('vim.log', function()
         name = 'SetFormat',
         level = vim.log.levels.TRACE,
         format_func = function()
-          return 'old\n'
+          return nil
         end,
       })
+      local logfile = vim.fs.joinpath(vim.fn.stdpath('log'), 'setformat.log')
+      vim.fn.delete(logfile)
+      logger.error('skip-first')
+      assert(vim.uv.fs_stat(logfile) == nil)
 
       vim.log.set_format_func(logger, function(min_level, level, ...)
         return table.concat({ 'new', min_level, level, tostring(select(1, ...)) }, '|') .. '\n'
@@ -149,7 +153,7 @@ describe('vim.log', function()
     local logfile = get_logfile('SetFormat')
     assert_log('%[START%]%[.+%] SetFormat logging initiated', logfile, 10)
     assert_log('formatted', logfile, 10)
-    assert_nolog('old', logfile, 10)
+    assert_nolog('skip%-first', logfile, 10)
     assert_nolog('skip%-me', logfile, 10)
   end)
 
