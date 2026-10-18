@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Syntax highlighting		*syntax* *syntax-highlighting* *coloring*
 
 Syntax highlighting enables Vim to show parts of the text in another font or

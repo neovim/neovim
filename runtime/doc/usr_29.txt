@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			    Moving through programs
+==============================================================================
+Moving through programs
 
 
 The creator of Vim is a computer programmer.  It's no surprise that Vim

@@ -4,6 +4,7 @@
 		  NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Vimscript functions			*vimscript-functions* *builtin.txt*
 
 For functions grouped by what they are used for see |function-list|.

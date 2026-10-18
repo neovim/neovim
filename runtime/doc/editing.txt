@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Editing files						*edit-files*
 
                                       Type |gO| to see the table of contents.

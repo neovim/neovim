@@ -4,6 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Terminal emulator                                     *terminal* *terminal-emulator*
 
 Nvim embeds a VT220/xterm terminal emulator based on libvterm. The terminal is

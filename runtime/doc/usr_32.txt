@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			      The undo tree
+==============================================================================
+The undo tree
 
 
 Vim provides multi-level undo.  If you undo a few changes and then make a new

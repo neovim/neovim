@@ -4,7 +4,8 @@
                   VIM REFERENCE MANUAL    by Bram Moolenaar
 
 
-Starting Vim                                            *starting*
+==============================================================================
+Starting Nvim                                           *starting*
 
                                       Type |gO| to see the table of contents.
 

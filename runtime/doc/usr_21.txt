@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			   Go away and come back
+==============================================================================
+Go away and come back
 
 
 This chapter goes into mixing the use of other programs with Vim.  Either by

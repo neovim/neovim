@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Recovery after a crash					*crash-recovery*
 
 You have spent several hours typing in that text that has to be finished

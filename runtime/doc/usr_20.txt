@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-		     Typing command-line commands quickly
+==============================================================================
+Typing command-line commands quickly
 
 
 Vim has a few generic features that makes it easier to enter commands.  Colon

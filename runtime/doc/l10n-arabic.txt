@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Nadim Shaikli
 
 
+==============================================================================
 Arabic Language support (options & mappings) for Vim		*Arabic*
 
 These functions have been created by Nadim Shaikli <nadim-at-arabeyes.org>

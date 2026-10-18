@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Various commands					*various*
 
                                       Type |gO| to see the table of contents.
@@ -55,8 +56,8 @@ CTRL-L							*CTRL-L*
 			'tabline' includes an item that doesn't trigger
 			automatic updating. See also |nvim__redraw()|.
 
-							*N<Del>*
-<Del>			When entering a number: Remove the last digit.
+<Del>							*N<Del>*
+			When entering a number: Remove the last digit.
 			Note: if you like to use <BS> for this, add this
 			mapping to your vimrc: >
 				:map CTRL-V <BS>   CTRL-V <Del>
@@ -88,9 +89,9 @@ ga							*ga*
 
 			If the character can be inserted as a digraph, also
 			output the two characters that can be used to create
-			the character:
-				<ö> 246, Hex 00f6, Oct 366, Digr o: ~
-			This shows you can type CTRL-K o : to insert ö.
+			the character: >
+				<ö> 246, Hex 00f6, Oct 366, Digr o:
+<			This shows you can type CTRL-K o : to insert ö.
 
 g8							*g8*
 			Print the hex values of the bytes used in the
@@ -153,8 +154,8 @@ gx							*gx*
 :[range]# [count] [flags]				*:#*
 			synonym for :number.
 
-							*:#!* *vim-shebang*
-:#!{anything}		Ignored, so that you can start a Vim script with: >
+:#!{anything}						*:#!* *vim-shebang*
+			Ignored, so that you can start a Vim script with: >
 				#!vim -S
 				let mylogbook='$HOME/logbook.md'
 				exe $':e {mylogbook}'
@@ -182,13 +183,12 @@ gx							*gx*
 			:z can be used either alone or followed by any of
 			several marks.  These have the following effect:
 
-			mark   first line    last line      new cursor line ~
-			----   ----------    ---------      ------------
-			+      current line  1 scr forward  1 scr forward
-			-      1 scr back    current line   current line
-			^      2 scr back    1 scr back     1 scr back
-			.      1/2 scr back  1/2 scr fwd    1/2 scr fwd
-			=      1/2 scr back  1/2 scr fwd    current line
+			mark	first line	last line	new cursor line ~
+			`+`	current line	1 scr forward	1 scr forward
+			`-`	1 scr back	current line	current line
+			`^`	2 scr back	1 scr back	1 scr back
+			`.`	1/2 scr back	1/2 scr fwd	1/2 scr fwd
+			`=`	1/2 scr back	1/2 scr fwd	current line
 
 			Specifying no mark at all is the same as "+".
 			If the mark is "=", a line of dashes is printed
@@ -379,18 +379,21 @@ gx							*gx*
 			contents of the register if its name is given
 			uppercase {A-Z}.  The ">" after the register name is
 			optional.
+
 :redi[r] @{a-z}>>	Append messages to register {a-z}.
 
 :redi[r] @*>
 :redi[r] @+>		Redirect messages to the selection or clipboard.  For
 			backward compatibility, the ">" after the register
 			name can be omitted.  See |quotestar| and |quoteplus|.
+
 :redi[r] @*>>
 :redi[r] @+>>		Append messages to the selection or clipboard.
 
 :redi[r] @">		Redirect messages to the unnamed register.  For
 			backward compatibility, the ">" after the register
 			name can be omitted.
+
 :redi[r] @">>		Append messages to the unnamed register.
 
 :redi[r] => {var}	Redirect messages to a variable.  If the variable
@@ -433,22 +436,24 @@ gx							*gx*
 			the output, not necessarily the whole line.  Only some
 			commands support filtering, try it out to check if it
 			works.  Some of the commands that support filtering:
-			   |:#|          - filter whole line
-			   |:clist|      - filter by file name or module name
-			   |:command|    - filter by command name
-			   |:files|      - filter by file name
-			   |:highlight|  - filter by highlight group
-			   |:history|    - filter by history commands
-			   |:jumps|      - filter by file name
-			   |:let|        - filter by variable name
-			   |:list|       - filter whole line
-			   |:llist|      - filter by file name or module name
-			   |:marks|      - filter by text in the current file,
-					   or file name for other files
-			   |:oldfiles|   - filter by file name
-			   |:registers|  - filter by register contents
-					   (does not work multi-line)
-			   |:set|        - filter by option name
+
+			Command		Filters by ~
+			|:#|		whole line
+			|:clist|	file name or module name
+			|:command|	command name
+			|:files|	file name
+			|:highlight|	highlight group
+			|:history|	history commands
+			|:jumps|	file name
+			|:let|		variable name
+			|:list|		whole line
+			|:llist|	file name or module name
+			|:marks|	text in the current file,
+					or file name for other files
+			|:oldfiles|	file name
+			|:registers|	register contents
+					(does not work multi-line)
+			|:set|		option name
 
 			Only normal messages are filtered, error messages are
 			not.

@@ -4,6 +4,9 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
+Automatic indenting
+
 This file is about indenting C programs and other files.
 
                                       Type |gO| to see the table of contents.

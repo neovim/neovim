@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			      Editing programs
+==============================================================================
+Editing programs
 
 
 Vim has various commands that aid in writing computer programs.  Compile a

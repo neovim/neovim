@@ -4,6 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Repeating commands						*repeating*
 
 Chapter 26 of the user manual introduces repeating |usr_26.txt|.

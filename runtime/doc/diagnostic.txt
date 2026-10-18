@@ -4,6 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Diagnostic framework                                     *vim.diagnostic*
 
 Nvim provides a framework for displaying errors or warnings from external

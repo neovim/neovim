@@ -2775,9 +2775,9 @@ endfunc
 func Test_getregion_invalid_buf()
   new
   help index
-  call cursor(7, 6)
+  call cursor(9, 6)
   norm! mA
-  call cursor(7, 18)
+  call cursor(9, 18)
   norm! mB
   call assert_equal(['file contains'], getregion(getpos("'A"), getpos("'B")))
   " close the help window

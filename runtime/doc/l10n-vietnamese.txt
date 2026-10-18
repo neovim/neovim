@@ -3,6 +3,9 @@
 
 		  VIM REFERENCE MANUAL	  by Phạm Bình An
 
+==============================================================================
+Vietnamese language support
+
                                       Type |gO| to see the table of contents.
 
 ==============================================================================

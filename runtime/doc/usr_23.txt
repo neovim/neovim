@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			     Editing other files
+==============================================================================
+Editing other files
 
 
 This chapter is about editing files that are not ordinary files.  With Vim you

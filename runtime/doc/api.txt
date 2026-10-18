@@ -4,6 +4,7 @@
                  NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
+==============================================================================
 Nvim API                                                           *API* *api*
 
 Nvim exposes a powerful API that can be used by plugins and external processes

@@ -4,8 +4,9 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
-						*Insert* *Insert-mode*
+==============================================================================
 Inserting and replacing text				*mode-ins-repl*
+						*Insert* *Insert-mode*
 
 Most of this file is about Insert and Replace mode.  At the end are a few
 commands for inserting text in other ways.

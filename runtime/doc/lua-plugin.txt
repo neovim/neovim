@@ -2,7 +2,8 @@
 
                             NVIM REFERENCE MANUAL
 
-                   Guide to developing Lua plugins for Nvim
+==============================================================================
+Developing Lua plugins for Nvim
 
 
                                        Type |gO| to see the table of contents.

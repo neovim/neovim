@@ -1,7 +1,8 @@
 *luaref.txt*           Nvim
-                                                                *luaref*
 
-                             LUA REFERENCE MANUAL
+
+==============================================================================
+Lua reference manual                                            *luaref*
 
 
                                  Version 0.3.0

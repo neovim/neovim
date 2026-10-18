@@ -1,5 +1,8 @@
 *ft_sql.txt*	Nvim
 
+==============================================================================
+SQL filetype plugin
+
 by David Fishburn
 
 This is a filetype plugin to work with SQL files.

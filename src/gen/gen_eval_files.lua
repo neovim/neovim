@@ -1009,6 +1009,7 @@ local CONFIG = {
       '\t\t  NVIM REFERENCE MANUAL',
       '',
       '',
+      '==============================================================================',
       'Vimscript functions\t\t\t*vimscript-functions* *builtin.txt*',
       '',
       'For functions grouped by what they are used for see |function-list|.',

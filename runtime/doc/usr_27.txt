@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			 Search commands and patterns
+==============================================================================
+Search commands and patterns
 
 
 In chapter 3 a few simple search patterns were mentioned |03.9|.  Vim can do

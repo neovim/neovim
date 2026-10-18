@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			      Write a Vim script
+==============================================================================
+Write a Vim script
 
 
 The Vim script language is used for the startup vimrc file, syntax files, and

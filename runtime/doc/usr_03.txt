@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			     Moving around
+==============================================================================
+Moving around
 
 
 Before you can insert or delete text the cursor has to be moved to the right

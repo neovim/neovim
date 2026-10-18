@@ -4,6 +4,9 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
+Deleting and replacing text
+
 This file describes commands that delete or change text.  In this context,
 changing text means deleting the text and replacing it with other text using
 one command.  You can undo all of these commands.  You can repeat the non-Ex

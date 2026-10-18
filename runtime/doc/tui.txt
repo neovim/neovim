@@ -4,6 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Terminal UI						*TUI* *tui*
 
 By default when you run `nvim` (without |--embed| or |--headless|) it starts

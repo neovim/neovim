@@ -3,7 +3,9 @@
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
-								*index*
+==============================================================================
+Index of all commands						*index*
+
 This file contains a list of all commands for each mode, with a tag and a
 short description.  The lists are sorted on ASCII value.
 

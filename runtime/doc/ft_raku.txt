@@ -1,6 +1,7 @@
 *ft_raku.txt*	The Raku programming language filetype
 
-                                                      *vim-raku*
+==============================================================================
+Raku filetype plugin                                  *vim-raku*
 
 Vim-raku provides syntax highlighting, indentation, and other support for
 editing Raku programs.

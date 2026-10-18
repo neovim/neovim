@@ -4,6 +4,7 @@
 		  NVIM REFERENCE MANUAL
 
 
+==============================================================================
 The Python Interface to NVim				*if_pyth* *python* *Python*
 
 See |provider-python| for more information.

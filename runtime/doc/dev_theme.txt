@@ -4,6 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
+==============================================================================
 Nvim colorscheme guidelines                                   *dev-theme*
 
 Style guidelines for developing Nvim's default colorscheme.

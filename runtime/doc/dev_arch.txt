@@ -4,7 +4,8 @@
                             NVIM REFERENCE MANUAL
 
 
-How to develop Nvim, explanation of modules and subsystems    *dev-arch*
+==============================================================================
+How to develop Nvim, explanation of modules and subsystems          *dev-arch*
 
 Module-specific details are documented at the top of each module
 (`terminal.c`, `undo.c`, …). The top of each major module has (or should have)

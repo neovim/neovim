@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			  Using syntax highlighting
+==============================================================================
+Using syntax highlighting
 
 
 Black and white text is boring.  With colors your file comes to life.  This

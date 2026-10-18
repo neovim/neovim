@@ -4,7 +4,8 @@
 		     VIM USER MANUAL	by Bram Moolenaar
 
 
-			      Make new commands
+==============================================================================
+Make new commands
 
 
 Vim is an extensible editor.  You can take a sequence of commands you use

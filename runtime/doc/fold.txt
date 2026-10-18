@@ -4,6 +4,7 @@
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
+==============================================================================
 Folding						*Folding* *folding* *folds*
 
 You can find an introduction on folding in chapter 28 of the user manual.

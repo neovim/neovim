@@ -4,6 +4,7 @@
                   VIM REFERENCE MANUAL    by Bram Moolenaar
 
 
+==============================================================================
 Nvim Graphical User Interface                           *gui* *GUI*
 
 Any client that supports the Nvim |ui-protocol| can be used as a UI for Nvim.
