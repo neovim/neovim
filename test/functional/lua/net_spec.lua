@@ -122,17 +122,24 @@ describe('vim.net.request', function()
       local lines
 
       local buf = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_set_current_buf(buf)
       ---@diagnostic disable-next-line: param-type-mismatch
-      vim.net.request(url, { outbuf = buf })
+      vim.net.request(url, { outbuf = 0 })
+
+      -- Switch buffers before the response arrives.
+      local other = vim.api.nvim_create_buf(true, false)
+      vim.api.nvim_set_current_buf(other)
+      vim.api.nvim_buf_set_lines(other, 0, -1, true, { 'unrelated text' })
 
       vim.wait(2000, function()
         lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
         return lines[1] ~= ''
       end)
 
-      return lines
+      return { lines, vim.api.nvim_buf_get_lines(other, 0, -1, true) }
     end)
-    assert(content and content[1]:find('html'))
+    t.eq({ '<html>test</html>' }, content[1])
+    t.eq({ 'unrelated text' }, content[2])
   end)
 
   it('works with :read', function()
