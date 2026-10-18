@@ -99,6 +99,14 @@ report. |bugs|
 
 See |ATTENTION|.
 
+							*E787*  >
+  Buffer changed unexpectedly
+
+An event handler changed a buffer while a command was using it:
+- A |FileChangedRO| handler changed buffers during |:diffget| or |:diffput|.
+- A |Progress| handler changed the buffer during a |:write|.  The write is
+  aborted, and the original file is restored ('writebackup').
+
 							*E92*  >
   Buffer {N} not found
 
