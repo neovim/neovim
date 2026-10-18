@@ -1120,6 +1120,8 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   int progress = -1;  // Progress-message percent for a slow write.
   off_T progress_nchars = 0;  // `nchars` at the last progress check.
   const uint64_t write_start = os_hrtime();
+  // Safety: any changes hereafter (eg by Progress autocmds) are not written, so keep 'modified'.
+  const varnumber_T write_tick = buf_get_changedtick(buf);
   msg_scroll = false;               // always overwrite the file message now
 
   char *buffer = verbose_try_malloc(WRITEBUFSIZE);
@@ -1759,11 +1761,12 @@ restore_backup:
                  : msg_with_id(IObuff, msg_id, "bufwrite", NULL, 0, true, true, false), 0);
   }
 
-  // When written everything correctly: reset 'modified'.  Unless not
-  // writing to the original file and '+' is not in 'cpoptions'.
+  // When written everything correctly: reset 'modified'.  Unless not writing to the original file
+  // and not 'cpoptions=+', or the buffer changed (by autocmds!?) while writing.
   if (reset_changed && whole && !append
       && !write_info.bw_conv_error
-      && (overwriting || vim_strchr(p_cpo, kCpoPlus) != NULL)) {
+      && (overwriting || vim_strchr(p_cpo, kCpoPlus) != NULL)
+      && buf_get_changedtick(buf) == write_tick) {
     unchanged(buf, true, false);
     const varnumber_T changedtick = buf_get_changedtick(buf);
     if (buf->b_last_changedtick + 1 == changedtick) {
