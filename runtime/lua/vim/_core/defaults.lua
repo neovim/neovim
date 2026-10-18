@@ -7,7 +7,7 @@ do
   -- TODO: these only work if the argument list is empty (e.g. start with `neovim` not `neovim .`)
   -- See `:h shada-%`
   vim.api.nvim_create_user_command('Make', function()
-    local context = vim.api.nvim_get_context({ types = { 'bufs', 'jumps', 'regs' } })
+    local context = vim.api.nvim_get_context({ types = { 'bufs', 'jumps', 'regs', 'windows' } })
     local file = assert(io.open(vim.fs.joinpath(vim.fn.getcwd(), 'session_prototype'), 'wb'))
     file:write(vim.mpack.encode(context))
     file:close()
