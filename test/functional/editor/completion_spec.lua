@@ -1949,27 +1949,33 @@ describe('completion', function()
     eq('foobar(', n.api.nvim_get_current_line())
   end)
 
-  it('complete_info() reports equal, preselect and commit_chars', function()
-    command('set completeopt=menuone,noinsert')
+  it('complete_info() reports completion item fields', function()
+    command('set hidden complete=FTestComplete,b completeopt=menuone,noinsert')
+    command('file Xcompletion-source')
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'foobar' })
+    command('enew')
     source([[
-      function! TestComplete() abort
-        call complete(1, [
+      function! TestComplete(findstart, base) abort
+        if a:findstart
+          return 0
+        endif
+        return [
               \ {'word': 'foo', 'equal': 1},
               \ {'word': 'bar', 'preselect': v:true},
               \ {'word': 'baz', 'commit_chars': '('},
               \ {'word': 'qux'},
-              \ ])
-        return ''
+              \ ]
       endfunction
     ]])
-    feed('i<C-r>=TestComplete()<CR>')
+    feed('i<C-n>')
     poke_eventloop()
 
     local items = fn.complete_info({ 'items' }).items
-    eq(4, #items)
+    eq(5, #items)
     eq({ 1, nil }, { items[1].equal, items[1].preselect })
     eq(1, items[2].preselect)
     eq('(', items[3].commit_chars)
     eq({ nil, nil, nil }, { items[4].equal, items[4].preselect, items[4].commit_chars })
+    eq('Xcompletion-source', items[5].menu)
   end)
 end)
