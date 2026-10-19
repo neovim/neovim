@@ -84,6 +84,7 @@
 #include "nvim/state.h"
 #include "nvim/statusline.h"
 #include "nvim/statusline_defs.h"
+#include "nvim/strings.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
@@ -642,6 +643,21 @@ static bool find_runtime_cb(int num_fnames, char **fnames, bool all, void *c)
   }
 
   return num_fnames > 0;
+}
+
+/// Add optional packages by name, without searching start packages. Used by vim.pack.
+/// @nodoc
+void nvim__packadd_opt(String name, Boolean load, Error *err)
+{
+  VALIDATE_S(name.size > 0, "name", "must not be empty", {
+    return;
+  });
+  // do_in_path() separates patterns on whitespace, just like :packadd.
+  char *escaped = vim_strsave_escaped(name.data, " \t");
+  TRY_WRAP(err, {
+    runtime_pack_add(escaped, !load, true);
+  });
+  xfree(escaped);
 }
 
 /// @nodoc
