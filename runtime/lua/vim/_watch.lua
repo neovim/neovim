@@ -57,13 +57,20 @@ M.FileChangeType = {
 --- @class (internal) vim._watch.BackendOpts
 --- @field include vim._watch.CompiledFilter
 --- @field exclude? vim._watch.CompiledFilter
+--- @field matches? fun(path: string): boolean
 --- @field debounce? integer
 --- @field uvflags? uv.fs_event_start.flags
---- @field on_error fun(err: string)
+--- @field on_error fun(err: string, path?: string)
 
---- @alias vim._watch.Backend fun(path: string, opts: vim._watch.BackendOpts, callback: vim._watch.Callback): (fun())?
+--- @alias vim._watch.Backend fun(path: string, opts: vim._watch.BackendOpts, callback: vim._watch.Callback): fun()?
+
+--- @class (private) vim._watch.CompiledRule
+--- @field pattern vim.lpeg.Pattern
+--- @field events? vim._watch.FileChangeType[]
 
 --- @class (private) vim._watch.Subscriber
+--- @field pattern vim.lpeg.Pattern Include filter intersected with all rule patterns.
+--- @field rules vim._watch.CompiledRule[]
 --- @field callback vim._watch.Callback
 --- @field on_error fun(err: string)
 
@@ -180,18 +187,18 @@ local function intersect(a, b)
   }
 end
 
+--- Calls notify for each subscriber present when dispatch starts, unless
+--- cancelled before its turn. New subscribers wait for the next dispatch.
+--- Raises the first error after notifying the others.
 --- @param entry vim._watch.Shared
---- @param method 'callback'|'on_error'
---- @param ... any
-local function emit(entry, method, ...)
+--- @param notify fun(subscriber: vim._watch.Subscriber)
+local function dispatch(entry, notify)
   local first_error
 
   -- Callbacks can subscribe or cancel other subscriptions while handling an event.
   for _, subscriber in ipairs(vim.tbl_keys(entry.subscribers)) do
     if entry.subscribers[subscriber] then
-      -- EmmyLua rejects the union of callback signatures passed to pcall.
-      --- @diagnostic disable-next-line: param-type-mismatch
-      local ok, err = pcall(subscriber[method], ...)
+      local ok, err = pcall(notify, subscriber)
       if not ok then
         first_error = first_error or tostring(err)
       end
@@ -208,26 +215,29 @@ end
 --- @param path string
 --- @param opts vim._watch.watch.Opts
 --- @param rules {pattern: vim._watch.Filter?, events: vim._watch.FileChangeType[]?}[]
---- @param subscriber vim._watch.Subscriber
+--- @param handlers {callback: vim._watch.Callback, on_error: fun(err: string)}
 --- @return fun()
-local function subscribe(name, backend, path, opts, rules, subscriber)
+local function subscribe(name, backend, path, opts, rules, handlers)
   local key = {
     include_pattern = opts.include_pattern,
     exclude_pattern = opts.exclude_pattern,
     debounce = name == 'watchdirs' and (opts.debounce or 500) or nil,
     uvflags = name == 'watch' and (opts.uvflags or {}) or nil,
-    rules = rules,
+    -- watchdirs() set up for src/** can leave tests/ unwatched. Reusing that backend
+    -- for tests/** would miss its events, so keep rules in the sharing key.
+    -- watch() uses the same OS watch regardless of glob rules and can share it.
+    rules = name ~= 'watch' and rules or nil,
   }
 
   -- Validate every subscription, even when reusing a backend. Invalid globs do not mean the
   -- backend has failed, and each subscriber should receive its own diagnostics.
-  local include = compile(key.include_pattern, subscriber.on_error)
-  local exclude = key.exclude_pattern and compile(key.exclude_pattern, subscriber.on_error)
-  local compiled = {} --- @type {pattern: vim.lpeg.Pattern, events: vim._watch.FileChangeType[]?}[]
+  local include = compile(key.include_pattern, handlers.on_error)
+  local exclude = key.exclude_pattern and compile(key.exclude_pattern, handlers.on_error)
+  local compiled = {} --- @type vim._watch.CompiledRule[]
   local combined = { pattern = vim.lpeg.P(false), roots = {} } --- @type vim._watch.CompiledFilter
 
-  for _, rule in ipairs(key.rules) do
-    local filter = compile(rule.pattern, subscriber.on_error)
+  for _, rule in ipairs(rules) do
+    local filter = compile(rule.pattern, handlers.on_error)
     if filter then
       compiled[#compiled + 1] = { pattern = filter.pattern, events = rule.events }
       combined.pattern = combined.pattern + filter.pattern
@@ -238,6 +248,16 @@ local function subscribe(name, backend, path, opts, rules, subscriber)
   if not include or #compiled == 0 then
     return function() end
   end
+
+  local filter = intersect(include, combined)
+
+  --- @type vim._watch.Subscriber
+  local subscriber = {
+    pattern = filter.pattern,
+    rules = compiled,
+    callback = handlers.callback,
+    on_error = handlers.on_error,
+  }
 
   local stat = uv.fs_stat(path)
   local entry --- @type vim._watch.Shared?
@@ -265,24 +285,43 @@ local function subscribe(name, backend, path, opts, rules, subscriber)
     local backend_opts = {
       debounce = key.debounce,
       uvflags = key.uvflags,
-      include = intersect(include, combined),
+      include = name == 'watch' and include or filter,
       exclude = exclude,
-      on_error = function(err)
-        entry.failed = true
-        emit(entry, 'on_error', err)
+      on_error = function(err, fullpath)
+        if not fullpath then
+          entry.failed = true
+        end
+        dispatch(entry, function(s)
+          if not fullpath or s.pattern:match(fullpath) ~= nil then
+            s.on_error(err)
+          end
+        end)
       end,
     }
 
-    entry.cancel = backend(path, backend_opts, function(fullpath, change_type)
-      for _, rule in ipairs(compiled) do
-        if
-          rule.pattern:match(fullpath) ~= nil
-          and (not rule.events or vim.list_contains(rule.events, change_type))
-        then
-          emit(entry, 'callback', fullpath, change_type)
-          return
+    if name == 'watch' then
+      backend_opts.matches = function(fullpath)
+        for s in pairs(entry.subscribers) do
+          if s.pattern:match(fullpath) ~= nil then
+            return true
+          end
         end
+        return false
       end
+    end
+
+    entry.cancel = backend(path, backend_opts, function(fullpath, change_type)
+      dispatch(entry, function(s)
+        for _, rule in ipairs(s.rules) do
+          if
+            rule.pattern:match(fullpath) ~= nil
+            and (not rule.events or vim.list_contains(rule.events, change_type))
+          then
+            s.callback(fullpath, change_type)
+            return
+          end
+        end
+      end)
     end)
 
     if not entry.cancel then
@@ -312,8 +351,11 @@ local function subscribe(name, backend, path, opts, rules, subscriber)
   end
 end
 
---- Compatible calls share a backend until their last subscription is cancelled. Glob descriptions
---- are compared by value, LPeg patterns by identity. Failed or replaced roots are never reused.
+--- Compatible calls share a backend until their last subscription is cancelled.
+--- watch() subscriptions can share a backend with different rules.
+--- watchdirs() and inotify() subscriptions need matching rules.
+--- Comparisons match globs by value and LPeg patterns by identity.
+--- Failed or replaced roots are never reused.
 --- @param name 'watch'|'watchdirs'|'inotify'
 --- @param backend vim._watch.Backend
 --- @param path string|vim._watch.Rule[]
@@ -400,7 +442,7 @@ local function watch(path, opts, callback)
       fullpath = vim.fs.normalize(vim.fs.joinpath(fullpath, filename))
     end
 
-    if skip(fullpath, opts) then
+    if skip(fullpath, opts) or (opts.matches and not opts.matches(fullpath)) then
       return
     end
 
@@ -412,7 +454,7 @@ local function watch(path, opts, callback)
         change_type = M.FileChangeType.Deleted
       else
         if staterr then
-          return on_error(staterr)
+          return on_error(staterr, fullpath)
         end
         change_type = M.FileChangeType.Created
       end

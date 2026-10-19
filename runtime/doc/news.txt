@@ -472,7 +472,9 @@ OPTIONS
 PERFORMANCE
 
 • LSP shares identical file watcher registrations, reducing startup work in
-  large workspaces.
+  large workspaces. On macOS and Windows, watchers with different glob
+  patterns share one native watcher per directory, which reduces cleanup work
+  on shutdown.
 • |treesitter-highlight| performance on large injection-heavy files improves
   by 50% to 100% by reusing edited child-tree ranges.
 • Nvim architecture allows pure-Lua implementations of some `vim.fn`
