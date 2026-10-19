@@ -39,7 +39,9 @@ local testlog = 'Xtest-tui-log'
 local env_notermguicolors = { COLORTERM = 'xterm-256color' }
 
 describe('TUI', function()
-  it('exit status 1 and error message with server --listen error #34365', function()
+  -- FLAKY: the server writes to the inherited tty, which may happen before TUI enters the alternate
+  -- screen. #40557
+  it('exit status 1 and error message with --listen error #34365', { retries = 2 }, function()
     clear()
     local addr_in_use = api.nvim_get_vvar('servername')
     local screen = tt.setup_child_nvim(
