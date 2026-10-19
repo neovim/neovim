@@ -12,6 +12,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/input.h"
 #include "nvim/keycodes.h"
+#include "nvim/main.h"
 #include "nvim/math.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
@@ -154,8 +155,8 @@ int do_dialog(int type, const char *title, const char *message, const char *butt
   char *hotkeys = msg_show_console_dialog(message, buttons, dfltbutton);
 
   while (true) {
-    // Without a UI Nvim waits for input forever.
-    if (!ui_active() && !input_available()) {
+    // Use the default button when user input is unlikely/impossible.
+    if ((!ui_active() || input_unanswerable()) && !input_available()) {
       retval = dfltbutton;
       break;
     }

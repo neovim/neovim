@@ -727,6 +727,13 @@ There are several ways to exit Vim:
 When using `:cquit` or when there was an error message Vim exits with exit
 code 1.  Errors can be avoided by using `:silent!` or with `:catch`.
 
+If Nvim is exiting without a UI, or after a deadly signal (|v:dying|), prompts
+are dismissed (instead of waiting for user input that is unlikely to arrive).
+- |hit-enter| and |more-prompt| are skipped
+- |confirm()| returns its default
+- other prompts (|input()|, |getchar()|) are interrupted as if CTRL-C was
+  typed, which skips any remaining autocmds (|VimLeavePre|, |VimLeave|, …)
+
 ==============================================================================
 Saving settings                                         *save-settings*
 

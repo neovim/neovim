@@ -1418,7 +1418,7 @@ void wait_return(int redraw)
     return;
   }
 
-  if (headless_mode && !ui_active()) {
+  if ((headless_mode && !ui_active()) || input_unanswerable()) {
     return;
   }
 
@@ -3065,10 +3065,8 @@ static bool do_more_prompt(int typed_char)
   msgchunk_T *mp_last = NULL;
   msgchunk_T *mp;
 
-  // If headless mode is enabled and no input is required, this variable
-  // will be true. However If server mode is enabled, the message "--more--"
-  // should be displayed.
-  bool no_need_more = headless_mode && !embedded_mode && !ui_active();
+  // Skip more-prompt if no one can answer it: --headless without --embed/UI, or input_unanswerable.
+  bool no_need_more = (headless_mode && !embedded_mode && !ui_active()) || input_unanswerable();
 
   // We get called recursively when a timer callback outputs a message. In
   // that case don't show another prompt. Also when at the hit-Enter prompt

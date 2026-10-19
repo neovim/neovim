@@ -758,6 +758,14 @@ void os_exit(int r)
   exit(r);
 }
 
+/// Prompts/dialogs should not wait for a key (no chance of meaningful input).
+bool input_unanswerable(void)
+{
+  return v_dying  // Got deadly signal.
+         // Exiting without a UI.
+         || (exiting && !ui_active());
+}
+
 /// Exit properly
 void getout(int exitval)
   FUNC_ATTR_NORETURN
@@ -868,6 +876,9 @@ void getout(int exitval)
   profile_dump();
 
   if (did_emsg) {
+    if (!headless_mode && input_unanswerable()) {
+      WLOG("Exiting with error: \"%s\"", get_vim_var_str(VV_ERRMSG));
+    }
     // give the user a chance to read the (error) message
     no_wait_return = false;
     // TODO(justinmk): this may call getout(0), clobbering exitval...
