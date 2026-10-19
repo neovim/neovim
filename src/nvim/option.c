@@ -3687,85 +3687,6 @@ static char *optval_to_cstr(Object o, bool quote)
   }
 }
 
-/// Converts an option value to its structured form.
-///
-/// @return Object allocated in `arena` (scalar values are returned unchanged).
-Object optval_to_obj(OptIndex opt_idx, Object value, Arena *arena)
-{
-  if (value.type == kObjectTypeLuaRef) {
-    // Callback option: return an independent ref so it outlives the source value.
-    return LUAREF_OBJ(api_new_luaref(value.data.luaref));
-  }
-  if (value.type != kObjectTypeString) {
-    return value;  // boolean/number/nil/unset scalar; already an Object.
-  }
-
-  const uint32_t flags = options[opt_idx].flags;
-  const OptSchemaItem *schema = options[opt_idx].schema;
-
-  // A dict option (`schema != NULL`) parses here like any comma "key:value" map: its stored value
-  // is already the canonical ":set" string.
-  char *str = value.data.string.data != NULL ? value.data.string.data : "";
-
-  Object rv;
-  // Plain string option: no list/map structure.
-  if (!(flags & (kOptFlagComma | kOptFlagFlagList))) {
-    rv = STRING_OBJ(CSTR_TO_ARENA_STR(arena, str));
-  } else if ((flags & kOptFlagFlagList) && !(flags & kOptFlagComma)) {
-    // Single-char flag list, e.g. 'shortmess': each character is a flag.
-    size_t n = strlen(str);
-    Dict d = arena_dict(arena, n);
-    for (size_t i = 0; i < n; i++) {
-      PUT_C(d, arena_memdupz(arena, &str[i], 1), BOOLEAN_OBJ(true));
-    }
-    rv = DICT_OBJ(d);
-  } else {
-    // Comma-separated list/map/set. Upper-bound the item count for arena sizing.
-    size_t nparts = 1;
-    for (char *p = str; *p != NUL; p++) {
-      nparts += (*p == ',');
-    }
-    const bool as_map = (flags & kOptFlagColon) || (flags & kOptFlagFlagList) || schema != NULL;
-    Dict d = as_map ? arena_dict(arena, nparts) : (Dict)ARRAY_DICT_INIT;
-    Array a = as_map ? (Array)ARRAY_DICT_INIT : arena_array(arena, nparts);
-    char *item = xmalloc(strlen(str) + 1);
-    for (char *p = str; *p != NUL;) {
-      copy_option_part(&p, item, strlen(str) + 1, ",");
-      if (*item == NUL) {
-        continue;  // skip empty parts, e.g. "a,,b"
-      }
-      if (!as_map) {
-        // Note: the raw string preserves the ",," literal-comma convention (e.g. 'isfname'); the
-        // structured view splits on every comma and does not reconstruct literal commas.
-        ADD_C(a, STRING_OBJ(CSTR_TO_ARENA_STR(arena, item)));
-        continue;
-      }
-      char *colon = strchr(item, ':');
-      char *val = NULL;
-      if (colon != NULL) {
-        *colon = NUL;
-        val = colon + 1;
-      }
-      String key = CSTR_TO_ARENA_STR(arena, item);
-      Object v;
-      if (flags & kOptFlagFlagList) {
-        v = BOOLEAN_OBJ(true);  // comma flag list ('whichwrap'): each item is a flag
-      } else if (val == NULL) {
-        v = BOOLEAN_OBJ(true);  // bare flag in a typed/colon map
-      } else {
-        // A key's value stays a string, even for a num/enum key: option sub-value types are not a
-        // stable contract (Vim options are "stringly typed"), so we expose structure, not types.
-        v = STRING_OBJ(CSTR_TO_ARENA_STR(arena, val));
-      }
-      PUT_C(d, key.data, v);
-    }
-    xfree(item);
-    rv = as_map ? DICT_OBJ(d) : ARRAY_OBJ(a);
-  }
-
-  return rv;
-}
-
 /// Converts a structured option (non-scalar Object) to the internal scalar (:set-style) form.
 ///
 /// Example: 'listchars' `{ eol = "~" }` => "eol:~".
@@ -3781,7 +3702,7 @@ Object optval_from_obj(OptIndex opt_idx, Object o, set_op_T op, bool *error)
   const uint32_t flags = options[opt_idx].flags;
   const bool is_list = flags & (kOptFlagComma | kOptFlagFlagList);
   // "key:value" list, e.g. 'listchars', or a dict option, e.g. 'breakindentopt' (which accepts
-  // a Dict even without kOptFlagColon, mirroring `as_map` in optval_to_obj()).
+  // a Dict even without kOptFlagColon, mirroring the structured form returned by the API).
   const bool is_map = (flags & kOptFlagColon) || is_dict_option(opt_idx);
   const bool is_flaglist = flags & kOptFlagFlagList;  // single-char flag list, e.g. 'shortmess'.
   const bool is_comma = flags & kOptFlagComma;
