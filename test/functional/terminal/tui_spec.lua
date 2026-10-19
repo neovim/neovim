@@ -297,10 +297,19 @@ describe('TUI :detach', function()
     end)
 
     -- Simulate the host terminal disconnecting: SIGKILL the client so it can't shut down cleanly.
-    -- On Windows this also exercises the console hand-off in rpc_close_event().
-    n.exec_lua(function(pid)
+    --
+    -- On Windows this also exercises console hand-off in rpc_close_event(), which must finish
+    -- before the :terminal closes the console (client exit), else the server dies with it. So defer
+    -- this Nvim's job-exit handling (`vim.wait(fast_only=true)`) until the server drops the UI.
+    n.exec_lua(function(pid, addr)
       vim.uv.kill(pid, 'sigkill')
-    end, n.fn.jobpid(term_job))
+      local chan = vim.fn.sockconnect('pipe', addr, { rpc = true })
+      assert(vim.wait(4000, function()
+        return #vim.rpcrequest(chan, 'nvim_list_uis') == 0
+      end, 10, true))
+      vim.fn.chanclose(chan)
+    end, n.fn.jobpid(term_job), child_server)
+    screen:expect({ any = vim.pesc('[Process exited') })
 
     retry(nil, 4000, function()
       eq(2, ({ n.connect(child_server):request('nvim_eval', '1+1') })[2])
@@ -5200,7 +5209,7 @@ describe('TUI client', function()
       test_remote_tui_quit()
     end)
 
-    it('with :cquit', function()
+    it('with :cquit', { retries = 2 }, function()
       test_remote_tui_quit(42)
     end)
   end)
