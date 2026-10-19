@@ -394,7 +394,7 @@ describe('semantic token highlighting', function()
     end)
 
     it('range requests preserve highlights outside updated range', function()
-      screen:try_resize(40, 6)
+      screen:try_resize(40, 4)
       insert(text)
       feed('gg')
 
@@ -426,8 +426,6 @@ describe('semantic token highlighting', function()
         ^#include <iostream>                     |
                                                 |
         int {8:main}()                              |
-        {                                       |
-            int {7:x};                              |
                                                 |
       ]],
       }
@@ -449,8 +447,6 @@ describe('semantic token highlighting', function()
 
       screen:expect {
         grid = [[
-        {6:#else}                                   |
-        {6:    printf("%d\n", x);}                  |
         {6:#endif}                                  |
         }                                       |
         ^}                                       |
@@ -476,9 +472,7 @@ describe('semantic token highlighting', function()
         grid = [[
                                                 |
         int {8:main}()                              |
-        {                                       |
-            int {7:x};                              |
-        ^#ifdef {5:__cplusplus}                      |
+        ^{                                       |
                                                 |
       ]],
       }
@@ -490,13 +484,14 @@ describe('semantic token highlighting', function()
         end)
       )
 
-      eq_tokens(
+      eq(
         {
           {
             line = 2,
             end_line = 2,
             start_col = 4,
             end_col = 8,
+            marked = true,
             modifiers = {
               declaration = true,
               globalScope = true,
@@ -508,6 +503,7 @@ describe('semantic token highlighting', function()
             end_line = 4,
             start_col = 8,
             end_col = 9,
+            marked = true,
             modifiers = {
               declaration = true,
               functionScope = true,
@@ -519,6 +515,7 @@ describe('semantic token highlighting', function()
             end_line = 5,
             start_col = 7,
             end_col = 18,
+            marked = false,
             modifiers = {
               globalScope = true,
             },
@@ -529,6 +526,8 @@ describe('semantic token highlighting', function()
             end_line = 7,
             start_col = 0,
             end_col = 5,
+            marked = false,
+            modifiers = {},
             type = 'comment',
           },
           {
@@ -536,6 +535,8 @@ describe('semantic token highlighting', function()
             end_line = 8,
             start_col = 0,
             end_col = 22,
+            marked = false,
+            modifiers = {},
             type = 'comment',
           },
           {
@@ -543,6 +544,8 @@ describe('semantic token highlighting', function()
             end_line = 9,
             start_col = 0,
             end_col = 6,
+            marked = false,
+            modifiers = {},
             type = 'comment',
           },
         },
@@ -550,6 +553,205 @@ describe('semantic token highlighting', function()
           return vim.lsp.semantic_tokens.__STHighlighter.active[bufnr].client_state[client_id].current_result.highlights
         end)
       )
+    end)
+
+    it('range responses replace overlapping tokens instead of duplicating them', function()
+      insert(text)
+
+      local bufnr, client_id = exec_lua(function()
+        _G.range_response = [[{"data": [ 2, 4, 4, 3, 8193, 2, 8, 1, 1, 1025 ]}]]
+        _G.server2 = _G._create_server({
+          capabilities = {
+            textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
+            semanticTokensProvider = {
+              range = true,
+              legend = vim.fn.json_decode(legend),
+            },
+          },
+          handlers = {
+            ['textDocument/semanticTokens/range'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(_G.range_response))
+            end,
+          },
+        })
+        local bufnr = vim.api.nvim_get_current_buf()
+        local client_id = assert(_G._start_server(_G.server2))
+        return bufnr, client_id
+      end)
+
+      eq(2, #exec_lua(function()
+        return vim.lsp.semantic_tokens.__STHighlighter.active[bufnr].client_state[client_id].current_result.highlights
+      end))
+
+      -- Change the type of the second token and re-request the same range.
+      exec_lua(function()
+        _G.range_response = [[{"data": [ 2, 4, 4, 3, 8193, 2, 8, 1, 2, 1025 ]}]]
+        vim.lsp.semantic_tokens.__STHighlighter.active[bufnr]:send_request(client_id)
+      end)
+      n.poke_eventloop()
+
+      local highlights = exec_lua(function()
+        return vim.lsp.semantic_tokens.__STHighlighter.active[bufnr].client_state[client_id].current_result.highlights
+      end)
+      -- The token inside the requested range must be replaced, not appended.
+      eq(2, #highlights)
+      eq('parameter', highlights[2].type)
+    end)
+
+    it('ignores a response for a request that was cancelled', function()
+      insert(text)
+
+      local bufnr, client_id = exec_lua(function()
+        _G.pending = {}
+        _G.server2 = _G._create_server({
+          capabilities = {
+            textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
+            semanticTokensProvider = {
+              full = { delta = false },
+              legend = vim.fn.json_decode(legend),
+            },
+          },
+          handlers = {
+            ['textDocument/semanticTokens/full'] = function(_, _, callback)
+              _G.pending[#_G.pending + 1] = callback
+            end,
+          },
+        })
+        local bufnr = vim.api.nvim_get_current_buf()
+        local client_id = assert(_G._start_server(_G.server2))
+        return bufnr, client_id
+      end)
+      n.poke_eventloop()
+
+      -- Cancel the request while it is still in flight.
+      exec_lua(function()
+        vim.lsp.semantic_tokens.__STHighlighter.active[bufnr]:cancel_active_request(client_id)
+      end)
+
+      -- The server responds anyway. It must be dropped rather than applied.
+      exec_lua(function()
+        _G.pending[#_G.pending](nil, vim.fn.json_decode(response))
+      end)
+      n.poke_eventloop()
+
+      eq(
+        0,
+        exec_lua(function()
+          local cr =
+            vim.lsp.semantic_tokens.__STHighlighter.active[bufnr].client_state[client_id].current_result
+          return cr.highlights and #cr.highlights or 0
+        end)
+      )
+    end)
+
+    it('does not let a stale response overwrite a newer result', function()
+      insert(text)
+
+      local bufnr, client_id = exec_lua(function()
+        _G.pending = {}
+        _G.server2 = _G._create_server({
+          capabilities = {
+            textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
+            semanticTokensProvider = {
+              full = { delta = false },
+              legend = vim.fn.json_decode(legend),
+            },
+          },
+          handlers = {
+            ['textDocument/semanticTokens/full'] = function(_, _, callback)
+              _G.pending[#_G.pending + 1] = callback
+            end,
+          },
+        })
+        local bufnr = vim.api.nvim_get_current_buf()
+        local client_id = assert(_G._start_server(_G.server2))
+        return bufnr, client_id
+      end)
+      n.poke_eventloop() -- request A is now in flight
+
+      -- Changing the buffer supersedes request A and sends request B.
+      feed('o<ESC>')
+      n.poke_eventloop()
+
+      -- Respond to the current request B.
+      exec_lua(function()
+        _G.pending[#_G.pending](nil, { data = { 2, 4, 1, 3, 8193 }, resultId = '2' })
+      end)
+      n.poke_eventloop()
+
+      -- Respond to the superseded request A; it must be ignored.
+      exec_lua(function()
+        _G.pending[1](nil, { data = { 2, 4, 4, 3, 8193 }, resultId = '1' })
+      end)
+      n.poke_eventloop()
+
+      local highlights = exec_lua(function()
+        return vim.lsp.semantic_tokens.__STHighlighter.active[bufnr].client_state[client_id].current_result.highlights
+      end)
+      eq(1, #highlights)
+      eq(5, highlights[1].end_col)
+    end)
+
+    it('mark_dirty requests a full result rather than a delta over range tokens', function()
+      insert(text)
+
+      local bufnr, client_id = exec_lua(function()
+        _G.range_pending = {}
+        _G.server2 = _G._create_server({
+          capabilities = {
+            textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
+            semanticTokensProvider = {
+              full = { delta = true },
+              range = true,
+              legend = vim.fn.json_decode(legend),
+            },
+          },
+          handlers = {
+            ['textDocument/semanticTokens/range'] = function(_, _, callback)
+              -- Keep the range request in flight so it cannot clear result_id
+              -- before the follow-up full/delta request is chosen.
+              _G.range_pending[#_G.range_pending + 1] = callback
+            end,
+            ['textDocument/semanticTokens/full'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(response))
+            end,
+            ['textDocument/semanticTokens/full/delta'] = function(_, _, callback)
+              callback(nil, vim.fn.json_decode(edit_response))
+            end,
+          },
+        })
+        local bufnr = vim.api.nvim_get_current_buf()
+        local client_id = assert(_G._start_server(_G.server2))
+        return bufnr, client_id
+      end)
+      n.poke_eventloop()
+
+      local before = exec_lua('return #_G.server2.messages')
+      exec_lua(function()
+        local h = vim.lsp.semantic_tokens.__STHighlighter.active[bufnr]
+        h:mark_dirty(client_id)
+        h:send_request(client_id)
+      end)
+      n.poke_eventloop()
+
+      local has_full, has_delta = false, false
+      for _, method in
+        ipairs(exec_lua(function(first)
+          local methods = {}
+          for i = first + 1, #_G.server2.messages do
+            methods[#methods + 1] = _G.server2.messages[i].method
+          end
+          return methods
+        end, before))
+      do
+        if method == 'textDocument/semanticTokens/full' then
+          has_full = true
+        elseif method == 'textDocument/semanticTokens/full/delta' then
+          has_delta = true
+        end
+      end
+      eq(true, has_full)
+      eq(false, has_delta)
     end)
 
     it('use LspTokenUpdate and highlight_token', function()
