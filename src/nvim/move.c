@@ -1508,10 +1508,15 @@ bool scrolldown(win_T *wp, linenr_T line_count, int byfold)
     invalidate_botline_win(wp);
   }
 
-  // Adjust for concealed lines above w_topline
-  while (wp->w_topline > 1 && decor_conceal_line(wp, wp->w_topline - 2, false)) {
-    wp->w_topline--;
-    hasFolding(wp, wp->w_topline, &wp->w_topline, NULL);
+  // Adjust for concealed lines above w_topline. Not while filler lines of
+  // w_topline are still hidden: they would all be displayed at once without
+  // being counted in "done", and the cursor would end up below the window.
+  if (wp->w_topfill == win_get_fill(wp, wp->w_topline)) {
+    while (wp->w_topline > 1 && decor_conceal_line(wp, wp->w_topline - 2, false)) {
+      wp->w_topline--;
+      wp->w_topfill = 0;
+      hasFolding(wp, wp->w_topline, &wp->w_topline, NULL);
+    }
   }
 
   wp->w_wrow += done;               // keep w_wrow updated
