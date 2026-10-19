@@ -568,6 +568,13 @@ func Test_getcompletion()
   let l = getcompletion('det', 'filetypecmd')
   call assert_equal(['detect'], l)
 
+  command -nargs=1 -complete=filetypecmd DoFiletype :
+  let l = getcompletion('filetype plugin indent ', 'cmdline')
+  call assert_equal(['off', 'on'], l)
+  let l = getcompletion('DoFiletype ', 'cmdline')
+  call assert_equal(['detect', 'indent', 'off', 'on', 'plugin'], l)
+  delcommand DoFiletype
+
   let l = getcompletion('tag', 'function')
   call assert_true(index(l, 'taglist(') >= 0)
   let l = getcompletion('paint', 'function')
@@ -4248,6 +4255,13 @@ func Test_cmdline_complete_breakadd()
   call assert_equal(['expr', 'file', 'func', 'here'], getcompletion('', 'breakpoint'))
   let l = getcompletion('not', 'breakpoint')
   call assert_equal([], l)
+
+  command -nargs=1 -complete=breakpoint DoBreak :
+  call getcompletion('breakdel ', 'cmdline')
+  call assert_equal(['expr', 'file', 'func', 'here'], getcompletion('DoBreak ', 'cmdline'))
+  call getcompletion('breakdel ', 'cmdline')
+  call assert_equal(['expr', 'file', 'func', 'here'], getcompletion('', 'breakpoint'))
+  delcommand DoBreak
 
   " Test for :breakadd file [lnum] <file>
   call writefile([], 'Xscript')
