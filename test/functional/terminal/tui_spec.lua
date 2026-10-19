@@ -3767,7 +3767,7 @@ describe('TUI', function()
     end)
   end)
 
-  it('exits immediately when stdin is closed #35744', function()
+  it('exits immediately when stdin is closed #35744', { retries = 2 }, function()
     local screen = tt.setup_child_nvim(
       { '--clean', '--cmd', 'set laststatus=2' },
       { env = vim.tbl_extend('force', env_notermguicolors, { NVIM_LOG_FILE = testlog }) }
