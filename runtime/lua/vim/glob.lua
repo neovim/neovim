@@ -255,11 +255,7 @@ local function to_codepoint(utf8_str)
 end
 
 --- Pattern for matching UTF-8 characters
-local cont = m.R('\128\191')
-local any_utf8 = m.R('\0\127')
-  + m.R('\194\223') * cont
-  + m.R('\224\239') * cont * cont
-  + m.R('\240\244') * cont * cont * cont
+local any_utf8 = m.utfR(0, 0x10FFFF)
 
 --- Creates a character class pattern for glob ranges
 --- @param inv string Inversion flag ('!' or '')
