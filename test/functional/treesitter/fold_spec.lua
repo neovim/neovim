@@ -47,6 +47,21 @@ void ui_refresh(void)
     )
   end
 
+  --- Waits for the async parse, and the fold update that follows it.
+  local function wait_folds()
+    exec_lua(function()
+      local done = false
+      -- Queued after the in-flight parse's callbacks (if any), so folds have updated when it runs.
+      vim.treesitter.get_parser(0):parse(nil, function()
+        done = true
+      end)
+      assert(vim.wait(5000, function()
+        return done
+      end))
+    end)
+    poke_eventloop()
+  end
+
   local function get_fold_levels()
     return exec_lua(function()
       local res = {}
@@ -91,7 +106,7 @@ void ui_refresh(void)
     parse('c')
 
     command('1,2d')
-    poke_eventloop()
+    wait_folds()
 
     eq({
       [1] = '0',
@@ -114,7 +129,7 @@ void ui_refresh(void)
     }, get_fold_levels())
 
     command('1put!')
-    poke_eventloop()
+    wait_folds()
 
     eq({
       [1] = '>1',
@@ -157,7 +172,7 @@ t2]])
     }, get_fold_levels())
 
     feed('2ggo<Esc>')
-    poke_eventloop()
+    wait_folds()
 
     eq({
       [1] = '>1',
@@ -168,7 +183,7 @@ t2]])
     }, get_fold_levels())
 
     feed('dd')
-    poke_eventloop()
+    wait_folds()
 
     eq({
       [1] = '>1',
@@ -178,7 +193,7 @@ t2]])
     }, get_fold_levels())
 
     feed('2ggdd')
-    poke_eventloop()
+    wait_folds()
 
     eq({
       [1] = '0',
@@ -187,7 +202,7 @@ t2]])
     }, get_fold_levels())
 
     feed('u')
-    poke_eventloop()
+    wait_folds()
 
     eq({
       [1] = '>1',
@@ -197,7 +212,7 @@ t2]])
     }, get_fold_levels())
 
     feed('3ggdd')
-    poke_eventloop()
+    wait_folds()
 
     eq({
       [1] = '>1',
@@ -206,7 +221,7 @@ t2]])
     }, get_fold_levels())
 
     feed('u')
-    poke_eventloop()
+    wait_folds()
 
     eq({
       [1] = '>1',
@@ -217,7 +232,7 @@ t2]])
 
     feed('3ggI#<Esc>')
     parse()
-    poke_eventloop()
+    wait_folds()
 
     eq({
       [1] = '>1',
@@ -228,7 +243,7 @@ t2]])
 
     feed('x')
     parse()
-    poke_eventloop()
+    wait_folds()
 
     eq({
       [1] = '>1',
@@ -264,7 +279,7 @@ end
     }, get_fold_levels())
 
     command('1,4join')
-    poke_eventloop()
+    wait_folds()
 
     eq({
       [1] = '0',
@@ -272,7 +287,7 @@ end
     }, get_fold_levels())
 
     feed('u')
-    poke_eventloop()
+    wait_folds()
 
     eq({
       [1] = '>1',
@@ -317,7 +332,7 @@ end]])
 
     command('1,8join')
     feed('u')
-    poke_eventloop()
+    wait_folds()
 
     eq({
       [1] = '>1',
@@ -361,7 +376,7 @@ end]])
     }, get_fold_levels())
 
     command('2,6join')
-    poke_eventloop()
+    wait_folds()
 
     eq({
       [1] = '>1',
@@ -370,7 +385,7 @@ end]])
     }, get_fold_levels())
 
     feed('u')
-    poke_eventloop()
+    wait_folds()
 
     eq({
       [1] = '>1',
@@ -803,6 +818,7 @@ t2]])
       [18] = '2',
       [19] = '1',
     }
+    wait_folds()
     eq(foldlevels, get_fold_levels())
 
     -- only changing filetype should change the parser again
@@ -810,6 +826,7 @@ t2]])
     expect_no_folds()
 
     command('set ft=c')
+    wait_folds()
     eq(foldlevels, get_fold_levels())
   end)
 
