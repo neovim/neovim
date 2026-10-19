@@ -1088,15 +1088,16 @@ end
 
 --- Sets the start and end of a |list-iterator| pipeline.
 ---
---- Equivalent to `:skip(first - 1):rskip(len - last + 1)`.
+--- Equivalent to `:skip(first - 1):rskip(len - last)`.
 ---
 --- @since 12
 --- @param first integer
 --- @param last integer
 --- @return vim.IterArray<V1, V...>
 function IterArray:slice(first, last)
+  local len = math.abs(self._tail - self._head)
   local left = vim._assert_integer(math.max(0, first - 1))
-  local right = vim._assert_integer(math.max(0, self._tail - last - 1))
+  local right = vim._assert_integer(math.max(0, len - last))
   return self:skip(left):rskip(right)
 end
 
