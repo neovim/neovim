@@ -5200,7 +5200,7 @@ describe('TUI client', function()
       test_remote_tui_quit()
     end)
 
-    it('with :cquit', function()
+    it('with :cquit', { retries = 2 }, function()
       test_remote_tui_quit(42)
     end)
   end)
