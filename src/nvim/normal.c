@@ -4908,6 +4908,7 @@ static void nv_optrans(cmdarg_T *cap)
       stuffnumReadbuff(cap->count0);
     }
     stuffReadbuff(ar[strchr(str, (char)cap->cmdchar) - str]);
+    opcount = 0;
     exec_stuffed(cap);
   }
   cap->opcount = 0;
