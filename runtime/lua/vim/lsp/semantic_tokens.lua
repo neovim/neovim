@@ -9,6 +9,9 @@ local Capability = require('vim.lsp._capability')
 
 local M = {}
 
+-- Max time that token processing runs before yielding to the event loop.
+M._yield_interval_ns = 5e6
+
 --- @class (private) STTokenRange
 --- @field line integer line number 0-based
 --- @field start_col integer start column 0-based
@@ -91,8 +94,6 @@ local function tokens_to_ranges(data, bufnr, client, is_current)
   local ranges = {} ---@type STTokenRange[]
 
   local start = uv.hrtime()
-  local ms_to_ns = 1e6
-  local yield_interval_ns = 5 * ms_to_ns
   local co, is_main = coroutine.running()
 
   local line ---@type integer?
@@ -102,7 +103,7 @@ local function tokens_to_ranges(data, bufnr, client, is_current)
     if not is_main then
       local elapsed_ns = uv.hrtime() - start
 
-      if elapsed_ns > yield_interval_ns then
+      if elapsed_ns >= M._yield_interval_ns then
         vim.schedule(function()
           -- Ensure the request hasn't become stale since the last time the coroutine ran.
           -- If it's stale, we don't resume the coroutine so it'll be garbage collected.
@@ -168,11 +169,13 @@ local function merge_highlight_ranges(existing, response, request_range)
     return a.line < b.line or (a.line == b.line and a.start_col <= b.start_col)
   end
 
+  local srow, scol = request_range.start_row, request_range.start_col
+  local erow, ecol = request_range.end_row, request_range.end_col
+
+  -- Half-open ranges overlap if each starts before the other ends.
   local function overlaps(token)
-    ---@type vim.Range
-    local token_range =
-      vim.range(request_range.buf, token.line, token.start_col, token.end_line, token.end_col)
-    return request_range:intersect(token_range) ~= nil
+    return Range.cmp_pos.lt(token.line, token.start_col, erow, ecol)
+      and Range.cmp_pos.lt(srow, scol, token.end_line, token.end_col)
   end
 
   ---@type STTokenRange[]
@@ -262,6 +265,8 @@ function STHighlighter:on_detach(client_id)
     --TODO: delete namespace if/when that becomes possible
     api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
     self:reset_timer(state)
+    -- Drop in-flight responses (see `is_current()` in process_response).
+    self:cancel_active_request(client_id)
     self.client_state[client_id] = nil
   end
 end
@@ -372,7 +377,6 @@ function STHighlighter:send_range_request(client, state, version)
       response,
       client,
       request,
-      version,
       ctx.params.range
     )
   end, self.bufnr)
@@ -437,14 +441,7 @@ function STHighlighter:send_full_delta_request(client, state, version)
       return
     end
 
-    coroutine.wrap(STHighlighter.process_response)(
-      highlighter,
-      response,
-      client,
-      request,
-      version,
-      nil
-    )
+    coroutine.wrap(STHighlighter.process_response)(highlighter, response, client, request)
   end, self.bufnr)
 
   if state.active_request == request then
@@ -522,10 +519,9 @@ end
 ---@param response lsp.SemanticTokens|lsp.SemanticTokensDelta
 ---@param client vim.lsp.Client
 ---@param request STActiveRequest the request that triggered this response
----@param version integer
 ---@param range lsp.Range? nil if this was a full request
 ---@private
-function STHighlighter:process_response(response, client, request, version, range)
+function STHighlighter:process_response(response, client, request, range)
   local state = self.client_state[client.id]
   if not state then
     return
@@ -533,19 +529,11 @@ function STHighlighter:process_response(response, client, request, version, rang
 
   local is_range_request = range ~= nil
   local field = is_range_request and 'active_range_request' or 'active_request'
-  local active_request = state[field] ---@type STActiveRequest?
-
-  -- ignore stale responses
-  if not active_request or active_request ~= request then
-    return
-  end
 
   local function is_current()
-    return STHighlighter.active[self.bufnr] == self
-      and self.client_state[client.id] == state
-      and api.nvim_buf_is_loaded(self.bufnr)
-      and state[field] == active_request
-      and active_request.version == util.buf_versions[self.bufnr]
+    return api.nvim_buf_is_loaded(self.bufnr)
+      and state[field] == request
+      and request.version == util.buf_versions[self.bufnr]
       and (not is_range_request or not state.has_full_result)
   end
 
@@ -587,7 +575,7 @@ function STHighlighter:process_response(response, client, request, version, rang
 
   if range then
     local current = state.current_result
-    local existing = current.version == version and current.highlights or {}
+    local existing = current.version == request.version and current.highlights or {}
     local request_range = vim.range.lsp(self.bufnr, range, client.offset_encoding)
     highlights = merge_highlight_ranges(existing, highlights, request_range)
   end
@@ -602,7 +590,7 @@ function STHighlighter:process_response(response, client, request, version, rang
 
   -- update the state with the new results
   state.current_result = {
-    version = version,
+    version = request.version,
     result_id = not is_range_request and response.resultId or nil,
     tokens = tokens,
     highlights = highlights,

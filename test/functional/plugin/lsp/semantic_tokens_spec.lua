@@ -245,6 +245,36 @@ describe('semantic token highlighting', function()
       }
     end)
 
+    it('buffer is highlighted when token processing yields', function()
+      exec_lua(function()
+        -- Yield on every token.
+        assert(vim.lsp.semantic_tokens._yield_interval_ns)
+        vim.lsp.semantic_tokens._yield_interval_ns = 0
+        vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'x', 'x' })
+        _G._start_server(_G._create_server({
+          capabilities = {
+            semanticTokensProvider = {
+              full = { delta = false },
+              legend = vim.fn.json_decode(legend),
+            },
+          },
+          handlers = {
+            -- Respond synchronously.
+            ['textDocument/semanticTokens/full'] = function(_, _, callback)
+              callback(nil, { data = { 0, 0, 1, 0, 0, 1, 0, 1, 0, 0 } })
+            end,
+          },
+        }))
+      end)
+
+      screen:expect([[
+        {2:^x}                                       |
+        {2:x}                                       |
+        {1:~                                       }|*13
+                                                |
+      ]])
+    end)
+
     it('calls both range and full when range is supported', function()
       insert(text)
 
