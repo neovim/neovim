@@ -60,7 +60,7 @@ describe('vim.lsp.on_type_formatting', function()
   it('enables formatting on type', function()
     exec_lua(function()
       vim.lsp.on_type_formatting.enable()
-      vim.lsp.on_type_formatting.enable()
+      vim.lsp.on_type_formatting.enable() -- Repeated global enable...
       local win = vim.api.nvim_get_current_win()
       vim.api.nvim_win_set_cursor(win, { 2, 0 })
     end)
