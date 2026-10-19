@@ -1406,7 +1406,7 @@ describe('TUI', function()
     ]])
   end)
 
-  it('does not interpret ESC preceding repeat/release event as ALT #41763', function()
+  it('does not interpret ESC preceding repeat/release event/response as ALT #41763', function()
     child_session:request('nvim_command', 'noremap <M-Esc> <Nop>')
     child_session:request('nvim_command', 'noremap! <M-Esc> <Nop>')
     feed_data('i\015')
@@ -1416,6 +1416,10 @@ describe('TUI', function()
     feed_data('\015')
     wait_for_mode('niI')
     feed_data('\027\027[27;1:2u\027[27;1:3u') -- ESC, ESC repeat, ESC release
+    wait_for_mode('n')
+    feed_data('i')
+    wait_for_mode('i')
+    feed_data('\027\027P1$r0m\027\\') -- ESC, DECRQSS response
     wait_for_mode('n')
   end)
 
