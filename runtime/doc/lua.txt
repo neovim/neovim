@@ -3836,7 +3836,7 @@ IterArray:rskip({n})                                       *IterArray:rskip()*
 IterArray:slice({first}, {last})                           *IterArray:slice()*
     Sets the start and end of a |list-iterator| pipeline.
 
-    Equivalent to `:skip(first - 1):rskip(len - last + 1)`.
+    Equivalent to `:skip(first - 1):rskip(len - last)`.
 
     Attributes: ~
         Since: 0.10.0

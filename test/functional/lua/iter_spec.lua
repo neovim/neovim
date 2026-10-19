@@ -241,6 +241,8 @@ describe('vim.iter', function()
     eq({ 1, 2 }, vim.iter(q):slice(1, 2):totable())
     eq({ 10 }, vim.iter(q):slice(10, 10):totable())
     eq({ 8, 9, 10 }, vim.iter(q):slice(8, 11):totable())
+    eq({ 3, 4 }, vim.iter(q):skip(2):slice(1, 2):totable())
+    eq({ 10, 9 }, vim.iter(q):rev():slice(1, 2):totable())
 
     local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
     matches('slice%(%) requires an array%-like table', pcall_err(it.slice, it, 1, 3))
