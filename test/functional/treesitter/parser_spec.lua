@@ -600,7 +600,15 @@ describe('treesitter parser API', function()
   it('can run async parses with string parsers', function()
     local ret = exec_lua(function()
       local parser = vim.treesitter.get_string_parser('int foo = 42;', 'c')
-      return { parser:parse(nil, function() end)[1]:root():range() }
+      local trees ---@type table<integer, TSTree>?
+      parser:parse(nil, function(_, trees_)
+        trees = trees_
+      end)
+      -- Parse may exceed the 3ms time slice (slow CI), then it finishes in a scheduled callback.
+      vim.wait(1000, function()
+        return trees ~= nil
+      end)
+      return { assert(trees)[1]:root():range() }
     end)
 
     eq({ 0, 0, 0, 13 }, ret)

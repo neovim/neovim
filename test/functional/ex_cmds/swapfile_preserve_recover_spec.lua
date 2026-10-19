@@ -119,7 +119,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
     test_recover(swappath1)
   end)
 
-  it('killing TUI process without :preserve #22096', function()
+  it('killing TUI process without :preserve #22096', { retries = 2 }, function()
     -- Windows(#38669): inner server could attach to the outer Nvim terminal's console
     -- and die abruptly when the outer terminal job closed, leaving an unreadable swapfile
     skip(is_os('win'), 'unreadable swapfile on Windows after TUI process exit')

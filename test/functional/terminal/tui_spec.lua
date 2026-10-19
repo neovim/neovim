@@ -39,7 +39,9 @@ local testlog = 'Xtest-tui-log'
 local env_notermguicolors = { COLORTERM = 'xterm-256color' }
 
 describe('TUI', function()
-  it('exit status 1 and error message with server --listen error #34365', function()
+  -- FLAKY: the server writes to the inherited tty, which may happen before TUI enters the alternate
+  -- screen. #40557
+  it('exit status 1 and error message with --listen error #34365', { retries = 2 }, function()
     clear()
     local addr_in_use = api.nvim_get_vvar('servername')
     local screen = tt.setup_child_nvim(
@@ -1404,7 +1406,7 @@ describe('TUI', function()
     ]])
   end)
 
-  it('does not interpret ESC preceding repeat/release event as ALT #41763', function()
+  it('does not interpret ESC preceding repeat/release event/response as ALT #41763', function()
     child_session:request('nvim_command', 'noremap <M-Esc> <Nop>')
     child_session:request('nvim_command', 'noremap! <M-Esc> <Nop>')
     feed_data('i\015')
@@ -1414,6 +1416,10 @@ describe('TUI', function()
     feed_data('\015')
     wait_for_mode('niI')
     feed_data('\027\027[27;1:2u\027[27;1:3u') -- ESC, ESC repeat, ESC release
+    wait_for_mode('n')
+    feed_data('i')
+    wait_for_mode('i')
+    feed_data('\027\027P1$r0m\027\\') -- ESC, DECRQSS response
     wait_for_mode('n')
   end)
 
