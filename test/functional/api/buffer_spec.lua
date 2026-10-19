@@ -868,7 +868,7 @@ describe('api/buf', function()
       eq(3, fn.winnr())
     end)
 
-    it('set_lines on unloaded buffer #8659 #22670', function()
+    it('set_lines on unloaded buffer #8659 #22670 #42443', function()
       local bufnr = api.nvim_get_current_buf()
       lua_or_rpc.nvim_buf_set_lines(bufnr, 0, -1, false, { 'a', 'b', 'c' })
       lua_or_rpc.nvim_buf_set_name(bufnr, 'set_lines')
@@ -882,6 +882,12 @@ describe('api/buf', function()
       lua_or_rpc.nvim_buf_set_lines(new_bufnr, 0, -1, false, {})
       eq({ '' }, lua_or_rpc.nvim_buf_get_lines(new_bufnr, 0, -1, false))
       eq(true, api.nvim_buf_is_loaded(new_bufnr))
+
+      local wiped = fn.bufadd('Xwiped')
+      local au = 'au BufReadCmd <buffer=%d> ++once call nvim_buf_delete(%d, #{force: v:true})'
+      command(au:format(wiped, wiped))
+      eq('Failed to load buffer', pcall_err(lua_or_rpc.nvim_buf_set_lines, wiped, 0, -1, true, {}))
+      eq(false, api.nvim_buf_is_valid(wiped))
     end)
   end)
 
