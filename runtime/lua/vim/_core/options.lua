@@ -301,12 +301,7 @@ local function create_option_accessor(scope)
 
   option_mt = {
     get = function(self)
-      -- `nvim_set_option_value(dry_run)` returns the value in its structured form.
-      return api.nvim_set_option_value(
-        self._name,
-        self._value,
-        { operation = 'set', scope = scope, dry_run = true }
-      )
+      return api.nvim__option_to_object(self._name, self._value)
     end,
 
     append = function(self, right)

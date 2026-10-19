@@ -304,6 +304,89 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   return value;
 }
 
+// Convert an already validated option value without reading or changing the option.
+// The returned Object is allocated in arena (scalar values are returned unchanged).
+/// @nodoc
+Object nvim__option_to_object(String name, Object value, Arena *arena, Error *err)
+  FUNC_API_LUA_ONLY
+{
+  OptIndex opt_idx = find_option(name.data);
+  if (opt_idx == kOptInvalid) {
+    api_set_error(err, kErrorTypeValidation, "Unknown option '%s'", name.data);
+    return NIL;
+  }
+
+  if (value.type != kObjectTypeString) {
+    return copy_object(value, arena);
+  }
+
+  vimoption_T *option = get_option(opt_idx);
+  const uint32_t flags = option->flags;
+  const OptSchemaItem *schema = option->schema;
+
+  // A dict option (`schema != NULL`) parses here like any comma "key:value" map: its stored value
+  // is already the canonical ":set" string.
+  char *str = value.data.string.data != NULL ? value.data.string.data : "";
+
+  Object rv;
+  // Plain string option: no list/map structure.
+  if (!(flags & (kOptFlagComma | kOptFlagFlagList))) {
+    rv = STRING_OBJ(CSTR_TO_ARENA_STR(arena, str));
+  } else if ((flags & kOptFlagFlagList) && !(flags & kOptFlagComma)) {
+    // Single-char flag list, e.g. 'shortmess': each character is a flag.
+    size_t n = strlen(str);
+    Dict d = arena_dict(arena, n);
+    for (size_t i = 0; i < n; i++) {
+      PUT_C(d, arena_memdupz(arena, &str[i], 1), BOOLEAN_OBJ(true));
+    }
+    rv = DICT_OBJ(d);
+  } else {
+    // Comma-separated list/map/set. Upper-bound the item count for arena sizing.
+    size_t nparts = 1;
+    for (char *p = str; *p != NUL; p++) {
+      nparts += (*p == ',');
+    }
+    const bool as_map = (flags & kOptFlagColon) || (flags & kOptFlagFlagList) || schema != NULL;
+    Dict d = as_map ? arena_dict(arena, nparts) : (Dict)ARRAY_DICT_INIT;
+    Array a = as_map ? (Array)ARRAY_DICT_INIT : arena_array(arena, nparts);
+    char *item = xmalloc(strlen(str) + 1);
+    for (char *p = str; *p != NUL;) {
+      copy_option_part(&p, item, strlen(str) + 1, ",");
+      if (*item == NUL) {
+        continue;  // skip empty parts, e.g. "a,,b"
+      }
+      if (!as_map) {
+        // Note: the raw string preserves the ",," literal-comma convention (e.g. 'isfname'); the
+        // structured view splits on every comma and does not reconstruct literal commas.
+        ADD_C(a, STRING_OBJ(CSTR_TO_ARENA_STR(arena, item)));
+        continue;
+      }
+      char *colon = strchr(item, ':');
+      char *val = NULL;
+      if (colon != NULL) {
+        *colon = NUL;
+        val = colon + 1;
+      }
+      String key = CSTR_TO_ARENA_STR(arena, item);
+      Object v;
+      if (flags & kOptFlagFlagList) {
+        v = BOOLEAN_OBJ(true);  // comma flag list ('whichwrap'): each item is a flag
+      } else if (val == NULL) {
+        v = BOOLEAN_OBJ(true);  // bare flag in a typed/colon map
+      } else {
+        // A key's value stays a string, even for a num/enum key: option sub-value types are not a
+        // stable contract (Vim options are "stringly typed"), so we expose structure, not types.
+        v = STRING_OBJ(CSTR_TO_ARENA_STR(arena, val));
+      }
+      PUT_C(d, key.data, v);
+    }
+    xfree(item);
+    rv = as_map ? DICT_OBJ(d) : ARRAY_OBJ(a);
+  }
+
+  return rv;
+}
+
 /// Sets the value of an option. The behavior of this function matches that of
 /// |:set|: for global-local options, both the global and local value are set
 /// unless otherwise specified with {scope}.
@@ -458,7 +541,7 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
   }
 
   // Return the value in its structured (list/map/set) form.
-  Object rv = optval_to_obj(opt_idx, merged_val, arena);
+  Object rv = nvim__option_to_object(name, merged_val, arena, err);
   optval_free(merged_val);
   return rv;
 }

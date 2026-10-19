@@ -138,6 +138,13 @@ function vim.api.nvim__ns_set(ns_id, opts) end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- @param name string
+--- @param value any
+--- @return any
+function vim.api.nvim__option_to_object(name, value) end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- Instruct Nvim to redraw various components.
 ---
 ---
