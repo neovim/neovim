@@ -965,6 +965,7 @@ local function buf_attach(bufnr)
           client:notify('textDocument/didClose', params, bufnr)
         end
       end
+      util.buf_versions[bufnr] = api.nvim_buf_get_changedtick(bufnr)
       for _, client in ipairs(clients) do
         client:_text_document_did_open_handler(bufnr)
       end
