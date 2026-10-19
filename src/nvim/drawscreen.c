@@ -409,7 +409,10 @@ void screen_resize(int width, int height)
         }
       }
     }
-    ui_flush();
+
+    if (State != MODE_ASKMORE) {  // Don't flush partial pager; do_more_prompt() will redraw it.
+      ui_flush();
+    }
   }
   resizing_screen = false;
 }
