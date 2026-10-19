@@ -161,6 +161,9 @@ EVENTS
 • |vim.on_key()| callbacks are not invoked for keys consumed by |getchar()|.
 • |BufModifiedSet| has been removed. Use the |OptionSet| event with pattern
   "modified" instead.
+• |RecordingLeave| is now triggered after the recorded macro has been written
+  to its register, so calling |getreg()| returns the new contents instead of the
+  previous contents. |reg_recorded()| is still only updated after the event.
 • |ui-messages| `msg_show.completion` messages are now `msg_show.progress`
   events.
 
@@ -374,6 +377,7 @@ EVENTS
   be sorted or filtered. See |dir-render|.
 • CTRL-C sends SIGINT to ":!" and "system()" child processes (before
   escalating to SIGTERM/SIGKILL, as usual).
+• |RegisterChanged| is triggered after a register is written.
 
 HIGHLIGHTS
 
