@@ -59,6 +59,8 @@ describe('vim.lsp.on_type_formatting', function()
 
   it('enables formatting on type', function()
     exec_lua(function()
+      vim.lsp.on_type_formatting.enable()
+      vim.lsp.on_type_formatting.enable() -- Repeated global enable...
       local win = vim.api.nvim_get_current_win()
       vim.api.nvim_win_set_cursor(win, { 2, 0 })
     end)
@@ -75,6 +77,29 @@ describe('vim.lsp.on_type_formatting', function()
         end)
       )
     end)
+
+    exec_lua(function()
+      vim.lsp.buf_detach_client(0, _G.server_id)
+    end)
+    feed(' = 6')
+    eq(
+      {
+        'int main() {',
+        '  int hi = 5 = 6;',
+        '}',
+      },
+      exec_lua(function()
+        return vim.api.nvim_buf_get_lines(0, 0, -1, false)
+      end)
+    )
+    eq(
+      1,
+      exec_lua(function()
+        return #vim.tbl_filter(function(message)
+          return message.method == 'textDocument/onTypeFormatting'
+        end, _G.server.messages)
+      end)
+    )
   end)
 
   it('works with multiple clients', function()
