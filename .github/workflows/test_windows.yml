@@ -67,6 +67,10 @@ jobs:
           TEST_TIMEOUT: 600
         run: |
           $ErrorActionPreference = 'Continue'
+          # Keep an MSYS process (Git's usr/bin) alive, so the MSYS runtime initializes its shared
+          # state only once. Else a test that kills an MSYS process during that init (CTRL-C) can
+          # make the next one stall 15s and die: "fatal error - add_item (...) failed, errno 1".
+          Start-Process -WindowStyle Hidden (Get-Command sleep.exe).Source infinity
           # `-k 0` tells ninja to continue running all targets even if some fail.
           cmake --build build --target functionaltest-parallel -j 2 -- -k 0
           $exitCode = $LASTEXITCODE
