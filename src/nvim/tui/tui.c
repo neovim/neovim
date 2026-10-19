@@ -1800,6 +1800,12 @@ static void tui_suspend_cb(TUIData *tui)
   tui_terminal_stop(tui);
   stream_set_blocking(tui->input.in_fd, true);   // normalize stream (#2598)
 
+  // Stop a parent sharing our process group (e.g. `fish -c`) first, so it can't reap our stop
+  // while still running and then exit instead of waiting for us when resumed.
+  pid_t ppid = getppid();
+  if (getpgid(ppid) == getpgrp()) {
+    kill(ppid, SIGSTOP);
+  }
   // Avoid os/signal.c SIGTSTP handler. ex_stop calls auto_writeall. #33258
   kill(0, SIGSTOP);
 
