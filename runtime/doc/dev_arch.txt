@@ -239,6 +239,39 @@ Common examples of non-fast code: regexp matching, wildcard expansion,
 expression evaluation.
 
 ==============================================================================
+Extmarks                                                        *dev-extmarks*
+
+Extmarks (`extmark.c`, `marktree.c`) are buffer positions that move with
+edits. Decorations (`decoration.c`) attach highlights, virtual text, signs and
+conceal to them. Marktree nodes count some decoration kinds (`MetaIndex`), so
+callers can skip rows without them.
+
+------------------------------------------------------------------------------
+Conceal                                                          *dev-conceal*
+
+Two mechanisms:
+- extmark-conceal (stored marks, including treesitter's) reflows 'wrap'.
+  Wrap prefixes, 'linebreak' and line heights use the "displayed vcol"
+  (see `CharsizeArg.extconceal_off`); `getvcol()`, marks and 'virtualedit'
+  keep the raw vcol. `extconceal_vcol_map()` maps between them.
+- `:syntax`, |matchadd()| and ephemeral conceal exist only while drawing, so
+  measuring can't see them: `win_line()` hides their cells with `boguscols`
+  and keeps the raw layout.
+
+Measuring a line (heights, motions, mouse) copies the row's extmark-conceal
+into `ConcealSpans` (`init_charsize_arg_conceal()`), after running the
+`_on_conceal` providers (`decor_providers_invoke_conceal()`), so rows not
+yet drawn are measured concealed. Rows without conceal marks
+(`kMTMetaConceal`) take the fast path.
+
+'concealcursor' reveals the cursor line and the Visual area; revealing
+changes height, so `conceal_reveal_changed()` invalidates those lines in
+every window.
+
+TODO: produce `ConcealSpans` for `:syntax` and match conceal too, so they
+reflow and `boguscols` goes away?
+
+==============================================================================
 Internal practices and patterns                          *dev-internals-howto*
 
 ------------------------------------------------------------------------------

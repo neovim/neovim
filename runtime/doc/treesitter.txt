@@ -1594,6 +1594,8 @@ vim.treesitter.Query                                    *vim.treesitter.Query*
                                    defined in query
       • {has_combined_injections}  (`boolean`) whether the query contains
                                    combined injections
+      • {has_conceal}              (`boolean`) whether the query can conceal
+                                   text or override conceal
       • {has_conceal_line}         (`boolean`) whether the query sets
                                    conceal_lines metadata
       • {info}                     (`vim.treesitter.QueryInfo`) query context

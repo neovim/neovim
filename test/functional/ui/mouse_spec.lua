@@ -1356,7 +1356,9 @@ describe('ui/mouse/input', function()
       })
     end)
 
-    local function test_mouse_click_conceal()
+    --- @param reflows boolean Extmark conceal reflows wrapped lines (#14409), tested separately.
+    local function test_mouse_click_conceal(reflows)
+      local it_wrapped = not reflows and it or function() end
       it('(level 1) click on non-wrapped lines', function()
         feed_command('let &conceallevel=1', 'echo')
 
@@ -1424,7 +1426,7 @@ describe('ui/mouse/input', function()
         })
       end) -- level 1 - non wrapped
 
-      it('(level 1) click on wrapped lines', function()
+      it_wrapped('(level 1) click on wrapped lines', function()
         feed_command('let &conceallevel=1', 'let &wrap=1', 'echo')
 
         feed('<esc><LeftMouse><24,1>')
@@ -1599,7 +1601,7 @@ describe('ui/mouse/input', function()
         })
       end) -- level 2 - non wrapped (insert mode)
 
-      it('(level 2) click on wrapped lines', function()
+      it_wrapped('(level 2) click on wrapped lines', function()
         feed_command('let &conceallevel=2', 'let &wrap=1', 'echo')
 
         feed('<esc><LeftMouse><20,0>')
@@ -1749,7 +1751,7 @@ describe('ui/mouse/input', function()
         })
       end) -- level 3 - non wrapped
 
-      it('(level 3) click on wrapped lines', function()
+      it_wrapped('(level 3) click on wrapped lines', function()
         feed_command('let &conceallevel=3', 'let &wrap=1', 'echo')
 
         feed('<esc><LeftMouse><14,1>')
@@ -1872,7 +1874,7 @@ describe('ui/mouse/input', function()
           command([[syntax match X2 /cats/ conceal cchar=X contained]])
           command([[syntax match X3 /\n\@<=x/ conceal cchar=>]])
         end)
-        test_mouse_click_conceal()
+        test_mouse_click_conceal(false)
       end)
 
       describe('(matchadd())', function()
@@ -1881,7 +1883,7 @@ describe('ui/mouse/input', function()
           fn.matchadd('Conceal', [[cats]], 10, -1, { conceal = 'X' })
           fn.matchadd('Conceal', [[\n\@<=x]], 10, -1, { conceal = '>' })
         end)
-        test_mouse_click_conceal()
+        test_mouse_click_conceal(false)
       end)
 
       describe('(extmarks)', function()
@@ -1900,8 +1902,233 @@ describe('ui/mouse/input', function()
           api.nvim_buf_set_extmark(0, ns, 2, 25, { end_col = 29, conceal = 'X' })
           api.nvim_buf_set_extmark(0, ns, 2, 0, { end_col = 1, conceal = '>' })
         end)
-        test_mouse_click_conceal()
+        test_mouse_click_conceal(true)
+
+        it('click on reflowed wrapped lines', function()
+          command('set wrap')
+          -- Conceallevel, rows after the first, and clicks: { col, row, cursor line, cursor col }.
+          for _, case in ipairs({
+            {
+              1,
+              {
+                '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
+                't4{14: }                      ',
+                '{14:>} 私は猫が大好き{1:>---}{14: X } {1:>}',
+                '✨🐈✨                   ',
+              },
+              {
+                { 24, 1, 2, 15 },
+                { 0, 2, 2, 16 },
+                { 8, 3, 3, 11 },
+                { 21, 3, 3, 25 },
+                { 4, 4, 3, 38 },
+              },
+            },
+            {
+              2,
+              {
+                '{1:>--->--->---}  t2 t3 t4   ',
+                '{14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+                '🐈✨                     ',
+              },
+              {
+                { 20, 0, 1, 12 },
+                { 14, 1, 2, 6 },
+                { 18, 1, 2, 12 },
+                { 0, 2, 3, 0 },
+                { 1, 2, 3, 1 },
+                { 0, 3, 3, 34 },
+                { 20, 3, 3, 38 },
+              },
+            },
+            {
+              3,
+              {
+                '{1:>--->--->---}  t2 t3 t4   ',
+                ' 私は猫が大好き{1:>----} ✨🐈',
+                '✨                       ',
+              },
+              {
+                { 14, 1, 2, 6 },
+                { 18, 1, 2, 12 },
+                { 1, 2, 3, 2 },
+                { 0, 3, 3, 38 },
+                { 20, 3, 3, 38 },
+              },
+            },
+          }) do
+            command(('set conceallevel=%d'):format(case[1]))
+            feed('<esc>gg')
+            screen:expect({ any = case[2] })
+            for _, click in ipairs(case[3]) do
+              feed(('<esc><LeftMouse><%d,%d>'):format(click[1], click[2]))
+              eq({ click[3], click[4] }, api.nvim_win_get_cursor(0))
+            end
+          end
+        end)
       end)
+    end)
+
+    it(
+      'getmousepos() reports the reflowed buffer column with conceal-aware wrap (#14409)',
+      function()
+        command('%delete')
+        command('set wrap conceallevel=2 concealcursor=nvic mouse=a')
+        local ns = api.nvim_create_namespace('conceal_wrap_getmousepos')
+        -- 10 a + HIDDEN(6) + 30 b = 46 raw; hide the 6 -> 40 cells -> 2 rows at width 20.
+        screen:try_resize(20, 6)
+        insert(('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(30))
+        api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
+        command('redraw')
+
+        -- Row 1 (0-based 0), cell 14: reflowed 'b' at buffer col 20.
+        api.nvim_input_mouse('left', 'press', '', 0, 0, 14)
+        local mousepos = fn.getmousepos()
+        eq(1, mousepos.line)
+        eq(21, mousepos.column)
+        eq(0, mousepos.coladd)
+
+        -- The boundary cell where the concealed run collapses to zero width: row 1, cell 10 lands
+        -- on the first visible 'b' (buffer col 16, immediately after the concealed range).
+        api.nvim_input_mouse('left', 'press', '', 0, 0, 10)
+        mousepos = fn.getmousepos()
+        eq(1, mousepos.line)
+        eq(17, mousepos.column)
+        eq(0, mousepos.coladd)
+      end
+    )
+
+    it('clicks resolve the layout on screen before entering a window or ending Visual', function()
+      screen:try_resize(40, 8)
+      command('%delete | set nolist wrap conceallevel=2 concealcursor= mousetime=0')
+      local ns = api.nvim_create_namespace('')
+      local long = 'x' .. ('C'):rep(45) .. 'yz'
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'aa**bold**cc', long, long, long, long })
+      for _, col in ipairs({ 2, 8 }) do
+        api.nvim_buf_set_extmark(0, ns, 0, col, { end_col = col + 2, conceal = '' })
+      end
+      for row = 1, 4 do
+        api.nvim_buf_set_extmark(0, ns, row, 1, { end_col = 46, conceal = '' })
+      end
+      local function click(row, col)
+        api.nvim_input_mouse('left', 'press', '', 0, row, col)
+        api.nvim_input_mouse('left', 'release', '', 0, row, col)
+        return api.nvim_win_get_cursor(0)
+      end
+
+      -- The right window draws "aaboldcc"; its first "c" is buf 10.
+      command('vsplit')
+      eq({ 1, 10 }, click(0, 21 + 6))
+      -- Its cursor line (line 2) is concealed while the left window is current.
+      api.nvim_win_set_cursor(0, { 2, 0 })
+      command('wincmd h')
+      eq({ 3, 47 }, click(2, 21 + 2))
+
+      -- Lines that leave the Visual area are concealed again only after the click.
+      command('only')
+      api.nvim_win_set_cursor(0, { 2, 0 })
+      feed('Vj')
+      eq({ 4, 47 }, click(5, 2))
+
+      -- Whole-line conceal on the other window's cursor line.
+      api.nvim_buf_clear_namespace(0, ns, 0, -1)
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'line 1', 'line 2', 'line 3' })
+      api.nvim_buf_set_extmark(0, ns, 1, 0, { conceal_lines = '' })
+      command('vsplit')
+      command('wincmd l')
+      api.nvim_win_set_cursor(0, { 2, 0 })
+      command('wincmd h')
+      eq({ 3, 2 }, click(1, 21 + 2))
+
+      -- A foldcolumn click in the other window.
+      command('only | set foldcolumn=1 | 1,2fold | vsplit')
+      eq(1, fn.foldclosed(1))
+      click(0, 21)
+      eq(-1, fn.foldclosed(1))
+    end)
+
+    it('clicks use raw desired columns after conceal moves wrap prefixes', function()
+      screen:try_resize(20, 6)
+      command('%delete')
+      command('set wrap conceallevel=2 concealcursor=nvic showbreak=>> mousetime=0')
+      insert(('abcdefghij'):rep(4))
+      local ns = api.nvim_create_namespace('')
+      api.nvim_buf_set_extmark(0, ns, 0, 2, { end_col = 10, conceal = '' })
+      command('redraw')
+
+      api.nvim_input_mouse('left', 'press', '', 0, 0, 14)
+      eq({ 1, 22 }, api.nvim_win_get_cursor(0))
+      eq(23, fn.getmousepos().column)
+      eq(25, fn.getcurpos()[5])
+      api.nvim_input_mouse('left', 'release', '', 0, 0, 14)
+
+      -- Resolve the click before entering the line reveals its concealed text.
+      command('set concealcursor=')
+      api.nvim_buf_set_lines(0, 1, -1, true, { 'next' })
+      api.nvim_win_set_cursor(0, { 2, 0 })
+      command('redraw')
+      api.nvim_input_mouse('left', 'press', '', 0, 0, 14)
+      eq({ 1, 22 }, api.nvim_win_get_cursor(0))
+      api.nvim_input_mouse('left', 'release', '', 0, 0, 14)
+
+      api.nvim_buf_clear_namespace(0, ns, 0, -1)
+      command('set conceallevel=0')
+      command('redraw')
+      api.nvim_input_mouse('move', '', '', 0, 1, 2)
+      eq(21, fn.getmousepos().column)
+      eq(2, fn.getmousepos().coladd)
+
+      command('set conceallevel=2 concealcursor=nvic showbreak= tabstop=32 nolist')
+      for _, text in ipairs({ '\t', '界' }) do
+        for _, inline in ipairs({ false, true }) do
+          api.nvim_buf_clear_namespace(0, ns, 0, -1)
+          api.nvim_buf_set_lines(0, 0, -1, true, { ('%sZ'):format(text), 'end' })
+          api.nvim_buf_set_extmark(0, ns, 0, 0, { end_col = #text, conceal = 'X' })
+          if inline then
+            api.nvim_buf_set_extmark(0, ns, 0, 0, {
+              virt_text = { { 'II' } },
+              virt_text_pos = 'inline',
+            })
+          end
+          api.nvim_win_set_cursor(0, { 2, 0 })
+          command('redraw')
+          for col = 0, inline and 3 or 1 do
+            local expected = col == (inline and 3 or 1) and #text or 0
+            api.nvim_input_mouse('left', 'press', '', 0, 0, col)
+            eq({ 1, expected }, api.nvim_win_get_cursor(0))
+            eq(expected + 1, fn.getmousepos().column)
+            if col == (inline and 2 or 0) then
+              eq(text == '\t' and 32 or (inline and 4 or 2), fn.getcurpos()[5])
+            end
+            api.nvim_input_mouse('left', 'release', '', 0, 0, col)
+            poke_eventloop()
+          end
+        end
+      end
+      command('set virtualedit=all')
+      api.nvim_input_mouse('left', 'press', '', 0, 0, 2)
+      eq({ 1, 0 }, api.nvim_win_get_cursor(0))
+      eq(3, fn.getcurpos()[4])
+      eq(4, fn.virtcol('.'))
+      api.nvim_input_mouse('left', 'release', '', 0, 0, 2)
+      api.nvim_input_mouse('left', 'press', '', 0, 0, 8)
+      eq({ 1, 4 }, api.nvim_win_get_cursor(0))
+      eq(4, fn.getcurpos()[4])
+      eq(4, fn.getmousepos().coladd)
+      api.nvim_input_mouse('left', 'release', '', 0, 0, 8)
+
+      api.nvim_buf_clear_namespace(0, ns, 0, -1)
+      api.nvim_buf_set_lines(0, 0, -1, true, { '\tZ', ('a'):rep(40) })
+      api.nvim_buf_set_extmark(0, ns, 0, 0, { end_col = 1, conceal = 'X' })
+      command('redraw')
+      api.nvim_input_mouse('left', 'press', '', 0, 0, 0)
+      eq(31, fn.getcurpos()[4])
+      eq(32, fn.virtcol('.'))
+      api.nvim_input_mouse('left', 'release', '', 0, 0, 0)
+      feed('jk')
+      eq(31, fn.getcurpos()[4])
+      feed('l')
+      eq({ 1, 1 }, api.nvim_win_get_cursor(0))
     end)
 
     it('virtual text does not change cursor placement on concealed line', function()

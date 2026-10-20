@@ -1536,6 +1536,35 @@ describe('vim.lsp.util', function()
       {1:~                                                    }|*8
                                                            |
     ]])
+
+      command('close')
+      feed('<Ignore>')
+      screen:try_resize(24, 6)
+      local url = 'https://example.com/' .. ('a'):rep(50)
+      screen:add_extra_attr_ids({
+        [103] = {
+          background = Screen.colors.LightMagenta,
+          foreground = Screen.colors.DarkCyan,
+          url = url,
+        },
+      })
+      local win = exec_lua(function(link)
+        local _, popup = vim.lsp.util.open_floating_preview(
+          { ('[x](%s) tail'):format(link) },
+          'markdown',
+          { width = 10, max_height = 4, border = 'single', focus = false }
+        )
+        return popup
+      end, url)
+      screen:expect([[
+        ^                        |
+        {4:┌──────────┐}{1:            }|
+        {4:│}{103:x}{4: tail    │}{1:            }|
+        {4:└──────────┘}{1:            }|
+        {1:~                       }|
+                                |
+      ]])
+      eq({ 10, 1 }, { api.nvim_win_get_width(win), api.nvim_win_get_height(win) })
     end)
 
     it('open_floating_preview height does not exceed max_height', function()
