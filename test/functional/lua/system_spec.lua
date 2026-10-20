@@ -78,6 +78,20 @@ describe('vim.system', function()
       end)
 
       it('supports timeout', function()
+        if name == 'sync' and not t.is_os('win') then
+          eq(
+            { code = 0, signal = 0, stdout = 'late', stderr = '' },
+            exec_lua(function()
+              -- The shell exits before its child closes the inherited output pipes.
+              local obj = vim.system({ 'sh', '-c', '(sleep 0.3; printf late) & exit 0' })
+              assert(vim.wait(1000, function()
+                return obj:is_closing()
+              end, nil, true))
+              return obj:wait(100) or obj:wait()
+            end)
+          )
+        end
+
         eq({
           code = 124,
           signal = 15,
