@@ -842,6 +842,24 @@ t2]])
     ]])
   end)
 
+  it('no error when the first foldexpr call happens during a join', function()
+    local screen = Screen.new(80, 6)
+    insert(t.dedent([[
+      # Title
+
+      Text]]))
+    parse('markdown')
+    command('set foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr()')
+    command('doautocmd FileType')
+    feed('ggJ')
+    screen:expect([[
+      # Titl^e                                                                         |
+      Text                                                                            |
+      {1:~                                                                               }|*3
+                                                                                      |
+    ]])
+  end)
+
   it('clamps unbounded changed ranges on 32-bit platforms', function()
     insert([[
 one
@@ -857,6 +875,10 @@ two]])
       end
 
       function parser:for_each_tree() end
+
+      function parser:trees()
+        return {}
+      end
 
       function parser:register_cbs(callbacks)
         self.callbacks = callbacks
