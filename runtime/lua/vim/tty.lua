@@ -126,11 +126,13 @@ function M.query(caps, opts, on_response)
       end
     end,
   }, function(resp)
+    -- XTGETTCAP reply: ESC P, status (0 = not found, 1 = found), "+r", then capability data.
     local status, body = resp:match('^\027P([01])%+r(.*)$')
     if not status or not body then
       return
     end
 
+    -- Each pair contains a hex-encoded name, optionally followed by "=" and a hex-encoded value.
     for pair in vim.gsplit(body, ';') do
       local k, rest = pair:match('^(%x+)(.*)$')
       local cap = k and vim.text.hexdecode(k)
@@ -142,6 +144,10 @@ function M.query(caps, opts, on_response)
           if not seq then
             return -- Ignore malformed responses and leave the capability pending.
           end
+          -- Normalize terminfo source strings in three steps:
+          -- 1. Replace the literal \E escape with the ESC byte.
+          -- 2. Remove %pN parameter selectors (N is one decimal digit), leaving %d/%s conversions.
+          -- 3. Decode a backslash followed by exactly three octal digits as one byte.
           seq = seq
             :gsub('\\E', '\027')
             :gsub('%%p%d', '')
