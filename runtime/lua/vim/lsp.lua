@@ -562,10 +562,15 @@ local function lsp_enable_callback(bufnr)
       config = vim.deepcopy(config)
 
       if type(config.root_dir) == 'function' then
+        local fname = vim.fs.basename(api.nvim_buf_get_name(bufnr))
         ---@param root_dir string?
         config.root_dir(bufnr, function(root_dir)
           config.root_dir = root_dir
           vim.schedule(function()
+            if not api.nvim_buf_is_valid(bufnr) then
+              log.info(('lsp.enable: buffer disappeared, skipping: %d "%s"'):format(bufnr, fname))
+              return
+            end
             start_config(bufnr, config)
           end)
         end)
