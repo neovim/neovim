@@ -117,7 +117,11 @@ end
 ---@param ctx lsp.HandlerContext
 function Completor:handler(err, result, ctx)
   if err then
-    log.error('inline_completion', err)
+    if err.code == protocol.ErrorCodes.ServerCancelled then
+      log.debug('inline_completion', err)
+    else
+      log.error('inline_completion', err)
+    end
     return
   end
   if not result or not vim.startswith(api.nvim_get_mode().mode, 'i') then
