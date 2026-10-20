@@ -620,6 +620,7 @@ function protocol.make_client_capabilities()
       workspaceFolders = true,
       applyEdit = true,
       workspaceEdit = {
+        documentChanges = true,
         resourceOperations = { 'rename', 'create', 'delete' },
         normalizesLineEndings = true,
         changeAnnotationSupport = { groupsOnLabel = true },
