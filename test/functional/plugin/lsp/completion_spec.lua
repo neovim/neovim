@@ -1742,7 +1742,7 @@ describe('vim.lsp.completion: integration', function()
         -- detail is in documentation, should not be duplicated
         detail = '_assert_integer',
         documentation = {
-          kind = 'markdown',
+          kind = 'plaintext',
           value = [[```lua\nmore doc for vim._assert_integer\n```]],
         },
         insertText = '_assert_integer(${1:x}, ${2:base?})',
@@ -1835,22 +1835,26 @@ describe('vim.lsp.completion: integration', function()
       ]])
       feed('<C-N>')
       retry(nil, nil, function()
-        local info = exec_lua(function()
+        local info, ts_highlight, conceallevel = exec_lua(function()
           local data = vim.fn.complete_info({ 'selected' })
           if not data.preview_bufnr or not vim.api.nvim_buf_is_valid(data.preview_bufnr) then
             error('preview not ready')
           end
-          return table.concat(vim.api.nvim_buf_get_lines(data.preview_bufnr, 0, -1, false), '\n')
+          return table.concat(vim.api.nvim_buf_get_lines(data.preview_bufnr, 0, -1, false), '\n'),
+            vim.b[data.preview_bufnr].ts_highlight or false,
+            vim.wo[data.preview_winid].conceallevel
         end)
         neq(nil, info:find('more doc for vim._assert_integer', 1, true))
         local _, count = info:gsub('_assert_integer', '')
         -- item 3: detail '_assert_integer' is in documentation, should not be duplicated
         eq(1, count)
+        eq(false, ts_highlight)
+        eq(0, conceallevel)
       end)
       screen:expect([[
         _assert_integer(x, base)^                          |
-        {4:nvim__id_array_1 Function }{100:lua\nmore doc for vi}{4:   }{1: }|
-        {4:nvim__id_array_2 Function }{100:m._assert_integer\n}{4:    }{1: }|
+        {4:nvim__id_array_1 Function ```lua\nmore doc for vi}{1: }|
+        {4:nvim__id_array_2 Function m._assert_integer\n``` }{1: }|
         {4:for i = ..       Snippet  }{1:                        }|
         {4:for j = ..       Snippet  }{1:                        }|
         {12:_assert_integer  Function }{1:                        }|

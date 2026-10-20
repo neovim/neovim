@@ -797,6 +797,9 @@ local function update_popup_window(winid, bufnr, kind)
     if kind == protocol.MarkupKind.Markdown then
       vim.wo[winid].conceallevel = 2
       vim.treesitter.start(bufnr, kind)
+    else
+      vim.wo[winid].conceallevel = 0
+      vim.treesitter.stop(bufnr)
     end
     local all = api.nvim_win_text_height(winid).all
     api.nvim_win_resize(winid, -1, all)
