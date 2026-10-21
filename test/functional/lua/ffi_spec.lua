@@ -9,6 +9,57 @@ local clear = n.clear
 before_each(clear)
 
 describe('ffi.cdef', function()
+  it('nvim_strwidth respects the String length #33836', function()
+    if not exec_lua("return pcall(require, 'ffi')") then
+      pending('N/A: missing LuaJIT FFI')
+    end
+
+    eq(
+      {},
+      exec_lua(function()
+        local ffi = require('ffi')
+        ffi.cdef [[
+        typedef struct { char *data; size_t size; } String;
+        typedef struct {} Error;
+        int64_t nvim_strwidth(String text, Error *err);
+      ]]
+        local failures = {}
+        for _, text in ipairs({
+          'abcd',
+          'aのb',
+          'éx',
+          '❤️x',
+          '🏳️‍⚧️x',
+          '🧑‍🌾x',
+          'a\0bc',
+          '\t\n',
+        }) do
+          local data = ffi.new('char[?]', #text + 1, text)
+          for size = 0, #text do
+            local expected = vim.api.nvim_strwidth(text:sub(1, size))
+            local actual = tonumber(ffi.C.nvim_strwidth(ffi.new('String', { data, size }), nil))
+            if actual ~= expected then
+              failures[#failures + 1] = { text, size, expected, actual }
+            end
+          end
+        end
+        return failures
+      end)
+    )
+
+    eq(
+      { 1, 0 },
+      exec_lua(function()
+        local ffi = require('ffi')
+        local data = ffi.new('char[1]', { string.byte('a') })
+        return {
+          tonumber(ffi.C.nvim_strwidth(ffi.new('String', { data, 1 }), nil)),
+          tonumber(ffi.C.nvim_strwidth(ffi.new('String', { nil, 0 }), nil)),
+        }
+      end)
+    )
+  end)
+
   it('can use Neovim core functions', function()
     if not exec_lua("return pcall(require, 'ffi')") then
       pending('N/A: missing LuaJIT FFI')
