@@ -117,6 +117,15 @@ describe('nvim.dir', function()
     line_of('alpha.txt')
   end)
 
+  it('keeps syntax when re-editing a startup directory #42160', function()
+    make_fixture()
+    n.clear({ args = { '--clean', root, '+edit' } })
+
+    assert_directory(root)
+    eq('subdir/', lines()[1])
+    eq(true, has_syntax_group('directoryDirectory'))
+  end)
+
   it('3P dir-browser can handle `FileType directory` event and rename buf', function()
     make_fixture()
     n.clear({ args = { '--clean' } })
