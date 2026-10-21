@@ -66,6 +66,36 @@ describe('exit:', function()
     pcall_err(command, 'quit')
     eq('', eval('v:exitreason'))
   end)
+
+  it('interrupts prompts after the UI detached', function()
+    local testlog = 'Xtest-exit-prompt.log'
+    local fname = 'Xtest-corrupt.shada'
+    t.finally(function()
+      os.remove(fname)
+      os.remove(testlog)
+    end)
+    -- Spins forever unless getchar() is interrupted.
+    for _, loop in ipairs({
+      [[while getchar() != char2nr('q') | endwhile]],
+      [[lua while vim.fn.getchar() ~= ('q'):byte() do end]],
+    }) do
+      os.remove(testlog)
+      -- Not --headless: a server that lost its UI is not headless. #42097
+      n.clear({ args_rm = { '--headless' }, env = { NVIM_LOG_FILE = testlog } })
+      n.api.nvim_ui_attach(80, 20, {})
+      n.api.nvim_ui_detach()
+      command(('autocmd VimLeavePre * %s'):format(loop))
+      -- The ShaDa write at exit reads the unparseable file and emits an error (hit-enter prompt).
+      t.write_file(fname, 'x')
+      command(('set shadafile=%s'):format(fname))
+      n.api.nvim_input(':qall!<CR>')
+      n.expect_exit(2000, function() end)
+
+      -- Positive confirmation
+      t.assert_log('Interrupted prompt %(mode=n%)', testlog, 100)
+      t.assert_log('Exiting with error: "E%d+: ', testlog, 100)
+    end
+  end)
 end)
 
 describe(':cquit', function()

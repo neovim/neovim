@@ -3146,12 +3146,44 @@ describe('TUI', function()
   end)
 
   it('exit status 1 and error message with deadly signal sent to server', function()
+    -- Multiline Lua error at exit doesn't wait at "-- More --". #42294
+    child_exec_lua([[
+      vim.o.more = true
+      local sig = vim.uv.new_signal()
+      sig:start('sigterm', function()
+        sig:close() -- An open handle stalls loop_close() at exit.
+        error(('line\n'):rep(20))
+      end)
+    ]])
     local _, server_pid = child_session:request('nvim_call_function', 'getpid', {})
     exec_lua([[vim.uv.kill(..., 'sigterm')]], server_pid)
     if not is_os('win') then
       screen:expect({ any = vim.pesc([[Nvim: Caught deadly signal 'SIGTERM']]) })
     end
     screen:expect({ any = vim.pesc('[Process exited 1]') })
+  end)
+
+  it('exit on deadly signal dismisses dialog (returns default)', function()
+    t.skip(is_os('win'), 'N/A SIGTERM is TerminateProcess() on Windows: no VimLeavePre')
+    local confirmed = t.tmpname()
+    finally(function()
+      os.remove(confirmed)
+    end)
+    child_exec_lua(
+      [[
+      local confirmed = ...
+      vim.api.nvim_create_autocmd('VimLeavePre', {
+        callback = function()
+          vim.fn.writefile({ tostring(vim.fn.confirm('Quit?', '&Yes\n&No', 2)) }, confirmed)
+        end,
+      })
+    ]],
+      confirmed
+    )
+    local _, server_pid = child_session:request('nvim_call_function', 'getpid', {})
+    exec_lua([[vim.uv.kill(..., 'sigterm')]], server_pid)
+    screen:expect({ any = vim.pesc('[Process exited 1]') })
+    eq('2\n', read_file(confirmed)) -- Default was returned.
   end)
 
   it('exits properly when :quit non-last window in event handler #14379', function()
@@ -3774,6 +3806,36 @@ describe('TUI', function()
         )
       end
     end)
+  end)
+
+  it('exit dismisses prompt if UI detaches', function()
+    finally(function()
+      os.remove(testlog)
+    end)
+    local child_server = new_pipename()
+    local screen = tt.setup_child_nvim(
+      { '--listen', child_server, '--clean', '--cmd', nvim_set .. ' laststatus=2' },
+      { env = vim.tbl_extend('force', env_notermguicolors, { NVIM_LOG_FILE = testlog }) }
+    )
+    screen:expect({ any = '%[No Name%]' })
+    local child_session = n.connect(child_server)
+    tt.make_lua_executor(child_session)([[
+      vim.o.more = true
+      vim.api.nvim_create_autocmd('VimLeavePre', {
+        callback = function()
+          print(('line\n'):rep(20))
+        end,
+      })
+    ]])
+    local _, server_pid = child_session:request('nvim_call_function', 'getpid', {})
+    feed_data(':qa\r')
+    screen:expect({ any = '%-%- More %-%-' })
+    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigkill')]])
+    retry(nil, 4000, function()
+      eq(nil, (vim.uv.kill(server_pid, 0)))
+    end)
+    -- Positive confirmation
+    assert_log('Interrupted prompt %(mode=rm%)', testlog, 100)
   end)
 
   it('exits immediately when stdin is closed #35744', { retries = 2 }, function()

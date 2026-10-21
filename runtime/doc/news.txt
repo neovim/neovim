@@ -500,6 +500,8 @@ PLUGINS
 
 STARTUP
 
+• Prompts during |exiting| without a UI, or after a deadly signal, are
+  dismissed instead of waiting (indefinitely).
 • |--embed| with |--listen| waits for a UI on the listen address if stdin is
   not a pipe (e.g. tty or /dev/null), instead of exiting.
 

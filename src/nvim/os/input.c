@@ -527,21 +527,40 @@ static bool inbuf_poll(int ms, MultiQueue *events)
     return true;
   }
 
-  if (do_profiling == PROF_YES && ms) {
+  if (ms == 0) {
+    LOOP_PROCESS_EVENTS(&main_loop, NULL, 0);
+    return os_input_ready(events);
+  }
+
+  if (do_profiling == PROF_YES) {
     prof_input_start();
   }
 
-  if ((ms == -1 || ms > 0) && events != main_loop.events) {
+  if (events != main_loop.events) {
     // The pending input provoked a blocking wait. Do special events now. #6247
     blocking = true;
     multiqueue_process_events(ch_before_blocking_events);
   }
   DLOG("blocking... events=%s", !!events ? "true" : "false");
-  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms, os_input_ready(events));
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms, os_input_ready(events) || input_unanswerable());
   blocking = false;
 
-  if (do_profiling == PROF_YES && ms) {
+  if (do_profiling == PROF_YES) {
     prof_input_end();
+  }
+
+  if (input_unanswerable() && !os_input_ready(events)) {
+    // Dismiss the prompt (CTRL-C) instead of waiting forever.
+    static bool did_log = false;  // Log once (the interrupt may be caught...).
+    if (!did_log) {
+      did_log = true;
+      char mode[MODE_MAX_LENGTH];
+      get_mode(mode);
+      WLOG("Interrupted prompt (mode=%s): user input is unlikely", mode);
+    }
+    input_enqueue_raw("\003", 1);
+    // Also interrupt the code that prompted. Skips remaining exit autocmds.
+    got_int = true;
   }
 
   return os_input_ready(events);
