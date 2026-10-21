@@ -24,7 +24,7 @@ jobs:
           # positive: this is trusted base code, not fork PR code).
           ref: ${{ github.event.pull_request.base.ref }}
 
-      - uses: actions/create-github-app-token@v3.2.0
+      - uses: actions/create-github-app-token@v3.3.0
         id: app-token
         with:
           app-id: ${{ vars.BACKPORT_APP }}
