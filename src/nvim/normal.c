@@ -4908,7 +4908,6 @@ static void nv_optrans(cmdarg_T *cap)
       stuffnumReadbuff(cap->count0);
     }
     stuffReadbuff(ar[strchr(str, (char)cap->cmdchar) - str]);
-    // The count is in the stuffed keys: don't apply a count typed before '"' again.
     opcount = 0;
     exec_stuffed(cap);
   }
