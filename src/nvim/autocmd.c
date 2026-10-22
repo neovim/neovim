@@ -2090,14 +2090,10 @@ char *getnextac(int c, void *cookie, int indent, bool do_concat)
   return retval;
 }
 
-/// Return true if there is a matching autocommand for "fname".
-/// To account for buffer-local autocommands, function needs to know
-/// in which buffer the file will be opened.
+/// Implementation of has_autocmd() and has_autocmd_fullname().
 ///
-/// @param event event that occurred.
-/// @param sfname filename the event occurred in.
-/// @param buf buffer the file is open in
-bool has_autocmd(event_T event, char *sfname, buf_T *buf)
+/// @param is_full true if "sfname" is already a full path name.
+static bool has_autocmd_ext(event_T event, char *sfname, buf_T *buf, bool is_full)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (!has_event(event)) {
@@ -2107,7 +2103,7 @@ bool has_autocmd(event_T event, char *sfname, buf_T *buf)
   char *tail = path_tail(sfname);
   bool retval = false;
 
-  char *fname = FullName_save(sfname, false);
+  char *fname = is_full ? xstrdup(sfname) : FullName_save(sfname, false);
   if (fname == NULL) {
     return false;
   }
@@ -2127,6 +2123,25 @@ bool has_autocmd(event_T event, char *sfname, buf_T *buf)
   xfree(fname);
 
   return retval;
+}
+
+/// Return true if there is a matching autocommand for "fname".
+/// To account for buffer-local autocommands, function needs to know
+/// in which buffer the file will be opened.
+///
+/// @param event event that occurred.
+/// @param sfname filename the event occurred in.
+/// @param buf buffer the file is open in
+bool has_autocmd(event_T event, char *sfname, buf_T *buf)
+{
+  return has_autocmd_ext(event, sfname, buf, false);
+}
+
+/// Like has_autocmd(), but "fname" is already a full path name, e.g. as
+/// returned by fix_fname().  Avoids expanding it again, which is slow on MS-Windows.
+bool has_autocmd_fullname(event_T event, char *fname, buf_T *buf)
+{
+  return has_autocmd_ext(event, fname, buf, true);
 }
 
 // Function given to ExpandGeneric() to obtain the list of autocommand group names.
