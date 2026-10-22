@@ -964,10 +964,12 @@ function netrw#Obtain(islocal,fname,...)
     let tgtdir= getcwd()
   endif
 
-  if exists("b:netrw_islocal") && b:netrw_islocal
+  if a:islocal
     " obtain a file from local b:netrw_curdir to (local) tgtdir
     if exists("b:netrw_curdir") && getcwd() != b:netrw_curdir
       let topath = netrw#fs#ComposePath(tgtdir,"")
+      " names in the listing are relative to b:netrw_curdir, not to vim's current directory
+      let fnamelist = map(copy(fnamelist), {_, fname -> isabsolutepath(fname) ? fname : netrw#fs#ComposePath(b:netrw_curdir, fname)})
       if has("win32") && !g:netrw_cygwin
         " transfer files one at time
         for fname in fnamelist

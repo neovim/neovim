@@ -700,6 +700,37 @@ func Test_netrw_obtain_reject_evil_hostname()
   endtry
 endfunc
 
+" "O" in a local listing copies the file under the cursor to the current directory
+func Test_netrw_obtain_local()
+  let dir = getcwd() .. '/Xnetrwobtain'
+  call mkdir(dir, 'pR')
+  call writefile(['obtained'], dir .. '/Xobtainfile')
+  try
+    exe 'Explore' dir
+    call search('^Xobtainfile$')
+    let msg = execute('normal O')
+    call assert_notmatch('cannot determine method', msg)
+    call assert_equal(['obtained'], readfile('Xobtainfile'))
+
+    " the same for marked files
+    call delete('Xobtainfile')
+    call writefile(['marked'], dir .. '/Xobtainmarked')
+    Explore
+    call search('^Xobtainfile$')
+    normal mf
+    call search('^Xobtainmarked$')
+    normal mf
+    let msg = execute('normal O')
+    call assert_notmatch('cannot determine method', msg)
+    call assert_equal(['obtained'], readfile('Xobtainfile'))
+    call assert_equal(['marked'], readfile('Xobtainmarked'))
+  finally
+    bwipe!
+    call delete('Xobtainfile')
+    call delete('Xobtainmarked')
+  endtry
+endfunc
+
 func Test_netrw_hostname()
   let valid_hostnames = [
   \   'localhost',
