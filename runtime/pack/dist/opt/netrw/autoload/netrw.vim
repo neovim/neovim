@@ -971,11 +971,12 @@ function netrw#Obtain(islocal,fname,...)
       " names in the listing are relative to b:netrw_curdir, not to vim's current directory
       let fnamelist = map(copy(fnamelist), {_, fname -> isabsolutepath(fname) ? fname : netrw#fs#ComposePath(b:netrw_curdir, fname)})
       if has("win32") && !g:netrw_cygwin
-        " transfer files one at time
+        " transfer files one at time; "copy" in cmd.exe does not handle the
+        " composed paths reliably, use filecopy() as s:NetrwMarkFileCopy() does
         for fname in fnamelist
-          call system(g:netrw_localcopycmd.g:netrw_localcopycmdopt." ".netrw#os#Escape(fname)." ".netrw#os#Escape(topath))
-          if v:shell_error != 0
-            call netrw#msg#Notify('WARNING', printf('consider setting g:netrw_localcopycmd<%s> to something that works', g:netrw_localcopycmd))
+          let tgt = netrw#fs#ComposePath(tgtdir, fnamemodify(fname, ':t'))
+          if !filecopy(fname, tgt)
+            call netrw#msg#Notify('ERROR', printf('copy failed, unable to filecopy() <%s> to <%s>', fname, tgt))
             return
           endif
         endfor

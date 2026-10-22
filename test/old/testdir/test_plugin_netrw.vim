@@ -710,6 +710,7 @@ func Test_netrw_obtain_local()
     call search('^Xobtainfile$')
     let msg = execute('normal O')
     call assert_notmatch('cannot determine method', msg)
+    call assert_notmatch('copy failed', msg)
     call assert_equal(['obtained'], readfile('Xobtainfile'))
 
     " the same for marked files
@@ -722,6 +723,7 @@ func Test_netrw_obtain_local()
     normal mf
     let msg = execute('normal O')
     call assert_notmatch('cannot determine method', msg)
+    call assert_notmatch('copy failed', msg)
     call assert_equal(['obtained'], readfile('Xobtainfile'))
     call assert_equal(['marked'], readfile('Xobtainmarked'))
   finally
