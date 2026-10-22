@@ -665,7 +665,7 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
       }
 #endif
       } else if (src[1] == NUL  // home directory
-                 || vim_ispathsep(src[1])
+                 || path_is_sep(src[1])
                  || vim_strchr(" ,\t\n", (uint8_t)src[1]) != NULL) {
         var = homedir;
         tail = src + 1;
@@ -678,7 +678,7 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
         while (c-- > 0
                && *tail
                && vim_isfilec((uint8_t)(*tail))
-               && !vim_ispathsep(*tail)) {
+               && !path_is_sep(*tail)) {
           *var++ = *tail++;
         }
         *var = NUL;
@@ -716,7 +716,7 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
 #ifdef BACKSLASH_IN_FILENAME
               && dst[c - 1] != ':'
 #endif
-              && vim_ispathsep(*tail)) {
+              && path_is_sep(*tail)) {
             tail++;
           }
           dst += c;
@@ -773,40 +773,6 @@ static char *vim_runtime_dir(const char *vimdir)
   }
   xfree(p.data);
   return NULL;
-}
-
-/// If `dirname + "/"` precedes `pend` in the path, return the pointer to
-/// `dirname + "/" + pend`.  Otherwise return `pend`.
-///
-/// Examples (path = /usr/local/share/nvim/runtime/doc/help.txt):
-///
-///   pend    = help.txt
-///   dirname = doc
-///   -> doc/help.txt
-///
-///   pend    = doc/help.txt
-///   dirname = runtime
-///   -> runtime/doc/help.txt
-///
-///   pend    = runtime/doc/help.txt
-///   dirname = vim74
-///   -> runtime/doc/help.txt
-///
-/// @param path    Path to a file
-/// @param pend    A suffix of the path
-/// @param dirname The immediate path fragment before the pend
-/// @return The new pend including dirname or just pend
-static char *remove_tail(char *path, char *pend, char *dirname)
-{
-  size_t len = strlen(dirname);
-  char *new_tail = pend - len - 1;
-
-  if (new_tail >= path
-      && path_cmp(p_fic, new_tail, dirname, len) == 0
-      && (new_tail == path || after_pathsep(path, new_tail))) {
-    return new_tail;
-  }
-  return pend;
 }
 
 /// Iterates $PATH-like delimited list `val`.
@@ -959,26 +925,22 @@ char *vim_getenv(const char *name)
 
     if (vim_path != NULL) {
       // remove the file name
-      char *vim_path_end = path_tail(vim_path);
+      char *tail = path_tail_with_sep(vim_path);
 
-      // remove "doc/" from 'helpfile', if present
+      // remove "/doc/" from 'helpfile', if present
       if (vim_path == p_hf) {
-        vim_path_end = remove_tail(vim_path, vim_path_end, "doc");
+        char *dir = path_prev_sep(vim_path, tail);
+        tail = path_cmp(p_fic, dir, "/doc/", 5) == 0 ? dir : tail;
       }
 
-      // for $VIM, remove "runtime/", if present
+      // for $VIM, remove "/runtime/", if present
       if (!vimruntime) {
-        vim_path_end = remove_tail(vim_path, vim_path_end, RUNTIME_DIRNAME);
-      }
-
-      // remove trailing path separator
-      if (vim_path_end > vim_path && after_pathsep(vim_path, vim_path_end)) {
-        vim_path_end--;
+        char *dir = path_prev_sep(vim_path, tail);
+        tail = path_cmp(p_fic, dir, "/" RUNTIME_DIRNAME "/", 9) == 0 ? dir : tail;
       }
 
       // check that the result is a directory name
-      assert(vim_path_end >= vim_path);
-      vim_path = xmemdupz(vim_path, (size_t)(vim_path_end - vim_path));
+      vim_path = xmemdupz(vim_path, (size_t)(tail - vim_path));
 
       if (!os_isdir(vim_path)) {
         xfree(vim_path);
@@ -1075,7 +1037,7 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
     modify_fname(":p", false, &usedlen, &homedir_env_mod, &fbuf, &flen, false);
     flen = strlen(homedir_env_mod);
     assert(homedir_env_mod != homedir_env);
-    if (vim_ispathsep(homedir_env_mod[flen - 1])) {
+    if (path_is_sep(homedir_env_mod[flen - 1])) {
       // Remove the trailing / that is added to a directory.
       homedir_env_mod[flen - 1] = NUL;
     }
@@ -1102,7 +1064,7 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
     while (true) {
       if (len
           && path_cmp(p_fic, src, p, len) == 0
-          && (vim_ispathsep(src[len])
+          && (path_is_sep(src[len])
               || (!one && (src[len] == ',' || src[len] == ' '))
               || src[len] == NUL)) {
         src += len;
