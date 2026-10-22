@@ -687,6 +687,19 @@ func Test_netrw_reject_evil_hostname()
   call assert_match('Rejecting invalid hostname', msg)
 endfunc
 
+func Test_netrw_obtain_reject_evil_hostname()
+  new
+  let b:netrw_islocal = 0
+  let b:netrw_curdir = 'scp://x;touch RCE;x/dir/'
+  try
+    " A List skips s:SetupNetrwStatusLine(), whose :redir cannot run in execute()
+    let msg = execute('call netrw#Obtain(0, ["file"])')
+    call assert_match('Rejecting invalid hostname: <x;touch RCE;x>', msg)
+  finally
+    bwipe!
+  endtry
+endfunc
+
 func Test_netrw_hostname()
   let valid_hostnames = [
   \   'localhost',
