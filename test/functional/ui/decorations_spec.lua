@@ -3645,6 +3645,43 @@ describe('extmark decorations', function()
     eq(5, n.fn.line('w0'))
   end)
 
+  it('<C-Y> scrolls past conceal_lines above virt_lines_above #42317', function()
+    api.nvim_buf_set_lines(0, 0, -1, true, fn.map(fn.range(1, 100), '"line " .. v:val'))
+    command('set conceallevel=2')
+    for row = 40, 44 do
+      api.nvim_buf_set_extmark(0, ns, row, 0, { conceal_lines = '' })
+    end
+    local virt_lines = { { { 'virt_above 46' } } }
+    api.nvim_buf_set_extmark(0, ns, 45, 0, { virt_lines = virt_lines, virt_lines_above = true })
+    feed('70Gzb')
+    local toplines = {}
+    for _ = 1, 13 do
+      feed('<C-Y>')
+      command('redraw')
+      table.insert(toplines, fn.line('w0'))
+    end
+    -- Virtual line scrolls into view before topline moves onto the concealed lines.
+    eq({ 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 41, 40 }, toplines)
+    feed('<C-E>')
+    screen:expect([[
+      virt_above 46                                     |
+      line 46                                           |
+      line 47                                           |
+      line 48                                           |
+      line 49                                           |
+      line 50                                           |
+      line 51                                           |
+      line 52                                           |
+      line 53                                           |
+      line 54                                           |
+      line 55                                           |
+      line 56                                           |
+      ^line 57                                           |
+      line 58                                           |
+                                                        |
+    ]])
+  end)
+
   it('conceal_lines not checking on invalid row #36057', function()
     exec_lua(function()
       vim.fn.setline(1, { 'foo', 'bar', 'baz' })
