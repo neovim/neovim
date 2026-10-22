@@ -1269,9 +1269,8 @@ struct window_S {
   // w_wrow and w_wcol specify the cursor position in the window.
   // This is related to positions in the window, not in the display or
   // buffer, thus w_wrow is relative to w_winrow.
+  // win_line() adjusts w_wcol for conceal; curs_columns()/validate_cursor_col() do not.
   int w_wrow, w_wcol;               // cursor position in window
-  int w_wcol_conceal_off;           // screen cells concealed before w_wcol on
-                                    // the cursor's screen line, set by win_line()
 
   linenr_T w_botline;               // number of the line below the bottom of
                                     // the window

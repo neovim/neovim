@@ -279,6 +279,45 @@ static inline int pum_border_width(void)
   return strequal(p_pumborder, opt_winborder_values[3]) ? 1 : 2;
 }
 
+/// Find the completion start in the window's rendered grid.
+static int pum_get_col(win_T *wp)
+{
+  pos_T pos = wp->w_cursor;
+  pos.col = ins_compl_col();
+  colnr_T vcol = wp->w_virtcol;
+  if (!(wp->w_valid & VALID_VIRTCOL)
+      || pos.lnum != wp->w_valid_cursor.lnum
+      || pos.col != wp->w_valid_cursor.col
+      || pos.coladd != wp->w_valid_cursor.coladd) {
+    getvvcol(wp, &pos, NULL, &vcol, NULL, 0);
+  }
+
+  colnr_T start_vcol = wp->w_p_wrap
+                       ? (pos.lnum == wp->w_topline ? wp->w_skipcol : 0)
+                       : wp->w_leftcol;
+  if (wp->w_p_cole > 0 && conceal_cursor_line(wp) && wp->w_redr_type == 0
+      && vcol >= start_vcol) {
+    int row_off = 0;
+    int col_off = 0;
+    ScreenGrid *grid = grid_adjust(&wp->w_grid, &row_off, &col_off);
+    if (grid->chars != NULL && (wp->w_valid & VALID_CROW)) {
+      int end_row = MIN(wp->w_wrow, MIN(wp->w_view_height, grid->rows - row_off) - 1);
+      int width = MIN(wp->w_view_width, grid->cols - col_off);
+      for (int row = MAX(0, wp->w_cline_row); row <= end_row; row++) {
+        size_t off = grid->line_offset[row + row_off] + (size_t)col_off;
+        for (int col = 0; col < width; col++) {
+          int grid_col = wp->w_p_rl ? width - col - 1 : col;
+          if (grid->vcols[off + (size_t)grid_col] >= vcol) {
+            return grid_col;
+          }
+        }
+      }
+    }
+  }
+  int col = vcol2wcol(wp, vcol);
+  return wp->w_p_rl ? wp->w_view_width - col - 1 : col;
+}
+
 /// Show the popup menu with items "array[size]".
 /// "array" must remain valid until pum_undisplay() is called!
 /// When possible the leftmost character is aligned with cursor column.
@@ -312,7 +351,6 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     // to avoid that must_redraw is set when 'cursorcolumn' is on.
     pum_is_visible = true;
     pum_is_drawn = true;
-    validate_cursor_col(curwin);
     int above_row = 0;
     int below_row = MAX(cmdline_row, curwin->w_winrow + curwin->w_view_height);
     if (State & MODE_CMDLINE) {
@@ -331,21 +369,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     } else {
       // anchor position: the start of the completed word
       pum_win_row = curwin->w_wrow;
-      int wcol = curwin->w_wcol;
-      // w_wcol does not account for text concealed before the cursor;
-      // shift by the offset win_line() recorded for the cursor line so the
-      // menu lines up with the visible text.
-      if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)) {
-        wcol -= curwin->w_wcol_conceal_off;
-        if (wcol < 0) {
-          wcol = 0;
-        }
-      }
-      if (pum_rl) {
-        cursor_col = curwin->w_view_width - wcol - 1;
-      } else {
-        cursor_col = wcol;
-      }
+      cursor_col = pum_get_col(curwin);
     }
 
     if (target_win != NULL) {
@@ -992,6 +1016,7 @@ static bool pum_adjust_info_position(win_T *wp, int width)
   // TODO(glepnir): Replace the hardcoded value (10) with values from the 'completepopup' width/height options.
   if (max_extra < 10) {
     wp->w_config.hide = true;
+    win_config_float(wp, wp->w_config);
     return false;
   }
 
@@ -1223,9 +1248,7 @@ static bool pum_set_selected(int n, int repeat)
 
           if (use_float) {
             // adjust floating window by actually height and max info text width
-            if (!pum_adjust_info_position(curwin, max_info_width) && win_valid(curwin_save)) {
-              win_enter(curwin_save, false);
-            }
+            pum_adjust_info_position(curwin, max_info_width);
           }
 
           if ((curwin != curwin_save && win_valid(curwin_save))
@@ -1272,6 +1295,11 @@ static bool pum_set_selected(int n, int repeat)
               no_u_sync++;
               win_enter(curwin_save, true);
               no_u_sync--;
+            }
+
+            if (curwin == curwin_save && curwin->w_p_cole > 0 && conceal_cursor_line(curwin)) {
+              // Restore the conceal-corrected cursor position after win_enter().
+              redrawWinline(curwin, curwin->w_cursor.lnum);
             }
 
             // May need to update the screen again when there are
