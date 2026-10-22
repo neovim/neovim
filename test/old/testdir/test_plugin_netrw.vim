@@ -687,6 +687,52 @@ func Test_netrw_reject_evil_hostname()
   call assert_match('Rejecting invalid hostname', msg)
 endfunc
 
+func Test_netrw_obtain_reject_evil_hostname()
+  new
+  let b:netrw_islocal = 0
+  let b:netrw_curdir = 'scp://x;touch RCE;x/dir/'
+  try
+    " A List skips s:SetupNetrwStatusLine(), whose :redir cannot run in execute()
+    let msg = execute('call netrw#Obtain(0, ["file"])')
+    call assert_match('Rejecting invalid hostname: <x;touch RCE;x>', msg)
+  finally
+    bwipe!
+  endtry
+endfunc
+
+" "O" in a local listing copies the file under the cursor to the current directory
+func Test_netrw_obtain_local()
+  let dir = getcwd() .. '/Xnetrwobtain'
+  call mkdir(dir, 'pR')
+  call writefile(['obtained'], dir .. '/Xobtainfile')
+  try
+    exe 'Explore' dir
+    call search('^Xobtainfile$')
+    let msg = execute('normal O')
+    call assert_notmatch('cannot determine method', msg)
+    call assert_notmatch('copy failed', msg)
+    call assert_equal(['obtained'], readfile('Xobtainfile'))
+
+    " the same for marked files
+    call delete('Xobtainfile')
+    call writefile(['marked'], dir .. '/Xobtainmarked')
+    Explore
+    call search('^Xobtainfile$')
+    normal mf
+    call search('^Xobtainmarked$')
+    normal mf
+    let msg = execute('normal O')
+    call assert_notmatch('cannot determine method', msg)
+    call assert_notmatch('copy failed', msg)
+    call assert_equal(['obtained'], readfile('Xobtainfile'))
+    call assert_equal(['marked'], readfile('Xobtainmarked'))
+  finally
+    bwipe!
+    call delete('Xobtainfile')
+    call delete('Xobtainmarked')
+  endtry
+endfunc
+
 func Test_netrw_hostname()
   let valid_hostnames = [
   \   'localhost',
