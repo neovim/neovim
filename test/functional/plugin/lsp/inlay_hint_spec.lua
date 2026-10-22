@@ -146,6 +146,44 @@ int main() {
     screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
   end)
 
+  describe('refresh()', function()
+    local function count_requests()
+      return exec_lua(function()
+        local count = 0
+        for _, msg in ipairs(_G.server.messages) do
+          if msg.method == 'textDocument/inlayHint' then
+            count = count + 1
+          end
+        end
+        return count
+      end)
+    end
+
+    it('forces a new request even when nothing has changed', function()
+      local before = count_requests()
+
+      exec_lua(function()
+        vim.lsp.inlay_hint.refresh({ bufnr = bufnr })
+      end)
+
+      eq(before + 1, count_requests())
+    end)
+
+    it('only refreshes the filtered buffer', function()
+      local other_bufnr = exec_lua(function()
+        return vim.api.nvim_create_buf(true, false)
+      end)
+
+      local before = count_requests()
+
+      exec_lua(function()
+        vim.lsp.inlay_hint.refresh({ bufnr = other_bufnr })
+      end)
+
+      eq(before, count_requests())
+    end)
+  end)
+
   describe('enable()', function()
     it('validation', function()
       t.matches(

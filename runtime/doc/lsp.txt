@@ -2490,6 +2490,22 @@ is_enabled({filter})                         *vim.lsp.inlay_hint.is_enabled()*
     Return: ~
         (`boolean`)
 
+refresh({filter})                               *vim.lsp.inlay_hint.refresh()*
+    Force a refresh of all inlay hints.
+
+    Only has an effect if the buffer is currently active for inlay hints
+    (|vim.lsp.inlay_hint.enable()| has been called for it).
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {filter}  (`table?`) Optional filters |kwargs|,
+                  • {bufnr}? (`integer`, default: all) Buffer number, or 0 for
+                    current buffer, or nil for all.
+                  • {client_id}? (`integer`, default: all) Client ID, or nil
+                    for all.
+
 
 ==============================================================================
 Lua module: vim.lsp.inline_completion                  *lsp-inline_completion*
