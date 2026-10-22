@@ -22,4 +22,8 @@ describe('env', function()
     command('lua vim.uv.os_setenv("FOO", "buzz")')
     eq('buzz', n.eval('$FOO'))
   end)
+
+  it('does not add duplicate Nvim dir to $PATH #22572', function()
+    eq(n.eval('$PATH'), n.fn.system({ n.nvim_prog, '--clean', '--headless', '+echo $PATH', '+q' }))
+  end)
 end)

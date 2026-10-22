@@ -1177,7 +1177,7 @@ char *get_env_name(expand_T *xp, int idx)
   return NULL;
 }
 
-/// Appends the head of `fname` to $PATH and sets it in the environment.
+/// Appends the head of `fname` to $PATH (if not already there) and sets it in the environment.
 ///
 /// @param fname  Full path whose parent directory will be appended to $PATH.
 ///
@@ -1201,6 +1201,18 @@ bool os_setenv_append_path(const char *fname)
   assert(tail >= fname && dirlen + 1 < sizeof(os_buf));
   xmemcpyz(os_buf, fname, dirlen);
   char *path = os_getenv("PATH");
+  if (path != NULL) {
+    const void *iter = NULL;
+    do {
+      size_t dir_len;
+      const char *dir;
+      iter = vim_env_iter(ENV_SEPCHAR, path, iter, &dir, &dir_len);
+      if (dir_len == dirlen && path_cmp(false, dir, os_buf, dirlen) == 0) {
+        xfree(path);
+        return false;
+      }
+    } while (iter != NULL);
+  }
   const size_t pathlen = path ? strlen(path) : 0;
   const size_t newlen = pathlen + dirlen + 2;
   bool retval = false;
