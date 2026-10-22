@@ -40,14 +40,27 @@ func Test_source_cmd()
   au! SourcePost
 endfunc
 
+" A SourceCmd pattern with a directory is matched against the full path.
+func Test_source_cmd_full_path()
+  call mkdir('XsourceCmdDir', 'R')
+  call writefile(['let g:sourced_file = 1'], 'XsourceCmdDir/script.vim')
+  au SourceCmd */XsourceCmdDir/*.vim let g:source_cmd_file = expand('<afile>:t')
+
+  source XsourceCmdDir/script.vim
+  call assert_equal('script.vim', g:source_cmd_file)
+  call assert_false(exists('g:sourced_file'))
+
+  au! SourceCmd
+  unlet g:source_cmd_file
+endfunc
+
 func Test_source_sandbox()
   new
-  call writefile(["Ohello\<Esc>"], 'Xsourcehello')
+  call writefile(["Ohello\<Esc>"], 'Xsourcehello', 'D')
   source! Xsourcehello | echo
   call assert_equal('hello', getline(1))
   call assert_fails('sandbox source! Xsourcehello', 'E48:')
   bwipe!
-  call delete('Xsourcehello')
 endfunc
 
 " When deleting a file and immediately creating a new one the inode may be
