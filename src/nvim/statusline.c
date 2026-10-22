@@ -397,6 +397,11 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
   char *p = buf;
   int curattr = attr;
   int curgroup = (int)group;
+  // Groups stacked in a row with %$ (only tracked for ui_event), emitted as one highlight group.
+  // If there are more than fit in "stack", the last group is emitted instead.
+  int stack[MAX_HL_STACK];
+  int nstack = 0;
+  bool stack_full = false;
   Array content = ARRAY_DICT_INIT;
   for (stl_hlrec_t *sp = hltab;; sp++) {
     int textlen = (int)(sp->start ? sp->start - p : buf + len - p);
@@ -408,10 +413,17 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
       Array chunk = ARRAY_DICT_INIT;
       ADD(chunk, INTEGER_OBJ(curattr));
       ADD(chunk, STRING_OBJ(cbuf_as_string(xmemdupz(transbuf, tsize), tsize)));
-      ADD(chunk, INTEGER_OBJ(curgroup));
+      ADD(chunk, INTEGER_OBJ(nstack > 1 && !stack_full
+                             ? syn_stack_group(stack, nstack, curattr) : curgroup));
       ADD(content, ARRAY_OBJ(chunk));
     }
     p = sp->start;
+
+    // Anything but %$ starts a new stack.
+    if (sp->userhl >= 0 || sp->item != STL_HIGHLIGHT_COMB) {
+      nstack = 0;
+      stack_full = false;
+    }
 
     if (p == NULL) {
       break;
@@ -422,6 +434,16 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
       int new_attr = syn_id2attr(-sp->userhl);
       if (sp->item == STL_HIGHLIGHT_COMB) {
         curattr = hl_combine_attr(curattr, new_attr);
+        if (ui_event) {
+          if (nstack == 0) {
+            stack[nstack++] = curgroup;
+          }
+          if (nstack < (int)ARRAY_SIZE(stack)) {
+            stack[nstack++] = -sp->userhl;
+          } else {
+            stack_full = true;
+          }
+        }
       } else {
         curattr = new_attr;
       }

@@ -1442,6 +1442,19 @@ describe('messages2', function()
     ]])
   end)
 
+  it("'rulerformat' supports stacked highlights #42014", function()
+    screen:add_extra_attr_ids({
+      [101] = { background = Screen.colors.Blue, foreground = Screen.colors.Red },
+    })
+    command('set ruler laststatus=1 | hi User1 guibg=Blue | hi User2 guifg=Red')
+    command('set rulerformat=%#User1#%$User2$test')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+                                                       {101:test}|
+    ]])
+  end)
+
   it("'ruler' updates on 'modified' change #42255", function()
     command('set laststatus=0 ruler rulerformat=%m noautoread')
     command(('edit %s'):format(t.tmpname(false)))
