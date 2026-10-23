@@ -161,6 +161,9 @@ LSP
 
 LUA
 
+• |vim.fs.find()| `type` matches symlinks as type="link", unless
+  `follow=true` is set. Upward searches with string/table names previously
+  always followed symlinks.
 • "standalone" Lua interpreter mode `nvim -ll` was removed. Use |-l| script
   mode instead.
 • |vim.opt| no longer supports chaining multiple infix operators (e.g.

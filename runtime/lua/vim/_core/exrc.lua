@@ -3,6 +3,7 @@
 local files = vim.fs.find({ '.nvim.lua', '.nvimrc', '.exrc' }, {
   type = 'file',
   upward = true,
+  follow = true,
   limit = math.huge,
 })
 for _, file in ipairs(files) do
