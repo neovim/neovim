@@ -52,6 +52,17 @@ describe('RecordingLeave', function()
     eq('q', eval 'reg_recorded()')
   end)
 
+  it('has already written the register', function()
+    source_vim [[
+      call setreg('q', 'stale')
+      let g:during = ''
+      autocmd RecordingLeave * let g:during = getreg(v:event.regname)
+      call feedkeys("qqyyq", 'xt')
+    ]]
+    eq('yy', eval 'g:during')
+    eq('yy', eval "getreg('q')")
+  end)
+
   it('populates v:event', function()
     source_vim [[
       let g:regname = ''
