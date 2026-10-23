@@ -337,6 +337,8 @@ Commands:
 - |:uptime|
 
 Editor:
+- |dot-repeat| (".") replays input (|getchar()|, |input()|) read by an
+  operator/mapping, instead of re-prompting. |repeat-payload|
 - |ins-repeat| replays the full Insert session, including cursor-moves:
   "iab<Left>c<Esc>." produces "acb", not "c".
 - |visual-repeat| is "semantic" instead of "fixed-size". If you prefer Vim's

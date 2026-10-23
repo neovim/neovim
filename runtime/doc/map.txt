@@ -879,6 +879,8 @@ g@{motion}						*g@* *E774* *E775*
 			    "char"	{motion} was |charwise|
 			    "block"	{motion} was |blockwise-visual|
 			The type can be forced, see |forced-motion|.
+			A function that reads input (|getchar()|, |input()|)
+			must do so on every call. |repeat-payload|
 
 Here is an example that counts the number of spaces with <F4>: >
 
