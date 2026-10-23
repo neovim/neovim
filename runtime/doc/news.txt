@@ -497,6 +497,8 @@ PLUGINS
   :packadd old-zip
 <
 • provider: add bun support for Node.js plugins
+• |package-diffhl| highlights the code in diff hunks with the treesitter
+  parser for each file's language. Enable it with `:packadd nvim.diffhl`.
 
 STARTUP
 
