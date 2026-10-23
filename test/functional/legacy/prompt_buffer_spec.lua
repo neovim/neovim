@@ -12,7 +12,6 @@ local expect = n.expect
 local poke_eventloop = n.poke_eventloop
 local api = n.api
 local eq = t.eq
-local pcall_err = t.pcall_err
 local neq = t.neq
 local exec_lua = n.exec_lua
 
@@ -762,7 +761,7 @@ describe('prompt buffer', function()
 
     -- ': mark is only available in prompt buffer.
     api.nvim_set_option_value('buftype', '', { buf = 0 })
-    eq("Invalid mark name: ':'", t.pcall_err(api.nvim_buf_get_mark, 0, ':'))
+    eq("Mark ':' is only available in prompt buffers", t.pcall_err(api.nvim_buf_get_mark, 0, ':'))
 
     -- mark can be moved
     api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })

@@ -174,6 +174,11 @@ typedef struct {
 } Dict(create_autocmd);
 
 typedef struct {
+  OptionalKeys is_set__del_mark_;
+  Buffer buf;
+} Dict(del_mark);
+
+typedef struct {
   OptionalKeys is_set__echo_opts_;
   Boolean err;
   Boolean verbose;
@@ -252,6 +257,12 @@ typedef struct {
   Boolean link;
   Boolean create;
 } Dict(get_highlight);
+
+typedef struct {
+  OptionalKeys is_set__get_mark_;
+  Buffer buf;
+  Window win;
+} Dict(get_mark);
 
 typedef struct {
   OptionalKeys is_set__get_ns_;
@@ -430,6 +441,13 @@ typedef struct {
 
   Integer _subpriority;
 } Dict(set_extmark);
+
+typedef struct {
+  OptionalKeys is_set__set_mark_;
+  Buffer buf;
+  Window win;
+  String type;
+} Dict(set_mark);
 
 typedef struct {
   OptionalKeys is_set__tabpage_config_;
