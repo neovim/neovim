@@ -52,6 +52,29 @@ describe('vim.pos', function()
     eq({ 4, 2, buf }, pos)
   end)
 
+  it('creates a position from an extmark', function()
+    local buf = exec_lua([[return vim.api.nvim_get_current_buf()]])
+
+    -- vim.api.keyset.get_extmark_item
+    eq({ 2, 4, buf }, exec_lua [[return vim.pos.extmark(0, { 1, 2, 4 })]])
+    eq({ { 2, 4, buf }, nil }, exec_lua [[return { vim.pos.extmark(0, { 1, 2, 4, {} }) }]])
+    eq(
+      { { 2, 4, buf }, { 2, 8, buf } },
+      exec_lua [[return { vim.pos.extmark(0, { 1, 2, 4, { end_row = 2, end_col = 8 } }) }]]
+    )
+
+    -- vim.api.keyset.get_extmark_item_by_id
+    eq({ 2, 4, buf }, exec_lua [[return vim.pos.extmark(0, { 2, 4 })]])
+    eq({ { 2, 4, buf }, nil }, exec_lua [[return { vim.pos.extmark(0, { 2, 4, {} }) }]])
+    eq(
+      { { 2, 4, buf }, { 2, 8, buf } },
+      exec_lua [[return { vim.pos.extmark(0, { 2, 4, { end_row = 2, end_col = 8 } }) }]]
+    )
+
+    -- Manual
+    eq({ 2, 4, buf }, exec_lua [[return vim.pos.extmark(0, 2, 4)]])
+  end)
+
   it('comparisons by overloaded operators', function()
     local buf = exec_lua(function()
       return vim.api.nvim_create_buf(false, true)
