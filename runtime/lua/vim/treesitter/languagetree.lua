@@ -984,6 +984,7 @@ end
 ---@param parent_ranges Range6[]?
 ---@param result table<string,Range6[][]>
 local function add_injection(t, pattern, lang, combined, ranges, parent_ranges, result)
+  ranges = clip_regions(ranges, parent_ranges)
   if #ranges == 0 then
     -- Make sure not to add an empty range set as this is interpreted to mean the whole buffer.
     return
@@ -994,7 +995,7 @@ local function add_injection(t, pattern, lang, combined, ranges, parent_ranges, 
   end
 
   if not combined then
-    table.insert(result[lang], clip_regions(ranges, parent_ranges))
+    table.insert(result[lang], ranges)
     return
   end
 
@@ -1010,7 +1011,7 @@ local function add_injection(t, pattern, lang, combined, ranges, parent_ranges, 
     table.insert(result[lang], regions)
   end
 
-  for _, range in ipairs(clip_regions(ranges, parent_ranges)) do
+  for _, range in ipairs(ranges) do
     table.insert(t[lang][pattern], range)
   end
 end
