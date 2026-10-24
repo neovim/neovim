@@ -193,7 +193,7 @@ struct listvar_S {
   int lv_refcount;  ///< Reference count.
   int lv_len;  ///< Number of items.
   int lv_idx;  ///< Index of a cached item, used for optimising repeated l[idx].
-  int lv_copyID;  ///< ID used by deepcopy().
+  int64_t lv_copyID;  ///< ID used by deepcopy().
   VarLockStatus lv_lock;  ///< Zero, VAR_LOCKED, VAR_FIXED.
 
   LuaRef lua_table_ref;
@@ -256,7 +256,7 @@ struct dictvar_S {
   ScopeType dv_scope;     ///< Non-zero (#VAR_SCOPE, #VAR_DEF_SCOPE) if
                           ///< dictionary represents a scope (i.e. g:, l: …).
   int dv_refcount;        ///< Reference count.
-  int dv_copyID;          ///< ID used when recursivery traversing a value.
+  int64_t dv_copyID;      ///< ID used when recursivery traversing a value.
   hashtab_T dv_hashtab;   ///< Hashtab containing all items.
   dict_T *dv_copydict;    ///< Copied dict used by deepcopy().
   dict_T *dv_used_next;   ///< Next dictionary in used dictionaries list.
@@ -318,7 +318,7 @@ struct funccall_S {
   funccall_T *fc_caller;             ///< Calling function or NULL; or next funccal in
                                      ///< list pointed to by previous_funccal.
   int fc_refcount;                   ///< Number of user functions that reference this funccall.
-  int fc_copyID;                     ///< CopyID used for garbage collection.
+  int64_t fc_copyID;                 ///< CopyID used for garbage collection.
   garray_T fc_ufuncs;                ///< List of ufunc_T* which keep a reference to "fc_func".
 };
 
@@ -362,7 +362,7 @@ struct ufunc_S {
 
 struct partial_S {
   int pt_refcount;    ///< Reference count.
-  int pt_copyID;
+  int64_t pt_copyID;
   char *pt_name;      ///< Function name; when NULL use pt_func->name.
   ufunc_T *pt_func;   ///< Function pointer; when NULL lookup function with pt_name.
   bool pt_auto;       ///< When true the partial was created by using dict.member

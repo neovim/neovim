@@ -392,17 +392,17 @@ void evalvars_clear(void)
 }
 #endif
 
-int garbage_collect_globvars(int copyID)
+int garbage_collect_globvars(int64_t copyID)
 {
   return set_ref_in_ht(&globvarht, copyID, NULL);
 }
 
-bool garbage_collect_vimvars(int copyID)
+bool garbage_collect_vimvars(int64_t copyID)
 {
   return set_ref_in_ht(&vimvarht, copyID, NULL);
 }
 
-bool garbage_collect_scriptvars(int copyID)
+bool garbage_collect_scriptvars(int64_t copyID)
 {
   bool abort = false;
 

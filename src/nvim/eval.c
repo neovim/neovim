@@ -3993,14 +3993,14 @@ bool func_equal(typval_T *tv1, typval_T *tv2, bool ic)
 ///
 /// Used for traversing nested structures e.g. when serializing them or garbage
 /// collecting.
-int get_copyID(void)
+int64_t get_copyID(void)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // CopyID for recursively traversing lists and dicts
   //
   // This value is needed to avoid endless recursiveness. Last bit is used for
   // previous_funccal and normally ignored when comparing.
-  static int current_copyID = 0;
+  static int64_t current_copyID = 0;
   current_copyID += COPYID_INC;
   return current_copyID;
 }
@@ -4059,7 +4059,7 @@ bool garbage_collect(bool testing)
 
   // We advance by two (COPYID_INC) because we add one for items referenced
   // through previous_funccal.
-  const int copyID = get_copyID();
+  const int64_t copyID = get_copyID();
 
   // 1. Go through all accessible variables and mark all lists and dicts
   // with copyID.
@@ -4195,7 +4195,7 @@ bool garbage_collect(bool testing)
 /// @param copyID  Free lists/dictionaries that don't have this ID.
 ///
 /// @return  true, if something was freed.
-static int free_unref_items(int copyID)
+static int free_unref_items(int64_t copyID)
 {
   bool did_free = false;
 
@@ -4264,7 +4264,7 @@ static int free_unref_items(int copyID)
 /// @param list_stack    Used to add lists to be marked. Can be NULL.
 ///
 /// @returns             true if setting references failed somehow.
-bool set_ref_in_ht(hashtab_T *ht, int copyID, list_stack_T **list_stack)
+bool set_ref_in_ht(hashtab_T *ht, int64_t copyID, list_stack_T **list_stack)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool abort = false;
@@ -4302,7 +4302,7 @@ bool set_ref_in_ht(hashtab_T *ht, int copyID, list_stack_T **list_stack)
 /// @param ht_stack      Used to add hashtabs to be marked. Can be NULL.
 ///
 /// @returns             true if setting references failed somehow.
-bool set_ref_in_list_items(list_T *l, int copyID, ht_stack_T **ht_stack)
+bool set_ref_in_list_items(list_T *l, int64_t copyID, ht_stack_T **ht_stack)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool abort = false;
@@ -4337,7 +4337,7 @@ bool set_ref_in_list_items(list_T *l, int copyID, ht_stack_T **ht_stack)
 
 /// Mark the dict "dd" with "copyID".
 /// Also see set_ref_in_item().
-static bool set_ref_in_item_dict(dict_T *dd, int copyID, ht_stack_T **ht_stack,
+static bool set_ref_in_item_dict(dict_T *dd, int64_t copyID, ht_stack_T **ht_stack,
                                  list_stack_T **list_stack)
 {
   if (dd == NULL || dd->dv_copyID == copyID) {
@@ -4367,7 +4367,7 @@ static bool set_ref_in_item_dict(dict_T *dd, int copyID, ht_stack_T **ht_stack,
 
 /// Mark the list "ll" with "copyID".
 /// Also see set_ref_in_item().
-static bool set_ref_in_item_list(list_T *ll, int copyID, ht_stack_T **ht_stack,
+static bool set_ref_in_item_list(list_T *ll, int64_t copyID, ht_stack_T **ht_stack,
                                  list_stack_T **list_stack)
 {
   if (ll == NULL || ll->lv_copyID == copyID) {
@@ -4390,7 +4390,7 @@ static bool set_ref_in_item_list(list_T *ll, int copyID, ht_stack_T **ht_stack,
 
 /// Mark the partial "pt" with "copyID".
 /// Also see set_ref_in_item().
-static bool set_ref_in_item_partial(partial_T *pt, int copyID, ht_stack_T **ht_stack,
+static bool set_ref_in_item_partial(partial_T *pt, int64_t copyID, ht_stack_T **ht_stack,
                                     list_stack_T **list_stack)
 {
   if (pt == NULL || pt->pt_copyID == copyID) {
@@ -4425,7 +4425,7 @@ static bool set_ref_in_item_partial(partial_T *pt, int copyID, ht_stack_T **ht_s
 /// @param list_stack    Used to add lists to be marked. Can be NULL.
 ///
 /// @returns             true if setting references failed somehow.
-bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack, list_stack_T **list_stack)
+bool set_ref_in_item(typval_T *tv, int64_t copyID, ht_stack_T **ht_stack, list_stack_T **list_stack)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool abort = false;
@@ -5002,7 +5002,7 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
   return ret;
 }
 
-bool set_ref_in_callback(Callback *callback, int copyID, ht_stack_T **ht_stack,
+bool set_ref_in_callback(Callback *callback, int64_t copyID, ht_stack_T **ht_stack,
                          list_stack_T **list_stack)
 {
   typval_T tv;
@@ -5024,8 +5024,8 @@ bool set_ref_in_callback(Callback *callback, int copyID, ht_stack_T **ht_stack,
   return false;
 }
 
-static bool set_ref_in_callback_reader(CallbackReader *reader, int copyID, ht_stack_T **ht_stack,
-                                       list_stack_T **list_stack)
+static bool set_ref_in_callback_reader(CallbackReader *reader, int64_t copyID,
+                                       ht_stack_T **ht_stack, list_stack_T **list_stack)
 {
   if (set_ref_in_callback(&reader->cb, copyID, ht_stack, list_stack)) {
     return true;
@@ -6094,7 +6094,7 @@ void set_selfdict(typval_T *const rettv, dict_T *const selfdict)
 ///                     will emit a copy with (`copy[0] is copy[1]`) like in the
 ///                     original list. Not used when deep is false.
 int var_item_copy(const vimconv_T *const conv, typval_T *const from, typval_T *const to,
-                  const bool deep, const int copyID)
+                  const bool deep, const int64_t copyID)
   FUNC_ATTR_NONNULL_ARG(2, 3)
 {
   static int recurse = 0;
