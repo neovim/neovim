@@ -6,6 +6,7 @@ local Screen = require('test.functional.ui.screen')
 local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local eq = t.eq
 local matches = t.matches
+local not_matches = t.not_matches
 local NIL = vim.NIL
 local feed = n.feed
 local clear = n.clear
@@ -371,5 +372,25 @@ end)
 describe('bit module', function()
   it('works', function()
     eq(9, exec_lua [[ return require'bit'.band(11,13) ]])
+  end)
+end)
+
+describe('package.path and package.cpath', function()
+  it('do not contain "./?.{lua,so}', function()
+    clear({ args_rm = { '--cmd' } })
+    not_matches('^%.[/\\\\]%?%.lua', fn.luaeval('package.path'))
+    not_matches('^%.[/\\\\]%?%.[^/\\\\;]+', fn.luaeval('package.cpath'))
+  end)
+
+  it('remove current directory from all package path entries', function()
+    clear {
+      args_rm = { '--cmd' },
+      env = {
+        LUA_PATH = 'before;./?.lua;after;./?.lua',
+        LUA_CPATH = 'before;./?.so;after;./?.so',
+      },
+    }
+    eq('before;after', fn.luaeval('package.path'))
+    eq('before;after', fn.luaeval('package.cpath'))
   end)
 end)
