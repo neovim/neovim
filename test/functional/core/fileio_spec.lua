@@ -152,51 +152,77 @@ describe('fileio', function()
   end)
 
   it('backup with full path #11214', function()
+    local bdir, file = 'Xtest_backupdir', 'Xtest_startup_file1'
     clear()
-    mkdir('Xtest_backupdir')
+    mkdir(bdir)
     command('set backup')
-    command('set backupdir=Xtest_backupdir//')
-    command('write Xtest_startup_file1')
+    command(('set backupdir=%s//'):format(bdir))
+    command(('write %s'):format(file))
     feed('ifoo<esc>')
     command('write')
     feed('Abar<esc>')
     command('write')
 
-    -- Backup filename = fullpath, separators replaced with "%".
-    local backup_file_name = string.gsub(
-      currentdir() .. '/Xtest_startup_file1',
-      is_os('win') and '[:/\\]' or '/',
-      '%%'
-    ) .. '~'
-    local foo_contents = trim(read_file('Xtest_backupdir/' .. backup_file_name))
-    local foobar_contents = trim(read_file('Xtest_startup_file1'))
+    -- Backup filename = slug of the full path.
+    local backup_file = ('%s/%s~'):format(
+      bdir,
+      vim.fs.slug(('%s/%s'):format(currentdir(), file), { maxlen = 64 })
+    )
+    local foo_contents = trim(read_file(backup_file) or '')
+    local foobar_contents = trim(read_file(file) or '')
 
     eq('foobar', foobar_contents)
     eq('foo', foo_contents)
   end)
 
   it('backup with full path with spaces', function()
+    local bdir, file = 'Xtest_backupdir with spaces', 'Xtest_startup_file1'
     clear()
-    mkdir('Xtest_backupdir with spaces')
+    mkdir(bdir)
     command('set backup')
-    command('set backupdir=Xtest_backupdir\\ with\\ spaces//')
-    command('write Xtest_startup_file1')
+    command(('set backupdir=%s//'):format(fn.escape(bdir, ' ')))
+    command(('write %s'):format(file))
     feed('ifoo<esc>')
     command('write')
     feed('Abar<esc>')
     command('write')
 
-    -- Backup filename = fullpath, separators replaced with "%".
-    local backup_file_name = string.gsub(
-      currentdir() .. '/Xtest_startup_file1',
-      is_os('win') and '[:/\\]' or '/',
-      '%%'
-    ) .. '~'
-    local foo_contents = trim(read_file('Xtest_backupdir with spaces/' .. backup_file_name))
-    local foobar_contents = trim(read_file('Xtest_startup_file1'))
+    -- Backup filename = slug of the full path.
+    local backup_file = ('%s/%s~'):format(
+      bdir,
+      vim.fs.slug(('%s/%s'):format(currentdir(), file), { maxlen = 64 })
+    )
+    local foo_contents = trim(read_file(backup_file) or '')
+    local foobar_contents = trim(read_file(file) or '')
 
     eq('foobar', foobar_contents)
     eq('foo', foo_contents)
+  end)
+
+  it('backup uses old "%" name if it exists', function()
+    local bdir, file = 'Xtest_backupdir', 'Xtest_startup_file1'
+    clear()
+    mkdir(bdir)
+    local legacy = ('%s/%s'):format(
+      bdir,
+      ('%s/%s~'):format(currentdir(), file):gsub(is_os('win') and '[:/\\]' or '/', '%%')
+    )
+    write_file(legacy, 'old')
+    command('set backupcopy=no')
+    command(('set backupdir=%s//'):format(bdir))
+    command('set backup')
+    feed('ifoo<esc>')
+    command(('write %s'):format(file))
+    feed('ibar<esc>')
+    command('write')
+
+    local files = vim.fs.find(function(name)
+      return name:match('.*~')
+    end)
+    eq(1, #files)
+    assert(files[1])
+    eq(legacy, vim.fs.relpath(currentdir(), files[1]))
+    eq('foo', trim(read_file(legacy) or ''))
   end)
 
   it('backup symlinked files #11349', function()
