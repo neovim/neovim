@@ -73,6 +73,17 @@ do
       local vpos = vim.fn.getpos('v')
       local mode = vim.fn.mode()
       local chunks = vim.fn.getregion(pos, vpos, { type = mode })
+      if mode == '\22' then
+        local regions = vim.fn.getregionpos(pos, vpos, { type = mode, eol = true })
+        for i, region in ipairs(regions) do
+          local end_pos = region[2]
+          if end_pos[3] > #vim.fn.getline(end_pos[2]) then
+            -- Remove virtual padding, preserving actual trailing whitespace.
+            local chunk = assert(chunks[i])
+            chunks[i] = chunk:sub(1, math.max(0, #chunk - end_pos[4]))
+          end
+        end
+      end
       local esc_chunks = vim
         .iter(chunks)
         :map(function(v)
