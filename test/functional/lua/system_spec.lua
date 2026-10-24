@@ -102,6 +102,25 @@ describe('vim.system', function()
     end)
   end
 
+  it('timeout is measured from spawn, not from stale loop time #42521', function()
+    local res = exec_lua(function()
+      local uv = vim.uv
+      local function block(ms)
+        local t = uv.hrtime()
+        while (uv.hrtime() - t) / 1e6 < ms do end
+      end
+      uv.update_time()
+      block(1200)
+      local t0 = uv.hrtime()
+      local r = vim.system({ 'sleep', '2' }, { timeout = 500 }):wait()
+      return { code = r.code, signal = r.signal, ms = math.floor((uv.hrtime() - t0) / 1e6) }
+    end)
+    eq(124, res.code)
+    eq(15, res.signal)
+    -- Without the fix the timer fires after ~1ms; with it, after ~500ms.
+    assert(res.ms >= 400, 'timeout fired after only ' .. res.ms .. 'ms')
+  end)
+
   it('kill processes', function()
     exec_lua(function()
       local signal --- @type integer?
