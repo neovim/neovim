@@ -162,7 +162,7 @@ local function parse_md(text)
 
     for child, child_field in node:iter_children() do
       local e = extract(child)
-      if child_field then
+      if child_field and child_field ~= 'info_string' then
         ret[child_field] = e
       else
         table.insert(ret, e)
