@@ -1854,17 +1854,21 @@ static void json_parse_object_context(lua_State *l, json_parse_t *json)
      * .., table, key, value */
     json_decode_descend(l, json, 3);
 
-    lua_newtable(l);
-
     json_next_token(json, &token);
 
     /* Handle empty objects */
     if (token.type == T_OBJ_END) {
-        nlua_pushref(l, nlua_get_empty_dict_ref(l)); \
-        lua_setmetatable(l, -2); \
+        lua_newtable(l);
+        nlua_pushref(l, nlua_get_empty_dict_ref(l));
+        lua_setmetatable(l, -2);
         json_decode_ascend(json);
         return;
     }
+
+    /* Most JSON containers are small; pre-size to skip the growth path.
+     * A fresh table has no hash part, so LuaJIT rehashes on the first insert
+     * and again at 3, 5, 9, ... keys. */
+    lua_createtable(l, 0, 4);
 
     while (1) {
         if (token.type != T_STRING)
@@ -1906,6 +1910,16 @@ static void json_parse_object_context(lua_State *l, json_parse_t *json)
     }
 }
 
+/* set array_mt on the table at the top of the stack */
+static void json_set_array_mt(lua_State *l, json_parse_t *json)
+{
+    if (json->cfg->decode_array_with_array_mt) {
+        lua_pushlightuserdata(l, json_lightudata_mask(&json_array));
+        lua_rawget(l, LUA_REGISTRYINDEX);
+        lua_setmetatable(l, -2);
+    }
+}
+
 /* Handle the array context */
 static void json_parse_array_context(lua_State *l, json_parse_t *json)
 {
@@ -1916,22 +1930,18 @@ static void json_parse_array_context(lua_State *l, json_parse_t *json)
      * .., table, value */
     json_decode_descend(l, json, 2);
 
-    lua_newtable(l);
-
-    /* set array_mt on the table at the top of the stack */
-    if (json->cfg->decode_array_with_array_mt) {
-        lua_pushlightuserdata(l, json_lightudata_mask(&json_array));
-        lua_rawget(l, LUA_REGISTRYINDEX);
-        lua_setmetatable(l, -2);
-    }
-
     json_next_token(json, &token);
 
     /* Handle empty arrays */
     if (token.type == T_ARR_END) {
+        lua_newtable(l);
+        json_set_array_mt(l, json);
         json_decode_ascend(json);
         return;
     }
+
+    lua_createtable(l, 4, 0);
+    json_set_array_mt(l, json);
 
     for (i = 1; ; i++) {
         json_process_value(l, json, &token, json->options->luanil_array);
