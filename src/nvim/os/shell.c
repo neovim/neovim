@@ -130,7 +130,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   bool ampersand = false;
   // vimglob() function to define for Posix shell
   static char *sh_vimglob_func =
-    "vimglob() { while [ $# -ge 1 ]; do echo \"$1\"; shift; done }; vimglob >";
+    "vimglob() { while [ $# -ge 1 ]; do printf '%s\n' \"$1\"; shift; done }; vimglob >";
   // vimglob() function with globstar setting enabled, only for bash >= 4.X
   static char *sh_globstar_opt =
     "[[ ${BASH_VERSINFO[0]} -ge 4 ]] && shopt -s globstar; ";
