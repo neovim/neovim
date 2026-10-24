@@ -705,6 +705,7 @@ static void json_append_string_contents(lua_State *l, json_encode_t *ctx,
     const char *str;
     size_t len;
     size_t i;
+    const char *const *escapes = *ctx->options->char2escape;
     strbuf_t *json = ctx->json;
     if (use_keybuf) {
         json = &ctx->options->keybuf.buf;
@@ -719,14 +720,26 @@ static void json_append_string_contents(lua_State *l, json_encode_t *ctx,
     if (len >= SIZE_MAX / 6)
         abort(); /* Overflow check */
     strbuf_ensure_empty_length(json, len * 6);
+    char *start = strbuf_empty_ptr(json);
+    char *out = start;
 
+    /* Write straight into the reserved space: an escape is either two bytes
+     * long or "\\u00XX", so the loop needs no length bookkeeping. */
     for (i = 0; i < len; i++) {
-        escstr = (*ctx->options->char2escape)[(unsigned char)str[i]];
-        if (escstr)
-            strbuf_append_string(json, escstr);
-        else
-            strbuf_append_char_unsafe(json, str[i]);
+        unsigned char c = (unsigned char)str[i];
+        escstr = escapes[c];
+        if (!escstr) {
+            *out++ = (char)c;
+        } else if (escstr[1] == 'u') {
+            memcpy(out, escstr, 6);
+            out += 6;
+        } else {
+            out[0] = escstr[0];
+            out[1] = escstr[1];
+            out += 2;
+        }
     }
+    strbuf_extend_length(json, (size_t)(out - start));
 }
 
 /* json_append_string args:
