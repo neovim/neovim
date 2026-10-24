@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
+local t_lsp = require('test.functional.plugin.lsp.testutil')
 
 local describe, it, before_each = t.describe, t.it, t.before_each
 local eq = t.eq
@@ -215,6 +216,42 @@ describe('vim.ui', function()
       n.api.nvim_set_option_value('filetype', 'help', { buf = buf, scope = 'local' })
       local tags = n.api.nvim_buf_get_extmarks(buf, link_ns, 0, -1, {})
       eq(0, #tags)
+    end)
+
+    it('resolves a documentLink with no target via documentLink/resolve', function()
+      exec_lua(t_lsp.create_server_definition)
+      exec_lua(function()
+        vim.api.nvim_buf_set_lines(0, 0, -1, true, { 'see the docs for more' })
+        _G.server = _G._create_server({
+          capabilities = {
+            documentLinkProvider = { resolveProvider = true },
+          },
+          handlers = {
+            ['textDocument/documentLink'] = function(_, _, callback)
+              callback(nil, {
+                {
+                  range = {
+                    start = { line = 0, character = 8 },
+                    ['end'] = { line = 0, character = 12 },
+                  },
+                  data = { id = 1 },
+                },
+              })
+            end,
+            ['documentLink/resolve'] = function(_, link, callback)
+              link.target = 'https://example.com/docs'
+              callback(nil, link)
+            end,
+          },
+        })
+        vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+      end)
+
+      local urls = exec_lua(function()
+        vim.api.nvim_win_set_cursor(0, { 1, 9 })
+        return vim.ui._get_urls()
+      end)
+      eq({ 'https://example.com/docs' }, urls)
     end)
   end)
 end)

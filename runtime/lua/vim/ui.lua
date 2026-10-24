@@ -257,12 +257,20 @@ local get_lsp_urls = function(bufnr)
       local document_links = result.result or {} ---@type lsp.DocumentLink[]
       for _, document_link in ipairs(document_links) do
         local range = vim.range.lsp(bufnr, document_link.range, client.offset_encoding)
-        if document_link.target and range:has(position) then
-          local target = document_link.target ---@type string
-          if vim.startswith(target, 'file://') then
-            target = vim.uri_to_fname(target)
+        if range:has(position) then
+          local target = document_link.target ---@type string?
+          if not target and client:supports_method('documentLink/resolve', bufnr) then
+            local resolved = client:request_sync('documentLink/resolve', document_link, 1000, bufnr)
+            if resolved and not resolved.err and resolved.result then
+              target = resolved.result.target
+            end
           end
-          table.insert(urls, target)
+          if target then
+            if vim.startswith(target, 'file://') then
+              target = vim.uri_to_fname(target)
+            end
+            table.insert(urls, target)
+          end
         end
       end
     end
