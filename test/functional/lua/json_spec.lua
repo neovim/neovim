@@ -23,6 +23,14 @@ describe('vim.json.decode()', function()
       'Expected object key string but found invalid token at character 2',
       pcall_err(exec_lua, [[return vim.json.decode('{a:"b"}')]])
     )
+    eq(
+      'Expected colon but found T_COMMA at character 5',
+      pcall_err(exec_lua, [[return vim.json.decode('{"a",1}')]])
+    )
+    eq(
+      'Expected comma or array end but found T_INTEGER at character 4',
+      pcall_err(exec_lua, [[return vim.json.decode('[1 2]')]])
+    )
   end)
 
   it('options', function()

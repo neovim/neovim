@@ -1873,9 +1873,13 @@ static void json_parse_object_context(lua_State *l, json_parse_t *json)
         /* Push key */
         lua_pushlstring(l, token.value.string, token.string_len);
 
-        json_next_token(json, &token);
-        if (token.type != T_COLON)
-            json_throw_parse_error(l, json, "colon", &token);
+        if (*json->ptr == ':') {
+            json->ptr++;
+        } else {
+            json_next_token(json, &token);
+            if (token.type != T_COLON)
+                json_throw_parse_error(l, json, "colon", &token);
+        }
 
         /* Fetch value */
         json_next_token(json, &token);
@@ -1884,15 +1888,19 @@ static void json_parse_object_context(lua_State *l, json_parse_t *json)
         /* Set key = value */
         lua_rawset(l, -3);
 
-        json_next_token(json, &token);
+        if (*json->ptr == ',') {
+            json->ptr++;
+        } else {
+            json_next_token(json, &token);
 
-        if (token.type == T_OBJ_END) {
-            json_decode_ascend(json);
-            return;
+            if (token.type == T_OBJ_END) {
+                json_decode_ascend(json);
+                return;
+            }
+
+            if (token.type != T_COMMA)
+                json_throw_parse_error(l, json, "comma or object end", &token);
         }
-
-        if (token.type != T_COMMA)
-            json_throw_parse_error(l, json, "comma or object end", &token);
 
         json_next_token(json, &token);
     }
@@ -1929,15 +1937,19 @@ static void json_parse_array_context(lua_State *l, json_parse_t *json)
         json_process_value(l, json, &token, json->options->luanil_array);
         lua_rawseti(l, -2, i);            /* arr[i] = value */
 
-        json_next_token(json, &token);
+        if (*json->ptr == ',') {
+            json->ptr++;
+        } else {
+            json_next_token(json, &token);
 
-        if (token.type == T_ARR_END) {
-            json_decode_ascend(json);
-            return;
+            if (token.type == T_ARR_END) {
+                json_decode_ascend(json);
+                return;
+            }
+
+            if (token.type != T_COMMA)
+                json_throw_parse_error(l, json, "comma or array end", &token);
         }
-
-        if (token.type != T_COMMA)
-            json_throw_parse_error(l, json, "comma or array end", &token);
 
         json_next_token(json, &token);
     }
