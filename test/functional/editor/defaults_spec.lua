@@ -95,6 +95,35 @@ describe('default', function()
 
   describe('key mappings', function()
     describe('Visual mode search mappings', function()
+      it('ignore virtual padding in block selections #42514', function()
+        for _, virtualedit in ipairs({ 'block', 'all' }) do
+          for _, direction in ipairs({ '*', '#' }) do
+            n.clear({ args_rm = { '--cmd' } })
+            n.command('setglobal virtualedit=all')
+            n.command('setlocal virtualedit=' .. virtualedit)
+            n.command(
+              'let g:option_events = 0 | autocmd OptionSet virtualedit let g:option_events += 1'
+            )
+            n.api.nvim_buf_set_lines(0, 0, -1, true, { 'café 猫  ', 'x', 'café 猫  ' })
+            n.feed((direction == '*' and 'gg' or 'G') .. '0<C-v>$' .. direction)
+            t.eq([[\Vcafé 猫  ]], n.fn.getreg('/'))
+            t.eq({ direction == '*' and 3 or 1, 0 }, n.api.nvim_win_get_cursor(0))
+            t.eq(virtualedit, n.api.nvim_get_option_value('virtualedit', {}))
+            t.eq('all', n.api.nvim_get_option_value('virtualedit', { scope = 'global' }))
+            t.eq(0, n.eval('g:option_events'))
+          end
+        end
+      end)
+
+      it('ignore virtual padding on short lines in a block #42514', function()
+        n.clear({ args_rm = { '--cmd' } })
+        n.command('set virtualedit=block')
+        n.api.nvim_buf_set_lines(0, 0, -1, true, { 'foo bar', 'x', '', 'foo bar', 'x' })
+        n.feed('gg0<C-v>7lj*')
+        t.eq([[\Vfoo bar\nx]], n.fn.getreg('/'))
+        t.eq({ 4, 0 }, n.api.nvim_win_get_cursor(0))
+      end)
+
       it('handle various chars properly', function()
         n.clear({ args_rm = { '--cmd' } })
         local screen = Screen.new(60, 8)
