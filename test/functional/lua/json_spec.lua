@@ -79,6 +79,11 @@ describe('vim.json.decode()', function()
     eq(0, exec_lua([[return vim.json.decode('0')]]))
     eq(0, exec_lua([[return vim.json.decode('-0')]]))
     eq(3053700806959403, exec_lua([[return vim.json.decode('3053700806959403')]]))
+    -- 2^53 is the largest integer that a double represents exactly.
+    eq(9007199254740992, exec_lua([[return vim.json.decode('9007199254740992')]]))
+    eq(-9007199254740992, exec_lua([[return vim.json.decode('-9007199254740992')]]))
+    -- Above that the value is rounded to the nearest double.
+    eq(9007199254740992, exec_lua([[return vim.json.decode('9007199254740993')]]))
   end)
 
   it('parses floating-point numbers', function()
@@ -319,6 +324,11 @@ describe('vim.json.encode()', function()
     eq('0', exec_lua([[return vim.json.encode(0)]]))
     eq('10', exec_lua([[return vim.json.encode(10)]]))
     eq('-10', exec_lua([[return vim.json.encode(-10)]]))
+    eq('9007199254740992', exec_lua([[return vim.json.encode(9007199254740992)]]))
+    -- 1e16 is the first integral value that is not written in fixed notation.
+    eq('1000000000000000', exec_lua([[return vim.json.encode(1e15)]]))
+    eq('1e+16', exec_lua([[return vim.json.encode(1e16)]]))
+    eq('-0', exec_lua([[return vim.json.encode(-0.0)]]))
   end)
 
   it('dumps floats', function()
