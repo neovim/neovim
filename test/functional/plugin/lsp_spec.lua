@@ -111,6 +111,24 @@ describe('LSP', function()
     os.remove(fake_lsp_logfile)
   end)
 
+  it('stops uninitialized clients on exit #42440', function()
+    exec_lua(create_server_definition)
+    local stopped = exec_lua(function()
+      local server = _G._create_server({
+        handlers = {
+          initialize = function() end,
+        },
+      })
+      local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = server.cmd }))
+      local client = assert(vim.lsp.get_client_by_id(client_id))
+      assert(not client.initialized)
+
+      vim.api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
+      return client:is_stopped()
+    end)
+    eq(true, stopped)
+  end)
+
   describe('server_name specified', function()
     before_each(function()
       -- Run an instance of nvim on the file which contains our "scripts".

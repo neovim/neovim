@@ -1176,7 +1176,7 @@ end
 local min_warn_exit_timeout = 100
 
 nvim_on('VimLeavePre', nil, { desc = 'vim.lsp: exit handler' }, function()
-  local active_clients = lsp.get_clients()
+  local active_clients = lsp.get_clients({ _uninitialized = true })
   log.info('exit_handler', active_clients)
 
   local max_timeout = 0
