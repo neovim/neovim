@@ -20,6 +20,7 @@ describe(':terminal', function()
       local function clipboard(reg, type)
         if type == 'copy' then
           return function(lines)
+            vim.g.clipboard_reg = reg
             vim.g.clipboard_lines = lines
             local data = table.concat(lines, '\n')
             vim.g.clipboard_data = data
@@ -83,6 +84,29 @@ describe(':terminal', function()
 
     retry(nil, 1000, function()
       eq({ '', 'foo', '', 'bar', '' }, exec_lua([[ return vim.g.clipboard_lines ]]))
+    end)
+  end)
+
+  it('writes to the register selected by the OSC 52 selector', function()
+    local term = api.nvim_open_term(0, {})
+    for _, case in ipairs({ { 'c', '+' }, { 'p', '*' }, { 's', '+' }, { '', '+' } }) do
+      local selector, reg = case[1], case[2]
+      exec_lua('vim.g.clipboard_reg = nil')
+      local text = 'selector ' .. selector
+      local encoded = exec_lua('return vim.base64.encode(...)', text)
+      api.nvim_chan_send(term, string.format('\027]52;%s;%s\027\\', selector, encoded))
+      retry(nil, 1000, function()
+        eq({ reg, text }, exec_lua('return { vim.g.clipboard_reg, vim.g.clipboard_data }'))
+      end)
+    end
+  end)
+
+  it('clears the clipboard on an empty OSC 52 payload', function()
+    local term = api.nvim_open_term(0, {})
+    exec_lua('vim.g.clipboard_lines = nil')
+    api.nvim_chan_send(term, '\027]52;c;\027\\')
+    retry(nil, 1000, function()
+      eq({ '+', { '' } }, exec_lua('return { vim.g.clipboard_reg, vim.g.clipboard_lines }'))
     end)
   end)
 

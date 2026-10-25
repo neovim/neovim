@@ -146,7 +146,6 @@ typedef enum {
 #define REFRESH_DELAY 10
 
 #define TEXTBUF_SIZE 0x1fff
-#define SELECTIONBUF_SIZE 0x0400
 
 // Whether to include OSC 52/clipboard support in Ghostty's DA1 response. Functional tests
 // toggle this to force the runtime OSC 52 detection path to fall back to XTGETTCAP.
@@ -221,24 +220,12 @@ struct terminal {
 
   bool color_set[16];
 
-  char *selection_buffer;
-  StringBuilder selection;
-
   StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request sequence
   TermRequestParserState termrequest_state;  ///< Current OSC/DCS/APC TermRequest or CSI parser state.
   TermRequestKind termrequest_kind;  ///< Current OSC/DCS/APC sequence kind.
   TermRequestTerminator termrequest_terminator;  ///< Terminator (BEL or ST) used in request.
 
   size_t refcount;                  // reference count
-};
-
-static VTermScreenCallbacks vterm_screen_callbacks = {
-  .theme = NULL,
-};
-
-static VTermSelectionCallbacks vterm_selection_callbacks = {
-  .set = term_selection_set,
-  .query = NULL,
 };
 
 static Set(ptr_t) invalidated_terminals = SET_INIT;
@@ -706,6 +693,8 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
                                  (const void *)on_device_attributes_query));
   assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_RENDER_HOLD,
                                  (const void *)on_render_hold));
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_CLIPBOARD_WRITE,
+                                 (const void *)on_clipboard_write));
 #if defined(__GNUC__)
 # pragma GCC diagnostic pop
 #endif
@@ -722,17 +711,11 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   update_default_cursor(term);
   update_render_state(term);
 
-  // libvterm still handles terminal queries and OSC 52 writes during the migration.
-  VTermState *state = vterm_obtain_state(term->vt);
   term->vts = vterm_obtain_screen(term->vt);
   vterm_screen_enable_altscreen(term->vts, true);
   vterm_screen_enable_reflow(term->vts, true);
-  vterm_screen_set_callbacks(term->vts, &vterm_screen_callbacks, term);
   vterm_screen_set_damage_merge(term->vts, VTERM_DAMAGE_SCROLL);
   vterm_screen_reset(term->vts, 1);
-  term->selection_buffer = xcalloc(SELECTIONBUF_SIZE, 1);
-  vterm_state_set_selection_callbacks(state, &vterm_selection_callbacks, term,
-                                      term->selection_buffer, SELECTIONBUF_SIZE);
 
   // Force an initial refresh so the buffer starts with one line per screen row.
   term->invalid_start = 0;
@@ -1430,8 +1413,6 @@ void terminal_destroy(Terminal **termpp)
     for (size_t i = 0; i < ARRAY_SIZE(term->scrollback_anchors); i++) {
       ghostty_tracked_grid_ref_free(term->scrollback_anchors[i].ref);
     }
-    xfree(term->selection_buffer);
-    kv_destroy(term->selection);
     vterm_free(term->vt);
     ghostty_terminal_free(term->ghostty);
     xfree(term);
@@ -1685,16 +1666,6 @@ static void on_sync_flush(void **argv)
   unblock_autocmds();
 }
 
-static void terminal_vt_write_chunk(Terminal *term, const char *data, size_t len)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (len == 0) {
-    return;
-  }
-  vterm_input_write(term->vt, data, len);
-  ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)data, len);
-}
-
 /// Writes child output to Ghostty. Stops at the end of each TermRequest so Ghostty has processed
 /// the output before it when the request is scheduled, and records each scrollback clear (CSI 3 J).
 static void vt_write(Terminal *term, const char *data, size_t len)
@@ -1712,11 +1683,13 @@ static void vt_write(Terminal *term, const char *data, size_t len)
       size_t clear_sequence_len = clear_scrollback_seq_len(data, len, i);
       if (clear_sequence_len > 0) {
         if (i > chunk_start) {
-          terminal_vt_write_chunk(term, data + chunk_start, i - chunk_start);
+          ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)(data + chunk_start),
+                                    i - chunk_start);
           update_render_state(term);
         }
         record_scrollback_clear(term);
-        terminal_vt_write_chunk(term, data + i, clear_sequence_len);
+        ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)(data + i),
+                                  clear_sequence_len);
         i += clear_sequence_len - 1;
         chunk_start = i + 1;
         continue;
@@ -1726,14 +1699,16 @@ static void vt_write(Terminal *term, const char *data, size_t len)
     if (termrequest_parse_byte(term, (uint8_t)data[i])) {
       // Ghostty must process the output up to here before schedule_termrequest() reads the
       // cursor and starts holding back responses to later queries.
-      terminal_vt_write_chunk(term, data + chunk_start, i + 1 - chunk_start);
+      ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)(data + chunk_start),
+                                i + 1 - chunk_start);
       if (has_event(EVENT_TERMREQUEST)) {
         schedule_termrequest(term);
       }
       chunk_start = i + 1;
     }
   }
-  terminal_vt_write_chunk(term, data + chunk_start, len - chunk_start);
+  ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)(data + chunk_start),
+                            len - chunk_start);
   update_render_state(term);
 }
 
@@ -1758,8 +1733,6 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
   } else {
     vt_write(term, data, len);
   }
-
-  vterm_screen_flush_damage(term->vts);
 
   // When a synchronized update just ended, refresh the buffer immediately
   // instead of waiting for the 10ms timer.  This eliminates the window where
@@ -2168,7 +2141,6 @@ void terminal_notify_theme(Terminal *term, bool dark)
 }
 
 /// Updates the terminal's default foreground, background, and cursor colors.
-/// Updates the default colors for every open terminal buffer.
 void terminal_update_colors(Terminal *term)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -2201,6 +2173,7 @@ void terminal_update_colors(Terminal *term)
                                  NULL));
 }
 
+/// Updates the default colors for every open terminal buffer.
 void terminal_update_colors_all(void)
 {
   FOR_ALL_BUFFERS(buf) {
@@ -2230,7 +2203,7 @@ static void terminal_focus(Terminal *term, bool focus)
 }
 
 // }}}
-// libghostty and libvterm callbacks {{{
+// libghostty callbacks {{{
 
 /// Called when Ghostty needs to write the response for a terminal query.
 static void on_pty_write(GhosttyTerminal ghostty FUNC_ATTR_UNUSED, void *user_data,
@@ -2265,6 +2238,31 @@ static void on_render_hold(GhosttyTerminal ghostty FUNC_ATTR_UNUSED, void *user_
     term->sync_flush_pending = true;
   }
   term->synchronized_output = held;
+}
+
+/// Called when the terminal program writes to the clipboard (OSC 52).
+static void on_clipboard_write(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
+                               void *user_data FUNC_ATTR_UNUSED, const GhosttyClipboardWrite *write)
+{
+  const GhosttyClipboardContent *text = NULL;
+  for (size_t i = 0; i < write->contents_len && text == NULL; i++) {
+    GhosttyString mime = write->contents[i].mime;
+    if (mime.len == 10 && memcmp(mime.ptr, "text/plain", 10) == 0) {
+      text = &write->contents[i];
+    }
+  }
+  // Zero contents means clear. Otherwise, returning without a reply denies the write.
+  if (write->contents_len > 0 && text == NULL) {
+    return;
+  }
+
+  char regname = write->location == GHOSTTY_CLIPBOARD_LOCATION_PRIMARY ? '*' : '+';
+  multiqueue_put(main_loop.events, term_clipboard_set, (void *)(intptr_t)regname,
+                 text ? xmemdupz(text->data.ptr, text->data.len) : xstrdup(""));
+  write->reply(write, &(GhosttyClipboardWriteReply){
+    .size = sizeof(GhosttyClipboardWriteReply),
+    .result = GHOSTTY_CLIPBOARD_WRITE_RESULT_SUCCESS,
+  });
 }
 
 /// Called when the terminal program wants to know the terminal device attributes.
@@ -2324,21 +2322,8 @@ static bool on_color_scheme_query(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
 
 static void term_clipboard_set(void **argv)
 {
-  VTermSelectionMask mask = (VTermSelectionMask)(long)argv[0];
+  char regname = (char)(intptr_t)argv[0];
   char *data = argv[1];
-
-  char regname;
-  switch (mask) {
-  case VTERM_SELECTION_CLIPBOARD:
-    regname = '+';
-    break;
-  case VTERM_SELECTION_PRIMARY:
-    regname = '*';
-    break;
-  default:
-    regname = '+';
-    break;
-  }
 
   // Split the payload into readfile()-style list (:h chansend()).
   // TODO(justinmk): drop this, support Blob in clipboard provider: #41097
@@ -2360,23 +2345,6 @@ static void term_clipboard_set(void **argv)
 
   tv_list_append_string(args, &regname, 1);
   eval_call_provider("clipboard", "set", args, true);
-}
-
-static int term_selection_set(VTermSelectionMask mask, VTermStringFragment frag, void *user)
-{
-  Terminal *term = user;
-  if (frag.initial) {
-    kv_size(term->selection) = 0;
-  }
-
-  kv_concat_len(term->selection, frag.str, frag.len);
-
-  if (frag.final) {
-    char *data = xmemdupz(term->selection.items, kv_size(term->selection));
-    multiqueue_put(main_loop.events, term_clipboard_set, (void *)mask, data);
-  }
-
-  return 1;
 }
 
 // }}}
