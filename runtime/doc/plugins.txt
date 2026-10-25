@@ -203,6 +203,11 @@ set to "diff", such as `git diff` output or a `.patch` file) with the
 treesitter parser for the language of each file in the diff. Added and
 removed lines also get a green or red background.
 
+Uninstall any third-party diff parser and queries before enabling this plugin.
+For example, with nvim-treesitter's "main" branch: >vim
+    :TSUninstall diff
+<
+
 The plugin is not loaded by default; use `:packadd` to activate it: >
     :packadd nvim.diffhl
 <
