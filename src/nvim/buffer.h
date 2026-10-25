@@ -45,6 +45,7 @@ enum dobuf_action_values {
   DOBUF_UNLOAD = 2,  ///< unload specified buffer(s)
   DOBUF_DEL    = 3,  ///< delete specified buffer(s) from buflist
   DOBUF_WIPE   = 4,  ///< delete specified buffer(s) really
+  DOBUF_WIPE_BRUTAL   = 5,///< delete specified buffer(s) brutally
 };
 
 /// Values for start argument for do_buffer_ext()
