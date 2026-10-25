@@ -4903,6 +4903,9 @@ static void nv_optrans(cmdarg_T *cap)
                                 ":s\r" };
   static const char *str = "xXDCsSY&";
 
+  // Count before a register is already in count0: don't let the stuffed command apply it again.
+  cap->opcount = 0;
+  opcount = 0;
   if (!checkclearopq(cap->oap)) {
     if (cap->count0) {
       stuffnumReadbuff(cap->count0);
@@ -4910,7 +4913,6 @@ static void nv_optrans(cmdarg_T *cap)
     stuffReadbuff(ar[strchr(str, (char)cap->cmdchar) - str]);
     exec_stuffed(cap);
   }
-  cap->opcount = 0;
 }
 
 /// "'" and "`" commands.  Also for "g'" and "g`".
