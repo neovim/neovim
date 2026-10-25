@@ -1267,6 +1267,12 @@ func Test_cmdline_complete_various()
   call feedkeys(":1,2\"\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal("\"1,2\"\<C-A>", @:)
 
+  " completion for command after a pattern address (containing delimiter)
+  call feedkeys(":/foo[/]bar\\/baz/num\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"/foo[/]bar\\/baz/number", @:)
+  call feedkeys(":?foo[?]bar\\?baz?num\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"?foo[?]bar\\?baz?number", @:)
+
   " completion for :k command
   call feedkeys(":ka\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal("\"ka\<C-A>", @:)
@@ -2666,6 +2672,18 @@ func Test_zero_line_search()
   0;/pattern/d
   call assert_equal(["2, ", "3, pattern"], getline(1,'$'))
   q!
+endfunc
+
+func Test_pattern_address_with_command()
+  new
+  call setline(1, ["one", "two - foo/bar/baz", "three - foo?bar?baz", "four"])
+  call cursor(1, 1)
+  :/foo[/]bar\/baz/print
+  call assert_equal("two - foo/bar/baz", getline('.'))
+  call cursor("$", 1)
+  :?foo[?]bar\?baz?print
+  call assert_equal("three - foo?bar?baz", getline('.'))
+  bwipe!
 endfunc
 
 func Test_read_shellcmd()

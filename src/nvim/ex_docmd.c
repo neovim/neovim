@@ -3356,12 +3356,7 @@ char *skip_range(const char *cmd, int *ctx)
         *ctx = EXPAND_NOTHING;
       }
     } else if (*cmd == '/' || *cmd == '?') {
-      unsigned delim = (unsigned)(*cmd++);
-      while (*cmd != NUL && *cmd != (char)delim) {
-        if (*cmd++ == '\\' && *cmd != NUL) {
-          cmd++;
-        }
-      }
+      cmd = skip_regexp((char *)cmd + 1, (uint8_t)(*cmd), p_magic);
       if (*cmd == NUL && ctx != NULL) {
         *ctx = EXPAND_NOTHING;
       }
