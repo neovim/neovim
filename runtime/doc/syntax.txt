@@ -5755,9 +5755,17 @@ it took to match them against the text.
 					this is not unique.
 			PATTERN		The pattern being used.
 
+							*:syn-performance*
 Pattern matching gets slow when it has to try many alternatives.  Try to
 include as much literal text as possible to reduce the number of ways a
-pattern does NOT match.
+pattern does NOT match.  For example, having "ABC" and "ADC" is faster than a
+"A[BD]C" regex.  If using literal text isn't possible, reducing the amount of
+regex by merging them where in makes sense, like grouping common patterns
+together also helps.
+
+When dealing with heavy backtracking, it's possible to force the old
+backtracking regex engine by using "\%#=1", which is often faster in those
+cases.
 
 When using the "\@<=" and "\@<!" items, add a maximum size to avoid trying at
 all positions in the current and previous line.  For example, if the item is
