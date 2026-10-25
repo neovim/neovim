@@ -3765,6 +3765,45 @@ describe('extmark decorations', function()
       end
     end
   end)
+
+  it('new window does not check conceal_lines of every line above its viewport', function()
+    command('set conceallevel=2 showtabline=0')
+    exec_lua(function()
+      _G.conceal_rows = {}
+      vim.api.nvim_set_decoration_provider(ns, {
+        _on_conceal_line = function(_, _, _, row)
+          table.insert(_G.conceal_rows, row)
+        end,
+      })
+    end)
+    command('tabnew | call setline(1, range(1, 1000)) | normal! G')
+    screen:expect([[
+      987                                               |
+      988                                               |
+      989                                               |
+      990                                               |
+      991                                               |
+      992                                               |
+      993                                               |
+      994                                               |
+      995                                               |
+      996                                               |
+      997                                               |
+      998                                               |
+      999                                               |
+      ^1000                                              |
+                                                        |
+    ]])
+    -- Only rows around the initial and the final viewport are checked.
+    eq(
+      {},
+      exec_lua(function()
+        return vim.tbl_filter(function(row)
+          return row > 1 and row < 970
+        end, _G.conceal_rows)
+      end)
+    )
+  end)
 end)
 
 describe('decorations: inline virtual text', function()
