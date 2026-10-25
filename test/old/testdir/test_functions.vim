@@ -3993,6 +3993,25 @@ func Test_glob_extended_mswin()
   call delete('Xtestglob', 'rf')
 endfunc
 
+" Test for glob() with filenames starting with a -
+func Test_glob_shell_expansion_minus()
+  CheckUnix
+  CheckExecutable bash
+
+  let shell = &shell
+  set shell=bash
+  call mkdir('Xvimglob', 'R')
+  call writefile([], 'Xvimglob/-n')
+  let cwd = getcwd()
+  call chdir('Xvimglob')
+  try
+    call assert_equal(['-n'], glob("{-n,E}", 0, 1))
+  finally
+    let &shell = shell
+    call chdir(cwd)
+  endtry
+endfunc
+
 " Tests for the slice() function.
 func Test_slice()
   let lines =<< trim END
