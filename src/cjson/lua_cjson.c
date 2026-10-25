@@ -1530,9 +1530,13 @@ static void json_next_string_token(json_parse_t *json, json_token_t *token)
      */
     strbuf_reset(json->tmp);
 
-    while ((ch = *json->ptr) != '"') {
+    char *dst = json->tmp->buf;
+    const char *p = json->ptr;
+
+    while ((ch = *p) != '"') {
         if (!ch) {
             /* Premature end of the string */
+            json->ptr = (char *)p;
             json_set_token_error(token, json, "unexpected end of string");
             return;
         }
@@ -1540,32 +1544,39 @@ static void json_next_string_token(json_parse_t *json, json_token_t *token)
         /* Handle escapes */
         if (ch == '\\') {
             /* Fetch escape character */
-            ch = *(json->ptr + 1);
+            ch = *(p + 1);
 
             /* Translate escape code and append to tmp string */
             ch = escape2char[(unsigned char)ch];
             if (ch == 'u') {
-                if (json_append_unicode_escape(json) == 0)
+                json->ptr = (char *)p;
+                json->tmp->length = (size_t)(dst - json->tmp->buf);
+                if (json_append_unicode_escape(json) == 0) {
+                    p = json->ptr;
+                    dst = json->tmp->buf + json->tmp->length;
                     continue;
+                }
 
                 json_set_token_error(token, json,
                                      "invalid unicode escape code");
                 return;
             }
             if (!ch) {
+                json->ptr = (char *)p;
                 json_set_token_error(token, json, "invalid escape code");
                 return;
             }
 
             /* Skip '\' */
-            json->ptr++;
+            p++;
         }
         /* Append normal character or translated single character
          * Unicode escapes are handled above */
-        strbuf_append_char_unsafe(json->tmp, ch);
-        json->ptr++;
+        *dst++ = ch;
+        p++;
     }
-    json->ptr++;    /* Eat final quote (") */
+    json->ptr = (char *)p + 1;    /* Eat final quote (") */
+    json->tmp->length = (size_t)(dst - json->tmp->buf);
 
     strbuf_ensure_null(json->tmp);
 
