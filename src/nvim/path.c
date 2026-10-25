@@ -1157,7 +1157,7 @@ static bool has_special_wildchar(char *p, int flags)
         continue;
       }
       // A quote and backtick must be followed by another one.
-      if ((*p == '`' || *p == '\'') && vim_strchr(p, (uint8_t)(*p)) == NULL) {
+      if ((*p == '`' || *p == '\'') && vim_strchr(p + 1, (uint8_t)(*p)) == NULL) {
         continue;
       }
       return true;

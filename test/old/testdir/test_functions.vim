@@ -3744,6 +3744,16 @@ func Test_glob2()
   endif
 endfunc
 
+" shell is not used to expand a single quote
+func Test_glob3()
+  CheckUnix
+  let shell = &shell
+  set shell=DOESNOTEXIST
+  call writefile([], "Xit's_a_file", 'D')
+  call assert_equal(["Xit's_a_file"], glob("Xit's*", 0, 1))
+  let &shell = shell
+endfunc
+
 func Test_glob_symlinks()
   call writefile([], 'Xglob1')
 
