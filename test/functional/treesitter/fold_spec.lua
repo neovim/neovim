@@ -9,6 +9,7 @@ local insert = n.insert
 local write_file = t.write_file
 local exec_lua = n.exec_lua
 local command = n.command
+local fn = n.fn
 local feed = n.feed
 local poke_eventloop = n.poke_eventloop
 
@@ -251,6 +252,26 @@ t2]])
       [3] = '>1',
       [4] = '1',
     }, get_fold_levels())
+  end)
+
+  it('creates a fold that starts above the edited lines #42425', function()
+    insert('# h1')
+    parse('markdown')
+    command('set foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr()')
+    eq(0, fn.foldlevel(1))
+
+    -- Type one key at a time, so each edit is processed separately.
+    for _, keys in ipairs({ 'o', '<CR>', 'f', '<Esc>' }) do
+      feed(keys)
+      wait_folds()
+    end
+
+    eq({
+      [1] = '>1',
+      [2] = '1',
+      [3] = '1',
+    }, get_fold_levels())
+    eq(1, fn.foldlevel(1))
   end)
 
   it('handles changes that trigger multiple on_bytes', function()
