@@ -104,10 +104,12 @@ describe('cmdwin', function()
 
   it('<C-C> in normal mode cancels without executing', function()
     feed('q:')
-    feed('ilet g:executed = 1<Esc>')
+    feed('ilet g:executed = 1<Left><Left><Esc>')
     n.poke_eventloop() -- Ensure previous input is processed before <C-C>.
     feed('<C-C>')
     eq('', fn.getcmdwintype())
+    -- The cmdline cursor mirrors where it was in the cmdwin
+    eq(16, fn.getcmdpos())
     -- The cancelled line is neither executed nor added to history. It is pre-filled into the
     -- cmdline; reopening via c_CTRL-F must then not duplicate it.
     eq(0, fn.exists('g:executed'))
