@@ -949,6 +949,47 @@ func Test_visual_force_motion_feedkeys()
     ounmap i-
 endfunc
 
+" Test that a one-column block of a forced blockwise motion is not empty
+func Test_visual_force_motion_one_column_block()
+  new
+  " An exclusive motion: the block has one column, as in Visual block mode.
+  for [line, keys, expected] in [
+        \ ['ab', "0mxd\<C-V>`x", 'b'],
+        \ ['ab', "0mxc\<C-V>`xX\<Esc>", 'Xb'],
+        \ ['ab', "0d\<C-V>0", 'b'],
+        \ ]
+    call setline(1, line)
+    exe 'normal! ' .. keys
+    call assert_equal(expected, getline(1), keys)
+  endfor
+
+  " Visual block mode, for comparison.
+  call setline(1, 'ab')
+  exe "normal! 0\<C-V>d"
+  call assert_equal('b', getline(1))
+
+  set selection=exclusive
+  call setline(1, 'abcd')
+  exe "normal! 0d\<C-V>l"
+  call assert_equal('bcd', getline(1))
+  set selection&
+
+  " With 'cpoptions' "E" the block is not an empty region.
+  set cpoptions+=E
+  call setline(1, 'ab')
+  call setreg('"', '')
+  exe "normal! 0mxy\<C-V>`x"
+  call assert_equal('a', @")
+  set cpoptions-=E
+
+  " A characterwise exclusive motion still makes an empty region.
+  call setline(1, 'ab')
+  normal! 0mxd`x
+  call assert_equal('ab', getline(1))
+
+  bwipe!
+endfunc
+
 " Test block-insert using cursor keys for movement
 func Test_visual_block_insert_cursor_keys()
   new
