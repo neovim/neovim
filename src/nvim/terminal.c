@@ -206,7 +206,6 @@ struct terminal {
   } pending;
 
   bool streamed_paste;  ///< Streamed pasting
-  bool theme_updates;  ///< Send a theme update notification when 'bg' changes
   bool synchronized_output;  ///< Mode 2026: suppress redraws until end of synchronized update
   bool sync_flush_pending;   ///< Set when mode 2026 ends; triggers immediate buffer refresh
 
@@ -288,12 +287,13 @@ static void schedule_termrequest(Terminal *term)
   term->pending.send = xmalloc(sizeof(StringBuilder));
   kv_init(*term->pending.send);
 
-  terminal_ghostty_cursor_position_update(term);
-  int line = term->cursor.row + (int)get_history_rows(term) + 1;
+  int row, col;
+  get_cursor_pos(term, &row, &col);
+  int line = row + (int)get_history_rows(term) + 1;
   multiqueue_put(main_loop.events, emit_termrequest, (void *)(intptr_t)term->buf_handle,
                  xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size),
                  (void *)(intptr_t)term->termrequest_buffer.size, term->pending.send,
-                 (void *)(intptr_t)line, (void *)(intptr_t)term->cursor.col,
+                 (void *)(intptr_t)line, (void *)(intptr_t)col,
                  (void *)(intptr_t)term->scrollback_deleted,
                  (void *)(intptr_t)term->termrequest_terminator);
 }
@@ -408,19 +408,17 @@ static bool mode_enabled(Terminal *term, GhosttyMode mode)
   return config.value;
 }
 
-static void terminal_ghostty_cursor_position_update(Terminal *term)
+/// Gets the current cursor position on Ghostty's active screen. Unlike "term->cursor", which is
+/// updated with the buffer on refresh, this includes output that wasn't refreshed yet.
+static void get_cursor_pos(Terminal *term, int *row, int *col)
   FUNC_ATTR_NONNULL_ALL
 {
-  uint16_t col = 0;
-  uint16_t row = 0;
-  assert_ok(ghostty_terminal_get(term->ghostty,
-                                 GHOSTTY_TERMINAL_DATA_CURSOR_X,
-                                 &col));
-  assert_ok(ghostty_terminal_get(term->ghostty,
-                                 GHOSTTY_TERMINAL_DATA_CURSOR_Y,
-                                 &row));
-  term->cursor.col = (int)col;
-  term->cursor.row = (int)row;
+  uint16_t x = 0;
+  uint16_t y = 0;
+  assert_ok(ghostty_terminal_get(term->ghostty, GHOSTTY_TERMINAL_DATA_CURSOR_X, &x));
+  assert_ok(ghostty_terminal_get(term->ghostty, GHOSTTY_TERMINAL_DATA_CURSOR_Y, &y));
+  *row = (int)y;
+  *col = (int)x;
 }
 
 /// Updates term->cursor from the render state. Falls back to the cursor position on the active
@@ -433,41 +431,18 @@ static void fetch_cursor(Terminal *term)
                                      GHOSTTY_RENDER_STATE_DATA_CURSOR,
                                      &cursor));
 
-  int old_row = term->cursor.row;
-  int old_col = term->cursor.col;
   if (cursor.viewport_has_value) {
     term->cursor.col = cursor.viewport_x;
     term->cursor.row = cursor.viewport_y;
   } else {
-    terminal_ghostty_cursor_position_update(term);
+    get_cursor_pos(term, &term->cursor.row, &term->cursor.col);
   }
-  bool position_changed = term->cursor.row != old_row || term->cursor.col != old_col;
-  bool visibility_changed = term->cursor.visible != cursor.visible;
-  bool style_changed = term->cursor.blink != cursor.blinking
-                       || term->cursor.shape != cursor.visual_style;
+  if (term->cursor.blink != cursor.blinking || term->cursor.shape != cursor.visual_style) {
+    term->pending.cursor = true;
+  }
   term->cursor.visible = cursor.visible;
   term->cursor.blink = cursor.blinking;
   term->cursor.shape = cursor.visual_style;
-
-  if (style_changed) {
-    term->pending.cursor = true;
-  }
-  if (position_changed || visibility_changed || style_changed) {
-    invalidate_terminal(term, -1, -1);
-  }
-}
-
-static void terminal_ghostty_termprops_update(Terminal *term)
-  FUNC_ATTR_NONNULL_ALL
-{
-  GhosttyTerminalScreen screen = GHOSTTY_TERMINAL_SCREEN_PRIMARY;
-  assert_ok(ghostty_terminal_get(term->ghostty,
-                                 GHOSTTY_TERMINAL_DATA_ACTIVE_SCREEN,
-                                 &screen));
-  // Switching screens makes all rows dirty, so they're invalidated after this.
-  term->in_altscreen = screen == GHOSTTY_TERMINAL_SCREEN_ALTERNATE;
-
-  term->theme_updates = mode_enabled(term, GHOSTTY_MODE_COLOR_SCHEME_REPORT);
 }
 
 static GhosttyTerminalCursorStyle default_cursor_style(void)
@@ -506,7 +481,7 @@ void terminal_update_default_cursor_all(void)
   FOR_ALL_BUFFERS(buf) {
     if (buf->terminal) {
       update_default_cursor(buf->terminal);
-      update_render_state(buf->terminal);
+      invalidate_terminal(buf->terminal, -1, -1);
     }
   }
 }
@@ -828,6 +803,7 @@ void terminal_close(Terminal **termpp, int status)
   } else {
     // flush any pending changes to the buffer
     if (!exiting) {
+      update_render_state(term);
       GhosttyRenderStateRowCells cells = NULL;
       if (status != -1 && term->cursor.row == term->height - 1
           && get_row_cells(term, (uint32_t)term->cursor.row, &cells)
@@ -956,7 +932,6 @@ void terminal_check_size(Terminal *term)
   assert_ok(ghostty_terminal_resize(term->ghostty, width, height, 0, 0));
   term->width = width;
   term->height = height;
-  update_render_state(term);
   set_mouse_encoder_size(term, width, height);
   term->pending.resize = true;
   invalidate_terminal(term, -1, -1);
@@ -1120,6 +1095,9 @@ bool terminal_enter(void)
   curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
 
   if (curbuf->terminal == s->term && !s->close) {
+    // Place the cursor after output that is still waiting for the refresh timer, e.g. the response
+    // to the focus report above.
+    flush_refresh(s->term);
     terminal_check_cursor();
   }
   if (restart_edit) {
@@ -1376,13 +1354,7 @@ void terminal_destroy(Terminal **termpp)
   }
 
   if (!term->refcount) {
-    if (set_has(ptr_t, &invalidated_terminals, term)) {
-      // flush any pending changes to the buffer
-      block_autocmds();
-      refresh_terminal(term);
-      unblock_autocmds();
-      set_del(ptr_t, &invalidated_terminals, term);
-    }
+    flush_refresh(term);
     kv_destroy(term->termrequest_buffer);
     multiqueue_free(term->pending.events);
     ghostty_mouse_event_free(term->ghostty_mouse_event);
@@ -1666,7 +1638,6 @@ static void vt_write(Terminal *term, const char *data, size_t len)
         if (i > chunk_start) {
           ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)(data + chunk_start),
                                     i - chunk_start);
-          update_render_state(term);
         }
         record_scrollback_clear(term);
         ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)(data + i),
@@ -1690,7 +1661,7 @@ static void vt_write(Terminal *term, const char *data, size_t len)
   }
   ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)(data + chunk_start),
                             len - chunk_start);
-  update_render_state(term);
+  invalidate_terminal(term, -1, -1);
 }
 
 void terminal_receive(Terminal *term, const char *data, size_t len)
@@ -2110,7 +2081,7 @@ bool terminal_suspended(const Terminal *term)
 void terminal_notify_theme(Terminal *term, bool dark)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (!term->theme_updates) {
+  if (!mode_enabled(term, GHOSTTY_MODE_COLOR_SCHEME_REPORT)) {
     return;
   }
 
@@ -2788,8 +2759,10 @@ static void mirror_scrollback_rows(Terminal *term, buf_T *buf, size_t row, size_
                                    (GhosttyTerminalScrollViewport) {
     .tag = GHOSTTY_SCROLL_VIEWPORT_BOTTOM,
   });
-  // Restore the render state before refresh_screen() reads it.
+  // Restore the render state before refresh_screen() reads it. Damage was already collected when
+  // the refresh started, so the dirty state from moving the viewport can be dropped.
   assert_ok(ghostty_render_state_update(term->ghostty_render_state, term->ghostty));
+  assert_ok(ghostty_render_state_clean(term->ghostty_render_state));
 }
 
 // queue a terminal instance for refresh
@@ -2813,7 +2786,10 @@ static void invalidate_terminal(Terminal *term, int start_row, int end_row)
   }
 }
 
-/// Invalidates the terminal rows Ghostty reports as dirty.
+/// Updates the render state from Ghostty and adds the rows it reports as dirty to the invalid range.
+///
+/// Called when refreshing the buffer, so the buffer text, attributes and cursor all come from the
+/// same snapshot, and output received between refreshes is only processed once.
 ///
 /// We're currently handling invalid terminal rows as a single range, so partial Ghostty damage is
 /// collapsed to the smallest range covering every dirty row. After this returns, Ghostty's render
@@ -2824,7 +2800,11 @@ static void update_render_state(Terminal *term)
   assert_ok(ghostty_render_state_update(term->ghostty_render_state,
                                         term->ghostty));
   fetch_cursor(term);
-  terminal_ghostty_termprops_update(term);
+
+  // Switching screens makes all rows dirty, so they're invalidated below.
+  GhosttyTerminalScreen screen = GHOSTTY_TERMINAL_SCREEN_PRIMARY;
+  assert_ok(ghostty_terminal_get(term->ghostty, GHOSTTY_TERMINAL_DATA_ACTIVE_SCREEN, &screen));
+  term->in_altscreen = screen == GHOSTTY_TERMINAL_SCREEN_ALTERNATE;
 
   assert_ok(ghostty_render_state_get(term->ghostty_render_state,
                                      GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR,
@@ -2836,10 +2816,20 @@ static void update_render_state(Terminal *term)
     dirty_start = MIN(dirty_start, row);
     dirty_end = row + 1;
   }
-  if (dirty_end != -1) {
-    invalidate_terminal(term, dirty_start, dirty_end);
-  }
+  term->invalid_start = MIN(term->invalid_start, dirty_start);
+  term->invalid_end = MAX(term->invalid_end, dirty_end);
   assert_ok(ghostty_render_state_clean(term->ghostty_render_state));
+}
+
+/// Refreshes "term" now if it is waiting for the refresh timer.
+static void flush_refresh(Terminal *term)
+{
+  if (set_has(ptr_t, &invalidated_terminals, term)) {
+    block_autocmds();
+    refresh_terminal(term);
+    unblock_autocmds();
+    set_del(ptr_t, &invalidated_terminals, term);
+  }
 }
 
 /// Normally refresh_timer_cb() is called when processing main_loop.events, but with
@@ -2859,6 +2849,7 @@ static void refresh_terminal(Terminal *term)
   }
   linenr_T ml_before = buf->b_ml.ml_line_count;
 
+  update_render_state(term);
   bool resized = refresh_size(term, buf);
   refresh_scrollback(term, buf, resized);
   refresh_screen(term, buf);
