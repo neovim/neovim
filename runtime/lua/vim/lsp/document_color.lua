@@ -55,9 +55,10 @@ end
 --- @return string
 local function get_hex_code(color)
   -- The RGB values in lsp.Color are in the [0-1] range, but we want them to be in the [0-255] range instead.
+  -- Clamp first: servers may send out-of-range components (e.g. for out-of-gamut colors).
   --- @param n decimal
   local rgb = vim.tbl_map(function(n)
-    return math.floor((n * 255) + 0.5)
+    return math.floor((math.min(math.max(n, 0), 1) * 255) + 0.5)
   end, color)
 
   return ('#%02x%02x%02x'):format(rgb.red, rgb.green, rgb.blue):lower()

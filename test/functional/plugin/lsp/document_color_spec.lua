@@ -62,6 +62,7 @@ body {
       [3] = { background = Screen.colors.Cyan1, foreground = Screen.colors.Gray0 },
       [4] = { foreground = Screen.colors.Grey100 },
       [5] = { foreground = Screen.colors.Cyan1 },
+      [6] = { background = tonumber('00ff80', 16), foreground = Screen.colors.Gray0 },
     }
 
     bufnr = n.api.nvim_get_current_buf()
@@ -243,6 +244,41 @@ body {                                               |
       end)
 
       screen:expect({ grid = grid_with_swatches })
+    end)
+
+    it('clamps color components outside the [0, 1] range', function()
+      exec_lua(function()
+        local server = _G._create_server({
+          capabilities = {
+            colorProvider = true,
+          },
+          handlers = {
+            ['textDocument/documentColor'] = function(_, _, callback)
+              callback(nil, {
+                {
+                  range = {
+                    start = { line = 0, character = 0 },
+                    ['end'] = { line = 0, character = 4 },
+                  },
+                  color = { red = -0.2, green = 1.3, blue = 0.5 },
+                },
+              })
+            end,
+          },
+        })
+
+        vim.lsp.start({ name = 'out-of-range', cmd = server.cmd })
+      end)
+
+      screen:expect([[
+{6:body} {                                               |
+  color: {2:#FFF};                                       |
+  background-color: {3:rgb(0, 255, 255)};                |
+}                                                    |
+^                                                     |
+{1:~                                                    }|*8
+                                                     |
+      ]])
     end)
 
     it('will not create highlights with custom style function', function()
