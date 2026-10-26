@@ -44,8 +44,8 @@ TREESITTER_VIMDOC_URL https://github.com/neovim/tree-sitter-vimdoc/archive/v4.3.
 TREESITTER_VIMDOC_SHA256 4c46119abf86fcb29bc66878eb9a37666a936589769bea2b76308cd2119dfaf5
 TREESITTER_QUERY_URL https://github.com/tree-sitter-grammars/tree-sitter-query/archive/v0.8.0.tar.gz
 TREESITTER_QUERY_SHA256 c2b23b9a54cffcc999ded4a5d3949daf338bebb7945dece229f832332e6e6a7d
-TREESITTER_MARKDOWN_URL https://github.com/tree-sitter-grammars/tree-sitter-markdown/archive/v0.5.3.tar.gz
-TREESITTER_MARKDOWN_SHA256 df845b1ab7c7c163ec57d7fa17170c92b04be199bddab02523636efec5224ab6
+TREESITTER_MARKDOWN_URL https://github.com/tree-sitter-grammars/tree-sitter-markdown/archive/v0.5.4.tar.gz
+TREESITTER_MARKDOWN_SHA256 481ce2c1cce7b1130bc8455c186052bd0fa461f1ff488666994c6a3da7fca2ac
 TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/v0.27.1.tar.gz
 TREESITTER_SHA256 982cd3d4d9eb7be18c243240a622423fd2e4ecb4bec2cd98832c2f3fa1f0f333
 
