@@ -30,12 +30,17 @@ describe('vim.lsp.linked_editing_range', function()
         },
         handlers = {
           ['textDocument/linkedEditingRange'] = function(_, _, callback)
+            local ranges = {}
+            for row, line in ipairs(vim.api.nvim_buf_get_lines(0, 0, -1, false)) do
+              for col, word in line:gmatch('()([%w%-_]+)') do
+                ranges[#ranges + 1] = {
+                  start = { line = row - 1, character = col - 1 },
+                  ['end'] = { line = row - 1, character = col - 1 + #word },
+                }
+              end
+            end
             callback(nil, {
-              ranges = {
-                { start = { line = 0, character = 0 }, ['end'] = { line = 0, character = 5 } },
-                { start = { line = 1, character = 0 }, ['end'] = { line = 1, character = 5 } },
-                { start = { line = 2, character = 0 }, ['end'] = { line = 2, character = 5 } },
-              },
+              ranges = ranges,
             })
           end,
         },
@@ -44,6 +49,28 @@ describe('vim.lsp.linked_editing_range', function()
       _G.server_id = vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
     end)
   end)
+
+  for index = 1, 3 do
+    for _, change in ipairs({
+      { keys = 'x', expected = 'ello ello ello', name = 'shortens' },
+      { keys = 'iX<Esc>', expected = 'Xhello Xhello Xhello', name = 'lengthens' },
+    }) do
+      it(change.name .. ' same-line ranges when editing range ' .. index, function()
+        exec_lua(function(active_index)
+          vim.lsp.linked_editing_range.enable(false)
+          vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'hello hello hello' })
+          vim.api.nvim_win_set_cursor(0, { 1, (active_index - 1) * 6 })
+          vim.lsp.linked_editing_range.enable()
+        end, index)
+        feed(change.keys)
+        n.expect(change.expected)
+        feed('u')
+        n.expect('hello hello hello')
+        feed('<C-r>')
+        n.expect(change.expected)
+      end)
+    end
+  end
 
   it('initiates linked editing', function()
     exec_lua(function()
