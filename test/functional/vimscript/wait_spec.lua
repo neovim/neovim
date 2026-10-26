@@ -38,6 +38,42 @@ describe('wait()', function()
     eq(-1, eval('wait(50, 0)'))
   end)
 
+  -- Each pass returns in under 1 ms, so its elapsed time counts as 0 ms unless the
+  -- sub-millisecond remainder is carried into the next pass. The conditions give up after 1 s so
+  -- that a regression fails the test instead of hanging the suite. A wait that ends early also
+  -- returns -1, so the elapsed time is checked as well.
+  local function wait_and_time(timeout, pending)
+    local elapsed = n.exec_lua(function()
+      local start = vim.uv.hrtime()
+      local waited = vim.fn.wait(timeout, function()
+        if vim.uv.hrtime() - start > 1e9 then
+          return 1
+        end
+        if pending == 'close' then
+          local timer = vim.uv.new_timer()
+          timer:start(60000, 0, function() end)
+          timer:stop()
+          timer:close()
+        elseif pending == 'schedule' then
+          vim.schedule(function() end)
+        end
+        return false
+      end)
+      assert(waited == -1)
+      return vim.uv.hrtime() - start
+    end, timeout, pending)
+    assert(elapsed >= timeout * 0.8e6, ('ended after %.1f ms'):format(elapsed / 1e6))
+    assert(elapsed < 1e9, ('hung for %.1f ms'):format(elapsed / 1e6))
+  end
+
+  it('times out when the condition closes a libuv handle', function()
+    wait_and_time(500, 'close')
+  end)
+
+  it('times out when the condition schedules a callback', function()
+    wait_and_time(500, 'schedule')
+  end)
+
   it('returns -2 when interrupted', function()
     feed_command(
       'call rpcnotify(g:channel, "ready") | ' .. 'call rpcnotify(g:channel, "wait", wait(-1, 0))'
