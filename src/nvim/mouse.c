@@ -58,9 +58,6 @@
 
 #include "mouse.c.generated.h"
 
-static linenr_T orig_topline = 0;
-static int orig_topfill = 0;
-
 /// Get class of a character for selection: same class means same word.
 /// 0: blank
 /// 1: punctuation groups
@@ -1431,10 +1428,7 @@ retnomove:
     if (dragwin == NULL || (flags & MOUSE_RELEASED)) {
       win_enter(wp, true);                      // can make wp invalid!
     }
-    // set topline, to be able to check for double click ourselves
-    if (curwin != old_curwin) {
-      set_mouse_topline(curwin);
-    }
+
     if (status_line_offset) {                       // In (or below) status line
       // Don't use start_arrow() if we're in the same window
       if (curwin == old_curwin) {
@@ -1915,14 +1909,6 @@ void setmouse(void)
 {
   ui_cursor_shape();
   ui_check_mouse();
-}
-
-// Set orig_topline.  Used when jumping to another window, so that a double
-// click still works.
-static void set_mouse_topline(win_T *wp)
-{
-  orig_topline = wp->w_topline;
-  orig_topfill = wp->w_topfill;
 }
 
 /// Return length of line "lnum" for horizontal scrolling.
