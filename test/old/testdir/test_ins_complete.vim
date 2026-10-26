@@ -7074,4 +7074,91 @@ func Test_complete_fuzzy_keep_order_as_leader_changes()
   bwipe!
 endfunc
 
+" Test that CTRL-X CTRL-F searches the directories in 'path'
+func Test_ins_complete_files_in_path()
+  call mkdir('Xfilecptdir/sub1', 'p')
+  call mkdir('Xfilecptdir/sub2', 'p')
+  call writefile(['one'], 'Xfilecptdir/one.txt')
+  call writefile(['sub1'], 'Xfilecptdir/sub1/two.txt')
+  call writefile(['sub2'], 'Xfilecptdir/sub2/two.txt')
+  call writefile(['cwd'], 'Xcwdfile.txt')
+
+  new
+  " complete a file name found in a directory in 'path'
+  set path=Xfilecptdir
+  call setline(1, 'on')
+  call feedkeys("A\<C-X>\<C-f>\<Esc>", 'tx')
+  call assert_equal('on', getline(1))
+
+  " consulting 'path' for file completion requires pathopt in 'completeopt'
+  set completeopt+=pathopt
+
+  " complete a file name found in a directory in 'path'
+  call setline(1, 'on')
+  call feedkeys("A\<C-X>\<C-f>\<Esc>", 'tx')
+  call assert_equal('one.txt', getline(1))
+
+  " complete a directory name found in a directory in 'path' followed by a file
+  call setline(1, 'su')
+  call feedkeys("A\<C-X>\<C-f>\<Esc>", 'tx')
+  call assert_equal('sub1/', substitute(getline(1), '\\', '/', 'g'))
+  call feedkeys("A\<C-X>\<C-f>\<Esc>", 'tx')
+  call assert_equal('sub1/two.txt', substitute(getline(1), '\\', '/', 'g'))
+
+  " when a file name is found in several directories in 'path', the
+  " directory is prepended to make the match unambiguous
+  set path=Xfilecptdir/sub1,Xfilecptdir/sub2
+  call setline(1, 'tw')
+  call feedkeys("A\<C-X>\<C-f>\<Esc>", 'tx')
+  call assert_equal('./Xfilecptdir/sub1/two.txt',
+        \ substitute(getline(1), '\\', '/', 'g'))
+  call setline(1, 'tw')
+  call feedkeys("A\<C-X>\<C-f>\<C-N>\<Esc>", 'tx')
+  call assert_equal('./Xfilecptdir/sub2/two.txt',
+        \ substitute(getline(1), '\\', '/', 'g'))
+
+  " a match starting with "./" is completed in the current directory only,
+  " 'path' is not used
+  set path=
+  call setline(1, './Xfilecptdir/on')
+  call feedkeys("A\<C-X>\<C-f>\<Esc>", 'tx')
+  call assert_equal('./Xfilecptdir/one.txt',
+        \ substitute(getline(1), '\\', '/', 'g'))
+
+  " a match starting with "../" is completed in the current directory only,
+  " 'path' is not used
+  cd Xfilecptdir/sub1
+  call setline(1, '../sub2/tw')
+  call feedkeys("A\<C-X>\<C-f>\<Esc>", 'tx')
+  call assert_equal('../sub2/two.txt',
+        \ substitute(getline(1), '\\', '/', 'g'))
+  cd ../..
+
+  " the current directory is not searched when it is not in 'path'
+  call setline(1, 'Xcwdfi')
+  call feedkeys("A\<C-X>\<C-f>\<Esc>", 'tx')
+  call assert_equal('Xcwdfi', getline(1))
+
+  " check the counter argument of above test
+  set path=,,
+  call feedkeys("A\<C-X>\<C-f>\<Esc>", 'tx')
+  call assert_equal('Xcwdfile.txt', getline(1))
+
+  " the completed file name can be opened with "gf" using 'path'
+  set path=Xfilecptdir
+  call setline(1, 'on')
+  call feedkeys("A\<C-X>\<C-f>\<Esc>", 'tx')
+  call assert_equal('one.txt', getline(1))
+  set nomodified
+  normal! gf
+  call assert_equal('one', getline(1))
+  call assert_equal('one.txt', fnamemodify(bufname(), ':t'))
+
+  %bwipe!
+  set path&
+  set completeopt&
+  call delete('Xcwdfile.txt')
+  call delete('Xfilecptdir', 'rf')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

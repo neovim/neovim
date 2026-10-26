@@ -1206,6 +1206,11 @@ vim.go.cia = vim.go.completeitemalign
 --- 	    scores when "fuzzy" is enabled.  Candidates will appear
 --- 	    in their original order.
 ---
+---    pathopt  Additionally consult the 'path' option during filename
+--- 	    completion.  Depending on the patterns in 'path', setting
+--- 	    this option may result in performance degradation due to
+--- 	    path expansions `i_CTRL-X_CTRL-F`
+---
 ---    popup    Show extra information about the currently selected
 --- 	    completion in a popup window.  Only works in combination
 --- 	    with "menu" or "menuone".  Overrides "preview".

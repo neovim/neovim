@@ -4200,8 +4200,13 @@ static void get_next_filename_completion(void)
     }
   }
 
-  if (expand_wildcards(1, &compl_pattern.data, &num_matches, &matches,
-                       EW_FILE|EW_DIR|EW_ADDSLASH|EW_SILENT) != OK) {
+  int flags = EW_FILE|EW_DIR|EW_ADDSLASH|EW_SILENT;
+
+  if (get_cot_flags() & kOptCotFlagPathopt) {
+    flags |= EW_PATH;
+  }
+
+  if (expand_wildcards(1, &compl_pattern.data, &num_matches, &matches, flags) != OK) {
     return;
   }
 

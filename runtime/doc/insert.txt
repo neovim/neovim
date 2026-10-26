@@ -956,8 +956,14 @@ CTRL-X CTRL-F		Search for the first file name that starts with the
 			file name is inserted in front of the cursor.
 			Alphabetic characters and characters in 'isfname'
 			are used to decide which characters are included in
-			the file name.  Note: the 'path' option is not used
-			here (yet).
+			the file name.
+			When 'completeopt' contains "pathopt", the directories
+			in 'path' are searched as well, like with |gf| and
+			|:find|.  A match found in a directory of 'path' is
+			shortened when possible, such that "gf" can find it
+			again.  A file name starting with "/", "./" or "../"
+			is completed as an absolute or relative path to the
+			current directory, without consulting 'path'.
 	CTRL-F	or
 	CTRL-N		Search forwards for next matching file name.  This
 			file name replaces the previous matching file name.
