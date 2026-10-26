@@ -383,6 +383,30 @@ describe(':terminal buffer', function()
     command('bd!')
   end)
 
+  it('deleting a terminal buffer with a pending write does not hang #42508', function()
+    exec_lua(function(prg)
+      -- The before_each setup leaves a :terminal buffer current; jobstart(…,{term=true})
+      -- requires an unmodified buffer, so move to a fresh empty one.
+      vim.cmd('enew')
+      local job = vim.fn.jobstart({ prg }, { term = true })
+      assert(job > 0)
+      local bufnr = vim.api.nvim_get_current_buf()
+      assert(vim.wait(2000, function()
+        return vim.api.nvim_buf_get_lines(bufnr, 0, 1, false)[1] == 'tty ready'
+      end))
+
+      -- Write and delete in the same event loop iteration, before libuv completes the write.
+      vim.fn.chansend(job, 'pending write\n')
+      vim.api.nvim_buf_delete(bufnr, { force = true })
+
+      -- Drain queued events immediately after deletion.
+      vim.wait(1, function()
+        return false
+      end)
+      assert(not vim.api.nvim_buf_is_valid(bufnr))
+    end, testprg('tty-test'))
+  end)
+
   it('correct size when switching buffers', function()
     local term_buf = api.nvim_get_current_buf()
     command('file foo | enew | vsplit')
