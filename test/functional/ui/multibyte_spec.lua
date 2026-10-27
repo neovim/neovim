@@ -12,6 +12,7 @@ local fn = n.fn
 local api = n.api
 local split = vim.split
 local dedent = t.dedent
+local eq = t.eq
 local write_file = t.write_file
 
 describe('multibyte rendering', function()
@@ -391,6 +392,12 @@ describe('multibyte rendering', function()
     {1:~                                                           }|*4
                                                                 |
     ]])
+
+    -- strwidth() runs through the same cluster walk on NUL-terminated
+    -- strings, with every oversized invalid lead byte (5/6-byte class)
+    eq(2, fn.strwidth('\216\131\251')) -- 0xD8 0x83 0xFB
+    eq(2, fn.strwidth('\216\131\252')) -- 0xD8 0x83 0xFC
+    eq(2, fn.strwidth('\216\131\253')) -- 0xD8 0x83 0xFD
   end)
 end)
 
