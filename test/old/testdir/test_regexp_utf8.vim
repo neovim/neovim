@@ -829,4 +829,19 @@ func Test_regexp_casefold_match_length()
   endtry
 endfunc
 
+" \%d must not overflow: digits past INT_MAX are rejected with E678
+func Test_regexp_dec_overflow()
+  for engine in [1, 2]
+    let pre = '\%#=' .. engine
+    " values at and past INT64_MAX must saturate and be rejected, not wrap
+    for val in ['9223372036854775807', '9223372036854775808', '18446744073709551713', '4294967296']
+      call assert_fails("call match('a', '" .. pre .. "\\%d" .. val .. "')", 'E678:')
+    endfor
+    call assert_equal(0, match('a', pre .. '\%d97'))
+    call assert_equal(-1, match('a', pre .. '\%d98'))
+    " a saturated look-behind count still matches (it is narrowed to an int)
+    call assert_equal(1, match('aa', pre .. 'a\@18446744073709551713<=a'))
+  endfor
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

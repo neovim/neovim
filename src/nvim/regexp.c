@@ -1128,8 +1128,12 @@ static int64_t getdecchrs(void)
     if (c < '0' || c > '9') {
       break;
     }
-    nr *= 10;
-    nr += c - '0';
+    if (nr > (INT64_MAX - (c - '0')) / 10) {
+      nr = INT64_MAX;  // saturate, but keep consuming digits
+    } else {
+      nr *= 10;
+      nr += c - '0';
+    }
     regparse++;
     curchr = -1;     // no longer valid
   }
