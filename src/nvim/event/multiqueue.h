@@ -32,9 +32,9 @@
       if (remaining == 0) { \
         break; \
       } else if (remaining > 0) { \
-        uint64_t now = os_hrtime(); \
-        remaining -= (int64_t)((now - before) / 1000000); \
-        before = now; \
+        uint64_t elapsed_ms = (os_hrtime() - before) / 1000000; \
+        remaining -= (int64_t)elapsed_ms; \
+        before += elapsed_ms * 1000000; \
         if (remaining <= 0) { \
           break; \
         } \

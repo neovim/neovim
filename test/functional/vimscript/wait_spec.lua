@@ -38,6 +38,14 @@ describe('wait()', function()
     eq(-1, eval('wait(50, 0)'))
   end)
 
+  it('times out when the condition keeps the event loop busy', function()
+    -- Each check leaves a pending close callback, so every poll returns in under 1 ms.
+    eq(
+      -1,
+      eval([[wait(100, 'luaeval("(function() vim.uv.new_timer():close() return false end)()")')]])
+    )
+  end)
+
   it('returns -2 when interrupted', function()
     feed_command(
       'call rpcnotify(g:channel, "ready") | ' .. 'call rpcnotify(g:channel, "wait", wait(-1, 0))'
