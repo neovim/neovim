@@ -24,26 +24,22 @@ describe('vim.lsp.linked_editing_range', function()
     exec_lua(function()
       vim.lsp.linked_editing_range.enable()
 
+      _G.handlers = {
+        ['textDocument/linkedEditingRange'] = function(_, _, callback)
+          callback(nil, {
+            ranges = {
+              { start = { line = 0, character = 0 }, ['end'] = { line = 0, character = 5 } },
+              { start = { line = 1, character = 0 }, ['end'] = { line = 1, character = 5 } },
+              { start = { line = 2, character = 0 }, ['end'] = { line = 2, character = 5 } },
+            },
+          })
+        end,
+      }
       _G.server = _G._create_server({
         capabilities = {
           linkedEditingRangeProvider = true,
         },
-        handlers = {
-          ['textDocument/linkedEditingRange'] = function(_, _, callback)
-            local ranges = {}
-            for row, line in ipairs(vim.api.nvim_buf_get_lines(0, 0, -1, false)) do
-              for col, word in line:gmatch('()([%w%-_]+)') do
-                ranges[#ranges + 1] = {
-                  start = { line = row - 1, character = col - 1 },
-                  ['end'] = { line = row - 1, character = col - 1 + #word },
-                }
-              end
-            end
-            callback(nil, {
-              ranges = ranges,
-            })
-          end,
-        },
+        handlers = _G.handlers,
       })
 
       _G.server_id = vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
@@ -58,6 +54,16 @@ describe('vim.lsp.linked_editing_range', function()
       it(change.name .. ' same-line ranges when editing range ' .. index, function()
         exec_lua(function(active_index)
           vim.lsp.linked_editing_range.enable(false)
+          _G.handlers['textDocument/linkedEditingRange'] = function(_, _, callback)
+            local ranges = {}
+            for col, word in vim.api.nvim_get_current_line():gmatch('()([%w%-_]+)') do
+              ranges[#ranges + 1] = {
+                start = { line = 0, character = col - 1 },
+                ['end'] = { line = 0, character = col - 1 + #word },
+              }
+            end
+            callback(nil, { ranges = ranges })
+          end
           vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'hello hello hello' })
           vim.api.nvim_win_set_cursor(0, { 1, (active_index - 1) * 6 })
           vim.lsp.linked_editing_range.enable()
