@@ -3252,7 +3252,7 @@ int set_cpt_callbacks(optset_T *args)
 
 /// Mark "copyID" references in an array of F{func} callbacks so that they are
 /// not garbage collected.
-bool set_ref_in_cpt_callbacks(Callback *callbacks, int count, int copyID)
+bool set_ref_in_cpt_callbacks(Callback *callbacks, int count, int64_t copyID)
 {
   bool abort = false;
 
@@ -3268,7 +3268,7 @@ bool set_ref_in_cpt_callbacks(Callback *callbacks, int count, int copyID)
 
 /// Mark the global 'completefunc' 'omnifunc' and 'thesaurusfunc' callbacks with
 /// "copyID" so that they are not garbage collected.
-bool set_ref_in_insexpand_funcs(int copyID)
+bool set_ref_in_insexpand_funcs(int64_t copyID)
 {
   bool abort = set_ref_in_callback(&p_cfu, copyID, NULL, NULL);
   abort = abort || set_ref_in_callback(&p_ofu, copyID, NULL, NULL);

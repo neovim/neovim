@@ -3277,7 +3277,7 @@ void free_operatorfunc_option(void)
 
 /// Mark the global 'operatorfunc' callback with "copyID" so that it is not
 /// garbage collected.
-bool set_ref_in_opfunc(int copyID)
+bool set_ref_in_opfunc(int64_t copyID)
 {
   return set_ref_in_callback(&p_opfunc, copyID, NULL, NULL);
 }
