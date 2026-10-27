@@ -216,22 +216,101 @@ function M.setup_child_nvim(args, opts)
   return screen
 end
 
---- FIXME: On Windows spaces at the end of a screen line may have wrong attrs.
---- Remove this function when that's fixed.
+--- Moves the blank cells and cursor marker at the edges of each attribute group of a screen line out
+--- of the group, leaving `{MATCH:…}` patterns as they are.
+---
+--- @param line string
+--- @return string
+local function strip_blank_attrs(line)
+  -- Split the line into groups of chunks, where a chunk is a character or a {MATCH:…} pattern, and
+  -- text outside attribute groups is a group without an id.
+  local groups = {} --- @type { id: string?, [integer]: string }[]
+  local group = { id = nil } --- @type { id: string?, [integer]: string }
+  local i = 1
+  while i <= #line do
+    local _, match_end = line:find('^{MATCH:.-}', i)
+    local id, text_start = line:match('^{(%d+):()', i)
+    if match_end then
+      group[#group + 1] = line:sub(i, match_end)
+      i = match_end + 1
+    elseif not group.id and id then
+      groups[#groups + 1] = group
+      group = { id = id }
+      i = text_start
+    elseif group.id and line:sub(i, i) == '}' then
+      groups[#groups + 1] = group
+      group = { id = nil }
+      i = i + 1
+    else
+      group[#group + 1] = line:sub(i, i)
+      i = i + 1
+    end
+  end
+  groups[#groups + 1] = group
+
+  local out = {} --- @type string[]
+  local out_id --- @type string? Attribute group open in `out`.
+  local function emit(s, id)
+    if out_id ~= id then
+      out[#out + 1] = (out_id and '}' or '') .. (id and '{' .. id .. ':' or '')
+      out_id = id
+    end
+    out[#out + 1] = s
+  end
+  for _, g in ipairs(groups) do
+    local first, last = #g + 1, 0
+    for j, chunk in ipairs(g) do
+      if chunk ~= ' ' and chunk ~= '^' then
+        first = math.min(first, j)
+        last = j
+      end
+    end
+    for j, chunk in ipairs(g) do
+      emit(chunk, (j >= first and j <= last) and g.id or nil)
+    end
+  end
+  emit('', nil)
+  return table.concat(out)
+end
+
+--- FIXME: On Windows, ConPTY may redraw blank cells with the wrong attributes. Remove this
+--- function when that's fixed.
+---
+--- Ignores the attributes of blank cells at the edges of attribute groups, on both sides of
+--- `screen:expect()`.
 ---
 --- @param screen test.functional.ui.screen
 function M.override_screen_expect_for_conpty(screen)
+  local orig_row_repr = screen._row_repr
+  function screen._row_repr(...)
+    return strip_blank_attrs(orig_row_repr(...))
+  end
+
+  local function strip_grid(grid)
+    -- Dedent first, and keep screen:expect() from dedenting blank cells moved out of a group.
+    return (
+      t.dedent(grid, 0):gsub('[^\n]+', function(line)
+        local row, suffix = line:match('^(.*)(|%**%d*)$')
+        return row and strip_blank_attrs(row):gsub('^ ', '{MATCH: }') .. suffix or line
+      end)
+    )
+  end
+  local function strip_patterns(patterns)
+    if type(patterns) == 'string' then
+      return strip_blank_attrs(patterns)
+    end
+    return patterns and vim.tbl_map(strip_blank_attrs, patterns)
+  end
+
   local orig_screen_expect = screen.expect
   function screen.expect(self, expected, attr_ids, ...)
     if type(expected) == 'string' then
-      -- Ignore attribute groups that contain only blank cells. ConPTY may
-      -- merge them into either adjacent group, so retaining the group itself
-      -- makes the patterns below require a boundary that may not exist.
-      expected = expected:gsub('(\n[ \t]*){[^{}\n]-: +}(%|%*?%d*)', '%1{MATCH:[^|]*}%2')
-      expected = expected:gsub('{[^{}\n]-: +}', ' ')
-      expected = expected:gsub('%}%^ +', '{MATCH:[^|]*%%^[^|]*}')
-      expected = expected:gsub(' +%} *', '{MATCH: *}}{MATCH:[^|]*}')
-      expected = expected:gsub('%} +', '{MATCH: *}}{MATCH:[^|]*}')
+      expected = strip_grid(expected)
+    elseif type(expected) == 'table' then
+      expected = t.shallowcopy(expected)
+      expected.grid = expected.grid and strip_grid(expected.grid)
+      expected.any = strip_patterns(expected.any)
+      expected.none = strip_patterns(expected.none)
     end
     orig_screen_expect(self, expected, attr_ids, ...)
   end
