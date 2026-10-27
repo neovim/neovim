@@ -1805,7 +1805,12 @@ ClusterInfo utf_ClusterInfo_impl(StrCharInfo base, int *max_len)
     }
 
     int32_t const next_code = utf_ptr2CharInfo_impl(next, (uintptr_t)next_len);
-    if (!utf_iscomposing(prev_code, next_code, &state)) {
+    // An undecodable byte is not a code point and cannot join the cluster.
+    // Composing state machines only know real code points; feeding them -1
+    // can report "no break", which would advance next by the DECLARED
+    // sequence length (utf8len_tab) even when fewer bytes remain, running
+    // past the end of the NUL-terminated line buffer.
+    if (next_code < 0 || !utf_iscomposing(prev_code, next_code, &state)) {
       return (ClusterInfo){
         .next = (StrCharInfo){
           .ptr = (char *)next,

@@ -12,6 +12,7 @@ local fn = n.fn
 local api = n.api
 local split = vim.split
 local dedent = t.dedent
+local write_file = t.write_file
 
 describe('multibyte rendering', function()
   local screen
@@ -374,6 +375,21 @@ describe('multibyte rendering', function()
       ❤ variant selecte^d                                          |
       {1:~                                                           }|*2
                                                 3,20-18        All|
+    ]])
+  end)
+
+  it('renders a line ending in an invalid multibyte sequence', function()
+    -- U+0603 (grapheme class Prepend) followed by 0xFD, which announces a
+    -- 6-byte sequence but is the last byte of the file. The cluster walk
+    -- used to advance past the end of the line buffer here
+    -- (heap-buffer-overflow read, #42559).
+    local file = 'nvim_42559.dat'
+    write_file(file, '\216\131\253') -- 0xD8 0x83 0xFD
+    command('edit ' .. file)
+    screen:expect([[
+    ^؃?                                                          |
+    {1:~                                                           }|*4
+                                                                |
     ]])
   end)
 end)
