@@ -25,11 +25,20 @@ local function win_config(win, hide, height)
     api.nvim_win_resize(win, -1, height)
   end
   if vim.o.cmdheight ~= height then
-    -- Avoid moving the cursor with 'splitkeep' = "screen", and altering the user
-    -- configured value with noautocmd.
-    vim._with({ noautocmd = true, o = { splitkeep = 'screen' } }, function()
+    -- Keep the text in place with 'splitkeep' = "screen" (noautocmd: not the user
+    -- value), but scroll instead of moving the cursor when the window shrinks over it.
+    local view = fn.winsaveview()
+    vim._with({ noautocmd = true, keepjumps = true, o = { splitkeep = 'screen' } }, function()
       vim.o.cmdheight = height
     end)
+    if fn.line('.') ~= view.lnum then
+      fn.winrestview({
+        lnum = view.lnum,
+        col = view.col,
+        coladd = view.coladd,
+        curswant = view.curswant,
+      })
+    end
     ui.msg.set_pos()
   elseif M.wmnumode ~= (M.dialog and fn.pumvisible() == 0 and fn.wildmenumode() or 0) then
     M.wmnumode = (M.wmnumode == 1 and 0 or 1)

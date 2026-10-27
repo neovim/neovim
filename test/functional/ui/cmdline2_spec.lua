@@ -6,6 +6,7 @@ local Screen = require('test.functional.ui.screen')
 
 local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, exec, exec_lua, feed = n.clear, n.exec, n.exec_lua, n.feed
+local eq = t.eq
 
 describe('cmdline2', function()
   local screen
@@ -332,6 +333,40 @@ describe('cmdline2', function()
       {1:~                                                    }|*12
       {16::}{15:call} {25:foo}{16:(}{25:bar}{16:(}^                                       |
     ]])
+  end)
+
+  it("does not move the cursor when 'cmdheight' is 0 #42496", function()
+    exec_lua(function()
+      local lines = {} ---@type string[]
+      for i = 1, 100 do
+        lines[i] = 'line ' .. i
+      end
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+      vim.o.scrolloff = 4
+      vim.o.cmdheight = 0
+      vim.cmd('normal! 80Gzb')
+      vim.cmd('clearjumps')
+      vim.keymap.set('n', '<F2>', function()
+        vim.fn.input('Name: ')
+        _G.lnum = vim.fn.line('.')
+      end)
+    end)
+    local function state()
+      return exec_lua(function()
+        return { vim.fn.line('.'), #vim.fn.getjumplist()[1] }
+      end)
+    end
+    -- Window scrolls instead of moving the cursor, no jumplist entry is added
+    feed(':')
+    eq({ 80, 0 }, state())
+    feed('<Esc>')
+    eq({ 80, 0 }, state())
+    exec('normal! zb')
+    feed('<F2>')
+    eq({ 80, 0 }, state())
+    feed('foo<CR>')
+    eq({ 80, 0 }, state())
+    eq(80, exec_lua('return _G.lnum'))
   end)
 
   it("doesn't interfere with :$q", function()
