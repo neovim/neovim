@@ -1805,7 +1805,7 @@ ClusterInfo utf_ClusterInfo_impl(StrCharInfo base, int *max_len)
     }
 
     int32_t const next_code = utf_ptr2CharInfo_impl(next, (uintptr_t)next_len);
-    if (!utf_iscomposing(prev_code, next_code, &state)) {
+    if (next_code < 0 || !utf_iscomposing(prev_code, next_code, &state)) {
       return (ClusterInfo){
         .next = (StrCharInfo){
           .ptr = (char *)next,
