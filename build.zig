@@ -565,6 +565,7 @@ pub fn build(b: *std.Build) !void {
         "-std=gnu99",
         "-DZIG_BUILD",
         "-D_GNU_SOURCE",
+        "-DNVIM_LOG_DEBUG",
         if (support_unittests) "-DUNIT_TESTING" else "",
         if (use_luajit) "" else "-DNVIM_VENDOR_BIT",
         if (is_windows) "-DMSWIN" else "",
