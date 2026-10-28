@@ -1440,7 +1440,7 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           // Compute the length of the replaced characters in
           // screen characters, not bytes.
           {
-            int repl_size = vim_strnsize(lead_repl, lead_repl_len);
+            int repl_size = mb_string2cells_len(lead_repl, (size_t)lead_repl_len);
             int old_size = 0;
             char *endp = p;
 
@@ -1484,16 +1484,21 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           // screen characters, not bytes. Move the part that is
           // not to be overwritten.
           {
-            int repl_size = vim_strnsize(lead_repl, lead_repl_len);
-            int i;
-            int l;
+            int repl_size = mb_string2cells_len(lead_repl, (size_t)lead_repl_len);
 
-            for (i = 0; i < lead_len && p[i] != NUL; i += l) {
-              l = utfc_ptr2len(p + i);
-              if (vim_strnsize(p, i + l) > repl_size) {
+            int len_left = lead_len;
+            StrCharInfo ci = utf_ptr2StrCharInfo_len(p, len_left);
+            int rep_width = 0;
+            while (len_left > 0 && *ci.ptr != NUL) {
+              ClusterInfo cli = utf_ClusterInfo_len(ci, &len_left);
+              rep_width += cli.cells;
+              if (rep_width > repl_size) {
                 break;
               }
+              ci = cli.next;
             }
+            int i = (int)(ci.ptr - p);
+
             if (i != lead_repl_len) {
               memmove(p + lead_repl_len, p + i,
                       (size_t)(lead_len - i - (p - leader)));
