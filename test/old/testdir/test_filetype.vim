@@ -410,6 +410,7 @@ func s:GetFilenameChecks() abort
     \ 'inko': ['file.inko'],
     \ 'ipfilter': ['ipf.conf', 'ipf6.conf', 'ipf.rules'],
     \ 'ipkg': ['file.ipkg'],
+    \ 'ispc': ['file.ispc', 'file.isph'],
     \ 'iss': ['file.iss'],
     \ 'ist': ['file.ist', 'file.mst'],
     \ 'j': ['file.ijs'],
