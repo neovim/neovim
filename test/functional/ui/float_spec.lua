@@ -10016,6 +10016,50 @@ describe('float window', function()
         }
       end
 
+      -- changing only zindex restacks the float #42556
+      api.nvim_win_set_config(win1, { zindex = 60 })
+      if multigrid then
+        screen:expect {
+          grid = [[
+        ## grid 1
+          [2:----------------------------------------]|*6
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|*5
+        ## grid 3
+                                                  |
+        ## grid 4
+          {7:                    }|
+          {7:~                   }|*2
+        ## grid 5
+          {17:                    }|
+          {17:~                   }|*2
+        ## grid 6
+          {8:                    }|
+          {8:~                   }|*2
+        ]],
+          float_pos = {
+            [4] = { 1001, 'NW', 1, 1, 5, true, 60, 3, 1, 5 },
+            [5] = { 1002, 'NW', 1, 2, 6, true, 50, 2, 2, 6 },
+            [6] = { 1003, 'NW', 1, 3, 7, true, 40, 1, 3, 7 },
+          },
+        }
+      else
+        screen:expect {
+          grid = [[
+          ^                                        |
+          {0:~    }{7:                    }{0:               }|
+          {0:~    }{7:~                   }{17: }{0:              }|
+          {0:~    }{7:~                   }{17: }{8: }{0:             }|
+          {0:~     }{17:~                   }{8: }{0:             }|
+          {0:~      }{8:~                   }{0:             }|
+                                                  |
+        ]],
+        }
+      end
+      api.nvim_win_set_config(win1, { zindex = 30 })
+
       --
       -- Check that floats are positioned correctly after changing the zindexes.
       --

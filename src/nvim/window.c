@@ -957,6 +957,9 @@ void ui_ext_win_position(win_T *wp, bool validate)
     if (!c.hide) {
       ui_comp_put_grid(&wp->w_grid_alloc, comp_row, comp_col,
                        wp->w_height_outer, wp->w_width_outer, valid, false);
+      if (resort) {
+        ui_comp_compose_grid(&wp->w_grid_alloc);
+      }
       if (ui_has(kUIMultigrid)) {
         String anchor = cstr_as_string(float_anchor_str[c.anchor]);
         ui_call_win_float_pos(wp->w_grid_alloc.handle, wp->handle, anchor,
