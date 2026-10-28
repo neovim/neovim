@@ -55,7 +55,7 @@ continues in the background), or |:connect| to another instance.
 Use cases:
 - keep the session running on remote machines after (unexpected) SSH disconnect
 - open files in an existing session from your OS file explorer
-- run Nvim as a background process (daemon/service), atttach/detach as needed
+- run Nvim as a background process (daemon/service), attach/detach as needed
 
 ------------------------------------------------------------------------------
 Stop or detach the current UI
