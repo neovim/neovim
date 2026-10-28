@@ -245,16 +245,11 @@ end
 --- @param is_pull? boolean
 --- @param pull_id? string
 local function handle_diagnostics(uri, client_id, diagnostics, is_pull, pull_id)
-  local fname = vim.uri_to_fname(uri)
-
-  if #diagnostics == 0 and vim.fn.bufexists(fname) == 0 then
+  local bufnr = require('vim.uri')._uri_to_bufnr(uri)
+  if not bufnr and #diagnostics == 0 then
     return
   end
-
-  local bufnr = vim.fn.bufadd(fname)
-  if not bufnr then
-    return
-  end
+  bufnr = bufnr or vim.uri_to_bufnr(uri)
 
   client_id = client_id or DEFAULT_CLIENT_ID
 

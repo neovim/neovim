@@ -206,6 +206,30 @@ describe('URI methods', function()
   end)
 
   describe('uri from bufnr', function()
+    it('uses distinct reversible URIs for unnamed buffers', function()
+      local result = exec_lua(function()
+        local first = vim.api.nvim_get_current_buf()
+        local second = vim.api.nvim_create_buf(true, false)
+        local first_uri = vim.uri_from_bufnr(first)
+        local second_uri = vim.uri_from_bufnr(second)
+
+        return {
+          first = first,
+          second = second,
+          first_uri = first_uri,
+          second_uri = second_uri,
+          first_roundtrip = vim.uri_to_bufnr(first_uri),
+          second_roundtrip = vim.uri_to_bufnr(second_uri),
+        }
+      end)
+
+      eq(result.first, result.first_roundtrip)
+      eq(result.second, result.second_roundtrip)
+      eq(true, result.first_uri:match('^untitled:nvim%-%d+%-%d+$') ~= nil)
+      eq(true, result.second_uri:match('^untitled:nvim%-%d+%-%d+$') ~= nil)
+      eq(false, result.first_uri == result.second_uri)
+    end)
+
     it('Windows paths should not be treated as uris', function()
       skip(not is_os('win'), 'N/A on non-Windows')
 

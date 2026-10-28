@@ -9,6 +9,7 @@ local schar = string.char
 local tohex = require('bit').tohex
 local URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):.*'
 local WINDOWS_URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):[a-zA-Z]:.*'
+local UNTITLED_URI_PATTERN = '^untitled:nvim%-(%d+)%-(%d+)$'
 local PATTERNS = {
   -- RFC 2396
   -- https://tools.ietf.org/html/rfc2396#section-2.2
@@ -76,11 +77,17 @@ function M.uri_from_fname(path)
   return table.concat(uri_parts)
 end
 
----Gets a URI from a bufnr.
+---Gets a URI from a bufnr. Unnamed buffers use a process-local `untitled:` URI.
 ---@param buf integer
 ---@return string URI
 function M.uri_from_bufnr(buf)
+  if buf == 0 then
+    buf = vim.api.nvim_get_current_buf()
+  end
   local fname = vim.api.nvim_buf_get_name(buf)
+  if fname == '' then
+    return ('untitled:nvim-%d-%d'):format(vim.uv.os_getpid(), buf)
+  end
   local volume_path = fname:match('^([a-zA-Z]:).*')
   local is_windows = volume_path ~= nil
   local scheme ---@type string?
@@ -95,6 +102,20 @@ function M.uri_from_bufnr(buf)
   else
     return M.uri_from_fname(fname)
   end
+end
+
+---Gets an existing buffer for a URI without creating one.
+---@param uri string
+---@return integer? bufnr
+function M._uri_to_bufnr(uri)
+  local pid, buf = uri:match(UNTITLED_URI_PATTERN)
+  buf = tonumber(buf)
+  if tonumber(pid) == vim.uv.os_getpid() and buf and vim.api.nvim_buf_is_valid(buf) then
+    return buf
+  end
+
+  local bufnr = vim.fn.bufnr(M.uri_to_fname(uri))
+  return bufnr ~= -1 and bufnr or nil
 end
 
 ---Gets a filename from a URI.
@@ -124,7 +145,7 @@ end
 ---@param uri string
 ---@return integer bufnr
 function M.uri_to_bufnr(uri)
-  return vim.fn.bufadd(M.uri_to_fname(uri))
+  return M._uri_to_bufnr(uri) or vim.fn.bufadd(M.uri_to_fname(uri))
 end
 
 return M

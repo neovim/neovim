@@ -212,6 +212,56 @@ describe('vim.lsp.diagnostic', function()
       )
     end)
 
+    it('routes diagnostics to distinct unnamed buffers', function()
+      local result = exec_lua(function()
+        local first = vim.api.nvim_create_buf(true, false)
+        local second = vim.api.nvim_create_buf(true, false)
+        local first_uri = vim.uri_from_bufnr(first)
+        local second_uri = vim.uri_from_bufnr(second)
+
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
+          uri = first_uri,
+          diagnostics = {
+            _G.make_error('first', 0, 0, 0, 0),
+          },
+        }, { client_id = client_id })
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
+          uri = second_uri,
+          diagnostics = {
+            _G.make_error('second', 0, 0, 0, 0),
+          },
+        }, { client_id = client_id })
+
+        local first_diagnostics = vim.diagnostic.get(first)
+        local second_diagnostics = vim.diagnostic.get(second)
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
+          uri = first_uri,
+          diagnostics = {},
+        }, { client_id = client_id })
+
+        return {
+          first = first,
+          second = second,
+          first_uri = first_uri,
+          second_uri = second_uri,
+          first_roundtrip = vim.uri_to_bufnr(first_uri),
+          second_roundtrip = vim.uri_to_bufnr(second_uri),
+          first_diagnostics = first_diagnostics,
+          second_diagnostics = second_diagnostics,
+          first_after_clear = vim.diagnostic.get(first),
+          second_after_clear = vim.diagnostic.get(second),
+        }
+      end)
+
+      eq(result.first, result.first_roundtrip)
+      eq(result.second, result.second_roundtrip)
+      eq(false, result.first_uri == result.second_uri)
+      eq('first', result.first_diagnostics[1].message)
+      eq('second', result.second_diagnostics[1].message)
+      eq(0, #result.first_after_clear)
+      eq('second', result.second_after_clear[1].message)
+    end)
+
     it('clears diagnostics for the client namespace on empty publish', function()
       local before_clear, after_clear = exec_lua(function()
         local ns = vim.lsp.diagnostic.get_namespace(client_id)
