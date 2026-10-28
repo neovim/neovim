@@ -342,7 +342,7 @@ custom terminfo at runtime, use
 make CMAKE_EXTRA_FLAGS="-DENABLE_UNIBILIUM=0" DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_UNIBILIUM=0"
 ```
 
-To confirm at runtime that unibilium was not included, check `has('terminfo') == 1`.
+To confirm at runtime that unibilium was not included, check `has('terminfo') == 0`.
 
 ### Build with specific "bundled" dependencies
 
