@@ -209,7 +209,7 @@ Filesystem                                                    *dev-filesystem*
 
 https://github.com/neovim/neovim/issues/36112 Path handling, especially
 separator chars ("/" vs "\"), is designed as follows: "/" separators are used
-every except at the "edges", i.e. the separator chars are coverted
+everywhere except at the "edges", i.e. the separator chars are converted
 just-in-time, and only when absolutely needed. This is similar to how UTF-8
 encoding is used internally for all text, but buffers can read/write various
 encodings.

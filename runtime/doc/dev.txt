@@ -420,7 +420,7 @@ API PATTERNS                                                *dev-api-patterns*
     - |OptionSet| event
     - Scopes: global/buf/win/tab (can start as global, then "graduate" later)
     - UI: `:verbose set`, `:options`, etc.
-  - Alternatively if the editor |options| system absolutey doesn't fit: Expose
+  - Alternatively if the editor |options| system absolutely doesn't fit: Expose
     a `config(opts)` interface (example: |vim.diagnostic.config()|). If `opts`
     is omitted (or `nil`) it returns the current configuration.
 - "Enable" ("toggle") interface and behavior:

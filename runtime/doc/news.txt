@@ -123,6 +123,9 @@ EDITOR
 • `stdpath("log")` moved to `stdpath("state")/logs`.
 • An operator on a target that creates a Visual selection ("cgn") does not
   change |'<| |'>|. |gv|
+• After a motion forced blockwise (|o_CTRL-V|), |']| is on the last column
+  of the block: "g@<C-v>l" gives 'operatorfunc' the block that "y<C-v>l"
+  yanks.
 • |cmdwin| (|q:|, |q/|, |q?|, |c_CTRL-F|):
   • Only supports one "cmdline level", not "infinite recursion".
   • Expr-register (|i_CTRL-R_=|, |c_CTRL-R_=|) no longer supports opening
