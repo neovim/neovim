@@ -852,17 +852,16 @@ review_pr() {
 
 is_na_patch() {
   local patch=$1
-  local NA_REGEXP="$NVIM_SOURCE_DIR/scripts/vim_na_regexp.txt"
-  local NA_FILELIST="$NVIM_SOURCE_DIR/scripts/vim_na_files.txt"
   local NA_HUNKS_C="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_c.txt"
   local NA_HUNKS_H="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_h.txt"
   local NA_HUNKS_HELP="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_help.txt"
   local NA_HUNKS_MAKE_PO="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_make_po.txt"
   local NA_HUNKS_VIM="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_vim.txt"
+  local -a NA_PATHSPECS
+  readarray -t NA_PATHSPECS < "$NVIM_SOURCE_DIR/scripts/vim_na_pathspec.txt"
 
   local FILES_REMAINING HUNKS HUNK_NUM_FINAL
-  FILES_REMAINING="$(diff <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b --name-only "$patch" | grep -v -f "$NA_REGEXP") "$NA_FILELIST" |
-    grep '^<' | sed 's/^< //')" || true
+  FILES_REMAINING=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b --name-only "$patch" -- "${NA_PATHSPECS[@]}") || true
   test -z "$FILES_REMAINING" && return 0
 
   for file in $FILES_REMAINING; do
