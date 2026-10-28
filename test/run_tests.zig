@@ -21,6 +21,8 @@ pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compi
 
     const env = test_step.getEnvMap();
     try env.put("NVIM_TEST", "1");
+    // Test runner should use the runtime from the build, not the system install (if any).
+    try env.put("VIMRUNTIME", try b.build_root.join(b.graph.arena, &.{"runtime"}));
     if (env.get("NVIM_LOG_FILE") == null) {
         try env.put("NVIM_LOG_FILE", b.fmt("{s}/nvim.log", .{b.install_path}));
     }
