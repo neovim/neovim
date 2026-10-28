@@ -110,6 +110,13 @@ static struct {
   kvec_t(uint32_t) regions;  ///< Per-cursor preview regions (`mc_session_ns`).
   bool active;      ///< Current insert-session is cascading.
   bool first;       ///< Entry-command not yet cascaded (no span pushed yet).
+  bool restart_pending;  ///< Keep an external edit after completion finalizes the capture.
+  String completion_prefix;  ///< Original text preceding the insertion region.
+  String completion_original;  ///< Insert span before completion replaces its suffix.
+  String completion_capture;  ///< Raw capture corresponding to completion_original.
+  pos_T completion_start;  ///< Position before completion replaces that original text.
+  bool completion_prefix_included;  ///< Original bytes pulled into the current region.
+  bool completion_external;  ///< Primary differs from the last mirrored insert preview.
   uint64_t frame;   ///< Root frame that started the insert-session.
   size_t done_len;  ///< Bytes of the capture already consumed by replayed spans; tail is pending.
   uint32_t region;  ///< Primary cursor's inserted text.
@@ -579,6 +586,12 @@ void mc_ins_cascade_start(bool cascade, CmdOrigin origin, uint64_t root_frame, c
   mc_ins_joined = false;
   mc_ins_span.active = cascade && mc_buf_has_cursors(curbuf);
   mc_ins_span.first = true;
+  mc_ins_span.restart_pending = false;
+  API_CLEAR_STRING(mc_ins_span.completion_prefix);
+  API_CLEAR_STRING(mc_ins_span.completion_original);
+  API_CLEAR_STRING(mc_ins_span.completion_capture);
+  mc_ins_span.completion_prefix_included = false;
+  mc_ins_span.completion_external = false;
   mc_ins_span.frame = root_frame;
   mc_ins_span.done_len = 0;
   mc_ins_span.origin = origin;
@@ -804,9 +817,178 @@ void mc_ins_cascade_restart(void)
     return;
   }
   String ins = redo_keys(NULL);
+  if (ins_compl_active()) {
+    mc_ins_span.restart_pending = true;
+    api_free_string(ins);
+    return;
+  }
+  mc_ins_span.restart_pending = false;
   mc_ins_span.done_len = ins.size;
   api_free_string(ins);
   mc_ins_preview_rebase();
+}
+
+/// Remember insert-span ownership before completion replaces its suffix.
+void mc_ins_completion_start(colnr_T col)
+{
+  if (mc_replaying()) {
+    return;
+  }
+  API_CLEAR_STRING(mc_ins_span.completion_prefix);
+  API_CLEAR_STRING(mc_ins_span.completion_original);
+  API_CLEAR_STRING(mc_ins_span.completion_capture);
+  mc_ins_span.completion_prefix_included = false;
+  mc_ins_span.completion_external = false;
+  pos_T start, end;
+  if (mc_ins_span.active && bufref_valid(&mc_ins_span.origin.buf)
+      && mc_ins_span.origin.buf.br_buf == curbuf && (State & MODE_INSERT)
+      && mc_region_mark_range(mc_ins_span.region, &start, &end)) {
+    if (equalpos(end, curwin->w_cursor)) {
+      mc_ins_span.completion_original = ml_region_text(curbuf, start, end);
+      mc_ins_span.completion_capture = redo_keys(NULL);
+      MTPair preview = mc_ins_region_first();
+      if (preview.start.id != 0) {
+        pos_T ps, pe;
+        mc_region_range(preview, &ps, &pe);
+        String mirrored = ml_region_text(curbuf, ps, pe);
+        const String original = mc_ins_span.completion_original;
+        mc_ins_span.completion_external = original.size != mirrored.size
+                                          || (original.size > 0
+                                              && memcmp(original.data, mirrored.data,
+                                                        original.size) != 0);
+        api_free_string(mirrored);
+      }
+    }
+    if (start.lnum == curwin->w_cursor.lnum && col >= 0 && col < start.col
+        && start.col <= curwin->w_cursor.col) {
+      mc_ins_span.completion_start = (pos_T){ .lnum = start.lnum, .col = col };
+      mc_ins_span.completion_prefix = cbuf_to_string(get_cursor_line_ptr() + col,
+                                                     (size_t)(start.col - col));
+    }
+  }
+}
+
+/// Snapshot completion text before formatting, and again before completion callbacks.
+String mc_ins_completion_text(bool before_format)
+{
+  pos_T start, end;
+  if (mc_ins_span.restart_pending && mc_ins_span.active && !mc_replaying()
+      && bufref_valid(&mc_ins_span.origin.buf) && mc_ins_span.origin.buf.br_buf == curbuf
+      && (State & MODE_INSERT) && mc_buf_has_cursors(curbuf)
+      && mc_region_mark_range(mc_ins_span.region, &start, &end)) {
+    if (before_format) {
+      mc_ins_span.completion_prefix_included = mc_ins_span.completion_prefix.size > 0
+                                               && equalpos(start, mc_ins_span.completion_start);
+    }
+    return ml_region_text(curbuf, start, end);
+  }
+  return (String)STRING_INIT;
+}
+
+/// Recreate uncaptured edits before replaying completion's tail at each cursor.
+static bool mc_ins_completion_replay(const String *before, const String *formatted,
+                                     const String *ins)
+{
+  const String original = mc_ins_span.completion_original;
+  const String capture = mc_ins_span.completion_capture;
+  const String prefix = mc_ins_span.completion_prefix_included
+                        ? mc_ins_span.completion_prefix : (String)STRING_INIT;
+  if (capture.data == NULL || capture.size < mc_ins_span.done_len || capture.size > ins->size
+      || memcmp(capture.data, ins->data, capture.size) != 0
+      || mc_ins_keys_nonliteral(capture.data + mc_ins_span.done_len,
+                                capture.size - mc_ins_span.done_len)) {
+    return false;
+  }
+  const char *keys = ins->data + capture.size;
+  const size_t len = ins->size - capture.size;
+  char *expected = xmalloc(prefix.size + original.size + 1);
+  if (prefix.size > 0) {
+    memcpy(expected, prefix.data, prefix.size);
+  }
+  if (original.size > 0) {
+    memcpy(expected + prefix.size, original.data, original.size);
+  }
+  char *end = expected + prefix.size + original.size;
+  *end = NUL;
+  size_t offset = 0;
+  bool valid = true;
+  while (offset < len) {
+    int key = (uint8_t)keys[offset];
+    size_t width = 1;
+    if (key == K_SPECIAL && offset + 2 < len) {
+      key = TO_SPECIAL((uint8_t)keys[offset + 1], (uint8_t)keys[offset + 2]);
+      width = 3;
+    }
+    if (key != K_BS && key != Ctrl_H) {
+      break;
+    }
+    if (end == expected || end[-1] == NL) {
+      valid = false;
+      break;
+    }
+    MB_PTR_BACK(expected, end);
+    offset += width;
+  }
+  valid = valid && !mc_ins_keys_nonliteral(keys + offset, len - offset);
+  char *tail = xmemdupz(keys + offset, len - offset);
+  const size_t tail_len = vim_unescape_ks(tail);
+  const size_t keep = (size_t)(end - expected);
+  const size_t result_len = keep + tail_len;
+  valid = valid && before->size >= result_len
+          && (keep == 0 || memcmp(before->data, expected, keep) == 0)
+          && (tail_len == 0 || memcmp(before->data + keep, tail, tail_len) == 0);
+  valid = valid && (mc_ins_span.completion_external || before->size > result_len);
+  xfree(tail);
+  xfree(expected);
+  if (!valid) {
+    return false;
+  }
+  // CompleteDone callbacks may change text after completion formatting.
+  pos_T start, finish;
+  if (!mc_region_mark_range(mc_ins_span.region, &start, &finish)) {
+    return false;
+  }
+  String current = ml_region_text(curbuf, start, finish);
+  valid = current.size == formatted->size
+          && (current.size == 0 || memcmp(current.data, formatted->data, current.size) == 0);
+  api_free_string(current);
+  if (!valid) {
+    return false;
+  }
+  mc_ins_preview_set(&original);
+  mc_ins_preview_rebase();
+  mc_ins_span.done_len = capture.size;
+  if (ins->size > capture.size) {
+    mc_ins_span_flush(ins, false);
+  }
+  // An API append after completion starts is not part of its redo tail either.
+  if (before->size > result_len) {
+    String suffix = { .data = before->data + result_len, .size = before->size - result_len };
+    mc_ins_preview_set(&suffix);
+    mc_ins_preview_rebase();
+  }
+  return true;
+}
+
+/// Completion finalized redo. Preserve uncaptured edits while replaying the completion tail.
+void mc_ins_cascade_complete(const String *before, const String *formatted)
+{
+  if (!mc_ins_span.restart_pending || !mc_ins_span.active || mc_replaying()
+      || !bufref_valid(&mc_ins_span.origin.buf) || mc_ins_span.origin.buf.br_buf != curbuf
+      || ins_compl_active() || !(State & MODE_INSERT) || !mc_buf_has_cursors(curbuf)) {
+    return;
+  }
+  mc_ins_span.restart_pending = false;
+  String ins = redo_keys(NULL);
+  if (ins.data != NULL && ins.size >= mc_ins_span.done_len) {
+    mc_ins_completion_replay(before, formatted, &ins);
+  }
+  api_free_string(ins);
+  API_CLEAR_STRING(mc_ins_span.completion_prefix);
+  API_CLEAR_STRING(mc_ins_span.completion_original);
+  API_CLEAR_STRING(mc_ins_span.completion_capture);
+  mc_ins_span.completion_prefix_included = false;
+  mc_ins_span.completion_external = false;
 }
 
 /// True during a span replay. The replay's synthetic <Esc> does not end the primary insert-session,
@@ -1161,6 +1343,12 @@ bool mc_ins_commit(void)
   bool ins_cascaded = active && !mc_ins_span.first;
   mc_ins_span.active = false;
   mc_ins_span.vsel = NULL;
+  mc_ins_span.restart_pending = false;
+  API_CLEAR_STRING(mc_ins_span.completion_prefix);
+  API_CLEAR_STRING(mc_ins_span.completion_original);
+  API_CLEAR_STRING(mc_ins_span.completion_capture);
+  mc_ins_span.completion_prefix_included = false;
+  mc_ins_span.completion_external = false;
 
   if (ins_cascaded) {
     // COMMIT: replace the previews with a real replay: abbrev, 'textwidth', … re-exec per cursor.

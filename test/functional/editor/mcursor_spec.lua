@@ -2022,6 +2022,386 @@ describe('multicursor', function()
       end
     end)
 
+    it('edit not captured by redo survives completion #42548', function()
+      command('set completeopt=menuone')
+      for _, case in ipairs({
+        { false, {}, '<Esc>', 'X' },
+        { true, {}, '<Esc>', 'X' },
+        { false, {}, 'Y<Esc>', 'XY' },
+        { true, {}, 'Y<Esc>', 'XY' },
+        { false, { 'Y' }, '<C-y><Esc>', 'XY' },
+        { true, { 'Y' }, '<C-y><Esc>', 'YX' },
+        { false, { 'Y' }, '<C-e><Esc>', 'X' },
+      }) do
+        clear_cursors()
+        cursors({ 'foo', 'bar' }, 'QjQ')
+        n.exec_lua(function(completion_before, matches)
+          vim.keymap.set('i', '<C-j>', function()
+            if completion_before then
+              vim.fn.complete(vim.fn.col('.'), matches)
+            end
+            vim.api.nvim_put({ 'X' }, 'c', false, true)
+            if not completion_before then
+              vim.fn.complete(vim.fn.col('.'), matches)
+            end
+          end)
+        end, case[1], case[2])
+        feed('A<C-j>' .. case[3])
+        eq({ 'foo' .. case[4], 'bar' .. case[4] }, get_lines())
+        feed('u')
+        eq({ 'foo', 'bar' }, get_lines())
+      end
+    end)
+
+    it('completion-only edits still replay per cursor #42548', function()
+      command('set completeopt=menuone textwidth=10')
+      cursors({ 'longerbar', 'foo' }, 'Qj')
+      feed('A')
+      fn.complete(fn.col('.'), { 'X Y' })
+      feed('<C-y><Esc>')
+      eq({ 'longerbarX', 'Y', 'fooX Y' }, get_lines())
+      feed('u')
+      eq({ 'longerbar', 'foo' }, get_lines())
+
+      -- RPC completion marks the primary's undo as needing sync, so its completion stop does
+      -- not wrap the line. The secondary still replays the completion at its own textwidth.
+      clear_cursors()
+      cursors({ 'foo', 'longerbar' }, 'Qj')
+      feed('A')
+      fn.complete(fn.col('.'), { 'X Y' })
+      feed('<C-y><Esc>')
+      eq({ 'fooX Y', 'longerbarX Y' }, get_lines())
+      feed('u')
+      eq({ 'foo', 'longerbar' }, get_lines())
+
+      clear_cursors()
+      cursors({ 'wo', 'wo' }, 'Qj')
+      feed('A')
+      fn.complete(1, { 'wombat' })
+      feed('<C-y><Esc>')
+      eq({ 'wombat', 'wombat' }, get_lines())
+      feed('u')
+      eq({ 'wo', 'wo' }, get_lines())
+    end)
+
+    it('completion distinguishes existing text from API edits #42548', function()
+      command('set completeopt=menuone')
+      for _, case in ipairs({
+        { 'wo', 'X', 'woXmbat', '<C-y>', 'woXmbat' },
+        { 'wo', 'X', 'woXmbat', '<C-e>', 'woX' },
+        { 'wo', 'wo', 'wowoX', '<C-y>', 'wowoX' },
+        { 'wo', 'wo', 'wowoX', '<C-e>', 'wowo' },
+        { 'wö', 'X', 'wöXmbat', '<C-y>', 'wöXmbat' },
+      }) do
+        clear_cursors()
+        cursors({ case[1], case[1] }, 'Qj')
+        n.exec_lua(function(text, candidate)
+          vim.keymap.set('i', '<C-j>', function()
+            vim.api.nvim_put({ text }, 'c', false, true)
+            vim.fn.complete(1, { candidate })
+          end)
+        end, case[2], case[3])
+        feed('A<C-j>' .. case[4] .. '<Esc>')
+        eq({ case[5], case[5] }, get_lines())
+        feed('u')
+        eq({ case[1], case[1] }, get_lines())
+      end
+    end)
+
+    it('completion after an API edit still replays per cursor #42548', function()
+      command('set completeopt=menuone textwidth=10')
+      n.exec_lua(function()
+        vim.keymap.set('i', '<C-j>', function()
+          vim.api.nvim_put({ 'X' }, 'c', false, true)
+          vim.fn.complete(vim.fn.col('.'), { 'Y Z' })
+        end)
+      end)
+      cursors({ 'longerbar', 'foo' }, 'Qj')
+      feed('A<C-j><C-y><Esc>')
+      eq({ 'longerbarXY', 'Z', 'fooXY Z' }, get_lines())
+      feed('u')
+      eq({ 'longerbar', 'foo' }, get_lines())
+    end)
+
+    it('completion suffix follows multiline and escaped API text #42548', function()
+      command('set completeopt=menuone')
+      for _, case in ipairs({
+        { { 'X', 'Z' }, 'Y', '', { 'fooX', 'ZY', 'barX', 'ZY' } },
+        { { 'X' }, '😀', '', { 'fooX😀', 'barX😀' } },
+        { { 'X' }, 'Y', 'ab', { 'fooabXY', 'barabXY' } },
+      }) do
+        clear_cursors()
+        cursors({ 'foo', 'bar' }, 'Qj')
+        n.exec_lua(function(text, candidate)
+          vim.keymap.set('i', '<C-j>', function()
+            vim.api.nvim_put(text, 'c', false, true)
+            vim.fn.complete(vim.fn.col('.'), { candidate })
+          end)
+        end, case[1], case[2])
+        feed('A' .. case[3] .. '<C-j><C-y><Esc>')
+        eq(case[4], get_lines())
+        feed('u')
+        eq({ 'foo', 'bar' }, get_lines())
+      end
+    end)
+
+    it('completion keeps API edits at a deferred same-line cursor #42548', function()
+      command('set completeopt=menuone')
+      for _, case in ipairs({ { {}, '<Esc>', 'X' }, { { 'Y' }, '<C-y><Esc>', 'XY' } }) do
+        clear_cursors()
+        cursors({ 'foo bar' }, 'eQwe')
+        n.exec_lua(function(matches)
+          vim.keymap.set('i', '<C-j>', function()
+            vim.api.nvim_put({ 'X' }, 'c', false, true)
+            vim.fn.complete(vim.fn.col('.'), matches)
+          end)
+        end, case[1])
+        feed('a<C-j>' .. case[2])
+        eq({ 'foo' .. case[3] .. ' bar' .. case[3] }, get_lines())
+        feed('u')
+        eq({ 'foo bar' }, get_lines())
+      end
+    end)
+
+    it('completion changing an existing prefix still replays #42548', function()
+      command('set completeopt=menuone')
+      cursors({ 'wo', 'wo' }, 'Qj')
+      feed('A')
+      fn.complete(1, { 'aardvark' })
+      feed('<C-y><Esc>')
+      eq({ 'aardvark', 'aardvark' }, get_lines())
+      feed('u')
+      eq({ 'wo', 'wo' }, get_lines())
+    end)
+
+    it('completion removing an API prefix still replays #42548', function()
+      command('set completeopt=menuone')
+      cursors({ 'wo', 'wo' }, 'Qj')
+      n.exec_lua(function()
+        vim.keymap.set('i', '<C-j>', function()
+          vim.api.nvim_put({ 'X' }, 'c', false, true)
+          vim.fn.complete(1, { 'wombat' })
+        end)
+      end)
+      feed('A<C-j><C-y><Esc>')
+      eq({ 'wombat', 'wombat' }, get_lines())
+      feed('u')
+      eq({ 'wo', 'wo' }, get_lines())
+    end)
+
+    it('nonliteral completion keeps typed and UTF-8 API prefixes #42548', function()
+      command('set completeopt=menuone')
+      for _, case in ipairs({
+        { 'wo', 'ab', 'X', 'woabmbat', 'woabmbat' },
+        { 'wo', '', '😀', 'wombat', 'wombat' },
+      }) do
+        clear_cursors()
+        cursors({ case[1], case[1] }, 'Qj')
+        n.exec_lua(function(text, candidate)
+          vim.keymap.set('i', '<C-j>', function()
+            vim.api.nvim_put({ text }, 'c', false, true)
+            vim.fn.complete(1, { candidate })
+          end)
+        end, case[3], case[4])
+        feed('A' .. case[2] .. '<C-j><C-y><Esc>')
+        eq({ case[5], case[5] }, get_lines())
+        feed('u')
+        eq({ case[1], case[1] }, get_lines())
+      end
+    end)
+
+    it('nonliteral completion keeps API appends after it starts #42548', function()
+      command('set completeopt=menuone')
+      for _, text_before in ipairs({ '', 'X' }) do
+        clear_cursors()
+        cursors({ 'wo', 'wo' }, 'Qj')
+        n.exec_lua(function(prefix)
+          vim.keymap.set('i', '<C-j>', function()
+            if prefix ~= '' then
+              vim.api.nvim_put({ prefix }, 'c', false, true)
+            end
+            vim.fn.complete(1, { 'aardvark' })
+            vim.api.nvim_put({ 'Y' }, 'c', false, true)
+          end)
+        end, text_before)
+        feed('A<C-j><C-y><Esc>')
+        eq({ 'aardvarkY', 'aardvarkY' }, get_lines())
+        feed('u')
+        eq({ 'wo', 'wo' }, get_lines())
+      end
+    end)
+
+    it('cancelling nonliteral completion retains the API original #42548', function()
+      command('set completeopt=menuone')
+      cursors({ 'wo', 'wo' }, 'Qj')
+      n.exec_lua(function()
+        vim.keymap.set('i', '<C-j>', function()
+          vim.api.nvim_put({ 'X' }, 'c', false, true)
+          vim.fn.complete(1, { 'aardvark' })
+        end)
+      end)
+      feed('A<C-j><C-e><Esc>')
+      eq({ 'woX', 'woX' }, get_lines())
+      feed('u')
+      eq({ 'wo', 'wo' }, get_lines())
+    end)
+
+    it('repeated API completion resets capture ownership #42548', function()
+      command('set completeopt=menuone')
+      cursors({ 'foo', 'bar' }, 'Qj')
+      n.exec_lua(function()
+        vim.keymap.set('i', '<C-j>', function()
+          vim.api.nvim_put({ 'X' }, 'c', false, true)
+          vim.fn.complete(vim.fn.col('.'), { 'Y' })
+        end)
+      end)
+      feed('A<C-j><C-y><C-j><C-y><Esc>')
+      eq({ 'fooXYXY', 'barXYXY' }, get_lines())
+      feed('u')
+      eq({ 'foo', 'bar' }, get_lines())
+    end)
+
+    it('repeated existing-word completion resets prefix ownership #42548', function()
+      command('set completeopt=menuone')
+      cursors({ 'wo', 'wo' }, 'Qj')
+      n.exec_lua(function()
+        vim.keymap.set('i', '<C-j>', function()
+          vim.api.nvim_put({ 'X' }, 'c', false, true)
+          vim.fn.complete(1, { 'woXmbat' })
+        end)
+      end)
+      feed('A<C-j><C-y>')
+      fn.complete(1, { 'woXmbatZ' })
+      feed('<C-y><Esc>')
+      eq({ 'woXmbatZ', 'woXmbatZ' }, get_lines())
+      feed('u')
+      eq({ 'wo', 'wo' }, get_lines())
+    end)
+
+    it('nonliteral completion formats each primary length #42548', function()
+      command('set completeopt=menuone,noinsert textwidth=10')
+      for _, case in ipairs({
+        { { 'wo', 'longerwo' }, { 'wombat Z', 'longerwombat', 'Z' } },
+        { { 'longerwo', 'wo' }, { 'longerwombat', 'Z', 'wombat Z' } },
+      }) do
+        for _, api_text in ipairs({ '', 'X' }) do
+          clear_cursors()
+          cursors(case[1], 'Qj')
+          n.exec_lua(function(text)
+            vim.keymap.set('i', '<C-j>', function()
+              if text ~= '' then
+                vim.api.nvim_put({ text }, 'c', false, true)
+              end
+              local col = vim.fn.col('.') - 2 - #text
+              vim.fn.complete(col, { 'wombat Z' })
+            end)
+          end, api_text)
+          feed('A<C-j><C-y><Esc>')
+          eq(case[2], get_lines())
+          feed('u')
+          eq(case[1], get_lines())
+        end
+      end
+    end)
+
+    it('completion before an API append still formats per cursor #42548', function()
+      command('set completeopt=menuone textwidth=10')
+      cursors({ 'longerbar', 'foo' }, 'Qj')
+      n.exec_lua(function()
+        vim.keymap.set('i', '<C-j>', function()
+          vim.fn.complete(vim.fn.col('.'), { 'Y Z' })
+          vim.api.nvim_put({ 'X' }, 'c', false, true)
+        end)
+      end)
+      feed('A<C-j><C-y><Esc>')
+      eq({ 'longerbarY', 'ZX', 'fooY ZX' }, get_lines())
+      feed('u')
+      eq({ 'longerbar', 'foo' }, get_lines())
+    end)
+
+    for _, event in ipairs({ 'CompleteDonePre', 'CompleteDone' }) do
+      for _, switch_window in ipairs({ false, true }) do
+        it(
+          ('completion preserves callback movement %s %s #42548'):format(
+            event,
+            tostring(switch_window)
+          ),
+          function()
+            command('set completeopt=menuone')
+            for _, api_text in ipairs({ '', 'X' }) do
+              clear_cursors()
+              command('only')
+              cursors({ 'wo', 'wo' }, 'Qj')
+              local target = n.exec_lua(function(name, new_window, text)
+                local source = vim.api.nvim_get_current_win()
+                local destination = source
+                if new_window then
+                  vim.cmd('split')
+                  destination = vim.api.nvim_get_current_win()
+                  vim.api.nvim_set_current_win(source)
+                end
+                vim.api.nvim_create_autocmd(name, {
+                  once = true,
+                  callback = function()
+                    vim.api.nvim_set_current_win(destination)
+                    vim.api.nvim_win_set_cursor(0, { 2, 0 })
+                  end,
+                })
+                vim.keymap.set('i', '<C-j>', function()
+                  if text ~= '' then
+                    vim.api.nvim_put({ text }, 'c', false, true)
+                  end
+                  vim.fn.complete(1, { 'wombat' })
+                end)
+                return destination
+              end, event, switch_window, api_text)
+              feed('A<C-j><C-y><Esc>')
+              eq(
+                { { 'wombat', 'wombat' }, { 2, 0 }, target },
+                { get_lines(), api.nvim_win_get_cursor(0), api.nvim_get_current_win() }
+              )
+              feed('u')
+              eq({ 'wo', 'wo' }, get_lines())
+            end
+          end
+        )
+      end
+    end
+
+    it('completion does not freeze earlier automatic wrapping #42548', function()
+      command('set completeopt=menuone textwidth=10')
+      cursors({ 'x', 'longer' }, 'Qj')
+      n.exec_lua(function()
+        vim.keymap.set('i', '<C-j>', function()
+          vim.fn.complete(vim.fn.col('.'), { 'Z' })
+        end)
+      end)
+      feed('Afoo bar<C-j><C-y><Esc>')
+      eq({ 'xfoo barZ', 'longerfoo', 'barZ' }, get_lines())
+      feed('u')
+      eq({ 'x', 'longer' }, get_lines())
+    end)
+
+    it('completion-triggered indentation keeps API edits #42548', function()
+      command('set completeopt=menuone indentexpr=4 indentkeys==wombat')
+      for _, api_text in ipairs({ '', 'X' }) do
+        clear_cursors()
+        cursors({ 'wo', 'wo' }, 'Qj')
+        n.exec_lua(function(text)
+          vim.keymap.set('i', '<C-j>', function()
+            if text ~= '' then
+              vim.api.nvim_put({ text }, 'c', false, true)
+            end
+            vim.fn.complete(1, { 'wombat' })
+          end)
+        end, api_text)
+        feed('A<C-j><C-y><Esc>')
+        eq({ '    wombat', '    wombat' }, get_lines())
+        feed('u')
+        eq({ 'wo', 'wo' }, get_lines())
+      end
+    end)
+
     it('mapping ending in a Normal-mode "tail", cascades #41864', function()
       command('inoremap <Esc> <Esc>l') -- the "<Esc>" leaves a Normal-mode tail ("l")
       api.nvim_buf_set_lines(0, 0, -1, true, { 'echo hi', 'echo bye' })

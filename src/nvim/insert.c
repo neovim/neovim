@@ -993,7 +993,7 @@ static int insert_handle_key(InsertState *s)
       // Save the cursor line before the next typed edit.
       Ins.need_undo = true;
     }
-    if (changed && !ins_compl_active()) {  // Multicursor: keep the edit as preview text.
+    if (changed) {  // Multicursor: keep the edit as preview text.
       mc_ins_cascade();
       mc_ins_cascade_restart();
     }

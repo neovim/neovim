@@ -52,6 +52,7 @@
 #include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -2799,6 +2800,8 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
     ins_compl_fixRedoBufForLeader(ptr);
   }
 
+  String mc_text = mc_ins_completion_text(true);
+
   bool want_cindent = (get_can_cindent() && cindent_on());
 
   // When completing whole lines: fix indent for 'cindent'.
@@ -2875,10 +2878,13 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
       }
     }
     restore_orig_extmarks();
+    api_free_string(mc_text);
+    mc_text = mc_ins_completion_text(true);
     retval = true;
   }
 
   auto_format(false, true);
+  String mc_formatted = mc_ins_completion_text(false);
 
   // Trigger the CompleteDonePre event to give scripts a chance to
   // act upon the completion before clearing the info, and restore
@@ -2912,12 +2918,25 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
 
   // Indent now if a key was typed that is in 'cinkeys'.
   if (want_cindent && in_cinkeys(KEY_COMPLETE, ' ', inindent(0))) {
+    String mc_current = mc_ins_completion_text(false);
+    bool mc_unchanged = mc_current.size == mc_formatted.size
+                        && (mc_current.size == 0
+                            || memcmp(mc_current.data, mc_formatted.data, mc_current.size) == 0);
+    api_free_string(mc_current);
     do_c_expr_indent();
+    // Include editor indentation, but not changes made by CompleteDonePre.
+    if (mc_unchanged) {
+      api_free_string(mc_formatted);
+      mc_formatted = mc_ins_completion_text(false);
+    }
   }
   // Trigger the CompleteDone event to give scripts a chance to act
   // upon the end of completion.
   do_autocmd_completedone(c, prev_mode, &word);
   xfree(word.data);
+  mc_ins_cascade_complete(&mc_text, &mc_formatted);
+  api_free_string(mc_text);
+  api_free_string(mc_formatted);
 
   return retval;
 }
@@ -3500,6 +3519,7 @@ static void ins_compl_add_dict(dict_T *dict)
 /// completion is cancelled, or the original text is completed.
 static void save_orig_extmarks(void)
 {
+  mc_ins_completion_start(compl_col);
   extmark_splice_delete(curbuf, curwin->w_cursor.lnum - 1, compl_col, curwin->w_cursor.lnum - 1,
                         compl_col + compl_length, &compl_orig_extmarks, true, kExtmarkUndo);
 }
