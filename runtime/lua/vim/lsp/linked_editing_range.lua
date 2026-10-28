@@ -75,7 +75,8 @@ local function update_ranges(bufnr, client_state)
     return
   end
 
-  for i, range in ipairs(ranges) do
+  for i = #ranges, 1, -1 do
+    local range = ranges[i]
     if i ~= client_state.range_index then
       api.nvim_buf_set_text(
         bufnr,
