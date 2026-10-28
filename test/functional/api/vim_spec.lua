@@ -5093,6 +5093,15 @@ describe('API', function()
         )
       )
     end)
+    it('repeated filter modifiers do not leak #42563', function()
+      eq(
+        { pattern = 'Xfilter', force = false },
+        api.nvim_parse_cmd('filter /nomatch/ filter /Xfilter/ ls', {}).mods.filter
+      )
+      command('file Xfilter')
+      eq(exec_capture('filter /Xfilter/ ls'), exec_capture('filter /nomatch/ filter /Xfilter/ ls'))
+      clear() -- Check for leaks when the process exits.
+    end)
     it('works with user commands', function()
       command('command -bang -nargs=+ -range -addr=lines MyCommand echo foo')
       eq_cmd({
