@@ -1201,6 +1201,7 @@ bool os_setenv_append_path(const char *fname)
   assert(tail >= fname && dirlen + 1 < sizeof(os_buf));
   xmemcpyz(os_buf, fname, dirlen);
   char *path = os_getenv("PATH");
+  // Skip appending to $PATH if already inherited from the TUI or a parent Nvim. #22572
   if (path != NULL) {
     const void *iter = NULL;
     do {
