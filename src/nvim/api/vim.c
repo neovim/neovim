@@ -579,7 +579,15 @@ Integer nvim_strwidth(String text, Error *err)
     return 0;
   });
 
-  return (Integer)mb_string2cells(text.data);
+  if (text.size == 0) {
+    return 0;
+  }
+
+  // The grapheme-aware width routine requires a NUL-terminated string.
+  char *str = xmemdupz(text.data, text.size);
+  Integer width = (Integer)mb_string2cells(str);
+  xfree(str);
+  return width;
 }
 
 /// Gets the paths contained in |runtime-search-path|.
