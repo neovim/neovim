@@ -245,7 +245,7 @@ end
 --- @param is_pull? boolean
 --- @param pull_id? string
 local function handle_diagnostics(uri, client_id, diagnostics, is_pull, pull_id)
-  local bufnr = require('vim.uri')._uri_to_bufnr(uri)
+  local bufnr = require('vim.uri')._uri_to_buf(uri)
   if not bufnr and #diagnostics == 0 then
     return
   end

@@ -106,11 +106,15 @@ end
 
 ---Gets an existing buffer for a URI without creating one.
 ---@param uri string
----@return integer? bufnr
-function M._uri_to_bufnr(uri)
-  local pid, buf = uri:match(UNTITLED_URI_PATTERN)
-  buf = tonumber(buf)
-  if tonumber(pid) == vim.uv.os_getpid() and buf and vim.api.nvim_buf_is_valid(buf) then
+---@return integer? buf
+function M._uri_to_buf(uri)
+  local pid_text, buf_text = uri:match(UNTITLED_URI_PATTERN)
+  local buf = vim._tointeger(buf_text)
+  if
+    vim._tointeger(pid_text) == vim.uv.os_getpid()
+    and buf
+    and vim.api.nvim_buf_is_valid(buf)
+  then
     return buf
   end
 
@@ -145,7 +149,7 @@ end
 ---@param uri string
 ---@return integer bufnr
 function M.uri_to_bufnr(uri)
-  return M._uri_to_bufnr(uri) or vim.fn.bufadd(M.uri_to_fname(uri))
+  return M._uri_to_buf(uri) or vim.fn.bufadd(M.uri_to_fname(uri))
 end
 
 return M
