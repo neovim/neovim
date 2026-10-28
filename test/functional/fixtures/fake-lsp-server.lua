@@ -122,10 +122,18 @@ end
 
 io.stderr:setvbuf('no')
 
+local client_pid --- @type integer
+
+---@param bufnr integer
+local function untitled_uri(bufnr)
+  return ('untitled:nvim-%d-%d'):format(client_pid, bufnr)
+end
+
 local function skeleton(config)
   local on_init = assert(config.on_init)
   local body = assert(config.body)
   expect_request('initialize', function(params)
+    client_pid = params.processId
     return nil, on_init(params)
   end)
   expect_notification('initialized', {})
@@ -343,7 +351,7 @@ function tests.text_document_sync_save_bool()
     end,
     body = function()
       notify('start')
-      expect_notification('textDocument/didSave', { textDocument = { uri = 'file://' } })
+      expect_notification('textDocument/didSave', { textDocument = { uri = untitled_uri(1) } })
       notify('shutdown')
     end,
   }
@@ -366,7 +374,7 @@ function tests.text_document_sync_save_includeText()
       notify('start')
       expect_notification('textDocument/didSave', {
         textDocument = {
-          uri = 'file://',
+          uri = untitled_uri(1),
         },
         text = 'help me\n',
       })
@@ -524,7 +532,7 @@ function tests.basic_check_buffer_open()
         textDocument = {
           languageId = '',
           text = table.concat({ 'testing', '123' }, '\n') .. '\n',
-          uri = 'file://',
+          uri = untitled_uri(2),
           version = 0,
         },
       })
@@ -551,13 +559,13 @@ function tests.basic_check_buffer_open_and_change()
         textDocument = {
           languageId = '',
           text = table.concat({ 'testing', '123' }, '\n') .. '\n',
-          uri = 'file://',
+          uri = untitled_uri(2),
           version = 0,
         },
       })
       expect_notification('textDocument/didChange', {
         textDocument = {
-          uri = 'file://',
+          uri = untitled_uri(2),
           version = 3,
         },
         contentChanges = {
@@ -587,13 +595,13 @@ function tests.basic_check_buffer_open_and_change_noeol()
         textDocument = {
           languageId = '',
           text = table.concat({ 'testing', '123' }, '\n'),
-          uri = 'file://',
+          uri = untitled_uri(2),
           version = 0,
         },
       })
       expect_notification('textDocument/didChange', {
         textDocument = {
-          uri = 'file://',
+          uri = untitled_uri(2),
           version = 3,
         },
         contentChanges = {
@@ -622,13 +630,13 @@ function tests.basic_check_buffer_open_and_change_multi()
         textDocument = {
           languageId = '',
           text = table.concat({ 'testing', '123' }, '\n') .. '\n',
-          uri = 'file://',
+          uri = untitled_uri(2),
           version = 0,
         },
       })
       expect_notification('textDocument/didChange', {
         textDocument = {
-          uri = 'file://',
+          uri = untitled_uri(2),
           version = 3,
         },
         contentChanges = {
@@ -637,7 +645,7 @@ function tests.basic_check_buffer_open_and_change_multi()
       })
       expect_notification('textDocument/didChange', {
         textDocument = {
-          uri = 'file://',
+          uri = untitled_uri(2),
           version = 4,
         },
         contentChanges = {
@@ -667,13 +675,13 @@ function tests.basic_check_buffer_open_and_change_multi_and_close()
         textDocument = {
           languageId = '',
           text = table.concat({ 'testing', '123' }, '\n') .. '\n',
-          uri = 'file://',
+          uri = untitled_uri(2),
           version = 0,
         },
       })
       expect_notification('textDocument/didChange', {
         textDocument = {
-          uri = 'file://',
+          uri = untitled_uri(2),
           version = 3,
         },
         contentChanges = {
@@ -682,7 +690,7 @@ function tests.basic_check_buffer_open_and_change_multi_and_close()
       })
       expect_notification('textDocument/didChange', {
         textDocument = {
-          uri = 'file://',
+          uri = untitled_uri(2),
           version = 4,
         },
         contentChanges = {
@@ -691,7 +699,7 @@ function tests.basic_check_buffer_open_and_change_multi_and_close()
       })
       expect_notification('textDocument/didClose', {
         textDocument = {
-          uri = 'file://',
+          uri = untitled_uri(2),
         },
       })
       expect_notification('finish')
@@ -725,13 +733,13 @@ function tests.basic_check_buffer_open_and_change_incremental()
         textDocument = {
           languageId = '',
           text = table.concat({ 'testing', '123' }, '\n') .. '\n',
-          uri = 'file://',
+          uri = untitled_uri(2),
           version = 0,
         },
       })
       expect_notification('textDocument/didChange', {
         textDocument = {
-          uri = 'file://',
+          uri = untitled_uri(2),
           version = 3,
         },
         contentChanges = {
@@ -768,13 +776,13 @@ function tests.basic_check_buffer_open_and_change_incremental_editing()
         textDocument = {
           languageId = '',
           text = table.concat({ 'testing', '123' }, '\n'),
-          uri = 'file://',
+          uri = untitled_uri(2),
           version = 0,
         },
       })
       expect_notification('textDocument/didChange', {
         textDocument = {
-          uri = 'file://',
+          uri = untitled_uri(2),
           version = 3,
         },
         contentChanges = {

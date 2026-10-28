@@ -908,10 +908,11 @@ describe('LSP', function()
     it('saveas sends didOpen to all attached servers only, if filename changed', function()
       local tmpfile_new = tmpname(false)
       exec_lua(create_server_definition)
-      local messages = exec_lua(function()
-        local server1 = _G._create_server()
-        local server2 = _G._create_server()
-        local server3 = _G._create_server()
+      local result = exec_lua(function()
+        local options = { capabilities = { textDocumentSync = { openClose = true, save = true } } }
+        local server1 = _G._create_server(options)
+        local server2 = _G._create_server(options)
+        local server3 = _G._create_server(options)
         local client1_id = assert(vim.lsp.start({ name = 'dummy1', cmd = server1.cmd }))
         local client2_id = assert(vim.lsp.start({ name = 'dummy2', cmd = server2.cmd }))
         -- Attached to another buffer, so it must not be notified about this one.
@@ -919,29 +920,42 @@ describe('LSP', function()
         local client3_id =
           assert(vim.lsp.start({ name = 'dummy3', cmd = server3.cmd }, { bufnr = other_buf }))
 
+        local old_uri = vim.uri.from_buf(0)
         vim.cmd('saveas ' .. tmpfile_new)
+        local new_uri = vim.uri.from_buf(0)
 
+        local function document_messages(server)
+          local messages = {}
+          for _, message in ipairs(server.messages) do
+            if message.params and message.params.textDocument then
+              messages[#messages + 1] = { message.method, message.params.textDocument.uri }
+            end
+          end
+          return messages
+        end
+
+        local saved = {
+          old_uri = old_uri,
+          new_uri = new_uri,
+          other_uri = vim.uri.from_buf(other_buf),
+          server1 = document_messages(server1),
+          server2 = document_messages(server2),
+          server3 = document_messages(server3),
+        }
         vim.lsp.get_client_by_id(client1_id):stop()
         vim.lsp.get_client_by_id(client2_id):stop()
         vim.lsp.get_client_by_id(client3_id):stop()
-
-        return {
-          server1 = server1.messages,
-          server2 = server2.messages,
-          server3 = vim.tbl_map(function(m)
-            return m.method
-          end, server3.messages),
-        }
+        return saved
       end)
-      eq('textDocument/didClose', messages.server1[3].method)
-      eq('textDocument/didOpen', messages.server1[4].method)
-      eq('textDocument/didSave', messages.server1[5].method)
-
-      eq('textDocument/didClose', messages.server2[3].method)
-      eq('textDocument/didOpen', messages.server2[4].method)
-      eq('textDocument/didSave', messages.server2[5].method)
-
-      eq({ 'initialize', 'initialized', 'shutdown', 'exit' }, messages.server3)
+      eq(false, result.old_uri == result.other_uri)
+      eq({
+        { 'textDocument/didOpen', result.old_uri },
+        { 'textDocument/didClose', result.old_uri },
+        { 'textDocument/didOpen', result.new_uri },
+        { 'textDocument/didSave', result.new_uri },
+      }, result.server1)
+      eq(result.server1, result.server2)
+      eq({ { 'textDocument/didOpen', result.other_uri } }, result.server3)
     end)
 
     it('BufWritePre does not send notifications if server lacks willSave capabilities', function()
@@ -1746,9 +1760,7 @@ describe('LSP', function()
           {
             method = 'textDocument/inlayHint',
             params = {
-              textDocument = {
-                uri = 'file://',
-              },
+              textDocument = {},
               range = {
                 start = { line = 0, character = 0 },
                 ['end'] = { line = 1, character = 3 },
@@ -1766,13 +1778,14 @@ describe('LSP', function()
       test_rpc_server {
         test_name = 'inlay_hint',
         on_setup = function()
-          exec_lua(function()
+          expected_handlers[3][3].params.textDocument.uri = exec_lua(function()
             _G.BUFFER = vim.api.nvim_create_buf(false, true)
             vim.api.nvim_buf_set_lines(_G.BUFFER, 0, -1, false, {
               'testing',
               '123',
             })
             vim.bo[_G.BUFFER].eol = false
+            return vim.uri.from_buf(_G.BUFFER)
           end)
         end,
         on_init = function(_client)
