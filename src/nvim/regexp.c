@@ -12287,7 +12287,7 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
       if (s == NULL) {
         goto theend;
       }
-      PUSH(frag(s, append(e.out, list1(&s->out1))));
+      PUSH(frag(s, append(list1(&s->out1), e.out)));
       break;
 
     case NFA_QUEST_NONGREEDY:
@@ -12301,7 +12301,7 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
       if (s == NULL) {
         goto theend;
       }
-      PUSH(frag(s, append(e.out, list1(&s->out))));
+      PUSH(frag(s, append(list1(&s->out), e.out)));
       break;
 
     case NFA_END_COLL:
@@ -12385,7 +12385,7 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
           e1 = e;
         }
         patch(e.out, s1);
-        append(e1.out, list1(&s->out1));
+        e1.out = append(list1(&s->out1), e1.out);
         s1 = s;
       }
       PUSH(frag(s, e1.out));
@@ -15023,13 +15023,12 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_KWORD:           //  \k
-        result = vim_iswordp_buf((char *)rex.input, rex.reg_buf);
+        result = vim_iswordc_buf(curc, rex.reg_buf);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
       case NFA_SKWORD:          //  \K
-        result = !ascii_isdigit(curc)
-                 && vim_iswordp_buf((char *)rex.input, rex.reg_buf);
+        result = !ascii_isdigit(curc) && vim_iswordc_buf(curc, rex.reg_buf);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -15044,12 +15043,12 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_PRINT:           //  \p
-        result = vim_isprintc(utf_ptr2char((char *)rex.input));
+        result = vim_isprintc(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
       case NFA_SPRINT:          //  \P
-        result = !ascii_isdigit(curc) && vim_isprintc(utf_ptr2char((char *)rex.input));
+        result = !ascii_isdigit(curc) && vim_isprintc(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
