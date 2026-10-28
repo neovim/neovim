@@ -4108,6 +4108,21 @@ bool set_ref_in_previous_funccal(int copyID)
   return false;
 }
 
+/// Set "copyID" in the arguments of the deferred functions of "fc".
+/// Returns true if setting references failed somehow.
+static bool set_ref_in_defer(funccall_T *fc, int copyID)
+{
+  for (int idx = 0; idx < fc->fc_defer.ga_len; idx++) {
+    defer_T *dr = ((defer_T *)fc->fc_defer.ga_data) + idx;
+    for (int i = 0; i < dr->dr_argcount; i++) {
+      if (set_ref_in_item(&dr->dr_argvars[i], copyID, NULL, NULL)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 static bool set_ref_in_funccal(funccall_T *fc, int copyID)
 {
   if (fc->fc_copyID != copyID) {
@@ -4115,6 +4130,7 @@ static bool set_ref_in_funccal(funccall_T *fc, int copyID)
     if (set_ref_in_ht(&fc->fc_l_vars.dv_hashtab, copyID, NULL)
         || set_ref_in_ht(&fc->fc_l_avars.dv_hashtab, copyID, NULL)
         || set_ref_in_list_items(&fc->fc_l_varlist, copyID, NULL)
+        || set_ref_in_defer(fc, copyID)
         || set_ref_in_func(NULL, fc->fc_func, copyID)) {
       return true;
     }
