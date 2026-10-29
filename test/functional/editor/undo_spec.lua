@@ -118,6 +118,24 @@ describe('u CTRL-R g- g+', function()
     eq({ 1, 5 }, api.nvim_win_get_cursor(0))
   end)
 
+  it("u does not jump to other window's cursor position #42449", function()
+    local api = n.api
+    local buf = api.nvim_get_current_buf()
+    local win = api.nvim_get_current_win()
+    local lines = {} --- @type string[]
+    for i = 1, 50 do
+      lines[i] = 'line ' .. i
+    end
+    api.nvim_buf_set_lines(buf, 0, -1, true, lines)
+    command('let &undolevels = &undolevels')
+    api.nvim_win_set_cursor(win, { 30, 3 })
+    command('new')
+    api.nvim_buf_set_lines(buf, 29, 30, true, { 'changed' })
+    command('close')
+    feed('u')
+    eq({ 30, 0 }, api.nvim_win_get_cursor(win))
+  end)
+
   describe('undo works correctly when writing in Insert mode', function()
     before_each(function()
       exec([[
