@@ -340,6 +340,88 @@ describe('vim.lsp.codelens', function()
     eq(4, get_message_count())
   end)
 
+  it('cancels stale in-flight requests on change', function()
+    clear_notrace()
+    exec_lua(create_server_definition)
+
+    insert('line1\n')
+
+    exec_lua(function()
+      _G.server = _G._create_server({
+        capabilities = {
+          textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
+          codeLensProvider = {
+            resolveProvider = true,
+          },
+        },
+        handlers = {
+          ['textDocument/codeLens'] = function(_, _, callback)
+            callback(nil, {
+              {
+                range = {
+                  ['end'] = {
+                    character = 1,
+                    line = 0,
+                  },
+                  start = {
+                    character = 0,
+                    line = 0,
+                  },
+                },
+              },
+            })
+          end,
+          ['codeLens/resolve'] = function()
+            -- Leave the request in-flight so an edit can cancel it.
+          end,
+        },
+      })
+
+      vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+      vim.lsp.codelens.enable()
+
+      assert(
+        vim.wait(1000, function()
+          return #vim.lsp.codelens.get() > 0
+        end),
+        'timed out waiting for initial codelens response'
+      )
+
+      vim.api.nvim__redraw({ flush = true })
+
+      assert(
+        vim.wait(1000, function()
+          return vim.iter(_G.server.messages):any(function(m)
+            return m.method == 'codeLens/resolve'
+          end)
+        end),
+        'timed out waiting for codeLens/resolve'
+      )
+
+      local resolve_id --- @type integer?
+      for i, m in ipairs(_G.server.messages) do
+        if m.method == 'codeLens/resolve' then
+          resolve_id = i
+          break
+        end
+      end
+      assert(resolve_id, 'no codeLens/resolve request id')
+
+      vim.api.nvim_buf_set_lines(0, 1, 1, true, { 'line2' })
+
+      local did_cancel = false
+      vim.wait(1000, function()
+        did_cancel = vim.iter(_G.server.messages):any(function(m)
+          return m.method == '$/cancelRequest' and m.params ~= nil and m.params.id == resolve_id
+        end)
+
+        return did_cancel
+      end)
+
+      assert(did_cancel, 'did not send $/cancelRequest for in-flight codeLens/resolve')
+    end)
+  end)
+
   it('ignores stale codeLens/resolve responses', function()
     clear_notrace()
     exec_lua(create_server_definition)
