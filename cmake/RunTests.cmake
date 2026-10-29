@@ -9,7 +9,7 @@ else()
 endif()
 
 set(ENV{NVIM_TEST} "1")
-# The runner's own Lua uses this runtime, not one installed under the install prefix.
+# Test runner should use the runtime from the build, not the system install (if any).
 set(ENV{VIMRUNTIME} ${ROOT_DIR}/runtime)
 # Set LC_ALL to meet expectations of some locale-sensitive tests.
 set(ENV{LC_ALL} "en_US.UTF-8")
