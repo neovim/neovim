@@ -401,6 +401,7 @@ LSP
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#workspace_foldingRange_refresh
 • |vim.lsp.completion.get()| accepts a `client_id` to request from only the
   given clients.
+• |vim.lsp.Client| now contains an optional `data` field for users and plugins.
 
 LUA
 
