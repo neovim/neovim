@@ -125,6 +125,7 @@ typedef struct {
   int (*sb_pushline)(int cols, const VTermScreenCell *cells, void *user);
   int (*sb_popline)(int cols, VTermScreenCell *cells, void *user);
   int (*sb_clear)(void *user);
+  int (*erase)(VTermRect rect, int selective, void *user);
 } VTermScreenCallbacks;
 
 typedef struct {
