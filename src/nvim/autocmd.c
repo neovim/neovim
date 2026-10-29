@@ -651,7 +651,7 @@ event_T event_name2nr_str(String str)
 const char *event_nr2name(event_T event)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_CONST
 {
-  return event >= 0 && event < NUM_EVENTS ? event_names[event].name : "Unknown";
+  return event < NUM_EVENTS ? event_names[event].name : "Unknown";
 }
 
 /// Return true if "event" is included in 'eventignore(win)'.
