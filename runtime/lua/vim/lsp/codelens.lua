@@ -64,11 +64,29 @@ function Provider:on_change(client_id)
   self:request(client_id)
 end
 
+---@private
+---@param client vim.lsp.Client
+function Provider:cancel_requests(client)
+  for _, method in ipairs({ 'textDocument/codeLens', 'codeLens/resolve' }) do
+    util._cancel_requests({
+      bufnr = self.bufnr,
+      clients = { client },
+      method = method,
+      type = 'pending',
+    })
+  end
+end
+
 ---@package
 ---@param client_id integer
 function Provider:clear(client_id)
   local state = self.client_state[client_id]
   if state then
+    local client = vim.lsp.get_client_by_id(client_id)
+    if client then
+      self:cancel_requests(client)
+    end
+
     state.version = nil
     tableclear(state.row_lenses)
     api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
@@ -118,6 +136,7 @@ function Provider:request(client_id)
   local state = self.client_state[client_id]
   local client = vim.lsp.get_client_by_id(client_id)
   if state and client then
+    self:cancel_requests(client)
     client:request('textDocument/codeLens', params, function(...)
       self:handler(...)
     end, self.bufnr)
