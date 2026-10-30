@@ -11,8 +11,8 @@ LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
 UNIBILIUM_URL https://github.com/neovim/unibilium/archive/v2.1.4.tar.gz
 UNIBILIUM_SHA256 7360907bcf79ba49f6fc4a504767ff86e93ab9018477026fcc70d5ab77e1f2c1
 
-LUV_URL https://github.com/luvit/luv/archive/1.53.0-0.tar.gz
-LUV_SHA256 bd393b5918f320c79a2c6405e3abebe01c024557c32b9fb9006bee20ce71e19e
+LUV_URL https://github.com/luvit/luv/archive/1.53.0-1.tar.gz
+LUV_SHA256 e7d7c872637560e9e9ac0cdcaad1b06c4058152fb0eb9d039f38612b183d01a7
 
 LUA_COMPAT53_URL https://github.com/lunarmodules/lua-compat-5.3/archive/v0.13.tar.gz
 LUA_COMPAT53_SHA256 f5dc30e7b1fda856ee4d392be457642c1f0c259264a9b9bfbcb680302ce88fc2

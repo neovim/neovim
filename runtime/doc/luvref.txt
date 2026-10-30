@@ -1767,6 +1767,7 @@ uv.signal_start({signal}, {signame}, {callback})           *uv.signal_start()*
     Start the handle with the given callback, watching for the given signal.
 
     See |luv-constants| for supported `signame` input and output values.
+    String `signame` values are case-insensitive.
 
     Parameters: ~
       • {signal}    (`uv.uv_signal_t`)
@@ -1783,6 +1784,7 @@ uv.signal_start_oneshot({signal}, {signame}, {callback})  *uv.signal_start_onesh
     the moment the signal is received.
 
     See |luv-constants| for supported `signame` input and output values.
+    String `signame` values are case-insensitive.
 
     Parameters: ~
       • {signal}    (`uv.uv_signal_t`)
@@ -1809,6 +1811,7 @@ uv_signal_t:start({signame}, {callback})                 *uv_signal_t:start()*
     Start the handle with the given callback, watching for the given signal.
 
     See |luv-constants| for supported `signame` input and output values.
+    String `signame` values are case-insensitive.
 
     Parameters: ~
       • {signame}   (`string|integer`)
@@ -1824,6 +1827,7 @@ uv_signal_t:start_oneshot({signame}, {callback})  *uv_signal_t:start_oneshot()*
     the moment the signal is received.
 
     See |luv-constants| for supported `signame` input and output values.
+    String `signame` values are case-insensitive.
 
     Parameters: ~
       • {signame}   (`string|integer`)
@@ -5239,7 +5243,7 @@ uv.getnameinfo.address                                *uv.getnameinfo.address*
       • {port}    (`integer?`)
 
 
-uv.getaddrinfo({host}, {service}, {hints}, {callback})      *uv.getaddrinfo()*
+uv.getaddrinfo({node}, {service}, {hints}, {callback})      *uv.getaddrinfo()*
     Equivalent to `getaddrinfo(3)`. Either `node` or `service` may be `nil`
     but not both.
 
@@ -5254,13 +5258,13 @@ uv.getaddrinfo({host}, {service}, {hints}, {callback})      *uv.getaddrinfo()*
     `"ip"`, `"icmp"`, `"tcp"`, `"udp"`, etc.
 
     Parameters: ~
-      • {host}      (`string?`)
+      • {node}      (`string?`)
       • {service}   (`string?`)
       • {hints}     (`uv.getaddrinfo.hints?`)
       • {callback}  (`nil?`) (async if provided, sync if `nil`)
 
     Overloads: ~
-      • `fun(host: string?, service: string?, hints: uv.getaddrinfo.hints?, callback: fun(err: string?, addresses: table<integer, uv.address>?)): uv.uv_getaddrinfo_t?, string?, uv.error_name?`
+      • `fun(node: string?, service: string?, hints: uv.getaddrinfo.hints?, callback: fun(err: string?, addresses: table<integer, uv.address>?)): uv.uv_getaddrinfo_t?, string?, uv.error_name?`
 
     Return (multiple): ~
         (`table<integer, uv.address>?`) addresses

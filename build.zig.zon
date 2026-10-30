@@ -10,8 +10,8 @@
             .hash = "zlua-0.1.0-hGRpC1mUBQCNQf4CnmRTM4I7gxE3YpCvZ-p2EarlcyER",
         },
         .luv = .{
-            .url = "git+https://github.com/luvit/luv?ref=1.53.0-0#26e62e49b0230891ece45a78cc1f63c074e60020",
-            .hash = "N-V-__8AAOHyDwDP2Y1CGXwG1tfx-DjEm7YFF9Qc3HZjs6MZ",
+            .url = "git+https://github.com/luvit/luv?ref=1.53.0-1#61e08e7b6911b43e4b8d9d16c0fee35f76729354",
+            .hash = "N-V-__8AADAJEADXgMzg26dqh2khfJZw1mUAwA2KmtTywT4m",
             .lazy = true,
         },
         .lua_compat53 = .{
