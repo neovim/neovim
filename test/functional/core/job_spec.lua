@@ -1022,15 +1022,20 @@ describe('jobs', function()
 
       it('can pass 0 to check if a job exists', function()
         source([[
-        call rpcnotify(g:channel, 'wait', jobwait(has('win32') ? [
+        let g:jobs = has('win32') ? [
         \  jobstart('Start-Sleep -Milliseconds 50; exit 4'),
         \  jobstart('Start-Sleep -Milliseconds 300; exit 5'),
         \  ] : [
         \  jobstart('sleep 0.05; exit 4'),
         \  jobstart('sleep 0.3; exit 5'),
-        \  ], 0))
+        \  ]
+        call rpcnotify(g:channel, 'wait', jobwait(g:jobs, 0))
         ]])
         eq({ 'notification', 'wait', { { -1, -1 } } }, next_msg())
+
+        -- With a timeout, keeps waiting for the second job after the first one exits.
+        command([[call rpcnotify(g:channel, 'wait', jobwait(g:jobs, 10000))]])
+        eq({ 'notification', 'wait', { { 4, 5 } } }, next_msg())
       end)
     end)
 
