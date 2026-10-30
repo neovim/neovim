@@ -1246,6 +1246,30 @@ describe('jobs', function()
     end)
   end)
 
+  it('jobstop() kill timeout excludes prior event-loop blocking #42521', function()
+    skip(is_os('win'), 'N/A: no SIGTERM on Windows')
+    local rv = exec_lua(function()
+      local code --- @type integer?
+      -- Ignores SIGTERM, so only SIGKILL (after the kill timeout) stops it.
+      local job = vim.fn.jobstart({ 'sh', '-c', "trap '' TERM; sleep 10" }, {
+        on_exit = function(_, c)
+          code = c
+        end,
+      })
+      -- Ensure the cached loop time is stale/outdated relative to the jobstop() kill timeout.
+      vim.uv.sleep(500)
+      local start = vim.uv.hrtime()
+      vim.fn.jobstop(job)
+      -- Wake the loop often: a stale timer fires on the first wakeup.
+      vim.wait(5000, function()
+        return code ~= nil
+      end, 10)
+      return { code = code, elapsed = (vim.uv.hrtime() - start) / 1e6 }
+    end)
+    eq(137, rv.code)
+    ok(rv.elapsed >= 1900, '>= 1900 ms', rv.elapsed)
+  end)
+
   it('jobstop on same id before stopped', function()
     command('let j = jobstart(["cat", "-"], g:job_opts)')
     neq(0, eval('j'))

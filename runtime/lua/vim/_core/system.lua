@@ -362,6 +362,7 @@ end
 --- @return uv.uv_timer_t
 local function timer_oneshot(timeout, cb)
   local timer = assert(uv.new_timer())
+  uv.update_time() -- See time_watcher_start().
   timer:start(timeout, 0, function()
     timer:stop()
     timer:close()
