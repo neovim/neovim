@@ -684,6 +684,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   bool in_winbar = (jump_flags & MOUSE_WINBAR);
   bool in_statuscol = (jump_flags & MOUSE_STATUSCOL);
   bool in_status_line = (jump_flags & IN_STATUS_LINE);
+  // Split separators are marked as statuslines for dragging, but should not handle statusline clicks.
   bool in_clickable_statusline = is_click && in_status_line
                                  && get_fpos_of_mouse(&m_pos, NULL) == IN_STATUS_LINE;
   bool in_global_statusline = in_clickable_statusline && mouse_grid <= 1
