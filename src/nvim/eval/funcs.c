@@ -2408,7 +2408,8 @@ static void f_wait(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   ui_flush();
 
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, timeout,
-                            eval_expr_typval(&expr, false, &argv, 0, &exprval) != OK
+                            (tv_clear(&exprval),
+                             eval_expr_typval(&expr, false, &argv, 0, &exprval) != OK)
                             || tv_get_number_chk(&exprval, &error)
                             || called_emsg > called_emsg_before || error || got_int);
 
@@ -2421,6 +2422,7 @@ static void f_wait(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   } else if (tv_get_number_chk(&exprval, &error)) {
     rettv->vval.v_number = 0;
   }
+  tv_clear(&exprval);
 
   // Stop dummy timer
   time_watcher_stop(tw);
@@ -3579,12 +3581,13 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     i++;
   });
 
-  int remaining = -1;
-  uint64_t before = 0;
+  int timeout = -1;
+  uint64_t start = 0;
   if (argvars[1].v_type == VAR_NUMBER && argvars[1].vval.v_number >= 0) {
-    remaining = (int)argvars[1].vval.v_number;
-    before = os_hrtime();
+    timeout = (int)argvars[1].vval.v_number;
+    start = os_hrtime();
   }
+  int remaining = timeout;
 
   // Only mark the UI as busy when jobwait() blocks
   const bool busy = remaining != 0;
@@ -3606,9 +3609,7 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       break;  // Interrupted (CTRL-C) or timeout, skip remaining jobs.
     }
     if (remaining > 0) {
-      uint64_t now = os_hrtime();
-      remaining = MIN(0, remaining - (int)((now - before) / 1000000));
-      before = now;
+      remaining = MAX(0, timeout - (int)((os_hrtime() - start) / 1000000));
     }
   }
 

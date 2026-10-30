@@ -36,6 +36,11 @@ describe('wait()', function()
   it('returns -1 on timeout', function()
     eq(-1, eval('wait(0, 0)'))
     eq(-1, eval('wait(50, 0)'))
+
+    -- Each check closes a timer, so every poll returns in under 1 ms. #42538
+    command('let g:Cond = { -> timer_stop(timer_start(10000, { -> 0 })) }')
+    feed(':call rpcnotify(g:channel, "wait", wait(100, g:Cond))<CR>')
+    eq({ 'notification', 'wait', { -1 } }, next_msg(5000))
   end)
 
   it('returns -2 when interrupted', function()

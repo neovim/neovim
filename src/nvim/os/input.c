@@ -43,7 +43,7 @@ static char *input_read_pos = input_buffer;
 static char *input_write_pos = input_buffer;
 
 static bool blocking = false;
-static int cursorhold_time = 0;  ///< time waiting for CursorHold event
+static uint64_t cursorhold_time = 0;  ///< Time (ns) spent waiting for CursorHold event.
 static int cursorhold_tb_change_cnt = 0;  ///< tb_change_cnt when waiting started
 
 #include "os/input.c.generated.h"
@@ -120,7 +120,7 @@ int input_get(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
     }
   } else {
     uint64_t wait_start = os_hrtime();
-    cursorhold_time = MIN(cursorhold_time, (int)p_ut);
+    cursorhold_time = MIN(cursorhold_time, (uint64_t)p_ut * 1000000);
     // When an autocomplete is pending, wake at the sooner of
     // 'autocompletedelay' and 'updatetime' so the delay does not postpone
     // CursorHold.  Once CursorHold has fired, only the delay is left.
@@ -133,7 +133,7 @@ int input_get(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
                          && (get_real_state() & MODE_INSERT) != 0;
     // Measure the delay from when it was armed (the keystroke), so a
     // CursorHold returning in between does not push the popup back.
-    int64_t wait_time = p_ut - cursorhold_time;
+    int64_t wait_time = p_ut - (int64_t)(cursorhold_time / 1000000);
     if (delay_pending) {
       int64_t delay_left = p_acl - ins_compl_autocomplete_elapsed();
       wait_time = MIN(MAX(delay_left, 0), wait_time);
@@ -168,7 +168,7 @@ int input_get(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
         inbuf_poll(-1, events);
       }
     } else {
-      cursorhold_time += (int)((os_hrtime() - wait_start) / 1000000);
+      cursorhold_time += os_hrtime() - wait_start;
     }
   }
 
