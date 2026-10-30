@@ -3937,6 +3937,7 @@ vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
       • {opts}   (`table?`) A table with the following fields:
                  • {buf}? (`integer`) Remove a mapping from the given buffer.
                    `0` for current.
+                 • {gui}? (`boolean`) Remove one of the GUI's keymaps.
                  • {lhs}? (`boolean`) When true, only match {lhs}, not {rhs}.
 
     See also: ~
@@ -3995,6 +3996,9 @@ vim.keymap.set({modes}, {lhs}, {rhs}, {opts})               *vim.keymap.set()*
                  Also accepts:
                  • {buf}? (`integer`) Creates buffer-local mapping, `0` for
                    current buffer.
+                 • {gui}? (`boolean`) Creates one of the GUI's keymaps
+                   (|nvim_gui_set_keymap()|): it works in every buffer, over
+                   the buffer's own mapping and a global one of the same keys.
                  • {remap}? (`boolean`, default: `false`) Make the mapping
                    recursive. Inverse of {noremap}.
 

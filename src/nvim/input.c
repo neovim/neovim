@@ -2284,7 +2284,6 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth, boo
   FUNC_ATTR_NONNULL_ARG(1)
 {
   mapblock_T *mp = NULL;
-  mapblock_T *mp2;
   mapblock_T *mp_match;
   int mp_match_len = 0;
   int tb_match_len = 0;
@@ -2351,14 +2350,22 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth, boo
       }
       nolmaplen = 0;
     }
-    // First try buffer-local mappings.
-    mp = get_buf_maphash_list(local_State, tb_b1);
-    mp2 = get_maphash_list(local_State, tb_b1);
-    if (mp == NULL) {
-      // There are no buffer-local mappings.
-      mp = mp2;
-      mp2 = NULL;
+    // The GUI's mappings first, then the buffer-local ones, then the global
+    // ones: the lists that have any, in that order.
+    mapblock_T *lists[3];
+    size_t nlists = 0;
+    mapblock_T *const candidates[3] = {
+      get_gui_maphash_list(local_State, tb_b1),
+      get_buf_maphash_list(local_State, tb_b1),
+      get_maphash_list(local_State, tb_b1),
+    };
+    for (size_t i = 0; i < ARRAY_SIZE(candidates); i++) {
+      if (candidates[i] != NULL) {
+        lists[nlists++] = candidates[i];
+      }
     }
+    size_t next_list = 1;
+    mp = nlists > 0 ? lists[0] : NULL;
     // Loop until a partly matching mapping is found or all (local)
     // mappings have been checked.
     // The longest full match is remembered in "mp_match".
@@ -2367,7 +2374,9 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth, boo
     mp_match = NULL;
     mp_match_len = 0;
     tb_match_len = 0;
-    for (; mp != NULL; mp->m_next == NULL ? (mp = mp2, mp2 = NULL) : (mp = mp->m_next)) {
+    for (; mp != NULL;
+         mp = mp->m_next != NULL ? mp->m_next
+                                 : (next_list < nlists ? lists[next_list++] : NULL)) {
       // Only consider an entry if the first character matches and it is
       // for the current state.
       // Skip ":lmap" mappings if keys were mapped.

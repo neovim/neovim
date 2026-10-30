@@ -708,6 +708,8 @@ EXTERN int vim_ignored;
 EXTERN bool embedded_mode INIT( = false);
 // Do not start UI (--headless, -l) nor read/write to stdio (unless embedding).
 EXTERN bool headless_mode INIT( = false);
+/// Nvim's built-in GUI is its UI (`--gui`, gui/gui.c).
+EXTERN bool gui_mode INIT( = false);
 
 /// Only filled for Win32.
 EXTERN char windowsVersion[20] INIT( = { 0 });

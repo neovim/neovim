@@ -1,0 +1,614 @@
+*biscide.txt*                    Nvim
+
+                            NVIM REFERENCE MANUAL
+
+==============================================================================
+biscide: Nvim as a graph IDE                                        *biscide*
+
+biscide is Nvim's built-in GUI (`nvim --gui`). It shows a program as cards
+on a canvas: one declaration in the middle, its file's other parts above
+and below it, what uses it on the left, what it uses on the right. You walk
+the program card by card. Everything is Nvim: the keys, the commands, the
+language servers, and your own configuration (`~/.config/nvim`).
+
+                                       Type |gO| to see the table of contents.
+
+==============================================================================
+1. Starting                                                *biscide-start*
+
+Run the `biscide` launcher, or Nvim itself: >sh
+    biscide ~/code/project          # a folder: the project
+    biscide ~/code/project/main.go  # a file: its git work tree, the file in
+                                    # the middle
+    nvim --gui ~/code/project       # the same, without the launcher
+<
+Nvim must be built with the GUI (`cmake -D ENABLE_GUI=ON`, Qt 6). Without a
+folder or file, the current directory is the project.
+
+biscide reads the project's Go and Rust files (tests, generated code and
+vendored code are left out) and lays out the program around the file given,
+else its first declaration. Any other text file (Lua, Markdown, TOML, …)
+opens as a single card holding the whole file: see |biscide-plain-files|.
+
+In biscide `vim.g.biscide` is true. Check it to configure only biscide: see
+|biscide-config|.
+
+==============================================================================
+2. The screen                                              *biscide-screen*
+
+From top to bottom:
+
+  The bar        The Project switch (the file tree), the active file.
+  The canvas     The cards in four lanes, the curves between them, the
+                 history along the top, the key to the colours (the
+                 "Colours" chip at the bottom left).
+  The status     Nvim's mode, its command line (or the last message), the
+  line           number of declarations, and the Messages switch.
+
+                                                           *biscide-lanes*
+The lanes, left to right:
+
+  previous   The declaration you came from (only its edge shows).
+  used by    The declarations that use the active one.
+  file       The active declaration's file, part by part: the package
+             clause, the imports, each declaration with its doc comment,
+             comments and code between them. Every line of the file is in
+             exactly one card.
+  uses       What the active declaration uses, in the order its code uses
+             them; then the names it uses that are defined nowhere
+             (|biscide-missing|).
+
+                                                           *biscide-cards*
+A card is an ordinary Nvim window on the file's real buffer, kept to its
+part of the file (|nvim_win_set_range()|): its cursor, its motions and its
+operators stay in the part, while the buffer, the language server and `:w`
+see the whole file. A long part scrolls inside its card.
+
+The active card (blue border) is the declaration in the middle; the
+keyboard is in it. The card cursor (orange border) marks another card to go
+to (|biscide-card-cursor|).
+
+The names that link the cards are underlined in the code, in the colour of
+their curve:
+
+  blue     calls it              cyan     has it in its parameters
+  violet   has it in its fields  green    uses the type
+  orange   is a method of it     grey     uses the value
+  red      points outward: a layer violation (|biscide-layers|)
+
+==============================================================================
+3. Configuration                                          *biscide-config*
+
+biscide uses your Nvim configuration. Put what is for biscide alone in a file
+of its own, which every Nvim loads and which does something only in biscide:
+>lua
+    -- ~/.config/nvim/plugin/biscide.lua
+    if not vim.g.biscide then
+      return
+    end
+
+    vim.g.biscide_card_cols = 100
+    vim.keymap.set('n', '<C-p>', '<Cmd>BiscidePick files<CR>',
+      { gui = true, desc = 'Find a file' })
+<
+Files in `plugin/` of your configuration are read before biscide's own
+setup, so your keys win over biscide's (|biscide-keys|).
+
+biscide sets some editor options when it starts: 'backupcopy' "yes" (a write
+goes onto the file itself), 'swapfile' and 'undofile' off, 'mouse' "a",
+'laststatus' 0, 'showmode' and 'ruler' off, 'expandtab' with 'shiftwidth'
+and 'tabstop' 4 (Go files use tabs), and <Space> as |mapleader| if you set
+none. To set any of these your way, set them after biscide, in `after/`:
+>lua
+    -- ~/.config/nvim/after/plugin/biscide.lua
+    if vim.g.biscide then
+      vim.o.tabstop = 2
+      vim.o.swapfile = true
+    end
+<
+Or when biscide has read the program (|BiscideReady|): >lua
+    vim.api.nvim_create_autocmd('User', {
+      pattern = 'BiscideReady',
+      callback = function()
+        vim.o.cmdheight = 0
+      end,
+    })
+<
+                                                          *biscide-options*
+Options are global variables (|vim.g|). Set them before biscide starts (in
+`plugin/`), or any time after for the next layout.
+
+*g:biscide_card_cols*
+    How wide a card is, in columns. Default: 80. |:BiscideCardCols| changes
+    it while biscide runs. >lua
+        vim.g.biscide_card_cols = 100
+<
+*g:biscide_card_options*
+    Window options for the cards, over biscide's own. biscide's: 'number'
+    and 'relativenumber' on, 'signcolumn' "yes:1", 'statuscolumn' and
+    'foldcolumn' off, 'wrap' and 'linebreak' on, 'smoothscroll' and
+    'foldenable' off, 'scrolloff' 0, and a transparent background
+    ('winhighlight' "NormalFloat:Normal"). >lua
+        vim.g.biscide_card_options = {
+          relativenumber = false,
+          cursorline = true,
+        }
+<
+    Keep 'signcolumn' fixed: a sign column that comes and goes would wrap a
+    card's lines differently from its height.
+
+*g:biscide_no_maps*
+    When true, biscide maps none of its keys: they are all yours to map
+    (|biscide-keys|). >lua
+        vim.g.biscide_no_maps = true
+<
+                                                         *biscide-templates*
+Your own templates for new declarations (|biscide-missing|) are files in
+`~/.config/nvim/biscide/templates/go/` and `.../rust/`. The file's name,
+without its extension, is the template's title. In the text:
+
+  ${name}      the declaration's name
+  ${recv}      the type a method belongs to (a template with it is offered
+               only for methods)
+  ${params}    the parameters the calling code suggests ("ctx
+               context.Context, key string")
+  ${results}   the results it suggests (" error", " (any, error)")
+  ${fields}    the fields a struct literal suggests
+  ${cursor}    where the cursor goes, in Insert mode
+
+For example, `~/.config/nvim/biscide/templates/go/handler.go`: >go
+    // ${name} handles ${cursor}.
+    func ${name}(w http.ResponseWriter, r *http.Request) {
+    }
+<
+==============================================================================
+4. Keys                                                     *biscide-keys*
+
+                                                     *biscide-gui-keymaps*
+biscide's keys are GUI keymaps: a mapping layer of Nvim that is looked up
+first, before the current buffer's own mappings and the global ones. So
+they work in every buffer, and win over your configuration's mappings of
+the same keys (LazyVim's <C-h>, for example). Set them like any mapping,
+with `gui = true` (|nvim_gui_set_keymap()|): >lua
+    -- Yours: biscide keeps it and does not map these keys.
+    vim.keymap.set('n', '<leader>fg', '<Cmd>BiscidePick grep<CR>',
+      { gui = true, desc = 'Grep' })
+
+    -- Remove one of biscide's (after it has set them).
+    vim.api.nvim_create_autocmd('User', {
+      pattern = 'BiscideReady',
+      callback = function()
+        vim.keymap.del('n', '<leader>/', { gui = true })
+      end,
+    })
+
+    -- List them.
+    vim.print(vim.api.nvim_gui_get_keymap('n'))
+<
+A key of biscide's with nothing to do where it is pressed is handed on: to
+the current buffer's own mapping of it, else to Nvim. <CR> in a card that
+is the active one runs your buffer's <CR> mapping (a language server's
+"references", say); in the file tree it opens the file.
+
+Normal mode, everywhere ("<leader>" is |mapleader|):
+
+  Moving through the program ~
+  <C-h> <C-l>       The card cursor one lane left, right.
+  <C-j> <C-k>       The card cursor one card down, up its lane.
+  gU                The card cursor to what the active card uses.
+  gR                The card cursor to what uses the active card.
+  <CR>              To the card under the card cursor; in a card that is
+                    not the active one, it becomes the active one.
+  <Esc>             The card cursor dropped.
+  <A-Left>          Back through the declarations gone to.
+  <A-Right>         Forth through them.
+  <leader>b         Back to the previous declaration (the far left one).
+  <leader>z         The camera back on the active card.
+
+  Panels ~
+  <leader>e  <A-1>  The file tree (|biscide-tree|).
+  <leader>m  <A-2>  The messages (|biscide-messages|).
+
+  Finding (|biscide-pickers|) ~
+  <leader>/         Declarations.
+  <leader>ss        Declarations.
+  <leader><space>   Files.
+  <leader>ff        Files.
+  <leader>sg        Grep, as typed.
+  <leader>sw        Grep the word under the cursor.
+  <leader>sd        Diagnostics.
+  <leader>fr        The declarations gone to.
+  <leader>sC        Commands.
+  <leader>sk        Keymaps.
+  <leader>sR        The last picker again.
+  <leader>sp        The pickers.
+
+  Writing ~
+  <leader>n         A new declaration at the end of the file.
+  gm                Resolve the name under the cursor that is defined
+                    nowhere (|biscide-missing|).
+
+Counts work: `3<C-j>` moves the card cursor three cards down.
+
+==============================================================================
+5. Moving through the program                         *biscide-navigation*
+
+                                                      *biscide-card-cursor*
+The keyboard is in the active card. The card cursor marks another card:
+move it with <C-h> <C-j> <C-k> <C-l> (or gU, gR), and the camera follows it.
+<CR> makes its card the active one: the lanes are laid out again around it.
+Going to a card on the right feels like going forward, to one on the left
+like going back; the camera travels there.
+
+The history is the declarations gone to, along the top of the canvas.
+<A-Left> and <A-Right> walk it; a click on one goes there.
+
+The mouse:
+
+  click on the active card     Nvim's cursor there; drag to select.
+  click on a name in it        Its card (in the uses lane) is brought
+                               beside the name, the card cursor on it;
+                               the camera stays.
+  click on another card        The card cursor on it.
+  double click on a card       It becomes the active one.
+  wheel over a long card       It is brought into the middle of the view,
+                               then scrolls; at its end, the lane scrolls.
+  wheel over a lane            The lane scrolls.
+  drag a lane                  The lane scrolls with the pointer.
+
+While you type in a card, the camera keeps it in the middle of the view,
+and the card grows with its text.
+
+==============================================================================
+6. The file tree                                            *biscide-tree*
+
+The project's files, in a panel on the left. <leader>e (or <A-1>, or the
+Project switch in the bar, or |:BiscideTree|) shows it with the keyboard in
+it; pressed again in it, it hides. The active declaration's file is
+selected (a blue dot marks it).
+
+In the tree:
+
+  j k (any motion)  Move.
+  /                 Search the names.
+  <CR> o            Open a file (it goes to the middle); open or close a
+                    folder.
+  l <Right>         Open a folder.
+  h <Left>          Close a folder, else go to its parent.
+  q                 Hide the tree.
+  <Esc> <C-w>l      The keyboard back to the active card (the tree stays).
+
+The mouse: a click selects (and opens or closes a folder), a double click
+opens a file, the wheel scrolls, the right edge resizes the panel.
+
+The tree is a buffer named `biscide://tree`, its 'filetype'
+"biscide_tree": map keys in it like in any buffer. >lua
+    vim.api.nvim_create_autocmd('FileType', {
+      pattern = 'biscide_tree',
+      callback = function(ev)
+        vim.keymap.set('n', 'R', '<Cmd>BiscideReload<CR>', { buf = ev.buf })
+      end,
+    })
+<
+From Lua: >lua
+    local tree = require('biscide.tree')
+    tree.toggle()             -- shown with the keyboard, or hidden
+    tree.open(false)          -- shown, the keyboard stays where it is
+    tree.close()
+    tree.reveal('cmd/main.go') -- folders opened down to it, selected
+<
+==============================================================================
+7. Messages                                             *biscide-messages*
+
+Nvim's messages are shown by the GUI, not in a grid. The status line shows
+the last one (its first line; "+N lines" when it has more). The Messages
+panel, on the right, floating over the canvas, keeps them all: each with
+its kind (error, warning, output, …), its time and its colours.
+
+  <leader>m <A-2>    Show or hide the panel (or click the Messages switch,
+                     or the message in the status line).
+  |:BiscideMessages|   toggle, open, close, clear.
+
+The panel opens by itself for a command's output longer than a line
+(`:messages`, `:ls`, `:lua =vim.lsp.get_clients()`). Errors and warnings you
+have not seen are counted on the Messages switch.
+
+In the panel: "Problems only" shows only errors and warnings, the bin
+clears it, × closes it, a double click on a message copies it, the left
+edge resizes it, the wheel scrolls it.
+
+|vim.notify()| is a message too (so plugins' notifications are in the
+panel), and a prompt's question (`:confirm`) pops up above the status
+line. |vim.ui.input()| asks on the command line. noice.nvim is turned off
+in biscide: the GUI shows the messages.
+
+==============================================================================
+8. Pickers                                               *biscide-pickers*
+
+A picker finds things: you type a query, it lists what matches (fuzzy, the
+matched letters lit), the selected one is previewed, <CR> picks it.
+
+  declarations   The program's declarations.
+  files          The project's files.
+  grep           The Go and Rust files grepped as you type (ripgrep, else
+                 git grep).
+  grep_word      The word under the cursor grepped.
+  diagnostics    The open files' diagnostics.
+  history        The declarations gone to.
+  commands       The Ex commands.
+  keymaps        The Normal mode keymaps (the GUI's, the buffer's, the
+                 global ones).
+  pickers        The pickers.
+  resume         The last picker, with its query.
+
+Open one with its key (|biscide-keys|), with |:BiscidePick|, or from Lua: >lua
+    require('biscide.pickers').open('files')
+    require('biscide.pickers').open('grep', 'TODO')  -- with a query
+<
+In a picker (the query is typed in Insert mode, with Nvim's keys):
+
+  <CR>                          Pick.
+  <Esc> <C-c>                   Close (q too, in Normal mode).
+  <C-n> <C-j> <Down> <Tab>      Next.
+  <C-p> <C-k> <Up> <S-Tab>      Previous.
+  <PageDown> <PageUp>           A page down, up.
+  <C-f> <C-b>                   Scroll the preview.
+
+The mouse: a click selects, a double click picks, a click outside closes.
+
+|vim.ui.select()| is a picker too: plugins that ask you to choose (code
+actions, …) ask in one.
+
+                                                     *biscide-picker-spec*
+Your own picker: `require('biscide.picker').open(spec)`, where `spec` is:
+
+  title       The picker's name.
+  items       Its items: a list, or a function `function(emit, done)` that
+              finds them (`emit(list)` as often as it has more, `done()` at
+              the end; it may return a function that stops it).
+  live        Instead of `items`: `function(query, emit, done)`, run again
+              as the query is typed (it does the matching itself).
+  format      `function(item)` returning how an item shows: `{ text =
+              string, detail? = string, kind? = string }`. The query is
+              matched against `text`; `kind` picks the badge ("func",
+              "type", "file:go", "file", "error", "warn", "info", "grep",
+              "command", "keymap", …).
+  preview     Optional. `function(item)` returning `{ path, lnum?, col?,
+              end_col? }` (a file at a line, `col..end_col` lit) or
+              `{ lines, ft? }`.
+  confirm     `function(item, index)`, called with what was picked.
+  cancel      Optional. `function()`, called when closed without a pick.
+  query       Optional. The query it opens with.
+  empty       Optional. What it says when nothing matches.
+
+For example, the Lua files of your configuration: >lua
+    vim.keymap.set('n', '<leader>fc', function()
+      local dir = vim.fn.stdpath('config')
+      require('biscide.picker').open({
+        title = 'Config',
+        items = vim.fs.find(function(name)
+          return name:match('%.lua$')
+        end, { path = dir, type = 'file', limit = math.huge }),
+        format = function(path)
+          return { text = vim.fs.relpath(dir, path), kind = 'file' }
+        end,
+        preview = function(path)
+          return { path = path }
+        end,
+        confirm = function(path)
+          vim.cmd.edit(path)
+        end,
+      })
+    end, { gui = true, desc = 'Config files' })
+<
+A picker of the output of a command, as it comes: >lua
+    items = function(emit, done)
+      local proc = vim.system({ 'fd', '--type', 'f' }, {
+        stdout = function(_, data)
+          if data then
+            emit(vim.split(data, '\n', { trimempty = true }))
+          end
+        end,
+      }, done)
+      return function()
+        proc:kill('sigterm')
+      end
+    end,
+<
+==============================================================================
+9. Writing code                                          *biscide-editing*
+
+A card is a window on the file's buffer: edit it with Nvim's keys, and `:w`
+writes the whole file, in place. The cards follow the typing: a card grows
+with its text, and once you leave Insert mode the file is read again (a
+declaration renamed keeps its card; text typed past a part's end that reads
+as a part of its own gets a card of its own, the cursor with it).
+
+                                                    *biscide-new-declaration*
+<leader>n (or a click on the dashed card at the end of the file lane, or
+|:BiscideNew|) starts a new declaration at the end of the active file, in a
+card of its own. Leave Insert mode and it becomes a card like the others;
+leave it empty and it is gone.
+
+                                                          *biscide-missing*
+A name the active declaration uses that is defined nowhere gets a dashed red
+card in the uses lane, with a red curve from the name. biscide finds them
+itself for Go (a name not declared in the function, in its package, nor
+built in), and the language server's diagnostics add theirs ("undefined:
+x", Rust's "cannot find function `x`", …).
+
+Click the card, or press gm on the name (|:BiscideResolve|), to resolve it.
+The picker offers:
+
+  - the language server's quick fixes (gopls' "Create function" writes the
+    signature for you);
+  - a declaration of that name in the program, to import (Go: the name is
+    qualified with its package and the import added; Rust: a `use` line);
+  - the name created from scratch, as each kind of declaration: func,
+    method, struct, interface, type, const, var (Rust: fn, method, struct,
+    enum, trait, type, const). The kind the code suggests comes first:
+    `name(…)` a func, `x.name(…)` on a method's receiver a method,
+    `Name{…}` a struct;
+  - "From a template…": biscide's and yours (|biscide-templates|).
+
+The new declaration is written at the end of the active file, in its card,
+with what the code suggests: `x, err := fetch(ctx, key)` makes
+`func fetch(ctx context.Context, key string) (any, error)`.
+
+                                                     *biscide-plain-files*
+A file that is neither Go nor Rust opens as a single card holding the whole
+file, with its own highlighting and language server: from the command line
+(`biscide ~/.config/nvim/init.lua`), the tree or the files picker.
+
+==============================================================================
+10. Commands                                            *biscide-commands*
+
+*:BiscideGo*
+    To the card under the card cursor; without one, the camera back on the
+    active card.
+
+*:BiscideBack* [count]
+    Back to the previous declaration (the far left lane), [count] times.
+
+*:BiscideLane* {dir}
+    Moves the card cursor: "down", "up", "left", "right", "top", "bottom"
+    (of its lane), "uses", "used_by". A count repeats it.
+
+*:BiscideHistory* {back|forward}
+    Through the declarations gone to. A count walks that many.
+
+*:BiscideTree* [toggle|open|close|reveal]
+    The file tree: shown with the keyboard or hidden (toggle, the default),
+    shown, hidden, or with the active file selected.
+
+*:BiscideMessages* [toggle|open|close|clear]
+    The messages panel; "clear" empties it.
+
+*:BiscidePick* {name} [query]
+    Opens picker {name} (|biscide-pickers|), with [query] typed. Without a
+    name, the pickers.
+
+*:BiscideFind* [query]
+    The declarations picker.
+
+*:BiscideNew*
+    A new declaration at the end of the active file.
+
+*:BiscideResolve*
+    Resolves the name under the cursor that is defined nowhere (else the
+    first such name of the active declaration).
+
+*:BiscideCentre*
+    The camera back on the active card.
+
+*:BiscideReload*
+    Reads the whole program again.
+
+*:BiscideCardCols* {n}
+    A card's width, in columns (30 to 240).
+
+==============================================================================
+11. Lua                                                      *biscide-lua*
+
+`require('biscide')` is what the GUI calls, and what you can call: >lua
+    local biscide = require('biscide')
+
+    biscide.lane('right')        -- the card cursor (as |:BiscideLane|)
+    biscide.lane('down', 3)
+    biscide.go_cursor()          -- to its card; false without one
+    biscide.drop_cursor()
+    biscide.history(-1)          -- back one; 1: forth one
+    biscide.back()               -- the previous declaration
+    biscide.centre()             -- the camera back on the active card
+    biscide.open('cmd/main.go', 41) -- a file's declaration at row 41
+                                    -- (from 0) in the middle
+    biscide.new()                -- a new declaration
+    biscide.reload()             -- the program read again
+    biscide.focus_active()       -- the keyboard back to the active card
+
+    -- The state, read only:
+    local n = biscide.state.active()  -- the active declaration
+    print(n.name, n.rel, n.srow, n.erow)
+<
+A declaration (`biscide.state.active()`, `biscide.state.graph.nodes[id]`)
+has: `id`, `name` ("Store.Get"), `short` ("Get"), `kind` ("func",
+"method", "struct", …, or a part's: "package", "imports", "comment",
+"code", "file"), `rel` (its file, from the project's root), `path`,
+`srow` and `erow` (its rows, from 0), `out` and `inc` (the edges to what it
+uses and from what uses it).
+
+                                                          *biscide-events*
+*BiscideReady*
+    |User| event: biscide has read the program and laid it out.
+
+*BiscideActive*
+    |User| event: a declaration became the active one. `data` has its
+    `name`, `path` (from the project's root) and `line`. >lua
+        vim.api.nvim_create_autocmd('User', {
+          pattern = 'BiscideActive',
+          callback = function(ev)
+            vim.notify(('%s:%d'):format(ev.data.path, ev.data.line))
+          end,
+        })
+<
+==============================================================================
+12. Colours                                           *biscide-highlights*
+
+biscide's colour scheme is "biscide" (|:colorscheme|); with one of yours set,
+yours is used. The highlight groups biscide adds, set as defaults (yours
+win; set them again on |ColorScheme|):
+
+  BiscideLinkCall        a name the active declaration calls
+  BiscideLinkParameter   a type in its parameters or results
+  BiscideLinkField       a type in its fields
+  BiscideLinkTypeUse     a type it uses
+  BiscideLinkReference   a value it uses
+  BiscideLinkReceiver    the type it is a method of
+  BiscideLinkOutward     a use that points outward (|biscide-layers|)
+  BiscideGoFile          Go files (the tree)
+  BiscideRustFile        Rust files (the tree)
+>lua
+    local function links()
+      vim.api.nvim_set_hl(0, 'BiscideLinkCall',
+        { underline = true, sp = '#61AFEF' })
+    end
+    links()
+    vim.api.nvim_create_autocmd('ColorScheme', { callback = links })
+<
+==============================================================================
+13. Layers                                                *biscide-layers*
+
+biscide knows a program's layers, inner to outer, and draws a use that
+points outward (an inner layer using an outer one) in red. The defaults:
+"domain" (`domain/**`, `internal/domain/**`, `crates/domain/**`), "app",
+"adapters", and "root" (`cmd/**`, `main.go`, `src/**`). A project gives its
+own in `biscide.toml` at its root: >toml
+    # Inner to outer.
+    [[layer]]
+    name = "domain"
+    paths = ["internal/domain/**"]
+
+    [[layer]]
+    name = "service"
+    paths = ["internal/service/**"]
+
+    [[layer]]
+    name = "transport"
+    paths = ["internal/http/**", "cmd/**"]
+<
+==============================================================================
+14. Without a screen                                      *biscide-debug*
+
+For checking biscide without a screen (tests, scripts):
+>sh
+    QT_QPA_PLATFORM=offscreen BISCIDE_SCREENSHOT=out.png \
+      BISCIDE_KEYS=' /Store.Get<CR>|<C-l>' nvim --gui ~/code/project
+<
+  BISCIDE_SCREENSHOT   Saves the window to this file, then quits.
+  BISCIDE_KEYS         Keys typed first; groups separated by "|" are typed
+                       600 ms apart.
+  BISCIDE_FRAMES       Also saves this many frames, 50 ms apart, after the
+                       last keys (out-1.png, …).
+  BISCIDE_DEBUG        Logs what passes between Nvim and the GUI.
+
+ vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

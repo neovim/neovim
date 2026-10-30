@@ -84,6 +84,7 @@
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winrange.h"
 
 typedef struct {
   VimState state;
@@ -382,6 +383,8 @@ static void insert_enter(InsertState *s)
 static int insert_check(VimState *state)
 {
   InsertState *s = (InsertState *)state;
+
+  win_range_clamp(curwin);
 
   // Multicursor: insert-cascade, before entry ("A"/"o"/"cw"/…), and after every executed key.
   mc_ins_cascade();

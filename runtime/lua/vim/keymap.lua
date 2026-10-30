@@ -12,6 +12,11 @@ local keymap = {}
 --- Creates buffer-local mapping, `0` for current buffer.
 --- @field buf? integer
 ---
+--- Creates one of the GUI's keymaps (|nvim_gui_set_keymap()|): it works
+--- in every buffer, over the buffer's own mapping and a global one of the
+--- same keys.
+--- @field gui? boolean
+---
 --- Make the mapping recursive. Inverse of {noremap}.
 --- (Default: `false`)
 --- @field remap? boolean
@@ -103,10 +108,15 @@ function keymap.set(modes, lhs, rhs, opts)
     buf = opts.buffer == true and 0 or opts.buffer --[[@as integer?]]
     opts.buffer = nil
   end
+  local gui = opts.gui
+  opts.gui = nil
+  assert(not (gui and buf), "Conflict: 'gui' not allowed with 'buf'")
 
   for _, m in ipairs(modes) do
     for _, l in ipairs(lhs) do
-      if buf then
+      if gui then
+        vim.api.nvim_gui_set_keymap(m, l, rhs, opts)
+      elseif buf then
         vim.api.nvim_buf_set_keymap(buf, m, l, rhs, opts)
       else
         vim.api.nvim_set_keymap(m, l, rhs, opts)
@@ -120,6 +130,8 @@ end
 ---
 --- Remove a mapping from the given buffer. `0` for current.
 --- @field buf? integer
+--- Remove one of the GUI's keymaps.
+--- @field gui? boolean
 --- When true, only match {lhs}, not {rhs}.
 --- @field lhs? boolean
 
@@ -160,7 +172,9 @@ function keymap.del(modes, lhs, opts)
 
   for _, m in ipairs(modes) do
     for _, l in ipairs(lhs) do
-      if buf then
+      if opts.gui then
+        vim.api.nvim_gui_del_keymap(m, l, api_opts)
+      elseif buf then
         vim.api.nvim_buf_del_keymap(buf, m, l, api_opts)
       else
         vim.api.nvim_del_keymap(m, l, api_opts)

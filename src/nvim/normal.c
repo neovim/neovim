@@ -105,6 +105,7 @@
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winrange.h"
 
 typedef struct {
   VimState state;
@@ -1251,6 +1252,9 @@ static int normal_execute(VimState *state, int key)
   // Call the command function found in the commands table.
   s->ca.arg = nv_cmds[s->idx].cmd_arg;
   (nv_cmds[s->idx].cmd_func)(&s->ca);
+  // A window kept to a range: the motion ends in it, before an operator
+  // works on the text it moved over.
+  win_range_clamp(curwin);
 
 finish:
   normal_finish_command(s, &frame);
@@ -1399,6 +1403,7 @@ static void normal_redraw(NormalState *s)
 ///           0 if the main loop must exit
 static int normal_check(VimState *state)
 {
+  win_range_clamp(curwin);
   NormalState *s = (NormalState *)state;
   normal_check_stuff_buffer(s);
   normal_check_interrupt(s);

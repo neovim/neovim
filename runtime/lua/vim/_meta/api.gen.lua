@@ -1592,6 +1592,44 @@ function vim.api.nvim_get_var(name) end
 --- @return any # Variable value
 function vim.api.nvim_get_vvar(name) end
 
+--- Unmaps one of the GUI's keymaps.
+---
+--- @see vim.api.nvim_gui_set_keymap
+--- @param mode string Mode short-name ("n", "i", "v", ...)
+--- @param lhs string Left-hand-side `{lhs}` of the mapping.
+--- @param opts vim.api.keyset.keymap_del? Optional parameters.
+--- - lhs: When true, only match {lhs}, not {rhs}.
+function vim.api.nvim_gui_del_keymap(mode, lhs, opts) end
+
+--- Gets the GUI's keymaps (see `nvim_gui_set_keymap()`).
+---
+--- @param mode string Mode short-name ("n", "i", "v", ...)
+--- @return vim.api.keyset.get_keymap[] # Array of |maparg()|-like dictionaries describing mappings.
+--- The "buf" key is always zero.
+function vim.api.nvim_gui_get_keymap(mode) end
+
+--- Sets one of the GUI's keymaps: a `mapping` that works in every buffer.
+---
+--- The GUI's keymaps are its shortcuts: they are looked up first, before
+--- the current buffer's own (`:map-local`) and the global ones, so the
+--- keys do what the GUI says in every buffer. A GUI keymap that has nothing
+--- to do in a buffer may hand the keys on to the buffer's own mapping (see
+--- `nvim_buf_get_keymap()`). They are set from Lua like any other
+--- mapping, in `init.lua` too:
+---
+--- ```lua
+--- vim.keymap.set('n', '<leader>e', '<Cmd>BiscideTree<CR>', { gui = true })
+--- ```
+---
+--- Otherwise as `nvim_set_keymap()`; abbreviations are not the GUI's.
+---
+--- @param mode string Mode short-name (map command prefix: "n", "i", "v", "x", …)
+--- or "!" for `:map!`, or empty string for `:map`.
+--- @param lhs string Left-hand-side `{lhs}` of the mapping.
+--- @param rhs string Right-hand-side `{rhs}` of the mapping.
+--- @param opts vim.api.keyset.keymap? Optional parameters map, as `nvim_set_keymap()`'s.
+function vim.api.nvim_gui_set_keymap(mode, lhs, rhs, opts) end
+
 --- Queues raw user-input. Unlike `nvim_feedkeys()`, this uses a low-level input buffer and the call
 --- is non-blocking (input is processed asynchronously by the eventloop).
 ---
@@ -2433,6 +2471,11 @@ function vim.api.nvim_win_call(win, fn) end
 --- hidden, even if 'hidden' is not set.
 function vim.api.nvim_win_close(win, force) end
 
+--- Lets a window go of its range of lines (`nvim_win_set_range()`).
+---
+--- @param win integer `window-ID`, or 0 for current window
+function vim.api.nvim_win_del_range(win) end
+
 --- Removes a window-scoped (w:) variable
 ---
 --- @param win integer `window-ID`, or 0 for current window
@@ -2492,6 +2535,13 @@ function vim.api.nvim_win_get_option(window, name) end
 --- @param win integer `window-ID`, or 0 for current window
 --- @return [integer, integer] # (row, col) tuple with the window position
 function vim.api.nvim_win_get_position(win) end
+
+--- Gets the range of lines a window is kept to (`nvim_win_set_range()`).
+---
+--- @param win integer `window-ID`, or 0 for current window
+--- @return integer[] # `[start, end]` (zero-indexed, inclusive), or an empty array when
+--- the window is not kept to a range
+function vim.api.nvim_win_get_range(win) end
 
 --- Gets the window tabpage
 ---
@@ -2598,6 +2648,21 @@ function vim.api.nvim_win_set_hl_ns(win, ns_id) end
 --- @param name string
 --- @param value any
 function vim.api.nvim_win_set_option(window, name, value) end
+
+--- Keeps a window to a range of its buffer's lines: the window shows and
+--- edits only those, while the buffer stays whole (a language server, a
+--- write, the other windows on it see all of it).
+---
+--- The range is an extmark of the buffer and follows the edits: lines added
+--- in it, or right after its last line, grow it. The cursor is put back in
+--- it after each Normal-mode command (before an operator works on the text
+--- moved over) and in Insert mode; the view does not start above it. Set
+--- again to move it; `nvim_win_del_range()` lets the window go.
+---
+--- @param win integer `window-ID`, or 0 for current window
+--- @param start integer First line of the range (zero-indexed)
+--- @param end_ integer Last line of the range (zero-indexed, inclusive)
+function vim.api.nvim_win_set_range(win, start, end_) end
 
 --- Sets a window-scoped (w:) variable
 ---

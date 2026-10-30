@@ -416,6 +416,7 @@ foreach(subdir
         msgpack_rpc
         tui
         tui/termkey
+        gui
         vterm
         event
         eval
@@ -834,6 +835,29 @@ endif()
 file(MAKE_DIRECTORY ${BINARY_LIB_DIR})
 
 # install treesitter parser if bundled
+# The built-in GUI (`nvim --gui`): Qt, in a C++ library of its own. Off
+# by default; with it, the Go and Rust parsers biscide reads code with are
+# built too (lib/nvim/parser, beside the bundled ones).
+option(ENABLE_GUI "Build Nvim's built-in GUI (Qt 6)" OFF)
+if(ENABLE_GUI)
+  enable_language(CXX)
+  add_subdirectory(gui/qt)
+  target_link_libraries(nvim_bin PRIVATE nvim_gui_qt)
+  target_compile_definitions(nvim_bin PRIVATE NVIM_GUI)
+  foreach(lang go rust)
+    set(dir ${CMAKE_CURRENT_SOURCE_DIR}/gui/grammars/${lang})
+    file(GLOB srcs ${dir}/src/*.c)
+    add_library(gui_parser_${lang} MODULE ${srcs})
+    target_include_directories(gui_parser_${lang} PRIVATE ${dir}/src)
+    target_compile_options(gui_parser_${lang} PRIVATE -O2 -w)
+    set_target_properties(gui_parser_${lang} PROPERTIES
+      PREFIX "" OUTPUT_NAME ${lang} SUFFIX ".so"
+      LIBRARY_OUTPUT_DIRECTORY ${BINARY_LIB_DIR}/parser)
+    add_dependencies(nvim_bin gui_parser_${lang})
+    install(TARGETS gui_parser_${lang} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/nvim/parser)
+  endforeach()
+endif()
+
 if(EXISTS ${DEPS_PREFIX}/lib/nvim/parser)
   add_custom_command(
     TARGET nvim_runtime_deps

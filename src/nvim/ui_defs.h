@@ -53,6 +53,9 @@ typedef struct {
   bool stdout_tty;
 
   uint64_t channel_id;
+  /// The built-in GUI (`nvim --gui`, gui/gui.c): its events are not packed
+  /// for a channel but handed to it as they are.
+  bool gui;
 
 #define UI_BUF_SIZE ARENA_BLOCK_SIZE  ///< total buffer size for pending msgpack data.
   /// guaranteed size available for each new event (so packing of simple events

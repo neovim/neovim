@@ -1112,6 +1112,13 @@ typedef struct {
 struct window_S {
   handle_T handle;                  ///< unique identifier for the window
 
+  /// The range of lines the window is kept to (|nvim_win_set_range()|): an
+  /// extmark of buffer w_range_buf (0: none).
+  uint32_t w_range_mark;
+  handle_T w_range_buf;
+  /// The range runs to the buffer's end (it was set to end on its last line).
+  bool w_range_to_end;
+
   buf_T *w_buffer;            ///< buffer we are a window into (used
                               ///< often, keep it the first item!)
 

@@ -1653,6 +1653,63 @@ void nvim_del_keymap(uint64_t channel_id, String mode, String lhs, Dict(keymap_d
   nvim_buf_del_keymap(channel_id, -1, mode, lhs, opts, err);
 }
 
+/// Gets the GUI's keymaps (see |nvim_gui_set_keymap()|).
+///
+/// @param  mode       Mode short-name ("n", "i", "v", ...)
+/// @returns Array of |maparg()|-like dictionaries describing mappings.
+///          The "buf" key is always zero.
+ArrayOf(DictAs(get_keymap)) nvim_gui_get_keymap(String mode, Arena *arena)
+  FUNC_API_SINCE(15)
+{
+  return gui_keymap_array(mode, arena);
+}
+
+/// Sets one of the GUI's keymaps: a |mapping| that works in every buffer.
+///
+/// The GUI's keymaps are its shortcuts: they are looked up first, before
+/// the current buffer's own (|:map-local|) and the global ones, so the
+/// keys do what the GUI says in every buffer. A GUI keymap that has nothing
+/// to do in a buffer may hand the keys on to the buffer's own mapping (see
+/// |nvim_buf_get_keymap()|). They are set from Lua like any other
+/// mapping, in |init.lua| too:
+///
+/// ```lua
+/// vim.keymap.set('n', '<leader>e', '<Cmd>BiscideTree<CR>', { gui = true })
+/// ```
+///
+/// Otherwise as |nvim_set_keymap()|; abbreviations are not the GUI's.
+///
+/// @param channel_id Channel id (implicit dispatcher arg)
+/// @param  mode  Mode short-name (map command prefix: "n", "i", "v", "x", …)
+///               or "!" for |:map!|, or empty string for |:map|.
+/// @param  lhs   Left-hand-side |{lhs}| of the mapping.
+/// @param  rhs   Right-hand-side |{rhs}| of the mapping.
+/// @param  opts  Optional parameters map, as |nvim_set_keymap()|'s.
+/// @param[out]   err   Error details, if any.
+void nvim_gui_set_keymap(uint64_t channel_id, String mode, String lhs, String rhs,
+                         Dict(keymap) *opts, Error *err)
+  FUNC_API_SINCE(15)
+{
+  modify_gui_keymap(channel_id, MAPTYPE_MAP, mode, lhs, rhs, opts, err);
+}
+
+/// Unmaps one of the GUI's keymaps.
+///
+/// @param  mode  Mode short-name ("n", "i", "v", ...)
+/// @param  lhs   Left-hand-side |{lhs}| of the mapping.
+/// @param  opts  Optional parameters.
+///               - lhs: When true, only match {lhs}, not {rhs}.
+///
+/// @see |nvim_gui_set_keymap()|
+void nvim_gui_del_keymap(uint64_t channel_id, String mode, String lhs, Dict(keymap_del) *opts,
+                         Error *err)
+  FUNC_API_SINCE(15)
+{
+  String rhs = { .data = "", .size = 0 };
+  int maptype = opts && opts->lhs ? MAPTYPE_UNMAP_LHS : MAPTYPE_UNMAP;
+  modify_gui_keymap(channel_id, maptype, mode, lhs, rhs, NULL, err);
+}
+
 /// Returns a 2-tuple (Array), where item 0 is the current channel id and item
 /// 1 is the |api-metadata| map (Dict).
 ///

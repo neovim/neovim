@@ -26,6 +26,7 @@
 #include "nvim/event/wstream.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
+#include "nvim/gui/gui.h"
 #include "nvim/highlight.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
@@ -636,6 +637,10 @@ static void prepare_call(RemoteUI *ui, const char *name)
 /// Pushes data into RemoteUI, to be consumed later by remote_ui_flush().
 static void push_call(RemoteUI *ui, const char *name, Array args)
 {
+  if (ui->gui) {
+    gui_ui_call(name, args);
+    return;
+  }
   prepare_call(ui, name);
   mpack_object_array(args, &ui->packer);
 }
@@ -829,6 +834,11 @@ void remote_ui_raw_line(RemoteUI *ui, Integer grid, Integer row, Integer startco
   // to not only use FIXSTR (only up to 0x20 bytes)
   STATIC_ASSERT(MAX_SCHAR_SIZE - 1 < 0x20, "SCHAR doesn't fit in fixstr");
 
+  if (ui->gui) {
+    gui_ui_raw_line(grid, row, startcol, endcol, clearcol, clearattr, flags, chunk, attrs);
+    return;
+  }
+
   if (ui->ui_ext[kUILinegrid]) {
     prepare_call(ui, "grid_line");
 
@@ -973,6 +983,10 @@ static void ui_flush_buf(RemoteUI *ui, bool incomplete_event)
 /// "redraw" batch.
 void remote_ui_flush(RemoteUI *ui)
 {
+  if (ui->gui) {
+    gui_ui_flush();
+    return;
+  }
   if (ui->nevents > 0 || ui->flushed_events) {
     if (!ui->ui_ext[kUILinegrid]) {
       remote_ui_cursor_goto(ui, ui->cursor_row, ui->cursor_col);
@@ -985,7 +999,7 @@ void remote_ui_flush(RemoteUI *ui)
 
 void remote_ui_ui_send(RemoteUI *ui, String content)
 {
-  if (!ui->stdout_tty) {
+  if (ui->gui || !ui->stdout_tty) {
     return;
   }
 
@@ -996,6 +1010,9 @@ void remote_ui_ui_send(RemoteUI *ui, String content)
 
 void remote_ui_flush_pending_data(RemoteUI *ui)
 {
+  if (ui->gui) {
+    return;
+  }
   ui_flush_buf(ui, false);
 }
 

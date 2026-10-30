@@ -60,6 +60,7 @@
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
+#include "nvim/gui/gui.h"
 #include "nvim/hashtab.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
@@ -336,7 +337,8 @@ int main(int argc, char **argv)
 #else
   bool has_term = (stdin_isatty || stdout_isatty || stderr_isatty);
 #endif
-  bool use_builtin_ui = (has_term && !headless_mode && !embedded_mode && !silent_mode);
+  bool use_builtin_ui = (has_term && !headless_mode && !embedded_mode && !silent_mode
+                         && !gui_mode);
 
   if (params.remote) {
     remote_request(&params, params.remote, params.server_addr, argc, argv,
@@ -432,6 +434,19 @@ int main(int argc, char **argv)
     TIME_MSG("waiting for UI");
     remote_ui_wait_for_attach();
     TIME_MSG("done waiting for UI");
+    firstwin->w_prev_height = firstwin->w_height;  // may have changed
+  }
+
+  // The built-in GUI: started and attached now, as a remote UI would be (it
+  // sees the startup's messages and prompts).
+  if (gui_mode) {
+    TIME_MSG("starting the GUI");
+    char err[256] = "";
+    if (!gui_start(err, sizeof err)) {
+      fprintf(stderr, "nvim: --gui: %s\n", err);
+      os_exit(1);
+    }
+    TIME_MSG("GUI attached");
     firstwin->w_prev_height = firstwin->w_height;  // may have changed
   }
 
@@ -729,6 +744,7 @@ void os_exit(int r)
   } else {
     ui_flush();
   }
+  gui_stop();
 
   if (!event_teardown() && r == 0) {
     r = 1;  // Exit with error if main_loop did not teardown gracefully.
@@ -1109,7 +1125,10 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
 /// @see EDIT_STDIN
 static bool edit_stdin(mparm_T *parmp)
 {
+  // The GUI reads stdin only when told (`-`): started from a desktop or a
+  // script, its stdin is no text to edit.
   bool implicit = !headless_mode
+                  && !gui_mode
                   && !(embedded_mode && stdin_fd <= 0)
                   && (!parmp->exmode || parmp->input_istext)
                   && !stdin_isatty
@@ -1194,6 +1213,8 @@ static void command_line_scan(mparm_T *parmp)
           headless_mode = true;
         } else if (STRICMP(argv[0] + argv_idx, "embed") == 0) {
           embedded_mode = true;
+        } else if (STRICMP(argv[0] + argv_idx, "gui") == 0) {
+          gui_mode = true;
         } else if (STRNICMP(argv[0] + argv_idx, "listen", 6) == 0) {
           want_argument = true;
           argv_idx += 6;
@@ -1565,6 +1586,9 @@ scripterror:
 
   if (embedded_mode && (silent_mode || parmp->luaf)) {
     mainerr(_("--embed conflicts with -es/-Es/-l"), NULL, NULL);
+  }
+  if (gui_mode && (embedded_mode || headless_mode || silent_mode || parmp->luaf)) {
+    mainerr(_("--gui conflicts with --embed/--headless/-es/-Es/-l"), NULL, NULL);
   }
 
   // If there is a "+123" or "-c" command, set v:swapcommand to the first one.
@@ -2373,6 +2397,7 @@ static void usage(void)
   printf(_("  --clean               \"Factory defaults\" (skip user config and plugins, shada)\n"));
   printf(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
   printf(_("  --headless            Don't start a user interface\n"));
+  printf(_("  --gui                 Start the built-in GUI (biscide)\n"));
   printf(_("  --listen <address>    Serve RPC API from this address\n"));
   printf(_("  --remote[-subcommand] Execute commands remotely on a server\n"));
   printf(_("  --server <address>    Connect to this Nvim server\n"));

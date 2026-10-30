@@ -27,6 +27,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/window.h"
+#include "nvim/winrange.h"
 
 #include "api/window.c.generated.h"  // IWYU pragma: keep
 
@@ -292,6 +293,63 @@ Integer nvim_win_get_number(Window win, Error *err)
   win_get_tabwin(w->handle, &tabnr, &rv);
 
   return rv;
+}
+
+/// Keeps a window to a range of its buffer's lines: the window shows and
+/// edits only those, while the buffer stays whole (a language server, a
+/// write, the other windows on it see all of it).
+///
+/// The range is an extmark of the buffer and follows the edits: lines added
+/// in it, or right after its last line, grow it. The cursor is put back in
+/// it after each Normal-mode command (before an operator works on the text
+/// moved over) and in Insert mode; the view does not start above it. Set
+/// again to move it; |nvim_win_del_range()| lets the window go.
+///
+/// @param win |window-ID|, or 0 for current window
+/// @param start  First line of the range (zero-indexed)
+/// @param end    Last line of the range (zero-indexed, inclusive)
+/// @param[out] err Error details, if any
+void nvim_win_set_range(Window win, Integer start, Integer end, Error *err)
+  FUNC_API_SINCE(15)
+{
+  win_T *w = find_window_by_handle(win, err);
+  if (!w) {
+    return;
+  }
+  win_range_set(w, (int)start, (int)end, err);
+}
+
+/// Gets the range of lines a window is kept to (|nvim_win_set_range()|).
+///
+/// @param win |window-ID|, or 0 for current window
+/// @param[out] err Error details, if any
+/// @return `[start, end]` (zero-indexed, inclusive), or an empty array when
+///         the window is not kept to a range
+ArrayOf(Integer) nvim_win_get_range(Window win, Arena *arena, Error *err)
+  FUNC_API_SINCE(15)
+{
+  win_T *w = find_window_by_handle(win, err);
+  linenr_T top, bot;
+  if (!w || !win_range(w, &top, &bot)) {
+    return (Array)ARRAY_DICT_INIT;
+  }
+  Array rv = arena_array(arena, 2);
+  ADD_C(rv, INTEGER_OBJ(top - 1));
+  ADD_C(rv, INTEGER_OBJ(bot - 1));
+  return rv;
+}
+
+/// Lets a window go of its range of lines (|nvim_win_set_range()|).
+///
+/// @param win |window-ID|, or 0 for current window
+/// @param[out] err Error details, if any
+void nvim_win_del_range(Window win, Error *err)
+  FUNC_API_SINCE(15)
+{
+  win_T *w = find_window_by_handle(win, err);
+  if (w) {
+    win_range_del(w);
+  }
 }
 
 /// Checks if a window is valid

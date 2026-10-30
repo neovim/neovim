@@ -1146,6 +1146,59 @@ nvim_get_vvar({name})                                        *nvim_get_vvar()*
     Return: ~
         (`any`) Variable value
 
+nvim_gui_del_keymap({mode}, {lhs}, {opts})             *nvim_gui_del_keymap()*
+    Unmaps one of the GUI's keymaps.
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {mode}  (`string`) Mode short-name ("n", "i", "v", ...)
+      • {lhs}   (`string`) Left-hand-side |{lhs}| of the mapping.
+      • {opts}  (`vim.api.keyset.keymap_del?`) Optional parameters.
+                • lhs: When true, only match {lhs}, not {rhs}.
+
+    See also: ~
+      • |nvim_gui_set_keymap()|
+
+nvim_gui_get_keymap({mode})                            *nvim_gui_get_keymap()*
+    Gets the GUI's keymaps (see |nvim_gui_set_keymap()|).
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {mode}  (`string`) Mode short-name ("n", "i", "v", ...)
+
+    Return: ~
+        (`vim.api.keyset.get_keymap[]`) Array of |maparg()|-like dictionaries
+        describing mappings. The "buf" key is always zero.
+
+nvim_gui_set_keymap({mode}, {lhs}, {rhs}, {opts})      *nvim_gui_set_keymap()*
+    Sets one of the GUI's keymaps: a |mapping| that works in every buffer.
+
+    The GUI's keymaps are its shortcuts: they are looked up first, before the
+    current buffer's own (|:map-local|) and the global ones, so the keys do
+    what the GUI says in every buffer. A GUI keymap that has nothing to do in
+    a buffer may hand the keys on to the buffer's own mapping (see
+    |nvim_buf_get_keymap()|). They are set from Lua like any other mapping, in
+    |init.lua| too: >lua
+        vim.keymap.set('n', '<leader>e', '<Cmd>BiscideTree<CR>', { gui = true })
+<
+
+    Otherwise as |nvim_set_keymap()|; abbreviations are not the GUI's.
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {mode}  (`string`) Mode short-name (map command prefix: "n", "i", "v",
+                "x", …) or "!" for |:map!|, or empty string for |:map|.
+      • {lhs}   (`string`) Left-hand-side |{lhs}| of the mapping.
+      • {rhs}   (`string`) Right-hand-side |{rhs}| of the mapping.
+      • {opts}  (`vim.api.keyset.keymap?`) Optional parameters map, as
+                |nvim_set_keymap()|'s.
+
 nvim_input({keys})                                              *nvim_input()*
     Queues raw user-input. Unlike |nvim_feedkeys()|, this uses a low-level
     input buffer and the call is non-blocking (input is processed
@@ -4124,6 +4177,15 @@ nvim_win_close({win}, {force})                              *nvim_win_close()*
                  with unwritten changes can be closed. The buffer will become
                  hidden, even if 'hidden' is not set.
 
+nvim_win_del_range({win})                               *nvim_win_del_range()*
+    Lets a window go of its range of lines (|nvim_win_set_range()|).
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {win}  (`integer`) |window-ID|, or 0 for current window
+
 nvim_win_del_var({win}, {name})                           *nvim_win_del_var()*
     Removes a window-scoped (w:) variable
 
@@ -4198,6 +4260,19 @@ nvim_win_get_position({win})                         *nvim_win_get_position()*
 
     Return: ~
         (`[integer, integer]`) (row, col) tuple with the window position
+
+nvim_win_get_range({win})                               *nvim_win_get_range()*
+    Gets the range of lines a window is kept to (|nvim_win_set_range()|).
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {win}  (`integer`) |window-ID|, or 0 for current window
+
+    Return: ~
+        (`integer[]`) `[start, end]` (zero-indexed, inclusive), or an empty
+        array when the window is not kept to a range
 
 nvim_win_get_tabpage({win})                           *nvim_win_get_tabpage()*
     Gets the window tabpage
@@ -4327,6 +4402,25 @@ nvim_win_set_hl_ns({win}, {ns_id})                      *nvim_win_set_hl_ns()*
     Parameters: ~
       • {win}    (`integer`)
       • {ns_id}  (`integer`) the namespace to use
+
+nvim_win_set_range({win}, {start}, {end})               *nvim_win_set_range()*
+    Keeps a window to a range of its buffer's lines: the window shows and
+    edits only those, while the buffer stays whole (a language server, a
+    write, the other windows on it see all of it).
+
+    The range is an extmark of the buffer and follows the edits: lines added
+    in it, or right after its last line, grow it. The cursor is put back in it
+    after each Normal-mode command (before an operator works on the text moved
+    over) and in Insert mode; the view does not start above it. Set again to
+    move it; |nvim_win_del_range()| lets the window go.
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {win}    (`integer`) |window-ID|, or 0 for current window
+      • {start}  (`integer`) First line of the range (zero-indexed)
+      • {end}    (`integer`) Last line of the range (zero-indexed, inclusive)
 
 nvim_win_set_var({win}, {name}, {value})                  *nvim_win_set_var()*
     Sets a window-scoped (w:) variable

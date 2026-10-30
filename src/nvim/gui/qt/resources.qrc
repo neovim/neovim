@@ -1,0 +1,21 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+  <qresource prefix="/biscide">
+    <file>icons/close.svg</file>
+    <file>icons/layers.svg</file>
+    <file>icons/file.svg</file>
+    <file>icons/folder.svg</file>
+    <file>icons/search.svg</file>
+    <file>icons/messages.svg</file>
+    <file>icons/folder-open.svg</file>
+    <file>icons/chevron-right.svg</file>
+    <file>icons/chevron-down.svg</file>
+    <file>icons/error.svg</file>
+    <file>icons/warning.svg</file>
+    <file>icons/info.svg</file>
+    <file>icons/terminal.svg</file>
+    <file>icons/keyboard.svg</file>
+    <file>icons/clock.svg</file>
+    <file>icons/trash.svg</file>
+  </qresource>
+</RCC>

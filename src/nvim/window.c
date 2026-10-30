@@ -80,6 +80,7 @@
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winrange.h"
 #include "nvim/winfloat.h"
 
 #include "window.c.generated.h"
@@ -5566,6 +5567,7 @@ void free_wininfo(WinInfo *wip, buf_T *bp)
 /// @param tp  tab page "win" is in, NULL for current
 void win_free(win_T *wp, tabpage_T *tp)
 {
+  win_range_del(wp);
   pmap_del(int)(&window_handles, wp->handle, NULL);
   clearFolding(wp);
 

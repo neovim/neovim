@@ -68,6 +68,11 @@ static mapblock_T *first_abbr = NULL;
 /// Each mapping is put in one of the MAX_MAPHASH hash lists, to speed up finding it.
 static mapblock_T *(maphash[MAX_MAPHASH]) = { 0 };
 
+/// The GUI's keymaps (|nvim_gui_set_keymap()|): looked up after the current
+/// buffer's and before the global ones, so they work in every buffer that
+/// does not map the keys itself.
+static mapblock_T *(gui_maphash[MAX_MAPHASH]) = { 0 };
+
 // Make a hash value for a mapping.
 // "mode" is the lower 4 bits of the State for the mapping.
 // "c1" is the first character of the "lhs".
@@ -115,10 +120,11 @@ struct map_arguments {
   char *orig_rhs;  ///< The original text of the {rhs}.
   size_t orig_rhs_len;
   char *desc;  ///< map description
+  bool gui;  ///< one of the GUI's keymaps (gui_maphash)
 };
 typedef struct map_arguments MapArguments;
 #define MAP_ARGUMENTS_INIT { false, false, false, false, false, false, false, false, \
-                             { 0 }, 0, { 0 }, 0, NULL, 0, LUA_NOREF, false, NULL, 0, NULL }
+                             { 0 }, 0, { 0 }, 0, NULL, 0, LUA_NOREF, false, NULL, 0, NULL, false }
 
 #include "mapping.c.generated.h"
 
@@ -147,6 +153,12 @@ mapblock_T *get_buf_maphash_list(int state, int c)
   return curbuf->b_maphash[MAP_HASH(state, c)];
 }
 
+/// Return the GUI's keymaps for the given state and character.
+mapblock_T *get_gui_maphash_list(int state, int c)
+{
+  return gui_maphash[MAP_HASH(state, c)];
+}
+
 /// Finds the Lua mapping whose `m_str` embeds `id`.
 static mapblock_T *map_luaid_scan(mapblock_T *const *mappings, size_t size, int id)
 {
@@ -167,6 +179,7 @@ static mapblock_T *map_luaid_scan(mapblock_T *const *mappings, size_t size, int 
 LuaRef map_luaid_get(int n)
 {
   mapblock_T *mp = map_luaid_scan(maphash, MAX_MAPHASH, n);
+  mp = mp != NULL ? mp : map_luaid_scan(gui_maphash, MAX_MAPHASH, n);
   mp = mp != NULL ? mp : map_luaid_scan(&first_abbr, 1, n);
   FOR_ALL_BUFFERS(fb) {
     mp = mp != NULL ? mp : map_luaid_scan(fb->b_maphash, MAX_MAPHASH, n);
@@ -594,8 +607,9 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
   int retval = 0;
 
   // If <buffer> was given, we'll be searching through the buffer's
-  // mappings/abbreviations, not the globals.
-  mapblock_T **map_table = args->buffer ? buf->b_maphash : maphash;
+  // mappings/abbreviations, not the globals; the GUI's keymaps have their
+  // own table.
+  mapblock_T **map_table = args->gui ? gui_maphash : args->buffer ? buf->b_maphash : maphash;
   mapblock_T **abbr_table = args->buffer ? &buf->b_first_abbr : &first_abbr;
   mapblock_T *mp_result[2] = { NULL, NULL };
 
@@ -2774,6 +2788,23 @@ void ex_abclear(exarg_T *eap)
 void modify_keymap(uint64_t channel_id, Buffer buffer, int maptype, String mode, String lhs,
                    String rhs, Dict(keymap) *opts, Error *err)
 {
+  keymap_modify(channel_id, buffer, false, maptype, mode, lhs, rhs, opts, err);
+}
+
+/// Set or delete one of the GUI's keymaps (|nvim_gui_set_keymap()|).
+///
+/// @see modify_keymap
+void modify_gui_keymap(uint64_t channel_id, int maptype, String mode, String lhs, String rhs,
+                       Dict(keymap) *opts, Error *err)
+{
+  keymap_modify(channel_id, -1, true, maptype, mode, lhs, rhs, opts, err);
+}
+
+/// A keymap of buffer `buffer` (-1: the global ones), or of the GUI's
+/// (`gui`), set or deleted.
+static void keymap_modify(uint64_t channel_id, Buffer buffer, bool gui, int maptype, String mode,
+                          String lhs, String rhs, Dict(keymap) *opts, Error *err)
+{
   LuaRef lua_funcref = LUA_NOREF;
   bool is_unmap = maptype == MAPTYPE_UNMAP || maptype == MAPTYPE_UNMAP_LHS;
   bool global = (buffer == -1);
@@ -2806,6 +2837,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, int maptype, String mode,
     }
   }
   parsed_args.buffer = !global;
+  parsed_args.gui = gui;
 
   if (parsed_args.replace_keycodes && !parsed_args.expr) {
     api_set_error(err, kErrorTypeValidation,  "\"replace_keycodes\" requires \"expr\"");
@@ -2838,6 +2870,10 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, int maptype, String mode,
   }
   if (mode.size > 0 && (size_t)(p - mode.data) != mode.size) {
     api_set_error(err, kErrorTypeValidation, "Invalid mode shortname: \"%s\"", mode.data);
+    goto fail_and_free;
+  }
+  if (gui && is_abbrev) {
+    api_set_error(err, kErrorTypeValidation, "The GUI has keymaps, not abbreviations");
     goto fail_and_free;
   }
 
@@ -2904,13 +2940,10 @@ fail_and_free:
   xfree(parsed_args.desc);
 }
 
-/// Get an array containing dictionaries describing mappings
-/// based on mode and buffer id
-///
-/// @param  mode  The abbreviation for the mode
-/// @param  buf  The buffer to get the mapping array. NULL for global
-/// @returns Array of maparg()-like dictionaries describing mappings
-ArrayOf(Dict) keymap_array(String mode, buf_T *buf, Arena *arena)
+/// The mappings of `table` (and `abbr`, the abbreviations) for `mode`, as
+/// maparg()-like dictionaries; `buffer_value` their "buffer".
+static ArrayOf(Dict) keymap_array_of(String mode, mapblock_T **table, mapblock_T *abbr,
+                                     int buffer_value, Arena *arena)
 {
   ArrayBuilder mappings = KV_INITIAL_VALUE;
   kvi_init(mappings);
@@ -2925,13 +2958,8 @@ ArrayOf(Dict) keymap_array(String mode, buf_T *buf, Arena *arena)
   }
   bool is_abbrev = (int_mode & (MODE_INSERT | MODE_CMDLINE)) != 0 && *p == 'a';
 
-  // Determine the desired buffer value
-  int buffer_value = (buf == NULL) ? 0 : buf->handle;
-
   for (int i = 0; i < (is_abbrev ? 1 : MAX_MAPHASH); i++) {
-    for (const mapblock_T *current_maphash = is_abbrev
-                                             ? (buf ? buf->b_first_abbr : first_abbr)
-                                             : (buf ? buf->b_maphash[i] : maphash[i]);
+    for (const mapblock_T *current_maphash = is_abbrev ? abbr : table[i];
          current_maphash;
          current_maphash = current_maphash->m_next) {
       if (current_maphash->m_simplified) {
@@ -2949,4 +2977,22 @@ ArrayOf(Dict) keymap_array(String mode, buf_T *buf, Arena *arena)
   }
 
   return arena_take_arraybuilder(arena, &mappings);
+}
+
+/// Get an array containing dictionaries describing mappings
+/// based on mode and buffer id
+///
+/// @param  mode  The abbreviation for the mode
+/// @param  buf  The buffer to get the mapping array. NULL for global
+/// @returns Array of maparg()-like dictionaries describing mappings
+ArrayOf(Dict) keymap_array(String mode, buf_T *buf, Arena *arena)
+{
+  return buf ? keymap_array_of(mode, buf->b_maphash, buf->b_first_abbr, buf->handle, arena)
+             : keymap_array_of(mode, maphash, first_abbr, 0, arena);
+}
+
+/// The GUI's keymaps for `mode`, as maparg()-like dictionaries.
+ArrayOf(Dict) gui_keymap_array(String mode, Arena *arena)
+{
+  return keymap_array_of(mode, gui_maphash, NULL, 0, arena);
 }
