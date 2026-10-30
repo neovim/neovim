@@ -490,6 +490,11 @@ Task:on_complete({callback})                              *Task:on_complete()*
     If the Task is already done when this method is called, the callback is
     called immediately with the results.
 
+    Callback errors are reported through the runtime scheduler with their
+    traceback. They do not change the task result, interrupt other callbacks,
+    or propagate to the caller that completes the task or registers a
+    callback. Catch errors inside the callback to handle them locally.
+
     This only observes completion. It does not start a pending task.
 
     Parameters: ~
@@ -520,7 +525,8 @@ Task:raise_on_error()                                  *Task:raise_on_error()*
 
     Use this for detached or top-level fire-and-forget tasks whose completion
     will not otherwise be observed. Attached task errors already propagate to
-    their parent.
+    their parent. The error is reported through the runtime scheduler, as for
+    errors in |Task:on_complete()| callbacks.
 
     Detached tasks do not raise errors automatically. Detaching changes
     ownership only; their completion can still be handled with
