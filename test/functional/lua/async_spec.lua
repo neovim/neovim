@@ -560,6 +560,10 @@ stack traceback:
         limit:with(function() end)
       end):wait(100)
 
+      -- LuaJIT traces can retain the completed task.
+      if jit then
+        jit.flush()
+      end
       collectgarbage('collect')
       collectgarbage('collect')
       eq(nil, (next(weak)))
