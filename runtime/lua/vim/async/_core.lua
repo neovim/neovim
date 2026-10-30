@@ -305,7 +305,7 @@ do --- Task
       msg = awaiting:traceback(msg, level + 1)
     end
 
-    local tblvl = is_task(awaiting) and 2 or nil
+    local tblvl = is_task(awaiting) and 2 or 0
     local tb = debug.traceback(self._thread, '', tblvl) or ''
     msg = (msg == nil and '' or tostring(msg)) .. tb:gsub('\n\t', '\n\t' .. thread)
 
