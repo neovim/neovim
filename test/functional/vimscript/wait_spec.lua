@@ -33,6 +33,18 @@ describe('wait()', function()
     eq(0, eval('wait(0, 1)'))
   end)
 
+  it('checks the condition after a timer callback runs past the timeout #11193', function()
+    -- Starts the timer in the same request as wait(), so it fires inside wait().
+    source([[
+    func StartAndWait()
+      let g:_awake = 0
+      call timer_start(0, { -> execute(['sleep 100m', 'let g:_awake = 1']) })
+      return wait(50, { -> g:_awake })
+    endfunc
+    ]])
+    eq(0, eval('StartAndWait()'))
+  end)
+
   it('returns -1 on timeout', function()
     eq(-1, eval('wait(0, 0)'))
     eq(-1, eval('wait(50, 0)'))

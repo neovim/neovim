@@ -145,6 +145,7 @@ function vim.wait(time, callback, interval, fast_only)
   -- Flush screen updates before blocking.
   vim._core.ui_flush()
 
+  local expired = false
   while true do
     if vim._core.check_interrupt() then
       cleanup()
@@ -162,6 +163,11 @@ function vim.wait(time, callback, interval, fast_only)
       end
     end
 
+    if expired then
+      cleanup()
+      return false, -1
+    end
+
     local poll_timeout = -1
     if has_deadline then
       local remaining_ms = time - (vim.uv.hrtime() - start) / 1e6
@@ -175,16 +181,9 @@ function vim.wait(time, callback, interval, fast_only)
     -- polling would only resume for unrelated events or the final timeout.
     vim._core.loop_poll(poll_timeout, fast_only)
 
-    -- Check deadline AFTER polling (mirrors LOOP_PROCESS_EVENTS_UNTIL behavior).
-    -- `got_int` may have been set during poll; let check_interrupt() catch it.
-    if has_deadline and time - (vim.uv.hrtime() - start) / 1e6 <= 0 then
-      if vim._core.check_interrupt() then
-        cleanup()
-        return false, -2
-      end
-      cleanup()
-      return false, -1
-    end
+    -- Checks `callback` after the last poll, which may have run past the deadline (same as
+    -- LOOP_PROCESS_EVENTS_UNTIL).
+    expired = has_deadline and time - (vim.uv.hrtime() - start) / 1e6 <= 0
   end
 end
 
