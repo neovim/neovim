@@ -526,6 +526,16 @@ describe('path.c', function()
       eq(OK, result)
     end)
 
+    itp('produces absolute path for "dir/.."', function()
+      local expected = uv.cwd()
+      local filename = 'unit-test-directory/..'
+      local buflen = get_buf_len(expected, filename)
+      local do_expand = 1
+      local buf, result = vim_FullName(filename, buflen, do_expand)
+      eq(expected, ffi.string(buf))
+      eq(OK, result)
+    end)
+
     itp('produces absolute path if possible and if path contains a slash', function()
       local old_dir = uv.cwd()
       uv.chdir('..')
@@ -594,6 +604,16 @@ describe('path.c', function()
     itp('does not remove trailing slash from non-existing relative directory #20847', function()
       local expected = uv.cwd() .. '/non_existing_dir/'
       local filename = 'non_existing_dir/'
+      local buflen = get_buf_len(expected, filename)
+      local do_expand = 1
+      local buf, result = vim_FullName(filename, buflen, do_expand)
+      eq(expected, ffi.string(buf))
+      eq(OK, result)
+    end)
+
+    itp('removes trailing slash from an existing relative directory', function()
+      local expected = uv.cwd() .. '/unit-test-directory'
+      local filename = 'unit-test-directory/'
       local buflen = get_buf_len(expected, filename)
       local do_expand = 1
       local buf, result = vim_FullName(filename, buflen, do_expand)
