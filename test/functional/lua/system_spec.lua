@@ -103,23 +103,19 @@ describe('vim.system', function()
   end
 
   it('timeout is measured from spawn, not from stale loop time #42521', function()
-    local res = exec_lua(function()
+    local code = exec_lua(function()
       local uv = vim.uv
-      local function block(ms)
-        local t = uv.hrtime()
-        while (uv.hrtime() - t) / 1e6 < ms do
-        end
-      end
       uv.update_time()
-      block(1200)
-      local t0 = uv.hrtime()
-      local r = vim.system({ 'sleep', '2' }, { timeout = 500 }):wait()
-      return { code = r.code, signal = r.signal, ms = math.floor((uv.hrtime() - t0) / 1e6) }
+      -- Block the loop for longer than the timeout, so the cached loop time is stale.
+      local t = uv.hrtime()
+      while (uv.hrtime() - t) / 1e6 < 1200 do
+      end
+      -- Exits well within the timeout (chosen >> child startup); a stale timer would kill it
+      -- immediately (code 124).
+      local cmd = { vim.v.progpath, '-u', 'NONE', '-i', 'NONE', '--headless', '+qa!' }
+      return vim.system(cmd, { timeout = 1000 }):wait().code
     end)
-    eq(124, res.code)
-    eq(15, res.signal)
-    -- Without the fix the timer fires after ~1ms; with it, after ~500ms.
-    assert(res.ms >= 400, 'timeout fired after only ' .. res.ms .. 'ms')
+    eq(0, code)
   end)
 
   it('kill processes', function()

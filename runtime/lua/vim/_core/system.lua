@@ -489,10 +489,8 @@ local function run(cmd, opts, on_exit)
   end
 
   if opts.timeout then
-    -- Refresh the loop time before arming the timer: libuv measures timer
-    -- deadlines from the cached loop clock, so if Lua code blocked the loop
-    -- for longer than the timeout before this call, the timer would otherwise
-    -- fire immediately. See #42521.
+    -- libuv timers use the cached loop time; refresh it so the timeout is
+    -- measured from now, not from before any blocking Lua code. #42521
     uv.update_time()
     state.timer = timer_oneshot(opts.timeout, function()
       if state.handle and state.handle:is_active() then
