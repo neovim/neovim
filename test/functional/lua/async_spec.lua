@@ -521,6 +521,105 @@ stack traceback:
     end)
   end)
 
+  describe('abandoned await callbacks', function()
+    it_exec('fails an abandoned await and frees the task after cleanup', function()
+      local holder = {}
+      local weak = setmetatable({}, { __mode = 'k' })
+      local result = {}
+      local limit = Async.semaphore(1)
+
+      local task = run(function()
+        local payload = {}
+        weak[payload] = true
+        limit:with(function()
+          await(function(cb)
+            holder.cb = cb
+            return add_handle('abandoned', vim.uv.new_timer())
+          end)
+        end)
+        return payload
+      end)
+      weak[task] = true
+      task:on_complete(function(err)
+        result.completed = true
+        result.err = err
+      end)
+
+      task = nil
+      holder.cb = nil
+      collectgarbage('collect')
+      collectgarbage('collect')
+      assert(
+        vim.wait(100, function()
+          return result.completed
+        end),
+        'abandoned await did not finish'
+      )
+      eq(p('^await callback was discarded'), result.err)
+      run(function()
+        limit:with(function() end)
+      end):wait(100)
+
+      collectgarbage('collect')
+      collectgarbage('collect')
+      eq(nil, (next(weak)))
+      eq('', Async._inspect_tree())
+    end)
+
+    it_exec('can recover from an abandoned await while keeping resources usable', function()
+      local holder = {}
+      local file = assert(io.tmpfile())
+      local task = run(function(owned_file)
+        local ok, err = Async.pawait(2, function(value, cb)
+          eq('request', value)
+          holder.cb = cb
+        end, 'request')
+        eq(false, ok)
+        eq(p('^await callback was discarded'), err)
+        eq(false, Async.is_closing())
+        Async.checkpoint()
+
+        local written = owned_file:write('cleanup')
+        owned_file:close()
+        return written ~= nil
+      end, file)
+
+      file = nil
+      holder.cb = nil
+      collectgarbage('collect')
+      collectgarbage('collect')
+      eq(true, task:wait(100))
+    end)
+
+    it_exec('retains a task scope while a child callback can resume it', function()
+      local holder = {}
+      local result = {}
+
+      run('parent', function()
+        run('child', function()
+          result.value = await(function(cb)
+            holder.cb = cb
+          end)
+          collectgarbage('collect')
+          collectgarbage('collect')
+          Async.checkpoint()
+        end)
+      end):on_complete(function(err)
+        result.completed = true
+        result.err = err
+      end)
+
+      collectgarbage('collect')
+      collectgarbage('collect')
+      eq('parent [awaiting]\n└─ child [awaiting]', Async._inspect_tree())
+
+      holder.cb('done')
+      holder.cb = nil
+      eq({ value = 'done', completed = true }, result)
+      eq('', Async._inspect_tree())
+    end)
+  end)
+
   describe('task cancellation and closing', function()
     it_exec('can close tasks', function()
       local task = run(eternity)

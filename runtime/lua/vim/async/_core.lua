@@ -25,9 +25,9 @@ local unpack_len = vim.F.unpack_len
 --- @nodoc
 local M = {}
 
---- Weak table to keep track of running tasks
+--- Keep unfinished tasks and their resources alive until completion.
 --- @type table<thread, vim.async.Task<any>?>
-local threads = setmetatable({}, { __mode = 'k' })
+local threads = {}
 
 --- Returns the currently running task.
 --- @return vim.async.Task<any>?
@@ -638,7 +638,16 @@ do --- Task
         -- Callback setup has one result: the optional closable.
         --- @type fun(callback: fun(err?: any, ...: any)): vim.async.Closable?
         local awaitable = yielded
-        setup_ok, setup_result = pcall(awaitable, complete_await)
+        local callback = util._gc_fun(complete_await, function()
+          if not settled and not task:completed() then
+            -- A collected callback can never finish this wait. Keep the task
+            -- and its resources alive, and deliver the failure outside GC.
+            runtime.schedule(function()
+              complete_await('await callback was discarded')
+            end)
+          end
+        end)
+        setup_ok, setup_result = pcall(awaitable, callback)
       end
 
       if not setup_ok then
@@ -908,16 +917,19 @@ local function norm_cb_fun(argc, fun, ...)
     end
   end
 
-  local args = pack_len(...)
+  local args = pack_len(...) --[[@as { [integer]: any, n: integer }? ]]
 
   --- @param callback fun(...: any)
   --- @return any?
   return function(callback)
-    args[argc] = function(...)
+    -- The thunk must not retain the inserted callback after setup returns.
+    local call_args = assert(args)
+    args = nil
+    call_args[argc] = function(...)
       callback(nil, ...)
     end
-    args.n = math.max(args.n, argc)
-    return fun(unpack_len(args))
+    call_args.n = math.max(call_args.n, argc)
+    return fun(unpack_len(call_args))
   end
 end
 
@@ -990,6 +1002,16 @@ end
 ---   render(lines)
 --- end)
 --- ```
+---
+--- If Lua collects the callback before it is called, the task fails with
+--- `"await callback was discarded"`. The failure is queued for a later
+--- event-loop turn. Normal await cleanup runs before the error is delivered.
+--- If cleanup fails, its error is reported instead. [vim.async.pawait()] can
+--- handle this error and continue the task instead.
+---
+--- A callback held in the task's own data or returned handle remains reachable,
+--- so the wait can stay pending. GC timing is unpredictable; use [Task:close()]
+--- or [vim.async.timeout()] to request cancellation without relying on GC.
 --- @async
 --- @generic T, R
 --- @param ... any see overloads

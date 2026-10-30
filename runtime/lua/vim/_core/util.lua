@@ -23,6 +23,25 @@ function M._stringify_error(err)
 end
 -- Generated from async.nvim/lua/async/_errors.lua: end
 
+-- Generated from async.nvim/lua/async/_util.lua: start
+--- Create a function that runs a function when it is garbage collected.
+--- @generic F : function
+--- @param f F
+--- @param gc fun()
+--- @return F
+--- @private
+function M._gc_fun(f, gc)
+  local proxy = newproxy(true)
+  local proxy_mt = getmetatable(proxy)
+  proxy_mt.__gc = gc
+
+  return function(...)
+    local _ = proxy
+    return f(...)
+  end
+end
+-- Generated from async.nvim/lua/async/_util.lua: end
+
 --- Adds one or more blank lines above or below the cursor.
 --- @param above? boolean Place blank line(s) above the cursor
 local function add_blank(above)
