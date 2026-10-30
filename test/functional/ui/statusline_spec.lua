@@ -242,8 +242,8 @@ for _, model in ipairs(mousemodels) do
       -- <C-RightMouse> is for tag jump
     end)
 
-    it('works for global statusline with vertical splits #19186', function()
-      command('set laststatus=3')
+    it('works for global statusline with splits #19186 #42572', function()
+      command('set laststatus=3 mouse=a')
       api.nvim_set_option_value(
         'statusline',
         '%0@MyClickFunc@Clicky stuff%T %= %0@MyClickFunc@Clicky stuff%T',
@@ -270,30 +270,18 @@ for _, model in ipairs(mousemodels) do
       eq('0 1 l', eval('g:testvar'))
       api.nvim_input_mouse('right', 'press', '', 0, 6, 5)
       eq('0 1 r', eval('g:testvar'))
-    end)
 
-    it('does not handle horizontal separators as global statusline clicks #42572', function()
-      command('set laststatus=3 mouse=a')
-      api.nvim_set_option_value('statusline', '%0@MyClickFunc@Clicky stuff%T', {})
       command('split | redraw')
 
       local top_win = api.nvim_get_current_win()
       local top_pos = api.nvim_win_get_position(top_win)
       local separator_row = top_pos[1] + api.nvim_win_get_height(top_win)
-
-      api.nvim_input_mouse('left', 'press', '', 0, separator_row, 5)
-      exec_lua('vim.wait(10)')
-      api.nvim_input_mouse('left', 'release', '', 0, separator_row, 5)
-      exec_lua('vim.wait(10)')
-      eq('', eval('g:testvar'))
-
       local height = api.nvim_win_get_height(top_win)
+
       api.nvim_input_mouse('left', 'press', '', 0, separator_row, 5)
-      exec_lua('vim.wait(10)')
+      eq('0 1 r', eval('g:testvar'))
       api.nvim_input_mouse('left', 'drag', '', 0, separator_row + 1, 5)
-      exec_lua('vim.wait(10)')
       api.nvim_input_mouse('left', 'release', '', 0, separator_row + 1, 5)
-      exec_lua('vim.wait(10)')
       eq(height + 1, api.nvim_win_get_height(top_win))
     end)
 

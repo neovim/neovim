@@ -684,14 +684,14 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   bool in_winbar = (jump_flags & MOUSE_WINBAR);
   bool in_statuscol = (jump_flags & MOUSE_STATUSCOL);
   bool in_status_line = (jump_flags & IN_STATUS_LINE);
-  bool in_clickable_status_line = is_click && in_status_line
-                                  && get_fpos_of_mouse(&m_pos, NULL) == IN_STATUS_LINE;
-  bool in_global_statusline = in_clickable_status_line && mouse_grid <= 1
+  bool in_clickable_statusline = is_click && in_status_line
+                                 && get_fpos_of_mouse(&m_pos, NULL) == IN_STATUS_LINE;
+  bool in_global_statusline = in_clickable_statusline && mouse_grid <= 1
                               && mouse_row < Rows - p_ch
                               && mouse_row >= Rows - p_ch - global_stl_height();
   bool in_sep_line = (jump_flags & IN_SEP_LINE);
 
-  if ((in_winbar || in_clickable_status_line || in_statuscol) && is_click) {
+  if ((in_winbar || in_clickable_statusline || in_statuscol) && is_click) {
     // Handle click event on window bar, status line or status column
     int click_grid = mouse_grid;
     int click_row = mouse_row;
