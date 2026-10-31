@@ -2055,6 +2055,17 @@ describe('multicursor', function()
       eq({ { 0, 5 } }, anchors())
       eq({ 2, 6 }, api.nvim_win_get_cursor(0))
     end)
+
+    it('does not change v:count #42493', function()
+      n.exec_lua(function()
+        vim.keymap.set('i', 'xx', function()
+          return (vim.v.count > 0 and vim.v.count or '') .. 'Hello'
+        end, { expr = true })
+      end)
+      cursors({ '', '' }, 'Qj')
+      feed('ixx<Esc>')
+      eq({ 'Hello', 'Hello' }, get_lines())
+    end)
   end)
 
   describe('navigation state (primary-only)', function()

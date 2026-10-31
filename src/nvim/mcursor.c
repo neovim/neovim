@@ -79,6 +79,7 @@ typedef struct {
   save_state_T sst;       ///< mode, typeahead, reg_executing, …
   RedoState redo;
   VisualState visual;     ///< The active selection (globals.h:Visual), not the '<,'> region.
+  varnumber_T vcount[3];  ///< v:count, v:count1, v:prevcount.
 } McSandbox;
 
 /// Primary cursor's insert-session, saved across nested edit() sessions during insert-cascade.
@@ -249,6 +250,9 @@ static void mc_sandbox_enter(McSandbox *sb, bool save_regs)
   save_current_state(&sb->sst);  // hint: see call_user_func()
   save_search_patterns();
   save_redobuff(&sb->redo);
+  sb->vcount[0] = get_vim_var_nr(VV_COUNT);
+  sb->vcount[1] = get_vim_var_nr(VV_COUNT1);
+  sb->vcount[2] = get_vim_var_nr(VV_PREVCOUNT);
 }
 
 /// @see mc_sandbox_enter
@@ -259,6 +263,9 @@ static void mc_sandbox_leave(McSandbox *sb)
   }
   restore_redobuff(&sb->redo);
   restore_search_patterns();
+  set_vim_var_nr(VV_COUNT, sb->vcount[0]);
+  set_vim_var_nr(VV_COUNT1, sb->vcount[1]);
+  set_vim_var_nr(VV_PREVCOUNT, sb->vcount[2]);
   // Visual first: restore_current_state() updates the cursor shape, and check_cursor() below keeps
   // a blockwise 'virtualedit' selection's coladd.
   Visual = sb->visual;
