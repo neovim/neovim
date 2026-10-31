@@ -16,6 +16,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/drawscreen.h"
+#include "nvim/eval/vars.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/ex_getln.h"
 #include "nvim/gettext_defs.h"
@@ -794,6 +795,10 @@ void ui_call_event(char *name, Array args)
   int save_textlock = textlock;
   expr_map_lock = 0;
   textlock = 0;
+  // Don't let UI event handlers reset v:count, e.g. with :normal.
+  varnumber_T save_prevcount = get_vim_var_nr(VV_PREVCOUNT);
+  varnumber_T save_count = get_vim_var_nr(VV_COUNT);
+  varnumber_T save_count1 = get_vim_var_nr(VV_COUNT1);
 
   bool handled = false;
   bool fast = msg_ext_fast && strcmp("msg_show", name) == 0;
@@ -814,6 +819,8 @@ void ui_call_event(char *name, Array args)
   })
   expr_map_lock = save_expr_map_lock;
   textlock = save_textlock;
+  set_vim_var_nr(VV_PREVCOUNT, save_prevcount);
+  set_vcount(save_count, save_count1, false);
 
   if (!handled) {
     UI_CALL(true, event, ui, name, args);

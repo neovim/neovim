@@ -1188,6 +1188,19 @@ describe('messages2', function()
     t.eq({ { old_mode = 'i', new_mode = 'n' } }, n.eval('g:modechanged'))
   end)
 
+  it('msg window does not reset v:count #42292', function()
+    exec_lua(function()
+      require('vim._core.ui2').enable({ msg = { targets = 'msg' } })
+      vim.keymap.set('n', 'gm', function()
+        local count = vim.v.count
+        print('Hello')
+        _G.counts = { count, vim.v.count }
+      end)
+    end)
+    feed('2gm')
+    t.eq({ 2, 2 }, exec_lua('return _G.counts'))
+  end)
+
   it('configured targets per kind', function()
     exec_lua(function()
       local targets = { echo = 'msg', list_cmd = 'pager', lua_print = 'cmd' }
