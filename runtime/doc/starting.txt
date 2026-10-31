@@ -1148,7 +1148,9 @@ include:
   non-ShaDa files are not overwritten for safety reasons to avoid accidentally
   destroying an unrelated file.  This could happen e.g. when typing "nvim -i
   file" in place of "nvim -R file" (yes, somebody did that at least with Vim).
-  Such errors are listed at |shada-critical-contents-errors|.
+  Such errors are listed at |shada-critical-contents-errors|.  If they occur
+  after a valid ShaDa header (e.g. file was truncated by a crash), Nvim keeps
+  the entries before the damage and replaces the file.
 - If writing to the temporary file failed: e.g. because of the insufficient
   space left.
 - If renaming file failed: e.g. because of insufficient permissions.
