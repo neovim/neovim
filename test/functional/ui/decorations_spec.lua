@@ -2589,9 +2589,15 @@ describe('extmark decorations', function()
     ]],
     }
 
-    -- Match conceal does not reflow: the character still moves to the next row.
+    -- Ephemeral conceal does not reflow: the character still moves to the next row.
     api.nvim_buf_clear_namespace(0, ns, 0, -1)
-    fn.matchadd('Conceal', '<>')
+    setup_provider([[
+      function on_do(event, _, buf, row)
+        if event == 'line' and row == 1 then
+          api.nvim_buf_set_extmark(buf, _G.ns1, 1, 37, { end_col = 39, conceal = '', ephemeral = true })
+        end
+      end
+    ]])
     feed('k')
     screen:expect([[
       ^                                        |
@@ -3293,7 +3299,14 @@ describe('extmark decorations', function()
   it('virtual text does not crash with blend, conceal and wrap #27836', function()
     screen:try_resize(50, 3)
     insert(('a'):rep(45) .. '|hidden|' .. ('b'):rep(45))
-    command('syntax match test /|hidden|/ conceal')
+    -- Ephemeral conceal does not reflow, so the wrapped line has cells after the concealed text.
+    setup_provider([[
+      function on_do(event, _, buf, row)
+        if event == 'line' then
+          api.nvim_buf_set_extmark(buf, _G.ns1, row, 45, { end_col = 53, conceal = '', ephemeral = true })
+        end
+      end
+    ]])
     command('set conceallevel=2 concealcursor=n')
     api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_text = { { 'FOO' } }, virt_text_pos = 'right_align', hl_mode = 'blend' })
     screen:expect {

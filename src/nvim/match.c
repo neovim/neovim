@@ -16,6 +16,7 @@
 #include "nvim/eval/window.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/extmark.h"
 #include "nvim/fold.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
@@ -34,6 +35,7 @@
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
 #include "nvim/strings.h"
+#include "nvim/syntax.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
@@ -208,6 +210,9 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
   }
   m->mit_next = cur;
 
+  if (match_changes_conceal(wp, m)) {
+    syn_conceal_invalidate(wp);
+  }
   redraw_later(wp, rtype);
   return id;
 
@@ -217,6 +222,22 @@ fail:
   xfree(m->mit_pos_array);
   xfree(m);
   return -1;
+}
+
+/// Whether match `m` in the match list of `wp` decides the conceal of some text (see
+/// match_set_conceal()): it is a "Conceal" match, or above one.
+static bool match_changes_conceal(win_T *wp, matchitem_T *m)
+{
+  int const conceal_id = syn_name2id("Conceal");
+  for (matchitem_T *cur = wp->w_match_head; cur != NULL; cur = cur->mit_next) {
+    if (cur->mit_hlg_id == conceal_id) {
+      return true;
+    }
+    if (cur == m) {
+      return false;
+    }
+  }
+  return false;
 }
 
 /// Delete match with ID 'id' in the match list of window 'wp'.
@@ -245,6 +266,9 @@ static int match_delete(win_T *wp, int id, bool perr)
     }
     return -1;
   }
+  if (match_changes_conceal(wp, cur)) {
+    syn_conceal_invalidate(wp);
+  }
   if (cur == prev) {
     wp->w_match_head = cur->mit_next;
   } else {
@@ -265,6 +289,7 @@ static int match_delete(win_T *wp, int id, bool perr)
 /// Delete all matches in the match list of window 'wp'.
 void clear_matches(win_T *wp)
 {
+  syn_conceal_invalidate(wp);
   while (wp->w_match_head != NULL) {
     matchitem_T *m = wp->w_match_head->mit_next;
     vim_regfree(wp->w_match_head->mit_match.regprog);
@@ -540,6 +565,69 @@ void prepare_search_hl(win_T *wp, match_T *search_hl, linenr_T lnum)
   }
 }
 
+/// Sets conceal marks (see extmark_set_conceal()) in namespace `ns` for the matches of `wp` with
+/// the "Conceal" group (see |matchadd()|) that start in row `row`. Each byte is concealed if the
+/// highest-priority match covering it has the "Conceal" group.
+void match_set_conceal(win_T *wp, int row, uint32_t ns, DecorPriority priority)
+{
+  linenr_T const lnum = row + 1;
+  colnr_T const len = ml_get_buf_len(wp->w_buffer, lnum);
+  int const conceal_id = syn_name2id("Conceal");
+  // The highest-priority match covering each byte, and the start of its occurrence.
+  matchitem_T **const top = xcalloc((size_t)len + 1, sizeof(*top));
+  colnr_T *const top_start = xcalloc((size_t)len + 1, sizeof(*top_start));
+  match_T no_search_hl = { 0 };
+  bool conceal = false;
+  // The list is in ascending priority.
+  for (matchitem_T *cur = wp->w_match_head; cur != NULL; cur = cur->mit_next) {
+    conceal = conceal || cur->mit_hlg_id == conceal_id;
+    if (!conceal) {
+      continue;  // Below all "Conceal" matches.
+    }
+    regprog_T *const prog = cur->mit_match.regprog;
+    match_T shl = { .rm = cur->mit_match, .buf = wp->w_buffer, .tm = profile_setlimit(p_rdt) };
+    cur->mit_pos_cur = 0;
+    for (colnr_T col = 0;;) {
+      next_search_hl(wp, &no_search_hl, &shl, lnum, col, cur);
+      colnr_T const start = shl.rm.startpos[0].col;
+      if (shl.lnum != lnum || start >= len) {
+        break;
+      }
+      colnr_T end = shl.rm.endpos[0].lnum > 0 ? len : MIN(shl.rm.endpos[0].col, len);
+      if (end <= start) {
+        // An empty match covers one character.
+        end = start + utfc_ptr2len(ml_get_buf(wp->w_buffer, lnum) + start);
+      }
+      for (colnr_T c = MAX(start, col); c < end; c++) {
+        top[c] = cur;
+        top_start[c] = start;
+      }
+      col = MAX(end, col + 1);
+    }
+    // The search may have recompiled the regprog.
+    if (shl.rm.regprog != NULL && shl.rm.regprog != prog) {
+      if (cur->mit_hl.rm.regprog == prog) {
+        cur->mit_hl.rm.regprog = shl.rm.regprog;
+      }
+      cur->mit_match.regprog = shl.rm.regprog;
+    }
+  }
+  for (colnr_T col = 0; col < len;) {
+    matchitem_T *const m = top[col];
+    colnr_T const start = col;
+    while (col < len && top[col] == m && top_start[col] == top_start[start]) {
+      col++;
+    }
+    if (m != NULL && m->mit_hlg_id == conceal_id) {
+      // Only the start of a match shows its replacement.
+      extmark_set_conceal(wp->w_buffer, ns, row, start, col, m->mit_conceal_char, priority,
+                          start != top_start[start]);
+    }
+  }
+  xfree(top);
+  xfree(top_start);
+}
+
 /// Update "shl->has_cursor" based on the match in "shl" and the cursor
 /// position.
 static void check_cur_search_hl(win_T *wp, match_T *shl)
@@ -642,8 +730,7 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char **lin
 /// is endcol.
 /// Return the updated search_attr.
 int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char **line, match_T *search_hl,
-                     int *has_match_conc, int *match_conc, bool lcs_eol_todo, bool *on_last_col,
-                     bool *search_attr_from_match)
+                     bool lcs_eol_todo, bool *on_last_col, bool *search_attr_from_match)
 {
   matchitem_T *cur = wp->w_match_head;  // points to the match list
   match_T *shl;                     // points to search_hl or a match
@@ -684,16 +771,6 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char **line, match_T
           }
         } else {
           shl->attr_cur = shl->attr;
-        }
-        // Match with the "Conceal" group results in hiding
-        // the match.
-        if (cur != NULL
-            && shl != search_hl
-            && syn_name2id("Conceal") == cur->mit_hlg_id) {
-          *has_match_conc = col == shl->startcol ? 2 : 1;
-          *match_conc = cur->mit_conceal_char;
-        } else {
-          *has_match_conc = 0;
         }
       } else if (col == shl->endcol) {
         shl->attr_cur = 0;

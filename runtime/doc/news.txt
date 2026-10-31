@@ -470,10 +470,11 @@ OPTIONS
   key and how long a message stays in the message window.
 • 'completeopt' takes the new value "pathopt" to make the file name completion
    consult the 'path' option |i_CTRL-X_CTRL-F|.
-• 'wrap' is now conceal-aware: lines wrap at their extmark-concealed width
-  (|nvim_buf_set_extmark()| `conceal`, |treesitter-highlight-conceal|). The
-  cursor, |screenpos()|, |wincol()| and mouse follow the reflowed layout.
-  • Not supported for legacy |:syn-conceal|, |matchadd()| and `ephemeral` conceal.
+• 'wrap' is now conceal-aware: lines wrap at their concealed width
+  (|:syn-conceal|, |matchadd()|, |nvim_buf_set_extmark()| `conceal`,
+  |treesitter-highlight-conceal|). The cursor, |screenpos()|, |wincol()| and
+  mouse follow the reflowed layout.
+  • Not supported for `ephemeral` conceal.
 
 PERFORMANCE
 

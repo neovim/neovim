@@ -1315,11 +1315,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
   int left_curline_col = 0;
   int right_curline_col = 0;
 
-  int match_conc = 0;              ///< cchar for match functions
   bool on_last_col = false;
-  int syntax_flags = 0;
-  int syntax_seqnr = 0;
-  int prev_syntax_id = 0;
   int conceal_attr = win_hl_attr(wp, HLF_CONCEAL);
   bool is_concealing = false;
   bool did_wcol = false;
@@ -1776,7 +1772,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
   // Repeat for each cell in the displayed line.
   while (true) {
-    int has_match_conc = 0;  ///< match wants to conceal
     int decor_conceal = 0;
     int conceal_replacement_extra = 0;
     int conceal_lbr_body = 0;
@@ -2014,16 +2009,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         // After end, check for start/end of next match.
         // When another match, have to check for start again.
         const int v = (int)(ptr - line);
-        search_attr = update_search_hl(wp, lnum, v, &line, &screen_search_hl,
-                                       &has_match_conc, &match_conc, lcs_eol_todo,
+        search_attr = update_search_hl(wp, lnum, v, &line, &screen_search_hl, lcs_eol_todo,
                                        &on_last_col, &search_attr_from_match);
         ptr = line + v;  // "line" may have been changed
-
-        // Do not allow a conceal over EOL otherwise EOL will be missed
-        // and bad things happen.
-        if (*ptr == NUL) {
-          has_match_conc = 0;
-        }
 
         // Check if ComplMatchIns highlight is needed.
         if ((State & MODE_INSERT) && ins_compl_win_active(wp)
@@ -2360,10 +2348,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           line = ml_get_buf(wp->w_buffer, lnum);
           ptr = line + v;
           prev_ptr = line + prev_v;
-
-          // no concealing past the end of the line, it interferes
-          // with line highlighting.
-          syntax_flags = (mb_schar == 0) ? 0 : get_syntax_info(&syntax_seqnr);
         }
 
         if (has_decor && v > 0) {
@@ -2778,22 +2762,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       }
 
       if (conceal_enabled && !(extconceal && did_decrement_ptr)
-          && (conceal_reflow || (syntax_flags & HL_CONCEAL) != 0
-              || has_match_conc > 0 || decor_conceal > 0)) {
-        bool syntax_conceal = (syntax_flags & HL_CONCEAL) != 0;
+          && (conceal_reflow || decor_conceal > 0)) {
         wlv.char_attr = conceal_attr;
-        // A match, then an extmark, then the syntax item supplies the replacement.
-        bool const decor_cchar = !(has_match_conc && match_conc)
-                                 && decor_conceal && decor_state.conceal_char;
-        schar_T const cchar = has_match_conc && match_conc ? schar_from_char(match_conc)
-                                                           : decor_cchar ? decor_state.conceal_char
-                                                                         : syntax_conceal
-                              && syn_get_sub_char() != NUL
-                              ? schar_from_char(syn_get_sub_char()) : NUL;
-        bool const is_start = (prev_syntax_id != syntax_seqnr && syntax_conceal)
-                              || has_match_conc > 1 || decor_conceal > 1;
         schar_T const replacement = conceal_reflow ? extconceal_char
-                                                   : conceal_replacement(wp, is_start, cchar);
+                                                   : decor_conceal_char(wp, &decor_state);
         if (replacement != NUL) {
           if (extconceal && conceal_lbr_body > 0) {
             wlv.n_extra = conceal_lbr_body - 1;
@@ -2806,8 +2778,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           // First time at this concealed item: display one
           // character.
           mb_schar = replacement;
-          if ((decor_cchar || (conceal_reflow && decor_state.conceal_char))
-              && decor_state.conceal_attr) {
+          if (decor_state.conceal_char && decor_state.conceal_attr) {
             wlv.char_attr = decor_state.conceal_attr;
           } else if (conceal_reflow && extconceal_attr) {
             wlv.char_attr = extconceal_attr;
@@ -2817,8 +2788,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           if (conceal_reflow || (decor_conceal > 0 && decor_state.conceal_slot_i >= 0)) {
             conceal_replacement_extra = mb_schar_width - 1;
           }
-
-          prev_syntax_id = syntax_seqnr;
 
           if (conceal_reflow) {
             // Source cells minus replacement cells: negative for a wider replacement.
@@ -2844,7 +2813,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           wlv.skip_cells = 1;
         }
       } else {
-        prev_syntax_id = 0;
         is_concealing = false;
       }
 

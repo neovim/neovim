@@ -405,11 +405,11 @@ describe('Conceal', function()
     -- luacheck: pop
 
     screen:expect([[
-      one one one  one one one {21:o}ne            |
-      {1: >>> }one {100:o}ne one one                    |
+      one one one  one one one {21:o}ne one one    |
+      {1: >>> }one {100:o}ne                            |
       two two two two |hidden| ^here two two   |
-      three  three three three {21:t}hree          |
-      {1: >>> }thre{100:e} three three three            |
+      three  three three three {21:t}hree three    |
+      {1: >>> }thre{100:e} three three                  |
       {1:~                                       }|*4
       /here                                   |
     ]])
@@ -417,11 +417,11 @@ describe('Conceal', function()
     -- move cursor to the end of line (the cursor jumps to the next screen line)
     feed('$')
     screen:expect([[
-      one one one  one one one one            |
-      {1: >>> }one {100:o}ne one one                    |
+      one one one  one one one one one one{21: }   |
+      {1: >>> }one {100:o}ne                            |
       two two two two |hidden| here two tw^o   |
-      three  three three three three          |
-      {1: >>> }thre{100:e} three three three            |
+      three  three three three three three{21: }   |
+      {1: >>> }thre{100:e} three three                  |
       {1:~                                       }|*4
       /here                                   |
     ]])
@@ -441,15 +441,15 @@ describe('Conceal', function()
       hi! CursorLine guibg=Green
     ]])
     screen:expect([[
-      {100:one one one  one one one one on^e        }|
-      {100: one one one                            }|
+      {100:one one one  one one one one one one on^e}|
+      {100: one                                    }|
       {1:~                                       }|
                                               |
     ]])
     command('hi! CursorLine guibg=NONE guifg=Red')
     screen:expect([[
-      {19:one one one  one one one one on^e        }|
-      {19: one one one                            }|
+      {19:one one one  one one one one one one on^e}|
+      {19: one                                    }|
       {1:~                                       }|
                                               |
     ]])
@@ -469,15 +469,15 @@ describe('Conceal', function()
       hi! CursorLine guibg=Green
     ]])
     screen:expect([[
-      {100:        ^eno eno eno eno eno  eno eno eno}|
-      {100:                            eno eno eno }|
+      {100:^eno eno eno eno eno eno eno  eno eno eno}|
+      {100:                                    eno }|
       {1:                                       ~}|
                                               |
     ]])
     command('hi! CursorLine guibg=NONE guifg=Red')
     screen:expect([[
-      {19:        ^eno eno eno eno eno  eno eno eno}|
-      {19:                            eno eno eno }|
+      {19:^eno eno eno eno eno eno eno  eno eno eno}|
+      {19:                                    eno }|
       {1:                                       ~}|
                                               |
     ]])
@@ -776,29 +776,29 @@ describe('Conceal', function()
       normal! $
     ]])
     screen:expect([[
-      aaaaaaaaaa{14:β}bbbbb    |
-      bbbbb{14:β}ccccccccc^c    |
+      aaaaaaaaaa{14:β}bbbbbbbbb|
+      b{14:β}ccccccccc^c        |
       {1:~                   }|
                           |
     ]])
     feed('gM')
     screen:expect([[
-      aaaaaaaaaa{14:β}bbbbb    |
-      ^bbbbb{14:β}cccccccccc    |
+      aaaaaaaaaa{14:β}bbbbb^bbbb|
+      b{14:β}cccccccccc        |
       {1:~                   }|
                           |
     ]])
     command('set conceallevel=3')
     screen:expect([[
-      aaaaaaaaaabbbbb     |
-      ^bbbbbcccccccccc     |
+      aaaaaaaaaabbbbb^bbbbb|
+      cccccccccc          |
       {1:~                   }|
                           |
     ]])
     feed('$')
     screen:expect([[
-      aaaaaaaaaabbbbb     |
-      bbbbbccccccccc^c     |
+      aaaaaaaaaabbbbbbbbbb|
+      ccccccccc^c          |
       {1:~                   }|
                           |
     ]])

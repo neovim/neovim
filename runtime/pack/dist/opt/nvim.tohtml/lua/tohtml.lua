@@ -586,8 +586,13 @@ end
 
 --- @param state vim.tohtml.state
 --- @param extmark [integer, integer, integer, vim.api.keyset.extmark_details]
-local function _styletable_extmarks_conceal(state, extmark)
+--- @param namespaces table<integer,string>
+local function _styletable_extmarks_conceal(state, extmark, namespaces)
   if not extmark[4].conceal or state.opt.conceallevel == 0 then
+    return
+  end
+  -- Copies of :syntax and matchadd() conceal (see styletable_conceal() and styletable_match()).
+  if (namespaces[extmark[4].ns_id] or ''):find('^nvim%.syn_conceal:') then
     return
   end
   local srow, scol, erow, ecol =
@@ -618,7 +623,7 @@ local function styletable_extmarks(state)
     _styletable_extmarks_highlight(state, v, namespaces)
   end
   for _, v in ipairs(extmarks) do
-    _styletable_extmarks_conceal(state, v)
+    _styletable_extmarks_conceal(state, v, namespaces)
   end
   for _, v in ipairs(extmarks) do
     _styletable_extmarks_virt_text(state, v, namespaces)

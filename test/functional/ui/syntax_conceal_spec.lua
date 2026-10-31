@@ -149,10 +149,9 @@ describe('Screen', function()
         insert('<r> A region with <r> a nested <r> nested region.</r> </r> </r>\n')
         screen:expect([[
           {1: } a region of text {1:-}                                 |*2
-          {1: } A region with {1: } a nested {1: } nested region.{1:-}         |
-           {1:-} {1:-}                                                 |
+          {1: } A region with {1: } a nested {1: } nested region.{1:-} {1:-} {1:-}     |
           ^                                                     |
-          {0:~                                                    }|*4
+          {0:~                                                    }|*5
                                                                |
         ]])
       end)

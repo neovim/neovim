@@ -36,6 +36,7 @@
 #include "nvim/extmark.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/globals.h"
+#include "nvim/grid.h"
 #include "nvim/map_defs.h"
 #include "nvim/marktree.h"
 #include "nvim/mcursor.h"
@@ -407,6 +408,28 @@ void extmark_set_pos(buf_T *buf, uint32_t ns_id, uint32_t *mark, pos_T pos, bool
   }
   extmark_set(buf, ns_id, mark, (int)pos.lnum - 1, pos.col, -1, 0, decor,
               ui_watched ? MT_FLAG_DECOR_HL : 0, right_gravity, false, no_undo, false, NULL);
+}
+
+/// Sets a transient mark that conceals bytes `start_col` until `end_col` of row `row`, like an item
+/// with |:syn-conceal| and |:syn-cchar| `cchar` (or NUL).
+///
+/// @param cont  Continuation of a concealed item: shows no replacement (see kSHConcealCont).
+void extmark_set_conceal(buf_T *buf, uint32_t ns_id, int row, colnr_T start_col, colnr_T end_col,
+                         int cchar, DecorPriority priority, bool cont)
+{
+  DecorHighlightInline hl = DECOR_HIGHLIGHT_INLINE_INIT;
+  hl.flags = (uint16_t)(kSHConceal | (cont ? kSHConcealCont : 0));
+  hl.priority = priority;
+  hl.conceal_char = cchar == NUL ? 0 : schar_from_char(cchar);
+  DecorInline decor = DECOR_INLINE_INIT;
+  if (schar_high(hl.conceal_char)) {
+    decor.ext = true;
+    decor.data.ext = (DecorExt){ .sh_idx = decor_put_sh(decor_sh_from_inline(hl)), .vt = NULL };
+  } else {
+    decor.data.hl = hl;
+  }
+  extmark_set(buf, ns_id, NULL, row, start_col, row, end_col, decor,
+              MT_FLAG_DECOR_HL | MT_FLAG_DECOR_CONCEAL, true, false, true, false, NULL);
 }
 
 /// Gets the position of an extmark, shifted by buffer edits since it was set. Keeps `pos->coladd`.

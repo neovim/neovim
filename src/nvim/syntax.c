@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nvim/api/extmark.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
@@ -20,6 +22,7 @@
 #include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/extmark.h"
 #include "nvim/fold.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
@@ -31,6 +34,8 @@
 #include "nvim/highlight_group.h"
 #include "nvim/indent_c.h"
 #include "nvim/macros_defs.h"
+#include "nvim/map_defs.h"
+#include "nvim/match.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -165,6 +170,13 @@ typedef struct {
 } time_entry_T;
 
 #include "syntax.c.generated.h"
+
+/// Mark priorities of `:syntax` and matchadd() conceal: below and above other extmarks (a match
+/// beats an extmark, which beats syntax).
+enum {
+  kSynConcealSyntaxPriority = 50,
+  kSynConcealMatchPriority = DECOR_PRIORITY_BASE + 1,
+};
 
 static char *(spo_name_tab[SPO_COUNT]) =
 { "ms=", "me=", "hs=", "he=", "rs=", "re=", "lc=" };
@@ -895,6 +907,11 @@ void syn_stack_free_all(synblock_T *block)
 {
   syn_stack_free_block(block);
 
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_s == block) {
+      syn_conceal_invalidate(wp);
+    }
+  }
   // When using "syntax" fold method, must update all folds.
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_s == block && foldmethodIsSyntax(wp)) {
@@ -5668,6 +5685,103 @@ int syn_get_concealed_id(win_T *wp, linenr_T lnum, colnr_T col)
     return seqnr;
   }
   return 0;
+}
+
+/// Sets a conceal mark (see extmark_set_conceal()) for each |:syn-conceal| item of row `row` of
+/// `wp`. Each item gets its own replacement, so adjacent items need separate marks.
+static void syn_conceal_set_items(win_T *wp, int row)
+{
+  linenr_T const lnum = row + 1;
+  int item = 0;  // Concealed item at `start`, or 0.
+  colnr_T start = 0;
+  int cchar = NUL;
+  colnr_T col = 0;
+  for (; ml_get_buf(wp->w_buffer, lnum)[col] != NUL;
+       col += utfc_ptr2len(ml_get_buf(wp->w_buffer, lnum) + col)) {  // A regexp may free the line.
+    int const seqnr = syn_get_concealed_id(wp, lnum, col);
+    if (seqnr != item) {
+      if (item != 0) {
+        extmark_set_conceal(wp->w_buffer, wp->w_syn_conceal_ns, row, start, col, cchar,
+                            kSynConcealSyntaxPriority, false);
+      }
+      item = seqnr;
+      start = col;
+      cchar = current_sub_char;
+    }
+  }
+  if (item != 0) {
+    extmark_set_conceal(wp->w_buffer, wp->w_syn_conceal_ns, row, start, col, cchar,
+                        kSynConcealSyntaxPriority, false);
+  }
+}
+
+/// Whether `:syntax` or matchadd() conceal may apply to `wp` (see syn_conceal_update()).
+bool syn_conceal_present(win_T *wp)
+{
+  if (wp->w_p_cole < 1) {
+    return false;
+  }
+  if (syntax_present(wp) && !wp->w_s->b_syn_error && !wp->w_s->b_syn_slow) {
+    return true;
+  }
+  int const conceal_id = syn_name2id("Conceal");
+  for (matchitem_T *cur = wp->w_match_head; cur != NULL; cur = cur->mit_next) {
+    if (cur->mit_hlg_id == conceal_id) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// Adds the `:syntax` and matchadd() conceal of row `row` to the marktree, as extmark-conceal in
+/// a namespace scoped to `wp` (matches and |:ownsyntax| belong to the window). Caches the rows
+/// until the next buffer change or syn_conceal_invalidate().
+void syn_conceal_update(win_T *wp, int row)
+{
+  buf_T *const buf = wp->w_buffer;
+  if (wp->w_syn_conceal_buf != buf->handle) {
+    syn_conceal_invalidate(wp);
+    wp->w_syn_conceal_buf = buf->handle;
+  }
+  if (wp->w_syn_conceal_tick != buf_get_changedtick(buf)) {
+    set_clear(int, &wp->w_syn_conceal_rows);
+    wp->w_syn_conceal_tick = buf_get_changedtick(buf);
+  }
+  if (set_has(int, &wp->w_syn_conceal_rows, row)) {
+    return;
+  }
+  set_put(int, &wp->w_syn_conceal_rows, row);
+  if (wp->w_syn_conceal_ns == 0) {
+    char name[32];
+    snprintf(name, sizeof(name), "nvim.syn_conceal:%d", wp->handle);
+    wp->w_syn_conceal_ns = (uint32_t)nvim_create_namespace(cstr_as_string(name));
+    set_put(uint32_t, &namespace_localscope, wp->w_syn_conceal_ns);
+    set_put(uint32_t, &wp->w_ns_set, wp->w_syn_conceal_ns);
+  }
+  extmark_clear(buf, wp->w_syn_conceal_ns, row, 0, row, MAXCOL);
+  if (syntax_present(wp) && !wp->w_s->b_syn_error && !wp->w_s->b_syn_slow) {
+    syn_conceal_set_items(wp, row);
+  }
+  match_set_conceal(wp, row, wp->w_syn_conceal_ns, kSynConcealMatchPriority);
+}
+
+/// Discards the `:syntax` and matchadd() conceal marks of `wp`, after the syntax items or matches
+/// changed.
+void syn_conceal_invalidate(win_T *wp)
+{
+  set_clear(int, &wp->w_syn_conceal_rows);
+  buf_T *const buf = handle_get_buffer(wp->w_syn_conceal_buf);
+  if (buf != NULL && wp->w_syn_conceal_ns != 0) {
+    extmark_clear(buf, wp->w_syn_conceal_ns, 0, 0, MAXLNUM, MAXCOL);
+  }
+}
+
+/// Frees the `:syntax` and matchadd() conceal state of `wp`, which is closing.
+void syn_conceal_free(win_T *wp)
+{
+  syn_conceal_invalidate(wp);
+  set_destroy(int, &wp->w_syn_conceal_rows);
+  set_del(uint32_t, &namespace_localscope, wp->w_syn_conceal_ns);
 }
 
 // Return conceal substitution character

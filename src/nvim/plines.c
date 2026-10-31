@@ -32,6 +32,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/state.h"
 #include "nvim/state_defs.h"
+#include "nvim/syntax.h"
 #include "nvim/types_defs.h"
 
 #include "plines.c.generated.h"
@@ -99,12 +100,12 @@ bool line_has_extconceal(win_T *wp, linenr_T lnum)
 }
 
 /// Whether extmark-conceal (see CharsizeArg.extconceal_off), including marks an `_on_conceal`
-/// provider adds on demand, may change the layout of `wp`.
+/// provider or syn_conceal_update() adds on demand, may change the layout of `wp`.
 bool has_extconceal(win_T *wp)
 {
   return wp->w_p_wrap && wp->w_p_cole > 0
          && (buf_meta_total(wp->w_buffer, kMTMetaConceal) > 0
-             || wp->w_buffer->b_conceal_providers > 0);
+             || wp->w_buffer->b_conceal_providers > 0 || syn_conceal_present(wp));
 }
 
 /// Prepare the structure passed to charsize functions.

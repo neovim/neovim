@@ -9,6 +9,7 @@ local eq, fn = t.eq, n.fn
 local poke_eventloop = n.poke_eventloop
 local command = n.command
 local exec = n.exec
+local exec_lua = n.exec_lua
 
 describe('ui/mouse/input', function()
   local function with_ext_multigrid(multigrid)
@@ -1356,7 +1357,8 @@ describe('ui/mouse/input', function()
       })
     end)
 
-    --- @param reflows boolean Extmark conceal reflows wrapped lines (see conceal_wrap_spec.lua).
+    --- @param reflows boolean Conceal reflows wrapped lines (all but ephemeral conceal, see
+    ---                conceal_wrap_spec.lua).
     local function test_mouse_click_conceal(reflows)
       local it_wrapped = not reflows and it or function() end
       it('(level 1) click on non-wrapped lines', function()
@@ -1874,7 +1876,7 @@ describe('ui/mouse/input', function()
           command([[syntax match X2 /cats/ conceal cchar=X contained]])
           command([[syntax match X3 /\n\@<=x/ conceal cchar=>]])
         end)
-        test_mouse_click_conceal(false)
+        test_mouse_click_conceal(true)
       end)
 
       describe('(matchadd())', function()
@@ -1883,33 +1885,76 @@ describe('ui/mouse/input', function()
           fn.matchadd('Conceal', [[cats]], 10, -1, { conceal = 'X' })
           fn.matchadd('Conceal', [[\n\@<=x]], 10, -1, { conceal = '>' })
         end)
-        test_mouse_click_conceal(false)
+        test_mouse_click_conceal(true)
       end)
+
+      -- Row, start col, end col, conceal.
+      local marks = {
+        { 0, 11, 12, '' },
+        { 0, 14, 15, '' },
+        { 1, 5, 6, '' },
+        { 1, 8, 9, '' },
+        { 1, 10, 11, '' },
+        { 1, 13, 14, '' },
+        { 1, 15, 16, '' },
+        { 1, 18, 19, '' },
+        { 2, 24, 25, '' },
+        { 2, 29, 30, '' },
+        { 2, 25, 29, 'X' },
+        { 2, 0, 1, '>' },
+      }
 
       describe('(extmarks)', function()
         before_each(function()
           local ns = api.nvim_create_namespace('conceal')
-          api.nvim_buf_set_extmark(0, ns, 0, 11, { end_col = 12, conceal = '' })
-          api.nvim_buf_set_extmark(0, ns, 0, 14, { end_col = 15, conceal = '' })
-          api.nvim_buf_set_extmark(0, ns, 1, 5, { end_col = 6, conceal = '' })
-          api.nvim_buf_set_extmark(0, ns, 1, 8, { end_col = 9, conceal = '' })
-          api.nvim_buf_set_extmark(0, ns, 1, 10, { end_col = 11, conceal = '' })
-          api.nvim_buf_set_extmark(0, ns, 1, 13, { end_col = 14, conceal = '' })
-          api.nvim_buf_set_extmark(0, ns, 1, 15, { end_col = 16, conceal = '' })
-          api.nvim_buf_set_extmark(0, ns, 1, 18, { end_col = 19, conceal = '' })
-          api.nvim_buf_set_extmark(0, ns, 2, 24, { end_col = 25, conceal = '' })
-          api.nvim_buf_set_extmark(0, ns, 2, 29, { end_col = 30, conceal = '' })
-          api.nvim_buf_set_extmark(0, ns, 2, 25, { end_col = 29, conceal = 'X' })
-          api.nvim_buf_set_extmark(0, ns, 2, 0, { end_col = 1, conceal = '>' })
+          for _, m in ipairs(marks) do
+            api.nvim_buf_set_extmark(0, ns, m[1], m[2], { end_col = m[3], conceal = m[4] })
+          end
         end)
         test_mouse_click_conceal(true)
+      end)
+
+      describe('(ephemeral extmarks)', function()
+        before_each(function()
+          exec_lua(function(conceal_marks)
+            local ns = vim.api.nvim_create_namespace('conceal')
+            vim.api.nvim_set_decoration_provider(ns, {
+              on_line = function(_, _, buf, row)
+                for _, m in ipairs(conceal_marks) do
+                  if m[1] == row then
+                    vim.api.nvim_buf_set_extmark(buf, ns, row, m[2], {
+                      end_col = m[3],
+                      conceal = m[4],
+                      ephemeral = true,
+                    })
+                  end
+                end
+              end,
+            })
+          end, marks)
+        end)
+        test_mouse_click_conceal(false)
       end)
     end)
 
     it('virtual text does not change cursor placement on concealed line', function()
       command('%delete')
       insert('aaaaaaaaaa|hidden|bbbbbbbbbb|hidden|cccccccccc')
-      command('syntax match test /|hidden|/ conceal cchar=X')
+      -- Ephemeral conceal does not reflow, so the wrapped line has cells after the concealed text.
+      exec_lua(function()
+        local ns = vim.api.nvim_create_namespace('conceal')
+        vim.api.nvim_set_decoration_provider(ns, {
+          on_line = function(_, _, buf, row)
+            for _, col in ipairs({ 10, 28 }) do
+              vim.api.nvim_buf_set_extmark(buf, ns, row, col, {
+                end_col = col + 8,
+                conceal = 'X',
+                ephemeral = true,
+              })
+            end
+          end,
+        })
+      end)
       command('set conceallevel=2 concealcursor=n virtualedit=all')
       screen:expect({
         any = {

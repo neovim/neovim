@@ -61,9 +61,17 @@ describe('conceal-aware wrapping (#14409)', function()
     })
   end
 
-  it('extmark conceal owns wrapped layout over other conceal sources', function()
+  it('extmark, :syntax and matchadd() conceal share the wrapped layout by priority', function()
     local prefix = ('a'):rep(19)
-    for _, source in ipairs({ 'syntax', 'match', 'ephemeral', 'ephemeral false' }) do
+    -- What follows the prefix with 'wrap', with 'nowrap', after the extmark (priority 100) sets
+    -- `conceal=false`, and after it sets "界". A match beats the extmark, which beats syntax.
+    -- Ephemeral conceal does not reflow.
+    for _, case in ipairs({
+      { 'syntax', { 'Z' }, 'Z', { 'X', 'Z' }, { '>', '界Z' } },
+      { 'match', { 'Q', 'Z' }, 'Q', { 'Q', 'Z' }, { 'Q', 'Z' } },
+      { 'ephemeral', { 'Z' }, 'Q', { 'Q', 'Z' }, { '>', '界Z' } },
+      { 'ephemeral false', { 'Z' }, 'X', { 'X', 'Z' }, { '>', '界Z' } },
+    }) do
       local id = exec_lua(function(kind, marks, text)
         local a = vim.api
         vim.cmd('set wrap')
@@ -97,24 +105,32 @@ describe('conceal-aware wrapping (#14409)', function()
           conceal = '',
           priority = 100,
         })
-      end, source, ns, prefix)
-      eq(1, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
-      expect_rows({ ('%sZ'):format(prefix), '!', '~' })
-
+      end, case[1], ns, prefix)
+      local function expect_line(rows)
+        eq(#rows, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
+        expect_rows({ ('%s%s'):format(prefix, rows[1]), rows[2] or '!', rows[2] and '!' or '~' })
+      end
+      expect_line(case[2])
       command('set nowrap')
-      local unowned = source == 'ephemeral false' and 'X' or 'Q'
-      expect_rows({ ('%s%s'):format(prefix, unowned), '!', '~' })
+      expect_rows({ ('%s%s'):format(prefix, case[3]), '!', '~' })
       command('set wrap')
       local mark = { id = id, end_col = 20, priority = 100, conceal = false }
       api.nvim_buf_set_extmark(0, ns, 0, 19, mark)
-      eq(2, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
-      expect_rows({ ('%s%s'):format(prefix, unowned), 'Z', '!' })
-
+      expect_line(case[4])
       mark.conceal = '界'
       api.nvim_buf_set_extmark(0, ns, 0, 19, mark)
-      eq(2, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
-      expect_rows({ ('%s>'):format(prefix), '界Z', '!' })
+      expect_line(case[5])
     end
+
+    -- `:syntax` conceal alone.
+    exec_lua(function()
+      vim.api.nvim_set_decoration_provider(vim.api.nvim_create_namespace('mixed-conceal'), {})
+    end)
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    command('syntax clear | syntax match Foo /brown/ conceal | set conceallevel=3')
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('The quick brown fox '):rep(2), '!' })
+    expect_rows({ 'The quick  fox The q', 'uick  fox', '!' })
+    command('set conceallevel=2')
 
     -- A line without decorations does not reuse the conceal of the last drawn character.
     exec_lua(function()
@@ -460,6 +476,15 @@ describe('conceal-aware wrapping (#14409)', function()
       api.nvim_input_mouse('left', 'press', '', 0, 0, col)
       eq({ 1, 2, 0 }, { fn.line('.'), fn.col('.') - 1, fn.getcurpos()[4] })
     end
+
+    -- Same with matchadd() conceal. #25915
+    command('set virtualedit= conceallevel=1')
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    api.nvim_buf_set_lines(0, 0, -1, true, { ':wrench: test' })
+    fn.matchadd('Conceal', ':wrench:', 0, 12, { conceal = '🔧' })
+    feed('$')
+    expect_rows({ '🔧 test' })
+    eq({ 12, 7 }, { fn.col('.') - 1, fn.wincol() })
   end)
 
   it('all inline virtual text cells on a concealed character have the same mouse anchor', function()

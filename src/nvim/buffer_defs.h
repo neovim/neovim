@@ -1125,6 +1125,12 @@ struct window_S {
 
   Set(uint32_t) w_ns_set;
 
+  // `:syntax` and matchadd() conceal as extmark-conceal (see syn_conceal_update()).
+  uint32_t w_syn_conceal_ns;        ///< Namespace of the marks, scoped to this window, or 0.
+  handle_T w_syn_conceal_buf;       ///< Buffer of the marks.
+  varnumber_T w_syn_conceal_tick;   ///< b:changedtick of `w_syn_conceal_rows`.
+  Set(int) w_syn_conceal_rows;      ///< Rows whose marks are up to date.
+
   int w_hl_id_normal;               ///< 'winhighlight' normal id
   int w_hl_attr_normal;             ///< 'winhighlight' normal final attrs
   int w_hl_attr_normalnc;           ///< 'winhighlight' NormalNC final attrs

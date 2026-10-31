@@ -16,9 +16,11 @@
 #include "nvim/highlight.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
+#include "nvim/map_defs.h"
 #include "nvim/message.h"
 #include "nvim/move.h"
 #include "nvim/pos_defs.h"
+#include "nvim/syntax.h"
 
 #include "decoration_provider.c.generated.h"
 
@@ -91,22 +93,33 @@ void decor_providers_invoke_spell(win_T *wp, int start_row, int start_col, int e
 
 /// Invokes the `_on_conceal_line` (if `lines`) or `_on_conceal` callback for buffer row `row`, so a
 /// provider can add the row's conceal to the marktree, where both drawing and geometry read it.
+/// `_on_conceal` also adds the row's `:syntax` and matchadd() conceal (see syn_conceal_update()).
 ///
-/// `_on_conceal` is a no-op unless 'conceallevel' is set and the buffer has such a provider (see
-/// nvim__buf_set_conceal_provider()). Under 'nowrap', which does not reflow conceal, it only
-/// refreshes rows with conceal marks (an edit may have moved them). Providers cache their per-row
+/// `_on_conceal` providers run only if 'conceallevel' is set and the buffer has such a provider
+/// (see nvim__buf_set_conceal_provider()). Under 'nowrap', which does not reflow conceal, they only
+/// refresh rows with conceal marks (an edit may have moved them). Providers cache their per-row
 /// work, so repeated calls are cheap.
 void decor_providers_invoke_conceal(win_T *wp, int row, bool lines)
 {
-  if (!lines && (row < 0 || wp->w_p_cole < 1 || wp->w_buffer->b_conceal_providers == 0
-                 || (!wp->w_p_wrap && !decor_row_has_conceal(wp, row)))) {
+  // Also replaces marks after their syntax items or matches went away.
+  bool const syn = !lines && row >= 0 && wp->w_p_cole > 0
+                   && (syn_conceal_present(wp)
+                       || (wp->w_syn_conceal_ns != 0
+                           && map_has(uint32_t, wp->w_buffer->b_extmark_ns, wp->w_syn_conceal_ns)));
+  bool const providers = lines || (row >= 0 && wp->w_p_cole > 0
+                                   && wp->w_buffer->b_conceal_providers > 0
+                                   && (wp->w_p_wrap || decor_row_has_conceal(wp, row)));
+  if (!syn && !providers) {
     return;
   }
   // While drawing, `win_line()` may still use marks the provider deletes (see decor_free()). This
   // can run inside `on_line` callbacks, so restore the flag instead of resetting it.
   bool const running = decor_state.running_decor_provider;
   decor_state.running_decor_provider = running || updating_screen;
-  for (size_t i = 0; i < kv_size(decor_providers); i++) {
+  if (syn) {
+    syn_conceal_update(wp, row);
+  }
+  for (size_t i = 0; providers && i < kv_size(decor_providers); i++) {
     DecorProvider *p = &kv_A(decor_providers, i);
     LuaRef const ref = lines ? p->conceal_line : p->conceal;
     if (p->state != kDecorProviderDisabled && ref != LUA_NOREF) {

@@ -517,39 +517,38 @@ func Test_conceal_mouse_click()
     set virtualedit&
 
     " Test with a wrapped line.
+    " Nvim: the line wraps at its concealed width, so there are no boguscols: a
+    " click puts the cursor on the character drawn there.
     call setline(1, ['conceal this click here']->repeat(3)->join())
     call assert_equal([
-          \ 'conceal  click here conceal  cli        ',
-          \ 'ck here conceal  click here             ',
+          \ 'conceal  click here conceal  click here ',
+          \ 'conceal  click here                     ',
           \ ], ScreenLines([1, 2], 40))
-    " Click on boguscols puts cursor on the last char of a screen line.
     for col in range(33, 40)
       call Ntest_setmouse(1, col)
       call feedkeys("\<LeftMouse>", "tx")
-      call assert_equal([0, 1, 40, 0, 40], getcurpos())
+      call assert_equal([0, 1, col + 8, 0, col + 8], getcurpos())
     endfor
 
-    " Also test with the last char of a screen line concealed.
     setlocal number signcolumn=yes
     call assert_equal([
-          \ '    1 conceal  click here conceal       ',
-          \ '       click here conceal  click h      ',
-          \ '      ere                               ',
-          \ ], ScreenLines([1, 3], 40))
+          \ '    1 conceal  click here conceal  click',
+          \ '       here conceal  click here         ',
+          \ ], ScreenLines([1, 2], 40))
     call Ntest_setmouse(1, 34)
     call feedkeys("\<LeftMouse>", "tx")
     call assert_equal([0, 1, 32, 0, 32], getcurpos())
     call Ntest_setmouse(2, 7)
     call feedkeys("\<LeftMouse>", "tx")
-    call assert_equal([0, 1, 37, 0, 37], getcurpos())
-    " Click on boguscols puts cursor on the last char of a screen line.
+    call assert_equal([0, 1, 43, 0, 43], getcurpos())
     for col in range(35, 40)
       call Ntest_setmouse(1, col)
       call feedkeys("\<LeftMouse>", "tx")
-      call assert_equal([0, 1, 34, 0, 34], getcurpos())
+      call assert_equal([0, 1, col + 2, 0, col + 2], getcurpos())
+      " Click after the end of the line puts cursor on the last char.
       call Ntest_setmouse(2, col)
       call feedkeys("\<LeftMouse>", "tx")
-      call assert_equal([0, 1, 68, 0, 68], getcurpos())
+      call assert_equal([0, 1, 71, 0, col + 40], getcurpos())
     endfor
     setlocal number& signcolumn&
   endfor

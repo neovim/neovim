@@ -5665,6 +5665,7 @@ void win_free(win_T *wp, tabpage_T *tp)
   clear_virttext(&wp->w_config.footer_chunks);
 
   clear_matches(wp);
+  syn_conceal_free(wp);
 
   free_jumplist(wp);
 

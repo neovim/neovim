@@ -401,9 +401,9 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buf, Integer ns_i
 ///               - conceal: (boolean|string) Conceals the range ("extmark-conceal") like
 ///                 |:syn-conceal|: a single char behaves like |:syn-cchar| (highlighted with
 ///                 "hl_group", default |hl-Conceal|); empty string or `true` conceals without
-///                 cchar; `false` reveals text that lower-priority conceal hides. Lines 'wrap' at
-///                 their (non-ephemeral) concealed width (takes precedence over legacy
-///                 |:syn-conceal|, |matchadd()|).
+///                 cchar; `false` reveals text that lower-priority conceal hides (including
+///                 |:syn-conceal|; |matchadd()| conceal has a higher priority). Lines 'wrap' at
+///                 their (non-ephemeral) concealed width.
 ///               - conceal_lines: (string) Line-level conceal. When set to an empty string (other
 ///                 values reserved for future use), the lines in the extmark range are not drawn;
 ///                 the next non-concealed line is drawn in their place. Requires 'conceallevel' >=
