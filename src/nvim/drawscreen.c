@@ -66,6 +66,7 @@
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/context.h"
@@ -137,25 +138,66 @@ static bool msg_grid_invalid = false;
 static bool resizing_autocmd = false;
 static bool conceal_cursor_used = false;
 
+/// Redraws the cursor line of `wp` after 'concealcursor' revealed or concealed it again.
+void conceal_redraw_cursor_line(win_T *wp)
+{
+  conceal_reveal_changed(wp, wp->w_cursor.lnum, wp->w_cursor.lnum);
+  if (decor_conceal_line(wp, wp->w_cursor.lnum - 1, true)) {
+    changed_window_setting(wp);
+  }
+}
+
 /// Check if the cursor line needs to be redrawn because of 'concealcursor'.
 ///
 /// When cursor is moved at the same time, both lines will be redrawn regardless.
 void conceal_check_cursor_line(void)
 {
+  conceal_check_visual();
+
   bool should_conceal = conceal_cursor_line(curwin);
   if (curwin->w_p_cole <= 0 || conceal_cursor_used == should_conceal) {
     return;
   }
 
-  redrawWinline(curwin, curwin->w_cursor.lnum);
-
-  // Concealed line visibility toggled.
-  if (decor_conceal_line(curwin, curwin->w_cursor.lnum - 1, true)) {
-    changed_window_setting(curwin);
-  }
+  conceal_redraw_cursor_line(curwin);
   // Need to recompute cursor column, e.g., when starting Visual mode
   // without concealing.
   curs_columns(curwin, true);
+}
+
+/// Redraws the lines that entered or left the Visual area since the last check: 'concealcursor'
+/// reveals the area (see conceal_cursor_reveals_line()).
+void conceal_check_visual(void)
+{
+  // Visual area (start/end lines) seen last, zero when none.
+  static linenr_T conceal_visual[2] = { 0, 0 };
+  linenr_T const old[2] = { conceal_visual[0], conceal_visual[1] };
+  linenr_T const cur[2] = { Visual.active ? MIN(Visual.start.lnum, curwin->w_cursor.lnum) : 0,
+                            Visual.active ? MAX(Visual.start.lnum, curwin->w_cursor.lnum) : 0 };
+  conceal_visual[0] = cur[0];
+  conceal_visual[1] = cur[1];
+
+  if (old[0] == 0 && cur[0] == 0) {
+    return;
+  }
+  // The Visual area is revealed in every window on the buffer.
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_buffer != curbuf) {
+      continue;
+    }
+    if (old[0] == 0) {
+      conceal_reveal_changed(wp, cur[0], cur[1]);
+    } else if (cur[0] == 0) {
+      conceal_reveal_changed(wp, old[0], old[1]);
+    } else {
+      // Lines between the old/new start, or the old/new end.
+      for (int i = 0; i < 2; i++) {
+        if (cur[i] != old[i]) {
+          conceal_reveal_changed(wp, MIN(cur[i], old[i]), MAX(cur[i], old[i]));
+        }
+      }
+    }
+  }
 }
 
 /// Resize default_grid to Rows and Columns.
@@ -1503,8 +1545,8 @@ static void win_update(win_T *wp)
 
   init_search_hl(wp, &screen_search_hl);
 
-  // Make sure skipcol is valid, it depends on various options and the window
-  // width.
+  // Make sure skipcol is valid, it depends on various options, the window width and the topline's
+  // displayed size (e.g. after a conceal mark or 'conceallevel' change).
   if (wp->w_skipcol > 0 && wp->w_view_width > win_col_off(wp)) {
     int w = 0;
     int width1 = wp->w_view_width - win_col_off(wp);
@@ -1521,6 +1563,11 @@ static void win_update(win_T *wp)
       // always round down, the higher value may not be valid
       wp->w_skipcol = w - add;
     }
+  }
+  // On the cursor line curs_columns() places skipcol, also past the end.
+  if (wp->w_skipcol > 0 && wp->w_cursor.lnum != wp->w_topline
+      && linetabsize_disp_eol(wp, wp->w_topline) <= wp->w_skipcol) {
+    wp->w_skipcol = 0;
   }
 
   const int nrwidth_before = wp->w_nrwidth;
@@ -2256,6 +2303,12 @@ static void win_update(win_T *wp)
         bool display_buf_line = !concealed
                                 && (foldinfo.fi_lines == 0 || wp->w_p_fdt.type == kCallbackNone);
 
+        // Add provider conceal to the marktree before drawing, so win_line() reflows it the same
+        // way the geometry functions do.
+        if (display_buf_line) {
+          decor_providers_invoke_conceal(wp, lnum - 1, false);
+        }
+
         // Display one line
         spellvars_T zero_spv = { 0 };
         row = win_line(wp, lnum, srow, wp->w_view_height, 0, concealed,
@@ -2864,6 +2917,33 @@ bool conceal_cursor_line(const win_T *wp)
     return false;
   }
   return vim_strchr(wp->w_p_cocu, c) != NULL;
+}
+
+/// Redraws lines `line1` to `line2` of `wp` and invalidates their heights, after 'concealcursor'
+/// revealed or concealed them again.
+void conceal_reveal_changed(win_T *wp, linenr_T line1, linenr_T line2)
+{
+  redraw_win_range_later(wp, line1, line2);
+  // Extmark-conceal may change their size.
+  if (has_extconceal(wp)) {
+    changed_lines_invalidate_win(wp, line1, 0, line2 + 1, 0);
+    changed_topline_skipcol(wp, line1, line2);
+  }
+}
+
+/// Whether 'concealcursor' reveals line `lnum` in window `wp`: the cursor line outside the
+/// listed modes, and every line of the Visual area unless "v" is listed. Drawing and height
+/// calculations must ask this the same way, or they disagree about how tall a concealed line is.
+bool conceal_cursor_reveals_line(const win_T *wp, linenr_T lnum)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (wp == curwin && lnum == wp->w_cursor.lnum && !conceal_cursor_line(wp)) {
+    return true;
+  }
+  return Visual.active && wp->w_buffer == curwin->w_buffer
+         && lnum >= MIN(Visual.start.lnum, curwin->w_cursor.lnum)
+         && lnum <= MAX(Visual.start.lnum, curwin->w_cursor.lnum)
+         && vim_strchr(wp->w_p_cocu, 'v') == NULL;
 }
 
 /// Whether cursorline is drawn in a special way

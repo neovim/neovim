@@ -69,6 +69,257 @@ describe('decorations providers', function()
     setup_screen(screen)
   end)
 
+  describe('conceal geometry', function()
+    local ns
+    before_each(function()
+      screen:try_resize(20, 6)
+      command('set wrap conceallevel=2 concealcursor=nvic')
+      ns = api.nvim_create_namespace('conceal_wrap')
+    end)
+
+    it('_on_conceal provider conceal reflows (added to the marktree)', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(30) })
+      exec_lua(function(nsid)
+        local added = {}
+        _G.conceal_ns = vim.api.nvim_create_namespace('conceal_wrap_provider_marks')
+        _G.conceal_calls = {}
+        vim.api.nvim_set_decoration_provider(nsid, {
+          _on_conceal = function(_, _, buf, row)
+            _G.conceal_calls[buf] = (_G.conceal_calls[buf] or 0) + 1
+            if row == 0 and not added[buf] then
+              added[buf] = true
+              vim.api.nvim_buf_set_extmark(buf, _G.conceal_ns, 0, 10, {
+                end_col = 16,
+                conceal = '',
+              })
+            end
+          end,
+        })
+        vim.api.nvim__buf_set_conceal_provider(0, true)
+      end, ns)
+
+      -- 46 raw cells become 40 displayed cells: two rows instead of three.
+      eq(2, api.nvim_win_text_height(0, {}).all)
+      eq({ row = 2, col = 1, curscol = 1, endcol = 1 }, fn.screenpos(0, 1, 27))
+      api.nvim_win_set_cursor(0, { 1, 0 })
+      feed('gj')
+      eq({ 1, 26 }, api.nvim_win_get_cursor(0))
+
+      -- Registration is buffer-local.
+      eq(
+        0,
+        exec_lua(function()
+          local original = vim.api.nvim_get_current_buf()
+          local other = vim.api.nvim_create_buf(false, true)
+          vim.api.nvim_buf_set_lines(other, 0, -1, true, { ('x'):rep(30) })
+          vim.api.nvim_win_set_buf(0, other)
+          vim.api.nvim_win_text_height(0, {})
+          local calls = _G.conceal_calls[other] or 0
+          vim.api.nvim_win_set_buf(0, original)
+          return calls
+        end)
+      )
+    end)
+
+    it('_on_conceal registration does not survive a reused buffer', function()
+      local bufnr = api.nvim_get_current_buf()
+      exec_lua(function(nsid)
+        vim.api.nvim_set_decoration_provider(nsid, {
+          _on_conceal = function() end,
+        })
+        vim.api.nvim__buf_set_conceal_provider(0, true)
+      end, ns)
+      command('edit Xconceal_provider_reuse')
+      eq(bufnr, api.nvim_get_current_buf())
+      eq(0, api.nvim__buf_stats(0).conceal_providers)
+      eq(
+        'Conceal provider is not enabled',
+        exec_lua(function()
+          return select(2, pcall(vim.api.nvim__buf_set_conceal_provider, 0, false))
+        end)
+      )
+    end)
+
+    it('_on_conceal runs once before a linebreak geometry walk', function()
+      command('set linebreak')
+      api.nvim_buf_set_lines(0, 0, -1, true, {
+        'alpha HIDDEN bravo charlie delta echo foxtrot golf hotel india juliet',
+        ('Q'):rep(200),
+      })
+
+      eq(
+        { 1, 1 },
+        exec_lua(function(nsid)
+          local calls = 0
+          local conceal_ns = vim.api.nvim_create_namespace('conceal_linebreak_provider_marks')
+          vim.api.nvim_set_decoration_provider(nsid, {
+            _on_conceal = function(_, _, buf, row)
+              calls = calls + 1
+              if row == 0 then
+                vim.api.nvim_buf_set_extmark(buf, conceal_ns, row, 6, {
+                  id = 1,
+                  end_row = 1,
+                  end_col = 1,
+                  conceal = '',
+                })
+              end
+            end,
+          })
+          vim.api.nvim__buf_set_conceal_provider(0, true)
+          local height = vim.api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all
+          return { height, calls }
+        end, ns)
+      )
+
+      -- `N|` takes a raw vcol: the space before "charlie" spans 19-20 ('linebreak').
+      api.nvim_win_set_cursor(0, { 1, 0 })
+      feed('20|')
+      eq({ 1, 18 }, api.nvim_win_get_cursor(0))
+    end)
+
+    it('_on_conceal is not queried by raw virtual columns', function()
+      eq(
+        0,
+        exec_lua(function(nsid)
+          vim.api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(40) })
+          local calls = 0
+          vim.api.nvim_set_decoration_provider(nsid, {
+            _on_conceal = function()
+              calls = calls + 1
+            end,
+          })
+          vim.api.nvim__buf_set_conceal_provider(0, true)
+          vim.fn.virtcol({ 1, 25 })
+          return calls
+        end, ns)
+      )
+    end)
+
+    it('_on_conceal keeps iterators, marks and the line valid', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(200) })
+      api.nvim_buf_set_extmark(0, ns, 0, 180, {
+        virt_text = { { 'INLINE', 'Comment' } },
+        virt_text_pos = 'inline',
+      })
+
+      eq(
+        11,
+        exec_lua(function(nsid)
+          local done = false
+          local conceal_ns = vim.api.nvim_create_namespace('conceal_iterator_provider_marks')
+          vim.api.nvim_set_decoration_provider(nsid, {
+            _on_conceal = function(_, _, buf, row)
+              if row ~= 0 or done then
+                return
+              end
+              done = true
+              -- Add enough marks before the inline mark to split its marktree node.
+              for col = 0, 159 do
+                vim.api.nvim_buf_set_extmark(buf, conceal_ns, row, col, {
+                  end_col = col + 1,
+                  conceal = col == 0 and '' or false,
+                })
+              end
+            end,
+          })
+          vim.api.nvim__buf_set_conceal_provider(0, true)
+          return vim.api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all
+        end, ns)
+      )
+
+      -- Nor the drawing iterators, when 'statuscolumn' measures the row being drawn while the
+      -- provider rewrites the row's marks.
+      command('set linebreak')
+      api.nvim_buf_clear_namespace(0, ns, 0, -1)
+      api.nvim_buf_set_lines(0, 0, -1, true, { ('ab_1 '):rep(8), ('ab_1 '):rep(8) })
+      exec_lua(function(nsid)
+        local conceal_ns = vim.api.nvim_create_namespace('conceal_iterator_provider_marks')
+        vim.api.nvim_set_decoration_provider(nsid, {
+          _on_conceal = function(_, _, buf, row)
+            vim.api.nvim_buf_clear_namespace(buf, conceal_ns, row, row + 1)
+            local line = vim.api.nvim_buf_get_lines(buf, row, row + 1, true)[1]
+            for col in line:gmatch('()_1') do
+              vim.api.nvim_buf_set_extmark(buf, conceal_ns, row, col - 1, {
+                end_col = col + 1,
+                conceal = '',
+              })
+            end
+          end,
+        })
+        _G.Stc = function()
+          vim.api.nvim_win_text_height(0, { start_row = vim.v.lnum - 1, end_row = vim.v.lnum - 1 })
+          return ' '
+        end
+        vim.o.statuscolumn = '%!v:lua.Stc()'
+      end, ns)
+      screen:expect([[
+        {3: }^ab ab ab ab ab ab  |
+        {3: }ab ab              |
+        {3: }ab ab ab ab ab ab  |
+        {3: }ab ab              |
+        {1:~                   }|
+                            |
+      ]])
+
+      -- Nor the marktree, when a mark changes on a topline with skipped cells.
+      command('set nolinebreak statuscolumn= smoothscroll')
+      api.nvim_buf_set_lines(0, 0, -1, true, { ('ab_1 '):rep(30) })
+      feed('<C-E>')
+      api.nvim_buf_set_extmark(0, ns, 0, 149, { end_col = 150, conceal = '' })
+      screen:expect([[
+        {1:<<<} ab ab ab ab ab a|
+        ^b ab ab ab ab ab ab |
+        ab ab ab ab ab ab ab|
+         ab ab ab           |
+        {1:~                   }|
+                            |
+      ]])
+
+      -- Nor the marks of the row being drawn, when the provider replaces them at a row end (fails
+      -- under ASan). The provider was enabled for this buffer above.
+      eq(1, api.nvim__buf_stats(0).conceal_providers)
+      command('set nosmoothscroll')
+      api.nvim_buf_clear_namespace(0, ns, 0, -1)
+      exec_lua(function(nsid)
+        local conceal_ns = vim.api.nvim_create_namespace('conceal_iterator_provider_marks')
+        vim.api.nvim_set_decoration_provider(nsid, {
+          _on_conceal = function(_, _, buf, row)
+            vim.api.nvim_buf_clear_namespace(buf, conceal_ns, row, row + 1)
+            local line = vim.api.nvim_buf_get_lines(buf, row, row + 1, true)[1]
+            for col in line:gmatch('()_1') do
+              vim.api.nvim_buf_set_extmark(buf, conceal_ns, row, col - 1, {
+                end_col = col + 1,
+                conceal = '',
+                virt_text = { { 'V' } },
+                virt_text_pos = 'eol',
+              })
+            end
+          end,
+        })
+      end, ns)
+      api.nvim_buf_set_lines(0, 0, -1, true, { ('ab_1 '):rep(8) })
+      screen:expect([[
+        ab ab ab ab ab ab ab|
+         ab^  V V V V V V V V|
+        {1:~                   }|*3
+                            |
+      ]])
+
+      -- Nor the line coladvance() walks, when the provider reads another line (fails under ASan).
+      command('set virtualedit=all nostartofline')
+      exec_lua(function(nsid)
+        vim.api.nvim_set_decoration_provider(nsid, {
+          _on_conceal = function(_, _, buf)
+            vim.api.nvim_buf_get_lines(buf, 0, -1, true)
+          end,
+        })
+      end, ns)
+      api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(50), 'b' })
+      feed('gg30|>>')
+      eq({ 1, 22 }, api.nvim_win_get_cursor(0))
+    end)
+  end)
+
   local mulholland = [[
     // just to see if there was an accident
     // on Mulholland Drive
@@ -2297,7 +2548,7 @@ describe('extmark decorations', function()
   it('conceal without conceal char #24782', function()
     screen:try_resize(50, 5)
     insert('foobar\n')
-    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_col = 3, conceal = '' })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_col = 3, conceal = '', hl_group = 'Search' })
     command('set listchars=conceal:?')
     command('let &conceallevel=1')
     screen:expect([[
@@ -2323,8 +2574,8 @@ describe('extmark decorations', function()
     screen:expect {
       grid = [[
       ^                                        |
-      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{1:>}  |
-      古                                      |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa古 |
+      {1:~                                       }|
                                               |
     ]],
     }
@@ -2337,6 +2588,17 @@ describe('extmark decorations', function()
                                               |
     ]],
     }
+
+    -- Match conceal does not reflow: the character still moves to the next row.
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    fn.matchadd('Conceal', '<>')
+    feed('k')
+    screen:expect([[
+      ^                                        |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{1:>}  |
+      古                                      |
+                                              |
+    ]])
   end)
 
   it('redraws properly when adding/removing conceal on non-current line', function()
@@ -8551,6 +8813,17 @@ describe('decorations: window scoped', function()
     command 'only'
 
     screen:expect(noextmarks)
+
+    -- Nor a mark that starts above the topline.
+    api.nvim_buf_set_lines(0, 0, -1, true, { '1', '2', '3' })
+    set_extmark(0, 0, { hl_group = 'Comment', end_row = 2, end_col = 1 })
+    feed('<C-E>')
+    screen:expect([[
+      ^2                   |
+      3                   |
+      {1:~                   }|*7
+                          |
+    ]])
   end)
 
   it('virt_text', function()

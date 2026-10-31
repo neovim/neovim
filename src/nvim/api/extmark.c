@@ -398,11 +398,12 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buf, Integer ns_i
 /// @param line  Line where to place the mark, 0-based. |api-indexing|
 /// @param col  Column where to place the mark, 0-based. |api-indexing|
 /// @param opts  Optional parameters:
-///               - conceal: (boolean|string)
-///                   - string: Single char or empty string, enables conceal similar to |:syn-conceal|.
-///                     Non-empty char is used as |:syn-cchar|. Highlighted with "hl_group" if
-///                     defined, else defaults to |hl-Conceal|.
-///                   - boolean: true is equivalent to "", false removes any existing conceal.
+///               - conceal: (boolean|string) Conceals the range ("extmark-conceal") like
+///                 |:syn-conceal|: a single char behaves like |:syn-cchar| (highlighted with
+///                 "hl_group", default |hl-Conceal|); empty string or `true` conceals without
+///                 cchar; `false` reveals text that lower-priority conceal hides. Lines 'wrap' at
+///                 their (non-ephemeral) concealed width (takes precedence over legacy
+///                 |:syn-conceal|, |matchadd()|).
 ///               - conceal_lines: (string) Line-level conceal. When set to an empty string (other
 ///                 values reserved for future use), the lines in the extmark range are not drawn;
 ///                 the next non-concealed line is drawn in their place. Requires 'conceallevel' >=
@@ -618,6 +619,13 @@ Integer nvim_buf_set_extmark(Buffer buf, Integer ns_id, Integer line, Integer co
         hl.conceal_char = schar_from_cluster(ci, cli);
       }
     }
+  }
+
+  if (opts->_conceal_continuation) {
+    VALIDATE(hl.flags & kSHConceal, "%s", "_conceal_continuation requires conceal", {
+      goto error;
+    });
+    hl.flags |= kSHConcealCont;
   }
 
   if (HAS_KEY(opts, set_extmark, conceal_lines)) {
@@ -850,7 +858,7 @@ Integer nvim_buf_set_extmark(Buffer buf, Integer ns_id, Integer line, Integer co
       goto error;
     }
 
-    uint16_t decor_flags = 0;
+    uint32_t decor_flags = 0;
 
     DecorVirtText *decor_alloc = NULL;
     if (kv_size(virt_text.data.virt_text)) {
@@ -892,6 +900,9 @@ Integer nvim_buf_set_extmark(Buffer buf, Integer ns_id, Integer line, Integer co
       }
     }
 
+    if (hl.flags & kSHConceal) {
+      decor_flags |= MT_FLAG_DECOR_CONCEAL;
+    }
     if (hl.flags & kSHConcealLines) {
       decor_flags |= MT_FLAG_DECOR_CONCEAL_LINES;
     }
@@ -1084,6 +1095,7 @@ void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *
     { "_on_hl_def", &opts->_on_hl_def, &p->hl_def },
     { "_on_spell_nav", &opts->_on_spell_nav, &p->spell_nav },
     { "_on_conceal_line", &opts->_on_conceal_line, &p->conceal_line },
+    { "_on_conceal", &opts->_on_conceal, &p->conceal },
     { NULL, NULL, NULL },
   };
 
@@ -1100,6 +1112,32 @@ void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *
   p->state = kDecorProviderActive;
   p->hl_valid++;
   p->hl_cached = false;
+}
+
+/// @nodoc
+/// Enables (or disables) the `_on_conceal` decoration providers for `buf`: measuring a row runs
+/// them first, so rows not yet drawn are measured concealed. Each enable needs one disable.
+void nvim__buf_set_conceal_provider(Buffer buf, Boolean enabled, Error *err)
+  FUNC_API_LUA_ONLY
+{
+  buf_T *b = find_buffer_by_handle(buf, err);
+  if (b == NULL) {
+    return;
+  }
+  int const count = b->b_conceal_providers + (enabled ? 1 : -1);
+  VALIDATE(count >= 0, "%s", "Conceal provider is not enabled", {
+    return;
+  });
+  b->b_conceal_providers = count;
+  // Only the first enable and the last disable change the layout.
+  if (count != (enabled ? 1 : 0)) {
+    return;
+  }
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_buffer == b) {
+      changed_window_setting(wp);
+    }
+  }
 }
 
 /// Gets the line and column of an |extmark|.

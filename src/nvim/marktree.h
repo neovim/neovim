@@ -12,39 +12,41 @@
 
 #define MT_INVALID_KEY (MTKey) { { -1, -1 }, 0, 0, 0, { .hl = DECOR_HIGHLIGHT_INLINE_INIT } }
 
-#define MT_FLAG_REAL (((uint16_t)1) << 0)
-#define MT_FLAG_END (((uint16_t)1) << 1)
-#define MT_FLAG_PAIRED (((uint16_t)1) << 2)
+#define MT_FLAG_REAL (((uint32_t)1) << 0)
+#define MT_FLAG_END (((uint32_t)1) << 1)
+#define MT_FLAG_PAIRED (((uint32_t)1) << 2)
 // orphaned: the other side of this paired mark was deleted. this mark must be deleted very soon!
-#define MT_FLAG_ORPHANED (((uint16_t)1) << 3)
-#define MT_FLAG_NO_UNDO (((uint16_t)1) << 4)
-#define MT_FLAG_INVALIDATE (((uint16_t)1) << 5)
-#define MT_FLAG_INVALID (((uint16_t)1) << 6)
+#define MT_FLAG_ORPHANED (((uint32_t)1) << 3)
+#define MT_FLAG_NO_UNDO (((uint32_t)1) << 4)
+#define MT_FLAG_INVALIDATE (((uint32_t)1) << 5)
+#define MT_FLAG_INVALID (((uint32_t)1) << 6)
 // discriminant for union
-#define MT_FLAG_DECOR_EXT (((uint16_t)1) << 7)
+#define MT_FLAG_DECOR_EXT (((uint32_t)1) << 7)
 
 // TODO(bfredl): flags for decorations. These cover the cases where we quickly needs
 // to skip over irrelevant marks internally. When we refactor this more, also make all info
 // for ExtmarkType included here
-#define MT_FLAG_DECOR_HL (((uint16_t)1) << 8)
-#define MT_FLAG_DECOR_SIGNTEXT (((uint16_t)1) << 9)
+#define MT_FLAG_DECOR_HL (((uint32_t)1) << 8)
+#define MT_FLAG_DECOR_SIGNTEXT (((uint32_t)1) << 9)
 // TODO(bfredl): for now this means specifically number_hl, line_hl, cursorline_hl
 // needs to clean up the name.
-#define MT_FLAG_DECOR_SIGNHL (((uint16_t)1) << 10)
-#define MT_FLAG_DECOR_VIRT_LINES (((uint16_t)1) << 11)
-#define MT_FLAG_DECOR_VIRT_TEXT_INLINE (((uint16_t)1) << 12)
-#define MT_FLAG_DECOR_CONCEAL_LINES (((uint16_t)1) << 13)
+#define MT_FLAG_DECOR_SIGNHL (((uint32_t)1) << 10)
+#define MT_FLAG_DECOR_VIRT_LINES (((uint32_t)1) << 11)
+#define MT_FLAG_DECOR_VIRT_TEXT_INLINE (((uint32_t)1) << 12)
+#define MT_FLAG_DECOR_CONCEAL (((uint32_t)1) << 13)
+#define MT_FLAG_DECOR_CONCEAL_LINES (((uint32_t)1) << 14)
 
 // These _must_ be last to preserve ordering of marks
-#define MT_FLAG_RIGHT_GRAVITY (((uint16_t)1) << 14)
-#define MT_FLAG_LAST (((uint16_t)1) << 15)
+#define MT_FLAG_RIGHT_GRAVITY (((uint32_t)1) << 15)
+#define MT_FLAG_LAST (((uint32_t)1) << 16)
 
 #define MT_FLAG_DECOR_MASK  (MT_FLAG_DECOR_EXT| MT_FLAG_DECOR_HL | MT_FLAG_DECOR_SIGNTEXT \
                              | MT_FLAG_DECOR_SIGNHL | MT_FLAG_DECOR_VIRT_LINES \
                              | MT_FLAG_DECOR_VIRT_TEXT_INLINE)
 
 #define MT_FLAG_EXTERNAL_MASK (MT_FLAG_DECOR_MASK | MT_FLAG_NO_UNDO | MT_FLAG_INVALIDATE \
-                               | MT_FLAG_INVALID | MT_FLAG_DECOR_CONCEAL_LINES)
+                               | MT_FLAG_INVALID | MT_FLAG_DECOR_CONCEAL \
+                               | MT_FLAG_DECOR_CONCEAL_LINES)
 
 // this is defined so that start and end of the same range have adjacent ids
 #define MARKTREE_END_FLAG ((uint64_t)1)
@@ -108,17 +110,12 @@ static inline bool mt_decor_sign(MTKey key)
   return key.flags & (MT_FLAG_DECOR_SIGNTEXT | MT_FLAG_DECOR_SIGNHL);
 }
 
-static inline bool mt_conceal_lines(MTKey key)
+static inline uint32_t mt_flags(bool right_gravity, bool no_undo, bool invalidate, bool decor_ext)
 {
-  return key.flags & MT_FLAG_DECOR_CONCEAL_LINES;
-}
-
-static inline uint16_t mt_flags(bool right_gravity, bool no_undo, bool invalidate, bool decor_ext)
-{
-  return (uint16_t)((right_gravity ? MT_FLAG_RIGHT_GRAVITY : 0)
-                    | (no_undo ? MT_FLAG_NO_UNDO : 0)
-                    | (invalidate ? MT_FLAG_INVALIDATE : 0)
-                    | (decor_ext ? MT_FLAG_DECOR_EXT : 0));
+  return (right_gravity ? MT_FLAG_RIGHT_GRAVITY : 0)
+         | (no_undo ? MT_FLAG_NO_UNDO : 0)
+         | (invalidate ? MT_FLAG_INVALIDATE : 0)
+         | (decor_ext ? MT_FLAG_DECOR_EXT : 0);
 }
 
 static inline MTPair mtpair_from(MTKey start, MTKey end)

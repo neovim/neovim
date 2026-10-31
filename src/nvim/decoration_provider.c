@@ -11,6 +11,7 @@
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
 #include "nvim/decoration_provider.h"
+#include "nvim/drawscreen.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
 #include "nvim/log.h"
@@ -88,21 +89,35 @@ void decor_providers_invoke_spell(win_T *wp, int start_row, int start_col, int e
   }
 }
 
-/// @return whether a provider placed any marks in the callback.
-bool decor_providers_invoke_conceal_line(win_T *wp, int row)
+/// Invokes the `_on_conceal_line` (if `lines`) or `_on_conceal` callback for buffer row `row`, so a
+/// provider can add the row's conceal to the marktree, where both drawing and geometry read it.
+///
+/// `_on_conceal` is a no-op unless 'conceallevel' is set and the buffer has such a provider (see
+/// nvim__buf_set_conceal_provider()). Under 'nowrap', which does not reflow conceal, it only
+/// refreshes rows with conceal marks (an edit may have moved them). Providers cache their per-row
+/// work, so repeated calls are cheap.
+void decor_providers_invoke_conceal(win_T *wp, int row, bool lines)
 {
-  size_t keys = wp->w_buffer->b_marktree->n_keys;
+  if (!lines && (row < 0 || wp->w_p_cole < 1 || wp->w_buffer->b_conceal_providers == 0
+                 || (!wp->w_p_wrap && !decor_row_has_conceal(wp, row)))) {
+    return;
+  }
+  // While drawing, `win_line()` may still use marks the provider deletes (see decor_free()). This
+  // can run inside `on_line` callbacks, so restore the flag instead of resetting it.
+  bool const running = decor_state.running_decor_provider;
+  decor_state.running_decor_provider = running || updating_screen;
   for (size_t i = 0; i < kv_size(decor_providers); i++) {
     DecorProvider *p = &kv_A(decor_providers, i);
-    if (p->state != kDecorProviderDisabled && p->conceal_line != LUA_NOREF) {
-      MAXSIZE_TEMP_ARRAY(args, 4);
+    LuaRef const ref = lines ? p->conceal_line : p->conceal;
+    if (p->state != kDecorProviderDisabled && ref != LUA_NOREF) {
+      MAXSIZE_TEMP_ARRAY(args, 3);
       ADD_C(args, INTEGER_OBJ(wp->handle));
       ADD_C(args, INTEGER_OBJ(wp->w_buffer->handle));
       ADD_C(args, INTEGER_OBJ(row));
-      decor_provider_invoke((int)i, "conceal_line", p->conceal_line, args, true, NULL);
+      decor_provider_invoke((int)i, lines ? "conceal_line" : "conceal", ref, args, true, NULL);
     }
   }
-  return wp->w_buffer->b_marktree->n_keys > keys;
+  decor_state.running_decor_provider = running;
 }
 
 /// For each provider invoke the 'start' callback
@@ -334,6 +349,7 @@ void decor_provider_clear(DecorProvider *p)
   NLUA_CLEAR_REF(p->redraw_end);
   NLUA_CLEAR_REF(p->spell_nav);
   NLUA_CLEAR_REF(p->conceal_line);
+  NLUA_CLEAR_REF(p->conceal);
   p->state = kDecorProviderDisabled;
 }
 

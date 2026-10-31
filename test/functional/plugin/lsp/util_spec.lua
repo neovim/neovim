@@ -1536,6 +1536,21 @@ describe('vim.lsp.util', function()
       {1:~                                                    }|*8
                                                            |
     ]])
+
+      -- A link counts its concealed width, not its raw width.
+      command('close')
+      feed('<Ignore>')
+      eq(
+        1,
+        exec_lua(function()
+          local _, win = vim.lsp.util.open_floating_preview(
+            { ('[x](https://example.com/%s) tail'):format(('a'):rep(50)) },
+            'markdown',
+            { width = 10, focus = false }
+          )
+          return vim.api.nvim_win_get_height(win)
+        end)
+      )
     end)
 
     it('open_floating_preview height does not exceed max_height', function()

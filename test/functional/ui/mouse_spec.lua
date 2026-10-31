@@ -1356,7 +1356,9 @@ describe('ui/mouse/input', function()
       })
     end)
 
-    local function test_mouse_click_conceal()
+    --- @param reflows boolean Extmark conceal reflows wrapped lines (see conceal_wrap_spec.lua).
+    local function test_mouse_click_conceal(reflows)
+      local it_wrapped = not reflows and it or function() end
       it('(level 1) click on non-wrapped lines', function()
         feed_command('let &conceallevel=1', 'echo')
 
@@ -1424,7 +1426,7 @@ describe('ui/mouse/input', function()
         })
       end) -- level 1 - non wrapped
 
-      it('(level 1) click on wrapped lines', function()
+      it_wrapped('(level 1) click on wrapped lines', function()
         feed_command('let &conceallevel=1', 'let &wrap=1', 'echo')
 
         feed('<esc><LeftMouse><24,1>')
@@ -1599,7 +1601,7 @@ describe('ui/mouse/input', function()
         })
       end) -- level 2 - non wrapped (insert mode)
 
-      it('(level 2) click on wrapped lines', function()
+      it_wrapped('(level 2) click on wrapped lines', function()
         feed_command('let &conceallevel=2', 'let &wrap=1', 'echo')
 
         feed('<esc><LeftMouse><20,0>')
@@ -1749,7 +1751,7 @@ describe('ui/mouse/input', function()
         })
       end) -- level 3 - non wrapped
 
-      it('(level 3) click on wrapped lines', function()
+      it_wrapped('(level 3) click on wrapped lines', function()
         feed_command('let &conceallevel=3', 'let &wrap=1', 'echo')
 
         feed('<esc><LeftMouse><14,1>')
@@ -1872,7 +1874,7 @@ describe('ui/mouse/input', function()
           command([[syntax match X2 /cats/ conceal cchar=X contained]])
           command([[syntax match X3 /\n\@<=x/ conceal cchar=>]])
         end)
-        test_mouse_click_conceal()
+        test_mouse_click_conceal(false)
       end)
 
       describe('(matchadd())', function()
@@ -1881,7 +1883,7 @@ describe('ui/mouse/input', function()
           fn.matchadd('Conceal', [[cats]], 10, -1, { conceal = 'X' })
           fn.matchadd('Conceal', [[\n\@<=x]], 10, -1, { conceal = '>' })
         end)
-        test_mouse_click_conceal()
+        test_mouse_click_conceal(false)
       end)
 
       describe('(extmarks)', function()
@@ -1900,7 +1902,7 @@ describe('ui/mouse/input', function()
           api.nvim_buf_set_extmark(0, ns, 2, 25, { end_col = 29, conceal = 'X' })
           api.nvim_buf_set_extmark(0, ns, 2, 0, { end_col = 1, conceal = '>' })
         end)
-        test_mouse_click_conceal()
+        test_mouse_click_conceal(true)
       end)
     end)
 

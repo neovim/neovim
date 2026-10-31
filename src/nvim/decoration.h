@@ -93,11 +93,13 @@ typedef struct {
   int conceal;
   schar_T conceal_char;
   int conceal_attr;
+  int conceal_slot_i;  ///< Slot index of the effective extmark-conceal range, or -1.
 
   TriState spell;
 
   bool running_decor_provider;
   bool itr_valid;
+  bool conceal_only;  ///< Measurement state: omit non-conceal and virtual-position ranges.
 } DecorState;
 
 EXTERN DecorState decor_state INIT( = { 0 });

@@ -1792,11 +1792,10 @@ describe('vim.lsp.completion: integration', function()
         nvim__id_array_1^                                  |
         {12:nvim__id_array_1 Function }{100:(method) nvim__id_array}{1: }|
         {4:nvim__id_array_2 Function }{100:_1(arr: any[]): any[]}{4:  }{1: }|
-        {4:for i = ..       Snippet  }{100:lua\nfunction vim.ap}{4:   }{1: }|
-        {4:for j = ..       Snippet  }{100:i.nvim__id_array_1(arr:}{1: }|
-        {4:_assert_integer  Function }{100: any[])\n  -> any[]\n}{4:  }{1: }|
-        {1:~                         }{4:                       }{1: }|
-        {1:~                                                 }|*12
+        {4:for i = ..       Snippet  }{100:lua\nfunction vim.api.n}{1: }|
+        {4:for j = ..       Snippet  }{100:vim__id_array_1(arr: an}{1: }|
+        {4:_assert_integer  Function }{100:y[])\n  -> any[]\n}{4:     }{1: }|
+        {1:~                                                 }|*13
         {5:-- INSERT --}                                      |
       ]])
       feed('<C-N>')
@@ -1804,11 +1803,10 @@ describe('vim.lsp.completion: integration', function()
         nvim__id_array_2^                                  |
         {4:nvim__id_array_1 Function }{100:(method) nvim__id_array}{1: }|
         {12:nvim__id_array_2 Function }{100:_2(arr: any[]): any[]}{4:  }{1: }|
-        {4:for i = ..       Snippet  }{100:lua\nfunction vim.ap}{4:   }{1: }|
-        {4:for j = ..       Snippet  }{100:i.nvim__id_array_2(arr:}{1: }|
-        {4:_assert_integer  Function }{100: any[])\n  -> any[]\n}{4:  }{1: }|
-        {1:~                         }{4:                       }{1: }|
-        {1:~                                                 }|*12
+        {4:for i = ..       Snippet  }{100:lua\nfunction vim.api.n}{1: }|
+        {4:for j = ..       Snippet  }{100:vim__id_array_2(arr: an}{1: }|
+        {4:_assert_integer  Function }{100:y[])\n  -> any[]\n}{4:     }{1: }|
+        {1:~                                                 }|*13
         {5:-- INSERT --}                                      |
       ]])
       feed('<C-N>')

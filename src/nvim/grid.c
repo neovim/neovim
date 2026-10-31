@@ -171,6 +171,14 @@ size_t schar_get_adv(char **buf_out, schar_T sc)
   return len;
 }
 
+/// @return Screen cells of `sc`.
+int schar_cells(schar_T sc)
+{
+  char buf[MAX_SCHAR_SIZE];
+  schar_get(buf, sc);
+  return utf_ptr2cells(buf);
+}
+
 size_t schar_len(schar_T sc)
 {
   if (schar_high(sc)) {
