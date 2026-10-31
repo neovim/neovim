@@ -240,7 +240,7 @@ bool is_path_head(const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
 #ifdef MSWIN
-  return isalpha((uint8_t)path[0]) && path[1] == ':';
+  return ASCII_ISALPHA(path[0]) && path[1] == ':';
 #else
   return vim_ispathsep(*path);
 #endif
@@ -261,7 +261,9 @@ char *get_past_head(const char *path)
   }
 #endif
 
-  retval = path_skip_sep(retval, true);
+  // For now, we doesn't support ADS (file.txt:stream), a colon is only valid
+  // right after the drive letter, we only need to skip actual path separators.
+  retval = path_skip_sep(retval, false);
 
   return (char *)retval;
 }
@@ -2300,51 +2302,28 @@ int append_path(char *path, const char *to_append, size_t max_len)
 static int path_to_absolute(const char *fname, char *buf, size_t len, int force)
   FUNC_ATTR_NONNULL_ALL
 {
-  const char *p;
+  const char *p = fname;
   *buf = NUL;
 
-  char *relative_directory = xmalloc(len);
-  const char *end_of_path = fname;
-
   // expand it if forced or not an absolute path
-  if (force || !path_is_absolute(fname)
+  if (force || !path_is_absolute(p)
 #ifdef MSWIN  // enforce drive letter on Windows paths
-      || fname[0] == '/' || fname[0] == '\\'
+      || vim_ispathsep_nocolon(p[0])
 #endif
       ) {
-    p = strrchr(fname, '/');
-#ifdef MSWIN
-    if (p == NULL) {
-      p = strrchr(fname, '\\');
-    }
-    if (p == NULL && ASCII_ISALPHA(fname[0]) && fname[1] == ':') {  // drive letter
-      p = fname + 1;
-    }
-#endif
-    if (p == NULL && strcmp(fname, "..") == 0) {
-      // Handle ".." without path separators.
-      p = fname + 2;
-    }
-    if (p != NULL) {
-      if (vim_ispathsep(*p) && strcmp(p + 1, "..") == 0) {
-        // For "/path/dir/.." include the "/..".
-        p += 3;
-      }
-      assert(p >= fname);
-      memcpy(relative_directory, fname, (size_t)(p - fname + 1));
-      relative_directory[p - fname + 1] = NUL;
-      end_of_path = (vim_ispathsep(*p) ? p + 1 : p);
-    } else {
-      relative_directory[0] = NUL;
+    p = path_tail(p);
+    if (strcmp(p, "..") == 0) {
+      p += 2;
     }
 
-    if (FAIL == path_full_dir_name(relative_directory, buf, len)) {
-      xfree(relative_directory);
+    char *relative_directory = xmemdupz(fname, (size_t)(p - fname));
+    int ret = path_full_dir_name(relative_directory, buf, len);
+    xfree(relative_directory);
+    if (ret == FAIL) {
       return FAIL;
     }
   }
-  xfree(relative_directory);
-  return append_path(buf, end_of_path, len);
+  return append_path(buf, p, len);
 }
 
 /// Check if file `fname` is a full (absolute) path.
