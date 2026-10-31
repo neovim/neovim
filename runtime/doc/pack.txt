@@ -447,6 +447,7 @@ A simple example: >json
     {
      "name": "best-plugin.nvim",
      "description": "The best plugin for Neovim",
+     "version": "1.0.0",
      "engines": {
          "nvim": ">=0.13.0",
          "vim": ">=9.1.0"
@@ -505,6 +506,8 @@ vim.pack.Manifest                                          *vim.pack.Manifest*
                          • {preuninstall}? (`string`) Pre delete script.
                          • {preupdate}? (`string`) Pre update script.
                          • {update}? (`string`) Post update script.
+      • {version}?       (`string`) Plugin version as a semver string (like
+                         "1.0.0", "0.0.1-dev").
 
 vim.pack.Spec                                                  *vim.pack.Spec*
 
