@@ -24,6 +24,10 @@ API
   • |nvim_exec_autocmds()|
   • |nvim_clear_autocmds()|
 
+• nvim_buf_set_mark()	Use |nvim_set_mark()| with `{buf=bufnr}`.
+• nvim_buf_get_mark()	Use |nvim_get_mark()| with `{buf=bufnr}`.
+• nvim_buf_del_mark()	Use |nvim_del_mark()| with `{buf=bufnr}`.
+
 EVENTS
 • *BufModifiedSet*	Use |OptionSet| with pattern "modified" instead.
 
