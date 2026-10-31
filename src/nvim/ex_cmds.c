@@ -2704,7 +2704,9 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
   //  true      false       start editing new file, new buffer
   //  true      true        start editing in existing buffer (nothing to do)
   if (!other_file && !oldbuf) {         // re-use the buffer
-    set_last_cursor(curwin);            // may set b_last_cursor
+    if (!(curbuf->b_flags & BF_NEVERLOADED)) {
+      set_last_cursor(curwin);          // may set b_last_cursor
+    }
     if (newlnum == ECMD_LAST || newlnum == ECMD_LASTL) {
       newlnum = curwin->w_cursor.lnum;
       solcol = curwin->w_cursor.col;
