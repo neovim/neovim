@@ -206,6 +206,10 @@ describe('vim.lsp.completion: item conversion', function()
         detail = 'int',
         sortText = '1',
         labelDetails = { detail = '(const char *restrict, ...)', description = 'stdio.h' },
+        documentation = {
+          kind = 'plaintext',
+          value = 'Writes formatted output. Requires __STDC__.',
+        },
       },
       {
         label = ' flush',
@@ -220,6 +224,11 @@ describe('vim.lsp.completion: item conversion', function()
     local result = complete('|', completion_list)
     eq('printf(const char *restrict, ...)', result.items[1].abbr)
     eq('stdio.h', result.items[1].menu)
+    eq(
+      '```\nint\n```\n```text\nWrites formatted output. Requires __STDC__.\n```',
+      result.items[1].info
+    )
+    eq('markdown', result.items[1].user_data.nvim.lsp.info_kind)
     eq('flush', result.items[2].word)
   end)
 
