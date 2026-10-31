@@ -572,6 +572,21 @@ example, FreeBASIC files, use this in your startup vimrc: >
    :let filetype_bas = "freebasic"
 
 
+BATS					*ft-bats-syntax*
+
+Bats (Bash Automated Testing System) files are highlighted as Bash (see
+|ft-sh-syntax|), with additional highlighting for the "@test" line and test
+name, "# bats test_tags=" and "# bats file_tags=" comments, and the commands
+provided by bats-core ("run", "skip", "load", ...).
+
+The body of a "@test" block is treated as a function body.  To enable syntax
+folding of test blocks, turn on function folding: >
+	let g:sh_fold_enabled= 1
+<
+See |ft-sh-syntax| for the other folding levels offered by
+g:sh_fold_enabled.
+
+
 C								*ft-c-syntax*
 
 A few things in C highlighting are optional.  To enable them assign any value
