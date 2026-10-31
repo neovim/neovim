@@ -3286,12 +3286,16 @@ function M.match(args)
   end
 
   if name then
-    if name:sub(-1) == '/' and not name:find('^%a[%w+.-]*://') then
+    local is_url = name:find('^%a[%w+.-]*://') ~= nil
+    if name:sub(-1) == '/' and not is_url then
       return 'directory'
     end
     name = normalize_path(name)
 
-    local ok_abspath, path = pcall(vim.fs.abspath, name)
+    local ok_abspath, path = false, name
+    if not is_url then
+      ok_abspath, path = pcall(vim.fs.abspath, name)
+    end
     if ok_abspath then -- First check for the simple case where the full path exists as a key
       local ft, on_detect = dispatch(filename[path], path, bufnr)
       if ft then
