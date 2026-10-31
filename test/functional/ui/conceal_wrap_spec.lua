@@ -1049,6 +1049,12 @@ describe('conceal-aware wrapping (#14409)', function()
       {1:~                   }|*4
                           |
     ]])
+    conceal_line('aXXXXXXb\tc', 'XXXXXX')
+    screen0:expect([[
+      ^ab{1:>-------------}c   |
+      {1:~                   }|*4
+                          |
+    ]])
 
     -- A concealed TAB's 'linebreak' filler is drawn, not hidden.
     command('set nolist conceallevel=1')

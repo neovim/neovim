@@ -2512,8 +2512,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
                 if (mb_c == TAB) {
                   // See "Tab alignment" below.
                   fix_for_boguscols(&wlv);
-                  if (!extconceal && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
+                  if (!extconceal && !wp->w_p_list) {
                     tab_absorb_extconceal(&wlv);
+                  } else if (!extconceal && wp->w_p_lcs_chars.tab1 && wlv.extconceal_off > 0) {
+                    // The 'list' TAB is drawn over the hidden cells, absorbed at "Tab alignment".
+                    wlv.n_extra += wlv.extconceal_off;
                   }
                 }
                 if (!wp->w_p_list) {

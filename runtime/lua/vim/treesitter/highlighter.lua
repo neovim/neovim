@@ -122,6 +122,7 @@ function TSHighlighter.new(tree, opts)
     end,
   })
 
+  --- Sets `_has_conceal` and `_has_conceal_line` from the queries of all trees.
   local function update_conceal_metadata()
     local has_conceal_line = self._has_conceal_line
     local has_conceal = self._has_conceal
