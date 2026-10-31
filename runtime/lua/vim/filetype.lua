@@ -1,5 +1,6 @@
 local api = vim.api
 local fn = vim.fn
+local is_url = vim._core.path_is_url
 
 local M = {}
 
@@ -3286,7 +3287,7 @@ function M.match(args)
   end
 
   if name then
-    if name:sub(-1) == '/' and not name:find('^%a[%w+.-]*://') then
+    if name:sub(-1) == '/' and not is_url(name) then
       return 'directory'
     end
     name = normalize_path(name)

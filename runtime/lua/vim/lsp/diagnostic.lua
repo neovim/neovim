@@ -245,7 +245,7 @@ end
 --- @param is_pull? boolean
 --- @param pull_id? string
 local function handle_diagnostics(uri, client_id, diagnostics, is_pull, pull_id)
-  local fname = vim.uri_to_fname(uri)
+  local fname = vim.uri.to_fname(uri)
 
   if #diagnostics == 0 and vim.fn.bufexists(fname) == 0 then
     return
@@ -327,7 +327,7 @@ function M.on_diagnostic(error, result, ctx)
     -- Create a new client state if it doesn't exist for the related document. This will not enable
     -- diagnostic pulling by itself, but will allow previous result IDs to be passed correctly the
     -- next time this buffer's diagnostics are pulled.
-    local related_bufnr = vim.uri_to_bufnr(uri)
+    local related_bufnr = vim.uri.to_buf(uri)
     local related_diagnostics = Diagnostics.active[related_bufnr] or Diagnostics:new(related_bufnr)
     local related_state = related_diagnostics.client_state[client_id]
     if not related_state then
@@ -470,7 +470,7 @@ local function previous_result_ids(client_id, identifier)
       local result_id = state.result_id[key]
       if result_id then
         results[#results + 1] = {
-          uri = vim.uri_from_bufnr(bufnr),
+          uri = vim.uri.from_buf(bufnr),
           value = result_id,
         }
       end
@@ -503,7 +503,7 @@ function M._workspace_diagnostics(opts)
       ---@type lsp.WorkspaceDiagnosticParams
       local params = ctx.params
       for _, report in ipairs(result.items) do
-        local bufnr = vim.uri_to_bufnr(report.uri)
+        local bufnr = vim.uri.to_buf(report.uri)
 
         -- Start tracking the buffer (but don't send "textDocument/diagnostic" requests for it).
         local provider = Diagnostics.active[bufnr] or Diagnostics:new(bufnr)

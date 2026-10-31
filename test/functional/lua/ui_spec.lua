@@ -129,9 +129,14 @@ describe('vim.ui', function()
       )
     end)
 
-    it('escapes cmd.exe metacharacters in URIs #41337', function()
+    it('escapes cmd.exe metacharacters #41337', function()
       eq(
-        { 'cmd.exe', '/c', 'start', '', 'https://example.com/?q=^&^|^<^>^^^%^!' },
+        {
+          { 'cmd.exe', '/c', 'start', '', 'https://example.com/?q=^&^|^<^>^^^%^!' },
+          { 'cmd.exe', '/c', 'start', '', 'C:/a^&b.pdf' },
+          -- Not escaped: libuv quotes it.
+          { 'cmd.exe', '/c', 'start', '', 'C:/a b&c.pdf' },
+        },
         exec_lua(function()
           vim.fn.has = function(feat)
             return feat == 'win32' and 1 or 0
@@ -145,8 +150,12 @@ describe('vim.ui', function()
               end,
             }
           end
-          vim.ui.open('https://example.com/?q=&|<>^%!')
-          return captured
+          local cmds = {} --- @type string[][]
+          for _, path in ipairs({ 'https://example.com/?q=&|<>^%!', 'C:/a&b.pdf', 'C:/a b&c.pdf' }) do
+            vim.ui.open(path)
+            cmds[#cmds + 1] = captured
+          end
+          return cmds
         end)
       )
     end)
@@ -171,6 +180,14 @@ describe('vim.ui', function()
           assert(cmd and not err)
           return cmd:wait()
         end, { n.testprg('printargs-test'), 'arg1' })
+      )
+
+      -- Expands a path containing ":".
+      eq(
+        ('arg1=%s/a:b;'):format(vim.fs.normalize('~')),
+        exec_lua(function(opener)
+          return vim.ui.open('~/a:b', { cmd = { opener } }):wait().stdout
+        end, n.testprg('printargs-test'))
       )
     end)
 
@@ -205,7 +222,7 @@ describe('vim.ui', function()
       local param = url:match('%?tag=(.*)')
       local tagname =
         n.api.nvim_buf_get_text(0, tag[2], tag[3], tag[4].end_row, tag[4].end_col, {})[1]
-      eq(vim.uri_encode(tagname), param)
+      eq(vim.uri.encode(tagname), param)
 
       -- non-nvim tags are ignored
       local buf = n.api.nvim_create_buf(false, false)

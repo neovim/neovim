@@ -81,6 +81,7 @@ pub fn nvim_gen_sources(
             "loader",
             "text",
             "tty",
+            "uri",
         };
         for (names) |n| {
             gen_step.addFileArg(b.path(b.fmt("runtime/lua/vim/{s}.lua", .{n})));

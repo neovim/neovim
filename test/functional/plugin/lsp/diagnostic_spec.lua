@@ -96,7 +96,7 @@ describe('vim.lsp.diagnostic', function()
     fake_uri = 'file:///fake/uri'
 
     exec_lua(function()
-      diagnostic_bufnr = vim.uri_to_bufnr(fake_uri)
+      diagnostic_bufnr = vim.uri.to_buf(fake_uri)
       local lines = { '1st line', '2nd line of text', 'wow', 'cool', 'more', 'lines' }
       vim.fn.bufload(diagnostic_bufnr)
       vim.api.nvim_buf_set_lines(diagnostic_bufnr, 0, 1, false, lines)
@@ -169,7 +169,7 @@ describe('vim.lsp.diagnostic', function()
             uri = 'file:///fake/uri2',
             diagnostics = {},
           }, { client_id = client_id })
-          return vim.fn.bufnr(vim.uri_to_fname('file:///fake/uri2'))
+          return vim.fn.bufnr(vim.uri.to_fname('file:///fake/uri2'))
         end)
       )
 
@@ -183,7 +183,7 @@ describe('vim.lsp.diagnostic', function()
               _G.make_error('Diagnostic', 0, 0, 0, 0),
             },
           }, { client_id = client_id })
-          return vim.fn.bufnr(vim.uri_to_fname('file:///fake/uri2'))
+          return vim.fn.bufnr(vim.uri.to_fname('file:///fake/uri2'))
         end)
       )
       eq(
@@ -201,7 +201,7 @@ describe('vim.lsp.diagnostic', function()
             uri = 'file:///fake/uri2',
             diagnostics = {},
           }, { client_id = client_id })
-          return vim.fn.bufnr(vim.uri_to_fname('file:///fake/uri2'))
+          return vim.fn.bufnr(vim.uri.to_fname('file:///fake/uri2'))
         end)
       )
       eq(
@@ -766,7 +766,7 @@ describe('vim.lsp.diagnostic', function()
       local fake_uri_2 = 'file:///fake/uri2'
       ---@type vim.Diagnostic[], vim.Diagnostic[], string?
       local diagnostics, related_diagnostics, relatedPreviousResultId = exec_lua(function()
-        local second_buf = vim.uri_to_bufnr(fake_uri_2)
+        local second_buf = vim.uri.to_buf(fake_uri_2)
         vim.fn.bufload(second_buf)
 
         -- Attach the client to both buffers.
@@ -973,7 +973,7 @@ describe('vim.lsp.diagnostic', function()
             _G.doc_requests,
             vim.diagnostic.get(),
             vim.diagnostic.get(diagnostic_bufnr),
-            vim.diagnostic.get(vim.uri_to_bufnr(fake_uri_3))
+            vim.diagnostic.get(vim.uri.to_buf(fake_uri_3))
         end
       )
       eq(1, workspace_requests)

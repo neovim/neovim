@@ -83,7 +83,7 @@ function M.get_lines(buf, rows)
   -- Load the buffer if this is not a file URI.
   -- Custom language server protocol extensions can result in servers sending
   -- URIs with custom schemes. Plugins are able to load these via `BufReadCmd` autocmds.
-  if not vim.startswith(vim.uri_from_bufnr(buf), 'file://') then
+  if not vim.startswith(vim.uri.from_buf(buf), 'file://') then
     vim.fn.bufload(buf)
     return buf_lines()
   end

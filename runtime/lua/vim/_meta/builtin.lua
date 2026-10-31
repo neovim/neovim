@@ -198,6 +198,13 @@ function vim._core.loop_poll(timeout, fast_only) end
 function vim._core.ui_flush() end
 
 --- @nodoc
+--- (C function: `path_with_url()`) Checks if `name` is a URL (not a file path): "deno:/a" and
+--- "fugitive:///a" are URLs, "C:/a" and "mailto:a" are not.
+--- @param name string
+--- @return boolean
+function vim._core.path_is_url(name) end
+
+--- @nodoc
 --- Checks for interrupt, clears it, and consumes input if present.
 --- @return boolean
 function vim._core.check_interrupt() end

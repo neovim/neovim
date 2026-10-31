@@ -248,6 +248,11 @@ describe('nvim.zip', function()
 
       eq({ 'plain text' }, lines())
       eq(false, exec_lua('return vim.b.nvim_dir ~= nil'))
+
+      -- Ignores a URL.
+      n.command('edit deno:/x/a.zip')
+      poke_eventloop()
+      eq({ '', '' }, { vim.trim(n.exec_capture('messages')), n.eval('v:errmsg') })
     end)
 
     it('lists a valid empty archive as empty', function()

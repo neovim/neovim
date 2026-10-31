@@ -319,7 +319,7 @@ function M.color_presentation()
     return
   end
 
-  local uri = vim.uri_from_bufnr(bufnr)
+  local uri = vim.uri.from_buf(bufnr)
   local client = assert(lsp.get_client_by_id(client_id))
 
   --- @type lsp.ColorPresentationParams

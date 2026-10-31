@@ -31,13 +31,9 @@ for k, v in pairs({
 end
 
 -- There are things which have special rules in vim._init_packages
--- for legacy reasons (uri) or for performance (_inspector).
+-- for performance (_inspector).
 -- most new things should go into a submodule namespace ( vim.foobar.do_thing() )
 vim._extra = {
-  uri_from_fname = true,
-  uri_from_bufnr = true,
-  uri_to_fname = true,
-  uri_to_bufnr = true,
   show_pos = true,
   inspect_pos = true,
 }

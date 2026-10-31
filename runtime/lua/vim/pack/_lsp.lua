@@ -111,7 +111,7 @@ local function match_link(line, pattern, link_type, lnum, src)
     ---@diagnostic disable-next-line: param-type-mismatch
     target = require('vim._core.util').get_forge_url(src, match, link_type)
   elseif link_type == 'path' then
-    target = vim.uri_from_fname(match)
+    target = vim.uri.from_fname(match)
   end
 
   if target == nil then

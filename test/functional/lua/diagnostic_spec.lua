@@ -3688,7 +3688,7 @@ describe('vim.diagnostic', function()
 
       -- Populate the related info buffer.
       exec_lua(function()
-        local fake_bufnr = vim.uri_to_bufnr(related_info_uri)
+        local fake_bufnr = vim.uri.to_buf(related_info_uri)
         vim.fn.bufload(fake_bufnr)
         vim.api.nvim_buf_set_lines(fake_bufnr, 0, 1, false, {
           'O, the Pelican,',

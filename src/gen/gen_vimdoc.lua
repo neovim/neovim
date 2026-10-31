@@ -243,7 +243,7 @@ local config = {
       'runtime/lua/vim/version.lua',
     },
     fn_xform = function(fun)
-      if contains(fun.module, { 'vim.uri', 'vim._core.shared', 'vim._core.editor' }) then
+      if contains(fun.module, { 'vim._core.shared', 'vim._core.editor' }) then
         fun.module = 'vim'
       end
 

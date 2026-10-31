@@ -233,6 +233,7 @@ describe('vim._core', function()
       'vim.loader',
       'vim.text',
       'vim.tty',
+      'vim.uri',
     }
     if n.exec_lua [[return not not _G.jit]] then
       expected = vim.list_extend({

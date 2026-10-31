@@ -69,11 +69,11 @@ local function watcher_rules(watchers, workspace_folders)
     if type(pattern) == 'string' then
       for _, folder in ipairs(workspace_folders) do
         rules[#rules + 1] =
-          { path = vim.uri_to_fname(folder.uri), pattern = pattern, events = events }
+          { path = vim.uri.to_fname(folder.uri), pattern = pattern, events = events }
       end
     else
       local uri = type(pattern.baseUri) == 'string' and pattern.baseUri or pattern.baseUri.uri
-      local base = vim.uri_to_fname(uri)
+      local base = vim.uri.to_fname(uri)
       local prefix = vim.fs.normalize(base):gsub('/$', '')
 
       rules[#rules + 1] = {
@@ -117,7 +117,7 @@ local function queue_change(client, fullpath, change_type)
   local client_id = client.id
   --- @type lsp.FileEvent
   local change = {
-    uri = vim.uri_from_fname(fullpath),
+    uri = vim.uri.from_fname(fullpath),
     type = to_lsp_change_type[change_type],
   }
 
