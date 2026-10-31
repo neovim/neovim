@@ -236,6 +236,111 @@ describe('async', function()
       }, results)
     end)
 
+    it_exec('on_complete reports callback errors separately from completion', function()
+      for _, already_completed in ipairs({ false, true }) do
+        local scheduled = {}
+        AsyncRuntime.config({
+          schedule = function(callback)
+            scheduled[#scheduled + 1] = callback
+          end,
+        })
+
+        local release --- @type fun(...)
+        local task = run(function()
+          return await(function(callback)
+            release = callback
+          end)
+        end)
+        if already_completed then
+          release('done', nil, 'last', nil)
+        end
+
+        task:on_complete(function()
+          error('CALLBACK_ERROR', 0)
+        end)
+        local observed
+        task:on_complete(function(...)
+          observed = vim.F.pack_len(...)
+        end)
+
+        if not already_completed then
+          local ok, err = pcall(release, 'done', nil, 'last', nil)
+          eq(true, ok, tostring(err))
+        end
+
+        eq({ n = 5, [2] = 'done', [4] = 'last' }, observed)
+        eq({ n = 4, [1] = 'done', [3] = 'last' }, vim.F.pack_len(task:wait(100)))
+        eq(1, #scheduled)
+        local ok, err = pcall(scheduled[1])
+        eq(false, ok)
+        assert(tostring(err):match('CALLBACK_ERROR'), tostring(err))
+        assert(tostring(err):match('stack traceback:'), tostring(err))
+        assert(tostring(err):match('async_spec.lua:%d+'), tostring(err))
+      end
+    end)
+
+    it_exec('on_complete callback errors do not fail the completing task', function()
+      local scheduled = {}
+      AsyncRuntime.config({
+        schedule = function(callback)
+          scheduled[#scheduled + 1] = callback
+        end,
+      })
+
+      local release --- @type fun()
+      local task = run(function()
+        await(function(callback)
+          release = callback
+        end)
+        error('TASK_ERROR', 0)
+      end)
+      task:raise_on_error()
+
+      eq(
+        'delivered',
+        run(function()
+          release()
+          return 'delivered'
+        end):wait(100)
+      )
+      check_task_err(task, 'TASK_ERROR')
+      eq(1, #scheduled)
+      local ok, err = pcall(scheduled[1])
+      eq(false, ok)
+      assert(tostring(err):match('TASK_ERROR'), tostring(err))
+    end)
+
+    it_exec('on_complete reports non-string callback errors', function()
+      local scheduled = {}
+      AsyncRuntime.config({
+        schedule = function(callback)
+          scheduled[#scheduled + 1] = callback
+        end,
+      })
+      local task = run(function() end)
+      task:on_complete(function()
+        error()
+      end)
+      task:on_complete(function()
+        error(false)
+      end)
+      task:on_complete(function()
+        error(setmetatable({}, {
+          __tostring = function()
+            error('TOSTRING_ERROR')
+          end,
+        }))
+      end)
+
+      eq(3, #scheduled)
+      for i, pattern in ipairs({ 'error%(nil%)', 'false', '<unprintable error>' }) do
+        local ok, err = pcall(scheduled[i])
+        eq(false, ok)
+        assert(tostring(err):match(pattern), tostring(err))
+      end
+      task:wait(100)
+    end)
+
     it_exec('child tasks start when the parent reaches a checkpoint', function()
       local results = {}
 
@@ -416,6 +521,109 @@ stack traceback:
     end)
   end)
 
+  describe('abandoned await callbacks', function()
+    it_exec('fails an abandoned await and frees the task after cleanup', function()
+      local holder = {}
+      local weak = setmetatable({}, { __mode = 'k' })
+      local result = {}
+      local limit = Async.semaphore(1)
+
+      local task = run(function()
+        local payload = {}
+        weak[payload] = true
+        limit:with(function()
+          await(function(cb)
+            holder.cb = cb
+            return add_handle('abandoned', vim.uv.new_timer())
+          end)
+        end)
+        return payload
+      end)
+      weak[task] = true
+      task:on_complete(function(err)
+        result.completed = true
+        result.err = err
+      end)
+
+      task = nil
+      holder.cb = nil
+      collectgarbage('collect')
+      collectgarbage('collect')
+      assert(
+        vim.wait(100, function()
+          return result.completed
+        end),
+        'abandoned await did not finish'
+      )
+      eq(p('^await callback was discarded'), result.err)
+      run(function()
+        limit:with(function() end)
+      end):wait(100)
+
+      -- LuaJIT traces can retain the completed task.
+      if jit then
+        jit.flush()
+      end
+      collectgarbage('collect')
+      collectgarbage('collect')
+      eq(nil, (next(weak)))
+      eq('', Async._inspect_tree())
+    end)
+
+    it_exec('can recover from an abandoned await while keeping resources usable', function()
+      local holder = {}
+      local file = assert(io.tmpfile())
+      local task = run(function(owned_file)
+        local ok, err = Async.pawait(2, function(value, cb)
+          eq('request', value)
+          holder.cb = cb
+        end, 'request')
+        eq(false, ok)
+        eq(p('^await callback was discarded'), err)
+        eq(false, Async.is_closing())
+        Async.checkpoint()
+
+        local written = owned_file:write('cleanup')
+        owned_file:close()
+        return written ~= nil
+      end, file)
+
+      file = nil
+      holder.cb = nil
+      collectgarbage('collect')
+      collectgarbage('collect')
+      eq(true, task:wait(100))
+    end)
+
+    it_exec('retains a task scope while a child callback can resume it', function()
+      local holder = {}
+      local result = {}
+
+      run('parent', function()
+        run('child', function()
+          result.value = await(function(cb)
+            holder.cb = cb
+          end)
+          collectgarbage('collect')
+          collectgarbage('collect')
+          Async.checkpoint()
+        end)
+      end):on_complete(function(err)
+        result.completed = true
+        result.err = err
+      end)
+
+      collectgarbage('collect')
+      collectgarbage('collect')
+      eq('parent [awaiting]\n└─ child [awaiting]', Async._inspect_tree())
+
+      holder.cb('done')
+      holder.cb = nil
+      eq({ value = 'done', completed = true }, result)
+      eq('', Async._inspect_tree())
+    end)
+  end)
+
   describe('task cancellation and closing', function()
     it_exec('can close tasks', function()
       local task = run(eternity)
@@ -461,6 +669,31 @@ stack traceback:
 
       check_task_err(task, 'closed')
       check_task_err(child, 'closed')
+    end)
+
+    it_exec('can cancel a task while it completes another task', function()
+      local resume_closer --- @type fun()
+      local closer --- @type vim.async.Task
+      local task = run(function()
+        local child = run(function()
+          await(function() end)
+        end)
+        closer = run(function()
+          await(function(callback)
+            resume_closer = callback
+          end)
+          child:close()
+        end)
+
+        Async.pawait(child)
+        -- The closer is still inside child:close() when this task resumes.
+        closer:close()
+        Async.pawait(closer)
+        return 'done'
+      end)
+      resume_closer()
+      eq('done', task:wait(100))
+      check_task_err(closer, 'closed')
     end)
 
     it_exec('can timeout tasks', function()
@@ -806,7 +1039,7 @@ stack traceback:
       --- @param task vim.async.Task
       --- @return integer
       local function get_task_callback_count(task)
-        --- @diagnostic disable-next-line: invisible
+        --- @diagnostic disable-next-line: access-invisible
         return vim.tbl_count(task._future._callbacks)
       end
 
@@ -861,7 +1094,7 @@ stack traceback:
         waiter:close()
         check_task_err(waiter, 'closed')
 
-        --- @diagnostic disable-next-line: invisible
+        --- @diagnostic disable-next-line: access-invisible
         local callback_count = vim.tbl_count(external._future._callbacks)
         external:close()
         check_task_err(external, 'closed')
@@ -883,7 +1116,7 @@ stack traceback:
 
         check_task_err(waiter, 'child error: .*async_spec.lua:%d+: CHILD ERROR')
 
-        --- @diagnostic disable-next-line: invisible
+        --- @diagnostic disable-next-line: access-invisible
         local callback_count = vim.tbl_count(external._future._callbacks)
         external:close()
         check_task_err(external, 'closed')
@@ -909,7 +1142,7 @@ stack traceback:
         check_task_err(parent, 'closed')
         eq(false, child:completed())
 
-        --- @diagnostic disable-next-line: invisible
+        --- @diagnostic disable-next-line: access-invisible
         local callback_count = vim.tbl_count(child._future._callbacks)
         child:close()
         check_task_err(child, 'closed')
@@ -2572,21 +2805,33 @@ stack traceback:
     end)
 
     it_exec('normalizes nil future callback errors', function()
+      local report --- @type fun()
+      AsyncRuntime.config({
+        schedule = function(callback)
+          report = callback
+        end,
+      })
       local future = require('vim.async._future')()
       future:on_complete(function()
         error()
       end)
 
-      local ok, err = pcall(function()
-        future:complete(nil, 'value')
-      end)
+      future:complete(nil, 'value')
+      eq({ true, 'value' }, { future:result() })
 
+      local ok, err = pcall(report)
       eq(false, ok)
       --- @cast err string
       assert(err:match('error%(nil%)'), 'Unexpected error: ' .. tostring(err))
     end)
 
     it_exec('continues future callbacks after an unprintable error', function()
+      local report --- @type fun()
+      AsyncRuntime.config({
+        schedule = function(callback)
+          report = callback
+        end,
+      })
       local future = require('vim.async._future')()
       local observed = false
       local unprintable = setmetatable({}, {
@@ -2602,12 +2847,12 @@ stack traceback:
         observed = true
       end)
 
-      local ok, err = pcall(function()
-        future:complete(nil, 'value')
-      end)
-
-      eq(false, ok)
+      future:complete(nil, 'value')
+      eq({ true, 'value' }, { future:result() })
       eq(true, observed)
+
+      local ok, err = pcall(report)
+      eq(false, ok)
       assert(tostring(err):match('<unprintable error>'), 'Unexpected error: ' .. tostring(err))
     end)
 

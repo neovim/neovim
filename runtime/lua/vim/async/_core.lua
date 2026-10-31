@@ -25,14 +25,14 @@ local unpack_len = vim.F.unpack_len
 --- @nodoc
 local M = {}
 
---- Weak table to keep track of running tasks
+--- Keep unfinished tasks and their resources alive until completion.
 --- @type table<thread, vim.async.Task<any>?>
-local threads = setmetatable({}, { __mode = 'k' })
+local threads = {}
 
 --- Returns the currently running task.
 --- @return vim.async.Task<any>?
 local function running()
-  --- @diagnostic disable-next-line: invisible, undefined-field
+  --- @diagnostic disable-next-line: access-invisible, undefined-field
   local task = threads[coroutine_running()]
   if task and not task:completed() then
     return task
@@ -165,6 +165,11 @@ do --- Task
   ---
   --- If the Task is already done when this method is called, the callback is
   --- called immediately with the results.
+  ---
+  --- Callback errors are reported through the runtime scheduler with their
+  --- traceback. They do not change the task result, interrupt other callbacks,
+  --- or propagate to the caller that completes the task or registers a callback.
+  --- Catch errors inside the callback to handle them locally.
   ---
   --- This only observes completion. It does not start a pending task.
   --- @param callback fun(err?: any, ...: R...)
@@ -300,7 +305,7 @@ do --- Task
       msg = awaiting:traceback(msg, level + 1)
     end
 
-    local tblvl = is_task(awaiting) and 2 or nil
+    local tblvl = is_task(awaiting) and 2 or 0
     local tb = debug.traceback(self._thread, '', tblvl) or ''
     msg = (msg == nil and '' or tostring(msg)) .. tb:gsub('\n\t', '\n\t' .. thread)
 
@@ -320,6 +325,8 @@ do --- Task
   --- Use this for detached or top-level fire-and-forget tasks whose completion
   --- will not otherwise be observed. Attached task errors already propagate to
   --- their parent.
+  --- The error is reported through the runtime scheduler, as for errors in
+  --- [Task:on_complete()] callbacks.
   ---
   --- Detached tasks do not raise errors automatically. Detaching changes
   --- ownership only; their completion can still be handled with
@@ -384,9 +391,10 @@ do --- Task
   --- @package
   --- @param err any
   function Task:_raise(err)
-    if self:status() == 'running' then
-      -- A running coroutine cannot be resumed recursively, so deliver the
-      -- error on a later event-loop turn after the current stack unwinds.
+    local status = self:status()
+    if status == 'running' or status == 'normal' then
+      -- A running coroutine, or one beneath it (`normal`), cannot be resumed
+      -- recursively. Deliver the error after the current stack unwinds.
       runtime.schedule(function()
         if not self:completed() then
           self:_resume(err)
@@ -630,7 +638,16 @@ do --- Task
         -- Callback setup has one result: the optional closable.
         --- @type fun(callback: fun(err?: any, ...: any)): vim.async.Closable?
         local awaitable = yielded
-        setup_ok, setup_result = pcall(awaitable, complete_await)
+        local callback = util._gc_fun(complete_await, function()
+          if not settled and not task:completed() then
+            -- A collected callback can never finish this wait. Keep the task
+            -- and its resources alive, and deliver the failure outside GC.
+            runtime.schedule(function()
+              complete_await('await callback was discarded')
+            end)
+          end
+        end)
+        setup_ok, setup_result = pcall(awaitable, callback)
       end
 
       if not setup_ok then
@@ -900,16 +917,19 @@ local function norm_cb_fun(argc, fun, ...)
     end
   end
 
-  local args = pack_len(...)
+  local args = pack_len(...) --[[@as { [integer]: any, n: integer }? ]]
 
   --- @param callback fun(...: any)
   --- @return any?
   return function(callback)
-    args[argc] = function(...)
+    -- The thunk must not retain the inserted callback after setup returns.
+    local call_args = assert(args)
+    args = nil
+    call_args[argc] = function(...)
       callback(nil, ...)
     end
-    args.n = math.max(args.n, argc)
-    return fun(unpack_len(args))
+    call_args.n = math.max(call_args.n, argc)
+    return fun(unpack_len(call_args))
   end
 end
 
@@ -982,6 +1002,16 @@ end
 ---   render(lines)
 --- end)
 --- ```
+---
+--- If Lua collects the callback (because it is unreachable) before it is
+--- called, the task fails with "await callback was discarded". The failure is
+--- queued for a later event-loop turn. Normal await cleanup runs before the
+--- error is delivered. If cleanup fails, its error is reported instead.
+--- [vim.async.pawait()] can handle this error and continue the task instead.
+---
+--- A callback held in the task's own data or returned handle remains reachable,
+--- so the wait can stay pending. GC timing is unpredictable; use [Task:close()]
+--- or [vim.async.timeout()] to request cancellation without relying on GC.
 --- @async
 --- @generic T, R
 --- @param ... any see overloads

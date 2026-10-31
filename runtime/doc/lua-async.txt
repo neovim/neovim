@@ -61,6 +61,10 @@ Awaiting a task observes that task's result; it does not attach the task to
 the awaiter or change which task owns it. Ownership is decided when the task
 is created.
 
+A task stays alive until it and its attached children finish cleanup. Dropping
+its handle does not stop the work. Keep the handle and call |Task:close()|
+when work is no longer needed, then observe completion to wait for cleanup.
+
 Scheduling is cooperative. When a task awaits a timer, I/O operation,
 callback, or another task, `vim.async` saves the Lua stack and returns control
 to the event loop. Other callbacks can run while the task is paused. Nothing
@@ -214,6 +218,17 @@ await({...})                                               *vim.async.await()*
           render(lines)
         end)
 <
+
+    If Lua collects the callback (because it is unreachable) before it is
+    called, the task fails with "await callback was discarded". The failure is
+    queued for a later event-loop turn. Normal await cleanup runs before the
+    error is delivered. If cleanup fails, its error is reported instead.
+    |vim.async.pawait()| can handle this error and continue the task instead.
+
+    A callback held in the task's own data or returned handle remains
+    reachable, so the wait can stay pending. GC timing is unpredictable; use
+    |Task:close()| or |vim.async.timeout()| to request cancellation without
+    relying on GC.
 
     Parameters: ~
       • {...}  (`any`) see overloads
@@ -490,6 +505,11 @@ Task:on_complete({callback})                              *Task:on_complete()*
     If the Task is already done when this method is called, the callback is
     called immediately with the results.
 
+    Callback errors are reported through the runtime scheduler with their
+    traceback. They do not change the task result, interrupt other callbacks,
+    or propagate to the caller that completes the task or registers a
+    callback. Catch errors inside the callback to handle them locally.
+
     This only observes completion. It does not start a pending task.
 
     Parameters: ~
@@ -520,7 +540,8 @@ Task:raise_on_error()                                  *Task:raise_on_error()*
 
     Use this for detached or top-level fire-and-forget tasks whose completion
     will not otherwise be observed. Attached task errors already propagate to
-    their parent.
+    their parent. The error is reported through the runtime scheduler, as for
+    errors in |Task:on_complete()| callbacks.
 
     Detached tasks do not raise errors automatically. Detaching changes
     ownership only; their completion can still be handled with
