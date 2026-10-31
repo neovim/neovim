@@ -382,6 +382,23 @@ describe('vim.fs', function()
 
       local parent, name = nvim_dir:match('^(.*/)([^/]+)$')
       eq({ nvim_dir }, vim.fs.find(name, { path = parent, upward = true, type = 'directory' }))
+
+      mkdir('testdir')
+      local literal = 'testdir/$XTEST_FS_FIND'
+      mkdir(literal)
+      t.write_file(literal .. '/marker', '')
+      finally(function()
+        rmdir('testdir')
+      end)
+      vim._with({ env = { XTEST_FS_FIND = 'expanded' } }, function()
+        eq({ literal .. '/marker' }, vim.fs.find('marker', { path = 'testdir' }))
+        eq(
+          { literal .. '/marker' },
+          vim.fs.find(function(name0)
+            return name0 == 'marker'
+          end, { path = literal, upward = true, stop = 'testdir' })
+        )
+      end)
     end)
 
     -- Isolated scratch tree (not the repo) so the result is deterministic regardless of what else
@@ -1025,6 +1042,20 @@ describe('vim.fs', function()
       vim.uv.fs_rmdir('Xtest_fs-rm/dir-to-link')
       vim.uv.fs_unlink('Xtest_fs-rm/file-to-link')
       vim.uv.fs_rmdir('Xtest_fs-rm')
+    end)
+
+    it('removes literal paths recursively', function()
+      local literal = 'Xtest_fs-rm/$XTEST_FS_RM'
+      mkdir(literal)
+      t.write_file(literal .. '/literal.txt', '')
+      finally(function()
+        rmdir('Xtest_fs-rm')
+      end)
+      vim._with({ env = { XTEST_FS_RM = 'dir-to-link' } }, function()
+        vim.fs.rm(literal, { recursive = true })
+      end)
+      eq(nil, vim.uv.fs_lstat(literal))
+      eq({ 'File in dir to link' }, fn.readfile('Xtest_fs-rm/dir-to-link/file'))
     end)
 
     it('symlink', function()
