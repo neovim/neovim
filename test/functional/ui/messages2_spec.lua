@@ -686,6 +686,16 @@ describe('messages2', function()
     ]])
   end)
 
+  it('pager key enters pager from Normal mode in terminal buffer', function()
+    command('set messagesopt+=pager:<CR>')
+    api.nvim_open_term(0, {})
+    t.eq('nt', api.nvim_get_mode().mode)
+    feed([[:echo "foo\n"->repeat(&lines)<CR>]])
+    feed('<CR>')
+    n.poke_eventloop()
+    t.eq('pager', api.nvim_get_option_value('filetype', { buf = 0 }))
+  end)
+
   it('paging prompt dialog #35191', function()
     screen:try_resize(71, screen._height)
     -- Don't consume <Esc> when paging is not necessary.
