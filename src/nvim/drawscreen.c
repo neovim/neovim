@@ -2334,6 +2334,7 @@ redr_statuscol:
       lnum = wp->w_topline;
       wp->w_lines_valid = 0;
       wp->w_valid &= ~VALID_WCOL;
+      init_search_hl(wp, &screen_search_hl);
       decor_redraw_reset(wp, &decor_state);
       decor_providers_invoke_win(wp);
       continue;
