@@ -98,7 +98,7 @@ describe('vim.filetype', function()
     )
   end)
 
-  it('passes URI buffer names to functions as is', function()
+  it('does not make URI buffer names absolute #42598', function()
     eq(
       'fugitive:///repo/.git//0/models/a.sql',
       exec_lua(function()
