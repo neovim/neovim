@@ -28,6 +28,7 @@ Help-link		Loaded	Short description ~
 |netrw|			No	Reading and writing files over a network
 |zip|			Yes	Read-only zip archive browser
 |package-cfilter|	No	Filtering quickfix/location list
+|package-diffhl|	No	Highlight code in diff hunks
 |package-justify|	No	Justify text
 |package-nohlsearch|	No	Automatically run :nohlsearch
 |package-spellfile|	Yes	Install spellfile if missing
@@ -193,6 +194,39 @@ To enable the legacy "netrw" plugin: >vim
 
 The plugin and its mappings remain loaded (it is a core component used by
 other features such as |zip|).
+
+==============================================================================
+Builtin plugin: diffhl                                        *package-diffhl*
+
+Highlights the code in the hunks of a diff buffer (a buffer with 'filetype'
+set to "diff", such as `git diff` output or a `.patch` file) with the
+treesitter parser for the language of each file in the diff. Added and
+removed lines also get a green or red background.
+
+Uninstall any third-party diff parser and queries before enabling this plugin.
+For example, with nvim-treesitter's "main" branch: >vim
+    :TSUninstall diff
+<
+
+The plugin is not loaded by default; use `:packadd` to activate it: >
+    :packadd nvim.diffhl
+<
+It applies to diff buffers with treesitter highlighting, see
+|vim.treesitter.start()|: >lua
+    vim.api.nvim_create_autocmd('FileType', {
+      pattern = 'diff',
+      callback = function(ev)
+        vim.treesitter.start(ev.buf)
+      end,
+    })
+<
+The code is highlighted only for languages that have a parser, see
+|treesitter-parsers|.
+
+Added and removed lines use the `@diff.plus.diff` and `@diff.minus.diff`
+highlight groups, see |treesitter-highlight-groups|. Change them with: >vim
+    hi @diff.plus.diff guibg=DarkGreen
+<
 
 ==============================================================================
 Builtin plugin: difftool                                            *difftool*
