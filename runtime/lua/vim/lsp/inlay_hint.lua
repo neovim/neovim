@@ -175,16 +175,6 @@ function M.on_inlayhint(err, result, ctx)
   result = result or {}
 
   local new_lnum_hints = {} ---@type table<integer, vim.lsp.inlay_hint.LineHints>
-  local num_unprocessed = #result
-  if num_unprocessed == 0 then
-    state.active_request = {}
-    state.current_result = {}
-    if vim.fn.win_gettype(vim.fn.bufwinid(bufnr)) == '' then
-      api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
-    end
-    return
-  end
-
   local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
 
@@ -214,7 +204,7 @@ function M.on_inlayhint(err, result, ctx)
   end
 end
 
----@private
+---@package
 ---@param client_id integer
 function InlayHint:cancel_active_request(client_id)
   local state = assert(self.client_state[client_id])
@@ -238,8 +228,10 @@ function M.on_refresh(err, _, ctx)
   end
 
   for bufnr, provider in pairs(InlayHint.active) do
-    if provider.client_state[ctx.client_id] then
-      provider:reset(ctx.client_id)
+    local state = provider.client_state[ctx.client_id]
+    if state then
+      provider:cancel_active_request(ctx.client_id)
+      state.current_result.version = nil
 
       if not vim.tbl_isempty(vim.fn.win_findbuf(bufnr)) then
         provider:refresh(ctx.client_id)
