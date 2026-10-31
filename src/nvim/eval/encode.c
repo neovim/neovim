@@ -735,7 +735,7 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
 #define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
   do { \
     if (convert_to_json_string(gap, (buf), (len)) != OK) { \
-      return FAIL; \
+      goto encode_vim_to__error_ret; \
     } \
   } while (0)
 

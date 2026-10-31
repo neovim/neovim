@@ -488,7 +488,7 @@ static bool typval_conv_special = false;
     if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) { \
       semsg(_("E5102: Lua failed to grow stack to %i"), \
             lua_gettop(lstate) + 3); \
-      return false; \
+      goto encode_vim_to__error_ret; \
     } \
     lua_createtable(lstate, (int)(len), 0); \
     lua_pushnumber(lstate, 1); \
@@ -511,7 +511,7 @@ static bool typval_conv_special = false;
     if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) { \
       semsg(_("E5102: Lua failed to grow stack to %i"), \
             lua_gettop(lstate) + 3); \
-      return false; \
+      goto encode_vim_to__error_ret; \
     } \
     lua_createtable(lstate, 0, (int)(len)); \
   } while (0)
