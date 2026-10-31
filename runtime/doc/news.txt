@@ -283,13 +283,10 @@ DIAGNOSTICS
 EDITOR
 
 • Multiple cursors (|multicursor|): edit in many places at once.
-  • Toggle cursors with |Q|, |<C-LeftMouse>|, or via API (the
-    "nvim.multicursor" extmarks namespace).
-  • Toggle "follow mode" with |q=|.
+  • Toggle cursors with |Q|, |<C-LeftMouse>|, or |mcursor-api|.
+  • Toggle "follow mode" with |q=| or the 'follow' option.
   • Clear cursors with |CTRL-L|, restore them with |gQ|.
-  • |zq| places a cursor at all targets of a motion. E.g. "zqgn" places at
-    every match (and "gv" selects the matches), "Vzqw" places at every
-    Visual-selected word.
+  • |zq| places cursors at all targets of a motion.
 • |:bcd| sets a buffer-local directory. |getcwd()| and |haslocaldir()| take
   `bufnr` as a third parameter.
 • |:lcd!| |:tcd!| |:bcd!| unsets the directory of that scope.

@@ -58,6 +58,7 @@
 # include "nvim/mbyte.h"
 # include "nvim/option.h"
 # include "nvim/os/os_win_console.h"
+# include "nvim/os/time.h"
 # include "nvim/strings.h"
 #endif
 
@@ -1022,6 +1023,13 @@ int os_rename(const char *path, const char *new_path)
 {
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_rename, path, new_path, NULL);
+#ifdef MSWIN
+  // Retry a few times, in case another process (AV, indexer, another Nvim) has the file open.
+  for (uint64_t ms = 1; (r == UV_EPERM || r == UV_EBUSY) && ms <= 64; ms *= 4) {
+    os_sleep(ms);
+    RUN_UV_FS_FUNC(r, uv_fs_rename, path, new_path, NULL);
+  }
+#endif
   return (r == kLibuvSuccess ? OK : FAIL);
 }
 
