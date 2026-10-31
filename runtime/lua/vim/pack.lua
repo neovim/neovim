@@ -257,6 +257,7 @@
 ---{
 ---  "name": "best-plugin.nvim",
 ---  "description": "The best plugin for Neovim",
+---  "version": "1.0.0",
 ---  "engines": {
 ---      "nvim": ">=0.13.0",
 ---      "vim": ">=9.1.0"
@@ -598,6 +599,7 @@ local n_active_plugins = 0
 --- @class vim.pack.Manifest
 --- @field name? string Plugin name
 --- @field description? string Plugin description
+--- @field version? string Plugin version as a semver string (like "1.0.0", "0.0.1-dev").
 --- Supported engine versions. Values should be |vim.version.range()| compatible specs.
 --- @field engines? vim.pack.ManifestEngines
 --- Script locations (relative to plugin's root) to |:source| after triggering
