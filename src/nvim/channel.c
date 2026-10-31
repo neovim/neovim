@@ -927,7 +927,10 @@ static inline void term_delayed_free(void **argv)
 {
   Channel *chan = argv[0];
   if (chan->stream.proc.in.pending_reqs || chan->stream.proc.out.s.pending_reqs) {
-    multiqueue_put(chan->events, term_delayed_free, chan);
+    // Reschedule via the main loop: re-queueing onto chan->events would livelock
+    // multiqueue_process_events() (it drains a queue until empty), and starving libuv
+    // prevents the pending write request from ever completing. #42508
+    loop_schedule_deferred(&main_loop, event_create(term_delayed_free, chan));
     return;
   }
 
