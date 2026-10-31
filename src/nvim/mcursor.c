@@ -1297,14 +1297,15 @@ static pos_T mc_zq_step(const char *keys, pos_T pos)
 /// Visual area ('< '>) of the target at `step`: its search match, else the char (or line).
 ///
 /// @param ctx  Saves the target into it (kCtxVisual), or NULL.
-static visualinfo_T mc_zq_target(pos_T step, bool search, MotionType motion_type, Context *ctx)
+static visualinfo_T mc_zq_target(pos_T step, bool search, MotionType motion_type, Context *ctx,
+                                 bool reverse)
 {
   const visualinfo_T save = curbuf->b_visual;
   const int save_mode_eval = curbuf->b_visual_mode_eval;
   if (!search) {
     curbuf->b_visual = (visualinfo_T){ .vi_start = step, .vi_end = step, .vi_curswant = step.col,
                                        .vi_mode = motion_type == kMTLineWise ? 'V' : 'v' };
-  } else if (mc_zq_step("gn\033", step).lnum == 0) {
+  } else if (mc_zq_step(reverse ? "gN\033" : "gn\033", step).lnum == 0) {
     // "gn" selects at `step`; ESC stores it as '< '>. Until then '< '> is the user's, for "\%V".
     curbuf->b_visual = (visualinfo_T){ 0 };  // No match.
   }
@@ -1370,7 +1371,8 @@ static bool mc_zq_first(const char *keys, bool search, MotionType motion_type, c
     return false;  // Fails from the start ("fx" without "x"): no step.
   }
   if (bof
-      && (!search || equalpos(mc_zq_target(start, true, motion_type, NULL).vi_start, start))) {
+      && (!search || equalpos(mc_zq_target(start, true, motion_type, NULL, false).vi_start,
+                              start))) {
     *step = start;  // Buffer start, nothing before it: a step (search: if a match starts there).
     return true;
   }
@@ -1384,17 +1386,22 @@ static bool mc_zq_first(const char *keys, bool search, MotionType motion_type, c
 
 /// Runs the "zq" steps: places a cursor at `first`, then at repeated `keys` motion, until `end`.
 ///
-/// @param end  Last position for a step. `end.lnum == MAXLNUM`: the buffer, wrapping around once.
+/// @param end  Last position for a step.
+///             To wrap the whole buffer once, use:
+///             `end.lnum == MAXLNUM` (forward direction)
+///             `end.lnum == 0` (backward direction).
+/// @param reverse  True when steps go backward ("n" after "#"/"?", "N" after "/"/"*").
 /// @return  Number of cursors placed.
-static int mc_zq_run(const char *keys, bool search, MotionType motion_type, pos_T end, pos_T first)
+static int mc_zq_run(const char *keys, bool search, MotionType motion_type, pos_T end, pos_T first,
+                     bool reverse)
 {
-  const bool wrap = end.lnum == MAXLNUM;
+  const bool wrap = reverse ? end.lnum == 0 : end.lnum == MAXLNUM;
   bool wrapped = false;
   int placed = 0;
   pos_T step = first;
   const colnr_T curswant = curwin->w_curswant;  // Flows between steps, like typed "gj gj".
   while (!got_int) {
-    mc_zq_target(step, search, motion_type, mc_add(curbuf, step));
+    mc_zq_target(step, search, motion_type, mc_add(curbuf, step), false);
     placed++;
     const pos_T prev = step;
     pos_T from = prev;
@@ -1406,13 +1413,14 @@ static int mc_zq_run(const char *keys, bool search, MotionType motion_type, pos_
     if (step.lnum == 0 || equalpos(step, prev) || equalpos(step, from)) {
       break;  // Failed, or did not advance (after retry).
     }
-    if (lt(step, prev)) {  // Wrapped around the end of the buffer ('wrapscan'), or backward.
+    if (reverse ? ltoreq(prev, step) : lt(step, prev)) {  // Wrapped around the end of the buffer ('wrapscan').
       if (!wrap || wrapped) {
         break;
       }
       wrapped = true;
     }
-    if (wrapped ? ltoreq(first, step) : lt(end, step)) {
+    if (reverse ? (wrapped ? ltoreq(step, first) : lt(step, end))
+                : (wrapped ? ltoreq(first, step) : lt(end, step))) {
       break;  // Back at the first step, or out of bounds.
     }
   }
@@ -1490,16 +1498,21 @@ void mc_zq(oparg_T *oap, cmdarg_T *cap, pos_T origin)
   pos_T first = { 0 };
   CmdSpec spec = atom_cmd_spec(cap);
   spec.regname = 0;  // The operator's ("\"azq").
-  // The search motion already set the pattern. Each step is "/<CR>".
-  String keys = search ? cstr_to_string("/\n") : redo_keys(&spec);
+  // The search motion already set the pattern. Each step is "n" or "N" (keeps direction).
+  const bool is_N = cap->cmdchar == 'N' || (cap->cmdchar == 'g' && cap->nchar == 'N');
+  const bool search_forward = get_vim_var_nr(VV_SEARCHFORWARD) == 1;
+  const bool reverse = search && (is_N == search_forward);
+  String keys = search ? cstr_to_string(is_N ? "N" : "n") : redo_keys(&spec);
   if (!oap->from_visual && search) {
-    first = mc_zq_target(primary, true, oap->motion_type, NULL).vi_start;  // Match at/after it.
+    const visualinfo_T target = mc_zq_target(primary, true, oap->motion_type, NULL, reverse);  // Match at/after it.
+    first = reverse ? target.vi_end : target.vi_start;
     if (first.lnum != 0) {
-      placed = mc_zq_run(keys.data, search, oap->motion_type, bounds[1], first);
+      const pos_T run_end = reverse ? (pos_T){ .lnum = 0 } : bounds[1];
+      placed = mc_zq_run(keys.data, search, oap->motion_type, run_end, first, reverse);
     }
   } else if (!blockwise) {
     if (mc_zq_first(keys.data, search, oap->motion_type, bounds, &first)) {
-      placed = mc_zq_run(keys.data, search, oap->motion_type, bounds[1], first);
+      placed = mc_zq_run(keys.data, search, oap->motion_type, bounds[1], first, reverse);
     }
   } else {
     // Blockwise: each line's part of the block is its own charwise selection.
@@ -1513,7 +1526,7 @@ void mc_zq(oparg_T *oap, cmdarg_T *cap, pos_T origin)
       pos_T step;
       if (mc_zq_first(keys.data, search, oap->motion_type, line, &step)) {
         first = first.lnum == 0 ? step : first;
-        placed += mc_zq_run(keys.data, search, oap->motion_type, line[1], step);
+        placed += mc_zq_run(keys.data, search, oap->motion_type, line[1], step, reverse);
       }
     }
   }
@@ -1527,7 +1540,7 @@ void mc_zq(oparg_T *oap, cmdarg_T *cap, pos_T origin)
       primary = first;  // Not on a step; move the primary to the first placement.
       curwin->w_set_curswant = true;
     }
-    curbuf->b_visual = mc_zq_target(primary, search, oap->motion_type, NULL);  // Its own target.
+    curbuf->b_visual = mc_zq_target(primary, search, oap->motion_type, NULL, false);  // Its own target.
     curbuf->b_visual_mode_eval = curbuf->b_visual.vi_mode;
     // Do ":nohlsearch" so cursors are visible. #41629
     set_no_hlsearch(true);

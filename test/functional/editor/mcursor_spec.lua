@@ -375,17 +375,40 @@ describe('multicursor', function()
       feed('x')
       eq({ 'oo foo oo' }, get_lines())
 
-      -- 'nowrapscan': from the match at (or after) primary; none if no match.
+      -- 'nowrapscan' + backward search: steps go backward, stopping when no match before.
       clear_cursors()
       command('set nowrapscan')
       api.nvim_buf_set_lines(0, 0, -1, true, { 'foo x' })
       fn.setreg('/', 'foo')
-      feed('$zqN') -- Backwards. Places at "x".
-      eq(0, ncursors())
-      api.nvim_buf_set_lines(0, 0, -1, true, { 'foo bar foo' })
-      feed('$hzq#') -- Mid-word on the last "foo": at its start.
-      eq({ { 0, 8 } }, anchors())
-      eq({ 1, 8 }, api.nvim_win_get_cursor(0))
+      feed('$zqN') -- Backwards, finds "foo".
+      eq(1, ncursors())
+      clear_cursors()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'foo x foo' })
+      fn.setreg('/', 'foo')
+      feed('0fxzqN') -- When not on a match, ensure we jump backwards rather than forwards.
+      eq({ { 0, 0 } }, anchors())
+      clear_cursors()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'foo foo bar foo foo' })
+      feed('$2blzq#') -- When on a match (mid-word), ensure we jump backward
+      eq({ { 0, 0 }, { 0, 4 }, { 0, 12 } }, anchors())
+      eq({ 1, 12 }, api.nvim_win_get_cursor(0))
+      eq(0, api.nvim_get_vvar('searchforward')) -- still backwards ("#")
+
+      -- N reverses the stored forward direction
+      clear_cursors()
+      feed('0*$2b') -- set search, move to 3rd foo.
+      feed('zqN')
+      eq({ { 0, 0 }, { 0, 4 }, { 0, 12 } }, anchors())
+      eq({ 1, 12 }, api.nvim_win_get_cursor(0))
+      eq(1, api.nvim_get_vvar('searchforward'))
+
+      -- explicit backward pattern
+      clear_cursors()
+      feed('$2b')
+      feed('zq?foo<CR>')
+      eq({ { 0, 0 }, { 0, 4 }, { 0, 12 } }, anchors())
+      eq({ 1, 12 }, api.nvim_win_get_cursor(0))
+      eq(0, api.nvim_get_vvar('searchforward'))
     end)
 
     it('zq{motion} {Visual} bounds, per-cursor gv', function()
