@@ -108,6 +108,7 @@ typedef struct {
 static struct {
   CmdOrigin origin;  ///< State at session start: the session's atoms diff against it.
   kvec_t(uint32_t) regions;  ///< Per-cursor preview regions (`mc_session_ns`).
+  kvec_t(uint32_t) owners;   ///< Cursor mark of each region. A removed cursor keeps its preview.
   bool active;      ///< Current insert-session is cascading.
   bool first;       ///< Entry-command not yet cascaded (no span pushed yet).
   uint64_t frame;   ///< Root frame that started the insert-session.
@@ -660,6 +661,7 @@ static void mc_ins_regions_clear(void)
   while (kv_size(mc_ins_span.regions) > 0) {
     extmark_del_id(curbuf, mc_session_ns(), kv_pop(mc_ins_span.regions));
   }
+  kv_size(mc_ins_span.owners) = 0;
 }
 
 /// Resolves cursor's tracked position.
@@ -695,6 +697,7 @@ static void mc_ins_preview_rebase(void)
     if (mc_ctx_resolve(ctx, &pos) && ctx->mark != mc_ins_span.origin.mcursor) {
       mc_region_mark_set(&mark, pos);
       kv_push(mc_ins_span.regions, mark);
+      kv_push(mc_ins_span.owners, ctx->mark);
     }
   }
 }
@@ -706,11 +709,18 @@ static MTPair mc_ins_region_first(void)
 {
   for (size_t i = 0; i < kv_size(mc_ins_span.regions); i++) {
     MTPair p = extmark_from_id(curbuf, mc_session_ns(), kv_A(mc_ins_span.regions, i));
-    if (p.start.id != 0) {
+    if (p.start.id != 0 && mc_ins_region_owned(i)) {
       return p;
     }
   }
   return (MTPair){ 0 };
+}
+
+/// True if the cursor of preview region `i` still exists.
+static bool mc_ins_region_owned(size_t i)
+{
+  pos_T pos;
+  return extmark_get_pos(curbuf, mc_ns(), kv_A(mc_ins_span.owners, i), &pos);
 }
 
 /// The buffer range (start/end positions) of region mark `p`.
@@ -762,7 +772,8 @@ static void mc_ins_preview_set(const String *new)
   for (size_t i = 0; i < kv_size(mc_ins_span.regions); i++) {
     pos_T rs, re;
     // Re-resolve each region, previous loop iterations may have shifted it.
-    if (!mc_region_mark_range(kv_A(mc_ins_span.regions, i), &rs, &re)) {
+    if (!mc_ins_region_owned(i)
+        || !mc_region_mark_range(kv_A(mc_ins_span.regions, i), &rs, &re)) {
       continue;
     }
     // Cursor display mark (right-gravity) is pushed by the replacement to the new preview end.
@@ -897,7 +908,8 @@ void mc_ins_cascade(void)
       // have this problem, and live-preview could allow (non-conflicting) text-shifts. #41719
       for (size_t i = 0; i < kv_size(mc_ins_span.regions); i++) {
         pos_T rs, re;
-        if (!mc_region_mark_range(kv_A(mc_ins_span.regions, i), &rs, &re)) {
+        if (!mc_ins_region_owned(i)
+            || !mc_region_mark_range(kv_A(mc_ins_span.regions, i), &rs, &re)) {
           continue;
         }
         // A preview after `end` is safe. Otherwise, multiline old or new preview text could shift
@@ -1724,6 +1736,7 @@ void mc_free_all(void)
   }
   kv_destroy(mc_cursors);
   kv_destroy(mc_ins_span.regions);
+  kv_destroy(mc_ins_span.owners);
   ctx_free(&mc_start.ctx);
 }
 #endif
