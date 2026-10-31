@@ -1671,6 +1671,8 @@ describe('multicursor', function()
       ]])
       -- The previews are cascade edits (v:cascading), the primary's are not.
       eq({ { 2, false }, { 0, true }, { 1, true } }, n.exec_lua('return _G.edits'))
+      -- The cascades keep the primary's v:count (e.g. for an Insert-mode <expr> mapping). #42493
+      eq({ 0, 1 }, n.exec_lua('return { vim.v.count, vim.v.count1 }'))
       feed('<Esc>')
       eq({ 'XYaaa', 'XYbbb', 'XYccc' }, get_lines())
       -- The session end shifts every cursor onto the last inserted char.

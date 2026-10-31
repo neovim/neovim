@@ -237,9 +237,10 @@ static void mc_sandbox_enter(McSandbox *sb, bool save_regs)
   assert(!mc_replaying());
   set_vim_var_bool(VV_CASCADING, kBoolVarTrue);  // Capture hooks ignore keys fed in the sandbox.
   sb->primary = (Context)CONTEXT_INIT;
-  // Change/Visual marks belong to the primary cursor's (already executed) operation.
+  // Change/Visual marks and counts belong to the primary cursor's (already executed) operation.
   // (jumplist/changelist are owned by the primary.)
-  ctx_save(&sb->primary, kCtxCursor | kCtxVisual | kCtxMarks | (save_regs ? kCtxRegs : 0));
+  ctx_save(&sb->primary,
+           kCtxCursor | kCtxVisual | kCtxMarks | kCtxCount | (save_regs ? kCtxRegs : 0));
   sb->cursor_mark = 0;
   mc_track_upd(curbuf, &sb->cursor_mark, sb->primary.pos);
   save_viewstate(curwin, &sb->view);
@@ -257,6 +258,7 @@ static void mc_sandbox_leave(McSandbox *sb)
   if (sb->primary.regs.data != NULL) {
     ctx_load(&sb->primary, kCtxRegs, 0);
   }
+  ctx_load(&sb->primary, kCtxCount, 0);
   restore_redobuff(&sb->redo);
   restore_search_patterns();
   // Visual first: restore_current_state() updates the cursor shape, and check_cursor() below keeps
