@@ -2430,6 +2430,21 @@ describe('lua stdlib', function()
       )
     end)
 
+    it('checks the callback after a deferred function runs past the timeout #11193', function()
+      eq(
+        true,
+        exec_lua(function()
+          vim.defer_fn(function()
+            vim.uv.sleep(100)
+            vim.g.timer_result = true
+          end, 0)
+          return vim.wait(50, function()
+            return vim.g.timer_result
+          end)
+        end)
+      )
+    end)
+
     it('does not crash when callback errors', function()
       local result = exec_lua [[
         return {pcall(function() vim.wait(1000, function() error("As Expected") end) end)}

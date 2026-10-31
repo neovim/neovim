@@ -22,21 +22,19 @@
     } \
   } while (0)
 
-// Poll for events until a condition or timeout
+// Poll for events until `condition` or timeout. Checks `condition` after the last poll, which may
+// have run past the timeout.
 #define LOOP_PROCESS_EVENTS_UNTIL(loop, multiqueue, timeout, condition) \
   do { \
     const int64_t timeout_ms = (timeout); \
-    const uint64_t start = (timeout_ms > 0) ? os_hrtime() : 0; \
+    const uint64_t start = (timeout_ms >= 0) ? os_hrtime() : 0; \
     int64_t remaining = timeout_ms; \
-    while (!(condition)) { \
+    bool expired = false; \
+    while (!(condition) && !expired) { \
       LOOP_PROCESS_EVENTS(loop, multiqueue, remaining); \
-      if (remaining == 0) { \
-        break; \
-      } else if (remaining > 0) { \
+      if (timeout_ms >= 0) { \
         remaining = timeout_ms - (int64_t)((os_hrtime() - start) / 1000000); \
-        if (remaining <= 0) { \
-          break; \
-        } \
+        expired = remaining <= 0; \
       } \
     } \
   } while (0)
