@@ -667,17 +667,21 @@ $
     nvim_command('wshada! ' .. shada_fname)
   end)
 
-  it('fails on invalid ShaDa file (failing skip in second item)', function()
-    wshada('\001\000\001\128#!/')
+  it('replaces ShaDa file damaged after the header, keeps valid entries', function()
+    -- Header, history entry, truncated entry.
+    wshada('\001\000\001\128\004\000\008\146\000\196\004kept#!/')
     eq(
       'Vim(rshada):E576: Reading ShaDa file: last entry specified that it occupies 47 bytes, but file ended earlier',
       t.pcall_err(nvim_command, sdrcmd())
     )
+    n.fn.histdel(':')
     eq(
       'Vim(wshada):E576: Error while reading ShaDa file: last entry specified that it occupies 47 bytes, but file ended earlier',
       t.pcall_err(nvim_command, 'wshada ' .. shada_fname)
     )
-    nvim_command('wshada! ' .. shada_fname)
+    eq(0, n.fn.filereadable(shada_fname .. '.tmp.a'))
+    nvim_command(sdrcmd())
+    eq('kept', n.fn.histget(':', -1))
   end)
 
   it('errors with too large items', function()

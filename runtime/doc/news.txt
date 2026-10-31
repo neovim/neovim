@@ -510,6 +510,8 @@ STARTUP
   dismissed instead of waiting (indefinitely).
 • |--embed| with |--listen| waits for a UI on the listen address if stdin is
   not a pipe (e.g. tty or /dev/null), instead of exiting.
+• A damaged |shada| file (e.g. truncated by a crash) is repaired on the next
+  write and keeps any valid entries. |shada-error-handling|
 
 TERMINAL
 

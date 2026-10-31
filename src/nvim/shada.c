@@ -558,13 +558,14 @@ static ShaDaReadResult sd_reader_skip(FileDescriptor *const sd_reader, const siz
 }
 
 /// Wrapper for closing file descriptors
-static void close_file(FileDescriptor *cookie)
+static int close_file(FileDescriptor *cookie)
 {
   const int error = file_close(cookie, !!p_fs);
   if (error != 0) {
     semsg(_(SERR "System error while closing ShaDa file: %s"),
           os_strerror(error));
   }
+  return error;
 }
 
 /// Read ShaDa file
@@ -1731,6 +1732,7 @@ static inline ShaDaWriteResult shada_read_when_writing(FileDescriptor *const sd_
   ShaDaWriteResult ret = kSDWriteSuccessful;
   ShadaEntry entry;
   ShaDaReadResult srni_ret;
+  bool has_header = false;
 
 #define COMPARE_WITH_ENTRY(wms_entry_, entry) \
   do { \
@@ -1755,8 +1757,9 @@ static inline ShaDaWriteResult shada_read_when_writing(FileDescriptor *const sd_
       // Should be handled by the while condition.
       abort();
     case kSDReadStatusNotShaDa:
-      ret = kSDWriteReadNotShada;
-      FALLTHROUGH;
+      // Damage after a valid header (e.g. truncated by a crash), so we know it is a (partial) ShaDa
+      // file. Keep the entries gathered so far and replace the file. #6875 #11876
+      return has_header ? ret : kSDWriteReadNotShada;
     case kSDReadStatusReadError:
       return ret;
     case kSDReadStatusMalformed:
@@ -1766,6 +1769,9 @@ static inline ShaDaWriteResult shada_read_when_writing(FileDescriptor *const sd_
     case kSDItemMissing:
       break;
     case kSDItemHeader:
+      has_header = true;
+      shada_free_shada_entry(&entry);
+      break;
     case kSDItemBufferList:
       abort();
     case kSDItemUnknown:
@@ -2279,7 +2285,8 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
     }
   }
 
-  const unsigned srni_flags = (unsigned)(kSDReadUndisableableData
+  const unsigned srni_flags = (unsigned)(kSDReadHeader
+                                         | kSDReadUndisableableData
                                          | kSDReadUnknown
                                          | (dump_history ? kSDReadHistory : 0)
                                          | (dump_registers ? kSDReadRegisters : 0)
@@ -2686,6 +2693,9 @@ shada_write_exit:
   map_destroy(cstr_t, &wms->file_marks);
   set_destroy(ptr_t, &removable_bufs);
   packer.packer_flush(&packer);
+  if (packer.anyint != 0) {
+    ret = kSDWriteFailed;
+  }
   set_destroy(cstr_t, &wms->dumped_variables);
   xfree(wms);
   return ret;
@@ -2755,71 +2765,36 @@ int shada_write_file(const char *const file, bool nomerge)
     return FAIL;
   }
 
-  char *tempname = NULL;
   FileDescriptor sd_writer;
   FileDescriptor sd_reader;
-  bool did_open_writer = false;
   bool did_open_reader = false;
 
   if (!nomerge) {
-    int error;
-    if ((error = file_open(&sd_reader, fname, kFileReadOnly, 0)) != 0) {
-      if (error != UV_ENOENT) {
-        semsg(_(SERR "System error while opening ShaDa file %s for reading "
-                "to merge before writing it: %s"),
-              fname, os_strerror(error));
-        // Try writing the file even if opening it emerged any issues besides
-        // file not existing: maybe writing will succeed nevertheless.
-      }
-      nomerge = true;
-      goto shada_write_file_nomerge;
-    } else {
+    const int error = file_open(&sd_reader, fname, kFileReadOnly, 0);
+    if (error == 0) {
       did_open_reader = true;
-    }
-
-    // Save permissions from the original file, with modifications:
-    int perm = (int)os_getperm(fname);
-    perm = (perm >= 0) ? ((perm & 0777) | 0600) : 0600;
-    //                 ^3         ^1       ^2      ^2,3
-    // 1: Strip SUID bit if any.
-    // 2: Make sure that user can always read and write the result.
-    // 3: If somebody happened to delete the file after it was opened for
-    //    reading use u=rw permissions.
-    tempname = shada_open_tmp(fname, &sd_writer, perm);
-    did_open_writer = tempname != NULL;
-  }
-  if (nomerge) {
-shada_write_file_nomerge: {}
-    char *const tail = path_tail_with_sep(fname);
-    if (tail != fname) {
-      const char tail_save = *tail;
-      *tail = NUL;
-      if (!os_isdir(fname)) {
-        int ret;
-        char *failed_dir;
-        if ((ret = os_mkdir_recurse(fname, 0700, &failed_dir, NULL)) != 0) {
-          semsg(_(SERR "Failed to create directory %s "
-                  "for writing ShaDa file: %s"),
-                failed_dir, os_strerror(ret));
-          xfree(fname);
-          xfree(failed_dir);
-          return FAIL;
-        }
-      }
-      *tail = tail_save;
-    }
-    int error = file_open(&sd_writer, fname, kFileCreate|kFileTruncate, 0600);
-    if (error) {
-      semsg(_(SERR "System error while opening ShaDa file %s for writing: %s"),
+    } else if (error != UV_ENOENT) {
+      semsg(_(SERR "System error while opening ShaDa file %s for reading "
+              "to merge before writing it: %s"),
             fname, os_strerror(error));
-    } else {
-      did_open_writer = true;
+      // Try writing the file even if opening it emerged any issues besides
+      // file not existing: maybe writing will succeed nevertheless.
     }
   }
 
-  if (!did_open_writer) {
+  // Save permissions from the original file, with modifications:
+  int perm = (int)os_getperm(fname);
+  perm = (perm >= 0) ? ((perm & 0777) | 0600) : 0600;
+  //                 ^3         ^1       ^2      ^2,3
+  // 1: Strip SUID bit if any.
+  // 2: Make sure that user can always read and write the result.
+  // 3: If the file does not exist use u=rw permissions.
+  char *tempname = NULL;
+  if (os_file_mkdir(fname, 0700) == 0) {
+    tempname = shada_open_tmp(fname, &sd_writer, perm);
+  }
+  if (tempname == NULL) {
     xfree(fname);
-    xfree(tempname);
     if (did_open_reader) {
       close_file(&sd_reader);
     }
@@ -2832,17 +2807,16 @@ shada_write_file_nomerge: {}
     verbose_leave();
   }
 
-  const ShaDaWriteResult sw_ret = shada_write(&sd_writer, (nomerge ? NULL : &sd_reader));
+  const ShaDaWriteResult sw_ret = shada_write(&sd_writer, did_open_reader ? &sd_reader : NULL);
   assert(sw_ret != kSDWriteIgnError);
-  if (!nomerge) {
-    if (did_open_reader) {
-      close_file(&sd_reader);
-    }
-    bool did_remove = false;
-    if (sw_ret == kSDWriteSuccessful) {
-      FileInfo old_info;
-      if (!os_fileinfo(fname, &old_info)
-          || S_ISDIR(old_info.stat.st_mode)
+  if (did_open_reader) {
+    close_file(&sd_reader);
+  }
+  bool did_remove = false;
+  if (sw_ret == kSDWriteSuccessful) {
+    FileInfo old_info;
+    if (os_fileinfo(fname, &old_info)) {
+      if (S_ISDIR(old_info.stat.st_mode)
 #ifdef UNIX
           // For Unix we check the owner of the file.  It's not very nice
           // to overwrite a user's viminfo file after a "su root", with a
@@ -2874,29 +2848,33 @@ shada_write_file_nomerge: {}
         }
       }
 #endif
-      if (vim_rename(tempname, fname) == -1) {
-        semsg(_(RNERR "Can't rename ShaDa file from %s to %s!"),
-              tempname, fname);
-      } else {
-        did_remove = true;
-        os_remove(tempname);
-      }
-    } else {
-      if (sw_ret == kSDWriteReadNotShada) {
-        semsg(_(RNERR "Did not rename %s because %s "
-                "does not look like a ShaDa file"), tempname, fname);
-      } else {
-        semsg(_(RNERR "Did not rename %s to %s because there were errors "
-                "during writing it"), tempname, fname);
-      }
     }
-    if (!did_remove) {
-shada_write_file_did_not_remove:
-      semsg(_(RNERR "Do not forget to remove %s or rename it manually to %s."),
+    // Flush (+fsync) before rename, so a crash cannot partially replace the old file.
+    if (close_file(&sd_writer) != 0) {
+      goto shada_write_file_did_not_remove;
+    }
+    if (vim_rename(tempname, fname) == -1) {
+      semsg(_(RNERR "Can't rename ShaDa file from %s to %s!"),
             tempname, fname);
+    } else {
+      did_remove = true;
+      os_remove(tempname);
     }
-    xfree(tempname);
+  } else {
+    if (sw_ret == kSDWriteReadNotShada) {
+      semsg(_(RNERR "Did not rename %s because %s "
+              "does not look like a ShaDa file"), tempname, fname);
+    } else {
+      semsg(_(RNERR "Did not rename %s to %s because there were errors "
+              "during writing it"), tempname, fname);
+    }
   }
+  if (!did_remove) {
+shada_write_file_did_not_remove:
+    semsg(_(RNERR "Do not forget to remove %s or rename it manually to %s."),
+          tempname, fname);
+  }
+  xfree(tempname);
   close_file(&sd_writer);
 
   xfree(fname);
@@ -3258,9 +3236,11 @@ shada_read_next_item_start:
   entry->data = sd_default_values[type_u64].data;
   switch ((ShadaEntryType)type_u64) {
   case kSDItemHeader:
-    // TODO(bfredl): header is written to file and provides useful debugging
-    // info. It is never read by nvim (earlier we parsed it back to a
-    // Dict, but that value was never used)
+    // Check that header is well-formed. shada_read_when_writing() uses it to detect "damaged ShaDa"
+    // vs "non-ShaDa" file.
+    if (unpack_skip(&read_ptr, &read_size) != MPACK_OK) {
+      goto shada_read_next_item_error;
+    }
     break;
   case kSDItemSearchPattern: {
     Dict(_shada_search_pat) *it = &entry->data.search_pattern;
