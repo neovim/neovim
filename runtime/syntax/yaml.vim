@@ -4,6 +4,7 @@
 " First author:     Nikolai Weibull <now@bitwi.se>
 " Latest Revision:  2024 Apr 01
 " 2026 Aug 28 by Vim project: force BT regexp engine to improve performance #21182
+" 2026 Oct 12 by Vim project: simplify PyYAML numeric regexps
 
 if exists('b:current_syntax')
     finish
@@ -192,9 +193,9 @@ elseif b:yaml_schema is# 'pyyaml'
     syn keyword yamlNull null Null NULL contained containedin=@yamlScalarWithSpecials
     syn keyword yamlBool true True TRUE false False FALSE yes Yes YES no No NO on On ON off Off OFF contained containedin=@yamlScalarWithSpecials
     exe 'syn match   yamlNull /\%#=1'.s:_bounder.'\@1<!\~'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
-    exe 'syn match  yamlFloat /\%#=1'.s:_bounder.'\@1<!\%(\v[-+]?%(\d[0-9_]*)\.[0-9_]*%([eE][-+]\d+)?|\.[0-9_]+%([eE][-+]\d+)?|[-+]?\d[0-9_]*%(\:[0-5]?\d)+\.[0-9_]*|[-+]?\.%(inf|Inf|INF)|\.%(nan|NaN|NAN)\m\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
-    exe 'syn match  yamlInteger /\%#=1'.s:_bounder.'\@1<!\%(\v[-+]?0b[0-1_]+|[-+]?0[0-7_]+|[-+]?%(0|[1-9][0-9_]*)|[-+]?0x[0-9a-fA-F_]+|[-+]?[1-9][0-9_]*%(:[0-5]?\d)+\m\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
-    exe 'syn match  yamlTimestamp /\%#=1'.s:_bounder.'\@1<!\%(\v\d\d\d\d\-\d\d\-\d\d|\d\d\d\d \-\d\d? \-\d\d?%([Tt]|[ \t]+)\d\d?\:\d\d \:\d\d %(\.\d*)?%([ \t]*%(Z|[-+]\d\d?%(\:\d\d)?))?\m\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
+    exe 'syn match  yamlFloat /\%#=1'.s:_bounder.'\@1<!\%(\v[-+]?%(\d[0-9_]*)\.[0-9_]*%([eE][-+]\d+)?|\.[0-9_]+%([eE][-+]\d+)?|[-+]?%(\d[0-9_]*%(\:[0-5]?\d)+\.[0-9_]*|\.%(inf|Inf|INF))|\.%(nan|NaN|NAN)\m\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
+    exe 'syn match  yamlInteger /\%#=1'.s:_bounder.'\@1<!\%(\v[-+]?%(0b[0-1_]+|0[0-7_]+|%(0|[1-9][0-9_]*)|0x[0-9a-fA-F_]+|[1-9][0-9_]*%(:[0-5]?\d)+)\m\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
+    exe 'syn match  yamlTimestamp /\%#=1\d\@='.s:_bounder.'\@1<!\%(\v\d\d\d\d\-\d\d\-\d\d|\d\d\d\d \-\d\d? \-\d\d?%([Tt]|[ \t]+)\d\d?\:\d\d \:\d\d %(\.\d*)?%([ \t]*%(Z|[-+]\d\d?%(\:\d\d)?))?\m\)'.s:_bounder.'\@!/ contained containedin=@yamlScalarWithSpecials'
 elseif b:yaml_schema is# 'failsafe'
     " Nothing
 endif
