@@ -47,12 +47,8 @@ local get_shada_rw = function(fname)
   end
   local clean = function()
     os.remove(fname)
-    local i = ('a'):byte()
-    while i <= ('z'):byte() do
-      if not os.remove(fname .. ('.tmp.%c'):format(i)) then
-        break
-      end
-      i = i + 1
+    for c = ('a'):byte(), ('z'):byte() do
+      os.remove(('%s.tmp.%c'):format(fname, c))
     end
   end
   return wshada, sdrcmd, fname, clean

@@ -1157,10 +1157,10 @@ include:
   Nvim was launched from root.
 
 Do not forget to remove the temporary file or replace the target file with
-temporary one after getting one of the above errors or all attempts to create
-a ShaDa file may fail with |E929|.  If you got one of them when using
-|:wshada| (and not when exiting Nvim: i.e. when you have Nvim session
-running) you have additional options:
+temporary one after getting one of the above errors.  When all names from
+`.tmp.a…z` are taken, Nvim discards the oldest such file and reuses its name.
+If you got one of the errors when using |:wshada| (i.e. not on exit) you have
+additional options:
 
 - First thing which you should consider if you got any error, except failure
   to write to the temporary file: remove existing file and replace it with the
@@ -1190,10 +1190,10 @@ running) you have additional options:
                         internal info is written (also disables safety checks
                         described in |shada-error-handling|).  If 'shada' is
                         empty, marks for up to 100 files will be written.
-                        When you get error "E929: All .tmp.X files exist,
-                        cannot write ShaDa file!", check that no old temp
-                        files were left behind (e.g.
-                        ~/.local/state/nvim/shada/main.shada.tmp*).
+                        When you get error "E138: All .tmp.X files exist,
+                        cannot write ShaDa file!", check that old temp files
+                        (e.g. ~/.local/state/nvim/shada/main.shada.tmp*) can
+                        be removed.
 
                         Note: Executing :wshada will reset all |'quote| marks.
 

@@ -2693,6 +2693,33 @@ shada_write_exit:
 
 #undef PACK_KEY
 
+/// Deletes the oldest of the `{file}.tmp.a…z` files.
+///
+/// @param[in,out]  tempname  Any of these names, set to the removed one.
+///
+/// @return Whether a file was removed.
+static bool shada_del_oldest_tmp(char *const tempname)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char *const letter = tempname + strlen(tempname) - 1;
+  char oldest = NUL;
+  int64_t oldest_mtime = 0;
+  for (int c = 'a'; c <= 'z'; c++) {
+    *letter = (char)c;
+    FileInfo info;
+    if (os_fileinfo_link(tempname, &info)
+        && (oldest == NUL || info.stat.st_mtim.tv_sec < oldest_mtime)) {
+      oldest = (char)c;
+      oldest_mtime = info.stat.st_mtim.tv_sec;
+    }
+  }
+  if (oldest == NUL) {
+    return false;
+  }
+  *letter = oldest;
+  return os_remove(tempname) == 0;
+}
+
 /// Write ShaDa file to a given location
 ///
 /// @param[in]  file     File to write to. If it is NULL or empty then default
@@ -2712,6 +2739,7 @@ int shada_write_file(const char *const file, bool nomerge)
   FileDescriptor sd_reader;
   bool did_open_writer = false;
   bool did_open_reader = false;
+  bool did_remove_tmp = false;
 
   if (!nomerge) {
     int error;
@@ -2749,8 +2777,11 @@ shada_write_file_open: {}
         // File already exists, try another name
         char *const wp = tempname + strlen(tempname) - 1;
         if (*wp == 'z') {
-          // Tried names from .tmp.a to .tmp.z, all failed. Something must be
-          // wrong then.
+          // Tried names from .tmp.a to .tmp.z, all failed. Reuse the oldest.
+          if (!did_remove_tmp && shada_del_oldest_tmp(tempname)) {
+            did_remove_tmp = true;
+            goto shada_write_file_open;
+          }
           semsg(_("E138: All %s.tmp.X files exist, cannot write ShaDa file!"),
                 fname);
           xfree(fname);

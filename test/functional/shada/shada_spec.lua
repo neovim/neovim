@@ -122,17 +122,18 @@ describe('ShaDa support code', function()
     end
   )
 
-  it('errors out when there are .tmp.a … .tmp.z ShaDa files', function()
+  it('reuses the oldest of .tmp.a … .tmp.z ShaDa files', function()
     wshada('')
     local i = ('a'):byte()
     while i <= ('z'):byte() do
       write_file(shada_fname .. ('.tmp.%c'):format(i), '', true)
       i = i + 1
     end
-    eq(
-      'Vim(wshada):E138: All Xtest-functional-shada-shada.shada.tmp.X files exist, cannot write ShaDa file!',
-      t.pcall_err(n.command, 'wshada ' .. shada_fname)
-    )
+    uv.fs_utime(shada_fname .. '.tmp.m', 1, 1)
+    n.command('wshada ' .. shada_fname)
+    eq(1, read_shada_file(shada_fname)[1].type)
+    eq(nil, uv.fs_stat(shada_fname .. '.tmp.m'))
+    eq(25, #fn.glob(shada_fname .. '.tmp.*', false, true))
   end)
 
   it('reads correctly various timestamps', function()
