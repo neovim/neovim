@@ -1137,7 +1137,7 @@ files for different types of files (e.g., C code) and load them based on the
 file name, using the ":autocmd" command (see |:autocmd|).  More information on
 ShaDa file format is contained in |shada-format| section.
 
-                                          *E136* *E929* *shada-error-handling*
+                                                 *E136* *shada-error-handling*
 Some errors make Nvim leave temporary file named `{basename}.tmp.X` (X is
 any free letter from `a` to `z`) while normally it will create this file,
 write to it and then rename `{basename}.tmp.X` to `{basename}`. Such errors
