@@ -5888,7 +5888,8 @@ vim.uri_encode({str}, {rfc})                                *vim.uri_encode()*
         (`string`) encoded string
 
 vim.uri_from_bufnr({buf})                               *vim.uri_from_bufnr()*
-    Gets a URI from a bufnr.
+    Gets a URI from a bufnr. Unnamed buffers use a process-local `untitled:`
+    URI.
 
     Parameters: ~
       • {buf}  (`integer`)

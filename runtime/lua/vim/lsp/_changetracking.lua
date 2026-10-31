@@ -29,6 +29,7 @@ local M = {}
 ---
 --- @class vim.lsp.CTBufferState
 --- @field name string name of the buffer
+--- @field uri string URI used when the buffer was opened
 --- @field lines string[] snapshot of buffer lines from last didChange
 --- @field lines_tmp string[]
 --- @field pending_changes table[] List of debounced changes in incremental sync mode
@@ -151,6 +152,7 @@ function M.init(client, bufnr)
   else
     buf_state = {
       name = api.nvim_buf_get_name(bufnr),
+      uri = vim.uri_from_bufnr(bufnr),
       lines = {},
       lines_tmp = {},
       pending_changes = {},
@@ -191,13 +193,15 @@ function M._send_did_save(bufnr)
     local state = state_by_group[entry.group]
     local buf_state = state.buffers[bufnr] or {}
     local old_name = buf_state.name
+    local old_uri = buf_state.uri
     buf_state.name = name
+    buf_state.uri = uri
 
     for _, client in ipairs(entry.clients) do
       if old_name and name ~= old_name then
         client:notify('textDocument/didClose', {
           textDocument = {
-            uri = vim.uri_from_fname(old_name),
+            uri = old_uri,
           },
         }, bufnr)
         client:notify('textDocument/didOpen', {
