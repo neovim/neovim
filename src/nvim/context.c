@@ -120,17 +120,25 @@ void ctx_free(Context *ctx)
 void ctx_save(Context *ctx, const CtxStateFlags flags)
   FUNC_ATTR_NONNULL_ALL
 {
-  // Its extmarks live in its buffer: re-save a Context only there, else ctx_free() it first.
-  assert(ctx->buf == 0 || ctx->buf == curbuf->handle);
-  ctx->buf = curbuf->handle;
-  ctx->pos = (pos_T) {
-    .lnum = curwin->w_cursor.lnum,
-    .col = curwin->w_cursor.col,
-    .coladd = curwin->w_cursor.coladd,
-  };
+  if (flags & (kCtxCursor | kCtxVisual | kCtxMarks)) {
+    // Its extmarks live in its buffer: re-save a Context only there, else ctx_free() it first.
+    assert(ctx->buf == 0 || ctx->buf == curbuf->handle);
+    ctx->buf = curbuf->handle;
+    ctx->pos = (pos_T) {
+      .lnum = curwin->w_cursor.lnum,
+      .col = curwin->w_cursor.col,
+      .coladd = curwin->w_cursor.coladd,
+    };
+  }
 
   if (flags & kCtxCursor) {
     ctx->curswant = curwin->w_set_curswant ? -1 : curwin->w_curswant;
+  }
+
+  if (flags & kCtxCount) {
+    ctx->count = get_vim_var_nr(VV_COUNT);
+    ctx->count1 = get_vim_var_nr(VV_COUNT1);
+    ctx->prevcount = get_vim_var_nr(VV_PREVCOUNT);
   }
 
   if (flags & kCtxVisual) {
@@ -227,6 +235,12 @@ void ctx_load(Context *ctx, const CtxStateFlags flags, const CtxLoadFlags loadfl
     } else {
       curwin->w_set_curswant = true;
     }
+  }
+
+  if (flags & kCtxCount) {
+    set_vim_var_nr(VV_COUNT, ctx->count);
+    set_vim_var_nr(VV_COUNT1, ctx->count1);
+    set_vim_var_nr(VV_PREVCOUNT, ctx->prevcount);
   }
 
   buf_T *buf = handle_get_buffer(ctx->buf);

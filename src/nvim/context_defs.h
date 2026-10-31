@@ -16,14 +16,17 @@ typedef struct {
   uint32_t mark;     ///< Extmark id tracking `pos` across buffer edits.
   colnr_T curswant;  ///< Preferred column ("curswant"); -1 if unset.
 
-  int visual_mode_eval;  ///< `b_visual_mode_eval` (visualmode()).
-  visualinfo_T visual;   ///< (Cache) Previous Visual area (`'<`, `'>`, "gv").
-  pos_T op_start;        ///< (Cache) '[ (b_op_start).
-  pos_T op_end;          ///< (Cache) '] (b_op_end).
-  fmark_T last_change;   ///< (Cache) '. (b_last_change).
-  fmark_T last_insert;   ///< (Cache) '^ (b_last_insert).
+  int visual_mode_eval;   ///< `b_visual_mode_eval` (visualmode()).
+  visualinfo_T visual;    ///< (Cache) Previous Visual area (`'<`, `'>`, "gv").
+  pos_T op_start;         ///< (Cache) '[ (b_op_start).
+  pos_T op_end;           ///< (Cache) '] (b_op_end).
+  fmark_T last_change;    ///< (Cache) '. (b_last_change).
+  fmark_T last_insert;    ///< (Cache) '^ (b_last_insert).
   uint32_t pos_marks[6];  ///< Extmarks tracking the (Cache) positions above (in that order),
                           ///< across buffer edits. 0: none.
+  int64_t count;          ///< v:count
+  int64_t count1;         ///< v:count1
+  int64_t prevcount;      ///< v:prevcount
   handle_T buf;      ///< Current buffer handle.
   String regs;       ///< Registers (shada msgpack string).
   String jumps;      ///< Jumplist (shada msgpack string).
@@ -44,6 +47,9 @@ typedef kvec_t(Context) ContextVec;
   .last_change = { .mark = { 0 } }, \
   .last_insert = { .mark = { 0 } }, \
   .pos_marks = { 0 }, \
+  .count = 0, \
+  .count1 = 0, \
+  .prevcount = 0, \
   .buf = 0, \
   .regs = STRING_INIT, \
   .jumps = STRING_INIT, \
@@ -65,6 +71,7 @@ typedef enum {
   kCtxCursor = 64,    ///< Cursor position and curswant.
   kCtxMarks = 128,    ///< Change marks ('[ '] '.), last insert ('^).
   kCtxVisual = 256,   ///< Visual area ('< '>, visualmode()).
+  kCtxCount = 512,    ///< Counts of the last Normal cmd (v:count, v:count1, v:prevcount).
 } CtxStateFlags;
 
 /// "How" to load, orthogonal to "what" (CtxStateFlags).
