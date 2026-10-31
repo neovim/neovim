@@ -5532,7 +5532,8 @@ win_T *win_alloc(win_T *after, bool hidden)
   new_wp->w_kind = kWinNormal;
   new_wp->w_config = WIN_CONFIG_INIT;
   new_wp->w_viewport_invalid = true;
-  new_wp->w_viewport_last_topline = 1;
+  new_wp->w_viewport_last_topline = new_wp->w_topline;
+  new_wp->w_viewport_last_botline = new_wp->w_botline;
 
   new_wp->w_ns_hl = -1;
 
