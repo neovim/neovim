@@ -3,7 +3,7 @@
 " Maintainer:		This runtime file is looking for a new maintainer.
 " Previous Maintainers:	vim-jp (https://github.com/vim-jp/vim-cpp)
 "			Ken Shan <ccshan@post.harvard.edu>
-" Last Change:		2026 Sep 16
+" Last Change:		2026 Oct 11
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -46,7 +46,7 @@ if !exists("cpp_no_cpp11")
   syn keyword cppConstant	ATOMIC_WCHAR_T_LOCK_FREE ATOMIC_SHORT_LOCK_FREE
   syn keyword cppConstant	ATOMIC_INT_LOCK_FREE ATOMIC_LONG_LOCK_FREE
   syn keyword cppConstant	ATOMIC_LLONG_LOCK_FREE ATOMIC_POINTER_LOCK_FREE
-  syn region cppRawString	matchgroup=cppRawStringDelimiter start=+\%(u8\|[uLU]\)\=R"\z([[:alnum:]_{}[\]#<>%:;.?*\+\-/\^&|~!=,"']\{,16}\)(+ end=+)\z1"\%(sv\|s\|_[_a-zA-Z][_a-zA-Z0-9]*\)\=+ contains=@Spell
+  syn region cppRawString	matchgroup=cppRawStringDelimiter start=+\%#=1\%(u8\|[uLU]\)\=R"\z([[:alnum:]_{}[\]#<>%:;.?*\+\-/\^&|~!=,"']\{,16}\)(+ end=+)\z1"\%(sv\|s\|_[_a-zA-Z][_a-zA-Z0-9]*\)\=+ contains=@Spell
   syn match cppCast		"\<\%(const\|static\|dynamic\)_pointer_cast\s*<"me=e-1
   syn match cppCast		"\<\%(const\|static\|dynamic\)_pointer_cast\s*$"
 endif
@@ -118,14 +118,19 @@ endif
 " C++ 26 extensions
 if !exists("cpp_no_cpp26")
   " attribute [[ ... ]] with optional value expr, eg [[=foo{1}]]
-  syn region cppAttribute	matchgroup=cppAttributeBracket start="\w\@1<!\[\[" end="\]\]" contains=TOP,@Spell
+  syn region cppAttribute	matchgroup=cppAttributeBracket start="\%#=1\w\@1<!\[\[" end="\]\]" contains=TOP,@Spell
   syn match cppReflect		"\^\^"
-  syn match cppSpliceBracket	"\[:\|:\]"
   syn keyword cppStatement	contract_assert
+  " having two matches for cppSpliceBracket is faster
+  " than doing "\[:\|:\]"
+  syn match cppSpliceBracket	"\[:"
+  syn match cppSpliceBracket	":\]"
 endif
 
 " The minimum and maximum operators in GNU C++
-syn match cppMinMax "[<>]?"
+" Having two separate matches is faster than [<>]?
+syn match cppMinMax "<?"
+syn match cppMinMax ">?"
 
 " Default highlighting
 hi def link cppAccess			cppStatement

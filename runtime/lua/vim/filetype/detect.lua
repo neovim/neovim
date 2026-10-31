@@ -2176,6 +2176,7 @@ end
 
 local patterns_hashbang = {
   ['^zsh\\>'] = { 'zsh', { vim_regex = true } },
+  ['^bats\\>'] = { 'bats', { vim_regex = true } },
   ['^\\(tclsh\\|wish\\|expectk\\|itclsh\\|itkwish\\)\\>'] = { 'tcl', { vim_regex = true } },
   ['^expect\\>'] = { 'expect', { vim_regex = true } },
   ['^gnuplot\\>'] = { 'gnuplot', { vim_regex = true } },

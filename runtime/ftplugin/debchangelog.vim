@@ -3,7 +3,7 @@
 " Maintainer:   Debian Vim Maintainers <team+vim@tracker.debian.org>
 " Former Maintainers:   Michael Piefel <piefel@informatik.hu-berlin.de>
 "                       Stefano Zacchiroli <zack@debian.org>
-" Last Change:  2026 Jun 29
+" Last Change:  2026 Jun 30
 " License:      Vim License
 " URL:          https://salsa.debian.org/vim-team/vim-debian/blob/main/ftplugin/debchangelog.vim
 
@@ -358,17 +358,17 @@ except ImportError:
     vim.command('echoerr \'python-launchpadlib >= 1.5.4 needs to be installed to use Launchpad bug completion\'')
 EOF
     else
-      if ! filereadable('/usr/sbin/apt-listbugs')
+      if ! executable('apt-listbugs')
         echoerr 'apt-listbugs not found, you should install it to use Closes bug completion'
         return
       endif
       let pkgsrc = DebGetPkgSrcName(line('.'))
-      let listbugs_output = system('/usr/sbin/apt-listbugs -s ' . g:debchangelog_listbugs_severities . ' list ' . shellescape(pkgsrc) . ' | grep "^ #" 2> /dev/null')
+      let listbugs_output = system('apt-listbugs -s ' . shellescape(g:debchangelog_listbugs_severities) . ' list ' . shellescape(pkgsrc) . ' | grep -e "^ #" -e "^ *b[0-9]* - #" 2> /dev/null')
       let bug_lines = split(listbugs_output, '\n')
     endif
     let completions = []
     for line in bug_lines
-      let parts = matchlist(line, '^\s*\(#\S\+\)\s*-\s*\(.*\)$')
+      let parts = matchlist(line, '^\%(\s*b\d\+\s*-\)\=\s*\(#\S\+\)\s*-\s*\(.*\)$')
       " filter only those which match a:base:
       if parts[1] !~ '^' . a:base
         continue
