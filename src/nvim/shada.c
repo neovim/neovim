@@ -103,9 +103,9 @@
 //   E577: Illegal register name
 //   E886: Can't rename viminfo file to %s!
 //   E929: Too many viminfo temp files, like %s!
-// Now only six of them are used:
+// Now only seven of them are used:
 //   E137: ShaDa file is not writeable (for pre-open checks)
-//   E929: All %s.tmp.X files exist, cannot write ShaDa file!
+//   E138: All %s.tmp.X files exist, cannot write ShaDa file!
 //   RCERR (E576) for critical read errors.
 //   RNERR (E136) for various errors when renaming.
 //   RERR (E575) for various errors inside read ShaDa file.
@@ -2693,19 +2693,36 @@ shada_write_exit:
 
 #undef PACK_KEY
 
-/// Deletes the oldest of the `{file}.tmp.a…z` files.
+/// Creates the first available `{fname}.tmp.a…z` file. If all exist (old failed writes), deletes
+/// the oldest and reuses its name.
 ///
-/// @param[in,out]  tempname  Any of these names, set to the removed one.
+/// @param[out]  sd_writer  Opened file.
+/// @param[in]  perm  Permissions of the new file.
 ///
-/// @return Whether a file was removed.
-static bool shada_del_oldest_tmp(char *const tempname)
-  FUNC_ATTR_NONNULL_ALL
+/// @return Name of the opened file, or NULL on error.
+static char *shada_open_tmp(const char *const fname, FileDescriptor *const sd_writer,
+                            const int perm)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  char *const tempname = modname(fname, ".tmp.a", false);
+  if (tempname == NULL) {
+    return NULL;
+  }
+  const int flags = kFileCreateOnly|kFileNoSymlink;
   char *const letter = tempname + strlen(tempname) - 1;
   char oldest = NUL;
   int64_t oldest_mtime = 0;
   for (int c = 'a'; c <= 'z'; c++) {
     *letter = (char)c;
+    const int error = file_open(sd_writer, tempname, flags, perm);
+    if (error == 0) {
+      return tempname;
+    } else if (error != UV_EEXIST && error != UV_ELOOP) {
+      semsg(_(SERR "System error while opening temporary ShaDa file %s for writing: %s"),
+            tempname, os_strerror(error));
+      xfree(tempname);
+      return NULL;
+    }
     FileInfo info;
     if (os_fileinfo_link(tempname, &info)
         && (oldest == NUL || info.stat.st_mtim.tv_sec < oldest_mtime)) {
@@ -2713,11 +2730,15 @@ static bool shada_del_oldest_tmp(char *const tempname)
       oldest_mtime = info.stat.st_mtim.tv_sec;
     }
   }
-  if (oldest == NUL) {
-    return false;
+  if (oldest != NUL) {
+    *letter = oldest;
+    if (os_remove(tempname) == 0 && file_open(sd_writer, tempname, flags, perm) == 0) {
+      return tempname;
+    }
   }
-  *letter = oldest;
-  return os_remove(tempname) == 0;
+  semsg(_("E138: All %s.tmp.X files exist, cannot write ShaDa file!"), fname);
+  xfree(tempname);
+  return NULL;
 }
 
 /// Write ShaDa file to a given location
@@ -2739,7 +2760,6 @@ int shada_write_file(const char *const file, bool nomerge)
   FileDescriptor sd_reader;
   bool did_open_writer = false;
   bool did_open_reader = false;
-  bool did_remove_tmp = false;
 
   if (!nomerge) {
     int error;
@@ -2756,11 +2776,6 @@ int shada_write_file(const char *const file, bool nomerge)
     } else {
       did_open_reader = true;
     }
-    tempname = modname(fname, ".tmp.a", false);
-    if (tempname == NULL) {
-      nomerge = true;
-      goto shada_write_file_nomerge;
-    }
 
     // Save permissions from the original file, with modifications:
     int perm = (int)os_getperm(fname);
@@ -2770,36 +2785,8 @@ int shada_write_file(const char *const file, bool nomerge)
     // 2: Make sure that user can always read and write the result.
     // 3: If somebody happened to delete the file after it was opened for
     //    reading use u=rw permissions.
-shada_write_file_open: {}
-    error = file_open(&sd_writer, tempname, kFileCreateOnly|kFileNoSymlink, perm);
-    if (error) {
-      if (error == UV_EEXIST || error == UV_ELOOP) {
-        // File already exists, try another name
-        char *const wp = tempname + strlen(tempname) - 1;
-        if (*wp == 'z') {
-          // Tried names from .tmp.a to .tmp.z, all failed. Reuse the oldest.
-          if (!did_remove_tmp && shada_del_oldest_tmp(tempname)) {
-            did_remove_tmp = true;
-            goto shada_write_file_open;
-          }
-          semsg(_("E138: All %s.tmp.X files exist, cannot write ShaDa file!"),
-                fname);
-          xfree(fname);
-          xfree(tempname);
-          if (did_open_reader) {
-            close_file(&sd_reader);
-          }
-          return FAIL;
-        }
-        (*wp)++;
-        goto shada_write_file_open;
-      } else {
-        semsg(_(SERR "System error while opening temporary ShaDa file %s "
-                "for writing: %s"), tempname, os_strerror(error));
-      }
-    } else {
-      did_open_writer = true;
-    }
+    tempname = shada_open_tmp(fname, &sd_writer, perm);
+    did_open_writer = tempname != NULL;
   }
   if (nomerge) {
 shada_write_file_nomerge: {}
