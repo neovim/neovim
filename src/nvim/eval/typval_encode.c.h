@@ -633,8 +633,13 @@ _convert_one_value_regular_dict: {}
   }
 typval_encode_stop_converting_one_item:
   return OK;
+/// Label common for this and encode_vim_to_* functions, used for escaping
+/// from macros on error.
+encode_vim_to__error_ret:
+  return FAIL;
   // Prevent “unused label” warnings.
   goto typval_encode_stop_converting_one_item;
+  goto encode_vim_to__error_ret;
 }
 
 TYPVAL_ENCODE_SCOPE int TYPVAL_ENCODE_ENCODE(
@@ -833,6 +838,9 @@ typval_encode_stop_converting_one_item:
   }
   kvi_destroy(mpstack);
   return OK;
+/// Label common for this and convert_one_value functions, used for escaping
+/// from macros on error. Macros must use it instead of returning directly,
+/// otherwise mpstack is leaked.
 encode_vim_to__error_ret:
   kvi_destroy(mpstack);
   return FAIL;
