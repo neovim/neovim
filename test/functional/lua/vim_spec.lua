@@ -1870,34 +1870,53 @@ describe('lua stdlib', function()
     )
   end)
 
-  it('vim.defer_fn', function()
-    eq(
-      false,
-      exec_lua [[
-      vim.g.test = false
-      vim.defer_fn(function() vim.g.test = true end, 150)
-      return vim.g.test
-    ]]
-    )
-    exec_lua [[vim.wait(1000, function() return vim.g.test end)]]
-    eq(true, exec_lua [[return vim.g.test]])
-  end)
-
-  it('nested vim.defer_fn does not leak handles on exit #19727', function()
-    n.expect_exit(exec_lua, function()
-      vim.defer_fn(function()
-        vim.defer_fn(function()
-          vim.defer_fn(function() end, 0)
-        end, 0)
-      end, 0)
-      vim.cmd('qall')
+  describe('vim.defer_fn', function()
+    it('works', function()
+      eq(
+        false,
+        exec_lua [[
+        vim.g.test = false
+        vim.defer_fn(function() vim.g.test = true end, 150)
+        return vim.g.test
+      ]]
+      )
+      exec_lua [[vim.wait(1000, function() return vim.g.test end)]]
+      eq(true, exec_lua [[return vim.g.test]])
     end)
-  end)
 
-  it('vim.defer_fn with timeout does not leak handles on exit', function()
-    n.expect_exit(exec_lua, function()
-      vim.defer_fn(function() end, 50)
-      vim.cmd('qall')
+    it('nested does not leak handles on exit #19727', function()
+      n.expect_exit(exec_lua, function()
+        vim.defer_fn(function()
+          vim.defer_fn(function()
+            vim.defer_fn(function() end, 0)
+          end, 0)
+        end, 0)
+        vim.cmd('qall')
+      end)
+    end)
+
+    it('with timeout does not leak handles on exit', function()
+      n.expect_exit(exec_lua, function()
+        vim.defer_fn(function() end, 50)
+        vim.cmd('qall')
+      end)
+    end)
+
+    it('timeout excludes prior event-loop blocking #42521', function()
+      local elapsed = exec_lua(function()
+        vim.uv.sleep(300) -- Ensure stale/outdated cached loop time relative to timeout=200 below.
+        local start = vim.uv.hrtime()
+        local elapsed --- @type number?
+        vim.defer_fn(function()
+          elapsed = (vim.uv.hrtime() - start) / 1e6
+        end, 200)
+        -- Wake the loop often: a stale timer fires on the first wakeup.
+        vim.wait(1000, function()
+          return elapsed ~= nil
+        end, 10)
+        return elapsed
+      end)
+      ok(elapsed >= 190, '>= 190 ms', elapsed)
     end)
   end)
 

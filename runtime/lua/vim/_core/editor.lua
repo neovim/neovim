@@ -649,6 +649,7 @@ function vim.defer_fn(fn, timeout)
   vim.validate('fn', fn, 'callable', true)
 
   local timer = assert(vim.uv.new_timer())
+  vim.uv.update_time() -- See time_watcher_start().
   timer:start(timeout, 0, function()
     local _, err = vim.schedule(function()
       if not timer:is_closing() then

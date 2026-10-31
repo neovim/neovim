@@ -7,6 +7,7 @@ local feed, eq, eval, ok = n.feed, t.eq, n.eval, t.ok
 local source, async_meths, run = n.source, n.async_meths, n.run
 local clear, command, fn = n.clear, n.command, n.fn
 local api = n.api
+local exec_lua = n.exec_lua
 local load_adjust = n.load_adjust
 local retry = t.retry
 local pcall_err = t.pcall_err
@@ -64,12 +65,29 @@ describe('timers', function()
     end)
   end)
 
-  it('works with zero timeout', function()
+  it('timeout=0 works', function()
     -- timer_start does still not invoke the callback immediately
     eq(0, eval("[timer_start(0, 'MyHandler', {'repeat': 1000}), g:val][1]"))
     retry(nil, nil, function()
       eq(1000, eval('g:val'))
     end)
+  end)
+
+  it('timeout excludes prior event-loop blocking #42521', function()
+    local elapsed = exec_lua(function()
+      vim.uv.sleep(300) -- Ensure stale/outdated cached loop time relative to timeout=200 below.
+      local start = vim.uv.hrtime()
+      local elapsed_ --- @type number?
+      vim.fn.timer_start(200, function()
+        elapsed_ = (vim.uv.hrtime() - start) / 1e6
+      end)
+      -- Wake the loop often: a stale timer fires on the first wakeup.
+      vim.wait(1000, function()
+        return elapsed_ ~= nil
+      end, 10)
+      return elapsed_
+    end)
+    ok(elapsed >= 190, '>= 190 ms', elapsed)
   end)
 
   it('can be started during sleep', function()

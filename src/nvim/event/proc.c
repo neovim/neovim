@@ -236,6 +236,7 @@ void proc_stop(Proc *proc) FUNC_ATTR_NONNULL_ALL
   }
 
   // (Re)start timer to verify that stopped process(es) died.
+  uv_update_time(&proc->loop->uv);  // See time_watcher_start().
   uv_timer_start(&proc->loop->children_kill_timer, children_kill_cb,
                  KILL_TIMEOUT_MS, 0);
 }

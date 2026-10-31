@@ -52,6 +52,7 @@ function M.request(payload, opts, on_response)
   end
 
   if timer then
+    vim.uv.update_time() -- See time_watcher_start().
     timer:start(timeout, 0, function()
       vim.schedule(function()
         pcall(vim.api.nvim_del_autocmd, id)

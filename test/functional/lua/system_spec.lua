@@ -102,6 +102,16 @@ describe('vim.system', function()
     end)
   end
 
+  it('timeout excludes prior event-loop blocking #42521', function()
+    eq(
+      0,
+      exec_lua(function(prg)
+        vim.uv.sleep(300) -- Ensure stale/outdated cached loop time relative to timeout=200 below.
+        return vim.system({ prg, 'PATH' }, { timeout = 200 }):wait().code
+      end, n.testprg('printenv-test'))
+    )
+  end)
+
   it('kill processes', function()
     exec_lua(function()
       local signal --- @type integer?

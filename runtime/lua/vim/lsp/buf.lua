@@ -725,6 +725,7 @@ function M.format(opts)
           timer:close()
           return
         end
+        vim.uv.update_time() -- See time_watcher_start().
         timer:start(
           assert(opts.timeout_ms),
           0,
