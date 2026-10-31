@@ -512,7 +512,9 @@ STARTUP
 
 TERMINAL
 
-• todo
+• The terminal emulator now uses libghostty-vt instead of libvterm. Lines in
+  the terminal scrollback region are now reflowed on resize like lines in the
+  visible area.
 
 TREESITTER
 
@@ -617,6 +619,9 @@ These existing features changed their behavior.
   can be used when printing to a terminal.
 • It is no longer allowed to change the window layout during a |DiffUpdated|
   autocommand.
+• |:terminal| uses Ghostty's default palette for the 16 ANSI colors, and
+  colors 16–255 now match xterm's. This only affects RGB UIs
+  ('termguicolors'); set `g:terminal_color_x` to choose your own colors.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

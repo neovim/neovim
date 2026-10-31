@@ -154,12 +154,12 @@ describe(':terminal altscreen', function()
       wait_removal()
       feed('<c-\\><c-n>4k')
       screen:expect([[
-        ^                                                  |
+        ^line3                                             |
                                                           |*2
         rows: 4, cols: 50                                 |
                                                           |
       ]])
-      eq(9, api.nvim_buf_line_count(0))
+      eq(8, api.nvim_buf_line_count(0))
     end)
 
     describe('and after exit', function()
@@ -169,17 +169,11 @@ describe(':terminal altscreen', function()
       end)
 
       it('restore buffer state', function()
-        screen:expect(t.is_os('win') and [[
+        screen:expect([[
           line6                                             |
           line7                                             |
           line8                                             |
           ^                                                  |
-          {5:-- TERMINAL --}                                    |
-        ]] or [[
-          line5                                             |
-          line6                                             |
-          line7                                             |
-          ^line8                                             |
           {5:-- TERMINAL --}                                    |
         ]])
       end)

@@ -33,7 +33,9 @@ describe(':edit term://*', function()
   it("runs TermOpen early enough to set buffer-local 'scrollback'", function()
     local columns, lines = 20, 4
     local scr = Screen.new(columns, lines, { rgb = false })
-    local rep = 97
+    -- Enough output for Ghostty to prune whole scrollback pages with the TermOpen limit, but not
+    -- with the default one.
+    local rep = 5000
     api.nvim_set_option_value('shellcmdflag', 'REP ' .. rep, {})
     command('set shellxquote=') -- win: avoid extra quotes
     local sb = 10
@@ -44,8 +46,7 @@ describe(':edit term://*', function()
 
     local bufcontents = {}
     local winheight = api.nvim_win_get_height(0)
-    local buf_cont_start = rep - sb - winheight + 1
-    for i = buf_cont_start, (rep - 1) do
+    for i = 0, (rep - 1) do
       bufcontents[#bufcontents + 1] = ('%d: foobar'):format(i)
     end
     bufcontents[#bufcontents + 1] = ''
@@ -59,6 +60,15 @@ describe(':edit term://*', function()
 
     exp_screen = exp_screen .. (' '):rep(columns) .. '|\n'
     scr:expect(exp_screen)
-    eq(bufcontents, api.nvim_buf_get_lines(0, 0, -1, true))
+    eq(sb, api.nvim_get_option_value('scrollback', { buf = 0 }))
+    local lines = api.nvim_buf_get_lines(0, 0, -1, true)
+    if t.is_os('win') then
+      -- ConPTY may pad lines with spaces.
+      lines = vim.tbl_map(function(line)
+        return (line:gsub(' +$', ''))
+      end, lines)
+    end
+    eq(true, #lines < rep)
+    eq(vim.list_slice(bufcontents, #bufcontents - #lines + 1), lines)
   end)
 end)
