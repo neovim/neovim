@@ -1410,6 +1410,25 @@ describe('decoration_providers', function()
     n.check_close()
     os.remove(testlog)
   end)
+
+  it('no crash when "start" scrolls a window after the screen shrinks', function()
+    clear()
+    local screen = Screen.new(200, 40)
+    exec_lua(function()
+      vim.cmd('rightbelow vnew')
+      local win = vim.api.nvim_get_current_win()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'title', ('x'):rep(57) })
+      vim.api.nvim_win_set_cursor(win, { 2, 56 })
+      vim.cmd('wincmd p | vertical resize 120')
+      vim.api.nvim_set_decoration_provider(vim.api.nvim_create_namespace('ns'), {
+        on_start = function()
+          vim.fn.line('w0', win)
+        end,
+      })
+    end)
+    screen:try_resize(100, 40)
+    assert_alive()
+  end)
 end)
 
 local example_text = [[
