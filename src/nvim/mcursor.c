@@ -1596,7 +1596,11 @@ Context *mc_add(buf_T *buf, pos_T pos)
   const size_t count = kv_size(mc_cursors);
   uint32_t mark = 0;
   mc_mark_upd(buf, &mark, pos);
-  return kv_size(mc_cursors) > count ? &kv_last(mc_cursors) : NULL;
+  if (kv_size(mc_cursors) == count) {
+    return NULL;
+  }
+  kv_last(mc_cursors).pos.coladd = pos.coladd;  // The extmark doesn't track 'virtualedit' coladd.
+  return &kv_last(mc_cursors);
 }
 
 /// Called when an extmark is set. Extmarks added to the "nvim.multicursor" namespace are cursors.
