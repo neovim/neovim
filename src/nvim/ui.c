@@ -14,6 +14,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/context.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/drawscreen.h"
 #include "nvim/event/multiqueue.h"
@@ -789,6 +790,8 @@ static void ui_attach_error(uint32_t ns_id, const char *name, const char *msg)
 
 void ui_call_event(char *name, Array args)
 {
+  Context ctx = CONTEXT_INIT;
+  ctx_save(&ctx, kCtxCount);
   // Don't impose textlock restrictions upon UI event handlers.
   int save_expr_map_lock = expr_map_lock;
   int save_textlock = textlock;
@@ -812,8 +815,11 @@ void ui_call_event(char *name, Array args)
     }
     api_clear_error(&err);
   })
+
   expr_map_lock = save_expr_map_lock;
   textlock = save_textlock;
+  ctx_load(&ctx, kCtxCount, 0);
+  ctx_free(&ctx);
 
   if (!handled) {
     UI_CALL(true, event, ui, name, args);
