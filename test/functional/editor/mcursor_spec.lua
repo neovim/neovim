@@ -117,6 +117,13 @@ describe('multicursor', function()
       eq(1, ncursors()) -- buf2 cursor also
     end)
 
+    it("past EOL with 'virtualedit'", function()
+      command('set virtualedit=all')
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'aaa', 'bbb' })
+      feed('gg05lQjix<Esc>')
+      eq({ 'aaa  x', 'bbb  x' }, get_lines())
+    end)
+
     it('"qQ" is macro-recording, not cursor-add', function()
       -- "q" is the recording command; a stray "q" before "Q" starts recording into reg Q.
       feed('qQ')
