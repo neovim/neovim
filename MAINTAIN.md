@@ -168,6 +168,8 @@ the sources manually:
     * Vendored from LPeg. Needs to be updated when LPeg is updated.
 * `runtime/lua/vim/_meta/re.lua`: docs for LPeg regex module.
     * Needs to be updated when LPeg is updated.
+* `runtime/lua/uv/_meta.lua`: docs for `vim.uv` module.
+    * Needs to be updated when Luv is updated.
 * `src/bit.c`: only for PUC lua: port of `require'bit'` from luajit https://bitop.luajit.org/
 * `runtime/lua/coxpcall.lua`: coxpcall (only needed for PUC lua, builtin to luajit)
 
