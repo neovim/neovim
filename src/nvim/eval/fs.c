@@ -87,11 +87,7 @@ repeat:
     // Expand "~/path" for all systems and "~user/path" for Unix
     if ((*fnamep)[0] == '~'
 #ifndef UNIX
-        && ((*fnamep)[1] == '/'
-# ifdef BACKSLASH_IN_FILENAME
-            || (*fnamep)[1] == '\\'
-# endif
-            || (*fnamep)[1] == NUL)
+        && (path_is_sep((*fnamep)[1]) || (*fnamep)[1] == NUL)
 #endif
         && !(tilde_file && (*fnamep)[1] == NUL)) {
       *fnamep = expand_env_save(*fnamep);
@@ -103,13 +99,10 @@ repeat:
     }
 
     // When "/." or "/.." is used: force expansion to get rid of it.
-    for (p = *fnamep; *p != NUL; MB_PTR_ADV(p)) {
-      if (vim_ispathsep(*p)
-          && p[1] == '.'
-          && (p[2] == NUL
-              || vim_ispathsep(p[2])
-              || (p[2] == '.'
-                  && (p[3] == NUL || vim_ispathsep(p[3]))))) {
+    for (p = *fnamep; *p != NUL; p++) {
+      if (path_is_sep(*p)
+          && (path_with_component(p + 1, ".")
+              || path_with_component(p + 1, ".."))) {
         break;
       }
     }
@@ -117,7 +110,7 @@ repeat:
     // FullName_save() is slow, don't use it when not needed.
     if (*p != NUL || !vim_isAbsName(*fnamep)
 #ifdef MSWIN  // enforce drive letter on Windows paths
-        || **fnamep == '/' || **fnamep == '\\'
+        || path_is_sep(**fnamep)
 #endif
         ) {
       *fnamep = FullName_save(*fnamep, *p != NUL);
@@ -182,10 +175,8 @@ repeat:
         // even though the path does not have a prefix.
         if (path_cmp(p_fic, p, dirname, dirnamelen) == 0) {
           p += dirnamelen;
-          if (vim_ispathsep(*p)) {
-            while (*p && vim_ispathsep(*p)) {
-              p++;
-            }
+          if (path_is_sep(*p)) {
+            p = path_skip_sep(p, false);
             *fnamep = p;
             if (pbuf != NULL) {
               // free any allocated file name
@@ -1543,8 +1534,8 @@ void f_resolve(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
     char *p = xstrdup(fname);
 
-    if (p[0] == '.' && (vim_ispathsep(p[1])
-                        || (p[1] == '.' && (vim_ispathsep(p[2]))))) {
+    if (p[0] == '.' && (path_is_sep(p[1])
+                        || (p[1] == '.' && (path_is_sep(p[2]))))) {
       is_relative_to_current = true;
     }
 
@@ -1591,7 +1582,7 @@ void f_resolve(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
         // Separate the first path component in the link value and
         // concatenate the remainders.
-        q = (char *)path_next_component(vim_ispathsep(*buf) ? buf + 1 : buf);
+        q = (char *)path_next_component(path_is_sep(*buf) ? buf + 1 : buf);
         if (*q != NUL) {
           cpy = remain;
           remain = remain != NULL ? concat_str(q - 1, remain) : xstrdup(q - 1);
@@ -1642,15 +1633,11 @@ void f_resolve(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
     // If the result is a relative path name, make it explicitly relative to
     // the current directory if and only if the argument had this form.
-    if (!vim_ispathsep(*p)) {
+    if (!path_is_sep(*p)) {
       if (is_relative_to_current
           && *p != NUL
-          && !(p[0] == '.'
-               && (p[1] == NUL
-                   || vim_ispathsep(p[1])
-                   || (p[1] == '.'
-                       && (p[2] == NUL
-                           || vim_ispathsep(p[2])))))) {
+          && !path_with_component(p, ".")
+          && !path_with_component(p, "..")) {
         // Prepend "./".
         cpy = concat_str("./", p);
         xfree(p);
@@ -1658,7 +1645,7 @@ void f_resolve(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       } else if (!is_relative_to_current) {
         // Strip leading "./".
         q = p;
-        while (q[0] == '.' && vim_ispathsep(q[1])) {
+        while (q[0] == '.' && path_is_sep(q[1])) {
           q += 2;
         }
         if (q > p) {

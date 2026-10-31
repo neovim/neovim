@@ -36,11 +36,6 @@
 #include "nvim/strings.h"
 #include "nvim/vim_defs.h"
 
-enum {
-  URL_SLASH = 1,      // path_is_url() has found ":/"
-  URL_BACKSLASH = 2,  // path_is_url() has found ":\\"
-};
-
 #ifdef gen_expand_wildcards
 # undef gen_expand_wildcards
 #endif
@@ -89,6 +84,20 @@ bool path_equal(const char *s1, const char *s2, PathCmpFlags flags)
   return false;
 }
 
+/// Rewinds to the leftmost separator in the run preceding "p".
+///
+/// @param b Start of the path "p" points into (lower bound of the scan).
+/// @param p Position in a path.
+/// @return Pointer to the separator, or "p" itself.
+static char *path_back_sep(const char *b, char *p)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+{
+  while (p > b && path_is_sep(p[-1])) {
+    p--;
+  }
+  return p;
+}
+
 /// Gets the tail (filename segment) of path `fname`.
 ///
 /// Examples:
@@ -108,7 +117,7 @@ char *path_tail(const char *fname)
   const char *tail = get_past_head(fname);
   // Find last part of path.
   for (const char *p = tail; *p != NUL; p++) {
-    if (vim_ispathsep_nocolon(*p)) {
+    if (path_is_sep(*p)) {
       tail = p + 1;
     }
   }
@@ -128,12 +137,7 @@ char *path_tail_with_sep(char *fname)
   FUNC_ATTR_NONNULL_ALL
 {
   // Don't remove the '/' from "c:/file".
-  char *past_head = get_past_head(fname);
-  char *tail = path_tail(fname);
-  while (tail > past_head && after_pathsep(fname, tail)) {
-    tail--;
-  }
-  return tail;
+  return path_back_sep(get_past_head(fname), path_tail(fname));
 }
 
 /// Finds the executable name (path tail) in a program invocation.
@@ -166,7 +170,7 @@ const char *invocation_path_tail(const char *invocation, size_t *len)
   bool inquote = false;
   while (*p != NUL && (inquote || *p != ' ')) {
     int l = utfc_ptr2len(p);
-    if (vim_ispathsep_nocolon(*p)) {
+    if (path_is_sep(*p)) {
       tail = p + 1;  // Now tail points one past the separator.
       tail_end = tail;
     } else if (*p == '\\' && inquote) {
@@ -194,7 +198,7 @@ const char *invocation_path_tail(const char *invocation, size_t *len)
 const char *path_next_component(const char *fname)
   FUNC_ATTR_NONNULL_ALL
 {
-  while (*fname != NUL && !vim_ispathsep(*fname)) {
+  while (*fname != NUL && !path_is_sep(*fname)) {
     fname++;
   }
   if (*fname != NUL) {
@@ -211,39 +215,10 @@ const char *path_next_component(const char *fname)
 char *path_skip_sep(const char *path, bool colon)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_PURE
 {
-  while (colon ? vim_ispathsep(*path) : vim_ispathsep_nocolon(*path)) {
+  while (colon ? vim_ispathsep(*path) : path_is_sep(*path)) {
     path++;
   }
   return (char *)path;
-}
-
-/// Returns the length of the path head on the current platform.
-/// @return
-///   - 3 on windows
-///   - 1 otherwise
-int path_head_length(void)
-{
-#ifdef MSWIN
-  return 3;
-#else
-  return 1;
-#endif
-}
-
-/// Returns true if path begins with characters denoting the head of a path
-/// (e.g. '/' on linux and 'D:' on windows).
-/// @param path The path to be checked.
-/// @return
-///   - True if path begins with a path head
-///   - False otherwise
-bool is_path_head(const char *path)
-  FUNC_ATTR_NONNULL_ALL
-{
-#ifdef MSWIN
-  return isalpha((uint8_t)path[0]) && path[1] == ':';
-#else
-  return vim_ispathsep(*path);
-#endif
 }
 
 /// Get a pointer to one character past the head of a path name.
@@ -252,43 +227,47 @@ bool is_path_head(const char *path)
 char *get_past_head(const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
-  const char *retval = path;
-
-#ifdef MSWIN
-  // May skip "c:"
-  if (is_path_head(path)) {
-    retval = path + 2;
+  if (path_has_drive_letter(path)) {
+    path += 2;
   }
-#endif
-
-  retval = path_skip_sep(retval, true);
-
-  return (char *)retval;
+  return path_skip_sep(path, false);
 }
 
-/// @return true if 'c' is a path separator.
-/// Note that for MS-Windows this includes the colon.
+/// @return true if 'c' is a path separator, also counting ':' on Windows.
 bool vim_ispathsep(int c)
 {
 #ifdef UNIX
-  return c == '/';          // Unix has ':' inside file names
+  return c == PATHSEP;          // Unix has ':' inside file names
 #else
-# ifdef BACKSLASH_IN_FILENAME
-  return c == ':' || c == '/' || c == '\\';
-# else
-  return c == ':' || c == '/';
-# endif
+  return path_is_sep(c) || c == ':';
 #endif
 }
 
-// Like vim_ispathsep(c), but exclude the colon for MS-Windows.
-bool vim_ispathsep_nocolon(int c)
+/// @return true if 'c' is a path separator.
+bool path_is_sep(int c)
 {
-  return vim_ispathsep(c)
 #ifdef BACKSLASH_IN_FILENAME
-         && c != ':'
+  return c == PATHSEP || c == '\\';
+#else
+  return c == PATHSEP;
 #endif
-  ;
+}
+
+/// Checks if the first component of "p" matches "com".
+PathCompMatch path_with_component(const char *p, const char *com)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  assert(strchr(com, PATHSEP) == NULL);
+  int i = 0;
+  for (; com[i]; i++) {
+    if (p[i] != com[i]) {
+      return kPathCompNone;
+    }
+  }
+  if (p[i] == NUL) {
+    return kPathCompNul;
+  }
+  return path_is_sep(p[i]) ? kPathCompSep : kPathCompNone;
 }
 
 /// @return true if 'c' is a path list separator.
@@ -587,7 +566,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
     // be removed by rem_backslash() or file_pat_to_reg_pat() below.
     if (path_end >= path + wildoff && rem_backslash(path_end)) {
       *p++ = *path_end++;
-    } else if (vim_ispathsep_nocolon(*path_end)) {
+    } else if (vim_ispathsep(*path_end)) {  // expand "c:" to "c:foo" like vim
       if (e != NULL) {
         break;
       }
@@ -744,25 +723,22 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
   return matches;
 }
 
-// Moves "*psep" back to the previous path separator in "path".
-// Returns FAIL is "*psep" ends up at the beginning of "path".
-static int find_previous_pathsep(char *path, char **psep)
-  FUNC_ATTR_NONNULL_ALL
+/// Rewinds to the separator preceding the component containing "p".
+/// Separators at "p" are skipped first.
+///
+/// @param b Start of the path "p" points into (lower bound of the scan).
+/// @param p Position in a path.
+/// @return Pointer to the separator, or "b" if there is none.
+char *path_prev_sep(const char *b, char *p)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  // skip the current separator
-  if (*psep > path && vim_ispathsep(**psep)) {
-    (*psep)--;
+  while (p > b && path_is_sep(*p)) {
+    p--;
   }
-
-  // find the previous separator
-  while (*psep > path) {
-    if (vim_ispathsep(**psep)) {
-      return OK;
-    }
-    MB_PTR_BACK(path, *psep);
+  while (p > b && !path_is_sep(*p)) {
+    p--;
   }
-
-  return FAIL;
+  return p;
 }
 
 /// Returns true if "maybe_unique" is unique wrt other_paths in "gap".
@@ -783,7 +759,7 @@ static bool is_unique(char *maybe_unique, garray_T *gap, int i)
     }
     char *rival = other_paths[j] + other_path_len - candidate_len;
     if (path_equal(maybe_unique, rival, kPathCmpLiteral)
-        && (rival == other_paths[j] || vim_ispathsep(*(rival - 1)))) {
+        && (rival == other_paths[j] || path_is_sep(*(rival - 1)))) {
       return false;  // match
     }
   }
@@ -813,7 +789,7 @@ static void expand_path_option(char *curdir, char *path_option, garray_T *gap)
       continue;
     }
 
-    if (buf[0] == '.' && (buf[1] == NUL || vim_ispathsep(buf[1]))) {
+    if (path_with_component(buf, ".")) {
       // Relative to current buffer:
       // "/path/file" + "." -> "/path/"
       // "/path/file"  + "./subdir" -> "/path/subdir"
@@ -876,12 +852,8 @@ static char *get_path_cutoff(char *fname, garray_T *gap)
   for (int i = 0; i < gap->ga_len; i++) {
     int j = 0;
 
-    while ((fname[j] == path_part[i][j]
-#ifdef MSWIN
-            || (vim_ispathsep(fname[j]) && vim_ispathsep(path_part[i][j]))
-#endif
-            )
-           && fname[j] != NUL && path_part[i][j] != NUL) {
+    // caller already normalizes separators to "/"
+    while (fname[j] == path_part[i][j] && fname[j] != NUL) {
       j++;
     }
     if (j > maxlen) {
@@ -892,7 +864,7 @@ static char *get_path_cutoff(char *fname, garray_T *gap)
 
   // skip to the file or directory name
   if (cutoff != NULL) {
-    cutoff = path_skip_sep(cutoff, true);
+    cutoff = path_skip_sep(cutoff, false);
   }
 
   return cutoff;
@@ -945,9 +917,9 @@ static void uniquefy_paths(garray_T *gap, char *pattern, char *path_option)
 
   for (int i = 0; i < gap->ga_len && !got_int; i++) {
     char *path = fnames[i];
-    const char *dir_end = gettail_dir(path);
-
     len = strlen(path);
+    assert(len > 0);
+    const char *dir_end = path_back_sep(path, path_prev_sep(path, path + len - 1));
     bool is_in_curdir = path_cmp(p_fic, curdir, path, (size_t)(dir_end - path)) == 0
                         && curdir[dir_end - path] == NUL;
     if (is_in_curdir) {
@@ -961,7 +933,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern, char *path_option)
     // pattern starts with **/, so only remove path_cutoff
     // when possible.
     if (pattern[0] == '*' && pattern[1] == '*'
-        && vim_ispathsep_nocolon(pattern[2])
+        && path_is_sep(pattern[2])
         && path_cutoff != NULL
         && vim_regexec(&regmatch, path_cutoff, 0)
         && is_unique(path_cutoff, gap, i)) {
@@ -971,7 +943,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern, char *path_option)
       // Here all files can be reached without path, so get shortest
       // unique path.  We start at the end of the path.
       char *pathsep_p = path + len - 1;
-      while (find_previous_pathsep(path, &pathsep_p)) {
+      while ((pathsep_p = path_prev_sep(path, pathsep_p)) > path) {
         if (vim_regexec(&regmatch, pathsep_p + 1, 0)
             && is_unique(pathsep_p + 1, gap, i)
             && path_cutoff != NULL && pathsep_p + 1 >= path_cutoff) {
@@ -1043,37 +1015,6 @@ static void uniquefy_paths(garray_T *gap, char *pattern, char *path_option)
   if (sort_again) {
     ga_remove_duplicate_strings(gap);
   }
-}
-
-/// Find end of the directory name
-///
-/// @param[in]  fname  File name to process.
-///
-/// @return end of the directory name, on the first path separator:
-///
-///            "/path/file", "/path/dir/", "/path//dir", "/file"
-///                  ^             ^             ^        ^
-const char *gettail_dir(const char *const fname)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
-{
-  const char *dir_end = fname;
-  const char *next_dir_end = fname;
-  bool look_for_sep = true;
-
-  for (const char *p = fname; *p != NUL; p++) {
-    if (vim_ispathsep(*p)) {
-      if (look_for_sep) {
-        next_dir_end = p;
-        look_for_sep = false;
-      }
-    } else {
-      if (!look_for_sep) {
-        dir_end = next_dir_end;
-      }
-      look_for_sep = true;
-    }
-  }
-  return dir_end;
 }
 
 /// Calls globpath() with 'path' values for the given pattern and stores the
@@ -1267,10 +1208,8 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
       if (path_has_wildcard(p, false) || (flags & EW_ICASE)) {
         if ((flags & (EW_PATH | EW_CDPATH))
             && !path_is_absolute(p)
-            && !(p[0] == '.'
-                 && (vim_ispathsep(p[1])
-                     || (p[1] == '.'
-                         && vim_ispathsep(p[2]))))) {
+            && path_with_component(p, ".") != kPathCompSep
+            && path_with_component(p, "..") != kPathCompSep) {
           // :find completion where 'path' is used.
           // Recursiveness is OK here.
           recursive = false;
@@ -1511,19 +1450,9 @@ size_t simplify_filename(char *filename)
 {
   int components = 0;
   bool stripping_disabled = false;
-  bool relative = true;
 
-  char *p = filename;
-#ifdef BACKSLASH_IN_FILENAME
-  if (p[0] != NUL && p[1] == ':') {        // skip "x:"
-    p += 2;
-  }
-#endif
-
-  if (vim_ispathsep(*p)) {
-    relative = false;
-    p = path_skip_sep(p, true);
-  }
+  char *p = get_past_head(filename);  // skip "x:"
+  bool relative = p == filename || !path_is_sep(p[-1]);
   char *start = p;        // remember start after "c:/" or "/" or "///"
   char *p_end = p + strlen(p);  // point to NUL at end of string "p"
 #ifdef UNIX
@@ -1538,11 +1467,10 @@ size_t simplify_filename(char *filename)
   do {
     // At this point "p" is pointing to the char following a single "/"
     // or "p" is at the "start" of the (absolute or relative) path name.
-    if (vim_ispathsep(*p)) {
+    if (path_is_sep(*p)) {
       memmove(p, p + 1, (size_t)(p_end - (p + 1)) + 1);  // remove duplicate "/"
       p_end--;
-    } else if (p[0] == '.'
-               && (vim_ispathsep(p[1]) || p[1] == NUL)) {
+    } else if (path_with_component(p, ".")) {
       if (p == start && relative) {
         p += 1 + (p[1] != NUL);         // keep single "." or leading "./"
       } else {
@@ -1552,17 +1480,16 @@ size_t simplify_filename(char *filename)
         // of an absolute path name.
         char *tail = p + 1;
         if (p[1] != NUL) {
-          tail = path_skip_sep(tail, true);
+          tail = path_skip_sep(tail, false);
         } else if (p > start) {
           p--;                          // strip preceding path separator
         }
         memmove(p, tail, (size_t)(p_end - tail) + 1);
         p_end -= (size_t)(tail - p);
       }
-    } else if (p[0] == '.' && p[1] == '.'
-               && (vim_ispathsep(p[2]) || p[2] == NUL)) {
+    } else if (path_with_component(p, "..")) {
       // Skip to after ".." or "../" or "..///".
-      char *tail = path_skip_sep(p + 2, true);
+      char *tail = path_skip_sep(p + 2, false);
 
       if (components > 0) {             // strip one preceding component
         bool do_strip = false;
@@ -1678,62 +1605,42 @@ size_t simplify_filename(char *filename)
   return (size_t)(p_end - filename);
 }
 
-/// Checks for a Windows drive letter ("C:/") at the start of the path.
-///
-/// @see https://url.spec.whatwg.org/#start-with-a-windows-drive-letter
-bool path_has_drive_letter(const char *p, size_t path_len)
+/// Checks for a Windows drive letter ("C:") at the start of the path.
+bool path_has_drive_letter(const char *p)
   FUNC_ATTR_NONNULL_ALL
 {
-  return path_len >= 2
-         && ASCII_ISALPHA(p[0])
-         && (p[1] == ':' || p[1] == '|')
-         && (path_len == 2 || ((p[2] == '/') | (p[2] == '\\') | (p[2] == '?') | (p[2] == '#')));
+#ifdef MSWIN
+  return ASCII_ISALPHA(p[0]) && p[1] == ':';
+#else
+  return false;
+#endif
 }
 
-// Check if the ":/" of a URL is at the pointer, return URL_SLASH.
-// Also check for ":\\", which MS Internet Explorer accepts, return
-// URL_BACKSLASH.
-int path_is_url(const char *p)
-  FUNC_ATTR_NONNULL_ALL
-{
-  // In the spec ':' is enough to recognize a scheme
-  // https://url.spec.whatwg.org/#scheme-state
-  if (strncmp(p, ":/", 2) == 0) {
-    return URL_SLASH;
-  } else if (strncmp(p, ":\\\\", 3) == 0) {
-    return URL_BACKSLASH;
-  }
-  return 0;
-}
-
-/// Check if "fname" starts with "name:/" or "name:\".
+/// Check if "fname" starts with "scheme:/".
 ///
 /// @param  fname         is the filename to test
-/// @return URL_SLASH for "name:/", URL_BACKSLASH for "name:\", zero otherwise.
-int path_with_url(const char *fname)
+/// @return true for "scheme:/", false otherwise.
+bool path_with_url(const char *fname)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *p;
 
-  // first character must be alpha
-  if (!ASCII_ISALPHA(*fname)) {
-    return 0;
+  // First character must be alpha.
+  // Also reject drive-letter paths and we don't need to support single-letter schemes: "c:"
+  if (!ASCII_ISALPHA(*fname) || fname[1] == ':') {
+    return false;
   }
 
-  if (path_has_drive_letter(fname, strlen(fname))) {
-    return 0;
-  }
-
-  // check body: (alpha, digit, '+', '-', '.') following RFC3986
+  // Check body: (alpha, digit, '+', '-', '.') following RFC3986
   for (p = fname + 1; (ASCII_ISALNUM(*p) || (*p == '+') || (*p == '-') || (*p == '.')); p++) {}
 
-  // check last char is not '+', '-', or '.'
+  // Check last char is not '+', '-', or '.'
   if ((p[-1] == '+') || (p[-1] == '-') || (p[-1] == '.')) {
-    return 0;
+    return false;
   }
 
-  // ":/" or ":\\" must follow
-  return path_is_url(p);
+  // ":/" must follow
+  return strncmp(p, ":/", 2) == 0;
 }
 
 bool path_with_extension(const char *path, const char *extension)
@@ -1750,7 +1657,7 @@ bool path_with_extension(const char *path, const char *extension)
 bool vim_isAbsName(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  return path_with_url(name) != 0 || path_is_absolute(name);
+  return path_with_url(name) || path_is_absolute(name);
 }
 
 /// Save absolute file name to "buf[len]".
@@ -1812,8 +1719,7 @@ char *fix_fname(const char *fname)
       || strstr(fname, "\\\\") != NULL
 # endif
 # ifdef MSWIN
-      || fname[0] == '/'
-      || fname[0] == '\\'
+      || path_is_sep(fname[0])
 # endif
       ) {
     return FullName_save(fname, false);
@@ -1891,8 +1797,8 @@ void path_fix_case(char *name)
 int after_pathsep(const char *b, const char *p)
   FUNC_ATTR_NONNULL_ALL
 {
-  return p > b && vim_ispathsep(p[-1])
-         && utf_head_off(b, p - 1) == 0;
+  return p > b && (path_is_sep(p[-1])
+                   || (path_has_drive_letter(b) && p == b + 2));
 }
 
 /// Return true if file names "f1" and "f2" are in the same directory.
@@ -1918,7 +1824,7 @@ bool same_directory(char *f1, char *f2)
 int path_fold_char(bool ic, const char *p, int *len)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (vim_ispathsep_nocolon(*p)) {
+  if (path_is_sep(*p)) {
     *len = 1;
     return PATHSEP;
   }
@@ -1956,9 +1862,9 @@ int path_cmp(bool ic, const char *p, const char *q, size_t maxlen)
 
 #ifdef MSWIN
   const char **pp = NULL;
-  if (vim_ispathsep_nocolon(*p) && ASCII_ISALPHA(*q) && q[1] == ':') {
+  if (path_is_sep(*p) && path_has_drive_letter(q)) {
     pp = &q;
-  } else if (vim_ispathsep_nocolon(*q) && ASCII_ISALPHA(*p) && p[1] == ':') {
+  } else if (path_is_sep(*q) && path_has_drive_letter(p)) {
     pp = &p;
   }
   if (pp && TOLOWER_ASC(**pp) == _getdrive() + 'a' - 1) {
@@ -1981,10 +1887,10 @@ int path_cmp(bool ic, const char *p, const char *q, size_t maxlen)
   }
 
   if (c1 != NUL && c2 != NUL) {
-    if (vim_ispathsep(c1)) {
+    if (path_is_sep(c1)) {
       return -1;
     }
-    if (vim_ispathsep(c2)) {
+    if (path_is_sep(c2)) {
       return 1;
     }
     return c1 - c2;
@@ -1992,7 +1898,7 @@ int path_cmp(bool ic, const char *p, const char *q, size_t maxlen)
 
   s = c1 == NUL ? q : p;
   // match with a single trailing slash, but not "//" or ":/"
-  if (vim_ispathsep_nocolon(*s)
+  if (path_is_sep(*s)
       && s[1] == NUL
       && len > 0
       && !vim_ispathsep(s[-1])) {
@@ -2046,22 +1952,17 @@ char *path_shorten_fname(char *full_path, char *dir_name)
     return NULL;
   }
 
-  // If dir_name is a path head, full_path can always be made relative.
-  if (len == (size_t)path_head_length() && is_path_head(dir_name)) {
-    return full_path + len;
-  }
-
   char *p = full_path + len;
 
   // If *p is not pointing to a path separator, this means that full_path's
   // last directory name is longer than *dir_name's last directory, so they
   // don't actually match.
-  if (!vim_ispathsep(*p)) {
+  if (!path_is_sep(*p) && !path_is_sep(p[-1])) {
     return NULL;
   }
 
   // Skip the matched separator, then any following separators (but not a colon).
-  return path_skip_sep(p + 1, false);
+  return path_skip_sep(p, false);
 }
 
 /// Invoke expand_wildcards() for one pattern
@@ -2271,7 +2172,7 @@ int append_path(char *path, const char *to_append, size_t max_len)
   }
 
   // Combine the path segments, separated by a slash.
-  if (current_length > 0 && !vim_ispathsep_nocolon(path[current_length - 1])) {
+  if (current_length > 0 && !path_is_sep(path[current_length - 1])) {
     // +1 for the NUL at the end.
     if (current_length + STRLEN_LITERAL(PATHSEPSTR) + 1 > max_len) {
       return FAIL;  // No space for trailing slash.
@@ -2300,51 +2201,33 @@ int append_path(char *path, const char *to_append, size_t max_len)
 static int path_to_absolute(const char *fname, char *buf, size_t len, int force)
   FUNC_ATTR_NONNULL_ALL
 {
-  const char *p;
+  const char *p = fname;
   *buf = NUL;
-
-  char *relative_directory = xmalloc(len);
-  const char *end_of_path = fname;
 
   // expand it if forced or not an absolute path
   if (force || !path_is_absolute(fname)
 #ifdef MSWIN  // enforce drive letter on Windows paths
-      || fname[0] == '/' || fname[0] == '\\'
+      || path_is_sep(fname[0])
 #endif
       ) {
-    p = strrchr(fname, '/');
-#ifdef MSWIN
-    if (p == NULL) {
-      p = strrchr(fname, '\\');
+    p = path_tail(fname);
+    if (strcmp(p, "..") == 0) {
+      p += 2;
     }
-    if (p == NULL && ASCII_ISALPHA(fname[0]) && fname[1] == ':') {  // drive letter
-      p = fname + 1;
+
+    char *relative_directory = xmalloc(len);
+    if (p > fname) {
+      memcpy(relative_directory, fname, (size_t)(p - fname));
     }
-#endif
-    if (p == NULL && strcmp(fname, "..") == 0) {
-      // Handle ".." without path separators.
-      p = fname + 2;
-    }
-    if (p != NULL) {
-      if (vim_ispathsep(*p) && strcmp(p + 1, "..") == 0) {
-        // For "/path/dir/.." include the "/..".
-        p += 3;
-      }
-      assert(p >= fname);
-      memcpy(relative_directory, fname, (size_t)(p - fname + 1));
-      relative_directory[p - fname + 1] = NUL;
-      end_of_path = (vim_ispathsep(*p) ? p + 1 : p);
-    } else {
-      relative_directory[0] = NUL;
-    }
+    relative_directory[p - fname] = NUL;
 
     if (FAIL == path_full_dir_name(relative_directory, buf, len)) {
       xfree(relative_directory);
       return FAIL;
     }
+    xfree(relative_directory);
   }
-  xfree(relative_directory);
-  return append_path(buf, end_of_path, len);
+  return append_path(buf, p, len);
 }
 
 /// Check if file `fname` is a full (absolute) path.
@@ -2354,13 +2237,9 @@ bool path_is_absolute(const char *fname)
   FUNC_ATTR_NONNULL_ALL
 {
 #ifdef MSWIN
-  if (*fname == NUL) {
-    return false;
-  }
   // A name like "d:/foo" and "//server/share" is absolute
   // /foo and \foo are absolute too because Windows keeps a current drive.
-  return ((ASCII_ISALPHA(fname[0]) && fname[1] == ':' && vim_ispathsep_nocolon(fname[2]))
-          || vim_ispathsep_nocolon(fname[0]));
+  return (path_has_drive_letter(fname) && path_is_sep(fname[2])) || path_is_sep(fname[0]);
 #else
   // UNIX: This just checks if the file name starts with '/' or '~'.
   return *fname == '/' || *fname == '~';
