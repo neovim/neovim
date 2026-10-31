@@ -68,8 +68,8 @@ function! s:set_osc52() abort
 endfunction
 
 function! s:set_pbcopy() abort
-  let s:copy['+'] = ['pbcopy']
-  let s:paste['+'] = ['pbpaste']
+  let s:copy['+'] = ['env', '-u', 'LC_ALL', 'LC_CTYPE=UTF-8', 'pbcopy']
+  let s:paste['+'] = ['env', '-u', 'LC_ALL', 'LC_CTYPE=UTF-8', 'pbpaste']
   let s:copy['*'] = s:copy['+']
   let s:paste['*'] = s:paste['+']
   let s:cache_enabled = 0
