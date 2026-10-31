@@ -132,7 +132,6 @@ typedef enum {
 
 #include "drawscreen.c.generated.h"
 
-static bool redraw_popupmenu = false;
 static bool msg_grid_invalid = false;
 static bool resizing_autocmd = false;
 static bool conceal_cursor_used = false;
@@ -243,7 +242,6 @@ void screenclear(void)
   cmdline_was_last_drawn = false;
   redraw_cmdline = true;
   redraw_tabline = true;
-  redraw_popupmenu = true;
   pum_invalidate();
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_floating) {
@@ -388,7 +386,6 @@ void screen_resize(int width, int height)
         do_check_scrollbind(true);
       }
       if (State & MODE_CMDLINE) {
-        redraw_popupmenu = false;
         update_screen();
         redrawcmdline();
         if (pum_drawn()) {
@@ -400,7 +397,6 @@ void screen_resize(int width, int height)
           // TODO(bfredl): ins_compl_show_pum wants to redraw the screen first.
           // For now make sure the nested update_screen() won't redraw the
           // pum at the old position. Try to untangle this later.
-          redraw_popupmenu = false;
           ins_compl_show_pum();
         }
         update_screen();

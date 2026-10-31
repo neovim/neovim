@@ -614,6 +614,7 @@ Object api_metadata(void)
       abort();
     }
     mem_for_metadata = arena_finish(&arena);
+    (void)mem_for_metadata;
   }
 
   return metadata;
