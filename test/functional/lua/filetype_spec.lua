@@ -98,6 +98,24 @@ describe('vim.filetype', function()
     )
   end)
 
+  it('does not make URI buffer names absolute #42598', function()
+    eq(
+      'fugitive:///repo/.git//0/models/a.sql',
+      exec_lua(function()
+        local seen
+        vim.filetype.add({
+          pattern = {
+            ['.*%.sql'] = function(path)
+              seen = path
+            end,
+          },
+        })
+        vim.filetype.match({ filename = 'fugitive:///repo/.git//0/models/a.sql' })
+        return seen
+      end)
+    )
+  end)
+
   it('works without defined g:ft_ignore_pat', function()
     local match_opts = { filename = 'unknown-ft', buf = api.nvim_create_buf(false, true) }
     eq(
