@@ -108,7 +108,7 @@ typedef struct {
 static struct {
   CmdOrigin origin;  ///< State at session start: the session's atoms diff against it.
   kvec_t(uint32_t) regions;  ///< Per-cursor preview regions (`mc_session_ns`).
-  kvec_t(uint32_t) owners;   ///< Cursor mark of each region. A removed cursor keeps its preview.
+  kvec_t(uint32_t) owners;  ///< Cursor mark of each region (0: cursor removed, preview stays).
   bool active;      ///< Current insert-session is cascading.
   bool first;       ///< Entry-command not yet cascaded (no span pushed yet).
   uint64_t frame;   ///< Root frame that started the insert-session.
@@ -702,9 +702,17 @@ static void mc_ins_preview_rebase(void)
   }
 }
 
-/// First live per-cursor preview region, or `start.id == 0` if none. A live region's buffer
-/// content is the applied preview text, and `start == end` means no preview is applied.
-/// All live regions hold the same preview, so any one represents the batch.
+/// True if the cursor of preview region `i` still exists.
+static bool mc_ins_region_owned(size_t i)
+{
+  pos_T pos;
+  return kv_A(mc_ins_span.owners, i) != 0
+         && extmark_get_pos(curbuf, mc_ns(), kv_A(mc_ins_span.owners, i), &pos);
+}
+
+/// First live per-cursor preview region (its cursor still exists), or `start.id == 0` if none.
+/// A live region's buffer content is the applied preview text, and `start == end` means no
+/// preview is applied. All live regions hold the same preview, so any one represents the batch.
 static MTPair mc_ins_region_first(void)
 {
   for (size_t i = 0; i < kv_size(mc_ins_span.regions); i++) {
@@ -714,13 +722,6 @@ static MTPair mc_ins_region_first(void)
     }
   }
   return (MTPair){ 0 };
-}
-
-/// True if the cursor of preview region `i` still exists.
-static bool mc_ins_region_owned(size_t i)
-{
-  pos_T pos;
-  return extmark_get_pos(curbuf, mc_ns(), kv_A(mc_ins_span.owners, i), &pos);
 }
 
 /// The buffer range (start/end positions) of region mark `p`.
@@ -1717,6 +1718,15 @@ void mc_ns_cleared(buf_T *buf, uint32_t ns_id)
       }
       uint32_t mark = 0;
       extmark_set_pos(buf, mc_last_ns(), &mark, ctx->pos, true, false, false);
+    }
+  }
+  if (buf == curbuf) {
+    // Detach the previews of the removed cursors now: a full clear resets the mark ids, so a new
+    // cursor could reuse one.
+    for (size_t i = 0; i < kv_size(mc_ins_span.owners); i++) {
+      if (!mc_ins_region_owned(i)) {
+        kv_A(mc_ins_span.owners, i) = 0;
+      }
     }
   }
   mc_cleanup(false, NULL, 0);
