@@ -1570,7 +1570,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   if (fname_io == NULL) {
     if (event == EVENT_COLORSCHEME || event == EVENT_COLORSCHEMEPRE
         || event == EVENT_OPTIONSET || event == EVENT_MODECHANGED
-        || event == EVENT_MARKSET) {
+        || event == EVENT_MARKSET || event == EVENT_REGISTERCHANGED) {
       autocmd_fname = NULL;
     } else if (fname != NULL && !ends_excmd(*fname)) {
       autocmd_fname = fname;
@@ -1640,6 +1640,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
         || event == EVENT_PROGRESS
         || event == EVENT_QUICKFIXCMDPOST
         || event == EVENT_QUICKFIXCMDPRE
+        || event == EVENT_REGISTERCHANGED
         || event == EVENT_REMOTEREPLY
         || event == EVENT_SIGNAL
         || event == EVENT_SPELLFILEMISSING
