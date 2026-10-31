@@ -916,6 +916,7 @@ local extension = {
   nimble = 'nim',
   ninja = 'ninja',
   nix = 'nix',
+  nlp = 'nlp',
   norg = 'norg',
   nq = 'nq',
   nqc = 'nqc',
