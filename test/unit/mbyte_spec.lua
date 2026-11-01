@@ -366,6 +366,13 @@ describe('mbyte', function()
     -- stylua: ignore start
     check('hej och hå 🧑‍🌾!', { 'å', '🧑‍🌾' })
 
+    -- GB9c needs Indic linker context when finding a cluster's start.
+    check('क्ष', { 'क्ष' })
+    check('क्‍ष', { 'क्‍ष' })
+    check('्क', { '्क' })
+    check('़्क', { '़्क' })
+    check('a्क', { 'a्क' })
+
     -- emoji (various kinds of combinations, use g8 to see them)
     check("🏳️‍⚧️🧑‍🌾❤️😂🏴‍☠️", {"🏳️‍⚧️", "🧑‍🌾", "❤️", "😂", "🏴‍☠️"})
     check('🏳️‍⚧️xy🧑‍🌾\r❤️😂å🏴‍☠️', { '🏳️‍⚧️', '🧑‍🌾', '❤️', '😂', 'å', '🏴‍☠️', '' })
