@@ -4771,7 +4771,7 @@ M.funcs = {
       	Key		Description ~
       	regcontents	List of lines contained in register
       			{regname}, like
-      			getreg({regname}, 1, 1).
+      			getreg({regname}, 1, 1), see |getreg()|.
       	regtype		the type of register {regname}, as in
       			|getregtype()|.
       	isunnamed	Boolean flag, v:true if this register
