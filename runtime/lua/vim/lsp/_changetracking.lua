@@ -31,6 +31,7 @@ local M = {}
 --- @field name string name of the buffer
 --- @field lines string[] snapshot of buffer lines from last didChange
 --- @field lines_tmp string[]
+--- @field eol boolean snapshot of the buffer's 'endofline' option
 --- @field pending_changes table[] List of debounced changes in incremental sync mode
 --- @field timer? uv.uv_timer_t uv_timer
 --- @field last_flush? number uv.hrtime of the last flush/didChange-notification
@@ -86,6 +87,8 @@ end
 local function incremental_changes(state, encoding, bufnr, firstline, lastline, new_lastline)
   local prev_lines = state.lines
   local curr_lines = state.lines_tmp
+  local prev_eol = state.eol
+  local curr_eol = vim.bo[bufnr].endofline
 
   local changed_lines = api.nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
   for i = 1, firstline do
@@ -110,7 +113,9 @@ local function incremental_changes(state, encoding, bufnr, firstline, lastline, 
     lastline,
     new_lastline,
     encoding,
-    line_ending
+    line_ending,
+    prev_eol,
+    curr_eol
   )
 
   -- Double-buffering of lines tables is used to reduce the load on the garbage collector.
@@ -123,6 +128,7 @@ local function incremental_changes(state, encoding, bufnr, firstline, lastline, 
   end
   state.lines = curr_lines
   state.lines_tmp = prev_lines
+  state.eol = curr_eol
 
   return incremental_change
 end
@@ -153,6 +159,7 @@ function M.init(client, bufnr)
       name = api.nvim_buf_get_name(bufnr),
       lines = {},
       lines_tmp = {},
+      eol = vim.bo[bufnr].endofline,
       pending_changes = {},
       needs_flush = false,
       refs = 1,
