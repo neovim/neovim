@@ -51,6 +51,22 @@ func Test_filter_map_dict_expr_string()
   call assert_equal({"foo": "f", "bar": "b", "baz": "b"}, dict01)
 endfunc
 
+func Test_filter_dict_many_items()
+  let dict = {}
+  let suffix = repeat('x', 64)
+  for index in range(2000)
+    let dict[printf('%04d-', index) .. suffix] = index
+  endfor
+
+  call filter(dict, 'v:val % 2')
+  call assert_equal(range(1, 1999, 2), sort(values(dict), 'n'))
+  call filter(dict, 0)
+  call assert_equal({}, dict)
+
+  let dict.after = 'filter'
+  call assert_equal(#{after: 'filter'}, dict)
+endfunc
+
 " list with funcref
 func Test_filter_map_list_expr_funcref()
   " filter()
