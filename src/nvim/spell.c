@@ -2608,7 +2608,8 @@ bool check_need_cap(win_T *wp, linenr_T lnum, colnr_T col)
       }
     }
   } else {
-    endcol = col;
+    colnr_T len = (colnr_T)strlen(line);
+    endcol = MIN(col, len);
   }
 
   if (endcol > 0) {
