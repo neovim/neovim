@@ -60,7 +60,7 @@ function lsp._get_workspace_folders(workspace_folders)
   elseif type(workspace_folders) == 'string' then
     return {
       {
-        uri = vim.uri_from_fname(workspace_folders),
+        uri = vim.uri.from_fname(workspace_folders),
         name = workspace_folders,
       },
     }
@@ -916,7 +916,7 @@ local function buf_attach(bufnr)
   end
   attached_buffers[bufnr] = true
 
-  local uri = vim.uri_from_bufnr(bufnr)
+  local uri = vim.uri.from_buf(bufnr)
   local augroup = ('nvim.lsp.b_%d_save'):format(bufnr)
   local group = api.nvim_create_augroup(augroup, { clear = true })
   nvim_on('BufWritePre', group, {

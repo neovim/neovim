@@ -8,9 +8,30 @@ local clear = n.clear
 local feed = n.feed
 local eq = t.eq
 local exec_lua = n.exec_lua
-local next_msg = n.next_msg
 local NIL = vim.NIL
 local pcall_err = t.pcall_err
+
+--- Calls `vim.*` functions in a thread. Returns the results as an mpack-encoded table.
+local vim_fns = [[
+  return vim.mpack.encode({
+    diff = vim.diff('Hello\n', 'Helli\n'),
+    is_thread = vim.is_thread(),
+    json = vim.json.decode(vim.json.encode({ 33, vim.NIL, 'text' })),
+    mpack = vim.mpack.decode(vim.mpack.encode({ 33, vim.NIL, 'text' })),
+    path_is_url = vim._core.path_is_url('deno:/a'),
+    uri = vim.uri.to_fname('file:///a') .. vim.uri_to_fname('file:///b'),
+    uv = vim.uv.version() >= 72961,
+  })
+]]
+local vim_fns_expected = {
+  diff = '@@ -1 +1 @@\n-Hello\n+Helli\n',
+  is_thread = true,
+  json = { 33, NIL, 'text' },
+  mpack = { 33, NIL, 'text' },
+  path_is_url = true,
+  uri = '/a/b',
+  uv = true,
+}
 
 describe('thread', function()
   local screen
@@ -119,149 +140,30 @@ describe('thread', function()
     end)
   end)
 
-  describe('vim.*', function()
-    before_each(function()
-      clear()
-      exec_lua [[
-        Thread_Test = {}
-
-        Thread_Test.entry_func = function(async, entry_str, args)
-          local decoded_args = vim.mpack.decode(args)
-          assert(loadstring(entry_str))(async, decoded_args)
-        end
-
-        function Thread_Test:do_test()
-          local async
-          local on_async = self.on_async
-          async = vim.uv.new_async(function(ret)
-            on_async(ret)
-            async:close()
-          end)
-          local thread =
-            vim.uv.new_thread(self.entry_func, async, self.entry_str, self.args)
-          vim.uv.thread_join(thread)
-        end
-
-        Thread_Test.new = function(entry, on_async, ...)
-          self = {}
-          setmetatable(self, {__index = Thread_Test})
-          self.args = vim.mpack.encode({...})
-          self.entry_str = string.dump(entry)
-          self.on_async = on_async
-          return self
-        end
-      ]]
-    end)
-
-    it('is_thread', function()
-      exec_lua [[
-        local entry = function(async)
-          async:send(vim.is_thread())
-        end
-        local on_async = function(ret)
-          vim.rpcnotify(1, 'result', ret)
-        end
-        local thread_test = Thread_Test.new(entry, on_async)
-        thread_test:do_test()
-      ]]
-
-      eq({ 'notification', 'result', { true } }, next_msg())
-    end)
-
-    it('uv', function()
-      exec_lua [[
-        local entry = function(async)
-          async:send(vim.uv.version())
-        end
-        local on_async = function(ret)
-          vim.rpcnotify(1, ret)
-        end
-        local thread_test = Thread_Test.new(entry, on_async)
-        thread_test:do_test()
-      ]]
-
-      local msg = next_msg()
-      eq('notification', msg[1])
-      assert(tonumber(msg[2]) >= 72961)
-    end)
-
-    it('mpack', function()
-      exec_lua [[
-        local entry = function(async)
-          async:send(vim.mpack.encode({33, vim.NIL, 'text'}))
-        end
-        local on_async = function(ret)
-          vim.rpcnotify(1, 'result', vim.mpack.decode(ret))
-        end
-        local thread_test = Thread_Test.new(entry, on_async)
-        thread_test:do_test()
-      ]]
-
-      eq({ 'notification', 'result', { { 33, NIL, 'text' } } }, next_msg())
-    end)
-
-    it('json', function()
-      exec_lua [[
-        local entry = function(async)
-        async:send(vim.json.encode({33, vim.NIL, 'text'}))
-        end
-        local on_async = function(ret)
-        vim.rpcnotify(1, 'result', vim.json.decode(ret))
-        end
-        local thread_test = Thread_Test.new(entry, on_async)
-        thread_test:do_test()
-      ]]
-
-      eq({ 'notification', 'result', { { 33, NIL, 'text' } } }, next_msg())
-    end)
-
-    it('diff', function()
-      exec_lua [[
-        local entry = function(async)
-          async:send(vim.diff('Hello\n', 'Helli\n'))
-        end
-        local on_async = function(ret)
-          vim.rpcnotify(1, 'result', ret)
-        end
-        local thread_test = Thread_Test.new(entry, on_async)
-        thread_test:do_test()
-      ]]
-
-      eq({
-        'notification',
-        'result',
-        {
-          table.concat({
-            '@@ -1 +1 @@',
-            '-Hello',
-            '+Helli',
-            '',
-          }, '\n'),
-        },
-      }, next_msg())
-    end)
+  it('vim.* functions', function()
+    eq(
+      vim_fns_expected,
+      exec_lua(function()
+        local result --- @type table?
+        local async = assert(vim.uv.new_async(function(ret)
+          result = vim.mpack.decode(ret)
+        end))
+        local thread = assert(vim.uv.new_thread(function(async_, code)
+          async_:send(assert(loadstring(code))())
+        end, async, vim_fns))
+        vim.uv.thread_join(thread)
+        vim.wait(2000, function()
+          return result ~= nil
+        end)
+        async:close()
+        return result
+      end)
+    )
   end)
 end)
 
 describe('threadpool', function()
   before_each(clear)
-
-  it('is_thread', function()
-    eq(false, exec_lua [[return vim.is_thread()]])
-
-    exec_lua [[
-      local work_fn = function()
-        return vim.is_thread()
-      end
-      local after_work_fn = function(ret)
-        vim.rpcnotify(1, 'result', ret)
-      end
-      local work = vim.uv.new_work(work_fn, after_work_fn)
-      work:queue()
-    ]]
-
-    eq({ 'notification', 'result', { true } }, next_msg())
-  end)
 
   it('with invalid argument', function()
     local status = pcall_err(
@@ -293,107 +195,23 @@ describe('threadpool', function()
     ]])
   end)
 
-  describe('vim.*', function()
-    before_each(function()
-      clear()
-      exec_lua [[
-        Threadpool_Test = {}
-
-        Threadpool_Test.work_fn = function(work_fn_str, args)
-          local decoded_args = vim.mpack.decode(args)
-          return assert(loadstring(work_fn_str))(decoded_args)
-        end
-
-        function Threadpool_Test:do_test()
-          local work =
-            vim.uv.new_work(self.work_fn, self.after_work)
-          work:queue(self.work_fn_str, self.args)
-        end
-
-        Threadpool_Test.new = function(work_fn, after_work, ...)
-          self = {}
-          setmetatable(self, {__index = Threadpool_Test})
-          self.args = vim.mpack.encode({...})
-          self.work_fn_str = string.dump(work_fn)
-          self.after_work = after_work
-          return self
-        end
-      ]]
-    end)
-
-    it('uv', function()
-      exec_lua [[
-        local work_fn = function()
-          return vim.uv.version()
-        end
-        local after_work_fn = function(ret)
-          vim.rpcnotify(1, ret)
-        end
-        local threadpool_test = Threadpool_Test.new(work_fn, after_work_fn)
-        threadpool_test:do_test()
-      ]]
-
-      local msg = next_msg()
-      eq('notification', msg[1])
-      assert(tonumber(msg[2]) >= 72961)
-    end)
-
-    it('mpack', function()
-      exec_lua [[
-        local work_fn = function()
-          local var = vim.mpack.encode({33, vim.NIL, 'text'})
-          return var
-        end
-        local after_work_fn = function(ret)
-          vim.rpcnotify(1, 'result', vim.mpack.decode(ret))
-        end
-        local threadpool_test = Threadpool_Test.new(work_fn, after_work_fn)
-        threadpool_test:do_test()
-      ]]
-
-      eq({ 'notification', 'result', { { 33, NIL, 'text' } } }, next_msg())
-    end)
-
-    it('json', function()
-      exec_lua [[
-        local work_fn = function()
-          local var = vim.json.encode({33, vim.NIL, 'text'})
-          return var
-        end
-        local after_work_fn = function(ret)
-          vim.rpcnotify(1, 'result', vim.json.decode(ret))
-        end
-        local threadpool_test = Threadpool_Test.new(work_fn, after_work_fn)
-        threadpool_test:do_test()
-      ]]
-
-      eq({ 'notification', 'result', { { 33, NIL, 'text' } } }, next_msg())
-    end)
-
-    it('work', function()
-      exec_lua [[
-        local work_fn = function()
-          return vim.diff('Hello\n', 'Helli\n')
-        end
-        local after_work_fn = function(ret)
-          vim.rpcnotify(1, 'result', ret)
-        end
-        local threadpool_test = Threadpool_Test.new(work_fn, after_work_fn)
-        threadpool_test:do_test()
-      ]]
-
-      eq({
-        'notification',
-        'result',
-        {
-          table.concat({
-            '@@ -1 +1 @@',
-            '-Hello',
-            '+Helli',
-            '',
-          }, '\n'),
-        },
-      }, next_msg())
-    end)
+  it('vim.* functions', function()
+    eq(false, exec_lua('return vim.is_thread()'))
+    eq(
+      vim_fns_expected,
+      exec_lua(function()
+        local result --- @type table?
+        local work = vim.uv.new_work(function(code)
+          return assert(loadstring(code))()
+        end, function(ret)
+          result = vim.mpack.decode(ret)
+        end)
+        work:queue(vim_fns)
+        vim.wait(2000, function()
+          return result ~= nil
+        end)
+        return result
+      end)
+    )
   end)
 end)

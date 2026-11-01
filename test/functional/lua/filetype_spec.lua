@@ -84,16 +84,33 @@ describe('vim.filetype', function()
     )
   end)
 
-  it('matches URI buffer patterns ending in slash', function()
+  it('matches URI buffer names as-is #42598', function()
     eq(
-      'example',
+      { 'example', 'myft', 'fugitive:///repo/a.sql', 'deno:/https/deno.land/a.sql' },
       exec_lua(function()
         vim.filetype.add({
+          filename = {
+            ['myscheme://project/foo'] = 'myft',
+          },
           pattern = {
             ['example://.*'] = 'example',
+            -- Detects the path passed to filetype functions as the filetype.
+            ['.*%.sql'] = function(path)
+              return path
+            end,
           },
         })
-        return vim.filetype.match({ filename = 'example:///tmp/example/' })
+        local names = {
+          'example:///tmp/example/',
+          'myscheme://project/foo',
+          'fugitive:///repo/a.sql',
+          'deno:/https/deno.land/a.sql',
+        }
+        local fts = {} ---@type string[]
+        for i, name in ipairs(names) do
+          fts[i] = vim.filetype.match({ filename = name })
+        end
+        return fts
       end)
     )
   end)

@@ -104,7 +104,7 @@ api.nvim_create_autocmd('BufReadCmd', {
     if legacy_loaded() then
       return true
     end
-    if ev.match:match('^%a[%w+.-]*://') then
+    if vim._core.path_is_url(ev.match) then
       return
     end
     require('nvim.zip').browse(ev.buf, ev.match)

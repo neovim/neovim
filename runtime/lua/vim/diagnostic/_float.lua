@@ -218,7 +218,7 @@ function M.open(opts, ...)
     -- range, plus description.
     for _, info in ipairs(related_info) do
       local location = info.location
-      local file_name = vim.fs.basename(vim.uri_to_fname(location.uri))
+      local file_name = vim.fs.basename(vim.uri.to_fname(location.uri))
       local info_suffix = ': ' .. info.message
       related_info_locations[#lines + 1] = location
       lines[#lines + 1] = string.format(

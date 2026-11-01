@@ -36,11 +36,6 @@
 #include "nvim/strings.h"
 #include "nvim/vim_defs.h"
 
-enum {
-  URL_SLASH = 1,      // path_is_url() has found ":/"
-  URL_BACKSLASH = 2,  // path_is_url() has found ":\\"
-};
-
 #ifdef gen_expand_wildcards
 # undef gen_expand_wildcards
 #endif
@@ -1690,38 +1685,31 @@ bool path_has_drive_letter(const char *p, size_t path_len)
          && (path_len == 2 || ((p[2] == '/') | (p[2] == '\\') | (p[2] == '?') | (p[2] == '#')));
 }
 
-// Check if the ":/" of a URL is at the pointer, return URL_SLASH.
-// Also check for ":\\", which MS Internet Explorer accepts, return
-// URL_BACKSLASH.
-int path_is_url(const char *p)
+/// Checks if the ":/" of a URL is at the pointer.
+bool path_is_url(const char *p)
   FUNC_ATTR_NONNULL_ALL
 {
-  // In the spec ':' is enough to recognize a scheme
-  // https://url.spec.whatwg.org/#scheme-state
-  if (strncmp(p, ":/", 2) == 0) {
-    return URL_SLASH;
-  } else if (strncmp(p, ":\\\\", 3) == 0) {
-    return URL_BACKSLASH;
-  }
-  return 0;
+  return strncmp(p, ":/", 2) == 0;
 }
 
-/// Check if "fname" starts with "name:/" or "name:\".
+/// Checks if `fname` is a URL (not a filepath).
+///
+/// - "deno:/a" and "fugitive:///a" are URLs
+/// - "C:/a" (drive letter) and "mailto:a" are NOT.
 ///
 /// @param  fname         is the filename to test
-/// @return URL_SLASH for "name:/", URL_BACKSLASH for "name:\", zero otherwise.
-int path_with_url(const char *fname)
+bool path_with_url(const char *fname)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *p;
 
   // first character must be alpha
   if (!ASCII_ISALPHA(*fname)) {
-    return 0;
+    return false;
   }
 
   if (path_has_drive_letter(fname, strlen(fname))) {
-    return 0;
+    return false;
   }
 
   // check body: (alpha, digit, '+', '-', '.') following RFC3986
@@ -1729,10 +1717,10 @@ int path_with_url(const char *fname)
 
   // check last char is not '+', '-', or '.'
   if ((p[-1] == '+') || (p[-1] == '-') || (p[-1] == '.')) {
-    return 0;
+    return false;
   }
 
-  // ":/" or ":\\" must follow
+  // ":/" must follow
   return path_is_url(p);
 }
 

@@ -551,7 +551,7 @@ function Client:initialize()
   local workspace_folder = self.workspace_folders and self.workspace_folders[1]
   if workspace_folder then
     root_uri = workspace_folder.uri
-    root_path = vim.uri_to_fname(root_uri)
+    root_path = vim.uri.to_fname(root_uri)
   end
 
   -- HACK: Capability modules must be loaded
@@ -1106,8 +1106,8 @@ function Client:_get_registrations(provider, bufnr)
       matched_regs[#matched_regs + 1] = reg
     else
       local language = self:_get_language_id(bufnr)
-      local uri = vim.uri_from_bufnr(bufnr)
-      local fname = vim.uri_to_fname(uri)
+      local uri = vim.uri.from_buf(bufnr)
+      local fname = vim.uri.to_fname(uri)
       for _, filter in ipairs(regoptions.documentSelector) do
         local flang, fscheme, fpat = filter.language, filter.scheme, filter.pattern
         if
@@ -1179,7 +1179,7 @@ function Client:_text_document_did_close_handler(bufnr)
   if not self:supports_method('textDocument/didClose') then
     return
   end
-  local uri = vim.uri_from_bufnr(bufnr)
+  local uri = vim.uri.from_buf(bufnr)
   local params = { textDocument = { uri = uri } }
   self:notify('textDocument/didClose', params, bufnr)
 end
@@ -1199,7 +1199,7 @@ function Client:_text_document_did_open_handler(bufnr)
   self:notify('textDocument/didOpen', {
     textDocument = {
       version = lsp.util.buf_versions[bufnr],
-      uri = vim.uri_from_bufnr(bufnr),
+      uri = vim.uri.from_buf(bufnr),
       languageId = self:_get_language_id(bufnr),
       text = lsp._buf_get_full_text(bufnr),
     },

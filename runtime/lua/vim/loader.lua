@@ -1,6 +1,6 @@
 local fs = vim.fs -- "vim.fs" is a dependency, so must be loaded early.
 local uv = vim.uv
-local uri_encode = vim.uri_encode --- @type function
+local uri_encode = vim.uri.encode --- @type function
 
 --- @type (fun(modename: string): fun()|string)[]
 local loaders = package.loaders

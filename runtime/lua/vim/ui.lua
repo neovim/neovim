@@ -182,8 +182,7 @@ end
 ---@see |vim.system()|
 function M.open(path, opt)
   vim.validate('path', path, 'string')
-  local is_uri = path:match('%w+:')
-  if not is_uri then
+  if not vim.uri.parse(path) then
     path = vim.fs.normalize(path)
   end
 
@@ -202,8 +201,9 @@ function M.open(path, opt)
     if open_cmd[1] == 'xdg-open' then
       job_opt.stdout = false
       job_opt.stderr = false
-    elseif open_cmd[1] == 'cmd.exe' and is_uri then
-      path = path:gsub('([&|<>^%%!])', '^%1') -- Escape cmd.exe special chars. #41337
+    elseif open_cmd[1] == 'cmd.exe' and not path:find('[%s"]') then
+      -- Escape cmd.exe special chars, unless libuv quotes the arg (it has whitespace or '"').
+      path = path:gsub('([&|<>^%%!])', '^%1')
     end
     cmd = vim.list_extend(open_cmd, { path })
   end
@@ -260,7 +260,7 @@ local get_lsp_urls = function(bufnr)
         if document_link.target and range:has(position) then
           local target = document_link.target ---@type string
           if vim.startswith(target, 'file://') then
-            target = vim.uri_to_fname(target)
+            target = vim.uri.to_fname(target)
           end
           table.insert(urls, target)
         end

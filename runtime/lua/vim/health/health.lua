@@ -824,7 +824,7 @@ local function check_sysinfo()
     if win == -1 then
       return
     end
-    local encoded_body = vim.uri_encode(body) --- @type string
+    local encoded_body = vim.uri.encode(body) --- @type string
     local issue_url = 'https://github.com/neovim/neovim/issues/new?type=Bug&body=' .. encoded_body
 
     --- Opens the prefilled issue from the checkhealth winbar.

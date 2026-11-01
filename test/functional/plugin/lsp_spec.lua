@@ -2615,7 +2615,7 @@ describe('LSP', function()
 
     before_each(function()
       target_bufnr = exec_lua(function()
-        local bufnr = vim.uri_to_bufnr('file:///fake/uri')
+        local bufnr = vim.uri.to_buf('file:///fake/uri')
         local lines = { '1st line of text', '2nd line of 语text' }
         vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, lines)
         return bufnr
@@ -2746,7 +2746,7 @@ describe('LSP', function()
 
     before_each(function()
       exec_lua(function()
-        target_bufnr = vim.uri_to_bufnr('file:///fake/uri')
+        target_bufnr = vim.uri.to_buf('file:///fake/uri')
         local lines = {
           'Original Line #1',
           'Original Line #2',
@@ -2813,7 +2813,7 @@ describe('LSP', function()
 
     it('supports file creation with CreateFile payload', function()
       local tmpfile = tmpname(false)
-      local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
+      local uri = exec_lua('return vim.uri.from_fname(...)', tmpfile)
       local edit = {
         documentChanges = {
           {
@@ -2832,7 +2832,7 @@ describe('LSP', function()
       'supports file creation in folder that needs to be created with CreateFile payload',
       function()
         local tmpfile = tmpname(false) .. '/dummy/x/'
-        local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
+        local uri = exec_lua('return vim.uri.from_fname(...)', tmpfile)
         local edit = {
           documentChanges = {
             {
@@ -2851,7 +2851,7 @@ describe('LSP', function()
     it('createFile does not touch file if it exists and ignoreIfExists is set', function()
       local tmpfile = tmpname()
       write_file(tmpfile, 'Dummy content')
-      local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
+      local uri = exec_lua('return vim.uri.from_fname(...)', tmpfile)
       local edit = {
         documentChanges = {
           {
@@ -2871,7 +2871,7 @@ describe('LSP', function()
     it('createFile overrides file if overwrite is set', function()
       local tmpfile = tmpname()
       write_file(tmpfile, 'Dummy content')
-      local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
+      local uri = exec_lua('return vim.uri.from_fname(...)', tmpfile)
       local edit = {
         documentChanges = {
           {
@@ -2895,7 +2895,7 @@ describe('LSP', function()
       local uri = exec_lua(function()
         local bufnr = vim.fn.bufadd(tmpfile)
         vim.fn.bufload(bufnr)
-        return vim.uri_from_fname(tmpfile)
+        return vim.uri.from_fname(tmpfile)
       end)
       local edit = {
         documentChanges = {
@@ -2912,7 +2912,7 @@ describe('LSP', function()
 
     it('DeleteFile fails if file does not exist and ignoreIfNotExists is false', function()
       local tmpfile = tmpname(false)
-      local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
+      local uri = exec_lua('return vim.uri.from_fname(...)', tmpfile)
       local edit = {
         documentChanges = {
           {
@@ -4287,7 +4287,7 @@ describe('LSP', function()
                       },
                       {
                         globPattern = {
-                          baseUri = vim.uri_from_fname(root_dir),
+                          baseUri = vim.uri.from_fname(root_dir),
                           pattern = '{foo}',
                         },
                         kind = 7,
@@ -4341,7 +4341,7 @@ describe('LSP', function()
             return { logfile = logfile, messages = server.messages, notifications = notifications }
           end)
 
-          local uri = vim.uri_from_fname(root_dir .. '/watch')
+          local uri = vim.uri.from_fname(root_dir .. '/watch')
           local messages = result.messages
 
           eq(6, #messages)
@@ -4439,7 +4439,7 @@ describe('LSP', function()
           eq({
             method = 'workspace/didChangeWatchedFiles',
             params = {
-              changes = { { uri = vim.uri_from_fname(root_dir .. '/file.py'), type = created } },
+              changes = { { uri = vim.uri.from_fname(root_dir .. '/file.py'), type = created } },
             },
           }, result)
         end
@@ -4508,7 +4508,7 @@ describe('LSP', function()
       end)
 
       local function watched_uri(fname)
-        return vim.uri_from_fname(root_dir .. '/' .. fname)
+        return vim.uri.from_fname(root_dir .. '/' .. fname)
       end
 
       eq(4, #result)
@@ -4548,7 +4548,7 @@ describe('LSP', function()
         for i = 0, max_kind do
           table.insert(watchers, {
             globPattern = {
-              baseUri = vim.uri_from_fname('/dir[1]'),
+              baseUri = vim.uri.from_fname('/dir[1]'),
               pattern = 'watch' .. tostring(i),
             },
             kind = i,
@@ -4580,7 +4580,7 @@ describe('LSP', function()
       end)
 
       local function watched_uri(fname)
-        return vim.uri_from_fname('/dir[1]/' .. fname)
+        return vim.uri.from_fname('/dir[1]/' .. fname)
       end
 
       eq(3, #result)
@@ -4685,15 +4685,15 @@ describe('LSP', function()
         changes = {
           {
             type = created,
-            uri = vim.uri_from_fname('file1'),
+            uri = vim.uri.from_fname('file1'),
           },
           {
             type = changed,
-            uri = vim.uri_from_fname('file1'),
+            uri = vim.uri.from_fname('file1'),
           },
           {
             type = created,
-            uri = vim.uri_from_fname('file2'),
+            uri = vim.uri.from_fname('file2'),
           },
         },
       }, result[3].params)

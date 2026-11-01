@@ -402,7 +402,7 @@ function M.apply_text_document_edit(
   validate('position_encoding', position_encoding, 'string')
 
   local text_document = text_document_edit.textDocument
-  local bufnr = vim.uri_to_bufnr(text_document.uri)
+  local bufnr = vim.uri.to_buf(text_document.uri)
 
   -- `VersionedTextDocumentIdentifier`s version may be null
   --  https://microsoft.github.io/language-server-protocol/specification#versionedTextDocumentIdentifier
@@ -557,7 +557,7 @@ end
 local function create_file(change)
   local opts = change.options or {}
   -- from spec: Overwrite wins over `ignoreIfExists`
-  local fname = vim.uri_to_fname(change.uri)
+  local fname = vim.uri.to_fname(change.uri)
   if not opts.ignoreIfExists or opts.overwrite then
     vim.fn.mkdir(vim.fs.dirname(fname), 'p')
     local file = io.open(fname, 'w')
@@ -571,7 +571,7 @@ end
 --- @param change lsp.DeleteFile
 local function delete_file(change)
   local opts = change.options or {}
-  local fname = vim.uri_to_fname(change.uri)
+  local fname = vim.uri.to_fname(change.uri)
   local bufnr = vim.fn.bufadd(fname)
   vim.fs.rm(fname, {
     force = opts.ignoreIfNotExists,
@@ -593,7 +593,7 @@ function M.apply_workspace_edit(workspace_edit, position_encoding)
     for idx, change in ipairs(workspace_edit.documentChanges) do
       if change.kind == 'rename' then
         local options = change.options --[[@as vim.lsp.util.rename.Opts]]
-        M.rename(vim.uri_to_fname(change.oldUri), vim.uri_to_fname(change.newUri), options)
+        M.rename(vim.uri.to_fname(change.oldUri), vim.uri.to_fname(change.newUri), options)
       elseif change.kind == 'create' then
         create_file(change)
       elseif change.kind == 'delete' then
@@ -601,7 +601,7 @@ function M.apply_workspace_edit(workspace_edit, position_encoding)
       elseif change.kind then --- @diagnostic disable-line:undefined-field
         error(string.format('Unsupported change: %q', vim.inspect(change)))
       else
-        local bufnr = vim.uri_to_bufnr(change.textDocument.uri)
+        local bufnr = vim.uri.to_buf(change.textDocument.uri)
         M.apply_text_document_edit(change, idx, position_encoding, workspace_edit.changeAnnotations)
         -- avoid triggering OptionSet
         if not vim.bo[bufnr].buflisted then
@@ -618,7 +618,7 @@ function M.apply_workspace_edit(workspace_edit, position_encoding)
   end
 
   for uri, changes in pairs(all_changes) do
-    local bufnr = vim.uri_to_bufnr(uri)
+    local bufnr = vim.uri.to_buf(uri)
     M.apply_text_edits(changes, bufnr, position_encoding, workspace_edit.changeAnnotations)
     -- avoid triggering OptionSet
     if not vim.bo[bufnr].buflisted then
@@ -925,7 +925,7 @@ end
 --- @param opts? vim.lsp.util.show_document.Opts
 --- @return boolean
 function M._show_document(uri, range, position_encoding, opts)
-  local bufnr = vim.uri_to_bufnr(uri)
+  local bufnr = vim.uri.to_buf(uri)
 
   -- Return early if the buffer fails to load, to avoid partial setup.
   local loaded, err = pcall(vim.fn.bufload, bufnr)
@@ -995,7 +995,7 @@ function M.preview_location(location, opts)
   if uri == nil then
     return
   end
-  local bufnr = vim.uri_to_bufnr(uri)
+  local bufnr = vim.uri.to_buf(uri)
   if not api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
   end
@@ -1802,7 +1802,7 @@ function M.locations_to_items(locations, position_encoding)
 
   for uri, rows in vim.spairs(grouped) do
     table.sort(rows, position_sort)
-    local filename = vim.uri_to_fname(uri)
+    local filename = vim.uri.to_fname(uri)
 
     local line_numbers = {}
     for _, temp in ipairs(rows) do
@@ -1813,7 +1813,7 @@ function M.locations_to_items(locations, position_encoding)
     end
 
     -- get all the lines for this uri
-    local lines = get_lines(vim.uri_to_bufnr(uri), line_numbers)
+    local lines = get_lines(vim.uri.to_buf(uri), line_numbers)
 
     for _, temp in ipairs(rows) do
       local pos = temp.start
@@ -1857,7 +1857,7 @@ function M.symbols_to_items(symbols, bufnr, position_encoding)
 
     if symbol.location then
       --- @cast symbol lsp.SymbolInformation
-      filename = vim.uri_to_fname(symbol.location.uri)
+      filename = vim.uri.to_fname(symbol.location.uri)
       range = vim.range.lsp(bufnr, symbol.location.range, position_encoding)
     elseif symbol.selectionRange then
       --- @cast symbol lsp.DocumentSymbol
@@ -1962,7 +1962,7 @@ end
 ---@return lsp.TextDocumentIdentifier
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentIdentifier
 function M.make_text_document_params(bufnr)
-  return { uri = vim.uri_from_bufnr(bufnr or 0) }
+  return { uri = vim.uri.from_buf(bufnr or 0) }
 end
 
 --- Create the workspace params
@@ -1997,7 +1997,7 @@ function M.make_formatting_params(options)
     insertSpaces = vim.bo.expandtab,
   }) --[[@as lsp.FormattingOptions]]
   return {
-    textDocument = { uri = vim.uri_from_bufnr(0) },
+    textDocument = { uri = vim.uri.from_buf(0) },
     options = options,
   }
 end

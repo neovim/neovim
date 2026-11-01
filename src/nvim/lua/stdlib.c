@@ -43,6 +43,7 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
@@ -466,6 +467,13 @@ int nlua_getvar(lua_State *lstate)
   return 1;
 }
 
+/// Checks if a path is a URL. See path_with_url().
+static int nlua_path_is_url(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
+{
+  lua_pushboolean(lstate, path_with_url(luaL_checkstring(lstate, 1)));
+  return 1;
+}
+
 /// Compare two strings, ignoring case
 ///
 /// Expects two values on the stack: compared strings. Returns one of the
@@ -843,6 +851,12 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
   // vim.json
   lua_cjson_new(lstate);
   lua_setfield(lstate, -2, "json");
+
+  // vim._core.path_is_url
+  lua_getfield(lstate, -1, "_core");
+  lua_pushcfunction(lstate, &nlua_path_is_url);
+  lua_setfield(lstate, -2, "path_is_url");
+  lua_pop(lstate, 1);
 
 #ifdef NVIM_VENDOR_BIT
   // if building with puc lua, use internal fallback for require'bit'

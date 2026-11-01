@@ -315,7 +315,7 @@ RCS['textDocument/documentSymbol'] = response_to_list(
   util.symbols_to_items,
   'document symbols',
   function(ctx)
-    local fname = vim.fn.fnamemodify(vim.uri_to_fname(ctx.params.textDocument.uri), ':.')
+    local fname = vim.fn.fnamemodify(vim.uri.to_fname(ctx.params.textDocument.uri), ':.')
     return string.format('Symbols in %s', fname)
   end
 )
@@ -539,7 +539,7 @@ local function make_call_hierarchy_handler(direction)
       local filename = nil
       local bufnr = nil
       if direction == 'from' then
-        filename = vim.uri_to_fname(call_hierarchy_item.uri)
+        filename = vim.uri.to_fname(call_hierarchy_item.uri)
       else
         bufnr = ctx.bufnr
       end
@@ -589,7 +589,7 @@ local function make_type_hierarchy_handler()
       local pos =
         vim.pos.lsp(assert(ctx.bufnr), type_hierarchy_item.range.start, client.offset_encoding)
       table.insert(items, {
-        filename = vim.uri_to_fname(type_hierarchy_item.uri),
+        filename = vim.uri.to_fname(type_hierarchy_item.uri),
         text = format_item(type_hierarchy_item),
         lnum = pos.row + 1,
         col = pos.col + 1,

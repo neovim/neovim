@@ -2691,7 +2691,8 @@ vim.fs.abspath({path}, {opts})                              *vim.fs.abspath()*
     the path (unless plain=true). Does not check if the path exists, normalize
     the path, resolve symlinks or hardlinks (including "." and ".."), or
     expand environment variables. If the path is already absolute, it is
-    returned unchanged. Converts `\` path separators to `/`.
+    returned unchanged. Converts `\` path separators to `/`. URLs (e.g.
+    "fugitive:///a") are returned as-is.
 
     Attributes: ~
         Since: 0.11.0
@@ -3030,9 +3031,9 @@ vim.fs.root({source}, {marker})                                *vim.fs.root()*
         Since: 0.10.0
 
     Parameters: ~
-      • {source}  (`integer|string`) Buffer number (0 for current buffer) or
-                  file path (absolute or relative, expanded via `abspath()`)
-                  to begin the search from.
+      • {source}  (`integer|string`) Buffer number (0 for current buffer),
+                  file path (absolute or relative, expanded via `abspath()`),
+                  or "file://" URI to begin the search from.
       • {marker}  (`(string|string[]|fun(name: string, path: string): boolean)[]|string|fun(name: string, path: string): boolean`)
                   Filename, function, or list thereof, that decides how to
                   find the root. To indicate "equal priority", specify items
@@ -5868,8 +5869,24 @@ vim.ui.img.set({data_or_id}, {opts})                        *vim.ui.img.set()*
 ==============================================================================
 Lua module: vim.uri                                                  *vim.uri*
 
-vim.uri_decode({str})                                       *vim.uri_decode()*
-    URI-decodes a string containing percent escapes.
+vim.Uri                                                              *vim.Uri*
+
+    Fields: ~
+      • {authority}?  (`string`) Authority (after "//"), e.g.
+                      "user@example.com:8080". Empty for "file:///a", nil for
+                      "file:/a".
+      • {fragment}?   (`string`) Fragment (after "#"), e.g. "section".
+      • {path}        (`string`) Path, e.g. "/a/b". Empty for
+                      "https://example.com".
+      • {query}?      (`string`) Query (after "?"), e.g. "q=1".
+      • {scheme}      (`string`) Scheme, e.g. "https".
+
+
+vim.uri.decode({str})                                       *vim.uri.decode()*
+    Decodes a URI-encoded string.
+
+    Attributes: ~
+        Since: 0.13.0
 
     Parameters: ~
       • {str}  (`string`) string to decode
@@ -5877,8 +5894,11 @@ vim.uri_decode({str})                                       *vim.uri_decode()*
     Return: ~
         (`string`) decoded string
 
-vim.uri_encode({str}, {rfc})                                *vim.uri_encode()*
-    URI-encodes a string using percent escapes.
+vim.uri.encode({str}, {rfc})                                *vim.uri.encode()*
+    URI-encodes a string.
+
+    Attributes: ~
+        Since: 0.13.0
 
     Parameters: ~
       • {str}  (`string`) string to encode
@@ -5887,8 +5907,11 @@ vim.uri_encode({str}, {rfc})                                *vim.uri_encode()*
     Return: ~
         (`string`) encoded string
 
-vim.uri_from_bufnr({buf})                               *vim.uri_from_bufnr()*
-    Gets a URI from a bufnr.
+vim.uri.from_buf({buf})                                   *vim.uri.from_buf()*
+    Gets a URI from a buffer.
+
+    Attributes: ~
+        Since: 0.13.0
 
     Parameters: ~
       • {buf}  (`integer`)
@@ -5896,8 +5919,19 @@ vim.uri_from_bufnr({buf})                               *vim.uri_from_bufnr()*
     Return: ~
         (`string`) URI
 
-vim.uri_from_fname({path})                              *vim.uri_from_fname()*
-    Gets a URI from a file path.
+vim.uri.from_fname({path})                              *vim.uri.from_fname()*
+    Gets a URI from a file path. Relative paths are resolved to
+    |current-directory| (RFC 8089 disallows relative URIs).
+
+    Example: >lua
+        vim.uri.from_fname('/a b/c#') --> 'file:///a%20b/c%23'
+        vim.uri.from_fname('C:\\a\\b') --> 'file:///C:/a/b'
+        vim.uri.from_fname('//server/share/a') --> 'file://server/share/a' (UNC)
+        vim.uri.from_fname('a') --> 'file:///home/user/a' (if CWD is "/home/user")
+<
+
+    Attributes: ~
+        Since: 0.13.0
 
     Parameters: ~
       • {path}  (`string`) Path to file
@@ -5905,18 +5939,53 @@ vim.uri_from_fname({path})                              *vim.uri_from_fname()*
     Return: ~
         (`string`) URI
 
-vim.uri_to_bufnr({uri})                                   *vim.uri_to_bufnr()*
-    Gets the buffer for a uri. Creates a new unloaded buffer if no buffer for
-    the uri already exists.
+vim.uri.parse({uri})                                         *vim.uri.parse()*
+    Parses a URI into its RFC 3986 components, without decoding them. Unlike
+    RFC 3986, a one-letter scheme is a drive letter, so `C:/a` is not a URI.
+
+    Example: >lua
+        vim.uri.parse('https://example.com/a%20b?q=1#section')
+        --> { scheme = 'https', authority = 'example.com', path = '/a%20b', query = 'q=1', fragment = 'section' }
+        vim.uri.parse('/a/b') --> nil
+        vim.uri.parse('C:/a') --> nil
+        tostring(vim.uri.parse('file:///a?b')) --> 'file:///a?b'
+<
+
+    Attributes: ~
+        Since: 0.13.0
 
     Parameters: ~
       • {uri}  (`string`)
 
     Return: ~
-        (`integer`) bufnr
+        (`vim.Uri?`) URI components, or nil if `uri` has no scheme.
 
-vim.uri_to_fname({uri})                                   *vim.uri_to_fname()*
-    Gets a filename from a URI.
+vim.uri.to_buf({uri})                                       *vim.uri.to_buf()*
+    Gets the buffer for a uri. Creates a new unloaded buffer if no buffer for
+    the uri already exists.
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {uri}  (`string`)
+
+    Return: ~
+        (`integer`) buf
+
+vim.uri.to_fname({uri})                                   *vim.uri.to_fname()*
+    Gets a filename from a URI. Drops the query and fragment, so "?" and "#"
+    in a filename must be percent-encoded.
+
+    Example: >lua
+        vim.uri.to_fname('file:///a%3Fb?c#d') --> '/a?b'
+        vim.uri.to_fname('file:///C:/a/b') --> 'C:/a/b'
+        vim.uri.to_fname('file://server/share/a') --> '//server/share/a'
+        vim.uri.to_fname('jdt://a/b') --> 'jdt://a/b'
+<
+
+    Attributes: ~
+        Since: 0.13.0
 
     Parameters: ~
       • {uri}  (`string`)

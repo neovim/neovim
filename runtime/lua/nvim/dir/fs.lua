@@ -2,6 +2,7 @@
 
 local api = vim.api
 local fs = vim.fs
+local is_url = vim._core.path_is_url
 
 local M = {}
 
@@ -48,7 +49,7 @@ end
 
 ---@param path string
 function M.open_parent_path(path)
-  if path == '' or path:find('^%a[%w+.-]*://') then
+  if path == '' or is_url(path) then
     navigate('.')
     return
   end

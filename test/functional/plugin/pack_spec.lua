@@ -1590,10 +1590,10 @@ describe('vim.pack', function()
 
         local fetch_src = repos_src.fetch
         local fetch_path = pack_get_plug_path('fetch')
-        local fetch_path_uri = vim.uri_from_fname(fetch_path)
+        local fetch_path_uri = vim.uri.from_fname(fetch_path)
         local semver_src = repos_src.semver
         local semver_path = pack_get_plug_path('semver')
-        local semver_path_uri = vim.uri_from_fname(semver_path)
+        local semver_path_uri = vim.uri.from_fname(semver_path)
 
         -- With `file://` sources it can only return "Path:" and "Source:" links
         local ref_file_links = {

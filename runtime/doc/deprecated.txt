@@ -33,10 +33,16 @@ HIGHLIGHTS
 
 LUA
 
-• vim.F.if_nil()			Renamed to |vim.nonnil()|
+• vim.F.if_nil()		Renamed to |vim.nonnil()|
 • vim.F.ok_or_nil()
-• vim.F.npcall()			Renamed to |vim.npcall()|
-• vim.F.nil_wrap()			Use |vim.npcall()| instead
+• vim.F.npcall()		Renamed to |vim.npcall()|
+• vim.F.nil_wrap()		Use |vim.npcall()| instead
+• *vim.uri_decode()*		Renamed to |vim.uri.decode()|
+• *vim.uri_encode()*		Renamed to |vim.uri.encode()|
+• *vim.uri_from_bufnr()*	Renamed to |vim.uri.from_buf()|
+• *vim.uri_from_fname()*	Renamed to |vim.uri.from_fname()|
+• *vim.uri_to_bufnr()*		Renamed to |vim.uri.to_buf()|
+• *vim.uri_to_fname()*		Renamed to |vim.uri.to_fname()|
 
 TREESITTER
 

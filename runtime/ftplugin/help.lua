@@ -156,7 +156,7 @@ local function urls()
             vim.api.nvim_buf_set_extmark(0, url_ns, start_line, start_col, {
               end_line = end_line,
               end_col = end_col,
-              url = base .. vim.uri_encode(tag),
+              url = base .. vim.uri.encode(tag),
             })
           end
         end

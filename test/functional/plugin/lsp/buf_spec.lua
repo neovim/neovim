@@ -1533,7 +1533,7 @@ describe('vim.lsp.buf', function()
                   start = { line = 0, character = 0 },
                   ['end'] = { line = 0, character = 0 },
                 },
-                uri = vim.uri_from_bufnr(bufnr),
+                uri = vim.uri.from_buf(bufnr),
               }
               callback(nil, location)
             end,
@@ -1590,7 +1590,7 @@ describe('vim.lsp.buf', function()
                     start = { line = 0, character = character },
                     ['end'] = { line = 0, character = character },
                   },
-                  uri = vim.uri_from_bufnr(bufnr),
+                  uri = vim.uri.from_buf(bufnr),
                 }
                 callback(nil, location)
               end,
@@ -1704,7 +1704,7 @@ describe('vim.lsp.buf', function()
     it('favors document diagnostics over workspace diagnostics', function()
       local client_id = setup_server({ make_report('full', 'Workspace error', 1) })
       local diagnostic_bufnr = exec_lua(function()
-        return vim.uri_to_bufnr(fake_uri)
+        return vim.uri.to_buf(fake_uri)
       end)
 
       exec_lua(function()
@@ -1740,7 +1740,7 @@ describe('vim.lsp.buf', function()
       eq(
         'Document error',
         exec_lua(function()
-          return vim.diagnostic.get(vim.uri_to_bufnr(fake_uri))[1].message
+          return vim.diagnostic.get(vim.uri.to_buf(fake_uri))[1].message
         end)
       )
     end)
