@@ -665,7 +665,7 @@ function lsp.enable(name, enable)
     end
   else
     for _, nm in ipairs(names) do
-      for _, client in ipairs(lsp.get_clients({ name = nm })) do
+      for _, client in ipairs(lsp.get_clients({ name = nm, _uninitialized = true })) do
         client:stop(client.exit_timeout)
       end
     end
@@ -1176,13 +1176,15 @@ end
 local min_warn_exit_timeout = 100
 
 nvim_on('VimLeavePre', nil, { desc = 'vim.lsp: exit handler' }, function()
-  local active_clients = lsp.get_clients()
+  local active_clients = lsp.get_clients({ _uninitialized = true })
   log.info('exit_handler', active_clients)
 
   local max_timeout = 0
   for _, client in pairs(active_clients) do
     max_timeout = math.max(max_timeout, vim._tointeger(client.exit_timeout) or 0)
-    client:stop(client.exit_timeout)
+    if not client:is_stopped() then -- If client is already "stopping", stop() would force-stop.
+      client:stop(client.exit_timeout)
+    end
   end
 
   local exit_warning_timer = max_timeout > min_warn_exit_timeout

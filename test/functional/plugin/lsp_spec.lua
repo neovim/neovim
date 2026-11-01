@@ -118,7 +118,8 @@ describe('LSP', function()
       local test_name = 'basic_init'
       exec_lua(function()
         _G.lsp = require('vim.lsp')
-        function _G.test__start_client()
+        --- @param timeout? string Server timeout in milliseconds.
+        function _G.test__start_client(timeout)
           return vim.lsp.start({
             cmd_env = {
               NVIM_LOG_FILE = fake_lsp_logfile,
@@ -129,6 +130,7 @@ describe('LSP', function()
               '-l',
               fake_lsp_code,
               test_name,
+              timeout,
             },
             workspace_folders = {
               {
@@ -235,6 +237,64 @@ describe('LSP', function()
       end)
       local c1, c2 = clients[1], clients[2]
       eq(false, c1 == c2, 'Expected a fresh client while the old one is stopping')
+    end)
+
+    it('exit handler stops starting clients, not stopping ones #42440', function()
+      exec_lua(create_server_definition)
+      eq(
+        {
+          -- Not answered "initialize": force-stopped, no warning about the exit status.
+          process = { true, {} },
+          -- Same, and a late answer does not initialize it.
+          starting = { true, false, { 'initialize' } },
+          -- Not answered "shutdown": exit_timeout=false is kept; another stop() force-stops it.
+          stopping = { false, { 'initialize', 'initialized', 'shutdown' }, true },
+        },
+        exec_lua(function()
+          local warnings = {} --- @type string[]
+          vim.notify = function(msg)
+            table.insert(warnings, msg)
+          end
+          local respond --- @type fun(err?: lsp.ResponseError, result: any)
+          local starting = _G._create_server({
+            handlers = {
+              initialize = function(_, _, callback)
+                respond = callback
+              end,
+            },
+          })
+          local stopping = _G._create_server({ handlers = { shutdown = function() end } })
+          local function start(name, server)
+            local id = vim.lsp.start({ name = name, cmd = server.cmd }, { attach = false })
+            return assert(vim.lsp.get_client_by_id(assert(id)))
+          end
+          local function sent(server)
+            return vim.tbl_map(function(m)
+              return m.method
+            end, server.messages)
+          end
+          -- The server outlives the wait unless stopped.
+          local process = assert(vim.lsp.get_client_by_id(_G.test__start_client('60000')))
+          local client1, client2 = start('starting', starting), start('stopping', stopping)
+          client2:stop(false)
+
+          vim.api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
+          respond(nil, { capabilities = {} })
+          local result = {
+            process = {
+              vim.wait(4000, function()
+                return vim.lsp.get_client_by_id(process.id) == nil
+              end),
+              warnings,
+            },
+            starting = { client1.rpc.is_closing(), client1.initialized or false, sent(starting) },
+            stopping = { client2.rpc.is_closing(), sent(stopping) },
+          }
+          client2:stop(false)
+          table.insert(result.stopping, client2.rpc.is_closing())
+          return result
+        end)
+      )
     end)
   end)
 

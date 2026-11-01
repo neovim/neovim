@@ -28,7 +28,7 @@ end
 --- @return string[]
 local function get_client_names()
   return vim
-    .iter(vim.lsp.get_clients())
+    .iter(vim.lsp.get_clients({ _uninitialized = true }))
     :map(function(client)
       return client.name
     end)
@@ -97,7 +97,7 @@ local function ex_lsp_disable(config_names)
   -- Default to disabling all clients attached to the current buffer.
   if #config_names == 0 then
     config_names = vim
-      .iter(vim.lsp.get_clients { bufnr = api.nvim_get_current_buf() })
+      .iter(vim.lsp.get_clients { bufnr = api.nvim_get_current_buf(), _uninitialized = true })
       :map(function(client)
         return client.name
       end)
@@ -119,7 +119,8 @@ end
 local function get_clients_from_names(client_names)
   -- Default to all active clients attached to the current buffer.
   if #client_names == 0 then
-    local clients = vim.lsp.get_clients { bufnr = api.nvim_get_current_buf() }
+    local clients =
+      vim.lsp.get_clients { bufnr = api.nvim_get_current_buf(), _uninitialized = true }
     if #clients == 0 then
       util.echo_err(N_('E5805: No clients attached to current buffer'))
     end
@@ -128,7 +129,7 @@ local function get_clients_from_names(client_names)
     return vim
       .iter(client_names)
       :map(function(name)
-        local clients = vim.lsp.get_clients { name = name }
+        local clients = vim.lsp.get_clients { name = name, _uninitialized = true }
         if #clients == 0 then
           util.echo_err(N_('E5806: No active clients matching name: %s'):format(name))
         end

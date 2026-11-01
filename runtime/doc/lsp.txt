@@ -1946,7 +1946,8 @@ vim.lsp.ClientConfig                                    *vim.lsp.ClientConfig*
                                the "shutdown" request. See |Client:stop()|.
                                Note: when Nvim itself is exiting,
                                • `false`: Nvim will not force-stop LSP
-                                 server(s).
+                                 server(s), except uninitialized ones (see
+                                 |Client:stop()|).
                                • `true`: Nvim will force-stop LSP server(s)
                                  that did not comply with the "shutdown"
                                  request.
@@ -1988,7 +1989,9 @@ vim.lsp.ClientConfig                                    *vim.lsp.ClientConfig*
                                `vim.lsp.rpc.client_errors[code]` to get
                                human-friendly name.
       • {on_exit}?             (`elem_or_list<fun(code: integer, signal: integer, client_id: integer)>`)
-                               Callback invoked on client exit.
+                               Callback invoked on client exit. On Nvim exit,
+                               it runs only if the server exits within
+                               `exit_timeout` milliseconds.
                                • code: exit code of the process
                                • signal: number describing the signal used to
                                  terminate (if any)
@@ -2126,7 +2129,8 @@ Client:stop({force})                                           *Client:stop()*
     milliseconds (unless `exit_timeout=false`). Calling stop() on a client
     that was previously requested to shutdown, will escalate to force-stop
     immediately, regardless of `force` (or `self.exit_timeout` if
-    `force=nil`).
+    `force=nil`). A server that has not answered "initialize" cannot receive
+    "shutdown", so it is force-stopped immediately.
 
     Note: Forcing shutdown while a server is busy writing out project or index
     files can lead to file corruption.
