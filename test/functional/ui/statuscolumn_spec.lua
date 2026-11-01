@@ -1124,6 +1124,26 @@ describe('statuscolumn', function()
     ]])
   end)
 
+  it('width change keeps search highlight with relativenumber #41592', function()
+    screen:try_resize(33, 4)
+    command([[set nonu rnu hlsearch stc=%{v:lnum}%#ErrorMsg#x\ ]])
+    command([[call setline(1, map(range(1, 120), '"foo " .. v:val'))]])
+    feed('/foo<CR>80G')
+    screen:expect([[
+      {8:79}{9:x }{10:foo} 79                       |
+      {8:80}{9:x }{10:^foo} 80                       |
+      {8:81}{9:x }{10:foo} 81                       |
+      /foo                             |
+    ]])
+    feed('100G')
+    screen:expect([[
+      {8:99}{9:x  }{10:foo} 99                      |
+      {8:100}{9:x }{10:^foo} 100                     |
+      {8:101}{9:x }{10:foo} 101                     |
+      /foo                             |
+    ]])
+  end)
+
   it('forces a rebuild with nvim__redraw', function()
     screen:try_resize(40, 4)
     -- Current window
