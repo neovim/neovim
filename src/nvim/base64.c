@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -169,14 +170,14 @@ char *base64_decode(const char *src, size_t src_len, size_t *out_lenp)
   int acc_len = 0;
   size_t out_i = 0;
   size_t src_i = 0;
-  int leftover_i = -1;
+  bool has_padding = false;
 
   for (; src_i < src_len; src_i++) {
     const uint8_t c = s[src_i];
     const uint8_t d = char_to_index[c];
     if (d == 0) {
       if (c == '=') {
-        leftover_i = (int)src_i;
+        has_padding = true;
         break;
       }
       goto invalid;
@@ -195,11 +196,11 @@ char *base64_decode(const char *src, size_t src_len, size_t *out_lenp)
     goto invalid;
   }
 
-  if (leftover_i > -1) {
-    int padding_len = acc_len / 2;
-    int padding_chars = 0;
-    for (; (size_t)leftover_i < src_len; leftover_i++) {
-      const uint8_t c = s[leftover_i];
+  if (has_padding) {
+    size_t padding_len = (size_t)acc_len / 2;
+    size_t padding_chars = 0;
+    for (size_t i = src_i; i < src_len; i++) {
+      const uint8_t c = s[i];
       if (c != '=') {
         goto invalid;
       }
