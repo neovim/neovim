@@ -334,6 +334,60 @@ describe('LSP', function()
       end
     )
 
+    it('uses distinct untitled URIs for unnamed buffers', function()
+      exec_lua(create_server_definition)
+      local result = exec_lua(function()
+        local server = _G._create_server({
+          capabilities = {
+            textDocumentSync = {
+              openClose = true,
+              change = vim.lsp.protocol.TextDocumentSyncKind.Full,
+            },
+          },
+        })
+        local first = vim.api.nvim_get_current_buf()
+        local second = vim.api.nvim_create_buf(true, false)
+        local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = server.cmd }, {
+          bufnr = first,
+        }))
+        assert(vim.lsp.buf_attach_client(second, client_id))
+
+        assert(vim.wait(1000, function()
+          return #vim.tbl_filter(function(message)
+            return message.method == 'textDocument/didOpen'
+          end, server.messages) == 2
+        end))
+
+        local uris = vim.tbl_map(
+          function(message)
+            return message.params.textDocument.uri
+          end,
+          vim.tbl_filter(function(message)
+            return message.method == 'textDocument/didOpen'
+          end, server.messages)
+        )
+        table.sort(uris, function(a, b)
+          return vim.uri_to_bufnr(a) < vim.uri_to_bufnr(b)
+        end)
+
+        vim.lsp.get_client_by_id(client_id):stop(true)
+        return {
+          first = first,
+          second = second,
+          first_uri = uris[1],
+          second_uri = uris[2],
+          first_roundtrip = vim.uri_to_bufnr(uris[1]),
+          second_roundtrip = vim.uri_to_bufnr(uris[2]),
+        }
+      end)
+
+      eq(result.first, result.first_roundtrip)
+      eq(result.second, result.second_roundtrip)
+      matches('^untitled:nvim%-%d+%-%d+$', result.first_uri)
+      matches('^untitled:nvim%-%d+%-%d+$', result.second_uri)
+      eq(false, result.first_uri == result.second_uri)
+    end)
+
     it('should succeed with manual shutdown', function()
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', bufnr = 1, client_id = 1, request_id = 2, version = 0 } },
@@ -826,7 +880,7 @@ describe('LSP', function()
     it('saveas sends didOpen to all attached servers only, if filename changed', function()
       local tmpfile_new = tmpname(false)
       exec_lua(create_server_definition)
-      local messages = exec_lua(function()
+      local result = exec_lua(function()
         local server1 = _G._create_server()
         local server2 = _G._create_server()
         local server3 = _G._create_server()
@@ -837,13 +891,17 @@ describe('LSP', function()
         local client3_id =
           assert(vim.lsp.start({ name = 'dummy3', cmd = server3.cmd }, { bufnr = other_buf }))
 
+        local old_uri = vim.uri_from_bufnr(0)
         vim.cmd('saveas ' .. tmpfile_new)
+        local new_uri = vim.uri_from_bufnr(0)
 
         vim.lsp.get_client_by_id(client1_id):stop()
         vim.lsp.get_client_by_id(client2_id):stop()
         vim.lsp.get_client_by_id(client3_id):stop()
 
         return {
+          old_uri = old_uri,
+          new_uri = new_uri,
           server1 = server1.messages,
           server2 = server2.messages,
           server3 = vim.tbl_map(function(m)
@@ -851,12 +909,17 @@ describe('LSP', function()
           end, server3.messages),
         }
       end)
+      local messages = result
       eq('textDocument/didClose', messages.server1[3].method)
+      eq(result.old_uri, messages.server1[3].params.textDocument.uri)
       eq('textDocument/didOpen', messages.server1[4].method)
+      eq(result.new_uri, messages.server1[4].params.textDocument.uri)
       eq('textDocument/didSave', messages.server1[5].method)
 
       eq('textDocument/didClose', messages.server2[3].method)
+      eq(result.old_uri, messages.server2[3].params.textDocument.uri)
       eq('textDocument/didOpen', messages.server2[4].method)
+      eq(result.new_uri, messages.server2[4].params.textDocument.uri)
       eq('textDocument/didSave', messages.server2[5].method)
 
       eq({ 'initialize', 'initialized', 'shutdown', 'exit' }, messages.server3)
@@ -1665,7 +1728,7 @@ describe('LSP', function()
             method = 'textDocument/inlayHint',
             params = {
               textDocument = {
-                uri = 'file://',
+                uri = false,
               },
               range = {
                 start = { line = 0, character = 0 },
@@ -1691,6 +1754,9 @@ describe('LSP', function()
               '123',
             })
             vim.bo[_G.BUFFER].eol = false
+          end)
+          expected_handlers[3][3].params.textDocument.uri = exec_lua(function()
+            return vim.uri_from_bufnr(_G.BUFFER)
           end)
         end,
         on_init = function(_client)
