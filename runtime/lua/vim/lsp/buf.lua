@@ -2,6 +2,7 @@
 --- The `vim.lsp.buf_…` functions perform operations for LSP clients attached to the current buffer.
 
 local api = vim.api
+local do_or_select = require('vim._core.util').do_or_select
 local nvim_on = require('vim._core.util').nvim_on
 local lsp = vim.lsp
 local validate = vim.validate
@@ -151,22 +152,17 @@ function M.hover(config)
         contents[#contents + 1] = string.format('# %s', client.name)
       end
 
-      if type(result.contents) == 'table' and result.contents.kind == MarkupKind.PlainText then
-        if nresults == 1 then
-          -- Only one client: use PlainText format
-          format = MarkupKind.PlainText
-          contents = vim.split(result.contents.value or '', '\n', { trimempty = true })
-        else
-          -- Multiple clients: surround plaintext with ``` to get correct formatting
-          contents[#contents + 1] = '```'
-          vim.list_extend(
-            contents,
-            vim.split(result.contents.value or '', '\n', { trimempty = true })
-          )
-          contents[#contents + 1] = '```'
-        end
+      if
+        nresults == 1
+        and type(result.contents) == 'table'
+        and result.contents.kind == MarkupKind.PlainText
+      then
+        -- Only one client: use PlainText format
+        format = MarkupKind.PlainText
+        contents = vim.split(result.contents.value or '', '\n', { trimempty = true })
       else
-        vim.list_extend(contents, util.convert_input_to_markdown_lines(result.contents))
+        -- Plaintext from one of several clients is fenced to get correct formatting
+        vim.list_extend(contents, util._to_markdown_section(result.contents))
       end
       if result.range then
         local range = vim.range.lsp(bufnr, result.range, client.offset_encoding)
@@ -1008,11 +1004,8 @@ local function hierarchy(method)
 
     if #results == 0 then
       vim.notify('No item resolved', vim.log.levels.WARN)
-    elseif #results == 1 then
-      local client_id, item = results[1][1], results[1][2]
-      request_with_id(client_id, method, { item = item }, nil, bufnr)
     else
-      vim.ui.select(results, {
+      do_or_select(results, {
         prompt = string.format('Select a %s hierarchy item:', kind),
         kind = kind .. 'hierarchy',
         format_item = function(x)

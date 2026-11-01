@@ -670,6 +670,25 @@ function M.convert_input_to_markdown_lines(input, contents)
   return contents
 end
 
+--- Like |vim.lsp.util.convert_input_to_markdown_lines()|, but for embedding `input` as one
+--- section of a larger Markdown document: explicit plaintext is fenced rather than
+--- interpreted, and an empty value yields no lines.
+---@diagnostic disable-next-line: deprecated
+---@param input lsp.MarkedString|lsp.MarkedString[]|lsp.MarkupContent
+---@return string[]
+function M._to_markdown_section(input)
+  if type(input) ~= 'table' or input.kind ~= protocol.MarkupKind.PlainText then
+    return M.convert_input_to_markdown_lines(input)
+  end
+  local lines = vim.split(input.value or '', '\n', { trimempty = true })
+  if #lines == 0 then
+    return lines
+  end
+  table.insert(lines, 1, '```')
+  lines[#lines + 1] = '```'
+  return lines
+end
+
 --- Returns the line/column-based position in `contents` at the given offset.
 ---
 ---@param offset integer
