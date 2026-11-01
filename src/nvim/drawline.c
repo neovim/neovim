@@ -90,6 +90,7 @@ typedef struct {
   int tocol;                 ///< end of inverting
 
   bool need_showbreak;       ///< overlong line, skipping first x chars
+  int breakindent;           ///< cached breakindent width
 
   int char_attr;             ///< attributes for next character
 
@@ -825,6 +826,9 @@ static void handle_breakindent(win_T *wp, winlinevars_T *wlv, int gap_decor_attr
       attr = hl_combine_attr(attr, win_hl_attr(wp, (int)wlv->diff_hlf));
     }
     int num = get_breakindent_win(wp, ml_get_buf(wp->w_buffer, wlv->lnum));
+    if (wlv->breakindent < 0) {
+      wlv->breakindent = num;
+    }
     if (wlv->row == wlv->startrow) {
       num -= win_col_off2(wp);
       if (wlv->n_extra < 0) {
@@ -1335,6 +1339,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     .row = startrow,
     .fromcol = -10,
     .tocol = MAXCOL,
+    .breakindent = -1,
     .old_boguscols = 0,
     .prev_num_attr = -1,
   };
