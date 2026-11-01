@@ -206,6 +206,27 @@ describe('clipboard', function()
     eq('', eval('provider#clipboard#Error()'))
   end)
 
+  it('pbcopy/pbpaste use UTF-8 if $LANG has no codeset #11432', function()
+    t.skip(not t.is_os('mac'), 'N/A pbcopy provider is only used on macOS')
+    local dir = t.tmpname(false)
+    t.mkdir(dir)
+    t.finally(function()
+      n.rmdir(dir)
+    end)
+    local copied = dir .. '/copied'
+    local script = '#!/bin/sh\nprintf \'%%s\' "$LC_ALL:$LC_CTYPE"%s\n'
+    t.write_file(dir .. '/pbcopy', script:format(' > ' .. copied))
+    t.write_file(dir .. '/pbpaste', script:format(''))
+    vim.uv.fs_chmod(dir .. '/pbcopy', tonumber('755', 8))
+    vim.uv.fs_chmod(dir .. '/pbpaste', tonumber('755', 8))
+
+    clear({ env = { LANG = 'en_GB', LC_ALL = 'C', PATH = dir .. ':' .. os.getenv('PATH') } })
+    command("let g:clipboard = 'pbcopy'")
+    command("call setreg('+', 'x')")
+    eq(':UTF-8', t.read_file(copied))
+    eq(':UTF-8', eval("getreg('+')"))
+  end)
+
   it('g:clipboard using Vimscript functions', function()
     -- Implements a fake clipboard provider. cache_enabled is meaningless here.
     source([[let g:clipboard = {
