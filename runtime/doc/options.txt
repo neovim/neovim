@@ -1043,9 +1043,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	- To include a comma in a directory name precede it with a backslash.
 	- A directory name may end in an '/'.
 	- For Unix and Win32, if a directory ends in two path separators "//",
-	  the swap file name will be built from the complete path to the file
-	  with all path separators changed to percent '%' signs.  This will
-	  ensure file name uniqueness in the backup directory.
+	  the swap file name will be built using |vim.fs.slug()| on the
+	  complete path to the file.  This will ensure file name uniqueness
+	  in the backup directory.
 	  On Win32, it is also possible to end with "\\".  However, When a
 	  separating comma is following, you must use "//", since "\\" will
 	  include the comma in the file name.  Therefore it is recommended to
@@ -2426,10 +2426,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  the swap file relative to where the edited file is.  The leading "."
 	  is replaced with the path name of the edited file.
 	- For Unix and Win32, if a directory ends in two path separators "//",
-	  the swap file name will be built from the complete path to the file
-	  with all path separators replaced by percent '%' signs (including
-	  the colon following the drive letter on Win32).  This will ensure
-	  file name uniqueness in the preserve directory.
+	  the swap file name will be built using |vim.fs.slug()| on the
+	  complete path to the file.  This will ensure file name uniqueness
+	  in the preserve directory.
 	  On Win32, it is also possible to end with "\\".  However, When a
 	  separating comma is following, you must use "//", since "\\" will
 	  include the comma in the file name.  Therefore it is recommended to
@@ -7192,8 +7191,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See 'backupdir' for details of the format.
 	"." means using the directory of the file.  The undo file name for
 	"file.txt" is ".file.txt.un~".
-	For other directories the file name is the full path of the edited
-	file, with path separators replaced with "%".
+	For other directories the file name is built using |vim.fs.slug()| on
+	the full path of the edited file.
 	When writing: The first directory that exists is used.  "." always
 	works, no directories after "." will be used for writing.  If none of
 	the directories exist Nvim will attempt to create the last directory in

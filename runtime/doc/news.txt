@@ -620,6 +620,9 @@ These existing features changed their behavior.
   can be used when printing to a terminal.
 • It is no longer allowed to change the window layout during a |DiffUpdated|
   autocommand.
+• New files in 'directory', 'backupdir' and 'undodir' use |vim.fs.slug()|,
+  instead of replacing path separators with "%". Existing files with "%" signs
+  are still used as before.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
