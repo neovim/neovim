@@ -5,9 +5,15 @@
 " 2025 Apr 17 by Vim Project (don't require space to start comments, #17130)
 " 2026 Apr 09 by Vim Project (anchor status regex to beginning of line, #19879)
 " 2026 Apr 09 by Vim Project (detect renames of files, #19879)
+" 2026 Oct 24 by Vim Project (configure spell checking, #21633)
 
 if exists('b:current_syntax')
   finish
+endif
+
+if has('spell')
+  syn spell notoplevel
+  syn region jjDescriptionSpell start="\%^" end="^JJ: ignore-rest$"me=s-1 contains=jjComment,@Spell
 endif
 
 syn match jjAdded "^JJ:\s\+\zsA\s.*" contained
