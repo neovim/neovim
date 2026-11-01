@@ -299,7 +299,7 @@ EXTERN bool garbage_collect_at_exit INIT( = false);
 
 // Script CTX being sourced or was sourced to define the current function.
 EXTERN sctx_T current_sctx INIT( = { 0, 0, 0, 0 });
-/// Last channel that invoked 'nvim_input` or got FocusGained.
+/// Last channel that invoked `nvim_input` or got FocusGained. Maybe not a UI, check remote_ui_attached().
 EXTERN uint64_t current_ui INIT( = 0);
 
 EXTERN bool did_source_packages INIT( = false);

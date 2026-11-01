@@ -1,14 +1,15 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
 local parser = require('vim.net._ssh')
 local describe, it = t.describe, t.it
-local before_each, after_each = t.before_each, t.after_each
+local before_each = t.before_each
 local clear = n.clear
 local eq = t.eq
 local is_os = t.is_os
 local skip = t.skip
 
-describe('SSH parser', function()
+describe('parse_ssh_config()', function()
   it('parses SSH configuration strings', function()
     local config = [[
       Host *
@@ -106,186 +107,59 @@ describe('SSH parser', function()
 end)
 
 describe('vim.net._ssh', function()
-  local fake_bin_dir
+  local fake_dir --- @type string
 
+  --- Makes `vim.net._ssh` run a fake `ssh` (fixtures/fake-ssh.lua), and stubs `confirm()`.
+  ---
+  --- @param behavior? table Optional fields:
+  ---   - `confirm`: Result of `confirm()`.
+  ---   - `ssh_config`, `uname`: Output of `ssh -G`, of `uname -s && uname -m`.
+  ---   - `tunnel`: The tunnel (`-L`) command, by default `{ serve = true }`:
+  ---     - `serve`: Serves a headless Nvim at the `-L` socket, then prints NVIM_READY.
+  ---     - `stdout`, `stderr`: Printed.
+  ---     - `exit`: Exit code. Else runs until the served Nvim exits, or until killed.
   local function setup_fake_ssh(behavior)
     behavior = behavior or {}
-    local is_windows = package.config:sub(1, 1) == '\\'
-    fake_bin_dir = t.tmpname()
-    os.remove(fake_bin_dir)
-    vim.uv.fs_mkdir(fake_bin_dir, 511)
-    local fake_ssh_path = fake_bin_dir .. (is_windows and '/ssh.cmd' or '/ssh')
-    local fake_tunnel_pid = fake_bin_dir .. '/tunnel.pid'
+    local dir = vim.fs.abspath(t.tmpname(false))
+    fake_dir = dir
+    n.mkdir_p(dir)
+    t.finally(function()
+      n.rmdir(dir)
+    end)
+    local nvim_prog = vim.fs.abspath(n.nvim_prog)
+    local config = vim.json.encode({
+      dir = fake_dir,
+      nvim_prog = nvim_prog,
+      ssh_config = behavior.ssh_config or 'stricthostkeychecking ask\nserveraliveinterval 0\n',
+      uname = behavior.uname or 'Linux\nx86_64\n',
+      tunnel = behavior.tunnel or { serve = true },
+    })
+    local fake_ssh = vim.fs.abspath('test/functional/fixtures/fake-ssh.lua')
 
-    local script
-    if is_windows then
-      script = t.dedent([=[
-        @echo off
-        setlocal EnableDelayedExpansion
-        set "ARGS=%*"
-
-        echo(!ARGS! | findstr /C:"uname -s && uname -m" >nul
-        if not errorlevel 1 (
-      ]=] .. (behavior.uname or [=[
-          echo Linux
-          echo x86_64
-      ]=]) .. [=[
-          exit /b 0
-        )
-
-        echo(!ARGS! | findstr /C:"-L" >nul
-        if not errorlevel 1 (
-          echo(!ARGS! | findstr /C:"ControlMaster" >nul
-          if errorlevel 1 (
-            echo FAIL: Multiplexing flags missing! 1>&2
-            exit /b 1
-          )
-      ]=] .. (behavior.tunnel or [=[
-          set "SOCK="
-          set "NEXT_L="
-          for %%A in (%*) do (
-            if defined NEXT_L (
-              set "SOCK=%%~A"
-              set "NEXT_L="
-            ) else if "%%~A"=="-L" (
-              set "NEXT_L=1"
-            )
-          )
-          if not defined SOCK (
-            echo Unexpected SSH command: !ARGS! 1>&2
-            exit /b 1
-          )
-          > "!SOCK!" type NUL
-          exit /b 0
-      ]=]) .. [=[
-        )
-
-        echo(!ARGS! | findstr /C:"TARGET_VER" >nul
-        if not errorlevel 1 (
-      ]=] .. (behavior.installer or [=[
-          echo Installing Neovim... 1>&2
-          exit /b 0
-      ]=]) .. [=[
-        )
-
-        echo(!ARGS! | findstr /C:"-O" >nul
-        if not errorlevel 1 (
-          echo(!ARGS! | findstr /C:"exit" >nul
-          if not errorlevel 1 exit /b 0
-        )
-
-        echo Unexpected SSH command: !ARGS! 1>&2
-        exit /b 1
-      ]=])
-    else
-      script = t.dedent([=[
-        #!/usr/bin/env bash
-        ARGS="$*"
-        if [[ "$ARGS" == *" sh -s" ]]; then
-          ARGS="$ARGS $(cat)"
-        fi
-        PID_FILE=]=] .. string.format('%q', fake_tunnel_pid) .. [=[
-
-        ARGS_FILE=]=] .. string.format('%q', fake_bin_dir .. '/tunnel.args') .. [=[
-
-        if [[ "$ARGS" == *"uname -s && uname -m"* ]]; then
-      ]=] .. (behavior.uname or [=[
-          echo "Linux"
-          echo "x86_64"
-      ]=]) .. [=[
-          exit 0
-        fi
-
-        if [[ "$ARGS" == *"-O cancel -L"* ]]; then
-          touch ]=] .. string.format('%q', fake_bin_dir .. '/forward.cancelled') .. [=[
-
-          exit 0
-        fi
-
-        if [[ "$ARGS" == *"-L"* ]]; then
-          if [[ "$ARGS" != *"ControlMaster"* ]]; then
-            echo "FAIL: Multiplexing flags missing!" >&2
-            exit 1
-          fi
-          if [[ "$ARGS" != *"sh -s"*"NVIM_READY"* ]]; then
-            echo "FAIL: tunnel script not fed to sh -s" >&2
-            exit 1
-          fi
-          printf '%s' "$ARGS" > "$ARGS_FILE"
-      ]=] .. (behavior.tunnel or [=[
-          SOCK=$(echo "$ARGS" | grep -oE '\-L [^:]+' | cut -d' ' -f2)
-          sleep 60 &
-          SLEEP_PID=$!
-          echo "$$ $SLEEP_PID" > "$PID_FILE"
-          trap 'kill "$SLEEP_PID" 2>/dev/null || true; rm -f "$PID_FILE"; exit 0' TERM INT EXIT
-          echo "NVIM_READY"
-          touch "$SOCK"
-          wait "$SLEEP_PID"
-      ]=]) .. [=[
-        fi
-
-        if [[ "$ARGS" == *"releases/download/"* ]]; then
-          printf '%s' "$ARGS" > ]=] .. string.format('%q', fake_bin_dir .. '/install.args') .. [=[
-
-      ]=] .. (behavior.installer or [=[
-          echo "Installing Neovim..." >&2
-          exit 0
-      ]=]) .. [=[
-        fi
-
-        if [[ "$ARGS" == *"-O"*"exit"* ]]; then
-          if [[ -f "$PID_FILE" ]]; then
-            set -- $(cat "$PID_FILE")
-            kill "$2" 2>/dev/null || true
-            kill "$1" 2>/dev/null || true
-          fi
-          exit 0
-        fi
-
-        echo "Unexpected SSH command: $ARGS" >&2
-        exit 1
-      ]=])
-    end
-    t.write_file(fake_ssh_path, script)
-    vim.uv.fs_chmod(fake_ssh_path, 493)
-
-    local path_sep = is_windows and ';' or ':'
-    n.exec_lua(string.format(
-      [[
-      _G.orig_path = vim.fn.getenv('PATH')
-      vim.fn.setenv('PATH', %q .. %q .. _G.orig_path)
-    ]],
-      fake_bin_dir,
-      path_sep
-    ))
+    n.exec_lua(function(ssh_cmd, choice)
+      require('vim.net._ssh').ssh_cmd = ssh_cmd
+      _G.confirm_log = {}
+      vim.fn.confirm = function(...)
+        table.insert(_G.confirm_log, { ... })
+        return choice
+      end
+    end, { nvim_prog, '-l', fake_ssh, config }, behavior.confirm or 1)
   end
 
-  local function teardown_fake_ssh()
-    if fake_bin_dir then
-      n.exec_lua([[
-        if _G.orig_path then
-          vim.fn.setenv('PATH', _G.orig_path)
-        end
-      ]])
-    end
+  --- Checks that the fake tunnel process has exited.
+  local function tunnel_exited()
+    local pid = assert(tonumber(t.read_file(('%s/tunnel.pid'):format(fake_dir))))
+    return vim.uv.kill(pid, 0) ~= 0
   end
 
   before_each(function()
     clear()
   end)
 
-  after_each(function()
-    teardown_fake_ssh()
-  end)
-
   describe('remote-ssh (Introspection)', function()
-    it('detects linux x86_64 successfully', function()
-      skip(is_os('win'), 'remote-ssh engine is POSIX-only')
+    it('detects linux x86_64', function()
       setup_fake_ssh({
-        uname = [[
-          echo "Linux"
-          echo "x86_64"
-        ]],
+        uname = 'Linux\nx86_64\n',
       })
       local res = n.exec_lua([[
         return { require('vim.net._ssh').get_system_info({ host = 'server' }) }
@@ -294,13 +168,9 @@ describe('vim.net._ssh', function()
       eq('x86_64', res[2])
     end)
 
-    it('detects macos arm64 successfully', function()
-      skip(is_os('win'), 'remote-ssh engine is POSIX-only')
+    it('detects macos arm64', function()
       setup_fake_ssh({
-        uname = [[
-          echo "Darwin"
-          echo "arm64"
-        ]],
+        uname = 'Darwin\narm64\n',
       })
       local res = n.exec_lua([[
         return { require('vim.net._ssh').get_system_info({ host = 'server' }) }
@@ -310,12 +180,8 @@ describe('vim.net._ssh', function()
     end)
 
     it('fails fast on Windows', function()
-      skip(is_os('win'), 'remote-ssh engine is POSIX-only')
       setup_fake_ssh({
-        uname = [[
-          echo "MSYS_NT-10.0-19045"
-          echo "x86_64"
-        ]],
+        uname = 'MSYS_NT-10.0-19045\nx86_64\n',
       })
       local status, err = pcall(function()
         n.exec_lua([[
@@ -329,78 +195,216 @@ describe('vim.net._ssh', function()
 
   describe('remote-ssh (Orchestration)', function()
     it('returns local socket with key-based auth', function()
-      skip(is_os('win'), 'remote-ssh engine is POSIX-only')
+      skip(is_os('win'), 'remote-ssh is POSIX-only')
       setup_fake_ssh()
-      local sock = n.exec_lua([[
-        local sock, _, teardown = require('vim.net._ssh').start('user@test-server')
+      local sock, logfile, progress = unpack(n.exec_lua([[
+        local logfile = vim.fs.joinpath(vim.fn.stdpath('log'), 'remote-ssh.log')
+        os.remove(logfile)
+        local progress = {}
+        vim.api.nvim_create_autocmd('Progress', {
+          pattern = 'remote-ssh',
+          callback = function(ev)
+            table.insert(progress, ('%s: %s'):format(ev.data.status, table.concat(ev.data.text)))
+          end,
+        })
+        local sock, teardown = require('vim.net._ssh').start('user@test-server')
         teardown()
-        return sock
-      ]])
+        return { sock, logfile, progress }
+      ]]))
 
       assert(sock:match('_remote_nvim%.sock$'))
+      eq({
+        'running: Connecting to user@test-server...',
+        'running: Starting remote Nvim...',
+        'success: Connected to user@test-server',
+      }, progress)
+      local msg = 'This will install Nvim on user@test-server (in ~/.local/share/nvim-remote/), '
+        .. 'if missing.\n'
+      eq({ { msg, 'Connect? &Yes\n&No', 1, 'Question' } }, n.exec_lua('return _G.confirm_log'))
+      t.matches('Connected to user@test%-server', t.read_file(logfile))
+      local tunnel_args = t.read_file(fake_dir .. '/tunnel.args')
+      t.matches('BatchMode=yes', tunnel_args)
+      t.matches('RemoteCommand=none', tunnel_args)
+      t.matches('StrictHostKeyChecking=accept%-new', tunnel_args)
+      t.matches('ServerAliveInterval=15', tunnel_args)
+      -- Teardown stops the tunnel and cancels its forward, but not the local server.
+      eq(true, tunnel_exited())
+      eq(true, vim.uv.fs_stat(fake_dir .. '/forward.cancelled') ~= nil)
+      n.poke_eventloop()
+      n.assert_alive()
+
+      -- Explicit ssh_config values are kept.
+      setup_fake_ssh({ ssh_config = 'stricthostkeychecking yes\nserveraliveinterval 60\n' })
+      n.exec_lua(function()
+        local _, teardown = require('vim.net._ssh').start('user@test-server')
+        teardown()
+      end)
+      local explicit_args = t.read_file(fake_dir .. '/tunnel.args')
+      eq(nil, explicit_args:find('StrictHostKeyChecking', 1, true))
+      eq(nil, explicit_args:find('ServerAliveInterval', 1, true))
+
+      -- Stops the session if the UI detached meanwhile.
+      setup_fake_ssh()
+      t.matches(
+        'UI detached: channel 999',
+        t.pcall_err(n.exec_lua, [[require('vim.net._ssh').start('user@test-server', 999)]])
+      )
+      eq(true, tunnel_exited())
+      eq(true, vim.uv.fs_stat(fake_dir .. '/forward.cancelled') ~= nil)
     end)
 
-    it('installs the matching release privately and runs it', function()
-      skip(is_os('win'), 'remote-ssh engine is POSIX-only')
+    it('stops the local server when the session ends, unless it is in use', function()
+      skip(is_os('win'), 'remote-ssh is POSIX-only')
       setup_fake_ssh()
-      local release = n.exec_lua([[
-        local _, _, teardown = require('vim.net._ssh').start('user@test-server')
+      local logfile =
+        n.exec_lua([[return vim.fs.joinpath(vim.fn.stdpath('log'), 'remote-ssh.log')]])
+      os.remove(logfile)
+      -- Connects, then ends the session as the remote does: its Nvim quits.
+      local session = [[
+        local sock = require('vim.net._ssh').start('user@test-server')
+        vim.rpcnotify(vim.fn.sockconnect('pipe', sock, { rpc = true }), 'nvim_command', 'qall!')
+      ]]
+
+      n.command('set modified')
+      n.exec_lua(session)
+      t.retry(nil, 5000, function()
+        t.matches('local server in use, keeping it', t.read_file(logfile))
+      end)
+      n.assert_alive()
+
+      n.command('set nomodified')
+      n.expect_exit(5000, n.exec_lua, session)
+    end)
+
+    it('passes the matching release to the remote script', function()
+      skip(is_os('win'), 'remote-ssh is POSIX-only')
+      setup_fake_ssh()
+      local base, prerelease = unpack(n.exec_lua(function()
+        local _, teardown = require('vim.net._ssh').start('user@test-server')
         teardown()
         local v = vim.version()
-        local base = ('v%d.%d.%d'):format(v.major, v.minor, v.patch)
-        return v.prerelease and ('nightly-' .. base) or base
-      ]])
-      local install = t.read_file(fake_bin_dir .. '/install.args')
-      local tag = release:match('^nightly') and 'nightly' or release
-      t.matches('releases/download/' .. vim.pesc(tag) .. '/nvim%-linux%-x86_64%.tar%.gz', install)
-      t.matches('dest="%$HOME"/%.local/share/nvim%-remote/releases/' .. vim.pesc(release), install)
-      eq(nil, install:find('.local/bin', 1, true))
-      t.matches(
-        '"%$HOME"/%.local/share/nvim%-remote/releases/'
-          .. vim.pesc(release)
-          .. '/bin/nvim %-%-headless',
-        t.read_file(fake_bin_dir .. '/tunnel.args')
+        return { ('v%d.%d.%d'):format(v.major, v.minor, v.patch), v.prerelease and true or false }
+      end))
+      local url = 'https://github.com/neovim/neovim/releases/download/%s/nvim-linux-x86_64.tar.gz'
+      local dir = '.local/share/nvim-remote/releases/%s-linux-x86_64'
+      -- A prerelease installs the current nightly, and passes no version for a system `nvim`.
+      local args = prerelease and { dir:format('nightly-' .. base), url:format('nightly') }
+        or { dir:format(base), url:format(base), base }
+      eq(
+        table.concat(args, ' '),
+        t.read_file(fake_dir .. '/tunnel.args')
+          :match(' sh %-s %-%- /tmp/nvim%-remote%.%x+/nvim%.sock (.-) #!/bin/sh')
+      )
+    end)
+
+    it('remote script runs `nvim` from $PATH if new enough, else installs the release', function()
+      skip(is_os('win'), 'remote-ssh is POSIX-only')
+      local home = vim.fs.abspath(t.tmpname(false))
+      t.finally(function()
+        n.rmdir(home)
+      end)
+      local nvim_prog = vim.fs.abspath(n.nvim_prog)
+      n.mkdir_p(home .. '/bin')
+      vim.uv.fs_symlink(nvim_prog, home .. '/bin/nvim')
+      -- Release archive: its `nvim` marks the server it runs.
+      local release = home .. '/src/nvim-test'
+      n.mkdir_p(release .. '/bin')
+      t.write_file(
+        release .. '/bin/nvim',
+        ('#!/bin/sh\nexport NVIM_TEST_RELEASE=1\nexec %s "$@"\n'):format(nvim_prog)
+      )
+      vim.uv.fs_chmod(release .. '/bin/nvim', 493)
+      local tarball = home .. '/nvim-test.tar.gz'
+      eq(0, vim.system({ 'tar', '-czf', tarball, '-C', home .. '/src', 'nvim-test' }):wait().code)
+      local dir = 'releases/v1-test'
+
+      --- Runs the script locally, as the remote does, and asks its server for `[$NVIM_APPNAME,
+      --- $NVIM_TEST_RELEASE, v:startreason]`.
+      local function serve(version)
+        return n.exec_lua(function(...)
+          local sock = ('%s/sock/nvim.sock'):format(home)
+          local cmd =
+            { 'env', ('HOME=%s'):format(home), ('PATH=%s/bin:%s'):format(home, vim.env.PATH) }
+          vim.list_extend(cmd, { 'sh', 'runtime/scripts/remote_ssh.sh', sock, ... })
+          local obj = require('vim._core.system').run_wait(cmd, nil, function(stdout)
+            return stdout:match('NVIM_READY') ~= nil
+          end, 10000)
+          local ch = vim.fn.sockconnect('pipe', sock, { rpc = true })
+          local env =
+            vim.rpcrequest(ch, 'nvim_eval', '[$NVIM_APPNAME, $NVIM_TEST_RELEASE, v:startreason]')
+          vim.fn.chanclose(ch)
+          obj:kill('sigterm')
+          obj:wait(5000)
+          -- The script removes its socket dir on exit.
+          local removed = vim.uv.fs_stat(vim.fs.dirname(sock)) == nil
+          return { env, removed, obj.stderr:match('Installing %S+') }
+        end, dir, ('file://%s'):format(tarball), version)
+      end
+
+      eq({ { 'nvim-remote', '', 'remote-ssh' }, true }, serve('v0.1.0'))
+      eq(nil, vim.uv.fs_stat(('%s/%s'):format(home, dir)))
+      local installing = ('Installing %s/%s...'):format(home, dir)
+      eq({ { 'nvim-remote', '1', 'remote-ssh' }, true, installing }, serve('v999.0.0'))
+      -- No version (a prerelease): never uses $PATH; the install is kept.
+      eq({ { 'nvim-remote', '1', 'remote-ssh' }, true }, serve())
+
+      -- The UI could not reach a restarted server through the tunnel.
+      n.clear({ env = { __NVIM_STARTREASON = 'remote-ssh' } })
+      eq(
+        'Vim(restart):E6103: :restart is not supported with remote-ssh',
+        t.pcall_err(n.command, 'restart')
       )
     end)
 
     it('fails when ssh exits before the remote Nvim is ready', function()
-      skip(is_os('win'), 'remote-ssh engine is POSIX-only')
       setup_fake_ssh({
-        tunnel = [[
-          echo "channel 0: open failed: administratively prohibited" >&2
-          exit 255
-        ]],
+        tunnel = { stderr = 'channel 0: open failed: administratively prohibited\n', exit = 255 },
       })
+      n.exec_lua(function()
+        vim.api.nvim_create_autocmd('Progress', {
+          pattern = 'remote-ssh',
+          callback = function(ev)
+            _G.last_progress = ('%s: %s'):format(ev.data.status, table.concat(ev.data.text))
+          end,
+        })
+      end)
       t.matches(
         'SSH tunnel exited before the remote Nvim was ready: channel 0: open failed',
         t.pcall_err(n.exec_lua, [[require('vim.net._ssh').start('user@test-server')]])
       )
-      eq(true, vim.uv.fs_stat(fake_bin_dir .. '/forward.cancelled') ~= nil)
+      eq('failed: Failed to connect to user@test-server', n.exec_lua('return _G.last_progress'))
+      eq(true, vim.uv.fs_stat(fake_dir .. '/forward.cancelled') ~= nil)
     end)
 
-    it('fails when the remote Nvim crashes during startup', function()
-      skip(is_os('win'), 'remote-ssh engine is POSIX-only')
+    it('fails when the remote Nvim crashes during startup, or is unreachable', function()
       setup_fake_ssh({
-        tunnel = [[
-          echo "NVIM_CRASHED"
-          exit 1
-        ]],
+        tunnel = { stdout = 'NVIM_CRASHED\n', exit = 1 },
       })
       t.matches(
         'Remote Nvim crashed during startup',
         t.pcall_err(n.exec_lua, [[require('vim.net._ssh').start('user@test-server')]])
       )
+
+      -- The script runs, but sshd refused the forward.
+      setup_fake_ssh({
+        tunnel = { stdout = 'NVIM_READY\n' },
+      })
+      t.matches(
+        'Remote Nvim is not reachable through the SSH forward',
+        t.pcall_err(n.exec_lua, [[require('vim.net._ssh').start('user@test-server')]])
+      )
+      eq(true, vim.uv.fs_stat(fake_dir .. '/forward.cancelled') ~= nil)
     end)
 
     it('serves each session from a fresh private remote directory', function()
-      skip(is_os('win'), 'remote-ssh engine is POSIX-only')
+      skip(is_os('win'), 'remote-ssh is POSIX-only')
       setup_fake_ssh()
       local function remote_dir()
         n.exec_lua([[
-          local _, _, teardown = require('vim.net._ssh').start('user@test-server')
+          local _, teardown = require('vim.net._ssh').start('user@test-server')
           teardown()
         ]])
-        local args = t.read_file(fake_bin_dir .. '/tunnel.args')
+        local args = t.read_file(fake_dir .. '/tunnel.args')
         t.matches('mkdir %-m 700 "%$dir"', args)
         return args:match(':(/tmp/nvim%-remote%.%x+)/nvim%.sock ')
       end
@@ -408,6 +412,28 @@ describe('vim.net._ssh', function()
       local dir1, dir2 = remote_dir(), remote_dir()
       assert(dir1 and dir2, 'remote socket path not found')
       assert(dir1 ~= dir2, 'remote socket directory reused across sessions')
+    end)
+
+    it(':connect ssh:// does nothing if it cannot attach, or is declined', function()
+      setup_fake_ssh({ confirm = 2 })
+      eq('Vim(connect):E477: No ! allowed', t.pcall_err(n.command, 'connect! ssh://test-server'))
+      eq('Vim(connect):E5768: No UI attached', t.pcall_err(n.command, 'connect ssh://test-server'))
+      -- Typed by a client that is not a UI.
+      n.command('let v:errmsg = ""')
+      local client = n.connect(n.eval('v:servername'))
+      client:request('nvim_input', ':connect ssh://test-server<CR>')
+      t.retry(nil, nil, function()
+        eq('E5768: No UI attached', n.eval('v:errmsg'))
+      end)
+      client:close()
+      eq({}, n.exec_lua('return _G.confirm_log'))
+
+      Screen.new()
+      -- Scheme is case-insensitive.
+      n.command('connect SSH://test-server')
+      eq(1, #n.exec_lua('return _G.confirm_log'))
+      eq(1, #n.api.nvim_list_uis())
+      eq(nil, vim.uv.fs_stat(fake_dir .. '/tunnel.args'))
     end)
   end)
 end)

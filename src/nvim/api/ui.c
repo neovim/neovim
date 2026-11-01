@@ -318,6 +318,12 @@ void nvim_ui_detach(uint64_t channel_id, Error *err)
   remote_ui_disconnect(channel_id, err, false);
 }
 
+/// Checks that a UI is attached on channel `channel_id`.
+bool remote_ui_attached(uint64_t channel_id)
+{
+  return map_has(uint64_t, &connected_uis, channel_id);
+}
+
 // Sends a "connect" event to the UI on the given channel
 void remote_ui_connect(uint64_t channel_id, char *server_addr, Error *err)
 {

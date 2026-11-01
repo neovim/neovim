@@ -675,41 +675,22 @@ local function check_external_tools()
     if ssh_job.code == 0 then
       health.ok(('%s (%s)'):format(ssh_out, ssh_path))
 
-      local version_str = ssh_out:match('OpenSSH_([%d%.]+)')
-      local ver = version_str and vim.version.parse(version_str)
-      if ver then
-        if vim.fn.has('win32') == 1 then
-          health.warn(
-            'Win32-OpenSSH does not support ControlMaster (multiplexing). Remote SSH features might be degraded or unsupported.'
-          )
-        elseif ver >= vim.version.parse('4.0') then
-          health.ok('OpenSSH version supports multiplexing')
-        else
-          health.warn(
-            'OpenSSH version is older than 4.0. Multiplexing is not supported, remote connections may be slow or fail.'
-          )
-        end
+      if vim.fn.has('win32') == 1 then
+        health.warn(
+          'Win32-OpenSSH lacks ControlMaster (multiplexing), so :connect ssh:// is not supported.'
+        )
       else
-        health.warn('Could not determine OpenSSH version. Multiplexing support is unknown.')
-      end
-
-      if vim.fn.has('win32') == 0 then
-        local ssh_g = vim.system({ ssh_path, '-G', 'example.com' }):wait()
-        if ssh_g.code == 0 then
-          local ssh_cfg = ssh_g.stdout or ''
-          local controlmaster = ssh_cfg:match('controlmaster%s+(%S+)')
-          local controlpath = ssh_cfg:match('controlpath%s+(%S+)')
-          if controlmaster and controlmaster ~= 'no' then
-            health.ok(('SSH multiplexing configured (ControlMaster=%s)'):format(controlmaster))
-          elseif controlpath and controlpath ~= 'none' then
-            health.ok(('SSH ControlPath resolved to: %s'):format(controlpath))
-          else
-            health.info(
-              'SSH multiplexing not configured in ssh_config. :connect will set it automatically.'
-            )
-          end
+        -- Asks `ssh` itself (ignoring ssh_config): `-G` fails on an option it does not support.
+        -- `accept-new` (OpenSSH 7.6) is the newest option that :connect ssh:// uses.
+        local cmd = { ssh_path, '-F', 'none', '-G', '-o', 'StrictHostKeyChecking=accept-new', 'x' }
+        local check = vim.system(cmd, { text = true }):wait()
+        if check.code == 0 then
+          health.ok('ssh supports :connect ssh://')
         else
-          health.warn('`ssh -G` failed. Cannot verify SSH multiplexing configuration.')
+          health.warn(
+            'ssh lacks StrictHostKeyChecking=accept-new (OpenSSH 7.6+), needed by :connect ssh://',
+            { vim.trim(check.stderr or '') }
+          )
         end
       end
     else

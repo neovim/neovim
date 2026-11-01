@@ -140,21 +140,29 @@ describe('vim.system', function()
     t.skip(t.is_os('win'), 'shell command is POSIX-only')
 
     exec_lua(function()
-      local res
+      local res, exited
       local ok, err = pcall(function()
         res = require('vim._core.system').run_wait(
-          { 'bash', '-c', 'echo READY; sleep 10' },
+          { 'bash', '-c', 'echo READY; sleep 1; echo LATER' },
           nil,
           function(stdout)
             return stdout:match('READY') ~= nil
           end,
-          10000
+          10000,
+          function(out)
+            exited = out
+          end
         )
 
         assert(res)
         assert(res.code == nil)
         assert(res.stdout == 'READY\n')
         assert(vim.api.nvim_get_proc(res.pid), 'process already exited')
+        -- Output after return (e.g. a heartbeat) is not captured.
+        assert(vim.wait(5000, function()
+          return exited ~= nil
+        end))
+        assert(exited.code == 0 and exited.stdout == nil)
       end)
 
       if res then

@@ -371,6 +371,31 @@ describe('vim.uri', function()
       eq('root', uri.user)
       eq('localhost', uri.host)
       eq('2222', uri.port)
+
+      eq(
+        { user = 'u', host = '::1', port = '22' },
+        exec_lua(function()
+          return require('vim.uri')._parse_ssh_uri('ssh://u@[::1]:22/home/u')
+        end)
+      )
+      eq(
+        { host = 'host' },
+        exec_lua(function()
+          return require('vim.uri')._parse_ssh_uri('ssh://host/')
+        end)
+      )
+      eq(
+        { user = 'first.last@corp', host = 'host' },
+        exec_lua(function()
+          return require('vim.uri')._parse_ssh_uri('ssh://first.last%40corp@host')
+        end)
+      )
+      eq(
+        'No host in SSH URI: ssh:///x',
+        t.pcall_err(exec_lua, function()
+          return require('vim.uri')._parse_ssh_uri('ssh:///x')
+        end)
+      )
     end)
 
     it('parses user@host', function()
