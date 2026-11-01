@@ -1575,6 +1575,9 @@ describe('user config init', function()
           '---',
           string.rep(' ', 50 - #'---')
         ))
+        -- Exit to ensure the child's ShaDa write is done before after_each() removes Xstate.
+        feed(':qall!<CR>')
+        screen:expect({ any = pesc('[Process exited 0]') })
 
         clear { args_rm = { '-u' }, env = xstateenv }
         if string.find(exrc_path, '%.lua$') then

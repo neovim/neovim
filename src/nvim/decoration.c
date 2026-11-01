@@ -982,7 +982,7 @@ bool decor_row_has_conceal(win_T *wp, int row)
 /// @return whether "row" is concealed
 bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
 {
-  if (row < 0 || wp->w_p_cole < 2
+  if (row < 0 || row >= wp->w_buffer->b_ml.ml_line_count || wp->w_p_cole < 2
       || (!check_cursor && wp == curwin && row + 1 == wp->w_cursor.lnum
           && !conceal_cursor_line(wp))) {
     return false;
