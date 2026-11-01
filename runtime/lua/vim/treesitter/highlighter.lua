@@ -402,7 +402,11 @@ local function on_range_impl(
   on_conceal_intra
 )
   local conceal_range ---@type Range4?
-  if on_conceal_intra then
+  if
+    on_conceal_intra
+    and range_start_row >= 0
+    and range_start_row < api.nvim_buf_line_count(buf)
+  then
     conceal_range = {
       range_start_row,
       0,

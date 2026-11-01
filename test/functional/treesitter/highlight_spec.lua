@@ -1005,6 +1005,25 @@ describe('treesitter highlighting (C)', function()
       eq(0, api.nvim__buf_stats(0).conceal_providers)
     end)
 
+    it('does not error when deleting a concealed row', function()
+      command('set conceallevel=2 concealcursor=')
+      api.nvim_buf_set_lines(0, 0, -1, true, { text })
+      exec_lua(function(query_text)
+        vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, 'c'), {
+          queries = { c = query_text },
+        })
+        vim.treesitter.get_parser():parse(true)
+      end, conceal_query)
+      feed('Go<Esc>dd')
+      eq({ text }, api.nvim_buf_get_lines(0, 0, -1, true))
+      screen:expect([[
+        ^int  = b;           |
+        {1:~                   }|
+        {1:~                   }|
+        {1:~                   }|
+      ]])
+    end)
+
     it('conceal redraws do not grow undo history during insert', function()
       screen:try_resize(60, 8)
       command('set conceallevel=2')
