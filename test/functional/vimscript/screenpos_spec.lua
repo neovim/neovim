@@ -20,6 +20,30 @@ describe('screenpos() function', function()
     eq({ row = 1, col = 3, endcol = 3, curscol = 3 }, fn.screenpos(0, 1, 0x7fffffff))
   end)
 
+  it('is on the cursor row for a character that starts on a row above', function()
+    local screen = Screen.new(20, 6)
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(15) .. 'b', ('a'):rep(18) .. '\tb' })
+    local vt = { virt_text = { { ('X'):rep(10) } }, virt_text_pos = 'inline' }
+    api.nvim_buf_set_extmark(0, api.nvim_create_namespace(''), 0, 15, vt)
+    screen:expect([[
+      ^aaaaaaaaaaaaaaaXXXXX|
+      XXXXXb              |
+      aaaaaaaaaaaaaaaaaa  |
+          b               |
+      {1:~                   }|
+                          |
+    ]])
+    -- From the row's first cell: inline virtual text, a TAB.
+    eq({ row = 2, col = 1, endcol = 6, curscol = 6 }, fn.screenpos(0, 1, 16))
+    eq({ row = 4, col = 1, endcol = 4, curscol = 4 }, fn.screenpos(0, 2, 19))
+    command('set number')
+    eq({ row = 2, col = 5, endcol = 14, curscol = 14 }, fn.screenpos(0, 1, 16))
+    -- Also from the first cell shown.
+    command('set nowrap')
+    fn.winrestview({ lnum = 2, col = 19, leftcol = 20 })
+    eq({ row = 1, col = 5, endcol = 10, curscol = 10 }, fn.screenpos(0, 1, 16))
+  end)
+
   it('works in floating window with border', function()
     local opts = {
       relative = 'editor',

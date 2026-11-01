@@ -170,6 +170,8 @@ describe('conceal-aware wrapping (#14409)', function()
     eq({ row = 2, col = 1, curscol = 1, endcol = 1 }, fn.screenpos(0, 1, 27))
     eq({ row = 1, col = 1, curscol = 1, endcol = 1 }, fn.screenpos(0, 1, 1))
     eq({ row = 1, col = 15, curscol = 15, endcol = 15 }, fn.screenpos(0, 1, 21))
+    -- A hidden character is at the cell of the text after it.
+    eq({ row = 1, col = 11, curscol = 11, endcol = 11 }, fn.screenpos(0, 1, 11))
     api.nvim_win_set_cursor(0, { 1, 26 })
     eq({ 2, 1 }, { fn.winline(), fn.wincol() })
     api.nvim_win_set_cursor(0, { 1, 20 })

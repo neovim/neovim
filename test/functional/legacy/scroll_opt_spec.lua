@@ -1401,6 +1401,23 @@ describe('smoothscroll', function()
       :norm j721|                             |
     ]])
   end)
+
+  it('winrestview() with only "topline" drops the skipcol of the previous topline', function()
+    exec([[
+      set smoothscroll
+      call setline(1, ['line1', 'line2'->repeat(20)])
+    ]])
+    -- Checked before a redraw, which repairs the view.
+    eq(
+      { 40, 0 },
+      n.exec_lua(function()
+        vim.fn.winrestview({ lnum = 2, col = 60, topline = 2, skipcol = 40 })
+        local skipcol = vim.fn.winsaveview().skipcol
+        vim.fn.winrestview({ topline = 1 })
+        return { skipcol, vim.fn.winsaveview().skipcol }
+      end)
+    )
+  end)
 end)
 
 describe('scrolloffpad', function()

@@ -1197,6 +1197,31 @@ describe('treesitter highlighting (C)', function()
           return checks
         end)
       )
+
+      -- Rechecking the last row of a `conceal_lines` mark keeps its capture's rows concealed, also
+      -- when that row's query does not return the capture: moved by `#offset!`, or shrunk by an edit.
+      for _, case in ipairs({
+        { '((comment) @c (#offset! @c 0 0 1 0) (#set! conceal_lines ""))', { 4, 4, 'A' }, 1 },
+        { c_query, { 2, 3, ' */' }, 3 },
+      }) do
+        eq(
+          { case[3], case[3] },
+          exec_lua(function(query_text, edit)
+            vim.treesitter.stop()
+            local lines = { 'int x;', '/* one', 'two', 'three */', 'int a;' }
+            vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+            vim.treesitter.query.set('c', 'highlights', query_text)
+            vim.treesitter.start(0, 'c')
+            vim.cmd('redraw')
+            vim.api.nvim_buf_set_text(0, edit[1], edit[2], edit[1], edit[2], { edit[3] })
+            -- Before a redraw, which would re-add the mark.
+            return {
+              vim.api.nvim_win_text_height(0, {}).all,
+              vim.api.nvim_win_text_height(0, {}).all,
+            }
+          end, case[1], case[2])
+        )
+      end
     end)
 
     it('preserves the replacement start when clipping multiline conceal', function()

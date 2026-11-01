@@ -1210,11 +1210,16 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
     } else {
       assert(lnum == pos->lnum);
       getvcol(wp, pos, &scol, &ccol, &ecol, GETVCOL_DISP);
+      // A character fully hidden by extmark-conceal ends where it starts.
+      ecol = MAX(ecol, scol);
 
       // similar to what is done in validate_cursor_col()
-      colnr_T col = scol;
+      // The cursor's row: inline virtual text or a TAB may start the character on a row above, or
+      // left of the window. Then "col" is the row's first cell.
+      colnr_T col = ccol;
       col += off;
       int width = wp->w_view_width - off + win_col_off2(wp);
+      colnr_T row_vcol = wp->w_leftcol;
 
       // long line wrapping, adjust row
       if (wp->w_p_wrap && col >= (colnr_T)wp->w_view_width && width > 0) {
@@ -1222,12 +1227,14 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
         int rowoff = visible_row ? ((col - wp->w_view_width) / width + 1) : 0;
         col -= rowoff * width;
         row += rowoff;
+        row_vcol += rowoff * width - win_col_off2(wp);
       }
 
       col -= wp->w_leftcol;
+      scol = MAX(scol, row_vcol);
 
       if (col >= 0 && col < wp->w_view_width && row >= 0 && row < wp->w_view_height) {
-        coloff = col - scol + (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1;
+        coloff = col - ccol + (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1;
         row += (local ? 0 : wp->w_winrow + wp->w_winrow_off) + 1;
       } else {
         // character is left, right or below of the window
