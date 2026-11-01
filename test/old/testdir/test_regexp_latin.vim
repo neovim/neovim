@@ -885,6 +885,15 @@ func Test_lookbehind_across_line()
   call cursor(1, 1)
   call search('\(<\_[xy]\+\)\@3<=start')
   call assert_equal([0, 7, 3, 0], getpos('.'))
+
+  %delete _
+  call setline(1, ['abc', 'X'])
+  call cursor(1, 1)
+  call assert_equal(2, search('\%#=1\(c\n\)\@1<=X', 'cnW'))
+  call assert_equal(0, search('\%#=1\(bc\n\)\@1<=X', 'cnW'))
+  call assert_equal(2, search('\%#=1\(bc\n\)\@2<=X', 'cnW'))
+  call assert_equal(2, search('\%#=1\(bc\n\)\@1<!X', 'cnW'))
+  call assert_equal(0, search('\%#=1\(bc\n\)\@2<!X', 'cnW'))
   bwipe!
 endfunc
 
