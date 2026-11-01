@@ -198,6 +198,32 @@ describe('path.c', function()
     end)
   end)
 
+  describe('path_with_component', function()
+    local function path_with_component(p1, p2)
+      return cimp.path_with_component(to_cstr(p1), to_cstr(p2))
+    end
+
+    itp('returns kPathCompNone when p1 does not start with component p2', function()
+      eq(cimp.kPathCompNone, path_with_component('foo', '.'))
+      eq(cimp.kPathCompNone, path_with_component('.x', '.'))
+      eq(cimp.kPathCompNone, path_with_component('...', '.'))
+      eq(cimp.kPathCompNone, path_with_component('..x', '..'))
+      eq(cimp.kPathCompNone, path_with_component('', '.'))
+    end)
+
+    itp('returns kPathCompNul when the component extends to the end of p1', function()
+      eq(cimp.kPathCompNul, path_with_component('.', '.'))
+      eq(cimp.kPathCompNul, path_with_component('..', '..'))
+      eq(cimp.kPathCompNul, path_with_component('foo', 'foo'))
+    end)
+
+    itp('returns kPathCompSep when the component is followed by a path separator', function()
+      eq(cimp.kPathCompSep, path_with_component('./', '.'))
+      eq(cimp.kPathCompSep, path_with_component('./foo', '.'))
+      eq(cimp.kPathCompSep, path_with_component('../foo', '..'))
+    end)
+  end)
+
   describe('path_tail', function()
     local function path_tail(file)
       local res = cimp.path_tail((to_cstr(file)))
@@ -337,10 +363,19 @@ describe('path.c', function()
       eq(NULL, (cimp.path_shorten_fname(full, dir)))
     end)
 
-    itp('returns NULL if the path is not separated properly', function()
+    itp('shortens the filename even if dir_name ends with a slash', function()
       local dir = to_cstr('some/very/long/')
       local full = to_cstr('some/very/long/directory/file.txt')
-      eq(NULL, (cimp.path_shorten_fname(full, dir)))
+      eq('directory/file.txt', ffi.string(cimp.path_shorten_fname(full, dir)))
+
+      dir = to_cstr('/')
+      full = to_cstr('/file.txt')
+      eq('file.txt', ffi.string(cimp.path_shorten_fname(full, dir)))
+
+      dir = to_cstr('c:/')
+      full = to_cstr('c:/file.txt')
+      eq('file.txt', ffi.string(cimp.path_shorten_fname(full, dir)))
+
     end)
 
     itp('shortens the filename if `dir_name` is the start of `full_path`', function()
@@ -744,47 +779,47 @@ describe('path.c', function()
       end
 
       -- Check normal scheme with just alphabetic
-      eq(1, path_with_url([[test://xyz/foo/b0]]))
-      eq(2, path_with_url([[test:\\xyz\foo\b0]]))
+      eq(true, path_with_url([[test://xyz/foo/b0]]))
+      eq(false, path_with_url([[test:\\xyz\foo\b0]]))
 
       -- Check valid scheme with just alphanumeric
-      eq(1, path_with_url([[test123://xyz/foo/b0]]))
-      eq(2, path_with_url([[test123:\\xyz\foo\b0]]))
+      eq(true, path_with_url([[test123://xyz/foo/b0]]))
+      eq(false, path_with_url([[test123:\\xyz\foo\b0]]))
 
       -- Check invalid scheme (contains invalid character)
-      eq(0, path_with_url([[test_abc://xyz/foo/b2]]))
+      eq(false, path_with_url([[test_abc://xyz/foo/b2]]))
 
       -- Check valid scheme containing '+', '-', or '.'
-      eq(1, path_with_url([[test+abc://xyz/foo/b1]]))
-      eq(2, path_with_url([[test+abc:\\xyz\foo\b1]]))
-      eq(1, path_with_url([[test-abc://xyz/foo/b3]]))
-      eq(2, path_with_url([[test-abc:\\xyz\foo\b3]]))
-      eq(1, path_with_url([[test.abc://xyz/foo/b1]]))
-      eq(2, path_with_url([[test.abc:\\xyz\foo\b1]]))
+      eq(true, path_with_url([[test+abc://xyz/foo/b1]]))
+      eq(false, path_with_url([[test+abc:\\xyz\foo\b1]]))
+      eq(true, path_with_url([[test-abc://xyz/foo/b3]]))
+      eq(false, path_with_url([[test-abc:\\xyz\foo\b3]]))
+      eq(true, path_with_url([[test.abc://xyz/foo/b1]]))
+      eq(false, path_with_url([[test.abc:\\xyz\foo\b1]]))
 
       -- Check valid scheme with full suite of allowed characters
-      eq(1, path_with_url([[test+abc-123.ghi://xyz/foo/b1]]))
-      eq(2, path_with_url([[test+abc-123.ghi:\\xyz\foo\b1]]))
+      eq(true, path_with_url([[test+abc-123.ghi://xyz/foo/b1]]))
+      eq(false, path_with_url([[test+abc-123.ghi:\\xyz\foo\b1]]))
 
       -- Check invalid scheme starting or ending with '+', '-', or '.'
-      eq(0, path_with_url([[-test://xyz/foo/b4]]))
-      eq(0, path_with_url([[test-://xyz/foo/b5]]))
-      eq(0, path_with_url([[+test://xyz/foo/b4]]))
-      eq(0, path_with_url([[test+://xyz/foo/b5]]))
-      eq(0, path_with_url([[.test://xyz/foo/b4]]))
-      eq(0, path_with_url([[test.://xyz/foo/b5]]))
+      eq(false, path_with_url([[-test://xyz/foo/b4]]))
+      eq(false, path_with_url([[test-://xyz/foo/b5]]))
+      eq(false, path_with_url([[+test://xyz/foo/b4]]))
+      eq(false, path_with_url([[test+://xyz/foo/b5]]))
+      eq(false, path_with_url([[.test://xyz/foo/b4]]))
+      eq(false, path_with_url([[test.://xyz/foo/b5]]))
 
       -- Check additional valid scheme containing '+', '-', or '.'
-      eq(1, path_with_url([[test-C:/xyz/foo/b5]]))
-      eq(1, path_with_url([[test-custom:/xyz/foo/b5]]))
-      eq(1, path_with_url([[test+C:/xyz/foo/b5]]))
-      eq(1, path_with_url([[test+custom:/xyz/foo/b5]]))
-      eq(1, path_with_url([[test.C:/xyz/foo/b5]]))
-      eq(1, path_with_url([[test.custom:/xyz/foo/b5]]))
+      eq(true, path_with_url([[test-C:/xyz/foo/b5]]))
+      eq(true, path_with_url([[test-custom:/xyz/foo/b5]]))
+      eq(true, path_with_url([[test+C:/xyz/foo/b5]]))
+      eq(true, path_with_url([[test+custom:/xyz/foo/b5]]))
+      eq(true, path_with_url([[test.C:/xyz/foo/b5]]))
+      eq(true, path_with_url([[test.custom:/xyz/foo/b5]]))
 
       -- Check invalid scheme representing drive letter
-      eq(0, path_with_url([[c:/xyz/foo/b5]]))
-      eq(0, path_with_url([[C:/xyz/foo/b5]]))
+      eq(false, path_with_url([[c:/xyz/foo/b5]]))
+      eq(false, path_with_url([[C:/xyz/foo/b5]]))
     end)
   end)
 end)
