@@ -633,10 +633,27 @@ function TSHighlighter._on_conceal(event, win, buf, row)
   self.tree:parse({ row, row + 1 })
   self._conceal_checked[row] = intra
   -- Replace the row's marks, which an edit may have moved here.
+  local marks = api.nvim_buf_get_extmarks(
+    buf,
+    ns,
+    { row, 0 },
+    { row, -1 },
+    { overlap = true, details = true }
+  )
   api.nvim_buf_clear_namespace(buf, ns, row, row + 1)
   api.nvim_buf_clear_namespace(buf, conceal_ns, row, row + 1)
   self:prepare_highlight_states(row, row)
   on_range_impl(self, buf, row, 0, row + 1, 0, false, true, intra)
+  -- This row's query need not return the capture of a `conceal_lines` mark that spans other rows
+  -- (e.g. moved by `#offset!`, or shrunk by an edit there): query its rows.
+  for _, mark in ipairs(marks) do
+    local srow, erow = mark[2], assert(mark[4]).end_row or mark[2]
+    if #api.nvim_buf_get_extmarks(buf, ns, { srow, 0 }, { srow, 0 }, {}) == 0 then
+      self.tree:parse({ srow, erow + 1 })
+      self:prepare_highlight_states(srow, erow)
+      on_range_impl(self, buf, srow, 0, erow + 1, 0, false, true)
+    end
+  end
   self._highlight_states = highlight_states
 end
 

@@ -944,7 +944,7 @@ static bool decor_row_has_mark(win_T *wp, int row, MetaIndex meta, uint32_t flag
   MarkTreeIter itr[1];
   marktree_itr_get_overlap(tree, row, 0, itr);
   while (marktree_itr_step_overlap(tree, itr, &pair)) {
-    if ((pair.start.flags & flag) && ns_in_win(pair.start.ns, wp)) {
+    if (!mt_invalid(pair.start) && (pair.start.flags & flag) && ns_in_win(pair.start.ns, wp)) {
       return true;
     }
   }
@@ -956,7 +956,7 @@ static bool decor_row_has_mark(win_T *wp, int row, MetaIndex meta, uint32_t flag
     if (mark.pos.row > row) {
       break;
     }
-    if ((mark.flags & flag) && ns_in_win(mark.ns, wp)) {
+    if (!mt_invalid(mark) && (mark.flags & flag) && ns_in_win(mark.ns, wp)) {
       return true;
     }
     marktree_itr_next_filter(tree, itr, row + 1, 0, filter);

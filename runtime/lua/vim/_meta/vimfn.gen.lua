@@ -11645,6 +11645,8 @@ function vim.fn.winrestcmd() end
 --- (yes, that is 5), while all other settings will remain the
 --- same.  This is useful, if you set the cursor position
 --- manually.
+--- A different "topline" resets "skipcol" and "topfill", unless
+--- {dict} contains them.
 ---
 --- If you have changed the values the result is unpredictable.
 --- If the window size changed the result won't be the same.

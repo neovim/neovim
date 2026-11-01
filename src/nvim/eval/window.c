@@ -847,7 +847,11 @@ void f_winrestview(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     curwin->w_cursor.coladd = (colnr_T)tv_get_number(&di->di_tv);
   }
   if ((di = tv_dict_find(dict, S_LEN("topline"))) != NULL) {
+    linenr_T const prev_topline = curwin->w_topline;
     set_topline(curwin, (linenr_T)tv_get_number(&di->di_tv));  // A folded line: its fold start.
+    if (curwin->w_topline != prev_topline) {
+      curwin->w_skipcol = 0;  // Keep the skipcol only when the topline didn't change.
+    }
   }
   viewstate_T vs;
   save_viewstate(curwin, &vs);  // Keys absent from the dict keep their value.

@@ -3937,6 +3937,24 @@ describe('extmark decorations', function()
     eq(5, n.fn.line('w0'))
     feed('<C-E><C-Y>')
     eq(5, n.fn.line('w0'))
+    -- An invalidated mark conceals nothing.
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { conceal_lines = '' })
+    api.nvim_buf_set_extmark(0, ns, 2, 0, { conceal_lines = '', invalidate = true })
+    feed('3Gdd')
+    screen:expect([[
+      {2:  3 }        ^hl_id = hl_id_cell                    |
+      {2:  4 }conceal text                                  |
+      {2:  5 }    for _ = 1, (count or 1) do                |
+      {2:  6 }        local cell = line[colpos]             |
+      {2:  7 }        cell.text = text                      |
+      {2:  8 }        cell.hl_id = hl_id                    |
+      {2:  9 }        colpos = colpos+1                     |
+      {2: 10 }    end                                       |
+      {2: 11 }end                                           |
+      {1:~                                                 }|*5
+                                                        |
+    ]])
   end)
 
   it('<C-Y> scrolls past conceal_lines above virt_lines_above #42317', function()
