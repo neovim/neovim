@@ -84,6 +84,83 @@ View the full list of CMake options defined in this project:
 cmake -B build -LH
 ```
 
+### Profile-guided optimization (PGO)
+
+PGO builds an instrumented `nvim`, runs it over a training workload to see which
+branches are actually taken, and rebuilds `nvim` with that profile. No
+build-system change is needed for the `nvim` sources (the flags go through
+`CMAKE_C_FLAGS` and `CMAKE_EXE_LINKER_FLAGS`), but the instrumented binary has
+to be *run*, so it does not work when cross-compiling, or on Windows.
+
+`contrib/pgo.sh` runs the three stages (GCC by default, Clang with `--clang`):
+
+```bash
+./contrib/pgo.sh all                 # instrument, train, rebuild
+./contrib/pgo.sh --pgo-deps all      # also optimize the bundled dependencies
+./contrib/pgo.sh --clang all         # Clang IR PGO instead of GCC
+```
+
+All three stages use the same build directory on purpose: GCC writes the
+profile next to the object files and the last stage has to find it there. Do not
+run `make clean` (or remove `build/`) in between. `ccache` is disabled, because
+it breaks instrumentation. The training workload is the functional test suite
+plus `contrib/pgo_train.lua` (an editing session: files, search, `:substitute`,
+treesitter, Lua callbacks, redraws, the TUI); failing tests are tolerated, the
+profile is collected from whatever ran.
+
+`--pgo-deps` also optimizes the bundled dependencies (GCC only) through the
+opt-in `DEPS_EXTRA_CFLAGS` variable in `cmake.deps`; it is empty by default, so
+normal builds are unaffected. The value is cached in `.deps/CMakeCache.txt`, so
+the PGO-built dependencies stay in place for later builds; remove `.deps` (or
+run `./contrib/pgo.sh clean`) to get the default ones back. `--march` is added
+to both stages, because `-fprofile-use` rejects a profile whose control-flow
+graph no longer matches.
+
+Measured with `./contrib/pgo.sh bench --rounds 21 --perf` on an AMD Ryzen AI
+Max+ 395 (Zen 5, GCC 16), both builds from the same sources and linking the same
+dependencies. Ratio = PGO / plain, so < 1.0 is faster; the range is the IQR over
+the 21 shuffled rounds:
+
+| benchmark | ratio | benchmark | ratio |
+| --- | --- | --- | --- |
+| `regex_search` | 0.78 [0.77, 0.79] | `json_encode` | 0.98 [0.97, 1.00] |
+| `fn_substitute` | 0.81 [0.79, 0.82] | `startup` | 0.98 [0.98, 0.99] |
+| `api_getlines` | 0.93 [0.91, 0.95] | `fn_sort` | 0.98 [0.94, 1.02] |
+| `edit_files` | 0.96 [0.95, 0.98] | `json_decode` | 0.99 [0.93, 1.03] |
+| `option_get_set` | 0.98 [0.96, 0.99] | `treesitter_parse` | 1.00 [0.99, 1.00] |
+| `api_setlines` | 0.98 [0.97, 0.99] | | |
+
+The same run benchmarks the reference binary twice as a control; it stays within
+[0.96, 1.02], so `fn_sort`, `json_decode` and `treesitter_parse` are not
+measurable changes. Whole-process counters agree: `instructions` 0.92,
+`branches` 0.90, `branch-misses` 0.93, `cycles` 0.87.
+
+The cost is build time: `./contrib/pgo.sh all` takes about 4 minutes on the test
+machine (32 threads) against ~25s for a plain build of the same tree with the
+dependencies already built, and the training run is about 3 minutes of that.
+`--pgo-deps` adds a rebuild of the dependencies, which roughly doubles their
+build time.
+
+`contrib/pgo.sh bench A B` compares two builds: startup plus the
+micro-benchmarks in `contrib/pgo_bench.lua`, shuffled rounds, the median ratio
+with its IQR, and the reference binary benchmarked twice as a same-binary
+control. Every variant runs from one shared path, because a different path alone
+can shift a benchmark by several percent. `--suite` uses Neovim's own
+`test/benchmark` instead, with one runner process per spec file (running the
+whole suite in one process makes a same-binary control deviate by 10-20% on
+tests shorter than 200 ms). `make benchmark` runs the suite once, without a
+baseline or repeated rounds, so this is useful for any performance change, not
+only for PGO.
+
+Measured and rejected with the same protocol: `-march=native` and
+`-march=x86-64-v3` (2-4% slower than plain PGO here, so they stay opt-in),
+Clang CS-PGO (much slower than plain Clang PGO), BOLT (no usable profile with
+LLVM 23, slower with basic events), `-fno-plt`/`-fno-stack-protector`/
+`--gc-sections`, a larger training workload, and PGO on LuaJIT itself (no
+measurable gain). The bundled tree-sitter parsers are the opposite: with
+`--pgo-deps` they parse about 1.6x faster than a non-PGO build of the same
+parser source.
+
 ## Building on Windows
 
 ### Windows / MSVC
