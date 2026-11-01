@@ -967,6 +967,35 @@ func Test_breakindent20_list()
   call s:close_windows('set breakindent& briopt& linebreak& list& listchars& showbreak&')
 endfunc
 
+func Test_breakindent_cache_per_line_render()
+  call NewWindow(10, 20)
+  setlocal breakindent breakindentopt=min:0
+  call setline(1, repeat(' ', 2) .. repeat('a', 60))
+  normal! gg0
+  redraw!
+  let expect = [
+        \ '  aaaaaaaaaaaaaaaaaa',
+        \ '  aaaaaaaaaaaaaaaaaa',
+        \ '  aaaaaaaaaaaaaaaaaa',
+        \ '  aaaaaa            ',
+        \ ]
+  call s:compare_lines(expect, s:screen_lines2(1, 4, 20))
+
+  " A new line render must recompute the cached width.
+  call setline(1, repeat(' ', 6) .. repeat('b', 60))
+  redraw!
+  let expect = [
+        \ '      bbbbbbbbbbbbbb',
+        \ '      bbbbbbbbbbbbbb',
+        \ '      bbbbbbbbbbbbbb',
+        \ '      bbbbbbbbbbbbbb',
+        \ '      bbbb          ',
+        \ ]
+  call s:compare_lines(expect, s:screen_lines2(1, 5, 20))
+
+  call CloseWindow()
+endfunc
+
 " The following used to crash Vim. This is fixed by 8.2.3391.
 " This is a regression introduced by 8.2.2903.
 func Test_window_resize_with_linebreak()
