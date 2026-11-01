@@ -127,6 +127,10 @@ static inline size_t tv_strlen(const typval_T *const tv)
 #define TYPVAL_ENCODE_CONVERT_ONE_VALUE \
   TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _convert_one_value)
 
+/// Name of the …convert_all function
+#define TYPVAL_ENCODE_CONVERT_ALL \
+  TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _convert_all)
+
 /// Name of the dummy const dict_T *const variable
 #define TYPVAL_ENCODE_NODICT_VAR \
   TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _nodict_var)

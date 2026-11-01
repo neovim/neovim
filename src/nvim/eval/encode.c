@@ -742,7 +742,6 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
 #undef TYPVAL_ENCODE_CONV_EXT_STRING
 #define TYPVAL_ENCODE_CONV_EXT_STRING(tv, buf, len, type) \
   do { \
-    xfree(buf); \
     emsg(_("E474: Unable to convert EXT string to JSON")); \
     return FAIL; \
   } while (0)
