@@ -7482,7 +7482,7 @@ static bool regmatch(uint8_t *scan, const proftime_T *tm, int *timed_out)
             if (limit > 0
                 && ((rp->rs_un.regsave.rs_u.pos.lnum
                      < behind_pos.rs_u.pos.lnum
-                     ? (colnr_T)strlen((char *)rex.line)
+                     ? reg_getline_len(rex.lnum)
                      : behind_pos.rs_u.pos.col)
                     - rp->rs_un.regsave.rs_u.pos.col >= limit)) {
               no = FAIL;
@@ -7494,8 +7494,7 @@ static bool regmatch(uint8_t *scan, const proftime_T *tm, int *timed_out)
                 no = FAIL;
               } else {
                 reg_restore(&rp->rs_un.regsave, &backpos);
-                rp->rs_un.regsave.rs_u.pos.col =
-                  (colnr_T)strlen((char *)rex.line);
+                rp->rs_un.regsave.rs_u.pos.col = reg_getline_len(rex.lnum);
               }
             } else {
               const uint8_t *const line =
