@@ -129,7 +129,8 @@ Connect UI to a different server
 
 :connect {address}					*:connect*
                 Attaches the UI to another Nvim instance: detaches from the
-                current server, then attaches to {address}.
+                current server, then attaches to {address}. If {address} is
+                an `ssh://` URI, see |remote-ssh|.
 
                 Note: If the current UI hasn't implemented the "connect" UI
                 event, this command is equivalent to |:detach|.
