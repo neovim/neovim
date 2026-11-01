@@ -84,9 +84,10 @@ void api_err_conflict(Error *err, const char *name, const char *name2)
 
 bool check_string_array(Array arr, char *name, bool disallow_nl, Error *err)
 {
-  snprintf(IObuff, sizeof(IObuff), "'%s' item", name);
+  char item_name[IOSIZE];
+  snprintf(item_name, sizeof(item_name), "'%s' item", name);
   for (size_t i = 0; i < arr.size; i++) {
-    VALIDATE_T(IObuff, kObjectTypeString, arr.items[i].type, {
+    VALIDATE_T(item_name, kObjectTypeString, arr.items[i].type, {
       return false;
     });
     // Disallow newlines in the middle of the line.
