@@ -138,7 +138,8 @@ static void filter_map_dict(dict_T *d, filtermap_T filtermap, const char *func_n
           || var_check_ro(di->di_flags, arg_errmsg, TV_TRANSLATE)) {
         break;
       }
-      tv_dict_item_remove(d, di);
+      hash_remove(dihi_ht_, dihi_);
+      tv_dict_item_free(di);
     }
   });
   hash_unlock(&d->dv_hashtab);
