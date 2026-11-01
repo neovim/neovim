@@ -677,20 +677,18 @@ local function check_external_tools()
 
       local version_str = ssh_out:match('OpenSSH_([%d%.]+)')
       local ver = version_str and vim.version.parse(version_str)
-      if ver then
-        if vim.fn.has('win32') == 1 then
-          health.warn(
-            'Win32-OpenSSH does not support ControlMaster (multiplexing). Remote SSH features might be degraded or unsupported.'
-          )
-        elseif ver >= vim.version.parse('4.0') then
-          health.ok('OpenSSH version supports multiplexing')
-        else
-          health.warn(
-            'OpenSSH version is older than 4.0. Multiplexing is not supported, remote connections may be slow or fail.'
-          )
-        end
-      else
+      if vim.fn.has('win32') == 1 then
+        health.warn(
+          'Win32-OpenSSH does not support ControlMaster (multiplexing). Remote SSH features might be degraded or unsupported.'
+        )
+      elseif not ver then
         health.warn('Could not determine OpenSSH version. Multiplexing support is unknown.')
+      elseif ver >= vim.version.parse('6.7') then
+        health.ok('OpenSSH version supports multiplexing and Unix socket forwarding')
+      else
+        health.warn(
+          'OpenSSH version is older than 6.7, which lacks Unix socket forwarding (required by :connect ssh://).'
+        )
       end
 
       if vim.fn.has('win32') == 0 then
@@ -699,7 +697,7 @@ local function check_external_tools()
           local ssh_cfg = ssh_g.stdout or ''
           local controlmaster = ssh_cfg:match('controlmaster%s+(%S+)')
           local controlpath = ssh_cfg:match('controlpath%s+(%S+)')
-          if controlmaster and controlmaster ~= 'no' then
+          if controlmaster and controlmaster ~= 'false' then
             health.ok(('SSH multiplexing configured (ControlMaster=%s)'):format(controlmaster))
           elseif controlpath and controlpath ~= 'none' then
             health.ok(('SSH ControlPath resolved to: %s'):format(controlpath))

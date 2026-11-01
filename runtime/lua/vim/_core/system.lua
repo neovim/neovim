@@ -246,7 +246,7 @@ function M.run_wait(cmd, opts, wait_until, timeout)
     return table.concat(state.stderr_data or {})
   end
 
-  local success = vim.wait(timeout or vim._maxint, function()
+  local success, status = vim.wait(timeout or vim._maxint, function()
     return state.result ~= nil or (wait_until and wait_until(stdout(), stderr())) or false
   end, 50, true)
 
@@ -255,7 +255,7 @@ function M.run_wait(cmd, opts, wait_until, timeout)
       obj:kill('sigterm')
     end
     obj:wait(1000)
-    error('command timed out')
+    error(status == -2 and 'command interrupted' or 'command timed out')
   end
 
   obj.code = state.result and state.result.code or nil

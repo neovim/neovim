@@ -289,7 +289,7 @@ local _log --- @type vim.Log?
 ---@return vim.Log
 local function log()
   if not _log then
-    _log = vim.log.new({ name = 'remote-ssh', current_level = vim.log.levels.INFO })
+    _log = vim.log.new({ name = 'remote-ssh', level = vim.log.levels.INFO })
   end
   return _log
 end
@@ -358,6 +358,8 @@ local function get_ssh_cmd(ssh_uri, opts)
   if ssh_uri.user then
     target = ssh_uri.user .. '@' .. ssh_uri.host
   end
+  -- Ends option parsing, so a target like `-oProxyCommand=x` is not taken as an option.
+  table.insert(ssh_cmd, '--')
   table.insert(ssh_cmd, target)
 
   if opts.remote_cmd then
@@ -420,8 +422,9 @@ function M.get_system_info(uri)
   return os, arch
 end
 
---- Installs the matching Nvim release on the remote host, unless present.
---- Uses a per-version dir, never touching the user's own Nvim.
+--- Installs the matching Nvim release on the remote host, unless present. Uses a per-version,
+--- per-platform dir (a shared `$HOME` may serve hosts of different platforms), never touching the
+--- user's own Nvim.
 ---
 ---@param uri {host:string, user?:string, port?:string}
 ---@param os string
@@ -449,7 +452,10 @@ local function check_and_install(uri, os, arch)
     tag,
     release_name
   )
-  local dest = '"$HOME"/.local/share/nvim-remote/releases/' .. install_name
+  local dest = ('"$HOME"/.local/share/nvim-remote/releases/%s/%s'):format(
+    install_name,
+    release_name
+  )
 
   local remote_script = string.format(
     [[
@@ -488,7 +494,8 @@ end
 --- @param uri_str string
 --- @return string local_socket path to the local forwarded socket
 --- @return vim.net.SshUri uri parsed SSH URI for cleanup
---- @return fun() teardown function to close the SSH master connection
+--- @return fun() teardown Stops this session's tunnel (and thus the remote server). Other sessions
+---   sharing the SSH master are unaffected.
 function M.start(uri_str)
   local uri = require('vim.uri')._parse_ssh_uri(uri_str)
   notify('Connecting to ' .. uri_str .. '...')
@@ -567,13 +574,13 @@ function M.start(uri_str)
       return
     end
     cleaned_up = true
-    log().info('teardown: closing ssh mux for ' .. uri_str)
-    local stop_cmd = get_ssh_cmd(uri, { ssh_args = { '-O', 'exit' } })
-    vim.system(stop_cmd):wait()
-    -- Wait for the original tunnel process to close its stdio handles.
+    log().info(('teardown: stopping tunnel for %s'):format(uri_str))
     if not tunnel:is_closing() then
-      tunnel:wait(1000)
+      tunnel:kill('sigterm')
     end
+    -- Waits for the tunnel to close its stdio handles.
+    tunnel:wait(1000)
+    vim.system(get_ssh_cmd(uri, { ssh_args = { '-O', 'cancel', '-L', forward } })):wait(1000)
   end
 
   vim.api.nvim_create_autocmd('VimLeavePre', {

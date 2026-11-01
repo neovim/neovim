@@ -221,28 +221,20 @@ end
 ---@field user? string
 ---@field port? string
 
+--- Splits `ssh://[user@]host[:port][/path]` or `[user@]host[:port]`. Drops the path, and the
+--- brackets of an IPv6 host: `ssh://u@[::1]:22/` => `{ user = 'u', host = '::1', port = '22' }`.
 ---@param str string
 ---@return vim.net.SshUri
 function M._parse_ssh_uri(str)
-  ---@type vim.net.SshUri
-  local uri = { host = '' }
-  ---@type string?
-  local scheme_match = str:match('^ssh://(.*)')
-  if scheme_match then
-    str = scheme_match
+  local parsed = M.parse(str)
+  local authority = parsed and parsed.authority or str
+  local user, host = authority:match('^(.*)@(.*)$') --- @type string?, string?
+  host = host or authority
+  local port = host:match(':(%d+)$') --- @type string?
+  if port then
+    host = host:sub(1, -#port - 2)
   end
-  local user, rest = str:match('^(.-)@(.*)$')
-  if user and rest then
-    uri.user = user
-    str = rest
-  end
-  local port_match = str:match(':(%d+)$')
-  if port_match then
-    uri.port = port_match
-    str = str:sub(1, -(#port_match + 2))
-  end
-  uri.host = str
-  return uri
+  return { host = host:match('^%[(.*)%]$') or host, user = user, port = port }
 end
 
 return M

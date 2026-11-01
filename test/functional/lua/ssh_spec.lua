@@ -233,15 +233,6 @@ describe('vim.net._ssh', function()
       ]=]) .. [=[
         fi
 
-        if [[ "$ARGS" == *"-O"*"exit"* ]]; then
-          if [[ -f "$PID_FILE" ]]; then
-            set -- $(cat "$PID_FILE")
-            kill "$2" 2>/dev/null || true
-            kill "$1" 2>/dev/null || true
-          fi
-          exit 0
-        fi
-
         echo "Unexpected SSH command: $ARGS" >&2
         exit 1
       ]=])
@@ -331,13 +322,19 @@ describe('vim.net._ssh', function()
     it('returns local socket with key-based auth', function()
       skip(is_os('win'), 'remote-ssh engine is POSIX-only')
       setup_fake_ssh()
-      local sock = n.exec_lua([[
+      local sock, logfile = unpack(n.exec_lua([[
+        local logfile = vim.fs.joinpath(vim.fn.stdpath('log'), 'remote-ssh.log')
+        os.remove(logfile)
         local sock, _, teardown = require('vim.net._ssh').start('user@test-server')
         teardown()
-        return sock
-      ]])
+        return { sock, logfile }
+      ]]))
 
       assert(sock:match('_remote_nvim%.sock$'))
+      t.matches('Connected to user@test%-server', t.read_file(logfile))
+      -- Teardown stops the tunnel and cancels its forward.
+      eq(nil, vim.uv.fs_stat(fake_bin_dir .. '/tunnel.pid'))
+      eq(true, vim.uv.fs_stat(fake_bin_dir .. '/forward.cancelled') ~= nil)
     end)
 
     it('installs the matching release privately and runs it', function()
@@ -358,7 +355,7 @@ describe('vim.net._ssh', function()
       t.matches(
         '"%$HOME"/%.local/share/nvim%-remote/releases/'
           .. vim.pesc(release)
-          .. '/bin/nvim %-%-headless',
+          .. '/nvim%-linux%-x86_64/bin/nvim %-%-headless',
         t.read_file(fake_bin_dir .. '/tunnel.args')
       )
     end)
@@ -408,6 +405,14 @@ describe('vim.net._ssh', function()
       local dir1, dir2 = remote_dir(), remote_dir()
       assert(dir1 and dir2, 'remote socket path not found')
       assert(dir1 ~= dir2, 'remote socket directory reused across sessions')
+    end)
+
+    it(':connect ssh:// fails before connecting if it cannot attach', function()
+      skip(is_os('win'), 'remote-ssh engine is POSIX-only')
+      setup_fake_ssh()
+      eq('Vim(connect):E477: No ! allowed', t.pcall_err(n.command, 'connect! ssh://test-server'))
+      eq('Vim(connect):E5768: No UI attached', t.pcall_err(n.command, 'connect ssh://test-server'))
+      eq(nil, vim.uv.fs_stat(fake_bin_dir .. '/tunnel.args'))
     end)
   end)
 end)

@@ -5919,17 +5919,24 @@ static void ex_connect(exarg_T *eap)
   char *addr = eap->arg;
   typval_T ssh_rettv = { .v_type = VAR_UNKNOWN };
 
-  // SSH URI: bootstrap remote Nvim, get local forwarded socket
+  // SSH URI: bootstrap remote Nvim, get local forwarded socket.
   if (strncmp(addr, "ssh://", 6) == 0) {
-    typval_T argvars[2];
-    argvars[0].v_type = VAR_STRING;
-    argvars[0].vval.v_string = addr;
-    argvars[1].v_type = VAR_UNKNOWN;
+    // The tunnel is owned by this server, so stopping it (":connect!") would kill the session.
+    if (eap->forceit) {
+      emsg(_(e_nobang));
+      return;
+    }
+    if (!find_channel(current_ui)) {
+      emsg(_(e_noui));
+      return;
+    }
 
+    typval_T argvars[] = { { .v_type = VAR_STRING, .vval.v_string = addr },
+                           { .v_type = VAR_UNKNOWN } };
     nlua_call_typval("vim.net._ssh", "start", argvars, &ssh_rettv);
 
     if (ssh_rettv.v_type != VAR_STRING || ssh_rettv.vval.v_string == NULL) {
-      emsg("E6101: SSH connection failed");
+      emsg(_("E6101: SSH connection failed"));
       tv_clear(&ssh_rettv);
       return;
     }
