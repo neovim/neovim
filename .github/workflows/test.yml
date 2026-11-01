@@ -342,6 +342,7 @@ jobs:
       - run: ./zig-out/bin/nvim --version
       # TODO: support entire test suite
       - run: zig build functionaltest -- test/functional/api/buffer_spec.lua
+      - run: zig build functionaltest -- test/functional/terminal/
 
   windows:
     uses: ./.github/workflows/test_windows.yml
