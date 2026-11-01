@@ -1687,6 +1687,22 @@ describe('treesitter highlighting (markdown)', function()
                                                 |
       ]],
     })
+    command('set conceallevel=2')
+    feed('o<Esc>')
+    screen:expect([[
+      {100:This link text} is a hyperlink.          |
+      ^                                        |
+      {1:~                                       }|*3
+                                              |
+    ]])
+    -- Deleting the cursor line reveals the line above. #42631
+    feed('dd')
+    screen:expect([[
+      {100:^[This link text](}{101:https://example.com}{100:)} is|
+       a hyperlink.                           |
+      {1:~                                       }|*3
+                                              |
+    ]])
   end)
 
   local code_block = [[
