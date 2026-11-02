@@ -154,8 +154,10 @@ describe('version', function()
       eq(range_alpha, vim.version.range(tostring(range_alpha)))
     end)
 
-    it('returns nil with empty version', function()
+    it('returns nil with invalid input', function()
       eq(nil, vim.version.parse(''))
+      eq(nil, vim.version.range('garbage - 2.0.0'))
+      eq(nil, vim.version.range('1.2.3 - garbage'))
     end)
   end)
 

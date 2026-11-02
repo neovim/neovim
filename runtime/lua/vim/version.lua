@@ -303,9 +303,12 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
     local parts = vim.split(b, '.', { plain = true })
     local ra = M.range(a)
     local rb = M.range(b)
+    if not ra or not rb then
+      return nil
+    end
     return setmetatable({
-      from = ra and ra.from,
-      to = rb and (#parts == 3 and rb.from or rb.to),
+      from = ra.from,
+      to = #parts == 3 and rb.from or rb.to,
     }, range_mt)
   end
   local mods, version = spec:lower():match('^([%^=<>~]*)(.*)$')
