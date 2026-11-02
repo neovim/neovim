@@ -1012,7 +1012,7 @@ bool set_mark(buf_T *buf, String name, Integer line, Integer col, Error *err)
     col = 0;
     deleting = true;
   } else {
-    VALIDATE_RANGE(!(col > MAXCOL), "column", {
+    VALIDATE_RANGE(!(col < 0 || col > MAXCOL), "column", {
       return res;
     });
     VALIDATE_RANGE(!(line < 1 || line > buf->b_ml.ml_line_count), "line", {

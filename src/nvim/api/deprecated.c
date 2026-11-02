@@ -12,6 +12,7 @@
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
+#include "nvim/api/vim.h"
 #include "nvim/api/vimscript.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
@@ -1050,4 +1051,101 @@ void nvim_win_set_width(Window win, Integer width, Error *err)
   TRY_WRAP(err, {
     win_setwidth_win((int)width, w, true);
   });
+}
+
+/// @deprecated
+/// @see |nvim_set_mark()|
+Boolean nvim_buf_set_mark(Buffer buf, String name, Integer line, Integer col, Dict(empty) *opts,
+                          Error *err)
+  FUNC_API_SINCE(8) FUNC_API_DEPRECATED_SINCE(15)
+{
+  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
+    return false;
+  });
+
+  // For compatibility, "buf" is validated and loaded for every mark name.
+  buf_T *b = api_buf_ensure_loaded(buf, err);
+  if (b == NULL) {
+    return false;
+  }
+
+  char mark = *name.data;
+
+  // line=0 deletes the mark, which nvim_set_mark() does not do.
+  if (line == 0) {
+    return set_mark(b, name, 0, 0, err);
+  }
+
+  Dict(set_mark) args = KEYDICT_INIT;
+
+  if (mark != '\'' && mark != '`') {
+    PUT_KEY(args, set_mark, buf, buf);
+  }
+
+  nvim_set_mark(name, line, col, &args, err);
+  return !ERROR_SET(err);
+}
+
+/// @deprecated
+/// @see |nvim_get_mark()|
+ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buf, String name, Arena *arena, Error *err)
+  FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(15)
+{
+  Array rv = ARRAY_DICT_INIT;
+
+  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
+    return rv;
+  });
+
+  if (find_buffer_by_handle(buf, err) == NULL) {
+    return rv;
+  }
+
+  char mark = *name.data;
+  Dict(get_mark) opts = KEYDICT_INIT;
+
+  // For compatibility, "buf" is ignored for ' and ` and for the motion marks.
+  if (mark != '\'' && mark != '`'
+      && mark != '{' && mark != '}' && mark != '(' && mark != ')') {
+    PUT_KEY(opts, get_mark, buf, buf);
+  }
+
+  Array mark_info = nvim_get_mark(name, &opts, arena, err);
+  if (ERROR_SET(err)) {
+    return rv;
+  }
+
+  rv = arena_array(arena, 2);
+  ADD_C(rv, mark_info.items[0]);
+  ADD_C(rv, mark_info.items[1]);
+
+  return rv;
+}
+
+/// @deprecated
+/// @see |nvim_del_mark()|
+Boolean nvim_buf_del_mark(Buffer buf, String name, Error *err)
+  FUNC_API_SINCE(8) FUNC_API_DEPRECATED_SINCE(15)
+{
+  VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
+    return false;
+  });
+
+  if (find_buffer_by_handle(buf, err) == NULL) {
+    return false;
+  }
+
+  char mark = *name.data;
+
+  // nvim_del_mark() refuses ' and `, which used to clear the curwin pcmark.
+  if (mark == '\'' || mark == '`') {
+    if (curwin->w_pcmark.lnum == 0) {
+      return false;
+    }
+    return set_mark(curbuf, name, 0, 0, err);
+  }
+
+  Dict(del_mark) opts = KEYDICT_INIT;
+  PUT_KEY(opts, del_mark, buf, buf);
+  return nvim_del_mark(name, &opts, err);
 }

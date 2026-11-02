@@ -245,6 +245,9 @@ error('Cannot require a meta file')
 --- @field once? boolean
 --- @field pattern? string|string[]
 
+--- @class vim.api.keyset.del_mark
+--- @field buf? integer
+
 --- @class vim.api.keyset.echo_opts
 --- @field data? table<string,any>
 --- @field err? boolean
@@ -306,6 +309,10 @@ error('Cannot require a meta file')
 --- @field id? integer
 --- @field link? boolean
 --- @field name? string
+
+--- @class vim.api.keyset.get_mark
+--- @field buf? integer
+--- @field win? integer
 
 --- @class vim.api.keyset.get_ns
 --- @field winid? integer
@@ -461,6 +468,11 @@ error('Cannot require a meta file')
 --- @field virt_text_win_col? integer
 --- @field _conceal_continuation? boolean
 --- @field _subpriority? integer
+
+--- @class vim.api.keyset.set_mark
+--- @field buf? integer
+--- @field type? string
+--- @field win? integer
 
 --- @class vim.api.keyset.tabpage_config
 --- @field after? integer

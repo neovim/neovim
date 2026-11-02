@@ -226,7 +226,7 @@ end
 ---
 --- -- Convert to mark position, you can call it in a method style.
 --- local lnum, col = pos:to_mark()
---- vim.api.nvim_buf_set_mark(0, 'M', lnum, col)
+--- vim.api.nvim_set_mark('M', lnum, col)
 --- ```
 ---@param pos vim.Pos
 ---@return integer lnum, integer col
