@@ -99,6 +99,8 @@ struct stream {
   stream_write_cb write_cb;
   size_t curmem;
   size_t maxmem;
+
+  int fulid;
 };
 
 struct rstream {

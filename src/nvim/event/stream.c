@@ -119,13 +119,15 @@ void stream_close_handle(Stream *stream)
   uv_handle_t *handle = NULL;
   if (stream->uvstream) {
     if (uv_stream_get_write_queue_size(stream->uvstream) > 0) {
-      WLOG("closed Stream (%p) with %zu unwritten bytes",
-           (void *)stream,
+      WLOG("closed Stream (%p, hint: %d) with %zu unwritten bytes",
+           (void *)stream, stream->fulid,
            uv_stream_get_write_queue_size(stream->uvstream));
 
       uv_os_fd_t try_fd = (uv_os_fd_t)-1;
-      uv_fileno((uv_handle_t *)stream->uvstream, &try_fd);
-      WLOG("info:  fd=%d or %d type=%d", stream->fd, try_fd, uv_handle_get_type((uv_handle_t *)stream->uvstream));
+      handle = (uv_handle_t *)stream->uvstream;
+      uv_fileno(handle, &try_fd);
+      WLOG("info:  fd=%d or %d type=%d flags=%d", stream->fd, try_fd, handle->type, handle->flags);
+
     }
     handle = (uv_handle_t *)stream->uvstream;
   } else {

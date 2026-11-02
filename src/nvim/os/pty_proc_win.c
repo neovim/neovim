@@ -83,6 +83,7 @@ int pty_proc_spawn(PtyProc *ptyproc)
                     &proc->in.uv.pipe,
                     in_name,
                     pty_proc_connect_cb);
+    proc->in.fulid = 10;
   }
 
   if (!proc->out.s.closed) {
@@ -91,6 +92,7 @@ int pty_proc_spawn(PtyProc *ptyproc)
                     &proc->out.s.uv.pipe,
                     out_name,
                     pty_proc_connect_cb);
+    proc->out.s.fulid = 15;
   }
 
   if (proc->cwd != NULL) {
