@@ -1,5 +1,6 @@
 local uv = vim.uv
 local log = vim.log.new({ name = 'nvim-watch' })
+local is_win = package.config:sub(1, 1) == '\\'
 
 local M = {}
 
@@ -451,6 +452,10 @@ local function watch(path, opts, callback)
     if events.rename then
       local _, staterr, staterrname = uv.fs_stat(fullpath)
       if staterrname == 'ENOENT' then
+        -- stop handle to prevent endless EPERM errors (neovim#41851, libuv#5399)
+        if is_win and not watching_dir then
+          handle:stop()
+        end
         change_type = M.FileChangeType.Deleted
       else
         if staterr then
