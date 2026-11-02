@@ -239,6 +239,10 @@ local function glob2regpat(glob)
     placeholder,
     'g'
   )
+  -- EditorConfig negates a character class with "[!seq]", Vim with "[^seq]".
+  glob1 = glob1:gsub([=[(\?)%[!]=], function(esc)
+    return esc == '' and '[^' or nil
+  end)
   local regpat = vim.fn.glob2regpat(glob1)
   return (regpat:gsub(placeholder, '[^/]*'))
 end

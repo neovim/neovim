@@ -113,6 +113,9 @@ setup(function()
     [max_line_length.txt]
     max_line_length = 42
 
+    [negated_[!a].txt]
+    max_line_length = 42
+
     [short_spelling_language.txt]
     spelling_language = de
 
@@ -266,6 +269,11 @@ But not this one
 
   it('sets textwidth', function()
     test_case('max_line_length.txt', { textwidth = 42 })
+  end)
+
+  it('"[!seq]" glob excludes seq', function()
+    test_case('negated_b.txt', { textwidth = 42 })
+    test_case('negated_a.txt', { textwidth = 0 })
   end)
 
   it('can be disabled globally', function()
