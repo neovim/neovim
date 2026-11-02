@@ -292,7 +292,7 @@ local range_mt = {
 --- @param spec string Version range "spec"
 --- @return vim.VersionRange?
 function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
-  if spec == '*' or spec == '' then
+  if spec == '*' or spec == 'x' or spec == '' then
     return setmetatable({ from = M.parse('0.0.0') }, range_mt)
   end
 
