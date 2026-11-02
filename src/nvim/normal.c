@@ -4907,7 +4907,6 @@ static void nv_optrans(cmdarg_T *cap)
       stuffnumReadbuff(cap->count0);
     }
     stuffReadbuff(ar[strchr(str, (char)cap->cmdchar) - str]);
-    opcount = 0;
     exec_stuffed(cap);
   }
   cap->opcount = 0;
@@ -6777,6 +6776,7 @@ void exec_stuffed(cmdarg_T *cap)
 {
   if (cap != NULL) {
     atom_stuff_start(cap);  // Label as one atom.
+    opcount = 0;  // Stuffed keys hold the count: 2"ax => 2dl, not 4dl.
   }
   if (text_locked() || curbuf_locked()) {
     return;
