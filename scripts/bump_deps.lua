@@ -167,7 +167,7 @@ local function ref(name, _ref)
         .. required_branch_prefix
     )
     print('Checking out to bump-' .. name)
-    run_die({ 'git', 'checkout', '-b', 'bump-' .. name }, 'git failed to create branch')
+    --run_die({ 'git', 'checkout', '-b', 'bump-' .. name }, 'git failed to create branch')
   end
 
   print('Updating ' .. name .. ' to ' .. archive.url .. '\n')
