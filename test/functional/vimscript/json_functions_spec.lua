@@ -981,6 +981,21 @@ describe('json_encode() function', function()
       'Vim(call):E474: UTF-8 string contains code point which belongs to a surrogate pair: \237\175\191',
       pcall_err(command, 'call json_encode("\237\175\191")')
     )
+    -- Also in a special string, or a key deeper than the 8 levels the conversion stack holds inline.
+    eq(
+      'Vim(call):E474: UTF-8 string contains code point which belongs to a surrogate pair: \237\160\128',
+      pcall_err(
+        command,
+        'call json_encode({"_TYPE": v:msgpack_types.string, "_VAL": ["\237\160\128"]})'
+      )
+    )
+    eq(
+      'Vim(call):E474: UTF-8 string contains code point which belongs to a surrogate pair: \237\160\128',
+      pcall_err(
+        command,
+        ('call json_encode(%s{"\237\160\128": 1}%s)'):format(('{"a": '):rep(8), ('}'):rep(8))
+      )
+    )
   end)
 
   it('dumps control characters as expected', function()
