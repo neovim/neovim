@@ -964,7 +964,6 @@ end
 function Iter:skip(n)
   if type(n) == 'number' then
     for _ = 1, n do
-      self._peeked = nil
       local _ = self:next()
     end
   elseif type(n) == 'function' then

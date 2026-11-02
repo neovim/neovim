@@ -185,15 +185,21 @@ describe('vim.iter', function()
     end
 
     do
-      local function skip(n)
-        return vim.iter(vim.gsplit('a|b|c|d', '|')):skip(n):totable()
+      local function skip(n, peek)
+        local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
+        if peek then
+          eq('a', it:peek())
+        end
+        return it:skip(n):totable()
       end
-      eq({ 'a', 'b', 'c', 'd' }, skip(0))
-      eq({ 'b', 'c', 'd' }, skip(1))
-      eq({ 'c', 'd' }, skip(2))
-      eq({ 'd' }, skip(3))
-      eq({}, skip(4))
-      eq({}, skip(5))
+      for _, peek in ipairs({ false, true }) do
+        eq({ 'a', 'b', 'c', 'd' }, skip(0, peek))
+        eq({ 'b', 'c', 'd' }, skip(1, peek))
+        eq({ 'c', 'd' }, skip(2, peek))
+        eq({ 'd' }, skip(3, peek))
+        eq({}, skip(4, peek))
+        eq({}, skip(5, peek))
+      end
     end
   end)
 
@@ -260,15 +266,21 @@ describe('vim.iter', function()
     end
 
     do
-      local function nth(n)
-        return vim.iter(vim.gsplit('a|b|c|d', '|')):nth(n)
+      local function nth(n, peek)
+        local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
+        if peek then
+          eq('a', it:peek())
+        end
+        return it:nth(n)
       end
-      eq(nil, nth(0))
-      eq('a', nth(1))
-      eq('b', nth(2))
-      eq('c', nth(3))
-      eq('d', nth(4))
-      eq(nil, nth(5))
+      for _, peek in ipairs({ false, true }) do
+        eq(nil, nth(0, peek))
+        eq('a', nth(1, peek))
+        eq('b', nth(2, peek))
+        eq('c', nth(3, peek))
+        eq('d', nth(4, peek))
+        eq(nil, nth(5, peek))
+      end
     end
   end)
 
