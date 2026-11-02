@@ -586,11 +586,12 @@ ret:
 }
 
 /// Calculate the number of cells occupied by string `str`.
+/// counting TABs as two characters: "^I".
 ///
 /// @param str The source string, may not be NULL, must be a NUL-terminated
 ///            string.
 /// @return The number of cells occupied by string `str`
-size_t mb_string2cells(const char *str)
+int mb_string2cells(const char *str)
   FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   size_t clen = 0;
@@ -598,12 +599,12 @@ size_t mb_string2cells(const char *str)
   StrCharInfo ci = utf_ptr2StrCharInfo((char *)str);
   while (*ci.ptr != NUL) {
     ClusterInfo cli = utf_ClusterInfo(ci);
-    // TODO(bfredl): moar unification, allowing dy_escape_width should be fine
-    clen += ci.chr.value < 0x80 ? 1 : (size_t)cli.cells;
+    clen += (size_t)cli.cells;
     ci = cli.next;
   }
 
-  return clen;
+  assert(clen <= INT_MAX);
+  return (int)clen;
 }
 
 /// Get the number of cells occupied by string `str` with length `size`
@@ -612,7 +613,7 @@ size_t mb_string2cells(const char *str)
 ///            string.
 /// @param size exact length of string. It will NOT terminate on earlier NUL.
 /// @return The number of cells occupied by string `str`
-size_t mb_string2cells_len(const char *str, size_t size)
+int mb_string2cells_len(const char *str, size_t size)
   FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ARG(1)
 {
   size_t clen = 0;
@@ -626,7 +627,8 @@ size_t mb_string2cells_len(const char *str, size_t size)
     ci = cli.next;
   }
 
-  return clen;
+  assert(clen <= INT_MAX);
+  return (int)clen;
 }
 
 /// Convert a UTF-8 byte sequence to a character number.

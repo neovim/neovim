@@ -38,3 +38,6 @@ static inline bool vim_isbreak(int c)
 {
   return breakat_flags[(uint8_t)c];
 }
+
+// TODO: actually do The Substitution
+#define vim_strsize mb_string2cells
