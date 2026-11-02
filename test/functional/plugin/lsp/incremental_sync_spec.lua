@@ -243,6 +243,66 @@ describe('incremental synchronization', function()
       }
       test_edit({ 'hello', 'world' }, { 'ggdG' }, expected_text_changes, 'utf-16', '\n')
     end)
+    it('deleting the last line when the first line is empty #36653', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 1,
+            },
+            ['end'] = {
+              character = 0,
+              line = 2,
+            },
+          },
+          rangeLength = 4,
+          text = '',
+        },
+      }
+      test_edit({ '', 'foo' }, { 'Gdd' }, expected_text_changes, 'utf-16', '\n')
+    end)
+    it('deleting the first line when the last line is empty #36653', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 0,
+            },
+            ['end'] = {
+              character = 0,
+              line = 1,
+            },
+          },
+          rangeLength = 4,
+          text = '',
+        },
+      }
+      test_edit({ 'foo', '' }, { 'ggdd' }, expected_text_changes, 'utf-16', '\n')
+    end)
+    it('empty insertion at EOF without eol', function()
+      api.nvim_set_option_value('eol', false, { buf = 0 })
+      exec_lua(function()
+        _G.test_register(0, 'test1', 'utf-16', '\n')
+      end)
+      api.nvim_buf_set_lines(0, 1, 1, true, {})
+      eq(
+        {
+          {
+            range = {
+              start = { line = 0, character = 0 },
+              ['end'] = { line = 0, character = 0 },
+            },
+            rangeLength = 0,
+            text = '',
+          },
+        },
+        exec_lua(function()
+          return _G.get_events()
+        end)
+      )
+    end)
     it('deleting an empty line', function()
       local expected_text_changes = {
         {
