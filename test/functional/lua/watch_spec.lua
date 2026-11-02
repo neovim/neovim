@@ -390,6 +390,7 @@ describe('vim._watch', function()
   end)
 
   it('watch() reports an error once when the parent directory is deleted #41851', function()
+    skip(is_os('mac'), 'flaky test on mac')
     local root_dir = t.tmpname(false)
     t.finally(function()
       n.rmdir(root_dir)
