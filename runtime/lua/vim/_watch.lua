@@ -1,6 +1,5 @@
 local uv = vim.uv
 local log = vim.log.new({ name = 'nvim-watch' })
-local is_win = package.config:sub(1, 1) == '\\'
 
 local M = {}
 
@@ -436,6 +435,9 @@ local function watch(path, opts, callback)
 
   local _, start_err = handle:start(path, opts.uvflags or {}, function(err, filename, events)
     if err then
+      -- libuv may repeat a persistent error on every loop iteration, e.g. EPERM on Windows after
+      -- the parent directory of a watched file is deleted (libuv#5399).
+      handle:stop()
       return on_error(err)
     end
     local fullpath = path
@@ -452,10 +454,6 @@ local function watch(path, opts, callback)
     if events.rename then
       local _, staterr, staterrname = uv.fs_stat(fullpath)
       if staterrname == 'ENOENT' then
-        -- stop handle to prevent endless EPERM errors (neovim#41851, libuv#5399)
-        if is_win and not watching_dir then
-          handle:stop()
-        end
         change_type = M.FileChangeType.Deleted
       else
         if staterr then

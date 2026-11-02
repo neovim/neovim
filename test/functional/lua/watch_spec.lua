@@ -389,60 +389,43 @@ describe('vim._watch', function()
     }, result)
   end)
 
-  it('watch() stops when the parent directory of watched file is deleted #41851', function()
+  it('watch() reports an error once when the parent directory is deleted #41851', function()
     local root_dir = t.tmpname(false)
     t.finally(function()
       n.rmdir(root_dir)
     end)
     n.mkdir_p(root_dir)
     local file = ('%s/file'):format(root_dir)
-    vim.fn.writefile({ 'x' }, file)
+    t.write_file(file, 'x')
 
-    exec_lua(
-      [[
-      local f = ...
-      _G.events = {}
-      _G.errors = {}
+    exec_lua(function(f)
+      _G.deleted, _G.errors = false, {}
       _G.cancel = vim._watch.watch(f, {
         on_error = function(err)
-          _G.errors[#_G.errors + 1] = err
+          table.insert(_G.errors, err)
         end,
-      }, function(p, change_type)
-        _G.events[#_G.events + 1] = { path = p, change_type = change_type }
+      }, function(_, change_type)
+        _G.deleted = _G.deleted or change_type == vim._watch.FileChangeType.Deleted
       end)
-      vim.wait(0)
-      ]],
-      file
-    )
-
+    end, file)
     assert(vim.uv.fs_unlink(file))
     assert(vim.uv.fs_rmdir(root_dir))
 
-    exec_lua([[
-      assert(
-        vim.wait(3000, function()
-          return #_G.events >= 1
-        end), 'Timed out waiting for event')
-    ]])
-    eq({
-      path = file,
-      change_type = exec_lua([[return vim._watch.FileChangeType.Deleted]]),
-    }, exec_lua [=[return _G.events[#_G.events]]=])
-
-    eq(
-      not is_os('win'),
-      exec_lua(function()
-        local active
-        vim.uv.walk(function(handle)
-          if handle:get_type() == 'fs_event' then
-            active = handle:is_active()
-          end
-        end)
-        return active
+    local result = exec_lua(function()
+      vim.wait(3000, function()
+        return _G.deleted
       end)
-    )
-    exec_lua [[_G.cancel()]]
-    eq(0, exec_lua [[return vim._watch.active().watch]])
+      -- Give a repeating error time to repeat.
+      vim.wait(200, function()
+        return #_G.errors > 1
+      end)
+      _G.cancel()
+      return { deleted = _G.deleted, errors = _G.errors }
+    end)
+
+    eq(true, result.deleted)
+    t.ok(#result.errors <= 1, 'at most 1 error', vim.inspect(result.errors))
+    eq(0, exec_lua('return vim._watch.active().watch'))
   end)
 
   it('watchdirs() tracks directories for matching files until cancelled', function()
