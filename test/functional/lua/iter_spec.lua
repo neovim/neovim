@@ -204,14 +204,19 @@ describe('vim.iter', function()
   end)
 
   it('skip(predicate) preserves first non-matching element', function()
-    local it = vim.iter(vim.gsplit('1|2|3|4', '|'))
+    local it = vim.iter(vim.gsplit('1|2|3|1|4', '|'))
+    local calls = 0
 
     it:skip(function(x)
+      calls = calls + 1
       return tonumber(x) < 3
     end)
 
     eq('3', it:next())
+    eq('1', it:next())
     eq('4', it:next())
+    eq(nil, it:next())
+    eq(3, calls)
   end)
 
   it('skip() followed by peek() works correctly', function()

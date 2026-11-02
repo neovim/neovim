@@ -968,10 +968,14 @@ function Iter:skip(n)
     end
   elseif type(n) == 'function' then
     local next = self.next
+    local skipping = true
 
     --- @return V1?, V...
     --- @diagnostic disable-next-line:duplicate-set-field
     self.next = function()
+      if not skipping then
+        return next(self)
+      end
       while true do
         local peeked = self._peeked or pack(next(self))
 
@@ -980,6 +984,7 @@ function Iter:skip(n)
         end
 
         if not n(unpack(peeked)) then
+          skipping = false
           self._peeked = nil
           return unpack(peeked)
         end
