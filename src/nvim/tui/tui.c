@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <utf8proc.h>
 #include <uv.h>
 
 #include "auto/config.h"
@@ -1247,6 +1248,19 @@ static void print_spaces(TUIData *tui, int width)
   }
 }
 
+static bool has_spacing_codepoint(const char *p)
+  FUNC_ATTR_PURE
+{
+  while (*p != NUL) {
+    CharInfo info = utf_ptr2CharInfo(p);
+    if (info.value >= 0 && utf8proc_charwidth(info.value) > 0) {
+      return true;
+    }
+    p += info.len;
+  }
+  return false;
+}
+
 /// Move cursor to the position given by `row` and `col` and print the char in `cell`.
 /// Allows grid and host terminal to assume different widths of ambiguous-width chars.
 ///
@@ -1264,7 +1278,7 @@ static void print_cell_at_pos(TUIData *tui, int row, int col, UCell *cell, bool 
   cursor_goto(tui, row, col);
 
   char buf[MAX_SCHAR_SIZE];
-  schar_get(buf, cell->data);
+  size_t len = schar_get(buf, cell->data);
   int c = utf_ptr2char(buf);
   bool is_ambiwidth = utf_ambiguous_width(buf);
   if (is_doublewidth && (is_ambiwidth || utf_char2cells(c) == 1)) {
@@ -1280,8 +1294,8 @@ static void print_cell_at_pos(TUIData *tui, int row, int col, UCell *cell, bool 
 
   print_cell(tui, buf, cell->attr);
 
-  if (is_ambiwidth) {
-    // Force repositioning cursor after printing an ambiguous-width char.
+  // The host may give trailing spacing codepoints their own cells.
+  if (is_ambiwidth || (len > 1 && has_spacing_codepoint(buf + utf_ptr2len(buf)))) {
     grid->row = -1;
   }
 }

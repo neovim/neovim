@@ -3158,6 +3158,69 @@ describe('TUI', function()
     screen:expect(singlewidth_screen)
   end)
 
+  for _, cluster in ipairs({ 'क्ष', 'क्‍ष' }) do
+    it('preserves statuslines when the host widens Indic clusters: ' .. cluster, function()
+      t.skip(is_os('win'), 'ConPTY can drop cluster components before the host can measure them')
+      -- Model the width disagreement with tmux without requiring a tmux server.
+      fn.setcellwidths({ { 0x915, 0x915, 2 } })
+      eq(2, fn.strdisplaywidth(cluster))
+      eq(
+        { true, 1 },
+        { child_session:request('nvim_call_function', 'strdisplaywidth', { cluster }) }
+      )
+
+      screen:try_resize(50, 10)
+      retry(nil, nil, function()
+        eq({ true, 9 }, { child_session:request('nvim_eval', '&lines') })
+      end)
+      child_session:request(
+        'nvim_exec2',
+        [[
+        set mouse=a mousescroll=ver:1,hor:1 nowrap
+        set statusline=PATCH-STATUS
+        botright 2new
+        setlocal statusline=BOTTOM-STATUS
+        wincmd k
+      ]],
+        {}
+      )
+      eq({ true, 4 }, { child_session:request('nvim_win_get_height', 0) })
+      child_session:request('nvim_buf_set_lines', 0, 0, -1, true, {
+        'plain 1',
+        'plain 2',
+        'plain 3',
+        'plain 4',
+        cluster .. ('x'):rep(48) .. 'R',
+        'after the cluster',
+      })
+      child_session:request('nvim_command', 'normal! ggzt')
+      child_session:request('nvim_command', 'redraw!')
+
+      -- Inspect decoded terminal rows without applying the host's width override
+      -- a second time while drawing the assertion target.
+      local function expect_terminal_text(row, text)
+        local line = api.nvim_buf_get_lines(0, row - 1, row, false)[1]
+        eq(text, line and line:sub(1, #text))
+      end
+
+      retry(nil, nil, function()
+        expect_terminal_text(5, 'PATCH-STATUS')
+        expect_terminal_text(8, 'BOTTOM-STATUS')
+      end)
+
+      -- Scroll the full-width Indic line into the last row above the statusline.
+      feed_data('\027[<65;2;2M')
+      retry(nil, nil, function()
+        local _, view = child_session:request('nvim_call_function', 'winsaveview', {})
+        eq(2, view.topline)
+        local terminal = api.nvim_buf_get_lines(0, 0, -1, false)
+        eq(cluster .. ('x'):rep(48) .. 'R', terminal[4], vim.inspect(terminal))
+        expect_terminal_text(5, 'PATCH-STATUS')
+        expect_terminal_text(8, 'BOTTOM-STATUS')
+      end)
+    end)
+  end
+
   it('draws correctly when cursor_address overflows #21643', function()
     screen:try_resize(70, 333)
     retry(nil, nil, function()
