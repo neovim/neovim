@@ -385,6 +385,11 @@ describe('version', function()
           want = { major = 1, minor = 2, patch = 3, build = 'build.15' },
         },
         {
+          desc = 'build with hyphen',
+          version = '1.2.3+build.0-rc1',
+          want = { major = 1, minor = 2, patch = 3, build = 'build.0-rc1' },
+        },
+        {
           desc = 'prerelease and build',
           version = '1.2.3-rc1+build.15',
           want = { major = 1, minor = 2, patch = 3, prerelease = 'rc1', build = 'build.15' },
@@ -392,7 +397,7 @@ describe('version', function()
       }
       for _, tc in ipairs(testcases) do
         it(string.format('%q: version = %q', tc.desc, tc.version), function()
-          eq(tc.want, vim.version.parse(tc.version))
+          eq(tc.want, vim.version.parse(tc.version, { strict = true }))
         end)
       end
     end)
@@ -427,7 +432,11 @@ describe('version', function()
         { version = '1.2.3foobar' },
         { version = '1.2.3-%?' },
         { version = '1.2.3+%?' },
-        { version = '1.2.3+build.0-rc1' },
+        { version = '1.2.3+' },
+        { version = '1.2.3+build..15' },
+        { version = '1.2.3+build.' },
+        { version = '1.2.3+.build' },
+        { version = '1.2.3+build+more' },
         { version = '3.2a' },
         { version = 'tmux 3.2a' },
       }

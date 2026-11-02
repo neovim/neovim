@@ -186,7 +186,17 @@ function M._version(version, strict) -- Adapted from https://github.com/folke/la
     version = scrubbed
   end
 
-  local prerel = version:match('%-([^+]*)')
+  local build = version:match('%+(.*)$')
+  version = version:gsub('%+.*$', '')
+  if strict and build then
+    for part in (build .. '.'):gmatch('(.-)%.') do
+      if not part:match('^[0-9A-Za-z-]+$') then
+        return nil -- Invalid build metadata.
+      end
+    end
+  end
+
+  local prerel = version:match('%-(.*)$')
   local prerel_strict = version:match('%-([0-9A-Za-z-]*)')
   if
     strict
@@ -195,7 +205,6 @@ function M._version(version, strict) -- Adapted from https://github.com/folke/la
   then
     return nil -- Invalid prerelease.
   end
-  local build = prerel and version:match('%-[^+]*%+(.*)$') or version:match('%+(.*)$')
   local major, minor, patch =
     version:match('^v?(%d+)%.?(%d*)%.?(%d*)' .. (strict and (prerel and '%-' or '$') or ''))
 
