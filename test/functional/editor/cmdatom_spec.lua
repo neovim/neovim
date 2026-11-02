@@ -1528,7 +1528,7 @@ describe('CmdAtom', function()
     eq_partial({ type = 'operator', operator = 'gq', keys = 'gqip' }, atom_last())
   end)
 
-  it('stuffed translations execute within their command (exec_stuffed)', function()
+  it('exec_stuffed: stuffed translations execute within their command', function()
     -- A register prefix crosses into the "." replay; an explicit register must not touch the
     -- small-delete register.
     atoms_start()
@@ -1587,6 +1587,29 @@ describe('CmdAtom', function()
     feed(':put .<CR>')
     eq('foo', fn.getline(2))
     eq_partial({ type = 'excmd', lhs = ':put .\n', keys = ':put .\n', text = 'put .' }, atom_last())
+  end)
+
+  it('exec_stuffed: count before a register is applied once #42468', function()
+    -- The stuffed keys hold the count: "2"_x" => "2dl".
+    local function check(lines, keys, expected)
+      api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      feed(('gg0%s'):format(keys))
+      eq(expected, get_lines())
+    end
+    check({ 'abcdefgh' }, '2"_x', { 'cdefgh' })
+    check({ 'abcdefgh' }, '2"ax', { 'cdefgh' })
+    eq('ab', fn.getreg('a'))
+    check({ 'abcdefgh' }, '"_2x', { 'cdefgh' })
+    check({ 'abcdefgh' }, '$2"_X', { 'abcdeh' })
+    check({ '1', '2', '3', '4', '5' }, '2"_D', { '3', '4', '5' })
+    check({ '1', '2', '3', '4' }, '2"_CX<Esc>', { 'X', '3', '4' })
+    check({ 'abcdefgh' }, '2"_sX<Esc>', { 'Xcdefgh' })
+    check({ '1', '2', '3', '4', '5' }, '2"_SX<Esc>', { 'X', '3', '4', '5' })
+    check({ 'a', 'a', 'a', 'a', 'a' }, ':s/a/b/<CR>j2"_&', { 'b', 'b', 'b', 'a', 'a' })
+    check({ '1', '2', '3', '4', '5' }, 'dd2"a.', { '4', '5' })
+    eq('2\n3\n', fn.getreg('a'))
+    command('set expandtab shiftwidth=2')
+    check({ 'abcdefgh' }, '2"_r<Tab>', { '    cdefgh' })
   end)
 
   it('fires for user input, not programmatic sources', function()
