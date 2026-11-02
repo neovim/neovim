@@ -361,7 +361,7 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
       end
     elseif mods == '^' then
       for i = 1, 3 do
-        if to[i] ~= 0 then
+        if to[i] ~= 0 or (i == #parts and i < 3) then
           to[i] = to[i] + 1
           for j = i + 1, 3 do
             to[j] = 0
