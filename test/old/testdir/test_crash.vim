@@ -119,7 +119,7 @@ func Test_crash1_2()
 
   let buf = RunVimInTerminal('sh', opts)
 
-  let file = 'crash/poc1'
+  let file = 'crash/poc_modechanged.vim'
   let cmn_args = "%s -u NONE -i NONE -n -e -s -S %s -c ':qa!'"
   let args = printf(cmn_args, vim, file)
   call s:RunCommandAndWait(buf, args ..
