@@ -123,7 +123,7 @@ void stream_close_handle(Stream *stream)
            (void *)stream,
            uv_stream_get_write_queue_size(stream->uvstream));
 
-      uv_os_fd_t try_fd = -1;
+      uv_os_fd_t try_fd = (uv_os_fd_t)-1;
       uv_fileno((uv_handle_t *)stream->uvstream, &try_fd);
       WLOG("info:  fd=%d or %d type=%d", stream->fd, try_fd, uv_handle_get_type((uv_handle_t *)stream->uvstream));
     }
