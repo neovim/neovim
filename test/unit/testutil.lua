@@ -140,6 +140,9 @@ local function filter_complex_blocks(body)
   local result = {} --- @type string[]
 
   for line in body:gmatch('[^\r\n]+') do
+    -- Enum with a fixed underlying type (macOS `OS_ENUM`): LuaJIT FFI only gets the type.
+    -- "typedef enum : uint8_t { A = 1, } foo_t;" => "typedef uint8_t foo_t;"
+    line = line:gsub('^%s*typedef enum : ([^{]-)%s*%b{}%s*([%w_]+);%s*$', 'typedef %1 %2;')
     if
       not (
         string.find(line, '(^)', 1, true) ~= nil
