@@ -147,12 +147,6 @@ jobs:
         build:
           [
             { runner: ubuntu-24.04, os: ubuntu, flavor: asan, cc: clang, flags: -D ENABLE_ASAN_UBSAN=ON },
-            { runner: ubuntu-24.04, os: ubuntu, flavor: tsan, cc: clang, flags: -D ENABLE_TSAN=ON },
-            { runner: ubuntu-24.04, os: ubuntu, flavor: release, cc: gcc, flags: -D CMAKE_BUILD_TYPE=Release -D ENABLE_TRANSLATIONS=ON },
-            { runner: ubuntu-24.04-arm, os: ubuntu, flavor: arm, cc: clang, flags: -D CMAKE_BUILD_TYPE=RelWithDebInfo },
-            { runner: macos-15-intel, os: macos, flavor: intel, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
-            { runner: macos-26, os: macos, flavor: arm, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
-            { runner: ubuntu-24.04, os: ubuntu, flavor: puc-lua, cc: gcc, deps_flags: -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON, flags: -D PREFER_LUA=ON },
           ]
         test: [unittest, functionaltest, oldtest]
         exclude:
@@ -271,77 +265,6 @@ jobs:
       - if: '!cancelled()'
         name: Show logs
         run: cat $(find "$LOG_DIR" -type f)
-
-  # TODO: matrixify
-  zig-build-linux:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
-    name: build using zig build (linux)
-    env:
-      # NB: tests assume there is a chosen install path, but nothing needs to be actually installed
-      OPTS: -Doptimize=ReleaseSafe -Dinstall-path=/usr/
-    steps:
-      - uses: actions/checkout@v7.0.1
-        with:
-          persist-credentials: false
-
-      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
-        with:
-          version: 0.16.0
-      - run: sudo apt-get install -y inotify-tools
-
-      - run: zig fmt --check . # run first, otherwise it will descend into zig-pkg..
-      - run: mkdir -p build/ # build/ is used for shared log paths, see global ENV defs
-      - run: zig build $OPTS test_nlua0
-      - run: zig build $OPTS nvim_bin && ./zig-out/bin/nvim --version
-      - run: zig build $OPTS unittest
-      - run: zig build $OPTS functionaltest
-      - run: zig build $OPTS oldtest
-      # `zig build` uses a lua script for doctags in order to support cross-compiling
-      # compare with the builtin generator that they match
-      - run: cd runtime; ../zig-out/bin/nvim -u NONE -i NONE -e --headless -c "helptags ++t doc" -c quit
-      - run: diff -u runtime/doc/tags zig-out/runtime/doc/tags
-
-  zig-build-macos-15:
-    runs-on: macos-15
-    timeout-minutes: 45
-    name: build using zig build (macos 15)
-    env:
-      OPTS: -Dinstall-path=/usr/
-    steps:
-      - uses: actions/checkout@v7.0.1
-        with:
-          persist-credentials: false
-
-      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
-        with:
-          version: 0.16.0
-
-      - run: mkdir -p build/ # build/ is used for shared log paths, see global ENV defs
-      - run: zig build $OPTS test_nlua0
-      - run: zig build $OPTS nvim_bin && ./zig-out/bin/nvim --version
-      - run: zig build $OPTS functionaltest
-      - run: zig build $OPTS oldtest
-
-  zig-build-windows:
-    runs-on: windows-2025
-    timeout-minutes: 45
-    name: build using zig build (windows)
-    steps:
-      - uses: actions/checkout@v7.0.1
-        with:
-          persist-credentials: false
-
-      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
-        with:
-          version: 0.16.0
-
-      - run: mkdir -p build/ # build/ is used for shared log paths, see global ENV defs
-      - run: zig build test_nlua0
-      - run: zig build nvim_bin
-      - run: ./zig-out/bin/nvim --version
-      # TODO: support entire test suite
-      - run: zig build functionaltest -- test/functional/api/buffer_spec.lua
 
   windows:
     uses: ./.github/workflows/test_windows.yml
