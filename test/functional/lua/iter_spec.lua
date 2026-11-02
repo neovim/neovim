@@ -480,6 +480,42 @@ describe('vim.iter', function()
         end)
         :last()
     )
+
+    for _, values in ipairs({
+      {},
+      { false },
+      { true, false },
+      { true, false, true },
+      { 1, false, 3, 4 },
+    }) do
+      local expected = values[#values]
+      local it = vim.iter(function()
+        return table.remove(values, 1)
+      end)
+      eq(expected, it:last())
+      eq(nil, it:next())
+    end
+
+    do
+      local it = vim.iter(ipairs({ 'a', 'b' })):map(function(i, v)
+        return i, v, nil
+      end)
+      local function check_last(n, expected, ...)
+        eq(n, select('#', ...))
+        eq(expected, { ... })
+      end
+      check_last(3, { 2, 'b' }, it:last())
+      eq(nil, it:next())
+
+      it = vim.iter(ipairs({ 'a', 'b' })):map(function(i, v)
+        if i == 1 then
+          return i, v, nil
+        end
+        return false
+      end)
+      check_last(1, { false }, it:last())
+      eq(nil, it:next())
+    end
   end)
 
   it('enumerate()', function()

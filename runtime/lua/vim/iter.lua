@@ -1179,13 +1179,17 @@ end
 --- @see |IterArray:rpeek()|
 --- @return V1?, V...
 function Iter:last()
-  local last = self:next()
-  local cur = self:next()
-  while cur do
-    last = cur
-    cur = self:next()
-  end
-  return last
+  local last = nil
+  local rest = {}
+  local n = 0
+  self:each(function(v, ...)
+    last = v
+    n = select('#', ...)
+    for i = 1, n do
+      rest[i] = select(i, ...)
+    end
+  end)
+  return last, _G.unpack(rest, 1, n)
 end
 
 --- @nodoc
