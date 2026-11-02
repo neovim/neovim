@@ -797,6 +797,9 @@ void ui_call_event(char *name, Array args)
   int save_textlock = textlock;
   expr_map_lock = 0;
   textlock = 0;
+  // Caller may still be using `IObuff`, e.g. as the message being shown.
+  char save_iobuff[IOSIZE];
+  memcpy(save_iobuff, IObuff, IOSIZE);
 
   bool handled = false;
   bool fast = msg_ext_fast && strcmp("msg_show", name) == 0;
@@ -818,6 +821,7 @@ void ui_call_event(char *name, Array args)
 
   expr_map_lock = save_expr_map_lock;
   textlock = save_textlock;
+  memcpy(IObuff, save_iobuff, IOSIZE);
   ctx_load(&ctx, kCtxCount, 0);
   ctx_free(&ctx);
 
