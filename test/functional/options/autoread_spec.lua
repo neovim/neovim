@@ -150,6 +150,22 @@ describe('autoread file watcher', function()
     end)
     -- Buffer content remains unchanged.
     eq({ 'will be deleted' }, api.nvim_buf_get_lines(0, 0, -1, true))
+
+    -- Also when the parent directory is deleted. #41851
+    local dir = t.tmpname(false)
+    t.finally(function()
+      n.rmdir(dir)
+    end)
+    n.mkdir_p(dir)
+    path = ('%s/file'):format(dir)
+    write_file(path, 'x\n')
+    command('edit ' .. path)
+    eq(true, is_watching())
+    os.remove(path)
+    assert(vim.uv.fs_rmdir(dir))
+    retry(nil, 3000, function()
+      eq(false, is_watching())
+    end)
   end)
 
   it('coalesces rapid changes via debouncing', function()
