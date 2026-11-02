@@ -312,4 +312,27 @@ func Test_file_changed_wipeout()
   %bw!
 endfunc
 
+" Cursor in a window in another tab page is valid after reload
+func Test_file_changed_other_tabpage()
+  call writefile(range(1, 10), 'Xchanged_tab', 'D')
+  edit Xchanged_tab
+  set autoread
+  normal! G
+  let winid = win_getid()
+  tabnew
+
+  " Need to wait until the timestamp would change.
+  if has('nanotime')
+    sleep 10m
+  else
+    sleep 2
+  endif
+  call writefile(range(1, 5), 'Xchanged_tab')
+  checktime
+  call assert_equal(5, getcurpos(winid)[1])
+
+  set autoread&
+  %bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
