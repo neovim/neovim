@@ -74,10 +74,14 @@ describe('version', function()
       ['1.*'] = { from = { 1, 0, 0 }, to = { 2, 0, 0 } },
       ['1'] = { from = { 1, 0, 0 }, to = { 2, 0, 0 } },
       ['1.x'] = { from = { 1, 0, 0 }, to = { 2, 0, 0 } },
+      ['1.X'] = { from = { 1, 0, 0 }, to = { 2, 0, 0 } },
       ['1.2.x'] = { from = { 1, 2, 0 }, to = { 1, 3, 0 } },
       ['1.2.*'] = { from = { 1, 2, 0 }, to = { 1, 3, 0 } },
       ['*'] = { from = { 0, 0, 0 } },
       ['x'] = { from = { 0, 0, 0 } },
+      ['1.2.3-RC.X'] = { from = '1.2.3-RC.X', to = '1.2.3-RC.X' },
+      ['>=1.2.3-RC1'] = { from = '1.2.3-RC1' },
+      ['1.2.3+BUILD.X'] = { from = '1.2.3+BUILD.X', to = '1.2.3+BUILD.X' },
       ['1.2 - 2.3.0'] = { from = { 1, 2, 0 }, to = { 2, 3, 0 } },
       ['1.2.3 - 2.3.4'] = { from = { 1, 2, 3 }, to = { 2, 3, 4 } },
       ['1.2.3 - 2'] = { from = { 1, 2, 3 }, to = { 3, 0, 0 } },
@@ -89,6 +93,7 @@ describe('version', function()
 
       it('parses ' .. input, function()
         eq(output, range)
+        eq(output.from.build, range.from.build)
       end)
 
       it('tostring() ' .. input, function()

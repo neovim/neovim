@@ -311,9 +311,11 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
       to = #parts == 3 and rb.from or rb.to,
     }, range_mt)
   end
-  local mods, version = spec:lower():match('^([%^=<>~]*)(.*)$')
+  local mods, version = spec:match('^([%^=<>~]*)(.*)$')
   assert(mods and version) -- The pattern matches every string.
-  version = version:gsub('%.[%*x]', '')
+  version = version:gsub('^[^+-]+', function(core)
+    return (core:gsub('%.[%*xX]', ''))
+  end)
   local parts = vim.split(version:gsub('%-.*', ''), '.', { plain = true })
   if #parts < 3 and mods == '' then
     mods = '~'
