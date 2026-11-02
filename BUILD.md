@@ -296,7 +296,7 @@ cmake --build build
 ### Build without "bundled" dependencies
 
 1. Manually install the dependencies:
-    - libuv libluv libutf8proc luajit lua-lpeg tree-sitter tree-sitter-c tree-sitter-lua tree-sitter-markdown tree-sitter-query tree-sitter-vim tree-sitter-vimdoc unibilium
+    - libghostty-vt libuv libluv libutf8proc luajit lua-lpeg tree-sitter tree-sitter-c tree-sitter-lua tree-sitter-markdown tree-sitter-query tree-sitter-vim tree-sitter-vimdoc unibilium
 2. Run CMake:
    ```bash
    cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
@@ -380,9 +380,10 @@ build/bin/nvim: ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), static
 General requirements (see [#1469](https://github.com/neovim/neovim/issues/1469#issuecomment-63058312)):
 
 - Clang or GCC version 4.9+
-- CMake version 3.16+, built with TLS/SSL support
+- CMake version 3.19+, built with TLS/SSL support
   - Optional: Get the latest CMake from https://cmake.org/download/
     - Provides a shell script which works on most Linux systems. After running it, ensure the resulting `cmake` binary is in your $PATH so the Nvim build will find it.
+- Zig 0.16.x, to build the bundled libghostty-vt (not needed with a system libghostty-vt, see [Build without "bundled" dependencies](#build-without-bundled-dependencies))
 
 Platform-specific requirements are listed below.
 

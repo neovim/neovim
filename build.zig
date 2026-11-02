@@ -105,6 +105,14 @@ pub fn build(b: *std.Build) !void {
     };
     const ci_build = b.option(bool, "ci-build", "CI build") orelse false;
 
+    const ghostty = b.dependency("ghostty", .{
+        .target = target,
+        .optimize = optimize,
+        .@"emit-lib-vt" = true,
+        .@"emit-xcframework" = false,
+    });
+    const ghostty_vt = ghostty.artifact("ghostty-vt-static");
+
     const ziglua = b.dependency("zlua", .{
         .target = target,
         .optimize = optimize_lua,
@@ -222,7 +230,6 @@ pub fn build(b: *std.Build) !void {
         "lua/",
         "viml/",
         "viml/parser/",
-        "vterm/",
     };
 
     // source names _relative_ src/nvim/, not including other src/ subdircs
@@ -347,8 +354,6 @@ pub fn build(b: *std.Build) !void {
         .HAVE_BUILTIN_ADD_OVERFLOW = true,
         .HAVE_WIMPLICIT_FALLTHROUGH_FLAG = true,
         .HAVE_BITSCANFORWARD64 = null,
-
-        .VTERM_TEST_FILE = "test/vterm_test_output", // TODO(bfredl): revisit when porting libvterm tests
     });
 
     _ = gen_config.addCopyFile(sysconfig_step.getOutputFile(), "auto/config.h"); // run_preprocessor() workaronnd
@@ -453,6 +458,7 @@ pub fn build(b: *std.Build) !void {
     if (iconv) |dep| {
         try unittest_include_path.append(b.allocator, dep.artifact("iconv").getEmittedIncludeTree());
     }
+    try unittest_include_path.append(b.allocator, ghostty_vt.getEmittedIncludeTree());
 
     const gen_headers, const funcs_data = try gen.nvim_gen_sources(
         b,
@@ -535,7 +541,9 @@ pub fn build(b: *std.Build) !void {
     if (is_windows) {
         nvim_mod.linkSystemLibrary("netapi32", .{});
     }
+    nvim_mod.linkLibrary(ghostty_vt);
     nvim_mod.addIncludePath(b.path("src"));
+    nvim_mod.addIncludePath(ghostty_vt.getEmittedIncludeTree());
     nvim_mod.addIncludePath(gen_config.getDirectory());
     nvim_mod.addIncludePath(gen_headers.getDirectory());
     try build_lua.add_lua_modules(nvim_mod, use_luajit, false);
@@ -565,6 +573,7 @@ pub fn build(b: *std.Build) !void {
         "-std=gnu99",
         "-DZIG_BUILD",
         "-D_GNU_SOURCE",
+        "-DGHOSTTY_STATIC",
         if (support_unittests) "-DUNIT_TESTING" else "",
         if (use_luajit) "" else "-DNVIM_VENDOR_BIT",
         if (is_windows) "-DMSWIN" else "",
@@ -927,7 +936,6 @@ pub fn test_config(b: *std.Build) ![]u8 {
         \\M.translations_enabled = "$ENABLE_TRANSLATIONS" == "ON"
         \\M.is_asan = "$ENABLE_ASAN_UBSAN" == "ON"
         \\M.is_zig_build = true
-        \\M.vterm_test_file = "test/vterm_test_output"
         \\M.test_build_dir = _G.nvim_build_dir -- command line arg
         \\M.test_source_path = "{[src_path]s}"
         \\M.test_lua_prg = ""
