@@ -613,7 +613,7 @@ end
 --- @since 12
 --- @return V1?, V...
 function Iter:next()
-  if self._peeked then
+  if self._peeked ~= nil then
     local v = self._peeked
     self._peeked = nil
 
@@ -682,7 +682,7 @@ end
 --- @since 12
 --- @return V1?, V...
 function Iter:peek()
-  if not self._peeked then
+  if self._peeked == nil then
     self._peeked = pack(self:next())
   end
 
@@ -977,9 +977,12 @@ function Iter:skip(n)
         return next(self)
       end
       while true do
-        local peeked = self._peeked or pack(next(self))
+        local peeked = self._peeked
+        if peeked == nil then
+          peeked = pack(next(self))
+        end
 
-        if not peeked then
+        if peeked == nil then
           return nil
         end
 

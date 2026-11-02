@@ -217,6 +217,22 @@ describe('vim.iter', function()
     eq('4', it:next())
     eq(nil, it:next())
     eq(3, calls)
+
+    for _, peek in ipairs({ false, true }) do
+      for _, skip_false in ipairs({ false, true }) do
+        local values = { false, true, false }
+        local it = vim.iter(function()
+          return table.remove(values, 1)
+        end)
+        if peek then
+          eq(false, it:peek())
+        end
+        it:skip(function(v)
+          return skip_false and v == false
+        end)
+        eq(skip_false and { true, false } or { false, true, false }, it:totable())
+      end
+    end
   end)
 
   it('skip() followed by peek() works correctly', function()
@@ -489,6 +505,20 @@ describe('vim.iter', function()
       eq('h', it:next())
       eq('i', it:peek())
       eq('i', it:next())
+    end
+
+    do
+      local values = { false, true, false }
+      local it = vim.iter(function()
+        return table.remove(values, 1)
+      end)
+      eq(false, it:peek())
+      eq(false, it:peek())
+      eq(false, it:next())
+      eq(true, it:next())
+      eq(false, it:peek())
+      eq(false, it:next())
+      eq(nil, it:peek())
     end
   end)
 
