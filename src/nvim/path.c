@@ -2035,7 +2035,7 @@ char *path_shorten_fname(char *full_path, char *dir_name)
   }
 
   // If dir_name is a path head, full_path can always be made relative.
-  if (len == (size_t)path_head_length() && is_path_head(dir_name)) {
+  if (len == (size_t)path_head_length() && get_past_head(dir_name) == dir_name + len) {
     return full_path + len;
   }
 
@@ -2288,28 +2288,28 @@ int append_path(char *path, const char *to_append, size_t max_len)
 static int path_to_absolute(const char *fname, char *buf, size_t len, int force)
   FUNC_ATTR_NONNULL_ALL
 {
-  const char *p = fname;
   *buf = NUL;
 
-  // expand it if forced or not an absolute path
-  if (force || !path_is_absolute(p)
-#ifdef MSWIN  // enforce drive letter on Windows paths
-      || vim_ispathsep_nocolon(p[0])
+  if (!force && path_is_absolute(fname)
+#ifdef MSWIN  // Enforce drive letter on Windows paths.
+      && !vim_ispathsep_nocolon(fname[0])
 #endif
       ) {
-    p = path_tail(p);
-    if (strcmp(p, "..") == 0) {
-      p += 2;
-    }
-
-    char *relative_directory = xmemdupz(fname, (size_t)(p - fname));
-    int ret = path_full_dir_name(relative_directory, buf, len);
-    xfree(relative_directory);
-    if (ret == FAIL) {
-      return FAIL;
-    }
+    return append_path(buf, fname, len);
   }
-  return append_path(buf, p, len);
+
+  const char *tail = path_tail(fname);
+  // "dir/.." => realpath("dir/.."), because append_path() doesn't resolve "..".
+  if (strcmp(tail, "..") == 0) {
+    tail += 2;
+  }
+  char *dir = xmemdupz(fname, (size_t)(tail - fname));
+  int ret = path_full_dir_name(dir, buf, len);
+  xfree(dir);
+  if (ret == FAIL) {
+    return FAIL;
+  }
+  return append_path(buf, tail, len);
 }
 
 /// Check if file `fname` is a full (absolute) path.
