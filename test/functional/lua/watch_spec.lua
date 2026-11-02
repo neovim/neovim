@@ -389,6 +389,62 @@ describe('vim._watch', function()
     }, result)
   end)
 
+  it('watch() stops when the parent directory of watched file is deleted #41851', function()
+    local root_dir = t.tmpname(false)
+    t.finally(function()
+      n.rmdir(root_dir)
+    end)
+    n.mkdir_p(root_dir)
+    local file = ('%s/file'):format(root_dir)
+    vim.fn.writefile({ 'x' }, file)
+
+    exec_lua(
+      [[
+      local f = ...
+      _G.events = {}
+      _G.errors = {}
+      _G.cancel = vim._watch.watch(f, {
+        on_error = function(err)
+          _G.errors[#_G.errors + 1] = err
+        end,
+      }, function(p, change_type)
+        _G.events[#_G.events + 1] = { path = p, change_type = change_type }
+      end)
+      vim.wait(0)
+      ]],
+      file
+    )
+
+    assert(vim.uv.fs_unlink(file))
+    assert(vim.uv.fs_rmdir(root_dir))
+
+    exec_lua([[
+      assert(
+        vim.wait(3000, function()
+          return #_G.events >= 1
+        end), 'Timed out waiting for event')
+    ]])
+    eq({
+      path = file,
+      change_type = exec_lua([[return vim._watch.FileChangeType.Deleted]]),
+    }, exec_lua [=[return _G.events[#_G.events]]=])
+
+    eq(
+      not is_os('win'),
+      exec_lua(function()
+        local active
+        vim.uv.walk(function(handle)
+          if handle:get_type() == 'fs_event' then
+            active = handle:is_active()
+          end
+        end)
+        return active
+      end)
+    )
+    exec_lua [[_G.cancel()]]
+    eq(0, exec_lua [[return vim._watch.active().watch]])
+  end)
+
   it('watchdirs() tracks directories for matching files until cancelled', function()
     local root_dir = t.tmpname(false)
     n.mkdir_p(root_dir .. '/src')

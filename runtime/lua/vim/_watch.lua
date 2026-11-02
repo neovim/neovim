@@ -419,6 +419,8 @@ local function skip(path, opts)
     or (opts.exclude ~= nil and opts.exclude.pattern:match(path) ~= nil)
 end
 
+local is_win = vim.fn.has('win32') == 1
+
 --- Initializes and starts a |uv_fs_event_t|
 ---
 --- @param path string The path to watch
@@ -451,6 +453,10 @@ local function watch(path, opts, callback)
     if events.rename then
       local _, staterr, staterrname = uv.fs_stat(fullpath)
       if staterrname == 'ENOENT' then
+        -- stop handle to prevent endless EPERM errors (neovim#41851, libuv#5399)
+        if is_win and not watching_dir then
+          handle:stop()
+        end
         change_type = M.FileChangeType.Deleted
       else
         if staterr then
