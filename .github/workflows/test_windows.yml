@@ -77,7 +77,7 @@ jobs:
           cmake --build build --target functionaltest-summary
           exit $exitCode
 
-      - if: ${{ matrix.test == 'functional' }}
+      - if: always()
         uses: actions/upload-artifact@v7
         with:
           name: the-terminal-log-file
