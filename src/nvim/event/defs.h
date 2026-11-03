@@ -101,6 +101,7 @@ struct stream {
   size_t maxmem;
 
   int fulid;
+  void *fulchan;
 };
 
 struct rstream {

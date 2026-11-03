@@ -4,6 +4,7 @@
 #include <uv.h>
 #include <uv/version.h>
 
+#include "nvim/channel.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/stream.h"
@@ -129,6 +130,14 @@ void stream_close_handle(Stream *stream, char *what)
       handle = (uv_handle_t *)stream->uvstream;
       uv_fileno(handle, &try_fd);
       WLOG("info: %s says: fd=%d or %d type=%d flags=%d", what, stream->fd, try_fd, handle->type, handle->flags);
+      if (stream->fulchan != NULL) {
+        Channel *chan = stream->fulchan;
+        char **arg = chan->stream.proc.argv;
+        WLOG("FUL");
+        for (int j = 0; arg[j]; j++) {
+          WLOG("ARG %d : %s", j, arg[j]);
+        }
+      }
 
     }
     handle = (uv_handle_t *)stream->uvstream;
