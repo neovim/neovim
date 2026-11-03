@@ -1804,7 +1804,7 @@ char *fix_fname(const char *fname)
       || fname[0] == '\\'
 # endif
       ) {
-    return FullName_save(fname, false);
+    return FullName_save(fname, true);
   }
 
   fname = TO_SLASH_SAVE(fname);
