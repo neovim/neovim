@@ -110,6 +110,9 @@ setup(function()
     [skip_trim_when_insert_normal.txt]
     trim_trailing_whitespace = true
 
+    [question?mark.txt]
+    max_line_length = 42
+
     [max_line_length.txt]
     max_line_length = 42
 
@@ -212,6 +215,11 @@ describe('editorconfig', function()
   it('sets newline options', function()
     test_case('with_newline.txt', { fixendofline = true })
     test_case('without_newline.txt', { fixendofline = false })
+  end)
+
+  it('"?" glob does not match "/"', function()
+    test_case('question_mark.txt', { textwidth = 42 })
+    test_case('question' .. pathsep .. 'mark.txt', { textwidth = 0 })
   end)
 
   it('respects trim_trailing_whitespace', function()
