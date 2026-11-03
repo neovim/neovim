@@ -26,6 +26,7 @@ before_each(function()
     --- @diagnostic disable-next-line:duplicate-set-field
     function _G.test_register(bufnr, id, position_encoding, line_ending)
       local prev_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
+      local prev_eol = vim.bo[bufnr].endofline
 
       local function callback(_, bufnr0, _changedtick, firstline, lastline, new_lastline)
         if _G.test_unreg == id then
@@ -33,6 +34,7 @@ before_each(function()
         end
 
         local curr_lines = vim.api.nvim_buf_get_lines(bufnr0, 0, -1, true)
+        local curr_eol = vim.bo[bufnr0].endofline
         local incremental_change = sync.compute_diff(
           prev_lines,
           curr_lines,
@@ -40,11 +42,14 @@ before_each(function()
           lastline,
           new_lastline,
           position_encoding,
-          line_ending
+          line_ending,
+          prev_eol,
+          curr_eol
         )
 
         table.insert(events, incremental_change)
         prev_lines = curr_lines
+        prev_eol = curr_eol
       end
       local opts = { on_lines = callback, on_detach = callback, on_reload = callback }
       vim.api.nvim_buf_attach(bufnr, false, opts)
@@ -65,15 +70,19 @@ local function test_edit(
   edit_operations,
   expected_text_changes,
   position_encoding,
-  line_ending
+  line_ending,
+  options
 )
   position_encoding = position_encoding or 'utf-16'
   line_ending = line_ending or '\n'
 
   api.nvim_buf_set_lines(0, 0, -1, true, prev_buffer)
-  exec_lua(function()
+  exec_lua(function(options)
+    for name, value in pairs(options or {}) do
+      vim.bo[name] = value
+    end
     return _G.test_register(0, 'test1', position_encoding, line_ending)
-  end)
+  end, options)
 
   for _, edit in ipairs(edit_operations) do
     feed(edit)
@@ -90,6 +99,103 @@ local function test_edit(
 end
 
 describe('incremental synchronization', function()
+  describe('edits at EOF without a final newline', function()
+    it('deleting the last line', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = { character = 3, line = 0 },
+            ['end'] = { character = 3, line = 1 },
+          },
+          rangeLength = 4,
+          text = '',
+        },
+      }
+      test_edit(
+        { 'foo', 'bar' },
+        { '2ggdd' },
+        expected_text_changes,
+        'utf-16',
+        '\n',
+        { endofline = false }
+      )
+    end)
+
+    it('appending an indented line', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = { character = 5, line = 0 },
+            ['end'] = { character = 5, line = 0 },
+          },
+          rangeLength = 0,
+          text = '\n  ',
+        },
+      }
+      test_edit(
+        { '  foo' },
+        { 'o' },
+        expected_text_changes,
+        'utf-16',
+        '\n',
+        { endofline = false, autoindent = true }
+      )
+    end)
+
+    it('appending an empty line', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = { character = 3, line = 0 },
+            ['end'] = { character = 3, line = 0 },
+          },
+          rangeLength = 0,
+          text = '\n',
+        },
+      }
+      test_edit({ 'foo' }, { 'o' }, expected_text_changes, 'utf-16', '\n', { endofline = false })
+    end)
+  end)
+
+  describe('endofline changes', function()
+    it('syncs an endofline change with the next edit', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'foo', 'bar' })
+      exec_lua(function()
+        _G.test_register(0, 'test1', 'utf-16', '\n')
+        vim.bo.endofline = false
+      end)
+      feed('A!')
+      eq(
+        { { text = 'foo!\nbar' } },
+        exec_lua(function()
+          return _G.get_events()
+        end)
+      )
+      exec_lua(function()
+        _G.test_unreg = 'test1'
+      end)
+    end)
+
+    it('syncs a restored endofline value with the next edit', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'foo', 'bar' })
+      exec_lua(function()
+        vim.bo.endofline = false
+        _G.test_register(0, 'test1', 'utf-16', '\n')
+        vim.bo.endofline = true
+      end)
+      feed('A!')
+      eq(
+        { { text = 'foo!\nbar\n' } },
+        exec_lua(function()
+          return _G.get_events()
+        end)
+      )
+      exec_lua(function()
+        _G.test_unreg = 'test1'
+      end)
+    end)
+  end)
+
   describe('single line edit', function()
     it('inserting a character in an empty buffer', function()
       local expected_text_changes = {
@@ -115,11 +221,11 @@ describe('incremental synchronization', function()
         {
           range = {
             ['start'] = {
-              character = 1,
+              character = 0,
               line = 0,
             },
             ['end'] = {
-              character = 1,
+              character = 0,
               line = 0,
             },
           },
@@ -210,12 +316,12 @@ describe('incremental synchronization', function()
         {
           range = {
             ['start'] = {
-              character = 0,
-              line = 1,
+              character = 5,
+              line = 0,
             },
             ['end'] = {
-              character = 0,
-              line = 2,
+              character = 5,
+              line = 1,
             },
           },
           rangeLength = 6,
@@ -248,12 +354,12 @@ describe('incremental synchronization', function()
         {
           range = {
             ['start'] = {
-              character = 0,
-              line = 1,
+              character = 11,
+              line = 0,
             },
             ['end'] = {
               character = 0,
-              line = 2,
+              line = 1,
             },
           },
           rangeLength = 1,
@@ -267,16 +373,16 @@ describe('incremental synchronization', function()
         {
           range = {
             ['start'] = {
-              character = 11,
+              character = 0,
               line = 0,
             },
             ['end'] = {
               character = 0,
-              line = 1,
+              line = 0,
             },
           },
-          rangeLength = 1,
-          text = '\nhello world\n',
+          rangeLength = 0,
+          text = 'hello world\n',
         },
       }
       test_edit({ 'hello world' }, { 'yyp' }, expected_text_changes, 'utf-16', '\n')
@@ -290,12 +396,12 @@ describe('incremental synchronization', function()
               line = 0,
             },
             ['end'] = {
-              character = 0,
-              line = 1,
+              character = 11,
+              line = 0,
             },
           },
-          rangeLength = 1,
-          text = '\n\n',
+          rangeLength = 0,
+          text = '\n',
         },
       }
       test_edit({ 'hello world' }, { 'o' }, expected_text_changes, 'utf-16', '\n')
@@ -310,11 +416,11 @@ describe('incremental synchronization', function()
             },
             ['end'] = {
               character = 0,
-              line = 1,
+              line = 0,
             },
           },
-          rangeLength = 1,
-          text = '\n\n',
+          rangeLength = 0,
+          text = '\n',
         },
       }
       test_edit({ '' }, { 'o' }, expected_text_changes, 'utf-16', '\n')
@@ -357,16 +463,16 @@ describe('incremental synchronization', function()
           rangeLength = 5,
           text = '',
         },
-        -- delete "hello world\n" from line 2
+        -- delete "\nhello world" from the end of line 1
         {
           range = {
             ['start'] = {
-              character = 0,
-              line = 2,
+              character = 4,
+              line = 1,
             },
             ['end'] = {
-              character = 0,
-              line = 3,
+              character = 11,
+              line = 2,
             },
           },
           rangeLength = 12,
@@ -406,12 +512,12 @@ describe('incremental synchronization', function()
         {
           range = {
             ['start'] = {
-              character = 0,
-              line = 2,
+              character = 4,
+              line = 1,
             },
             ['end'] = {
               character = 0,
-              line = 3,
+              line = 2,
             },
           },
           rangeLength = 6,
@@ -425,12 +531,12 @@ describe('incremental synchronization', function()
               line = 1,
             },
             ['end'] = {
-              character = 9,
+              character = 4,
               line = 1,
             },
           },
-          rangeLength = 5,
-          text = '_fdsa\nhello world\n1234 asdf',
+          rangeLength = 0,
+          text = '_fdsa\nhello world\n1234',
         },
         -- redo entire deletion
         {
@@ -440,12 +546,12 @@ describe('incremental synchronization', function()
               line = 1,
             },
             ['end'] = {
-              character = 9,
+              character = 4,
               line = 3,
             },
           },
-          rangeLength = 27,
-          text = ' asdf',
+          rangeLength = 22,
+          text = '',
         },
       }
       local original_lines = {
@@ -522,15 +628,15 @@ describe('incremental synchronization', function()
           range = {
             ['end'] = {
               character = 0,
-              line = 3,
+              line = 1,
             },
             ['start'] = {
-              character = 12,
-              line = 2,
+              character = 0,
+              line = 1,
             },
           },
-          rangeLength = 1,
-          text = '\n',
+          rangeLength = 0,
+          text = '',
         },
       }
       local original_lines = {
@@ -561,12 +667,12 @@ describe('incremental synchronization', function()
         {
           range = {
             ['start'] = {
-              character = 0,
-              line = 1,
+              character = 12,
+              line = 0,
             },
             ['end'] = {
               character = 0,
-              line = 2,
+              line = 1,
             },
           },
           rangeLength = 6,
@@ -579,12 +685,12 @@ describe('incremental synchronization', function()
               line = 0,
             },
             ['end'] = {
-              character = 17,
+              character = 12,
               line = 0,
             },
           },
-          rangeLength = 6,
-          text = '\ntest3',
+          rangeLength = 1,
+          text = '\n',
         },
       }
       test_edit({ 'test1 test2', 'test3' }, { 'J', 'u' }, expected_text_changes, 'utf-16', '\n')
@@ -592,6 +698,49 @@ describe('incremental synchronization', function()
   end)
 
   describe('multi-byte edits', function()
+    it('replacing a supplementary character with matching prefix', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = { character = 0, line = 0 },
+            ['end'] = { character = 2, line = 0 },
+          },
+          rangeLength = 2,
+          text = '😁',
+        },
+      }
+      test_edit({ '😀' }, { 'r😁' }, expected_text_changes, 'utf-16', '\n')
+    end)
+    it('replacing a supplementary character with matching suffix', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = { character = 0, line = 0 },
+            ['end'] = { character = 3, line = 0 },
+          },
+          rangeLength = 3,
+          text = '',
+        },
+        {
+          range = {
+            ['start'] = { character = 0, line = 0 },
+            ['end'] = { character = 0, line = 0 },
+          },
+          rangeLength = 0,
+          text = 'b',
+        },
+        {
+          range = {
+            ['start'] = { character = 1, line = 0 },
+            ['end'] = { character = 1, line = 0 },
+          },
+          rangeLength = 0,
+          text = '🌀',
+        },
+      }
+      -- 😀 and 🌀 share the final UTF-8 byte; the suffix must round past the emoji.
+      test_edit({ 'a😀' }, { 'gg0v$cb🌀<Esc>' }, expected_text_changes, 'utf-16', '\n')
+    end)
     it('deleting a multibyte character', function()
       local expected_text_changes = {
         {
@@ -690,11 +839,11 @@ describe('incremental synchronization', function()
         {
           range = {
             ['start'] = {
-              character = 85,
+              character = 0,
               line = 1,
             },
             ['end'] = {
-              character = 86,
+              character = 1,
               line = 1,
             },
           },
@@ -714,12 +863,12 @@ describe('incremental synchronization', function()
         {
           range = {
             ['start'] = {
-              character = 0,
-              line = 1,
+              character = 1,
+              line = 0,
             },
             ['end'] = {
-              character = 0,
-              line = 3,
+              character = 1,
+              line = 2,
             },
           },
           --utf 16 len of 🔥 is 2

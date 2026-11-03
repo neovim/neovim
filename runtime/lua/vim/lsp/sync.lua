@@ -45,245 +45,12 @@ local M = {}
 local str_byte = string.byte
 local min = math.min
 local str_utfindex = vim.str_utfindex
-local str_utf_start = vim.str_utf_start
-local str_utf_end = vim.str_utf_end
+local str_byteindex = vim.str_byteindex
 
--- Given a line, byte idx, alignment, and position_encoding convert to the aligned
--- utf-8 index and either the utf-16, or utf-32 index.
----@param line string the line to index into
----@param byte integer the byte idx
----@param position_encoding 'utf-8'|'utf-16'|'utf-32'? (default: utf-8)
----@return integer byte_idx of first change position
----@return integer char_idx of first change position
-local function align_end_position(line, byte, position_encoding)
-  position_encoding = position_encoding or 'utf-8'
-  local char --- @type integer
-  -- If on the first byte, or an empty string: the trivial case
-  if byte == 1 or #line == 0 then
-    char = byte
-    -- Called in the case of extending an empty line "" -> "a"
-  elseif byte == #line + 1 then
-    char = str_utfindex(line, position_encoding) + 1
-  else
-    -- Modifying line, find the nearest utf codepoint
-    local offset = str_utf_start(line, byte)
-    -- If the byte does not fall on the start of the character, then
-    -- align to the start of the next character.
-    if offset < 0 then
-      byte = byte + str_utf_end(line, byte) + 1
-    end
-    if byte <= #line then
-      --- Convert to 0 based for input, and from 0 based for output
-      char = str_utfindex(line, position_encoding, byte - 1) + 1
-    else
-      char = str_utfindex(line, position_encoding) + 1
-    end
-    -- Extending line, find the nearest utf codepoint for the last valid character
-  end
-  return byte, char
-end
-
----@class vim.lsp.sync.Range
----@field line_idx integer
----@field byte_idx integer
----@field char_idx integer
-
---- Finds the first line, byte, and char index of the difference between the previous and current lines buffer normalized to the previous codepoint.
----@param prev_lines string[] list of lines from previous buffer
----@param curr_lines string[] list of lines from current buffer
----@param firstline integer firstline from on_lines, adjusted to 1-index
----@param lastline integer lastline from on_lines, adjusted to 1-index
----@param new_lastline integer new_lastline from on_lines, adjusted to 1-index
----@param position_encoding 'utf-8'|'utf-16'|'utf-32'? (default: utf-8)
----@return vim.lsp.sync.Range result table include line_idx, byte_idx, and char_idx of first change position
-local function compute_start_range(
-  prev_lines,
-  curr_lines,
-  firstline,
-  lastline,
-  new_lastline,
-  position_encoding
-)
-  position_encoding = position_encoding or 'utf-8'
-
-  local char_idx --- @type integer
-  local byte_idx --- @type integer
-  -- If firstline == lastline, no existing text is changed. All edit operations
-  -- occur on a new line pointed to by lastline. This occurs during insertion of
-  -- new lines(O), the new newline is inserted at the line indicated by
-  -- new_lastline.
-  if firstline == lastline then
-    local line_idx --- @type integer
-    local line = prev_lines[firstline - 1]
-    if line then
-      line_idx = firstline - 1
-      byte_idx = #line + 1
-      char_idx = str_utfindex(line, position_encoding) + 1
-    else
-      line_idx = firstline
-      byte_idx = 1
-      char_idx = 1
-    end
-    return { line_idx = line_idx, byte_idx = byte_idx, char_idx = char_idx }
-  end
-
-  -- If firstline == new_lastline, the first change occurred on a line that was deleted.
-  -- In this case, the first byte change is also at the first byte of firstline
-  if firstline == new_lastline then
-    return { line_idx = firstline, byte_idx = 1, char_idx = 1 }
-  end
-
-  local prev_line = assert(prev_lines[firstline])
-  local curr_line = assert(curr_lines[firstline])
-
-  -- Iterate across previous and current line containing first change
-  -- to find the first different byte.
-  -- Note: *about -> a*about will register the second a as the first
-  -- difference, regardless of edit since we do not receive the first
-  -- column of the edit from on_lines.
-  local start_byte_idx = 1
-  for idx = 1, #prev_line + 1 do
-    start_byte_idx = idx
-    if str_byte(prev_line, idx) ~= str_byte(curr_line, idx) then
-      break
-    end
-  end
-
-  -- Convert byte to codepoint if applicable
-  if start_byte_idx == 1 or (#prev_line == 0 and start_byte_idx == 1) then
-    byte_idx = start_byte_idx
-    char_idx = 1
-  elseif start_byte_idx == #prev_line + 1 then
-    byte_idx = start_byte_idx
-    char_idx = str_utfindex(prev_line, position_encoding) + 1
-  else
-    byte_idx = start_byte_idx + str_utf_start(prev_line, start_byte_idx)
-    --- Convert to 0 based for input, and from 0 based for output
-    char_idx = str_utfindex(prev_line, position_encoding, byte_idx - 1) + 1
-  end
-
-  -- Return the start difference (shared for new and prev lines)
-  return { line_idx = firstline, byte_idx = byte_idx, char_idx = char_idx }
-end
-
---- Finds the last line and byte index of the differences between prev and current buffer.
---- Normalized to the next codepoint.
---- prev_end_range is the text range sent to the server representing the changed region.
---- curr_end_range is the text that should be collected and sent to the server.
----
----@param prev_lines string[] list of lines
----@param curr_lines string[] list of lines
----@param start_range vim.lsp.sync.Range
----@param firstline integer
----@param lastline integer
----@param new_lastline integer
----@param position_encoding 'utf-8'|'utf-16'|'utf-32'
----@return vim.lsp.sync.Range prev_end_range
----@return vim.lsp.sync.Range curr_end_range
-local function compute_end_range(
-  prev_lines,
-  curr_lines,
-  start_range,
-  firstline,
-  lastline,
-  new_lastline,
-  position_encoding
-)
-  -- A special case for the following `firstline == new_lastline` case where lines are deleted.
-  -- Even if the buffer has become empty, nvim behaves as if it has an empty line with eol.
-  if #curr_lines == 1 and curr_lines[1] == '' then
-    local prev_line = assert(prev_lines[lastline - 1])
-    return {
-      line_idx = lastline - 1,
-      byte_idx = #prev_line + 1,
-      char_idx = str_utfindex(prev_line, position_encoding) + 1,
-    }, { line_idx = 1, byte_idx = 1, char_idx = 1 }
-  end
-  -- If firstline == new_lastline, the first change occurred on a line that was deleted.
-  -- In this case, the last_byte...
-  if firstline == new_lastline then
-    return { line_idx = (lastline - new_lastline + firstline), byte_idx = 1, char_idx = 1 }, {
-      line_idx = firstline,
-      byte_idx = 1,
-      char_idx = 1,
-    }
-  end
-  if firstline == lastline then
-    return { line_idx = firstline, byte_idx = 1, char_idx = 1 }, {
-      line_idx = new_lastline - lastline + firstline,
-      byte_idx = 1,
-      char_idx = 1,
-    }
-  end
-  -- Compare on last line, at minimum will be the start range
-  local start_line_idx = start_range.line_idx
-
-  -- lastline and new_lastline were last lines that were *not* replaced, compare previous lines
-  local prev_line_idx = lastline - 1
-  local curr_line_idx = new_lastline - 1
-
-  local prev_line = assert(prev_lines[lastline - 1])
-  local curr_line = assert(curr_lines[new_lastline - 1])
-
-  local prev_line_length = #prev_line
-  local curr_line_length = #curr_line
-
-  local byte_offset = 0
-
-  -- Editing the same line
-  -- If the byte offset is zero, that means there is a difference on the last byte (not newline)
-  if prev_line_idx == curr_line_idx then
-    local max_length --- @type integer
-    if start_line_idx == prev_line_idx then
-      -- Search until beginning of difference
-      max_length = min(
-        prev_line_length - start_range.byte_idx,
-        curr_line_length - start_range.byte_idx
-      ) + 1
-    else
-      max_length = min(prev_line_length, curr_line_length) + 1
-    end
-    for idx = 0, max_length do
-      byte_offset = idx
-      if
-        str_byte(prev_line, prev_line_length - byte_offset)
-        ~= str_byte(curr_line, curr_line_length - byte_offset)
-      then
-        break
-      end
-    end
-  end
-
-  -- Iterate from end to beginning of shortest line
-  local prev_end_byte_idx = prev_line_length - byte_offset + 1
-
-  -- Handle case where lines match
-  if prev_end_byte_idx == 0 then
-    prev_end_byte_idx = 1
-  end
-  local prev_byte_idx, prev_char_idx =
-    align_end_position(prev_line, prev_end_byte_idx, position_encoding)
-  local prev_end_range =
-    { line_idx = prev_line_idx, byte_idx = prev_byte_idx, char_idx = prev_char_idx }
-
-  local curr_end_range ---@type vim.lsp.sync.Range
-  -- Deletion event, new_range cannot be before start
-  if curr_line_idx < start_line_idx then
-    curr_end_range = { line_idx = start_line_idx, byte_idx = 1, char_idx = 1 }
-  else
-    local curr_end_byte_idx = curr_line_length - byte_offset + 1
-    -- Handle case where lines match
-    if curr_end_byte_idx == 0 then
-      curr_end_byte_idx = 1
-    end
-    local curr_byte_idx, curr_char_idx =
-      align_end_position(curr_line, curr_end_byte_idx, position_encoding)
-    curr_end_range =
-      { line_idx = curr_line_idx, byte_idx = curr_byte_idx, char_idx = curr_char_idx }
-  end
-
-  return prev_end_range, curr_end_range
-end
+---@class vim.lsp.sync.Range Represents a position (not a range) in the document
+---@field line_idx integer 1-indexed line index
+---@field byte_idx integer 1-indexed byte index, for indexing into Lua string
+---@field char_idx integer 1-indexed char index, for sending to LSP server
 
 --- Get the text of the range defined by start and end line/column
 ---@param lines table list of lines
@@ -375,11 +142,13 @@ end
 --- Returns the range table for the difference between prev and curr lines
 ---@param prev_lines table list of lines
 ---@param curr_lines table list of lines
----@param firstline integer line to begin search for first difference
----@param lastline integer line to begin search in old_lines for last difference
----@param new_lastline integer line to begin search in new_lines for last difference
+---@param firstline integer 0-indexed line to begin search for first difference
+---@param lastline integer 0-indexed line to begin search in old_lines for last difference
+---@param new_lastline integer 0-indexed line to begin search in new_lines for last difference
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32' encoding requested by language server
 ---@param line_ending string
+---@param prev_eol boolean whether the previous buffer text ended with a line ending
+---@param curr_eol boolean whether the current buffer text ends with a line ending
 ---@return lsp.TextDocumentContentChangeEvent : see https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
 function M.compute_diff(
   prev_lines,
@@ -388,33 +157,166 @@ function M.compute_diff(
   lastline,
   new_lastline,
   position_encoding,
-  line_ending
+  line_ending,
+  prev_eol,
+  curr_eol
 )
-  -- Find the start of changes between the previous and current buffer. Common between both.
+  if prev_eol ~= curr_eol then
+    return {
+      text = table.concat(curr_lines, line_ending) .. (curr_eol and line_ending or ''),
+    }
+  end
+
+  -- A special case for the following `firstline == new_lastline` case where lines are deleted.
+  -- Even if the buffer has become empty, nvim behaves as if it has an empty line with eol.
+  if #curr_lines == 1 and curr_lines[1] == '' then
+    new_lastline = 1
+  end
+
+  -- The range [firstline, lastline) is half-open: prev_lines[firstline + 1] may differ from
+  -- curr_lines[firstline + 1], but with the adjustment above, prev_lines[lastline + 1] is
+  -- equal to curr_lines[new_lastline + 1]. It's possible that both are nil.
+
+  -- The start of changes between the previous and current buffer. Common between both.
   -- Sent to the server as the start of the changed range.
   -- Used to grab the changed text from the latest buffer.
-  local start_range = compute_start_range(
-    prev_lines,
-    curr_lines,
-    firstline + 1,
-    lastline + 1,
-    new_lastline + 1,
-    position_encoding
-  )
-  -- Find the last position changed in the previous and current buffer.
+  local start_range = {
+    line_idx = firstline + 1,
+    byte_idx = 1,
+    char_idx = 1,
+  }
+
+  -- When we delete the last line from a buffer without 'eol' set, we want to emit the change
+  -- that deletes the eol character of the line before that line instead of after.
+  -- For simplicity, we just also compare the line before. This shouldn't matter unless the line
+  -- before is very long.
+  if start_range.line_idx > 1 then
+    start_range.line_idx = start_range.line_idx - 1
+  end
+
+  -- The last position changed in the previous and current buffer.
   -- prev_end_range is sent to the server as the end of the changed range.
   -- curr_end_range is used to grab the changed text from the latest buffer.
-  local prev_end_range, curr_end_range = compute_end_range(
-    prev_lines,
-    curr_lines,
-    start_range,
-    firstline + 1,
-    lastline + 1,
-    new_lastline + 1,
-    position_encoding
-  )
+  local prev_end_range = {
+    line_idx = lastline + 1,
+    byte_idx = 1,
+    char_idx = 1,
+  }
+  local curr_end_range = {
+    line_idx = new_lastline + 1,
+    byte_idx = 1,
+    char_idx = 1,
+  }
 
-  -- Grab the changed text of from start_range to curr_end_range in the current buffer.
+  -- Simultaneously shrink prev_end_range and curr_end_range as much as possible while they're still
+  -- after start_range.
+  -- Note that throughout the shrinking procedure, the replacement range remains valid.
+  -- Start with comparing whole lines.
+  while
+    prev_end_range.line_idx > start_range.line_idx
+    and curr_end_range.line_idx > start_range.line_idx
+    and assert(prev_lines[prev_end_range.line_idx - 1])
+      == assert(curr_lines[curr_end_range.line_idx - 1])
+  do
+    prev_end_range.line_idx = prev_end_range.line_idx - 1
+    curr_end_range.line_idx = curr_end_range.line_idx - 1
+  end
+
+  -- Now shrink by character.
+  if
+    prev_end_range.line_idx > start_range.line_idx
+    and curr_end_range.line_idx > start_range.line_idx
+  then
+    -- First, shrink the common newline character.
+    prev_end_range.line_idx = prev_end_range.line_idx - 1
+    curr_end_range.line_idx = curr_end_range.line_idx - 1
+    local prev_line = assert(prev_lines[prev_end_range.line_idx])
+    local curr_line = assert(curr_lines[curr_end_range.line_idx])
+    prev_end_range.byte_idx = #prev_line + 1
+    curr_end_range.byte_idx = #curr_line + 1
+
+    -- Then, shrink the characters byte by byte.
+    while
+      prev_end_range.byte_idx > 1
+      and curr_end_range.byte_idx > 1
+      and str_byte(prev_line, prev_end_range.byte_idx - 1)
+        == str_byte(curr_line, curr_end_range.byte_idx - 1)
+    do
+      prev_end_range.byte_idx = prev_end_range.byte_idx - 1
+      curr_end_range.byte_idx = curr_end_range.byte_idx - 1
+    end
+
+    -- Recompute char index and round byte index upwards to the end of a UTF-8 sequence.
+    prev_end_range.char_idx = str_utfindex(
+      prev_line,
+      position_encoding,
+      prev_end_range.byte_idx - 1
+    ) + 1
+    curr_end_range.char_idx = str_utfindex(
+      curr_line,
+      position_encoding,
+      curr_end_range.byte_idx - 1
+    ) + 1
+    prev_end_range.byte_idx = str_byteindex(
+      prev_line,
+      position_encoding,
+      prev_end_range.char_idx - 1
+    ) + 1
+    curr_end_range.byte_idx = str_byteindex(
+      curr_line,
+      position_encoding,
+      curr_end_range.char_idx - 1
+    ) + 1
+  end
+
+  -- Do the same procedure, but go forward from start instead.
+  while
+    prev_end_range.line_idx > start_range.line_idx
+    and curr_end_range.line_idx > start_range.line_idx
+    and assert(prev_lines[start_range.line_idx]) == assert(curr_lines[start_range.line_idx])
+  do
+    start_range.line_idx = start_range.line_idx + 1
+  end
+
+  -- Now, if both ranges are nonempty, shrink by character.
+  if
+    (
+      start_range.line_idx ~= prev_end_range.line_idx
+      or start_range.byte_idx ~= prev_end_range.byte_idx
+    )
+    and (
+      start_range.line_idx ~= curr_end_range.line_idx
+      or start_range.byte_idx ~= curr_end_range.byte_idx
+    )
+  then
+    local prev_line = assert(prev_lines[start_range.line_idx])
+    local curr_line = assert(curr_lines[start_range.line_idx])
+
+    local max_shrink_bytes = min(#prev_line, #curr_line)
+    if start_range.line_idx == prev_end_range.line_idx then
+      max_shrink_bytes = min(max_shrink_bytes, prev_end_range.byte_idx - 1)
+    end
+    if start_range.line_idx == curr_end_range.line_idx then
+      max_shrink_bytes = min(max_shrink_bytes, curr_end_range.byte_idx - 1)
+    end
+
+    for idx = 1, max_shrink_bytes + 1 do
+      start_range.byte_idx = idx
+      if str_byte(prev_line, idx) ~= str_byte(curr_line, idx) then
+        break
+      end
+    end
+
+    -- Recompute char index and round byte index downwards to the start of a UTF-8 sequence.
+    if start_range.byte_idx <= #prev_line then
+      start_range.byte_idx = start_range.byte_idx
+        + vim.str_utf_start(prev_line, start_range.byte_idx)
+    end
+    start_range.char_idx = str_utfindex(prev_line, position_encoding, start_range.byte_idx - 1) + 1
+  end
+
+  -- Grab the changed text from start_range to curr_end_range in the current buffer (in the
+  -- curr_lines variable).
   -- The text range is "" if entire range is deleted.
   local text = extract_text(curr_lines, start_range, curr_end_range, line_ending)
 
