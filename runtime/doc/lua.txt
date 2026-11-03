@@ -702,7 +702,7 @@ vim.rpcnotify({channel}, {method}, {...})                    *vim.rpcnotify()*
       • {method}   (`string`)
       • {...}      (`any?`)
 
-vim.rpcrequest({channel}, {method}, {...})                  *vim.rpcrequest()*
+vim.rpcrequest({channel}, {opts}, {method}, {...})          *vim.rpcrequest()*
     Invokes |RPC| `method` on `channel` and blocks until a response is
     received.
 
@@ -712,8 +712,14 @@ vim.rpcrequest({channel}, {method}, {...})                  *vim.rpcrequest()*
 
     Parameters: ~
       • {channel}  (`integer`)
+      • {opts}     (`table?`) Optional parameters (can be omitted):
+                   • timeout: (integer) Max milliseconds to wait for the
+                     response, else raise an error.
       • {method}   (`string`)
       • {...}      (`any?`)
+
+    Overloads: ~
+      • `fun(channel: integer, method: string, ...: any): any`
 
 vim.schedule({fn})                                            *vim.schedule()*
     Schedules {fn} to be invoked soon by the main event-loop. Useful to avoid
@@ -1433,7 +1439,7 @@ vim.isarray({t})                                               *vim.isarray()*
 
     Empty table `{}` is an array, unless it was created by |vim.empty_dict()|
     or returned as a dict-like |API| or Vimscript result, for example from
-    |rpcrequest()| or |vim.fn|.
+    |vim.rpcrequest()| or |vim.fn|.
 
     Parameters: ~
       • {t}  (`any?`)
@@ -1450,7 +1456,7 @@ vim.islist({t})                                                 *vim.islist()*
 
     Empty table `{}` is a list, unless it was created by |vim.empty_dict()| or
     returned as a dict-like |API| or Vimscript result, for example from
-    |rpcrequest()| or |vim.fn|.
+    |vim.rpcrequest()| or |vim.fn|.
 
     Parameters: ~
       • {t}  (`any?`)

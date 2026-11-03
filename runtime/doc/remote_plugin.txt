@@ -25,9 +25,10 @@ process.
 2. Plugin hosts					    *remote-plugin-hosts*
 
 While plugins can be implemented as arbitrary programs that communicate
-directly with the high-level Nvim API and are called via |rpcrequest()| and
-|rpcnotify()|, that is not the best approach. Instead, developers should first
-check whether a plugin host is available for their chosen programming language.
+directly with the high-level Nvim API and are called via |vim.rpcrequest()|
+and |vim.rpcnotify()|, that is not the best approach. Instead, developers
+should first check whether a plugin host is available for their chosen
+programming language.
 
 Plugin hosts are programs that provide a high-level environment for plugins,
 taking care of most boilerplate involved in defining commands, autocmds, and
@@ -84,11 +85,11 @@ idioms to Vimscript occurs while the plugin manifest is being generated (see
 the next section).
 
 Notice that the exported command and autocmd are defined with the "sync" flag,
-which affects how Nvim calls the plugin: with "sync" the |rpcrequest()|
+which affects how Nvim calls the plugin: with "sync" the |vim.rpcrequest()|
 function is used, which will block Nvim until the handler function returns a
 value. Without the "sync" flag, the call is made using a fire and forget
-approach with |rpcnotify()|, meaning return values or exceptions raised in the
-handler function are ignored.
+approach with |vim.rpcnotify()|, meaning return values or exceptions raised in
+the handler function are ignored.
 
 To test the above plugin, it must be saved in "rplugin/python" in a
 'runtimepath' directory (~/.config/nvim/rplugin/python/limit.py for example).

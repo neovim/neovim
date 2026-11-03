@@ -94,12 +94,12 @@ functions can be called interactively (requires `pip install pynvim` or
     >>> nvim = attach('socket', path='[address]')
     >>> nvim.command('echo "hello world!"')
 <
-You can also embed Nvim via |jobstart()|, and communicate using |rpcrequest()|
-and |rpcnotify()|:
->vim
-    let nvim = jobstart(['nvim', '--embed'], {'rpc': v:true})
-    echo rpcrequest(nvim, 'nvim_eval', '"Hello " . "world!"')
-    call jobstop(nvim)
+You can also embed Nvim via |jobstart()|, and communicate using
+|vim.rpcrequest()| and |vim.rpcnotify()|: >lua
+
+    local nvim = vim.fn.jobstart({ 'nvim', '--embed' }, { rpc = true })
+    print(vim.rpcrequest(nvim, 'nvim_eval', '"Hello " . "world!"'))
+    vim.fn.jobstop(nvim)
 <
 
 ==============================================================================

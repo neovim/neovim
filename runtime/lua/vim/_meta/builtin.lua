@@ -102,9 +102,12 @@ function vim.rpcnotify(channel, method, ...) end
 --- Example: see [nvim_exec_lua()]
 ---
 --- @param channel integer
+--- @param opts? table Optional parameters (can be omitted):
+---   - timeout: (integer) Max milliseconds to wait for the response, else raise an error.
 --- @param method string
 --- @param ...? any
-function vim.rpcrequest(channel, method, ...) end
+--- @overload fun(channel: integer, method: string, ...: any): any
+function vim.rpcrequest(channel, opts, method, ...) end
 
 --- Compares strings case-insensitively.
 --- @param a string
