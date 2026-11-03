@@ -79,6 +79,7 @@ typedef struct {
 typedef struct {
   OptionalKeys is_set__chan_set_;
   Boolean detach;
+  Boolean trust;
 } Dict(chan_set);
 
 typedef struct {

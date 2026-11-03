@@ -10736,10 +10736,12 @@ sockconnect({mode}, {address} [, {opts}])                        *sockconnect()*
 		socket.
 
 		{opts} is an optional dictionary with these keys:
-		  |on_data| : callback invoked when data was read from socket
-		  data_buffered : read socket data in |channel-buffered| mode.
-		  rpc     : If set, |msgpack-rpc| will be used to communicate
-			    over the socket.
+		  - |on_data|: Callback invoked when data is read from socket.
+		  - data_buffered: Read socket data in |channel-buffered| mode.
+		  - rpc: Use |msgpack-rpc| to communicate over the socket.
+		  - trust: Trust the peer: allow its incoming |RPC| |API|
+		    calls. |nvim_chan_set()|
+
 		Returns:
 		  - The channel ID on success (greater than zero)
 		  - 0 on invalid arguments or connection failure.

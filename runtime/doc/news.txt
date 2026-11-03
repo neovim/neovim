@@ -96,8 +96,8 @@ API
 • |nvim_clear_autocmds()| no longer treats an empty array event as nil.
 • |vim.o|, |vim.opt|, and |nvim_set_option_value()| expand `~` and environment
   variables (|expand-env|).
-• Security: The |TUI| (also with |--remote-ui|) rejects server-to-client API
-  calls. Only UI events are allowed.
+• Security: |TUI|, |--remote-ui| and |--remote| reject server-to-client API
+  calls by default. Only UI events are allowed.
 
 DIAGNOSTICS
 
@@ -255,6 +255,8 @@ API
 • |nvim_create_autocmd()| callback |event-args| provide `win`.
 • |nvim_chan_set()| sets channel properties. With `detach=false`, any RPC
   channel can enable Nvim "self-exit on channel-close" behavior.
+• |nvim_chan_set()| and |sockconnect()| `trust=false` reject API calls from
+  an untrusted peer.
 
 BUILD
 

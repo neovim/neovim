@@ -227,6 +227,7 @@ Channel *channel_alloc(ChannelStreamType type)
   chan->exit_status = -1;
   chan->streamtype = type;
   chan->detach = type != kChannelStreamStdio;
+  chan->rpc.trust = true;  // TODO(justinmk): default to false?
   assert(chan->id <= VARNUMBER_MAX);
   pmap_put(uint64_t)(&channels, chan->id, chan);
   return chan;
@@ -480,8 +481,8 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
   return chan;
 }
 
-uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader on_output,
-                         int timeout, const char **error)
+uint64_t channel_connect(bool tcp, const char *address, bool rpc, bool trust,
+                         CallbackReader on_output, int timeout, const char **error)
 {
   Channel *channel;
 
@@ -519,6 +520,7 @@ uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader
   }
 
 end:
+  channel->rpc.trust = trust;
   channel_create_event(channel, address);
   return channel->id;
 }
@@ -1039,6 +1041,7 @@ Dict channel_info(uint64_t id, Arena *arena)
     mode_desc = "rpc";
     PUT_C(info, "client", DICT_OBJ(chan->rpc.info));
     PUT_C(info, "detach", BOOLEAN_OBJ(chan->detach));
+    PUT_C(info, "trust", BOOLEAN_OBJ(chan->rpc.trust));
   } else if (chan->term) {
     mode_desc = "terminal";
     PUT_C(info, "buf", BUFFER_OBJ(terminal_buf(chan->term)));

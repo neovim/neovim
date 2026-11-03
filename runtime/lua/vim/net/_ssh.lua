@@ -481,42 +481,21 @@ local function get_release(os, arch)
   return dir, release_url, not ver.prerelease and base or nil
 end
 
---- Sends a request to the Nvim server at `addr`, and waits for its result. Over a plain socket, not
---- an RPC channel: that would also let the (remote) server call the API of this (local) Nvim.
+--- Checks that the Nvim server at `addr` answers a request.
 ---@param addr string
----@param method string
----@param params any[]
----@return boolean ok
-local function request(addr, method, params)
-  local pipe = assert(vim.uv.new_pipe())
-  local received = ''
-  local response --- @type any
-  local done = false
-  pipe:connect(addr, function(err)
-    if err then
-      done = true
-      return
-    end
-    pipe:write(vim.mpack.encode({ 0, 0, method, params }))
-    pipe:read_start(function(read_err, data)
-      if read_err or not data then
-        done = true
-        return
-      end
-      received = ('%s%s'):format(received, data)
-      local ok, msg = pcall(vim.mpack.decode, received)
-      if ok then
-        response = msg
-        done = true
-      end
-    end)
-  end)
-  vim.wait(30000, function()
-    return done
-  end)
-  pipe:close()
-  -- Response: `[1, msgid, error, result]`.
-  return response ~= nil and response[1] == 1 and response[3] == vim.NIL
+---@return boolean
+local function answers(addr)
+  local ok, chan = pcall(vim.fn.sockconnect, 'pipe', addr, {
+    rpc = true,
+    trust = false, -- Security: remote is untrusted, don't allow API requests from it.
+  })
+  if not ok or chan == 0 then
+    return false
+  end
+  ---@cast chan integer
+  local answered = pcall(vim.rpcrequest, chan, 'nvim_get_api_info')
+  pcall(vim.fn.chanclose, chan)
+  return answered
 end
 
 --- See `M.start()`.
@@ -592,7 +571,7 @@ local function start(uri_str, chan, report)
       or 'SSH tunnel exited before the remote Nvim was ready'
     local detail = vim.trim(tunnel.stderr)
     err = detail ~= '' and ('%s: %s'):format(err, detail) or err
-  elseif not request(local_sock, 'nvim_get_api_info', {}) then
+  elseif not answers(local_sock) then
     -- sshd may refuse the forward (e.g. `AllowStreamLocalForwarding no`) but run the script.
     err = 'Remote Nvim is not reachable through the SSH forward'
   elseif

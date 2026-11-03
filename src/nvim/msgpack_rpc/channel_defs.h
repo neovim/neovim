@@ -38,6 +38,9 @@ typedef struct {
 
 typedef struct {
   bool closed;
+  /// Trust the peer: accept its incoming RPC API calls. Should be false for an untrusted peer.
+  /// If false, only responses (and UI events) are accepted.
+  bool trust;
   Unpacker *unpacker;
   RemoteUI *ui;
   uint32_t next_request_id;
