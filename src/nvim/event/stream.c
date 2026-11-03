@@ -109,11 +109,11 @@ void stream_may_close(Stream *stream)
 #endif
 
   if (!stream->pending_reqs) {
-    stream_close_handle(stream);
+    stream_close_handle(stream, "may");
   }  // Else: rstream.c:read_event() or wstream.c:write_cb() will call stream_close_handle().
 }
 
-void stream_close_handle(Stream *stream)
+void stream_close_handle(Stream *stream, char *what)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_handle_t *handle = NULL;
@@ -123,10 +123,12 @@ void stream_close_handle(Stream *stream)
            (void *)stream, stream->fulid,
            uv_stream_get_write_queue_size(stream->uvstream));
 
+      WLOG("ponding: %ld", stream->pending_reqs);
+
       uv_os_fd_t try_fd = (uv_os_fd_t)-1;
       handle = (uv_handle_t *)stream->uvstream;
       uv_fileno(handle, &try_fd);
-      WLOG("info:  fd=%d or %d type=%d flags=%d", stream->fd, try_fd, handle->type, handle->flags);
+      WLOG("info: %s says: fd=%d or %d type=%d flags=%d", what, stream->fd, try_fd, handle->type, handle->flags);
 
     }
     handle = (uv_handle_t *)stream->uvstream;

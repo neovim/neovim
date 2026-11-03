@@ -411,6 +411,9 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
   proc->cwd = cwd;
   proc->env = env;
   proc->overlapped = overlapped;
+  proc->in.fulid = 10000*(int)chan->id;
+  proc->out.s.fulid = 10000*(int)chan->id+1000;
+  proc->err.s.fulid = 10000*(int)chan->id+2000;
 #ifdef MSWIN
   // Windows: spawn channel jobs with noinherit (so writes don't leak to TUI #40074).
   proc->stdio_noinherit = true;
