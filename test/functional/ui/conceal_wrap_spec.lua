@@ -1209,6 +1209,19 @@ describe('conceal-aware wrapping (#14409)', function()
     ]])
   end)
 
+  it("'linebreak' with virt_lines below the last line does not read past the buffer", function()
+    command('set linebreak')
+    conceal_line('aaaHIDDENbbb')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_lines = { { { 'footer' } } } })
+    screen0:expect([[
+      ^aaabbb              |
+      footer              |
+      {1:~                   }|*3
+                          |
+    ]])
+    eq('', api.nvim_get_vvar('errmsg'))
+  end)
+
   it('ephemeral (decoration-provider) conceal does not reflow', function()
     -- Ephemeral conceal exists only while drawing, so geometry cannot read it from the marktree.
     api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(9) })
