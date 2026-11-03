@@ -3466,6 +3466,15 @@ describe('TUI', function()
     end)
   end)
 
+  it('security: server-to-client API calls are rejected', function()
+    local ok, err = unpack(child_exec_lua([[
+      local ui = vim.api.nvim_list_uis()[1].chan
+      return { pcall(vim.rpcrequest, ui, 'nvim_exec_lua', 'return vim.fn.getpid()', {}) }
+    ]]))
+    eq(false, ok)
+    t.matches('UI client does not accept API calls: nvim_exec_lua', err)
+  end)
+
   it('stdin and stdout are tty fds in embedded server #38172', function()
     eq(
       { 'tty', 'tty' },
