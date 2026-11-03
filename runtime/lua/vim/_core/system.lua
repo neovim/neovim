@@ -1,3 +1,4 @@
+local strbuffer = require('vim._core.stringbuffer')
 local uv = vim.uv
 local M = {}
 
@@ -46,12 +47,6 @@ local M = {}
 --- @field stdout? string `nil` if stdout is disabled or has a custom handler.
 --- @field stderr? string `nil` if stderr is disabled or has a custom handler.
 
---- @class (package) vim.SystemRunWaitResult : vim.SystemObj
---- @field code? integer Exit code, if the process exited before the predicate matched.
---- @field signal? integer Exit signal, if the process exited before the predicate matched.
---- @field stdout string Stdout until `run_wait()` returned (see its `on_exit`).
---- @field stderr string Stderr until `run_wait()` returned.
-
 --- @class (package) vim.SystemState
 --- @field cmd string[]
 --- @field handle? uv.uv_process_t
@@ -62,8 +57,8 @@ local M = {}
 --- @field stdin? uv.uv_stream_t
 --- @field stdout? uv.uv_stream_t
 --- @field stderr? uv.uv_stream_t
---- @field stdout_data? string[]
---- @field stderr_data? string[]
+--- @field stdout_data? vim._core.stringbuffer
+--- @field stderr_data? vim._core.stringbuffer
 --- @field result? vim.SystemCompleted
 
 --- @enum vim.SystemSig
@@ -137,16 +132,33 @@ end
 --- local obj = vim.system({'echo', 'hello'}, { text = true })
 --- local result = obj:wait(1000) -- waits up to 1000ms
 --- print(result.code, result.signal, result.stdout, result.stderr)
+---
+--- -- Monitor a long-lived process that prints "READY".
+--- local result = vim.system({ 'ssh', '-L', … }):wait(nil, function(stdout)
+---   return stdout:find('READY') ~= nil
+--- end)
 --- ```
 ---
 --- @param timeout? integer
+--- @param cond? fun(stdout: string, stderr: string): boolean Stops waiting when it returns true,
+--- without terminating the process. The `stdout` and `stderr` args have the accumulated output so
+--- far. The result has no `code` or `signal`.
 --- @return vim.SystemCompleted
-function SystemObj:wait(timeout)
+function SystemObj:wait(timeout, cond)
   local state = self._state
 
+  --- @param buf? vim._core.stringbuffer
+  local function output(buf)
+    return buf and buf:tostring() or nil
+  end
   local done = vim.wait(timeout or state.timeout or vim._maxint, function()
     return state.result ~= nil
-  end, nil, true)
+      or (cond ~= nil and cond(output(state.stdout_data) or '', output(state.stderr_data) or ''))
+  end, 200, true)
+
+  if done and not state.result then
+    return { stdout = output(state.stdout_data), stderr = output(state.stderr_data) } --[[@as vim.SystemCompleted]]
+  end
 
   if not done then
     -- Send sigkill since this cannot be caught
@@ -218,97 +230,33 @@ function SystemObj:is_closing()
   return handle == nil or handle:is_closing() or false
 end
 
---- @nodoc
---- Runs a command and waits until it exits or streamed output satisfies a predicate.
----
---- Unlike `vim.system(...):wait()`, this can return before the process exits. That is needed for
---- long-lived commands such as `ssh -L ...`, which print a readiness marker and then keep running.
----
---- @param cmd string[] Command to execute.
---- @param opts? { stdin?: string } `stdin` is written to the process, then closed.
---- @param wait_until? fun(stdout: string, stderr: string): boolean Predicate checked after output.
---- @param timeout? integer Time limit in ms.
---- @param on_exit? fun(out: vim.SystemCompleted) Called (in a fast context) when the process exits,
----   also if that is after this returns. Output is captured only until this returns (a long-lived
----   process may keep writing, e.g. a heartbeat), so `out` has no `stdout` or `stderr`.
---- @return vim.SystemRunWaitResult
-function M.run_wait(cmd, opts, wait_until, timeout, on_exit)
-  vim.validate('cmd', cmd, 'table')
-  vim.validate('opts', opts, 'table', true)
-  vim.validate('wait_until', wait_until, 'function', true)
-  vim.validate('timeout', timeout, 'number', true)
-  vim.validate('on_exit', on_exit, 'function', true)
-
-  local out, err = {}, {} --- @type string[], string[]
-  local capturing = true
-  local obj = vim.system(cmd, {
-    stdin = opts and opts.stdin,
-    stdout = function(e, data)
-      assert(not e, e)
-      if capturing and data then
-        out[#out + 1] = (data:gsub('\r\n', '\n'))
-      end
-    end,
-    stderr = function(e, data)
-      assert(not e, e)
-      if capturing and data then
-        err[#err + 1] = (data:gsub('\r\n', '\n'))
-      end
-    end,
-  }, on_exit) --[[@as vim.SystemRunWaitResult]]
-  local state = obj._state
-
-  local success, status = vim.wait(timeout or vim._maxint, function()
-    return state.result ~= nil
-      or (wait_until and wait_until(table.concat(out), table.concat(err)))
-      or false
-  end, 50, true)
-
-  if not success then
-    if not obj:is_closing() then
-      obj:kill('sigterm')
-    end
-    obj:wait(1000)
-    error(status == -2 and 'command interrupted' or 'command timed out')
-  end
-
-  obj.code = state.result and state.result.code or nil
-  obj.signal = state.result and state.result.signal or nil
-  obj.stdout = table.concat(out)
-  obj.stderr = table.concat(err)
-  capturing = false
-
-  return obj
-end
-
 --- @param output? fun(err: string?, data: string?)|boolean
 --- @param text? boolean
 --- @return uv.uv_stream_t? pipe
 --- @return integer? child_fd
 --- @return fun(err: string?, data: string?)? handler
---- @return string[]? data
+--- @return vim._core.stringbuffer? data
 local function setup_output(output, text)
   if output == false then
     return
   end
 
-  local bucket --- @type string[]?
+  local bucket --- @type vim._core.stringbuffer?
   local handler --- @type fun(err: string?, data: string?)
 
   if type(output) == 'function' then
     handler = output
   else
-    bucket = {}
+    local buf = strbuffer.new()
+    bucket = buf
     --- @param err string?
     --- @param data string?
     handler = function(err, data)
       if err then
         error(err)
       end
-      if text and data then
-        bucket[#bucket + 1] = data:gsub('\r\n', '\n')
-      else
-        bucket[#bucket + 1] = data
+      if data then
+        buf:put(text and (data:gsub('\r\n', '\n')) or data)
       end
     end
   end
@@ -479,8 +427,8 @@ local function _on_exit(state, code, signal, on_exit)
     state.result = {
       code = code,
       signal = signal,
-      stdout = stdout_data and table.concat(stdout_data) or nil,
-      stderr = stderr_data and table.concat(stderr_data) or nil,
+      stdout = stdout_data and stdout_data:tostring() or nil,
+      stderr = stderr_data and stderr_data:tostring() or nil,
     }
 
     if on_exit then

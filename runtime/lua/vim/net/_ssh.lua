@@ -316,11 +316,6 @@ local function new_progress_report()
   end
 end
 
-local function core_system()
-  -- Keep this lazy so parser-only users can load vim.net._ssh without editor state.
-  return require('vim._core.system')
-end
-
 --- Builds a command for the remote host identified by `ssh_uri`.
 ---
 --- `ssh_args` are inserted before the target; `remote_cmd` is appended after the target.
@@ -391,9 +386,9 @@ end
 ---
 ---@param uri {host:string, user?:string, port?:string}
 ---@param args string[] Script args: plain words, which no shell expands, so they need no quoting.
----@param opts? { ssh_args?: string[], wait_until?: fun(stdout: string, stderr: string): boolean }
----@param on_exit? fun(out: vim.SystemCompleted) See `run_wait()`.
----@return vim.SystemRunWaitResult
+---@param opts? { ssh_args?: string[] }
+---@param on_exit? fun(out: vim.SystemCompleted)
+---@return vim.SystemObj
 local function run_script(uri, args, opts, on_exit)
   opts = opts or {}
   for _, arg in ipairs(args) do
@@ -404,7 +399,7 @@ local function run_script(uri, args, opts, on_exit)
   local remote_cmd = vim.list_extend({ 'sh', '-s', '--' }, args)
   local ssh_cmd = get_ssh_cmd(uri, { ssh_args = opts.ssh_args, remote_cmd = remote_cmd })
   log().debug('run_script: running', ssh_cmd)
-  return core_system().run_wait(ssh_cmd, { stdin = script }, opts.wait_until, 300000, on_exit)
+  return vim.system(ssh_cmd, { stdin = script }, on_exit)
 end
 
 --- Gets the operating system and architecture from the remote system.
@@ -498,10 +493,10 @@ local function answers(addr)
   return answered
 end
 
---- See `M.start()`.
+--- See `M.connect()`.
 ---@param chan? integer
 ---@param report fun(status: 'running'|'success'|'failed', msg: string)
-local function start(uri_str, chan, report)
+local function connect(uri_str, chan, report)
   local uri = require('vim.uri')._parse_ssh_uri(uri_str)
   report('running', ('Connecting to %s...'):format(uri_str))
   local dir, url, version = get_release(M.get_system_info(uri))
@@ -512,14 +507,15 @@ local function start(uri_str, chan, report)
 
   local forward = ('%s:%s'):format(local_sock, remote_sock)
   local cleaned_up = false
-  local tunnel --- @type vim.SystemRunWaitResult
+  local tunnel --- @type vim.SystemObj
 
   --- Stops this (local) server when the session ends (remote quit, crash, lost connection),
   --- unless it is still in use: a UI is attached or a buffer is modified.
-  local function on_exit()
+  --- @param out vim.SystemCompleted
+  local function on_exit(out)
     vim.schedule(function()
-      -- Without NVIM_READY there was no session (`start()` fails instead).
-      if cleaned_up or not (tunnel and tunnel.stdout:match('NVIM_READY')) then
+      -- Without NVIM_READY there was no session (`connect()` fails instead).
+      if cleaned_up or not (out.stdout or ''):match('NVIM_READY') then
         return
       end
       local modified = vim.iter(vim.api.nvim_list_bufs()):any(function(buf)
@@ -555,21 +551,25 @@ local function start(uri_str, chan, report)
   end
 
   report('running', 'Starting remote Nvim...')
-  log().debug('start: local_sock', local_sock)
-  tunnel = run_script(uri, { remote_sock, dir, url, version }, {
-    ssh_args = { '-L', forward },
-    wait_until = function(stdout)
-      return stdout:match('NVIM_READY') ~= nil
-    end,
-  }, on_exit)
-  log().debug('start: tunnel stdout', tunnel.stdout, 'stderr', tunnel.stderr)
+  log().debug('connect: local_sock', local_sock)
+  tunnel = run_script(
+    uri,
+    { remote_sock, dir, url, version },
+    { ssh_args = { '-L', forward } },
+    on_exit
+  )
+  local res = tunnel:wait(300000, function(stdout)
+    return stdout:match('NVIM_READY') ~= nil
+  end)
+  log().debug('connect: tunnel stdout', res.stdout, 'stderr', res.stderr)
 
   local err --- @type string?
-  if not tunnel.stdout:match('NVIM_READY') then
-    -- The tunnel already exited.
-    err = tunnel.stdout:match('NVIM_CRASHED') and 'Remote Nvim crashed during startup'
+  if res.code then
+    -- The tunnel exited (or timed out).
+    err = (res.stdout or ''):match('NVIM_CRASHED') and 'Remote Nvim crashed during startup'
+      or res.code == 124 and 'Timed out waiting for the remote Nvim'
       or 'SSH tunnel exited before the remote Nvim was ready'
-    local detail = vim.trim(tunnel.stderr)
+    local detail = vim.trim(res.stderr or '')
     err = detail ~= '' and ('%s: %s'):format(err, detail) or err
   elseif not answers(local_sock) then
     -- sshd may refuse the forward (e.g. `AllowStreamLocalForwarding no`) but run the script.
@@ -583,7 +583,7 @@ local function start(uri_str, chan, report)
     err = ('UI detached: channel %d'):format(chan)
   end
   if err then
-    log().error(err, 'code', tunnel.code, 'stderr', tunnel.stderr)
+    log().error(err, 'code', res.code, 'stderr', res.stderr)
     teardown()
     error(err)
   end
@@ -603,7 +603,7 @@ end
 --- @return string? local_socket Path to the local forwarded socket, or nil if declined.
 --- @return fun()? teardown Stops this session's tunnel (and thus the remote server). Other sessions
 ---   sharing the SSH master are unaffected.
-function M.start(uri_str, chan)
+function M.connect(uri_str, chan)
   local msg = ('This will install Nvim on %s (in ~/%s/), if missing.\n'):format(
     uri_str,
     remote_data_dir
@@ -612,7 +612,7 @@ function M.start(uri_str, chan)
     return nil
   end
   local report = new_progress_report()
-  local ok, local_sock, teardown = pcall(start, uri_str, chan, report)
+  local ok, local_sock, teardown = pcall(connect, uri_str, chan, report)
   if not ok then
     report('failed', ('Failed to connect to %s'):format(uri_str))
     error(local_sock, 0)
