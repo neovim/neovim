@@ -314,6 +314,15 @@ static void handle_request(Channel *channel, Unpacker *p, Array args)
 {
   assert(p->type == kMessageTypeRequest || p->type == kMessageTypeNotification);
 
+  // SECURITY: only allow UI events, disallow server-to-client API calls. Else a malicious (remote)
+  // server could run arbitrary code in the local UI process.
+  if (p->handler.fn && p->handler.fn != handle_nvim_error_event
+      && ui_client_channel_id && channel->id == ui_client_channel_id) {
+    api_set_error(&p->unpack_error, kErrorTypeException, "UI client does not accept API calls: %s",
+                  p->handler.name);
+    p->handler.fn = NULL;
+  }
+
   if (!p->handler.fn) {
     send_error(channel, p->handler, p->type, p->request_id, p->unpack_error.msg);
     api_clear_error(&p->unpack_error);

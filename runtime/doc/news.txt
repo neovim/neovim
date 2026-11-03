@@ -96,6 +96,8 @@ API
 • |nvim_clear_autocmds()| no longer treats an empty array event as nil.
 • |vim.o|, |vim.opt|, and |nvim_set_option_value()| expand `~` and environment
   variables (|expand-env|).
+• Security: The |TUI| (also with |--remote-ui|) rejects server-to-client API
+  calls. Only UI events are allowed.
 
 DIAGNOSTICS
 
