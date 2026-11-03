@@ -77,6 +77,14 @@ jobs:
           cmake --build build --target functionaltest-summary
           exit $exitCode
 
+      - if: ${{ matrix.test == 'functional' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: the-terminal-log-file
+          path: |
+            build/nvim.log_terminal
+          retention-days: 3
+
       - if: ${{ matrix.test == 'old' }}
         uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2.33.0
         with:
