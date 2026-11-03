@@ -408,6 +408,13 @@ void ui_attach_impl(RemoteUI *ui, uint64_t chanid)
   if (!sent) {
     ui_send_all_hls(ui);
   }
+
+  // Resend window grids; the new UI has never seen their contents.
+  if (ui->ui_ext[kUIMultigrid]) {
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      wp->w_grid_alloc.valid = false;
+    }
+  }
   ui_refresh();
 
   do_autocmd_uienter(chanid, true);
