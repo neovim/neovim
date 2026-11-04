@@ -300,6 +300,83 @@ static int conceal_next_byte(const CharsizeArg *csarg, int col)
   return NUL;
 }
 
+/// Width of 'showbreak' and 'breakindent' at the start of a wrapped screen line.
+static int charsize_indent_width(CharsizeArg *csarg)
+{
+  if (csarg->indent_width == INT_MIN) {
+    win_T *wp = csarg->win;
+    char *const sbr = get_showbreak_value(wp);
+    int width = 0;
+    if (*sbr != NUL) {
+      width += vim_strsize(sbr);
+    }
+    if (wp->w_p_bri) {
+      width += get_breakindent_win(wp, csarg->line);
+    }
+    csarg->indent_width = width;
+  }
+  return csarg->indent_width;
+}
+
+/// When "vcol" is at the start of a wrapped screen line, skip the "head" cells
+/// of 'showbreak' and 'breakindent' there.
+static colnr_T skip_indent(colnr_T vcol, int width1, int width2, int head)
+{
+  if (head > 0 && head < width2 && vcol >= width1 && (vcol - width1) % width2 == 0) {
+    return vcol + head;
+  }
+  return vcol;
+}
+
+/// Cells taken by inline virtual text "vt" starting at vcol "*vcolp", including
+/// the ">" shown in the last column when a double-width character in the text
+/// doesn't fit and is moved to the next screen line.
+/// 'showbreak' and 'breakindent' are not included, but "*vcolp" is advanced
+/// past them, so that it is where the next text starts.
+static int inline_virt_text_cells(CharsizeArg *csarg, DecorVirtText *vt, colnr_T *vcolp)
+{
+  if (vt->width == 0) {
+    return 0;
+  }
+  win_T *wp = csarg->win;
+  if (!wp->w_p_wrap) {
+    *vcolp += vt->width;
+    return vt->width;
+  }
+  int const width1 = wp->w_view_width - win_col_off(wp);
+  int const width2 = width1 + win_col_off2(wp);
+  int const head = width2 > 0 ? charsize_indent_width(csarg) : 0;
+  colnr_T vcol = skip_indent(*vcolp, width1, width2, head);
+  // Fast path: the text doesn't reach the end of the current screen line.
+  int const rem = vcol < width1 ? width1 - vcol
+                                : (width2 > 0 ? width2 - (vcol - width1) % width2 : INT_MAX);
+  if (vt->width <= rem) {
+    *vcolp = vcol + vt->width;
+    return vt->width;
+  }
+  int cells = 0;
+  for (size_t i = 0; i < kv_size(vt->data.virt_text); i++) {
+    char *text = kv_A(vt->data.virt_text, i).text;
+    if (text == NULL) {
+      continue;
+    }
+    StrCharInfo ci = utf_ptr2StrCharInfo(text);
+    while (*ci.ptr != NUL) {
+      ClusterInfo cli = utf_ClusterInfo(ci);
+      vcol = skip_indent(vcol, width1, width2, head);
+      if (cli.cells == 2 && in_win_border(wp, vcol)) {
+        cells++;  // the ">" in the last column
+        vcol = skip_indent(vcol + 1, width1, width2, head);
+      }
+      cells += cli.cells;
+      vcol += cli.cells;
+      ci = cli.next;
+    }
+  }
+  *vcolp = vcol;
+  return cells;
+}
+
 /// Get the number of cells taken up on the screen for the given arguments.
 /// "csarg->cur_text_width_left" and "csarg->cur_text_width_right" are set
 /// to the extra size for inline virtual text.
@@ -341,6 +418,7 @@ CharSize charsize_regular(CharsizeArg *csarg, const char *cur, colnr_T const vco
     is_doublewidth = size == 2 && cur_char >= 0x80;
   }
 
+  colnr_T vt_vcol = disp_vcol;  // where the next inline virtual text starts
   if (csarg->virt_row >= 0 && !csarg->skip_cur_text) {
     int tab_size = size;
     int col = (int)(cur - line);
@@ -354,12 +432,13 @@ CharSize charsize_regular(CharsizeArg *csarg, const char *cur, colnr_T const vco
           DecorVirtText *vt = decor.ext ? decor.data.ext.vt : NULL;
           while (vt) {
             if (!(vt->flags & kVTIsLines) && vt->pos == kVPosInline) {
+              int const vt_width = inline_virt_text_cells(csarg, vt, &vt_vcol);
               if (mt_right(mark)) {
-                csarg->cur_text_width_right += vt->width;
+                csarg->cur_text_width_right += vt_width;
               } else {
-                csarg->cur_text_width_left += vt->width;
+                csarg->cur_text_width_left += vt_width;
               }
-              size += vt->width;
+              size += vt_width;
               if (use_tabstop) {
                 // tab size changes because of the inserted text
                 size -= tab_size;
@@ -396,7 +475,11 @@ CharSize charsize_regular(CharsizeArg *csarg, const char *cur, colnr_T const vco
   }
   size -= hidden;
 
-  if (is_doublewidth && wp->w_p_wrap && in_win_border(wp, disp_vcol + size - 2)) {
+  // Cells of 'showbreak'/'breakindent' skipped inside inline virtual text,
+  // which shift where the character starts.
+  int const vt_shift = vt_vcol - disp_vcol - csarg->cur_text_width_left
+                       - csarg->cur_text_width_right;
+  if (is_doublewidth && wp->w_p_wrap && in_win_border(wp, disp_vcol + size - 2 + vt_shift)) {
     // Count the ">" in the last column.
     size++;
     mb_added = 1;
@@ -423,17 +506,7 @@ CharSize charsize_regular(CharsizeArg *csarg, const char *cur, colnr_T const vco
       if (wcol >= width2 && width2 > 0) {
         wcol %= width2;
       }
-      head_prev = csarg->indent_width;
-      if (head_prev == INT_MIN) {
-        head_prev = 0;
-        if (*sbr != NUL) {
-          head_prev += vim_strsize(sbr);
-        }
-        if (wp->w_p_bri) {
-          head_prev += get_breakindent_win(wp, line);
-        }
-        csarg->indent_width = head_prev;
-      }
+      head_prev = charsize_indent_width(csarg);
       if (wcol < head_prev) {
         head_prev -= wcol;
         wcol += head_prev;
@@ -449,17 +522,7 @@ CharSize charsize_regular(CharsizeArg *csarg, const char *cur, colnr_T const vco
 
     if (wcol + size > wp->w_view_width) {
       // cells taken by 'showbreak'/'breakindent' halfway current char
-      int head_mid = csarg->indent_width;
-      if (head_mid == INT_MIN) {
-        head_mid = 0;
-        if (*sbr != NUL) {
-          head_mid += vim_strsize(sbr);
-        }
-        if (wp->w_p_bri) {
-          head_mid += get_breakindent_win(wp, line);
-        }
-        csarg->indent_width = head_mid;
-      }
+      int head_mid = charsize_indent_width(csarg);
       if (head_mid > 0) {
         // Calculate effective window width.
         int prev_rem = wp->w_view_width - wcol;

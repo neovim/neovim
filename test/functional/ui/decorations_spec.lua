@@ -6116,6 +6116,48 @@ describe('decorations: inline virtual text', function()
     ]])
   end)
 
+  it('cursor position is correct when virt_text wraps at double-width char', function()
+    api.nvim_buf_set_lines(0, 0, -1, false, { ('あ'):rep(24) })
+    api.nvim_buf_set_extmark(0, ns, 0, 72, { virt_text = { { 'a缶' } }, virt_text_pos = 'inline', right_gravity = false })
+    feed('A')
+    screen:expect([[
+      ああああああああああああああああああああああああa{1:>}|
+      缶^                                                |
+      {8:-- INSERT --}                                      |
+    ]])
+    -- The grid shows the second half of "缶" as empty, so check the column.
+    eq({ 2, 3 }, { fn.screenrow(), fn.screencol() })
+
+    -- 'showbreak' at the start of each wrapped screen line is skipped.
+    feed('<Esc>')
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    screen:try_resize(50, 4)
+    command('set showbreak=>')
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'x' })
+    api.nvim_buf_set_extmark(0, ns, 0, 1, { virt_text = { { ('あ'):rep(50) } }, virt_text_pos = 'inline', right_gravity = false })
+    feed('A')
+    screen:expect([[
+      xああああああああああああああああああああああああ{1:>}|
+      {1:>}ああああああああああああああああああああああああ{1:>}|
+      {1:>}ああ^                                             |
+      {8:-- INSERT --}                                      |
+    ]])
+    eq({ 3, 6 }, { fn.screenrow(), fn.screencol() })
+
+    -- A double-width char in the buffer after the virt_text also wraps correctly.
+    feed('<Esc>')
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'xあy' })
+    api.nvim_buf_set_extmark(0, ns, 0, 1, { virt_text = { { ('a'):rep(97) } }, virt_text_pos = 'inline' })
+    feed('0l')
+    screen:expect([[
+      xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:>}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{1:>}|
+      {1:>}^あy                                              |
+                                                        |
+    ]])
+  end)
+
   it('cursor position is correct if end_row or end_col is specified', function()
     screen:try_resize(50, 8)
     api.nvim_buf_set_lines(0, 0, -1, false, { ('a'):rep(48), ('b'):rep(48), ('c'):rep(48), ('d'):rep(48) })
