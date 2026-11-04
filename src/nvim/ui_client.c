@@ -297,7 +297,7 @@ static void channel_connect_event(void **argv)
   const char *err = "";
   bool is_tcp = socket_address_tcp_host_end(server_addr) != NULL;
   CallbackReader on_data = CALLBACK_READER_INIT;
-  uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, 50, &err);
+  uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, 500, &err);
 
   if (!strequal(err, "")) {
     ELOG("Cannot connect to server %s: %s", server_addr, err);
@@ -385,7 +385,7 @@ void ui_client_attach_to_restarted_server(bool error_restart)
   } else {  // "restart" UI event: connect to the new server.
     bool is_tcp = socket_address_tcp_host_end(first_arg) != NULL;
     const char *err = NULL;
-    chan_id = channel_connect(is_tcp, first_arg, true, CALLBACK_READER_INIT, 50, &err);
+    chan_id = channel_connect(is_tcp, first_arg, true, CALLBACK_READER_INIT, 500, &err);
     if (err != NULL) {
       ELOG("cannot connect to server %s: %s", first_arg, err);
       goto cleanup;
