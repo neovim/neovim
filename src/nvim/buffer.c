@@ -3133,7 +3133,9 @@ int setfname(buf_T *buf, char *ffname_arg, char *sfname_arg, bool message)
         return FAIL;
       }
       // delete from the list
+      buf->b_locked++;
       close_buffer(NULL, obuf, DOBUF_WIPE, false, false, false);
+      buf->b_locked--;
     }
     sfname = xstrdup(sfname);
 #ifdef CASE_INSENSITIVE_FILENAME

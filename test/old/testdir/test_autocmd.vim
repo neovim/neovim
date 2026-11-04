@@ -5528,4 +5528,18 @@ func Test_TextPutPost_term_norm()
   bwipe!
 endfunc
 
+func Test_setfname_wipe_in_autocmd()
+  edit Xsetfname_a
+  let bnr = bufnr()
+  badd Xsetfname_other
+  badd Xsetfname_b
+  augroup Xtest
+    exe 'au BufWipeout Xsetfname_b ++once bwipe! ' .. bnr
+  augroup END
+  call assert_fails('file Xsetfname_b', 'E937:')
+  au! Xtest
+  augroup! Xtest
+  %bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
