@@ -5040,7 +5040,7 @@ static void ex_restart(exarg_T *eap)
   MAXSIZE_TEMP_ARRAY(detach_args, 2);
   ADD_C(detach_args, INTEGER_OBJ(0));
   ADD_C(detach_args, DICT_OBJ(detach_opts));
-  rpc_send_call(channel->id, "nvim_chan_set", detach_args, &result_mem, &err);
+  rpc_send_call(channel->id, "nvim_chan_set", detach_args, -1, &result_mem, &err);
   if (ERROR_SET(&err)) {
     goto fail_2;
   }
@@ -5056,7 +5056,7 @@ static void ex_restart(exarg_T *eap)
     MAXSIZE_TEMP_ARRAY(autocmd_args, 2);
     ADD_C(autocmd_args, CSTR_AS_OBJ("UIEnter"));
     ADD_C(autocmd_args, DICT_OBJ(autocmd_opts));
-    rpc_send_call(channel->id, "nvim_create_autocmd", autocmd_args, &result_mem, &err);
+    rpc_send_call(channel->id, "nvim_create_autocmd", autocmd_args, -1, &result_mem, &err);
     if (ERROR_SET(&err)) {
       goto fail_2;
     }
@@ -5067,7 +5067,8 @@ static void ex_restart(exarg_T *eap)
   // Get the new server's initial address. On Windows this is the temporary self-generated address.
   MAXSIZE_TEMP_ARRAY(servername_args, 1);
   ADD_C(servername_args, CSTR_AS_OBJ("servername"));
-  Object result = rpc_send_call(channel->id, "nvim_get_vvar", servername_args, &result_mem, &err);
+  Object result = rpc_send_call(channel->id, "nvim_get_vvar", servername_args, -1, &result_mem,
+                                &err);
   if (ERROR_SET(&err)) {
     goto fail_2;
   }
@@ -5091,7 +5092,7 @@ static void ex_restart(exarg_T *eap)
     ADD_C(handoff_params, CSTR_AS_OBJ(listen_arg));
     ADD_C(handoff_params, INTEGER_OBJ((Integer)ui_active()));
     ADD_C(lua_args, ARRAY_OBJ(handoff_params));
-    rpc_send_call(channel->id, "nvim_exec_lua", lua_args, &result_mem, &err);
+    rpc_send_call(channel->id, "nvim_exec_lua", lua_args, -1, &result_mem, &err);
     if (ERROR_SET(&err)) {
       goto fail_2;
     }
@@ -5138,7 +5139,7 @@ fail_2:
   // Before killing the new server, close its stderr to avoid polluting the current UI.
   MAXSIZE_TEMP_ARRAY(chanclose_expr_args, 1);
   ADD_C(chanclose_expr_args, CSTR_AS_OBJ("chanclose(v:stderr)"));
-  rpc_send_call(channel->id, "nvim_eval", chanclose_expr_args, &result_mem, &err);
+  rpc_send_call(channel->id, "nvim_eval", chanclose_expr_args, -1, &result_mem, &err);
   api_clear_error(&err);
   arena_mem_free(result_mem);
 #endif

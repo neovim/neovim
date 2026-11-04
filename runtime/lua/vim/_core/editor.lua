@@ -1387,7 +1387,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
     for i = 2, #args do
       table.insert(command, vim.fn.fnameescape(args[i]))
     end
-    vim.fn.rpcrequest(rcid, 'nvim_command', table.concat(command, ' '))
+    vim.rpcrequest(rcid, 'nvim_command', table.concat(command, ' '))
   end
 
   return {

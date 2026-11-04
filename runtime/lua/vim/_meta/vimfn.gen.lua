@@ -847,7 +847,7 @@ function vim.fn.changenr() end
 ---
 --- chansend() writes raw data, not RPC messages.  If the channel
 --- was created with `"rpc":v:true` then the channel expects RPC
---- messages, use |rpcnotify()| and |rpcrequest()| instead.
+--- messages, use |vim.rpcnotify()| and |vim.rpcrequest()| instead.
 ---
 --- @param id number
 --- @param data string|string[]
@@ -5222,8 +5222,8 @@ function vim.fn.jobsend(...) end
 --- Returns |job-id| on success, 0 on invalid arguments (or job
 --- table is full), -1 if {cmd}[0] or 'shell' is not executable.
 --- The returned job-id is a valid |channel-id| representing the
---- job's stdio streams. Use |chansend()| (or |rpcnotify()| and
---- |rpcrequest()| if "rpc" was enabled) to send data to stdin and
+--- job's stdio streams. Use |chansend()| (or |vim.rpcnotify()| and
+--- |vim.rpcrequest()| if "rpc" was enabled) to send data to stdin and
 --- |chanclose()| to close the streams without stopping the job.
 ---
 --- See |job-control| and |RPC|.
@@ -7748,13 +7748,8 @@ function vim.fn.reverse(object) end
 --- @return number
 function vim.fn.round(expr) end
 
---- Lua: Prefer |vim.rpcnotify()|.
----
---- Sends {event} to {channel} via |RPC| and returns immediately.
---- If {channel} is 0, the event is broadcast to all channels.
---- Example: >vim
----   au VimLeave call rpcnotify(0, "leaving")
---- <
+--- @deprecated
+--- Use |vim.rpcnotify()| instead.
 ---
 --- @param channel integer
 --- @param event string
@@ -7762,13 +7757,8 @@ function vim.fn.round(expr) end
 --- @return integer
 function vim.fn.rpcnotify(channel, event, ...) end
 
---- Lua: Prefer |vim.rpcrequest()|.
----
---- Sends a request to {channel} to invoke {method} via
---- |RPC| and blocks until a response is received.
---- Example: >vim
----   let result = rpcrequest(rpc_chan, "func", 1, 2, 3)
---- <
+--- @deprecated
+--- Use |vim.rpcrequest()| instead.
 ---
 --- @param channel integer
 --- @param method string
@@ -9584,7 +9574,7 @@ function vim.fn.slice(expr, start, end_) end
 ---
 --- Returns a |channel| ID. Close the socket with |chanclose()|.
 --- Use |chansend()| to send data over a bytes socket, and
---- |rpcrequest()| and |rpcnotify()| to communicate with a RPC
+--- |vim.rpcrequest()| and |vim.rpcnotify()| to communicate with a RPC
 --- socket.
 ---
 --- {opts} is an optional dictionary with these keys:
@@ -9862,7 +9852,7 @@ function vim.fn.state(what) end
 --- handled by this function, see |v:stderr|.
 ---
 --- Close the stdio handles with |chanclose()|. Use |chansend()|
---- to send data to stdout, and |rpcrequest()| and |rpcnotify()|
+--- to send data to stdout, and |vim.rpcrequest()| and |vim.rpcnotify()|
 --- to communicate over RPC.
 ---
 --- {opts} is a dictionary with these keys:

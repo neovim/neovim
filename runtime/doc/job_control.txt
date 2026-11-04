@@ -20,7 +20,8 @@ Job Id								       *job-id*
 Each job is identified by an integer id, unique for the life of the current
 Nvim session. Each job-id is a valid |channel-id|: they share the same "key
 space". Functions like |jobstart()| return job ids; functions like
-|jobstop()|, |chansend()|, |rpcnotify()|, and |rpcrequest()| take job ids.
+|jobstop()|, |chansend()|, |vim.rpcnotify()|, and |vim.rpcrequest()| take job
+ids.
 
 Job stdio streams form a |channel| which can send and receive raw bytes or
 |msgpack-rpc| messages.

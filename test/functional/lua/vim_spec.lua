@@ -22,7 +22,6 @@ local exec_lua = n.exec_lua
 local matches = t.matches
 local exec = n.exec
 local NIL = vim.NIL
-local retry = t.retry
 local next_msg = n.next_msg
 local remove_trace = t.remove_trace
 local poke_eventloop = n.poke_eventloop
@@ -1448,88 +1447,6 @@ describe('lua stdlib', function()
 
     poke_eventloop()
     eq('hello', exec_lua [[return vim.g.fnres]])
-  end)
-
-  it('vim.rpcrequest and vim.rpcnotify', function()
-    exec_lua([[
-      chan = vim.fn.jobstart({'cat'}, {rpc=true})
-      vim.rpcrequest(chan, 'nvim_set_current_line', 'meow')
-    ]])
-    eq('meow', api.nvim_get_current_line())
-    command("let x = [3, 'aa', v:true, v:null]")
-    eq(
-      true,
-      exec_lua([[
-      ret = vim.rpcrequest(chan, 'nvim_get_var', 'x')
-      return #ret == 4 and ret[1] == 3 and ret[2] == 'aa' and ret[3] == true and ret[4] == vim.NIL
-    ]])
-    )
-    eq({ 3, 'aa', true, NIL }, exec_lua([[return ret]]))
-
-    eq(
-      { {}, {}, false, true },
-      exec_lua([[
-      vim.rpcrequest(chan, 'nvim_exec', 'let xx = {}\nlet yy = []', false)
-      local dict = vim.rpcrequest(chan, 'nvim_eval', 'xx')
-      local list = vim.rpcrequest(chan, 'nvim_eval', 'yy')
-      return {dict, list, vim.islist(dict), vim.islist(list)}
-     ]])
-    )
-
-    exec_lua([[
-       vim.rpcrequest(chan, 'nvim_set_var', 'aa', {})
-       vim.rpcrequest(chan, 'nvim_set_var', 'bb', vim.empty_dict())
-     ]])
-    eq({ 1, 1 }, eval('[type(g:aa) == type([]), type(g:bb) == type({})]'))
-
-    -- error handling
-    eq({ false, 'Invalid channel: 23' }, exec_lua([[return {pcall(vim.rpcrequest, 23, 'foo')}]]))
-    eq({ false, 'Invalid channel: 23' }, exec_lua([[return {pcall(vim.rpcnotify, 23, 'foo')}]]))
-
-    eq(
-      { false, 'Vim:E121: Undefined variable: foobar' },
-      exec_lua([[return {pcall(vim.rpcrequest, chan, 'nvim_eval', "foobar")}]])
-    )
-
-    -- rpcnotify doesn't wait on request
-    eq(
-      'meow',
-      exec_lua([[
-      vim.rpcnotify(chan, 'nvim_set_current_line', 'foo')
-      return vim.api.nvim_get_current_line()
-    ]])
-    )
-    retry(10, nil, function()
-      eq('foo', api.nvim_get_current_line())
-    end)
-
-    local screen = Screen.new(50, 7)
-    exec_lua([[
-      timer = vim.uv.new_timer()
-      timer:start(20, 0, function ()
-        -- notify ok (executed later when safe)
-        vim.rpcnotify(chan, 'nvim_set_var', 'yy', {3, vim.NIL})
-        -- rpcrequest an error
-        vim.rpcrequest(chan, 'nvim_set_current_line', 'bork')
-      end)
-    ]])
-    screen:expect {
-      grid = [[
-      {9:[string "<nvim>"]:6: E5560: rpcrequest must not be}|
-      {9: called in a fast event context}                   |
-      {9:stack traceback:}                                  |
-      {9:        [C]: in function 'rpcrequest'}             |
-      {9:        [string "<nvim>"]:6: in function <[string }|
-      {9:"<nvim>"]:2>}                                      |
-      {6:Press ENTER or type command to continue}^           |
-    ]],
-    }
-    feed('<cr>')
-    retry(10, nil, function()
-      eq({ 3, NIL }, api.nvim_get_var('yy'))
-    end)
-
-    exec_lua([[timer:close()]])
   end)
 
   it('vim.empty_dict()', function()

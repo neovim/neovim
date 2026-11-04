@@ -61,6 +61,8 @@ LSP
 VIMSCRIPT
 • ctxget(), ctxpop(), ctxpush(), ctxset(), ctxsize(). Use
   |nvim_get_context()| and |nvim_load_context()| instead.
+• *rpcnotify()*		Use |vim.rpcnotify()| instead.
+• *rpcrequest()*	Use |vim.rpcrequest()| instead.
 
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.12					*deprecated-0.12*

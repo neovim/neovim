@@ -493,7 +493,7 @@ local function answers(addr)
     return false
   end
   ---@cast chan integer
-  local answered = pcall(vim.rpcrequest, chan, 'nvim_get_api_info')
+  local answered = pcall(vim.rpcrequest, chan, { timeout = 10000 }, 'nvim_get_api_info')
   pcall(vim.fn.chanclose, chan)
   return answered
 end

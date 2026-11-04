@@ -58,6 +58,8 @@ function M.call(method, args)
     s_host = result
   end
 
+  -- Handles host requests in the caller's scope (see eval_call_provider()).
+  ---@diagnostic disable-next-line: deprecated
   return vim.fn.rpcrequest(s_host, 'perl_' .. method, unpack(args))
 end
 

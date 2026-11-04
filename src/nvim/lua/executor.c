@@ -1415,16 +1415,31 @@ static int nlua_rpcnotify(lua_State *lstate)
 
 static int nlua_rpc(lua_State *lstate, bool request)
 {
-  size_t name_len;
   uint64_t chan_id = (uint64_t)luaL_checkinteger(lstate, 1);
-  const char *name = luaL_checklstring(lstate, 2, &name_len);
-  int nargs = lua_gettop(lstate) - 2;
+
+  // XXX: overload: vim.rpcrequest(chan, [opts,] method, ...)
+  bool has_opts = request && (lua_isnil(lstate, 2) || lua_istable(lstate, 2));
+  int name_idx = has_opts ? 3 : 2;
+  int timeout = -1;
+  if (has_opts && lua_istable(lstate, 2)) {
+    lua_getfield(lstate, 2, "timeout");
+    if (!lua_isnil(lstate, -1)) {
+      if (lua_type(lstate, -1) != LUA_TNUMBER) {
+        return luaL_argerror(lstate, 2, "timeout: expected integer");
+      }
+      timeout = (int)lua_tointeger(lstate, -1);
+    }
+    lua_pop(lstate, 1);
+  }
+
+  const char *name = luaL_checkstring(lstate, name_idx);
+  int nargs = lua_gettop(lstate) - name_idx;
   Error err = ERROR_INIT;
   Arena arena = ARENA_EMPTY;
 
   Array args = arena_array(&arena, (size_t)nargs);
   for (int i = 0; i < nargs; i++) {
-    lua_pushvalue(lstate, i + 3);
+    lua_pushvalue(lstate, name_idx + 1 + i);
     ADD(args, nlua_pop_Object(lstate, false, &arena, &err));
     if (ERROR_SET(&err)) {
       goto check_err;
@@ -1433,7 +1448,7 @@ static int nlua_rpc(lua_State *lstate, bool request)
 
   if (request) {
     ArenaMem res_mem = NULL;
-    Object result = rpc_send_call(chan_id, name, args, &res_mem, &err);
+    Object result = rpc_send_call(chan_id, name, args, timeout, &res_mem, &err);
     if (!ERROR_SET(&err)) {
       nlua_push_Object(lstate, &result, 0);
       arena_mem_free(res_mem);

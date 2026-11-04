@@ -139,10 +139,11 @@ bool rpc_send_event(uint64_t id, const char *name, Array args)
 /// @param id The channel id
 /// @param method_name The method name, an arbitrary string
 /// @param args Array with method arguments
+/// @param timeout Max milliseconds to wait for the response, or -1 to wait forever.
 /// @param[out] error True if the return value is an error
 /// @return Whatever the remote method returned
-Object rpc_send_call(uint64_t id, const char *method_name, Array args, ArenaMem *result_mem,
-                     Error *err)
+Object rpc_send_call(uint64_t id, const char *method_name, Array args, int timeout,
+                     ArenaMem *result_mem, Error *err)
 {
   Channel *channel = NULL;
 
@@ -162,13 +163,17 @@ Object rpc_send_call(uint64_t id, const char *method_name, Array args, ArenaMem 
   // Push the frame
   ChannelCallFrame frame = { request_id, false, false, NIL, NULL };
   kv_push(rpc->call_stack, &frame);
-  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, channel->events, -1, frame.returned || rpc->closed);
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, channel->events, timeout, frame.returned || rpc->closed);
   (void)kv_pop(rpc->call_stack);
 
-  // !frame.returned implies rpc->closed.
   // If frame.returned is true, its memory needs to be freed, so don't return here.
   if (!frame.returned) {
-    api_set_error(err, kErrorTypeException, "Invalid channel: %" PRIu64, id);
+    if (rpc->closed) {
+      api_set_error(err, kErrorTypeException, "Invalid channel: %" PRIu64, id);
+    } else {
+      api_set_error(err, kErrorTypeException, "Request timed out after %d ms: %s", timeout,
+                    method_name);
+    }
     channel_decref(channel);
     return NIL;
   }
@@ -261,10 +266,15 @@ static void parse_msgpack(Channel *channel)
       }
       arena_mem_free(arena_finish(&p->arena));
     } else if (p->type == kMessageTypeResponse) {
-      ChannelCallFrame *frame = channel->rpc.client_type == kClientTypeMsgpackRpc
-                                ? find_call_frame(&channel->rpc, p->request_id)
-                                : kv_last(channel->rpc.call_stack);
-      if (frame == NULL || p->request_id != frame->request_id) {
+      ChannelCallFrame *frame = find_call_frame(&channel->rpc, p->request_id);
+      if (frame == NULL && p->request_id < channel->rpc.next_request_id) {
+        // Late response to a timed-out request! Drop it.
+        DLOG("ch %" PRIu64 ": discarding response id=%" PRIu32, channel->id, p->request_id);
+        arena_mem_free(arena_finish(&p->arena));
+        continue;
+      }
+      if (frame == NULL || (channel->rpc.client_type != kClientTypeMsgpackRpc
+                            && frame != kv_last(channel->rpc.call_stack))) {
         char buf[256];
         snprintf(buf, sizeof(buf),
                  "ch %" PRIu64 " (type=%" PRIu32 ") returned a response with an unknown request "
