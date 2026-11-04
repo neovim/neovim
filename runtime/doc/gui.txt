@@ -160,7 +160,9 @@ Connect UI to a different server
                 - Config: `~/.config/nvim-remote/`
                 - Data: `~/.local/share/nvim-remote/`, kept across sessions
                   for fast reconnects. Caches installed releases, e.g.
-                  `releases/v0.12.0-linux-x86_64/`.
+                  `releases/v0.12.0-linux-x86_64/`. Nightly is installed once;
+                  choose "Update Nvim" at the prompt to refresh it (may break
+                  other sessions using it).
 
                 Requirements:
                 - Local: `ssh` (OpenSSH 7.6+). Win32-OpenSSH lacks

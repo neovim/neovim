@@ -33,10 +33,18 @@ elseif not args:find(' -L ', 1, true) then
   fail(('Unexpected SSH command: %s'):format(args))
 end
 
-args = ('%s %s'):format(args, io.stdin:read('*a'))
+-- The script on stdin, which stays open (see `run_script()`).
+local script = {} --- @type string[]
+for line in io.stdin:lines() do
+  script[#script + 1] = line
+  if line == 'main "$@"' then
+    break
+  end
+end
+args = ('%s %s'):format(args, table.concat(script, '\n'))
 if not args:find('ControlMaster', 1, true) then
   fail('FAIL: Multiplexing flags missing!')
-elseif not args:find(' sh %-s .*NVIM_READY') then
+elseif not args:find(' sh %-s .*main "%$@"') then
   fail('FAIL: tunnel script not fed to sh -s')
 end
 write('tunnel.args', args)

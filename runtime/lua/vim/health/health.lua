@@ -876,11 +876,9 @@ local function check_sysinfo()
     vim.wo[win].winbar =
       '%#WarningMsg#%@v:lua.nvim_health_bugreport_open@▶ Create Bug Report on GitHub%X%*'
 
-    vim.api.nvim_create_autocmd('BufDelete', {
-      buf = buf,
-      once = true,
-      command = 'lua _G.nvim_health_bugreport_open = nil',
-    })
+    nvim_on('BufDelete', nil, { buf = buf, once = true }, function()
+      _G.nvim_health_bugreport_open = nil
+    end)
   end)
 end
 

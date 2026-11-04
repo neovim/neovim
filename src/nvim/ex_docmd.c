@@ -4896,7 +4896,8 @@ static void ex_exmode(exarg_T *eap)
 /// ":restart +cmd <command>": restart the Nvim server using ":cmd" and runs <command> in the new server.
 static void ex_restart(exarg_T *eap)
 {
-  // XXX: The UI reaches this server through an SSH tunnel, which cannot reach the new server.
+  // XXX: The UI reaches this server through an SSH tunnel, but the "restart" event gives it the new
+  // server's (remote) address.
   if (strequal(get_vim_var_str(VV_STARTREASON), "remote-ssh")) {
     emsg(_("E6103: :restart is not supported with remote-ssh"));
     return;
