@@ -991,7 +991,10 @@ static bool pum_adjust_info_position(win_T *wp, int width)
   // Close info window if there's insufficient space
   // TODO(glepnir): Replace the hardcoded value (10) with values from the 'completepopup' width/height options.
   if (max_extra < 10) {
-    wp->w_config.hide = true;
+    if (!wp->w_config.hide) {
+      wp->w_config.hide = true;
+      win_config_float(wp, wp->w_config);
+    }
     return false;
   }
 
@@ -1016,6 +1019,20 @@ static bool pum_adjust_info_position(win_T *wp, int width)
   return true;
 }
 
+/// Find the info float, creating it (hidden) when it doesn't exist yet.
+static win_T *pum_info_win_get(bool create)
+{
+  win_T *wp = win_float_find(kWinInfo);
+  if (wp == NULL && create) {
+    wp = win_float_special(false, true, kWinInfo);
+    if (wp) {
+      wp->w_topline = 1;
+      wp->w_p_wfb = true;
+    }
+  }
+  return wp;
+}
+
 /// Used for nvim__complete_set
 ///
 /// @param selected the selected compl item.
@@ -1026,18 +1043,13 @@ win_T *pum_set_info(int selected, char *info)
   if (!pum_is_visible || !compl_match_curr_select(selected)) {
     return NULL;
   }
+  win_T *wp = pum_info_win_get(true);
+  if (!wp) {
+    return NULL;
+  }
   block_autocmds();
   RedrawingDisabled++;
   no_u_sync++;
-  win_T *wp = win_float_find(kWinInfo);
-  if (wp == NULL) {
-    wp = win_float_special(false, true, kWinInfo);
-    if (!wp) {
-      return NULL;
-    }
-    wp->w_topline = 1;
-    wp->w_p_wfb = true;
-  }
   linenr_T lnum = 0;
   int max_info_width = 0;
   pum_preview_set_text(wp, info, &lnum, &max_info_width);
@@ -1078,8 +1090,9 @@ static bool pum_set_selected(int n, int repeat)
   // Close the floating preview window if 'selected' is -1, indicating a return to the original
   // state. It is also closed when the selected item has no corresponding info item.
   if (use_float && (pum_selected < 0 || pum_array[pum_selected].pum_info == NULL)) {
-    win_T *wp = win_float_find(kWinInfo);
-    if (wp) {
+    bool create = pum_selected >= 0 && ins_compl_active() && has_event(EVENT_COMPLETECHANGED);
+    win_T *wp = pum_info_win_get(create);
+    if (wp && !wp->w_config.hide) {
       wp->w_config.hide = true;
       win_config_float(wp, wp->w_config);
     }
