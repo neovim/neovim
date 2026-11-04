@@ -2598,6 +2598,8 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
         break;
       }
       if (!skip_only) {
+        xfree(cmod->cmod_filter_pat);
+        vim_regfree(cmod->cmod_filter_regmatch.regprog);
         cmod->cmod_filter_pat = xstrdup(reg_pat);
         cmod->cmod_filter_regmatch.regprog = vim_regcomp(reg_pat, RE_MAGIC);
         if (cmod->cmod_filter_regmatch.regprog == NULL) {
