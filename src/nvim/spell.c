@@ -2601,14 +2601,15 @@ bool check_need_cap(win_T *wp, linenr_T lnum, colnr_T col)
       if (*skipwhite(line) == NUL) {
         need_cap = true;
       } else {
+        colnr_T len = ml_get_buf_len(wp->w_buffer, lnum - 1);
         // Append a space in place of the line break.
         line_copy = concat_str(line, " ");
         line = line_copy;
-        endcol = (colnr_T)strlen(line);
+        endcol = len + 1;
       }
     }
   } else {
-    colnr_T len = (colnr_T)strlen(line);
+    colnr_T len = ml_get_buf_len(wp->w_buffer, lnum);
     endcol = MIN(col, len);
   }
 
