@@ -490,6 +490,7 @@ else()
   # Minimize logging for release-type builds.
   target_compile_definitions(nvim_bin PRIVATE $<$<CONFIG:Debug>:NVIM_LOG_DEBUG>)
 endif()
+target_compile_definitions(nvim_bin PRIVATE $<$<CONFIG:RelWithDebInfo>:NVIM_LOG_DEBUG>)
 
 if(ENABLE_ASAN_UBSAN OR ENABLE_MSAN OR ENABLE_TSAN)
   target_compile_definitions(main_lib INTERFACE EXITFREE)
