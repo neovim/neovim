@@ -737,14 +737,3 @@ describe('incremental synchronization', function()
     end)
   end)
 end)
-
--- TODO(mjlbach): Add additional tests
--- deleting single lone line
--- 2 lines -> 2 line delete -> undo -> redo
--- describe('future tests', function()
---   -- This test is currently wrong, ask bjorn why dd on an empty line triggers on_lines
---   it('deleting an empty line', function()
---     local expected_text_changes = {{ }}
---     test_edit({""}, {"ggdd"}, expected_text_changes, 'utf-16', '\n')
---   end)
--- end)
