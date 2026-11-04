@@ -59,8 +59,15 @@ describe('vim.uri', function()
     end)
 
     it('roundtrip to_fname(from_fname(path))', function()
-      local paths =
-        { '/a/c#/b?c', '/a/%25/%A0.txt', '/a b/#@file@#', 'C:/a b/c#', '//server/share/a b' }
+      local paths = {
+        '/a/c#/b?c',
+        '/a/%25/%A0.txt',
+        '/a b/#@file@#',
+        'C:/a b/c#',
+        '//server/share/a b',
+        -- A URI passes through both.
+        'jdt://a/b?c',
+      }
       eq(
         paths,
         exec_lua(function()
@@ -82,7 +89,7 @@ describe('vim.uri', function()
       exec_lua("uri = 'file:/Foo/Bar/Baz.txt'")
       eq('/Foo/Bar/Baz.txt', exec_lua('return vim.uri.to_fname(uri)'))
       eq(
-        { '/Foo/Bar', '/Foo/Bar', '/Foo/Bar', '/', '/Foo' },
+        { '/Foo/Bar', '/Foo/Bar', '/Foo/Bar', '/', '/Foo', '/Foo', 'jdt://a/b' },
         exec_lua(function()
           local uris = {
             'file:Foo/Bar',
@@ -90,6 +97,8 @@ describe('vim.uri', function()
             'file://localhost/Foo/Bar',
             'file://',
             'FILE:///Foo',
+            vim.uri.parse('file:///Foo'),
+            vim.uri.parse('jdt://a/b'),
           }
           return vim.tbl_map(vim.uri.to_fname, uris)
         end)
@@ -208,6 +217,9 @@ describe('vim.uri', function()
           return pcall(vim.uri.to_fname, 'not_an_uri.txt')
         ]]
         )
+        -- Invalid authority.
+        eq(false, exec_lua([[return pcall(vim.uri.to_fname, 'https://h:x')]]))
+        eq(false, exec_lua([[return pcall(vim.uri.to_fname, 'file://h:x/a')]]))
       end)
 
       it('does not treat comma as a scheme character', function()
@@ -323,97 +335,198 @@ describe('vim.uri', function()
   it('parse()', function()
     local uris = {
       'https://u@example.com:80/a%20b?q=1#f?#',
+      'ssh://a%40b:p%3Aw@[::1]:22',
+      'ssh://HOST:/',
       'file:///a',
       'deno:/https/a',
-      'mailto:a@example.com',
+      'MailTo:a@example.com',
       'inmemory:',
       'foo:api/files',
       'f3ile:#d',
       'file:////shares/p',
+      'file://C:/a',
       'stuff:?',
+      'jdt://contents/A.class?=a/%5C/b+c',
+      'http://[fe80::1%25en0]:8080/',
       'C:/a',
       '/a',
+      -- Invalid.
+      'https://h:x',
+      'http://::1/',
+      'http://[::1/',
+      'http://[zz]/',
+      'http://h:65536/',
+      'http://a b/',
+      'http://a%2@h/',
     }
     local parsed = exec_lua(function()
+      -- Roundtrip: tostring() gives the original URI, or its normalized form.
+      local normal = {
+        ['ssh://HOST:/'] = 'ssh://host/',
+        ['MailTo:a@example.com'] = 'mailto:a@example.com',
+        ['file://C:/a'] = 'file:///C:/a',
+      }
       return vim.tbl_map(function(uri)
         local u = vim.uri.parse(uri)
-        -- Roundtrip: tostring() gives the original URI.
-        assert(not u or tostring(u) == uri, uri)
+        assert(not u or tostring(u) == (normal[uri] or uri), ('%s => %s'):format(uri, tostring(u)))
         return u or {}
       end, uris)
     end)
     eq({
       {
         scheme = 'https',
-        authority = 'u@example.com:80',
+        user = 'u',
+        host = 'example.com',
+        port = 80,
         path = '/a%20b',
-        query = 'q=1',
+        query = { q = '1' },
+        querystr = 'q=1',
         fragment = 'f?#',
       },
-      { scheme = 'file', authority = '', path = '/a' },
+      {
+        scheme = 'ssh',
+        user = 'a@b',
+        password = 'p:w',
+        host = '::1',
+        port = 22,
+        path = '',
+      },
+      { scheme = 'ssh', host = 'host', path = '/' },
+      { scheme = 'file', host = '', path = '/a' },
       { scheme = 'deno', path = '/https/a' },
       { scheme = 'mailto', path = 'a@example.com' },
       { scheme = 'inmemory', path = '' },
       { scheme = 'foo', path = 'api/files' },
       { scheme = 'f3ile', path = '', fragment = 'd' },
-      { scheme = 'file', authority = '', path = '//shares/p' },
-      { scheme = 'stuff', path = '', query = '' },
+      { scheme = 'file', host = '', path = '//shares/p' },
+      { scheme = 'file', host = '', path = '/C:/a' },
+      { scheme = 'stuff', path = '', query = {}, querystr = '' },
+      {
+        scheme = 'jdt',
+        host = 'contents',
+        path = '/A.class',
+        query = { [''] = 'a/\\/b c' },
+        querystr = '=a/%5C/b+c',
+      },
+      { scheme = 'http', host = 'fe80::1%en0', port = 8080, path = '/' },
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
       {},
       {},
     }, parsed)
   end)
 
-  describe('SSH URI parser', function()
-    it('parses ssh://user@host:port', function()
-      local uri = exec_lua(function()
-        return require('vim.uri')._parse_ssh_uri('ssh://root@localhost:2222')
+  it('normalize()', function()
+    eq(
+      {
+        'https://User@example.com/a/c/~%2F?q=~%7B#~',
+        'http://h/',
+        'mailto:a/../b',
+        'file:///b',
+        true,
+        false,
+      },
+      exec_lua(function()
+        return {
+          tostring(
+            vim.uri.normalize('HTTPS://User@Example.COM:443/a/./b/../c/%7e%2f?q=%7e%7b#%7e')
+          ),
+          tostring(vim.uri.normalize('http://h:80')),
+          tostring(vim.uri.normalize('mailto:a/../b')),
+          tostring(vim.uri.normalize('file://LocalHost/a/../b')),
+          vim.uri.normalize('HTTP://h/%7E') == vim.uri.normalize(vim.uri.parse('http://h:80/~')),
+          (pcall(vim.uri.normalize, 'a/b')),
+        }
       end)
-      eq('root', uri.user)
-      eq('localhost', uri.host)
-      eq('2222', uri.port)
+    )
+  end)
 
-      eq(
-        { user = 'u', host = '::1', port = '22' },
-        exec_lua(function()
-          return require('vim.uri')._parse_ssh_uri('ssh://u@[::1]:22/home/u')
-        end)
-      )
-      eq(
-        { host = 'host' },
-        exec_lua(function()
-          return require('vim.uri')._parse_ssh_uri('ssh://host/')
-        end)
-      )
-      eq(
-        { user = 'first.last@corp', host = 'host' },
-        exec_lua(function()
-          return require('vim.uri')._parse_ssh_uri('ssh://first.last%40corp@host')
-        end)
-      )
-      eq(
-        'No host in SSH URI: ssh:///x',
-        t.pcall_err(exec_lua, function()
-          return require('vim.uri')._parse_ssh_uri('ssh:///x')
-        end)
-      )
-    end)
-
-    it('parses user@host', function()
-      local uri = exec_lua(function()
-        return require('vim.uri')._parse_ssh_uri('admin@server.local')
+  it('join()', function()
+    eq(
+      {
+        'file:///home/u/proj/src/a%231.lua',
+        'file:///home/u/proj/src/',
+        'file:///C:/x',
+        'file:///x',
+        'https://h/api/users/a%20b?v=1',
+        'https://h/a',
+        { 'file:///a/b', 'file:///a' },
+        { false, 'file:///a/ab:c' },
+        false,
+      },
+      exec_lua(function()
+        local base = assert(vim.uri.parse('file:///a'))
+        return {
+          tostring(vim.uri.join('file:///home/u/proj', 'src', 'a#1.lua')),
+          tostring(vim.uri.join('file:///home/u/proj/', 'src/')),
+          -- Not above the drive letter, or the root.
+          tostring(vim.uri.join('file:///C:/a', '../../x')),
+          tostring(vim.uri.join('file:///a', '../../x')),
+          tostring(vim.uri.join('https://h/api/?v=1', 'users', 'a b')),
+          tostring(vim.uri.join('https://h', 'a')),
+          -- Does not modify a `vim.Uri` base.
+          { tostring(vim.uri.join(base, 'b')), tostring(base) },
+          -- A segment can't be a URI, but can contain ":".
+          {
+            (pcall(vim.uri.join, 'file:///a', 'file:///b')),
+            tostring(vim.uri.join('file:///a', 'ab:c')),
+          },
+          (pcall(vim.uri.join, 'a/b', 'c')),
+        }
       end)
-      eq('admin', uri.user)
-      eq('server.local', uri.host)
-      eq(nil, uri.port)
-    end)
+    )
+  end)
 
-    it('parses host only', function()
-      local uri = exec_lua(function()
-        return require('vim.uri')._parse_ssh_uri('myalias')
+  it('encode_query(), decode_query()', function()
+    eq(
+      {
+        'n=1&q=a+b%26c%3Dd&tag=x&tag=y',
+        { q = 'a b&c=d', tag = { 'x', 'y' }, n = '1', flag = '' },
+      },
+      exec_lua(function()
+        local query = vim.uri.encode_query({ q = 'a b&c=d', tag = { 'x', 'y' }, n = 1 })
+        return { query, vim.uri.decode_query(('%s&flag'):format(query)) }
       end)
-      eq(nil, uri.user)
-      eq('myalias', uri.host)
-      eq(nil, uri.port)
-    end)
+    )
+  end)
+
+  it('new(), tostring()', function()
+    -- tostring() builds the URI from the fields.
+    eq(
+      {
+        'https://a%40b:p%3Aw@[::1]:8080/a',
+        true,
+        'https://[::1]:8080/a',
+        'https://h/s?n=1&q=a+b',
+        'https://h/?page=2&q=1',
+        'x:',
+        false,
+      },
+      exec_lua(function()
+        local u = assert(vim.uri.parse('https://example.com/a'))
+        u.user, u.password, u.host, u.port = 'a@b', 'p:w', '::1', 8080
+        return {
+          tostring(u),
+          vim.uri.parse('HTTP://h/a') == vim.uri.new({ scheme = 'http', host = 'h', path = '/a' }),
+          tostring(vim.uri.new({ scheme = 'HTTPS', host = '::1', port = 8080, path = '/a' })),
+          tostring(
+            vim.uri.new({ scheme = 'https', host = 'h', path = '/s', query = { q = 'a b', n = 1 } })
+          ),
+          (function()
+            -- `querystr` takes precedence over `query`.
+            local q = assert(vim.uri.parse('https://h/?q=1'))
+            q.query.page, q.querystr = '2', nil
+            return tostring(q)
+          end)(),
+          tostring(vim.uri.new({ scheme = 'x' })),
+          (pcall(vim.uri.new, {})),
+        }
+      end)
+    )
   end)
 end)

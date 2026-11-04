@@ -1122,12 +1122,13 @@ function Client:_get_registrations(provider, bufnr)
     else
       local language = self:_get_language_id(bufnr)
       local uri = vim.uri.from_buf(bufnr)
+      local scheme = assert(vim.uri.parse(uri)).scheme
       local fname = vim.uri.to_fname(uri)
       for _, filter in ipairs(regoptions.documentSelector) do
         local flang, fscheme, fpat = filter.language, filter.scheme, filter.pattern
         if
           not (flang and language ~= flang)
-          and not (fscheme and not vim.startswith(uri, fscheme .. ':'))
+          and not (fscheme and fscheme:lower() ~= scheme)
           and not (type(fpat) == 'string' and not self:_glob_matches(fpat, fname))
         then
           matched_regs[#matched_regs + 1] = reg

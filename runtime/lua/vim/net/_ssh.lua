@@ -320,7 +320,7 @@ end
 ---
 --- `ssh_args` are inserted before the target; `remote_cmd` is appended after the target.
 ---
----@param ssh_uri {host:string, user?:string, port?:string, config?:string}
+---@param ssh_uri vim.Uri & {host:string, config?:string}
 ---@param opts? { ssh_args?: string[], remote_cmd?: string[] }
 ---@return string[]
 local function get_ssh_cmd(ssh_uri, opts)
@@ -348,7 +348,7 @@ local function get_ssh_cmd(ssh_uri, opts)
     'RemoteCommand=none',
   })
   local target = ssh_uri.user and ('%s@%s'):format(ssh_uri.user, ssh_uri.host) or ssh_uri.host
-  local dest = ssh_uri.port and { '-p', ssh_uri.port } or {}
+  local dest = ssh_uri.port and { '-p', tostring(ssh_uri.port) } or {}
   -- Ends option parsing, so a target like `-oProxyCommand=x` is not taken as an option.
   vim.list_extend(dest, { '--', target })
 
@@ -384,7 +384,7 @@ end
 --- Runs the local `$VIMRUNTIME/scripts/remote_ssh.sh` on the remote host. The script goes to
 --- `sh -s` over stdin, so the remote login shell (any shell) parses only `args`.
 ---
----@param uri {host:string, user?:string, port?:string}
+---@param uri vim.Uri & {host:string}
 ---@param args string[] Script args: plain words, which no shell expands, so they need no quoting.
 ---@param opts? { ssh_args?: string[] }
 ---@param on_exit? fun(out: vim.SystemCompleted)
@@ -404,7 +404,7 @@ end
 
 --- Gets the operating system and architecture from the remote system.
 ---
----@param uri {host:string, user?:string, port?:string}
+---@param uri vim.Uri & {host:string}
 ---@return string os, string arch
 function M.get_system_info(uri)
   local ssh_cmd = get_ssh_cmd(uri, { remote_cmd = { 'uname -s && uname -m' } })
@@ -497,7 +497,11 @@ end
 ---@param chan? integer
 ---@param report fun(status: 'running'|'success'|'failed', msg: string)
 local function connect(uri_str, chan, report)
-  local uri = require('vim.uri')._parse_ssh_uri(uri_str)
+  local uri = vim.uri.parse(uri_str)
+  if not (uri and uri.host and uri.host ~= '') then
+    error(('No host in SSH URI: %s'):format(uri_str), 0)
+  end
+  ---@cast uri vim.Uri & {host:string}
   report('running', ('Connecting to %s...'):format(uri_str))
   local dir, url, version = get_release(M.get_system_info(uri))
 
