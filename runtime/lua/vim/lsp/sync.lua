@@ -191,7 +191,7 @@ local function compute_end_range(
 )
   -- A special case for the following `firstline == new_lastline` case where lines are deleted.
   -- Even if the buffer has become empty, nvim behaves as if it has an empty line with eol.
-  if #curr_lines == 1 and curr_lines[1] == '' then
+  if #curr_lines == 1 and curr_lines[1] == '' and firstline ~= lastline then
     local prev_line = assert(prev_lines[lastline - 1])
     return {
       line_idx = lastline - 1,

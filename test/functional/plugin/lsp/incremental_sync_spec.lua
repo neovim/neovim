@@ -319,6 +319,23 @@ describe('incremental synchronization', function()
       }
       test_edit({ '' }, { 'o' }, expected_text_changes, 'utf-16', '\n')
     end)
+    it('no-op edit in an empty buffer', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { '' })
+      exec_lua(function()
+        _G.test_register(0, 'test1', 'utf-16', '\n')
+        vim.api.nvim_buf_set_lines(0, 0, 0, false, {})
+      end)
+      eq({
+        {
+          range = {
+            ['start'] = { character = 0, line = 0 },
+            ['end'] = { character = 0, line = 0 },
+          },
+          rangeLength = 0,
+          text = '',
+        },
+      }, exec_lua('return _G.get_events()'))
+    end)
     it('insert a line above the current line', function()
       local expected_text_changes = {
         {
