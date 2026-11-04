@@ -14,6 +14,8 @@ func Test_filter()
   call assert_equal("\nfoo2\nfoo4", execute('filter /foo[24]/ 1,$print'))
   call assert_equal("\n  2 foo2\n  4 foo4", execute('filter /foo[24]/ 1,$number'))
   call assert_equal("\nfoo2$\nfoo4$", execute('filter /foo[24]/ 1,$list'))
+  " Repeated :filter uses the last one and does not leak memory
+  call assert_equal("\nfoo3$\nfoo5$", execute('filter /foo[24]/ filter /foo[35]/ 1,$list'))
 
   call assert_equal("\nfoo1$\nfoo3$\nfoo5$", execute('filter! /foo[24]/ 1,$list'))
   bwipe!
