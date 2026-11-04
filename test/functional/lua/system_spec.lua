@@ -136,6 +136,58 @@ describe('vim.system', function()
     end)
   end)
 
+  it('run_wait() can return before process exit', function()
+    t.skip(t.is_os('win'), 'shell command is POSIX-only')
+
+    exec_lua(function()
+      local res, exited
+      local ok, err = pcall(function()
+        res = require('vim._core.system').run_wait(
+          { 'bash', '-c', 'echo READY; sleep 1; echo LATER' },
+          nil,
+          function(stdout)
+            return stdout:match('READY') ~= nil
+          end,
+          10000,
+          function(out)
+            exited = out
+          end
+        )
+
+        assert(res)
+        assert(res.code == nil)
+        assert(res.stdout == 'READY\n')
+        assert(vim.api.nvim_get_proc(res.pid), 'process already exited')
+        -- Output after return (e.g. a heartbeat) is not captured.
+        assert(vim.wait(5000, function()
+          return exited ~= nil
+        end))
+        assert(exited.code == 0 and exited.stdout == nil)
+      end)
+
+      if res then
+        if not res:is_closing() then
+          res:kill('sigterm')
+        end
+        res:wait(1000)
+      end
+      if not ok then
+        error(err)
+      end
+    end)
+  end)
+
+  it('run_wait() writes stdin', function()
+    t.skip(t.is_os('win'), 'shell command is POSIX-only')
+
+    eq(
+      'hello',
+      exec_lua(function()
+        return require('vim._core.system').run_wait({ 'cat' }, { stdin = 'hello' }, nil, 10000).stdout
+      end)
+    )
+  end)
+
   it('SystemObj:wait() does not process non-fast events #27292', function()
     eq(
       false,

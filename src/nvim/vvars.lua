@@ -789,9 +789,10 @@ M.vars = {
     type = 'string',
     desc = [=[
       The reason Nvim started. Possible values:
-      - "normal"    Normal startup, yearning for life, etc.
-      - "restart"   Started by |:restart|.
-      - "restart!"  Started by |:restart!|.
+      - "normal"      Normal startup, yearning for life, etc.
+      - "restart"     Started by |:restart|.
+      - "restart!"    Started by |:restart!|.
+      - "remote-ssh"  Started by |remote-ssh|.
 
       Read-only.
     ]=],

@@ -127,9 +127,10 @@ Restart Nvim
 ------------------------------------------------------------------------------
 Connect UI to a different server
 
-:connect {address}					*:connect*
+:connect {address}                                      *:connect* *E6102*
                 Attaches the UI to another Nvim instance: detaches from the
-                current server, then attaches to {address}.
+                current server, then attaches to {address}. If {address} is
+                an `ssh://` URI, see |remote-ssh|.
 
                 Note: If the current UI hasn't implemented the "connect" UI
                 event, this command is equivalent to |:detach|.
@@ -137,6 +138,45 @@ Connect UI to a different server
 :connect! {address}
                 Same as |:connect| but it also stops the detached server if
                 no other UI is currently attached to it.
+
+:connect ssh://[{user}@]{host}[:{port}]         *remote-ssh* *E6101* *E6103*
+                Connects to Nvim on {host} over SSH:
+                1. Uses `nvim` from `$PATH` on {host} if it is the local
+                   version or newer (never for a local prerelease). Else
+                   auto-installs Nvim on the remote system (based on the
+                   current Nvim version). (Note: `$PATH` is derived from
+                   a non-login shell, your shell rc isn't applied.)
+                2. Starts Nvim on {host}.
+                3. Attaches the UI to it, through an SSH tunnel owned by the
+                   current (local) server.
+
+                The session ends when either side exits or the connection
+                drops: the remote Nvim stops, and so does the local server,
+                unless a UI is attached to it or a buffer is modified.
+
+                The remote Nvim runs with `NVIM_APPNAME=nvim-remote` (see
+                |$NVIM_APPNAME|), so its config/data are separate from other
+                Nvims.
+                - Config: `~/.config/nvim-remote/`
+                - Data: `~/.local/share/nvim-remote/`, kept across sessions
+                  for fast reconnects. Caches installed releases, e.g.
+                  `releases/v0.12.0-linux-x86_64/`.
+
+                Requirements:
+                - Local: `ssh` (OpenSSH 7.6+). Win32-OpenSSH lacks
+                  multiplexing (`ControlMaster`), thus not supported.
+                - Local: key-based authentication. `ssh` runs with
+                  `BatchMode=yes`, so it never prompts. An unknown host key is
+                  accepted and recorded, unless your ssh_config sets
+                  `StrictHostKeyChecking`.
+                - Remote: Linux (x86_64, aarch64) or macOS (arm64, x86_64),
+                  with `curl`, `tar`, POSIX `sh`, and a writable `/tmp`.
+
+                Examples: >vim
+                    :connect ssh://myhost
+                    :connect ssh://user@192.168.1.100
+                    :connect ssh://root@server:2222
+<
 
 ------------------------------------------------------------------------------
 GUI commands

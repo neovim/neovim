@@ -575,9 +575,10 @@ v:stacktrace                                  *v:stacktrace* *stacktrace-variabl
 
 v:startreason                               *v:startreason* *startreason-variable*
 		The reason Nvim started. Possible values:
-		- "normal"    Normal startup, yearning for life, etc.
-		- "restart"   Started by |:restart|.
-		- "restart!"  Started by |:restart!|.
+		- "normal"      Normal startup, yearning for life, etc.
+		- "restart"     Started by |:restart|.
+		- "restart!"    Started by |:restart!|.
+		- "remote-ssh"  Started by |remote-ssh|.
 
 		Read-only.
 

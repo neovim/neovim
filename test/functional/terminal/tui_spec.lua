@@ -214,6 +214,10 @@ describe('TUI :detach', function()
       { child_session:request('nvim_command', 'detach foo') }
     )
 
+    -- XXX: Error if `current_ui` was set by (input from) a non-UI client.
+    child_session:request('nvim_input', '<Esc>:%detach<CR>')
+    screen:expect({ any = 'E5768: No UI attached' }) -- TODO(justinmk): confusing msg...
+
     tt.feed_data('\027\027:detach\013')
     -- Note: "Process exited" message is misleading; tt.setup_child_nvim() sees the foreground
     -- process (client) exited, and doesn't know the server is still running?
@@ -1033,6 +1037,10 @@ describe('TUI :connect', function()
 
     tt.feed_data(':connect\013')
     screen1:expect({ any = 'E471: Argument required' })
+
+    -- No server at address: fails, UI stays attached (and "!" does not stop server).
+    tt.feed_data((':connect! %s\013'):format(new_pipename()))
+    screen1:expect({ any = 'E6102: Cannot connect to' })
 
     tt.feed_data('iThis is server 1.\027')
     screen1:expect({ any = vim.pesc('This is server 1^.') })

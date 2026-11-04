@@ -4894,6 +4894,11 @@ static void ex_exmode(exarg_T *eap)
 /// ":restart +cmd <command>": restart the Nvim server using ":cmd" and runs <command> in the new server.
 static void ex_restart(exarg_T *eap)
 {
+  // XXX: The UI reaches this server through an SSH tunnel, which cannot reach the new server.
+  if (strequal(get_vim_var_str(VV_STARTREASON), "remote-ssh")) {
+    emsg(_("E6103: :restart is not supported with remote-ssh"));
+    return;
+  }
   if (!eap->forceit) {
     dict_T *extra_d = tv_dict_alloc();  // Pass +cmd in the `extra` param of nlua_call_excmd.
     tv_dict_add_str(extra_d, S_LEN("quit_cmd"), eap->do_ecmd_cmd ? eap->do_ecmd_cmd : "");
@@ -5863,13 +5868,13 @@ static void ex_tabs(exarg_T *eap)
 /// ":%detach" detaches all UIs _except_ the current UI.
 static void ex_detach(exarg_T *eap)
 {
-  Channel *chan = find_channel(current_ui);
-  if (!chan) {
+  if (!remote_ui_attached(current_ui)) {
     emsg(_(e_noui));
     return;
   }
 
   if (eap && eap->forceit) {
+    Channel *chan = find_channel(current_ui);
     chan->detach = true;
     channel_event(chan, EVENT_CHANINFO);
     msg(_("Nvim will continue running if the UI disconnects"), 0);
@@ -5912,13 +5917,53 @@ static void ex_detach(exarg_T *eap)
 /// Connects the current UI to a different server
 ///
 /// ":connect <address>" detaches the current UI and connects to the given server.
+/// ":connect ssh://<uri>" bootstraps a remote Nvim over SSH, then connects.
 /// ":connect! <address>" stops the current server if no other UIs are attached, then connects to the given server.
 static void ex_connect(exarg_T *eap)
 {
+  char *addr = eap->arg;
+  typval_T ssh_rettv = { .v_type = VAR_UNKNOWN };
+  bool is_tcp = socket_address_tcp_host_end(addr) != NULL;
+  const char *error = NULL;
+
+  // SSH URI: bootstrap remote Nvim, get local forwarded socket.
+  if (STRNICMP(addr, "ssh://", 6) == 0) {
+    // XXX: ":connect!" not supported. The tunnel is owned by this server, stopping it would kill the session.
+    if (eap->forceit) {
+      emsg(_(e_nobang));
+      return;
+    }
+    if (!remote_ui_attached(current_ui)) {
+      emsg(_(e_noui));
+      return;
+    }
+
+    typval_T argvars[] = { { .v_type = VAR_STRING, .vval.v_string = addr },
+                           { .v_type = VAR_NUMBER, .vval.v_number = (varnumber_T)current_ui },
+                           { .v_type = VAR_UNKNOWN } };
+    nlua_call_typval("vim.net._ssh", "start", argvars, &ssh_rettv);
+
+    if (ssh_rettv.v_type == VAR_SPECIAL) {
+      return;  // User declined the prompt.
+    }
+    if (ssh_rettv.v_type != VAR_STRING || ssh_rettv.vval.v_string == NULL) {
+      emsg(_("E6101: SSH connection failed"));
+      tv_clear(&ssh_rettv);
+      return;
+    }
+
+    addr = ssh_rettv.vval.v_string;
+  } else if ((is_tcp || path_is_absolute(addr))  // UI CWD may differ.
+             && !socket_alive(&main_loop, is_tcp, addr, &error)) {
+    semsg(_("E6102: Cannot connect to %s: %s"), addr, error);
+    return;
+  }
+
   bool stop_server = eap->forceit ? (ui_active() == 1) : false;
 
   Error err = ERROR_INIT;
-  remote_ui_connect(current_ui, eap->arg, &err);
+  remote_ui_connect(current_ui, addr, &err);
+  tv_clear(&ssh_rettv);
 
   if (ERROR_SET(&err)) {
     emsg(err.msg);

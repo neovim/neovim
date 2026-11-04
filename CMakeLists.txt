@@ -248,7 +248,7 @@ add_glob_target(
   TARGET lintsh
   COMMAND ${SHELLCHECK_PRG}
   FLAGS -x -a
-  GLOB_DIRS scripts
+  GLOB_DIRS scripts runtime/scripts
   GLOB_PAT *.sh
   TOUCH_STRATEGY PER_DIR)
 

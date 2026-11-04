@@ -103,17 +103,18 @@ static void connect_close_cb(Stream *stream, void *data)
   *closed = true;
 }
 
-/// Check if a socket is alive by attempting to connect to it.
+/// Checks if a socket is alive by attempting to connect to it.
 /// @param loop Event loop
+/// @param is_tcp Whether `addr` is a TCP "host:port", else a pipe.
 /// @param addr Socket address to probe
+/// @param[out] error Reason, if not alive.
 /// @return true if socket is alive (connection succeeded), false otherwise
-static bool socket_alive(Loop *loop, const char *addr)
+bool socket_alive(Loop *loop, bool is_tcp, const char *addr, const char **error)
 {
   RStream stream = { 0 };
-  const char *error = NULL;
 
   // Try to connect with a 500ms timeout (fast failure for dead sockets)
-  bool connected = socket_connect(loop, &stream, false, addr, 500, &error);
+  bool connected = socket_connect(loop, &stream, is_tcp, addr, 500, error);
   if (!connected) {
     return false;
   }
@@ -175,7 +176,8 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
     if (result == UV_EACCES || result == UV_EADDRINUSE) {
       Loop *loop = watcher->stream->loop->data;
 
-      if (!socket_alive(loop, watcher->addr)) {
+      const char *error = NULL;
+      if (!socket_alive(loop, false, watcher->addr, &error)) {
         // Socket exists but is dead - remove it
         ILOG("Removing stale socket: %s", watcher->addr);
         int rm_result = os_remove(watcher->addr);
