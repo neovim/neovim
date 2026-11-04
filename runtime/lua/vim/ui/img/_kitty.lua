@@ -171,6 +171,13 @@ function M.supported(opts)
   if vim.env.TERM_PROGRAM == 'Apple_Terminal' then
     return false
   end
+  -- Only a UI with "stdout_tty" can respond.
+  local has_tty = vim.iter(vim.api.nvim_list_uis()):any(function(ui)
+    return ui.stdout_tty and (not opts.chan or ui.chan == opts.chan)
+  end)
+  if not has_tty then
+    return false
+  end
 
   local query_id = generate_id()
 
