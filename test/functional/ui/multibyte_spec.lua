@@ -47,6 +47,31 @@ describe('multibyte rendering', function()
     ]])
   end)
 
+  it('respects delcombine when deleting grapheme clusters', function()
+    command('set backspace=indent,eol,start')
+    local prefix = '漢'
+    local zwj = fn.nr2char(0x200d)
+    local cases = {
+      { text = '🇦🇽', remaining = '🇦' },
+      { text = '🧑' .. zwj .. '🌾', remaining = '🧑' .. zwj },
+      { text = '🧑́' .. zwj .. '🌾', remaining = '🧑́' .. zwj },
+    }
+    for _, enabled in ipairs({ false, true }) do
+      api.nvim_set_option_value('delcombine', enabled, {})
+      for _, case in ipairs(cases) do
+        local expected = enabled and case.remaining or ''
+        local context = ('delcombine=%s: %s'):format(tostring(enabled), case.text)
+        api.nvim_set_current_line(prefix .. case.text .. '!')
+        feed('0lx')
+        eq(prefix .. expected .. '!', api.nvim_get_current_line(), context .. ' x')
+
+        api.nvim_set_current_line(prefix .. case.text)
+        feed('A<BS><Esc>')
+        eq(prefix .. expected, api.nvim_get_current_line(), context .. ' Backspace')
+      end
+    end
+  end)
+
   it('works with doublewidth char at end of line', function()
     feed('58a <esc>a馬<esc>')
     screen:expect([[
