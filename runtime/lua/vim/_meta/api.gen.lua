@@ -866,6 +866,8 @@ function vim.api.nvim_chan_send(chan, data) end
 --- @param config vim.api.keyset.chan_set Properties:
 --- - detach: (boolean, default: true) Closing the channel does not self-exit Nvim. Nvim
 ---   self-exits when the last `detach=false` `RPC` channel closes. See also `:detach!`.
+--- - trust: (boolean, default: true) Trust the peer: allow its incoming `RPC` `API` calls. Set
+---   to false for untrusted (remote) peers.
 function vim.api.nvim_chan_set(chan, config) end
 
 --- Clears all autocommands matching the {opts} query. To delete autocmds see `nvim_del_autocmd()`.
@@ -1345,6 +1347,7 @@ function vim.api.nvim_get_autocmds(opts) end
 ---      - "stderr"     stderr of this Nvim instance
 ---      - "socket"     TCP/IP socket or named pipe
 ---      - "job"        Job with communication over its stdio.
+--- - "trust"    (optional) Trust the peer: allow its incoming |RPC| |API| calls. |nvim_chan_set()|
 function vim.api.nvim_get_chan_info(chan) end
 
 --- Returns the 24-bit RGB value of a `nvim_get_color_map()` color name or

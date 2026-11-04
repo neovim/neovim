@@ -2916,6 +2916,7 @@ describe('TUI', function()
       id = ui_chan,
       mode = 'rpc',
       stream = 'stdio',
+      trust = true,
     }
 
     local status, chan_info = child_session:request('nvim_get_chan_info', ui_chan)
@@ -3474,15 +3475,6 @@ describe('TUI', function()
     end)
   end)
 
-  it('security: server-to-client API calls are rejected', function()
-    local ok, err = unpack(child_exec_lua([[
-      local ui = vim.api.nvim_list_uis()[1].chan
-      return { pcall(vim.rpcrequest, ui, 'nvim_exec_lua', 'return vim.fn.getpid()', {}) }
-    ]]))
-    eq(false, ok)
-    t.matches('UI client does not accept API calls: nvim_exec_lua', err)
-  end)
-
   it('stdin and stdout are tty fds in embedded server #38172', function()
     eq(
       { 'tty', 'tty' },
@@ -3500,6 +3492,15 @@ describe('TUI', function()
     -- The server is now detached and needs to be quit explicitly.
     feed_data(':qall!\r')
     screen:expect({ any = vim.pesc('[Process exited 0]') })
+  end)
+
+  it('security: server-to-client API calls are rejected', function()
+    local ok, err = unpack(child_exec_lua([[
+      local ui = vim.api.nvim_list_uis()[1].chan
+      return { pcall(vim.rpcrequest, ui, 'nvim_exec_lua', 'return vim.fn.getpid()', {}) }
+    ]]))
+    eq(false, ok)
+    t.matches('Rejected API call from untrusted peer: nvim_exec_lua', err)
   end)
 end)
 

@@ -24,6 +24,7 @@ describe('API', function()
     mode = 'rpc',
     client = {},
     detach = false,
+    trust = true,
   }
   local stderr = {
     stream = 'stderr',
@@ -84,6 +85,7 @@ describe('API', function()
         id = 1,
         mode = 'rpc',
         detach = false,
+        trust = true,
         client = {
           name = 'functionaltests',
           version = { major = 0, minor = 3, patch = 17 },
@@ -107,6 +109,7 @@ describe('API', function()
         mode = 'rpc',
         client = {},
         detach = true,
+        trust = true,
       }
       eq({ info = info }, api.nvim_get_var('opened_event'))
       eq({ [1] = testinfo, [2] = stderr, [3] = info }, api.nvim_list_chans())
@@ -122,6 +125,7 @@ describe('API', function()
         argv = { catpath },
         mode = 'rpc',
         detach = true,
+        trust = true,
         client = {
           name = 'amazing-cat',
           version = { major = 0 },

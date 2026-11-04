@@ -6629,10 +6629,12 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   bool rpc = false;
+  bool trust = true;
   CallbackReader on_data = CALLBACK_READER_INIT;
   if (argvars[2].v_type == VAR_DICT) {
     dict_T *opts = argvars[2].vval.v_dict;
     rpc = tv_dict_get_number(opts, "rpc") != 0;
+    trust = tv_dict_get_bool(opts, "trust", true);
 
     if (!tv_dict_get_callback(opts, S_LEN("on_data"), &on_data.cb)) {
       goto cleanup;
@@ -6644,7 +6646,7 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   const char *error = NULL;
-  uint64_t id = channel_connect(tcp, address, rpc, on_data, 50, &error);
+  uint64_t id = channel_connect(tcp, address, rpc, trust, on_data, 50, &error);
 
   if (error) {
     semsg(_("connection failed: %s"), error);

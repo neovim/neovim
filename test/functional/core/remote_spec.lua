@@ -16,7 +16,7 @@ local set_session = n.set_session
 local tmpname = t.tmpname
 local write_file = t.write_file
 
-describe('Remote', function()
+describe('--remote', function()
   local fname, other_fname
   local contents = 'The call is coming from outside the process'
   local other_contents = "A second file's contents"
@@ -28,7 +28,7 @@ describe('Remote', function()
     write_file(other_fname, other_contents)
   end)
 
-  describe('connect to server and', function()
+  describe('connect', function()
     local server
     before_each(function()
       server = n.clear()
@@ -120,6 +120,22 @@ describe('Remote', function()
       eq({ '1.25', '' }, run_remote('--remote-expr', '1.25'))
       eq({ 'no', '' }, run_remote('--remote-expr', '0z6E6F'))
       eq({ '\t', '' }, run_remote('--remote-expr', '"\t"'))
+    end)
+
+    it('security: server-to-client API calls are rejected', function()
+      exec_lua(function()
+        _G.call_client = function()
+          local client = 0
+          for _, chan in ipairs(vim.api.nvim_list_chans()) do
+            client = math.max(client, chan.id)
+          end
+          return select(2, pcall(vim.rpcrequest, client, 'nvim_eval', '1'))
+        end
+      end)
+      t.matches(
+        'Rejected API call from untrusted peer: nvim_eval',
+        run_remote('--remote-expr', 'luaeval("_G.call_client()")')[1]
+      )
     end)
   end)
 

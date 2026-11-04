@@ -1758,6 +1758,8 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dict version, String
 /// @param config Properties:
 ///     - detach: (boolean, default: true) Closing the channel does not self-exit Nvim. Nvim
 ///       self-exits when the last `detach=false` |RPC| channel closes. See also |:detach!|.
+///     - trust: (boolean, default: true) Trust the peer: allow its incoming |RPC| |API| calls. Set
+///       to false for untrusted (remote) peers.
 /// @param[out] err Error details, if any
 void nvim_chan_set(uint64_t channel_id, Integer chan, Dict(chan_set) *config, Error *err)
   FUNC_API_SINCE(15) FUNC_API_FAST
@@ -1772,6 +1774,11 @@ void nvim_chan_set(uint64_t channel_id, Integer chan, Dict(chan_set) *config, Er
 
   if (HAS_KEY(config, chan_set, detach)) {
     channel->detach = config->detach;
+  }
+  if (HAS_KEY(config, chan_set, trust)) {
+    channel->rpc.trust = config->trust;
+  }
+  if (HAS_KEY(config, chan_set, detach) || HAS_KEY(config, chan_set, trust)) {
     channel_event(channel, EVENT_CHANINFO);
   }
 }
@@ -1824,6 +1831,7 @@ void nvim__cmdwin_set(String type, Buffer buf, Error *err)
 ///         - "stderr"     stderr of this Nvim instance
 ///         - "socket"     TCP/IP socket or named pipe
 ///         - "job"        Job with communication over its stdio.
+///    - "trust"    (optional) Trust the peer: allow its incoming |RPC| |API| calls. |nvim_chan_set()|
 Dict nvim_get_chan_info(uint64_t channel_id, Integer chan, Arena *arena, Error *err)
   FUNC_API_SINCE(4)
 {
