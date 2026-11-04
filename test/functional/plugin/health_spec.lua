@@ -36,6 +36,7 @@ describe(':checkhealth', function()
 
   it('detects invalid $VIM', function()
     clear()
+    exec_lua([[require('vim.health.health')._skip_update_check = true]])
     -- Do this after startup, otherwise it just breaks $VIMRUNTIME.
     command("let $VIM='zub'")
     command('checkhealth vim.health')

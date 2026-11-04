@@ -1,6 +1,8 @@
 local nvim_on = require('vim._core.util').nvim_on
 
 local M = {}
+--- For tests: skip the update check, which queries the network (SLOW).
+M._skip_update_check = false
 local async = require('vim.async') --- @type vim.async._core
 local health = require('vim.health')
 
@@ -802,7 +804,9 @@ local function check_sysinfo()
   local nvim_version = version_out:match('NVIM (v[^\n]+)') or 'unknown'
   local commit = (version_out:match('%+g(%x+)') or ''):sub(1, 12)
 
-  if vim.fn.executable('git') ~= 1 then
+  if M._skip_update_check then
+    vim.health.info('Skipped update check.')
+  elseif vim.fn.executable('git') ~= 1 then
     vim.health.warn('Cannot check for updates: git not found')
   elseif vim.trim(commit) ~= '' then
     check_head_hash(commit)
