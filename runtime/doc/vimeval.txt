@@ -1566,8 +1566,16 @@ When using the '=' register you get the expression itself, not what it
 evaluates to.  Use |eval()| to evaluate it.
 
 
+------------------------------------------------------------------------------
 nesting							*expr-nesting* *E110*
+
 (expr1)			nested expression
+
+If text follows the expression, E110 includes it, to show where the expression
+should end: >
+	echo (0!)
+<	E110: Missing ')': !) ~
+Vim expects the ")" where the "!" is.
 
 
 ------------------------------------------------------------------------------

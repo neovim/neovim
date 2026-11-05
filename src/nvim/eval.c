@@ -2755,7 +2755,12 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
     if (**arg == ')') {
       (*arg)++;
     } else if (ret == OK) {
-      emsg(_("E110: Missing ')'"));
+      // Show where the expression stopped, unless at the end.
+      if (**arg == NUL) {
+        emsg(_(e_missing_closing_paren));
+      } else {
+        semsg(_(e_missing_closing_paren_str), *arg);
+      }
       tv_clear(rettv);
       ret = FAIL;
     }
