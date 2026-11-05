@@ -17,6 +17,7 @@ set(TEST_XDG_PREFIX ${BUILD_DIR}/Xtest_xdg${TEST_SUFFIX})
 unset(ENV{XDG_DATA_DIRS})
 unset(ENV{NVIM})  # Clear $NVIM in case tests are running from Nvim. #11009
 unset(ENV{TMUX})  # Nvim TUI shouldn't think it's running in tmux. #34173
+unset(ENV{SSH_CONNECTION})  # Default 'statusline' shouldn't show the hostname.
 
 # Prepare for running tests in ${TEST_XDG_PREFIX}.
 file(MAKE_DIRECTORY ${TEST_XDG_PREFIX})

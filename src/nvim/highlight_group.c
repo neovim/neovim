@@ -191,6 +191,7 @@ static const char *highlight_init_both[] = {
   "default link Substitute       Search",
   "default link StatusLineTerm   StatusLine",
   "default link StatusLineTermNC StatusLineNC",
+  "default link StatusLineRemote DiffAdd",
   "default link StderrMsg        ErrorMsg",
   "default link StdoutMsg        NONE",
   "default link TabLine          TabLineFill",

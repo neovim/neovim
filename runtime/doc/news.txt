@@ -281,6 +281,8 @@ DEFAULTS
 
 • 'rulerformat' default is exposed as a statusline expression (previously it
   was implemented as an internal C routine).
+• Default 'statusline' shows the hostname (|hl-StatusLineRemote|) if Nvim runs
+  in an SSH session, e.g. |remote-ssh|.
 • 'termpastefilter' no longer removes TAB chars ("HT") when pasting into
   |:terminal|.
 
