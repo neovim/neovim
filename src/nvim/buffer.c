@@ -3640,29 +3640,29 @@ void fname_expand(buf_T *buf, char **ffname, char **sfname)
   if (*sfname == NULL) {  // no short file name given, use ffname
     *sfname = *ffname;
   }
-  *ffname = fix_fname(*ffname);     // expand to full path
+  bool is_url = path_with_url(*ffname);
+  bool trailing_slash = after_pathsep(*sfname, *sfname + strlen(*sfname));
+  if (is_url || !trailing_slash) {
+    *ffname = fix_fname(*ffname);     // expand to full path
+  } else {
+    // Preserve the last component for directory buffer by truncating the path
+    // at the separator following it. Otherwise, fix_fname() would resolve
+    // ".../link/" to ".../target"
+    char *s = xstrdup(*sfname);
+    *path_tail_with_sep(s) = NUL;
+    *ffname = fix_fname(s);
+    XFREE_CLEAR(s);
+  }
   if (*ffname == NULL) {
     *sfname = NULL;
     return;
   }
-  // Preserve a symbolic link path for directory buffers. fix_fname("link/")
-  // resolves to the target, so re-expand without the trailing separator: if
-  // "link" is a symbolic link to directory "target", ":edit link/" produces
-  // ".../link/", not ".../target/".
-  if (os_isdir(*ffname)) {
-    char *name = xstrdup(*sfname);
-    size_t name_len = strlen(name);
-    if (name_len > 0 && after_pathsep(name, name + name_len)
-        && name + name_len > get_past_head(name)) {
-      *path_tail_with_sep(name) = NUL;
-    }
-    char *full = fix_fname(name);
-    xfree(name);
-    if (full != NULL) {
-      xfree(*ffname);
-      *ffname = full;
-    }
+  if (trailing_slash || os_isdir(*ffname)) {
+    // append a trailing slash for directory
     *ffname = concat_fnames_realloc(*ffname, "", true);
+  }
+  if (is_url) {  // use the resolved filename for sfname as well
+    *sfname = *ffname;
   }
 
 #ifdef MSWIN

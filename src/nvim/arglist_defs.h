@@ -15,5 +15,5 @@ typedef struct {
 /// used).
 typedef struct {
   char *ae_fname;  ///< file name as specified
-  int ae_fnum;     ///< buffer number with expanded file name
+  int ae_fnum;     ///< buffer number with expanded file name (negative if deferred)
 } aentry_T;

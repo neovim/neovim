@@ -6161,10 +6161,12 @@ vim.uri.to_buf({uri})                                       *vim.uri.to_buf()*
         (`integer`) buf
 
 vim.uri.to_fname({uri})                                   *vim.uri.to_fname()*
-    Gets a filename from a URI. Drops the query and fragment, so "?" and "#"
-    in a filename must be percent-encoded.
+    Gets a normalized filename from a URI. Drops the query and fragment, so
+    "?" and "#" in a filename must be percent-encoded.
 
     Example: >lua
+        vim.uri.to_fname('file:///a/./b/../c') --> '/a/c'
+        vim.uri.to_fname('file:///a/%2E%2E/b') --> '/b'
         vim.uri.to_fname('file:///a%3Fb?c#d') --> '/a?b'
         vim.uri.to_fname('file:///C:/a/b') --> 'C:/a/b'
         vim.uri.to_fname('file://server/share/a') --> '//server/share/a'
