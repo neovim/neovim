@@ -3,14 +3,14 @@ const gen = @import("gen/gen_steps.zig");
 
 pub fn lintSources(
     b: *std.Build,
-    nvim_sources: std.ArrayList(gen.SourceItem),
-    nvim_headers: std.ArrayList([]u8),
+    nvim_sources: []gen.SourceItem,
+    nvim_headers: [][]u8,
 ) !std.ArrayList([]const u8) {
     var lint_sources: std.ArrayList([]const u8) = try .initCapacity(b.allocator, 0);
-    for (nvim_sources.items) |source| {
+    for (nvim_sources) |source| {
         try lint_sources.append(b.allocator, b.fmt("src/nvim/{s}", .{source.name}));
     }
-    for (nvim_headers.items) |header| {
+    for (nvim_headers) |header| {
         try lint_sources.append(b.allocator, b.fmt("src/nvim/{s}", .{header}));
     }
     try lint_sources.append(b.allocator, "src/tee/tee.c");
@@ -21,11 +21,12 @@ pub fn lintSources(
 pub fn addSteps(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
-    cdb_step: *std.Build.Step,
     nvim_exe_install: *std.Build.Step.InstallArtifact,
-    nvim_sources: std.ArrayList(gen.SourceItem),
-    nvim_headers: std.ArrayList([]u8),
+    nvim_sources: []gen.SourceItem,
+    nvim_headers: [][]u8,
     ci_build: bool,
+    include_path: []std.Build.LazyPath,
+    flags: []const []const u8,
 ) !void {
     const lintc = b.step("lintc", "Lint C source");
     var lint_sources = try lintSources(b, nvim_sources, nvim_headers);
@@ -34,7 +35,7 @@ pub fn addSteps(
     lintc.dependOn(lintc_uncrustify);
     const lintc_clint = addLintcClintStep(b, nvim_exe_install, lint_sources, ci_build);
     lintc.dependOn(lintc_clint);
-    const lintc_clang_tidy = try addLintcClangtidyStep(b, cdb_step, nvim_exe_install, target, lint_sources);
+    const lintc_clang_tidy = try addLintcClangtidyStep(b, nvim_exe_install, target, lint_sources, include_path, flags);
     lintc.dependOn(lintc_clang_tidy);
     try addFormatcStep(b, lint_sources);
 }
@@ -61,10 +62,11 @@ fn addLintcUncrustifyStep(
 
 fn addLintcClangtidyStep(
     b: *std.Build,
-    cdb_step: *std.Build.Step,
     nvim_exe_install: *std.Build.Step.InstallArtifact,
     target: std.Build.ResolvedTarget,
     lint_sources: std.ArrayList([]const u8),
+    include_path: []std.Build.LazyPath,
+    flags: []const []const u8,
 ) !*std.Build.Step {
     const lintc_clang_tidy = b.step("lintc-clang-tidy", "Lint C source with clang-tidy");
     var exclusions: std.ArrayList([]const u8) = try .initCapacity(b.allocator, 0);
@@ -93,10 +95,12 @@ fn addLintcClangtidyStep(
             if (std.mem.eql(u8, exclusion, file)) continue :outer;
         }
         const run = b.addSystemCommand(&.{"clang-tidy"});
-        run.step.dependOn(cdb_step);
         run.step.dependOn(&nvim_exe_install.step);
         run.addFileArg(b.path(file));
         run.addArg("--quiet");
+        run.addArg("--"); // below are like compile command flags:
+        for (flags) |f| run.addArg(f);
+        for (include_path) |lp| run.addPrefixedDirectoryArg("-I", lp);
         run.expectStdOutEqual("");
         lintc_clang_tidy.dependOn(&run.step);
     }
