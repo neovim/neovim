@@ -34,6 +34,10 @@ struct Channel {
   bool is_rpc;
   bool detach;  ///< Prevents self-exit on channel-close. Nvim self-exits when the last open
                 ///< detach=false RPC channel is closed. The stdio channel defaults to detach=false.
+  char *addr;  ///< Address (hint) the peer uses to reach this server (e.g. a tunnel), or NULL.
+  /// Trust the peer: accept its incoming RPC API calls. Should be false for an untrusted peer.
+  /// If false, only responses (and UI events) are accepted.
+  bool trust;
   RpcState rpc;
   Terminal *term;
 

@@ -165,7 +165,7 @@ describe('lua rpc', function()
       end)
     )
 
-    -- Close handles, else uv_loop_close() logs an error at exit (EXITFREE builds).
+    -- Release handles, else uv_loop_close() logs an error at exit (EXITFREE builds).
     exec_lua(function()
       vim.fn.chanclose(_G.chan)
       for _, pipe in ipairs(_G.pipes) do

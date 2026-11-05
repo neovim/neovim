@@ -117,9 +117,10 @@ Restart Nvim
                     :restart packupdate
 <
                 Note:
-                • Only works if the UI and server are on the same system.
-                • Windows limitation: during +cmd execution, |v:servername|
-                  refers to a temporary address.
+                • UI connected to a remote machine (e.g. |remote-ssh|)
+                  reconnects only if using the server's |--listen| address.
+                • Windows limitation: During +cmd execution, |v:servername|
+                  refers to a temporary address. No remote restart.
                 • If no UI handles the "restart" event, this leaves a dangling
                   process.
                 • To adjust what `:restart` restores, set 'sessionoptions'.
@@ -139,7 +140,7 @@ Connect UI to a different server
                 Same as |:connect| but it also stops the detached server if
                 no other UI is currently attached to it.
 
-:connect ssh://[{user}@]{host}[:{port}]         *remote-ssh* *E6101* *E6103*
+:connect ssh://[{user}@]{host}[:{port}]                 *remote-ssh* *E6101*
                 Connects to Nvim on {host} over SSH:
                 1. Uses `nvim` from `$PATH` on {host} if it is the local
                    version or newer (never for a local prerelease). Else

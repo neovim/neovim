@@ -51,6 +51,14 @@ describe('API', function()
       eq(info, api.nvim_get_chan_info(1))
       api.nvim_chan_set(1, { detach = false })
       eq(false, api.nvim_get_chan_info(1).detach)
+
+      -- `addr`, also on a non-RPC channel.
+      api.nvim_chan_set(1, { addr = '/tmp/tunnel.sock' })
+      eq('/tmp/tunnel.sock', api.nvim_get_chan_info(1).addr)
+      api.nvim_chan_set(1, { addr = '' }) --  Empty string clears it.
+      eq(nil, api.nvim_get_chan_info(1).addr)
+      api.nvim_chan_set(2, { addr = 'x' })
+      eq(vim.tbl_extend('force', stderr, { addr = 'x' }), api.nvim_get_chan_info(2))
     end)
   end)
 

@@ -409,12 +409,13 @@ describe('TUI :restart', function()
   before_each(n.clear)
   after_each(n.check_close)
 
-  --- Asserts that the server at `addr` has (or has not) restarted since `starttime`.
+  --- Asserts that the server at `addr` has restarted since `starttime`, and its UI reattached.
   ---@param starttime integer v:starttime of the server before restart
   ---@param sess table Session
   ---@param addr string
   ---@return integer starttime
   ---@return table session
+  ---@return integer chan UI channel.
   local function assert_restarted(starttime, sess, addr)
     sess:close()
     local new_starttime
@@ -434,7 +435,12 @@ describe('TUI :restart', function()
       sess = candidate
       new_starttime = t
     end)
-    return new_starttime, sess
+    local uis ---@type table[]
+    retry(nil, nil, function()
+      uis = ({ sess:request('nvim_list_uis') })[2]
+      eq(1, #uis)
+    end)
+    return new_starttime, sess, uis[1].chan
   end
 
   it('validation', function()
@@ -516,6 +522,86 @@ describe('TUI :restart', function()
     screen:expect({ any = vim.pesc('[Process exited 0]') })
   end)
 
+  it('reconnects through a tunnel to the --listen address (e.g. remote-ssh)', function()
+    t.skip(is_os('win'), 'new server takes over --listen only after the old server exits')
+    local server_pipe = new_pipename()
+    local proxy_pipe = new_pipename()
+    -- Simulates `ssh -L`: forwards `proxy_pipe` to `server_pipe`.
+    exec_lua(function(proxy_addr, server_addr)
+      _G.proxied = 0 -- Count connections.
+      _G.proxy = assert(vim.uv.new_pipe())
+      assert(_G.proxy:bind(proxy_addr))
+      _G.proxy:listen(8, function()
+        _G.proxied = _G.proxied + 1
+        local client = assert(vim.uv.new_pipe())
+        local server = assert(vim.uv.new_pipe())
+        _G.proxy:accept(client)
+        local function relay(from, to)
+          from:read_start(function(_, data)
+            if data and not to:is_closing() then
+              to:write(data)
+            elseif not data then
+              for _, h in ipairs({ from, to }) do
+                if not h:is_closing() then
+                  h:close()
+                end
+              end
+            end
+          end)
+        end
+        server:connect(server_addr, function()
+          relay(client, server)
+          relay(server, client)
+        end)
+      end)
+    end, proxy_pipe, server_pipe)
+
+    local job = fn.jobstart({ nvim_prog, '--clean', '--headless', '--listen', server_pipe })
+    local server_session ---@type test.Session
+    retry(nil, nil, function()
+      server_session = n.connect(server_pipe)
+    end)
+    finally(function()
+      pcall(server_session.request, server_session, 'nvim_command', 'qall!')
+      server_session:close()
+      pcall(fn.jobstop, job)
+      exec_lua('_G.proxy:close()') -- Release resource, for EXITFREE.
+    end)
+    local _, starttime = server_session:request('nvim_eval', 'v:starttime')
+
+    local screen = tt.setup_child_nvim(
+      { '--remote-ui', '--server', proxy_pipe },
+      { env = env_notermguicolors }
+    )
+    screen:expect({ any = vim.pesc('[No Name]') })
+
+    --- Restarts, and returns the UI channel of the new server.
+    local function restart(msg)
+      feed_data(':restart!\r')
+      local chan
+      starttime, server_session, chan = assert_restarted(starttime, server_session, server_pipe)
+      feed_data((':echo "%s"\r'):format(msg))
+      screen:expect({ any = msg })
+      return chan
+    end
+    local function chan_addr(chan)
+      return ({ server_session:request('nvim_get_chan_info', chan) })[2].addr
+    end
+
+    -- Reconnects through the tunnel (also after the next restart).
+    restart('restarted 1')
+    local chan = restart('restarted 2')
+    eq(3, exec_lua('return _G.proxied'))
+    eq(proxy_pipe, chan_addr(chan))
+
+    -- Not through another address of the server (it exits with the server).
+    local other = new_pipename()
+    server_session:request('nvim_call_function', 'serverstart', { other })
+    server_session:request('nvim_chan_set', chan, { addr = other })
+    restart('restarted 3')
+    eq(3, exec_lua('return _G.proxied'))
+  end)
+
   it('ZR', function()
     -- Just exercise ZR, don't need to test all :restart functionality here.
     local file = 'Xtest-restart-file'
@@ -585,9 +671,6 @@ describe('TUI :restart', function()
     starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
 
     -- Restarted server self-exits when the TUI disconnects / host-terminal closed. #42250
-    retry(nil, 4000, function()
-      eq(1, #({ server_session:request('nvim_list_uis') })[2])
-    end)
     local server_pid = ({ server_session:request('nvim_call_function', 'getpid', {}) })[2]
     n.exec_lua(function(pid)
       vim.uv.kill(pid, 'sigkill')
@@ -659,21 +742,7 @@ describe('TUI :restart', function()
     assert_termguicolors_and_no_gui_running()
 
     local server_session = n.connect(server_pipe)
-    local _, server_pid = server_session:request('nvim_call_function', 'getpid', {})
-    local function assert_new_pid()
-      server_session:close()
-      -- On Windows, --listen address is restored async (after old server exits).
-      if is_os('win') then
-        retry(nil, 5000, function()
-          server_session = n.connect(server_pipe)
-        end)
-      else
-        server_session = n.connect(server_pipe)
-      end
-      local _, new_pid = server_session:request('nvim_call_function', 'getpid', {})
-      t.neq(server_pid, new_pid)
-      server_pid = new_pid
-    end
+    local _, starttime = server_session:request('nvim_eval', 'v:starttime')
 
     local s1 = [[
                                                         |
@@ -687,7 +756,7 @@ describe('TUI :restart', function()
     tt.feed_data(':set nomodified\013')
     tt.feed_data(':restart\013')
     screen:expect(s0)
-    assert_new_pid()
+    starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
     assert_exitreason('QuitPre:restart\nExitPre:restart\nVimLeavePre:restart\nVimLeave:restart\n')
     assert_termguicolors_and_no_gui_running()
 
@@ -695,7 +764,7 @@ describe('TUI :restart', function()
     -- Command is run on new server.
     tt.feed_data(":restart! put ='Hello1'\013")
     screen:expect(s1)
-    assert_new_pid()
+    starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
     assert_exitreason()
     assert_termguicolors_and_no_gui_running()
 
@@ -710,7 +779,7 @@ describe('TUI :restart', function()
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
-    assert_new_pid()
+    starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
     assert_exitreason()
     assert_termguicolors_and_no_gui_running()
 
@@ -718,14 +787,14 @@ describe('TUI :restart', function()
     tt.feed_data(':set nomodified\013')
     tt.feed_data(':restart!\013')
     screen:expect(s0)
-    assert_new_pid()
+    starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
     assert_exitreason()
     assert_termguicolors_and_no_gui_running()
 
     -- Check ":restart! +qall!" on an unmodified buffer.
     tt.feed_data(':restart! +qall!\013')
     screen:expect(s0)
-    assert_new_pid()
+    starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
     assert_exitreason()
     assert_termguicolors_and_no_gui_running()
 
@@ -775,7 +844,7 @@ describe('TUI :restart', function()
     screen:expect({ any = vim.pesc('Save changes to "Untitled"?') })
     tt.feed_data('N\013')
     screen:expect({ any = '%^Hello3' })
-    assert_new_pid()
+    starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
     assert_exitreason()
     assert_termguicolors_and_no_gui_running()
 
@@ -801,7 +870,7 @@ describe('TUI :restart', function()
     tt.feed_data('ithis will be removed\027')
     tt.feed_data(':restart! +qall!\013')
     screen:expect(s0)
-    assert_new_pid()
+    starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
     assert_exitreason()
     assert_termguicolors_and_no_gui_running()
 
@@ -809,7 +878,7 @@ describe('TUI :restart', function()
       -- No --listen conflict when server exit is delayed.
       feed_data(':lua vim.schedule(function() vim.wait(100) end); vim.cmd("restart!")\n')
       screen:expect(s0)
-      assert_new_pid()
+      starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
       assert_exitreason()
       assert_termguicolors_and_no_gui_running()
     end
@@ -832,7 +901,7 @@ describe('TUI :restart', function()
       restarted                                                   |
       {5:-- TERMINAL --}                                              |
     ]])
-    assert_new_pid()
+    starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
     assert_exitreason()
     assert_termguicolors_and_no_gui_running()
 

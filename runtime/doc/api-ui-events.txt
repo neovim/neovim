@@ -258,9 +258,12 @@ the editor.
 							*ui-event-restart*
 ["restart", listen_addr, chan_config] ~
 	User invoked the |:restart| command. Nvim started a new server. The
-	old server is about to exit and close its channel. `chan_config` gives
-	the channel-specific properties from the old server, which the UI
-	should pass to |nvim_chan_set()| intact.
+	old server is about to exit and close its channel.
+
+	- `listen_addr`: The new server's address, or the channel-stored
+	  `addr` (|nvim_chan_set()|).
+	- `chan_config`: Channel properties from the old server, which the UI
+	  should restore intact via |nvim_chan_set()|.
 
 	UI is expected to:
 	1. Wait for the channel to be closed, to confirm that the old server
