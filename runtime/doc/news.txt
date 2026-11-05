@@ -161,7 +161,7 @@ EVENTS
 • |BufModifiedSet| has been removed. Use the |OptionSet| event with pattern
   "modified" instead.
 • |ui-messages| `msg_show.completion` messages are now `msg_show.progress`
-  events. If :write or :edit is slow it emits `msg_show.progress` events.
+  events.
 
 LSP
 
@@ -453,6 +453,11 @@ LUA
 • |vim.ui.input()| now allows setting input scope.
 • |vim.uri| is a module. The old `uri_xx` top-level functions were renamed,
   e.g. `vim.uri_to_fname()` is now |vim.uri.to_fname()|.
+  • Parse/build URIs with |vim.uri.parse()|, |vim.uri.new()|,
+    |vim.uri.join()|.
+  • Check equality with |vim.uri.normalize()|.
+  • Parse/build querystrings with |vim.uri.encode_query()| and
+    |vim.uri.decode_query()|.
 • |vim.log| provides a logging interface.
 • |vim.pack.get()| output includes revision of a pending update.
 • |vim.pack.get()| can fetch new updates before computing the output.
@@ -492,6 +497,7 @@ OPTIONS
 
 PERFORMANCE
 
+• If :write or :edit is slow it emits `msg_show.progress` events.
 • LSP shares identical file watcher registrations, reducing startup work in
   large workspaces. On macOS and Windows, watchers with different glob
   patterns share one native watcher per directory, which reduces cleanup work

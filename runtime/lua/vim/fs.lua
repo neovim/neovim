@@ -133,6 +133,8 @@ end
 --- paths). Slashes are normalized: redundant slashes are removed, and (on Windows) backslashes are
 --- replaced with forward-slashes. Empty segments are removed. Paths are not expanded/resolved.
 ---
+--- To join URI paths, see |vim.uri.join()|.
+---
 --- Examples:
 --- - "foo/", "/bar" => "foo/bar"
 --- - "", "after/plugin" => "after/plugin"
@@ -196,7 +198,7 @@ function M.slug(path, opts)
 
   -- Capture URI scheme before normalize() collapses "://" to ":/" (which looks like "C:/")
   local uri = uri_parse(path)
-  local uri_scheme = uri and uri.authority and uri.scheme
+  local uri_scheme = uri and uri.host and uri.scheme
 
   -- Normalize before computing the hash so equivalent paths produce the same result
   path = vim.fs.normalize(path, { plain = true })
@@ -664,7 +666,7 @@ function M.root(source, marker)
     error('invalid type for argument "source": expected string or buffer number')
   end
   local uri = uri_parse(path)
-  if uri and uri.scheme:lower() == 'file' then
+  if uri and uri.scheme == 'file' then
     path = vim.uri.to_fname(path)
   elseif is_url(path) then
     path = assert(uv.cwd())

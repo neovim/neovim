@@ -2871,6 +2871,8 @@ vim.fs.joinpath({...})                                     *vim.fs.joinpath()*
     removed, and (on Windows) backslashes are replaced with forward-slashes.
     Empty segments are removed. Paths are not expanded/resolved.
 
+    To join URI paths, see |vim.uri.join()|.
+
     Examples:
     • "foo/", "/bar" => "foo/bar"
     • "", "after/plugin" => "after/plugin"
@@ -5886,42 +5888,106 @@ vim.ui.img.set({data_or_id}, {opts})                        *vim.ui.img.set()*
 Lua module: vim.uri                                                  *vim.uri*
 
 vim.Uri                                                              *vim.Uri*
+    URI components (see |vim.uri.parse()|). `tostring()` gives the URI as a
+    string. Can be compared for equality (`==`): >lua
+        vim.uri.parse('HTTP://h/a') == vim.uri.new({ scheme = 'http', host = 'h', path = '/a' }) --> true
+<
 
     Fields: ~
-      • {authority}?  (`string`) Authority (after "//"), e.g.
-                      "user@example.com:8080". Empty for "file:///a", nil for
-                      "file:/a".
-      • {fragment}?   (`string`) Fragment (after "#"), e.g. "section".
-      • {path}        (`string`) Path, e.g. "/a/b". Empty for
-                      "https://example.com".
-      • {query}?      (`string`) Query (after "?"), e.g. "q=1".
-      • {scheme}      (`string`) Scheme, e.g. "https".
+      • {fragment}?  (`string`) Fragment (URI-encoded): "https://h#a%20b" =>
+                     "a%20b".
+      • {host}?      (`string`) Host (lowercase, URI-decoded):
+                     `ssh://Me@[::1]:22` => "::1", "https://Example.com" =>
+                     "example.com". Empty for "file:///a", nil for "file:/a".
+      • {password}?  (`string`) Password (URI-decoded):
+                     "https://u:p%40ss@host" => "p@ss".
+      • {path}       (`string`) Path (URI-encoded): "https://h/a%20b" =>
+                     "/a%20b". Empty for "https://h".
+      • {port}?      (`integer`) Port: "https://example.com:8080" => 8080.
+      • {query}?     (`table<string, string|string[]>`) Query (decoded by
+                     |vim.uri.decode_query()|): "https://h?q=a+b" =>
+                     `{ q = "a b" }`.
+      • {querystr}?  (`string`) Querystring (URI-encoded): "https://h?q=a+b"
+                     => "q=a+b". Takes precedence over `query` in
+                     `tostring()`.
+      • {scheme}     (`string`) Scheme (lowercase): "HTTPS://example.com" =>
+                     "https".
+      • {user}?      (`string`) User (URI-decoded): "ssh://a%40b@host" =>
+                     "a@b".
 
 
 vim.uri.decode({str})                                       *vim.uri.decode()*
-    Decodes a URI-encoded string.
+    Decodes a URI-encoded string. (Use |vim.uri.parse()| to get the structured
+    form.)
 
     Attributes: ~
         Since: 0.13.0
 
     Parameters: ~
-      • {str}  (`string`) string to decode
+      • {str}  (`string`) URI-encoded string.
 
     Return: ~
-        (`string`) decoded string
+        (`string`) Decoded string.
+
+vim.uri.decode_query({query})                         *vim.uri.decode_query()*
+    Decodes a querystring (`application/x-www-form-urlencoded`, as HTML forms
+    send it): "+" is space, and a repeated key gives a list.
+
+    Example: >lua
+        vim.uri.decode_query('q=a+b%26c&tag=x&tag=y&flag')
+        --> { q = 'a b&c', tag = { 'x', 'y' }, flag = '' }
+<
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {query}  (`string?`) Querystring, e.g. a form body.
+
+    Return: ~
+        (`table<string, string|string[]>`)
 
 vim.uri.encode({str}, {rfc})                                *vim.uri.encode()*
-    URI-encodes a string.
+    URI-encodes (percent-encodes) a string. For a querystring, use
+    |vim.uri.encode_query()|.
+
+    Example: >lua
+        vim.uri.encode('/a b?') --> '/a%20b%3f'
+        vim.uri.encode('/a b?', 'rfc2396') --> '%2fa%20b%3f'
+<
 
     Attributes: ~
         Since: 0.13.0
 
     Parameters: ~
-      • {str}  (`string`) string to encode
-      • {rfc}  (`"rfc2396"|"rfc2732"|"rfc3986"?`)
+      • {str}  (`string`) Arbitrary string.
+      • {rfc}  (`"rfc2396"|"rfc2732"|"rfc3986"?`) Chars to keep:
+               • "rfc2396": only `A-Za-z0-9-_.!~*'()`.
+               • "rfc2732": "rfc2396" plus `[` and `]`.
+               • "rfc3986" (default): those valid in a path, e.g. "/", ":",
+                 "@", "&", "=".
 
     Return: ~
-        (`string`) encoded string
+        (`string`) URI-encoded string.
+
+vim.uri.encode_query({params})                        *vim.uri.encode_query()*
+    Encodes `params` as a querystring (`application/x-www-form-urlencoded`, as
+    HTML forms send it): space is "+", and a list value repeats its key. Sorts
+    the keys.
+
+    Example: >lua
+        vim.uri.encode_query({ q = 'a b&c', tag = { 'x', 'y' }, n = 1 })
+        --> 'n=1&q=a+b%26c&tag=x&tag=y'
+<
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {params}  (`table<string, string|number|boolean|(string|number|boolean)[]>`)
+
+    Return: ~
+        (`string`)
 
 vim.uri.from_buf({buf})                                   *vim.uri.from_buf()*
     Gets a URI from a buffer.
@@ -5936,14 +6002,16 @@ vim.uri.from_buf({buf})                                   *vim.uri.from_buf()*
         (`string`) URI
 
 vim.uri.from_fname({path})                              *vim.uri.from_fname()*
-    Gets a URI from a file path. Relative paths are resolved to
-    |current-directory| (RFC 8089 disallows relative URIs).
+    Gets a URI from a file path, or returns `path` if already a URI. Relative
+    paths are resolved to |current-directory| (RFC 8089 disallows relative
+    URIs).
 
     Example: >lua
         vim.uri.from_fname('/a b/c#') --> 'file:///a%20b/c%23'
         vim.uri.from_fname('C:\\a\\b') --> 'file:///C:/a/b'
         vim.uri.from_fname('//server/share/a') --> 'file://server/share/a' (UNC)
         vim.uri.from_fname('a') --> 'file:///home/user/a' (if CWD is "/home/user")
+        vim.uri.from_fname('jdt://a/b') --> 'jdt://a/b'
 <
 
     Attributes: ~
@@ -5955,16 +6023,86 @@ vim.uri.from_fname({path})                              *vim.uri.from_fname()*
     Return: ~
         (`string`) URI
 
-vim.uri.parse({uri})                                         *vim.uri.parse()*
-    Parses a URI into its RFC 3986 components, without decoding them. Unlike
-    RFC 3986, a one-letter scheme is a drive letter, so `C:/a` is not a URI.
+vim.uri.join({base}, {...})                                   *vim.uri.join()*
+    Appends path segments to the path of `base`, like |vim.fs.joinpath()|, and
+    removes "." and ".." segments, but never above the root or a Windows drive
+    letter. Each segment is URI-encoded, so "#" or "?" in a file name is part
+    of the path.
 
     Example: >lua
-        vim.uri.parse('https://example.com/a%20b?q=1#section')
-        --> { scheme = 'https', authority = 'example.com', path = '/a%20b', query = 'q=1', fragment = 'section' }
+        tostring(vim.uri.join('file:///home/u/proj', 'src', 'a#1.lua'))
+        --> 'file:///home/u/proj/src/a%231.lua'
+        tostring(vim.uri.join('file:///C:/a', '../../x')) --> 'file:///C:/x'
+        tostring(vim.uri.join('https://h/api/?v=1', 'users/')) --> 'https://h/api/users/?v=1'
+        vim.uri.join('file:///a', 'file:///b') --> error: a segment can't be a URI
+<
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {base}  (`string|vim.Uri`)
+      • {...}   (`string`) Path segments (not URI-encoded), not URIs.
+
+    Return: ~
+        (`vim.Uri`)
+
+vim.uri.new({uri})                                             *vim.uri.new()*
+    Creates a |vim.Uri| from components.
+
+    Example: >lua
+        tostring(vim.uri.new({ scheme = 'https', host = '::1', port = 8080, path = '/a' }))
+        --> 'https://[::1]:8080/a'
+        tostring(vim.uri.new({ scheme = 'https', host = 'h', path = '/s', query = { q = 'a b' } }))
+        --> 'https://h/s?q=a+b'
+<
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {uri}  (`vim.Uri`) `path` defaults to "".
+
+    Return: ~
+        (`vim.Uri`)
+
+vim.uri.normalize({uri})                                 *vim.uri.normalize()*
+    Normalizes `uri` (RFC 3986 6), so equivalent URIs are equal (`==`).
+    Besides the normalizations of |vim.uri.parse()| and `tostring()`, it
+    normalizes percent-encoding, removes "." and ".." segments, and drops a
+    default port.
+
+    Example: >lua
+        tostring(vim.uri.normalize('HTTPS://Example.COM:443/a/./b/../%7e%2f'))
+        --> 'https://example.com/a/~%2F'
+        vim.uri.normalize('HTTP://h:80') == vim.uri.normalize('http://h/') --> true
+<
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {uri}  (`string|vim.Uri`)
+
+    Return: ~
+        (`vim.Uri`)
+
+vim.uri.parse({uri})                                         *vim.uri.parse()*
+    Parses a URI into its RFC 3986 components. Exception: a one-letter scheme
+    is a drive letter, "C:/a" is not a URI.
+
+    Example: >lua
+        vim.uri.parse('https://u:p%40ss@example.com:80/a%20b?q=1#section')
+        --> { scheme = 'https', user = 'u', password = 'p@ss', host = 'example.com', port = 80,
+             path = '/a%20b', query = { q = '1' }, querystr = 'q=1', fragment = 'section' }
         vim.uri.parse('/a/b') --> nil
         vim.uri.parse('C:/a') --> nil
-        tostring(vim.uri.parse('file:///a?b')) --> 'file:///a?b'
+        vim.uri.parse('https://h:x') --> nil
+
+        -- tostring() builds the URI from the fields.
+        local u = vim.uri.parse('https://example.com/a')
+        u.host, u.port = '::1', 8080
+        tostring(u) --> 'https://[::1]:8080/a'
 <
 
     Attributes: ~
@@ -5974,7 +6112,7 @@ vim.uri.parse({uri})                                         *vim.uri.parse()*
       • {uri}  (`string`)
 
     Return: ~
-        (`vim.Uri?`) URI components, or nil if `uri` has no scheme.
+        (`vim.Uri?`) URI components, or nil if invalid.
 
 vim.uri.to_buf({uri})                                       *vim.uri.to_buf()*
     Gets the buffer for a uri. Creates a new unloaded buffer if no buffer for
@@ -5984,7 +6122,7 @@ vim.uri.to_buf({uri})                                       *vim.uri.to_buf()*
         Since: 0.13.0
 
     Parameters: ~
-      • {uri}  (`string`)
+      • {uri}  (`string|vim.Uri`)
 
     Return: ~
         (`integer`) buf
@@ -6004,7 +6142,7 @@ vim.uri.to_fname({uri})                                   *vim.uri.to_fname()*
         Since: 0.13.0
 
     Parameters: ~
-      • {uri}  (`string`)
+      • {uri}  (`string|vim.Uri`)
 
     Return: ~
         (`string`) filename or unchanged URI for non-file URIs
