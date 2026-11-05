@@ -1,7 +1,7 @@
 local api = vim.api
 
 ---@type table<integer,vim.treesitter.LanguageTree>
-local parsers = setmetatable({}, { __mode = 'v' })
+local parsers = {}
 
 local M = vim._defer_require('vim.treesitter', {
   _fold = ..., --- @module 'vim.treesitter._fold'
@@ -36,20 +36,32 @@ function M._create_parser(buf, lang, opts)
   buf = vim._resolve_bufnr(buf)
 
   local self = LanguageTree.new(buf, lang, opts)
+  local tree_ref = setmetatable({ self }, { __mode = 'v' }) --- @type vim.treesitter.LanguageTree[]
 
   local function bytes_cb(_, ...)
-    self:_on_bytes(...)
+    local ref = tree_ref[1]
+    if ref == nil then
+      return true
+    end
+    ref:_on_bytes(...)
   end
 
   local function detach_cb(_, ...)
-    if parsers[buf] == self then
-      parsers[buf] = nil
+    local ref = tree_ref[1]
+
+    if ref ~= nil then
+      if parsers[buf] == ref then
+        parsers[buf] = nil
+      end
+      ref:_on_detach(...)
     end
-    self:_on_detach(...)
   end
 
   local function reload_cb(_)
-    self:_on_reload()
+    local ref = tree_ref[1]
+    if ref ~= nil then
+      ref:_on_reload()
+    end
   end
 
   local source = self:source() --[[@as integer]]
