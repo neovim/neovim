@@ -3816,6 +3816,9 @@ getenv({name})                                                        *getenv()*
 		is different from a variable set to an empty string.
 		See also |expr-env|.
 
+                Attributes: ~
+                  |api-fast|
+
                 Parameters: ~
                   • {name} (`string`)
 

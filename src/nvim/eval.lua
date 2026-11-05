@@ -4161,6 +4161,7 @@ M.funcs = {
       See also |expr-env|.
 
     ]=],
+    fast = true,
     name = 'getenv',
     params = { { 'name', 'string' } },
     returns = 'string',

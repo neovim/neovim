@@ -102,8 +102,7 @@ local function default_format_func(min_level, level, ...)
   local info = debug.getinfo(3, 'Sl')
   -- Full path (`short_src` is truncated), with $VIMRUNTIME abbreviated.
   local src = info and (info.source:match('^@(.*)') or info.short_src) or '?'
-  local vimruntime = vim.uv.os_getenv('VIMRUNTIME') -- Use `vim.uv` for api-fast (e.g. LSP rpc).
-  local rt_path = vimruntime and vim.fs.relpath(vimruntime, src)
+  local rt_path = vim.env.VIMRUNTIME and vim.fs.relpath(vim.env.VIMRUNTIME, src)
   local header = string.format(
     '[%s][%s] %s:%s',
     level_names[level],
