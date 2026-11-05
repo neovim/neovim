@@ -2319,7 +2319,7 @@ describe('vim.pack', function()
       exec_lua([[
         vim.env.GIT_CONFIG_COUNT = '1'
         vim.env.GIT_CONFIG_KEY_0 = 'column.ui'
-        vim.env.GIT_CONFIG_VALUE_0 = 'dense'
+        vim.env.GIT_CONFIG_VALUE_0 = 'always,dense'
       ]])
 
       -- Should work just after installation
