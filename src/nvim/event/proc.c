@@ -371,7 +371,7 @@ static void flush_stream(Proc *proc, RStream *stream)
   }
 
   // Read remaining data.
-  while (!stream->s.closed && stream->num_bytes < max_bytes) {
+  while (!stream->s.closed && stream->num_bytes < max_bytes && !got_int) {
     // Remember number of bytes before polling.
     size_t num_bytes = stream->num_bytes;
 
