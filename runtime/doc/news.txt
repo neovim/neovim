@@ -421,6 +421,8 @@ LUA
 • |vim.net.request()| can specify custom headers by passing `opts.headers`.
 • |vim.net.request()| can now accept  `method` param overload for multiple HTTP methods.
 • |vim.rpcrequest()| can specify `opts.timeout`.
+• |SystemObj:wait()| accepts a `cond` predicate which allows you to wait for
+  a condition instead of process termination.
 • |writefile()| treats Lua and RPC strings as |Blob|, so it can be used to
   write binary data.
 • |vim.fs.abspath()| gained `cwd` and `plain` parameters.

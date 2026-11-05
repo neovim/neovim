@@ -5944,7 +5944,7 @@ static void ex_connect(exarg_T *eap)
     typval_T argvars[] = { { .v_type = VAR_STRING, .vval.v_string = addr },
                            { .v_type = VAR_NUMBER, .vval.v_number = (varnumber_T)current_ui },
                            { .v_type = VAR_UNKNOWN } };
-    nlua_call_typval("vim.net._ssh", "start", argvars, &ssh_rettv);
+    nlua_call_typval("vim.net._ssh", "connect", argvars, &ssh_rettv);
 
     if (ssh_rettv.v_type == VAR_SPECIAL) {
       return;  // User declined the prompt.

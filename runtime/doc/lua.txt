@@ -5387,7 +5387,7 @@ vim.SystemObj                                                  *vim.SystemObj*
       • {kill}        (`fun(self: vim.SystemObj, signal: integer|string)`) See
                       |SystemObj:kill()|.
       • {pid}         (`integer`) Process ID
-      • {wait}        (`fun(self: vim.SystemObj, timeout: integer?): vim.SystemCompleted`)
+      • {wait}        (`fun(self: vim.SystemObj, timeout: integer?, cond: fun(stdout: string, stderr: string): boolean?): vim.SystemCompleted`)
                       See |SystemObj:wait()|.
       • {write}       (`fun(self: vim.SystemObj, data: string[]|string?)`) See
                       |SystemObj:write()|.
@@ -5417,7 +5417,7 @@ SystemObj:kill({signal})                                    *SystemObj:kill()*
       • {signal}  (`integer|string`) Signal to send to the process. See
                   |luv-constants|.
 
-SystemObj:wait({timeout})                                   *SystemObj:wait()*
+SystemObj:wait({timeout}, {cond})                           *SystemObj:wait()*
     Waits for the process to complete or until the specified timeout elapses.
 
     This method blocks execution until the associated process has exited or
@@ -5432,10 +5432,20 @@ SystemObj:wait({timeout})                                   *SystemObj:wait()*
         local obj = vim.system({'echo', 'hello'}, { text = true })
         local result = obj:wait(1000) -- waits up to 1000ms
         print(result.code, result.signal, result.stdout, result.stderr)
+
+        -- Monitor a long-lived process that prints "READY".
+        local result = vim.system({ 'ssh', '-L', … }):wait(nil, function(stdout)
+          return stdout:find('READY') ~= nil
+        end)
 <
 
     Parameters: ~
       • {timeout}  (`integer?`)
+      • {cond}     (`fun(stdout: string, stderr: string): boolean?`) Stops
+                   waiting when it returns true, without terminating the
+                   process. The `stdout` and `stderr` args have the
+                   accumulated output so far. The result has no `code` or
+                   `signal`.
 
     Return: ~
         (`vim.SystemCompleted`)
