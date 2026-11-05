@@ -3640,7 +3640,11 @@ void fname_expand(buf_T *buf, char **ffname, char **sfname)
   if (*sfname == NULL) {  // no short file name given, use ffname
     *sfname = *ffname;
   }
+  bool is_url = path_with_url(*ffname);
   *ffname = fix_fname(*ffname);     // expand to full path
+  if (is_url) {
+    *sfname = *ffname;
+  }
   if (*ffname == NULL) {
     *sfname = NULL;
     return;
