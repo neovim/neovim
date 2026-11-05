@@ -130,6 +130,8 @@ EXTERN const char e_write[] INIT(= N_("E80: Error while writing"));
 EXTERN const char e_zerocount[] INIT(= N_("E939: Positive count required"));
 EXTERN const char e_usingsid[] INIT(= N_("E81: Using <SID> not in a script context"));
 EXTERN const char e_missingparen[] INIT(= N_("E107: Missing parentheses: %s"));
+EXTERN const char e_missing_closing_paren[] INIT(= N_("E110: Missing ')'"));
+EXTERN const char e_missing_closing_paren_str[] INIT(= N_("E110: Missing ')': %s"));
 EXTERN const char e_empty_buffer[] INIT(= N_("E749: Empty buffer"));
 EXTERN const char e_nobufnr[] INIT(= N_("E86: Buffer %" PRId64 " does not exist"));
 
