@@ -12,6 +12,7 @@ describe('|api-fast| functions', function()
   it('callable in a fast event', function()
     local out = exec_lua(function()
       local result
+      vim.uv.os_setenv('XTEST_FAST', 'x')
       local timer = assert(vim.uv.new_timer())
       timer:start(0, 0, function()
         timer:close()
@@ -21,6 +22,7 @@ describe('|api-fast| functions', function()
             byteidx = vim.fn.byteidx('héllo', 2),
             char2nr = vim.fn.char2nr('A'),
             charidx = vim.fn.charidx('héllo', 3),
+            getenv = vim.env.XTEST_FAST,
             in_fast = vim.in_fast_event(),
             keycode = vim.keycode('<C-a>'),
             keytrans = vim.fn.keytrans(vim.keycode('<C-Home>')),
@@ -55,6 +57,7 @@ describe('|api-fast| functions', function()
       byteidx = 3,
       char2nr = 65,
       charidx = 2,
+      getenv = 'x',
       in_fast = true,
       keycode = '\1', -- <C-a>
       keytrans = '<C-Home>',
@@ -107,6 +110,11 @@ describe('|api-fast| functions', function()
         end,
         charidx = function()
           vim.fn.charidx(big, 500000)
+        end,
+        getenv = function()
+          -- Unset, so getenv() computes it.
+          vim.env.VIMRUNTIME = nil
+          vim.fn.getenv('VIMRUNTIME')
         end,
         keycode = function()
           vim.keycode('<C-a>')
