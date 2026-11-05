@@ -157,7 +157,7 @@ describe('vim.log', function()
     assert_nolog('skip%-me', logfile, 10)
   end)
 
-  it('default formatter logs the real caller source and line', function()
+  it('default formatter logs the caller source and line', function()
     caller_script = t.tmpname(false) .. '.lua'
     write_file(
       caller_script,
@@ -168,6 +168,22 @@ describe('vim.log', function()
 
     exec_lua(function(path)
       vim.cmd('source ' .. vim.fn.fnameescape(path))
+      -- Caller in $VIMRUNTIME.
+      vim.env.VIMRUNTIME = vim.fs.dirname(path)
+      vim.cmd('source ' .. vim.fn.fnameescape(path))
+
+      -- Fast context (e.g. LSP rpc).
+      local logger = vim.log.new({ name = 'Caller' })
+      local done = false
+      local timer = assert(vim.uv.new_timer())
+      timer:start(0, 0, function()
+        timer:close()
+        logger.warn('from-fast')
+        done = true
+      end)
+      vim.wait(1000, function()
+        return done
+      end)
     end, caller_script)
 
     local logfile = get_logfile('Caller')
@@ -175,7 +191,9 @@ describe('vim.log', function()
       return vim.pesc(vim.fn.fnamemodify(path, ':t'))
     end, caller_script)
     assert_log(expected .. ':2', logfile, 10)
+    assert_log('%$VIMRUNTIME/' .. expected .. ':2', logfile, 10)
     assert_log('from%-script', logfile, 10)
+    assert_log('from%-fast', logfile, 10)
     assert_nolog('runtime/lua/vim/log%.lua', logfile, 10)
   end)
 end)
