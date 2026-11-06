@@ -2395,8 +2395,10 @@ void msg_puts_len(const char *const str, const ptrdiff_t len, int hl_id, bool hi
   if (msg_silent != 0 || *str == NUL) {
     if (*str == NUL && ui_has(kUIMessages)) {
       msg_ext_no_fast();
+      const char *save_kind = msg_ext_kind;  // In case the ui code emits a different msg kind.
       ui_call_msg_show(cstr_as_string("empty"), (Array)ARRAY_DICT_INIT, false, false, false,
                        INTEGER_OBJ(-1), (String)STRING_INIT);
+      msg_ext_kind = save_kind;
       cmdline_was_last_drawn = false;
     }
     return;
