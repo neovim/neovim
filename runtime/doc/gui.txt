@@ -141,32 +141,33 @@ Connect UI to a different server
                 no other UI is currently attached to it.
 
 :connect ssh://[{user}@]{host}[:{port}]                 *remote-ssh* *E6101*
-                Connects to Nvim on {host} over SSH:
-                1. Uses `nvim` from `$PATH` on {host} if it is the local
-                   version or newer (never for a local prerelease). Else
-                   auto-installs Nvim on the remote system (based on the
-                   current Nvim version). (Note: `$PATH` is derived from
-                   a non-login shell, your shell rc isn't applied.)
-                2. Starts Nvim on {host}.
-                3. Attaches the UI to it, through an SSH tunnel owned by the
+                Connects to Nvim on {host} (the "remote") over SSH:
+
+                1. Uses `nvim` found in the remote `$PATH` if it is >= the
+                   local version (except when "Update Nvim" is selected), or
+                   else auto-installs Nvim. (Note: `$PATH` is from a non-login
+                   shell, your shell rc isn't applied.)
+                2. Copies your local config files (`stdpath("config")`) to
+                   `~/.config/nvim-remote/`.
+                3. Starts Nvim on the remote.
+                4. Attaches the UI to it, through an SSH tunnel owned by the
                    current (local) server.
 
                 The session ends when either side exits or the connection
                 drops: the remote Nvim stops, and so does the local server,
                 unless a UI is attached to it or a buffer is modified.
 
-                The remote Nvim runs with `NVIM_APPNAME=nvim-remote` (see
-                |$NVIM_APPNAME|), so its config/data are separate from other
-                Nvims, and owned by remote-ssh:
+                The remote Nvim runs with `NVIM_APPNAME=nvim-remote`, so its
+                config/data are isolated (appname "nvim-remote" is reserved
+                for this purpose):
                 - Config: `~/.config/nvim-remote/`, overwritten on connect by
-                  a copy of the local config (|stdpath()| "config", e.g.
-                  `~/.config/nvim/`), except `.git/`. Plugins are not copied:
-                  your plugin manager (e.g. |vim.pack|) installs them.
+                  a copy of your local config files (`stdpath("config")`,
+                  excluding `.git/`). Plugins are not copied, that is
+                  delegated to your plugin manager (|vim.pack|).
                 - Data: `~/.local/share/nvim-remote/`, kept across sessions
-                  for fast reconnects. Caches installed releases, e.g.
-                  `releases/v0.12.0-linux-x86_64/`. Nightly is installed once;
-                  choose "Update Nvim" at the prompt to refresh it (may break
-                  other sessions using it).
+                  for fast reconnect. Caches autoinstalls in `…/releases/`.
+                  Nightly is installed once; choose "Update Nvim" at the
+                  prompt to refresh it (may break other sessions using it).
 
                 Requirements:
                 - Local: `ssh` (OpenSSH 7.6+). Win32-OpenSSH lacks
@@ -176,7 +177,8 @@ Connect UI to a different server
                   accepted and recorded, unless your ssh_config sets
                   `StrictHostKeyChecking`.
                 - Remote: Linux (x86_64, aarch64) or macOS (arm64, x86_64),
-                  with `curl`, `tar`, POSIX `sh`, and a writable `/tmp`.
+                  with `curl`, `tar`, `sha256sum` or `shasum`, POSIX `sh`, and
+                  a writable `/tmp`.
 
                 Examples: >vim
                     :connect ssh://myhost
