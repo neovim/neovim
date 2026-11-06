@@ -1214,7 +1214,7 @@ func Test_CompleteChanged()
 
   call feedkeys("Sf\<C-N>", 'tx')
   call assert_equal({'completed_item': {}, 'width': 15.0,
-        \ 'height': 2.0, 'size': 2,
+        \ 'height': 2.0, 'size': 2, 'complete_leader': 'f',
         \ 'col': 0.0, 'row': 4.0, 'scrollbar': v:false}, g:event)
   call feedkeys("a\<C-N>\<C-N>\<C-E>", 'tx')
   call assert_equal('foo', g:word)
