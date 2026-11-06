@@ -491,8 +491,8 @@ end
 ---   `.local/share/nvim-remote/releases/v0.12.0-linux-x86_64`. Per platform too: a shared `$HOME`
 ---   may be mounted on remote hosts of different platforms.
 ---@return string url Release archive.
----@return string? version Minimum version of an `nvim` on the remote `$PATH` to use instead, or nil
----   for a prerelease (nightlies are not ordered by version).
+---@return string version Minimum version of an `nvim` on the remote `$PATH` to use instead, e.g.
+---   `v0.12.0`, or `v0.13.0-dev` (any build) for a prerelease.
 local function get_release(os, arch)
   local ver = vim.version()
   local base = ('v%d.%d.%d'):format(ver.major, ver.minor, ver.patch)
@@ -515,7 +515,7 @@ local function get_release(os, arch)
     release_name
   )
   local dir = ('%s/releases/%s-%s-%s'):format(remote_data_dir, install_name, target_os, target_arch)
-  return dir, release_url, not ver.prerelease and base or nil
+  return dir, release_url, ver.prerelease and ('%s-%s'):format(base, ver.prerelease) or base
 end
 
 --- Checks that the Nvim server at `addr` answers a request.
@@ -538,7 +538,7 @@ end
 --- See `M.connect()`.
 ---@param chan? integer
 ---@param report fun(status: 'running'|'success'|'failed', msg: string)
----@param update boolean Re-installs the release.
+---@param update boolean Re-installs the release, and runs it even if a `$PATH` nvim qualifies.
 ---@param config? string Local config dir to copy (see `push_config()`).
 local function connect(uri_str, chan, report, update, config)
   local uri = vim.uri.parse(uri_str)
@@ -667,8 +667,8 @@ function M.connect(uri_str, chan)
     )
   end
   local prerelease = vim.version().prerelease ~= nil
-  local choices = prerelease and 'Connect? &Yes\n&Update Nvim\n&No' -- Nightly is refreshed if "(U)pdate".
-    or 'Connect? &Yes\n&No'
+  -- "(U)pdate": refreshes the nightly, and runs it instead of `$PATH` nvim.
+  local choices = prerelease and 'Connect? &Yes\n&Update Nvim\n&No' or 'Connect? &Yes\n&No'
   local choice = vim.fn.confirm(msg, choices, 1, 'Question')
   local update = prerelease and choice == 2
   if choice ~= 1 and not update then

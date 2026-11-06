@@ -3,9 +3,9 @@
 # Bootstraps the headless Nvim server of a |remote-ssh| session: finds or installs `nvim`, which then
 # runs and supervises the server (vim.net._ssh.serve()).
 #
-# Usage: remote_ssh.sh [--update] {sock} {dir} {url} [{version}]
+# Usage: remote_ssh.sh [--update] {sock} {dir} {url} {version}
 #   Runs `nvim` from $PATH if it is {version} or newer, else the release {url}, which it installs
-#   to {dir} (relative to $HOME) unless present, or always with --update. E.g.
+#   to {dir} (relative to $HOME) unless present. --update: (re)installs and runs the release. E.g.
 #   remote_ssh.sh /tmp/nvim-remote.0123abcd/nvim.sock .local/share/nvim-remote/releases/v0.12.0-linux-x86_64 https://…/nvim-linux-x86_64.tar.gz v0.12.0
 
 set -eu
@@ -20,7 +20,6 @@ fi
 # TODO: $PATH is that of a non-login shell, so it may lack e.g. `~/.local/bin`. Could take it from
 # a throwaway login shell: `"$SHELL" -lc 'printf %s "$PATH"'`.
 system_nvim() {
-  [ -n "$want" ] || return 1
   nvim=$(command -v nvim) || return 1
   want=$want "$nvim" --clean -es \
     +'lua os.exit(vim.version.ge(vim.version(), os.getenv("want")) and 0 or 1)' \
@@ -57,8 +56,8 @@ main() {
   sock=$1
   dest="$HOME/$2"
   url=$3
-  want=${4-}
-  if ! nvim=$(system_nvim); then
+  want=$4
+  if [ -n "$update" ] || ! nvim=$(system_nvim); then
     install_release
     nvim="$dest/bin/nvim"
   fi
