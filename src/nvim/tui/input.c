@@ -8,6 +8,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
+#include "nvim/globals.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
@@ -626,7 +627,8 @@ static void handle_primary_device_attr(TermInput *input, TermKeyCsiParam *params
     cb_save(input->tui_data);
   }
 
-  if (nparams == 0) {
+  if (nparams == 0
+      || exiting) {  // no need to notify nvim about the DE1 on exit
     return;
   }
 
