@@ -1156,7 +1156,7 @@ void ex_diffupdate(exarg_T *eap)
   diff_try_update(&diffio, idx_orig, eap);
 
   // force updating cursor position on screen
-  curwin->w_valid_cursor.lnum = 0;
+  changed_line_abv_curs();
 
 theend:
   // A redraw is needed if there were diffs and they were cleared, or there
@@ -2603,6 +2603,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
 
   check_topfill(towin, false);
   hasFolding(towin, towin->w_topline, &towin->w_topline, NULL);
+  set_topline_valid(towin);
 }
 
 /// Parse the diff anchors. If "check_only" is set, will only make sure the
