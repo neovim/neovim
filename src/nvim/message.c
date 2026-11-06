@@ -2479,7 +2479,7 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
     // Find last newline in the message and calculate the current message column
     const char *lastline = xmemrchr(str, '\n', len);
     const char *p = lastline ? lastline + 1 : str;
-    int col = (int)mb_string2cells_len(p, len - (size_t)(p - str));
+    int col = mb_string2cells_len(p, len - (size_t)(p - str));
     msg_col = (lastline ? 0 : msg_col) + col;
 
     return;
