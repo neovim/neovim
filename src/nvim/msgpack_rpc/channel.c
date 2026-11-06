@@ -125,6 +125,13 @@ bool rpc_send_event(uint64_t id, const char *name, Array args)
   }
 
   log_notify(SEND, channel ? channel->id : 0, name);
+  if (strequal(name, "nvim_ui_term_event")) {
+    for (size_t i = 0; i < args.size; i++) {
+      Object a = args.items[i];
+      logmsg(LOGLVL_DBG, "RPC: ", NULL, -1, false, "ORG %lu is \"%s\"", i, a.type == kObjectTypeString ? a.data.string.data : "BORG");
+    }
+  }
+
   if (channel) {
     serialize_request(&channel, 1, 0, name, args);
   } else {
