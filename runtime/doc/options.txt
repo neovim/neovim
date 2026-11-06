@@ -6482,7 +6482,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		    when minwid is larger than the length of the item.
 	0	    Leading zeroes in numeric items.  Overridden by "-".
 	minwid	    Minimum width of the item, padding as set by "-" & "0".
-		    Value must be 50 or less.
 	maxwid	    Maximum width of the item.  Truncation occurs with a "<"
 		    on the left for text items.  Numeric items will be
 		    shifted down to maxwid-2 digits followed by ">"number

@@ -166,6 +166,20 @@ function M.term_exitcode()
   return ''
 end
 
+--- Returns the hostname for the bottom-left (or global) statusline, if Nvim is running in a SSH
+--- session (e.g. |remote-ssh|). Else empty.
+---
+--- @return string
+function M.remote_host()
+  if not vim.env.SSH_CONNECTION then
+    return ''
+  end
+  local win = vim.fn.winnr()
+  -- No window below or left of it (floats always have one).
+  local bottom_left = vim.fn.winnr('j') == win and vim.fn.winnr('h') == win
+  return (vim.o.laststatus == 3 or bottom_left) and vim.fn.hostname() or ''
+end
+
 --- Compute a link to a target on a forge host
 --- @param repo string URL of repo, usually "https://<domain>/<user>/<name>"
 --- @param target string Identifier of a target, like commit hash or tag name

@@ -6848,7 +6848,6 @@ vim.wo.stc = vim.wo.statuscolumn
 --- 	    when minwid is larger than the length of the item.
 --- 0	    Leading zeroes in numeric items.  Overridden by "-".
 --- minwid	    Minimum width of the item, padding as set by "-" & "0".
---- 	    Value must be 50 or less.
 --- maxwid	    Maximum width of the item.  Truncation occurs with a "<"
 --- 	    on the left for text items.  Numeric items will be
 --- 	    shifted down to maxwid-2 digits followed by ">"number
@@ -7089,7 +7088,7 @@ vim.wo.stc = vim.wo.statuscolumn
 ---
 ---
 --- @type string
-vim.o.statusline = "%<%f%( %h%w%m%r%{ v:lua.require('vim._core.util').term_exitcode() }%)%= %(%-10S %)%{ &busy > 0 ? '◐ ' : '' }%(%{ luaeval('(package.loaded[''vim.ui''] and vim.api.nvim_get_current_win() == tonumber(vim.g.actual_curwin or -1) and vim.ui.progress_status()) or '''' ')} %)%{% luaeval('(package.loaded[''vim.diagnostic''] and next(vim.diagnostic.count(0)) and vim.diagnostic.status() .. '' '') or '''' ') %}%(%k %)%{% &ruler ? &rulerformat : '' %}"
+vim.o.statusline = "%(%#(%#StatusLineRemote# @%.30(%{ v:lua.require('vim._core.util').remote_host() }%<%) %#) %)%<%f%( %h%w%m%r%{ v:lua.require('vim._core.util').term_exitcode() }%)%= %(%-10S %)%{ &busy > 0 ? '◐ ' : '' }%(%{ luaeval('(package.loaded[''vim.ui''] and vim.api.nvim_get_current_win() == tonumber(vim.g.actual_curwin or -1) and vim.ui.progress_status()) or '''' ')} %)%{% luaeval('(package.loaded[''vim.diagnostic''] and next(vim.diagnostic.count(0)) and vim.diagnostic.status() .. '' '') or '''' ') %}%(%k %)%{% &ruler ? &rulerformat : '' %}"
 vim.o.stl = vim.o.statusline
 vim.wo.statusline = vim.o.statusline
 vim.wo.stl = vim.wo.statusline

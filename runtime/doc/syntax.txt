@@ -5540,6 +5540,10 @@ StatusLineTerm	Status line of |terminal| window.
 							*hl-StatusLineTermNC*
 StatusLineTermNC
 		Status line of non-current |terminal| windows.
+							*hl-StatusLineRemote*
+StatusLineRemote
+		Hostname in the default 'statusline' of the bottom-left
+		window, shown in a SSH session (e.g. |remote-ssh|).
 							*hl-TabLine*
 TabLine		Tabpages line, not active tabpage label.
 		Combined with |hl-TabLineFill|.
