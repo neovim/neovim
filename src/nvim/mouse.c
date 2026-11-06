@@ -727,6 +727,11 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     }
 
     if (click_defs != NULL) {
+      // A click may fall outside the clickable area, e.g. a float's border.
+      if (click_col < 0
+          || (in_winbar && click_col >= (int)wp->w_winbar_click_defs_size)) {
+        return false;
+      }
       switch (click_defs[click_col].type) {
       case kStlClickDisabled:
         // If there is no click definition, still open the popupmenu for a
