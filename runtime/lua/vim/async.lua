@@ -313,7 +313,14 @@ end
 
 if type(vim) == 'table' then
   runtime.config({
-    wait = vim.wait,
+    -- CTRL-C interrupts a sync wait (see Task:wait()).
+    wait = function(timeout, predicate)
+      local done, code = vim.wait(timeout, predicate)
+      if code == -2 then
+        error('interrupted', 0)
+      end
+      return done
+    end,
     schedule = vim.schedule,
     new_timer = vim.uv.new_timer,
   })

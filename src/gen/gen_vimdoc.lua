@@ -380,6 +380,24 @@ local config = {
       if fun.classvar == 'M' then
         fun.classvar = nil
       end
+      -- Nvim-specific behavior (see `runtime.config()` in async.lua). #42729
+      if fun.class == 'vim.async.Task' and fun.name == 'wait' then
+        fun.notes = fun.notes or {}
+        table.insert(fun.notes, {
+          desc = vim.text.indent(
+            0,
+            [[
+            CTRL-C interrupts the wait like a timeout, but fails with `"interrupted"`.
+            ```lua
+            local ok, result_or_err = task:pwait(1000)
+            if not ok then
+              task:close() -- Timed out, or CTRL-C.
+            end
+            ```
+            ]]
+          ),
+        })
+      end
     end,
   },
   diagnostic = {
