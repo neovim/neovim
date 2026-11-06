@@ -4413,6 +4413,9 @@ static void f_state(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (msg_scrolled > 0) {
     may_add_state_char(&ga, include, 's');
   }
+  if (text_locked()) {
+    may_add_state_char(&ga, include, 'l');
+  }
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = ga.ga_data;
