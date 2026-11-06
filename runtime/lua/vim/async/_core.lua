@@ -182,7 +182,8 @@ do --- Task
   --- Synchronously wait for the Task to complete.
   ---
   --- If a timeout is provided, waits for the given time in milliseconds before
-  --- failing with `"timeout"`. With no timeout, waits indefinitely.
+  --- failing with `"timeout"`. The task keeps running: use [Task:close()] to
+  --- cancel it. With no timeout, waits indefinitely.
   ---
   --- This is for synchronous code. Inside a task, prefer [vim.async.await()] so
   --- the current task suspends instead of pumping the event loop itself.
