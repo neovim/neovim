@@ -285,12 +285,14 @@ local function parse(filepath, dir)
       local glob, key, val = parse_line(line)
       if glob then
         glob = glob:find('/') and (dir .. '/' .. glob:gsub('^/', '')) or ('**/' .. glob)
-        local ok, regpat = pcall(glob2regpat, glob)
+        local ok, regex = pcall(function()
+          return vim.regex(glob2regpat(glob))
+        end)
         if ok then
-          pat = vim.regex(regpat)
+          pat = regex
         else
           pat = nil
-          warn('editorconfig: Error occurred while parsing glob pattern "%s": %s', glob, regpat)
+          warn('editorconfig: Error occurred while parsing glob pattern "%s": %s', glob, regex)
         end
       elseif key ~= nil and val ~= nil then
         if key == 'root' then
