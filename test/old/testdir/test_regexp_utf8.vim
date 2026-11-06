@@ -829,4 +829,55 @@ func Test_regexp_casefold_match_length()
   endtry
 endfunc
 
+" A literal followed by "\%C" must match a character followed by composing
+" characters also with 'ignorecase' or "\c": the comparison of the literal in
+" cstrncmp() must not consume the composing characters that follow it in the
+" text, so that they are left for the "\%C" atom to skip (or for the
+" composing check to reject the match when there is no atom).  The NFA
+" engine already behaves this way.
+func Test_composing_after_literal_ignorecase()
+  CheckFeature multi_byte
+  let save_re = &regexpengine
+  let save_ic = &ignorecase
+  let grave = nr2char(0x300)
+  let acute = nr2char(0x301)
+  let text = 'ca' .. grave .. 't'
+  let text2 = 'ca' .. grave .. acute .. 't'
+  try
+    for engine in [0, 1, 2]
+      for ic in [0, 1]
+        execute 'set regexpengine=' .. engine
+        execute 'set ' .. (ic ? '' : 'no') .. 'ignorecase'
+        let ctx = 'engine=' .. engine .. ' ignorecase=' .. ic
+        " a literal followed by "\%C" matches a base character plus its
+        " composing characters, for every engine and 'ignorecase' value
+        call assert_equal(1, match(text, 'a\%C'), ctx)
+        call assert_equal(1, match(text, '\ca\%C'), ctx)
+        " more than one character before "\%C"
+        call assert_equal(0, match(text, 'ca\%Ct'), ctx)
+        " a collection is compared per character, unaffected
+        call assert_equal(1, match(text, '[a]\%C'), ctx)
+        " "\Z" disables composing character matching, unaffected
+        call assert_equal(1, match(text, 'a\Z'), ctx)
+        " the pattern may include the composing character itself
+        call assert_equal(0, match(text, 'ca' .. grave), ctx)
+        " "\%C" inside a capture group
+        call assert_equal(1, match(text, '\(a\%C\)'), ctx)
+        " a case-folded pattern character matches with 'ignorecase' only
+        call assert_equal(ic ? 1 : -1, match(text, 'A\%C'), ctx)
+        " without "\%C" a literal does not match a character followed by a
+        " composing character
+        call assert_equal(-1, match(text, 'a'), ctx)
+        " text with more than one composing character
+        call assert_equal(1, match(text2, 'a\%C'), ctx)
+        call assert_equal(1, match(text2, 'a' .. grave .. '\%C'), ctx)
+        call assert_equal(0, match(text2, 'ca' .. grave .. acute .. 't'), ctx)
+      endfor
+    endfor
+  finally
+    let &regexpengine = save_re
+    let &ignorecase = save_ic
+  endtry
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
