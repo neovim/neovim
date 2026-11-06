@@ -113,21 +113,6 @@ typedef struct {
   int rgb;      ///< RGB value, or -1 for the default color.
 } TerminalColorAttrs;
 
-// TODO(noib3): drop these types and use ghostty_terminal_vt_write_until() once we pin to a version
-// of Ghostty that includes https://github.com/ghostty-org/ghostty/pull/14802.
-typedef enum {
-  kTermRequestParserNormal = 0,
-  kTermRequestParserEsc,
-  kTermRequestParserString,     ///< Inside an OSC, DCS or APC string.
-  kTermRequestParserStringEsc,  ///< After an ESC inside a string.
-} TermRequestParserState;
-
-typedef enum {
-  kTermRequestKindOsc = 0,
-  kTermRequestKindDcs,
-  kTermRequestKindApc,
-} TermRequestKind;
-
 typedef enum {
   kTermRequestTerminatorBel = 0,
   kTermRequestTerminatorSt,
@@ -140,6 +125,12 @@ typedef enum {
 #define REFRESH_DELAY 10
 
 #define TEXTBUF_SIZE 0x1fff
+
+// Boundaries of the OSC, DCS and APC strings reported to TermRequest.
+#define TERMREQUEST_START (GHOSTTY_TERMINAL_BOUNDARY_OSC_START | GHOSTTY_TERMINAL_BOUNDARY_DCS_START \
+                           | GHOSTTY_TERMINAL_BOUNDARY_APC_START)
+#define TERMREQUEST_END (GHOSTTY_TERMINAL_BOUNDARY_OSC_END | GHOSTTY_TERMINAL_BOUNDARY_DCS_END \
+                         | GHOSTTY_TERMINAL_BOUNDARY_APC_END)
 
 // Whether to include OSC 52/clipboard support in Ghostty's DA1 response. Functional tests
 // toggle this to force the runtime OSC 52 detection path to fall back to XTGETTCAP.
@@ -210,9 +201,7 @@ struct terminal {
   bool color_set[16];
 
   StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request sequence
-  TermRequestParserState termrequest_state;  ///< Current OSC/DCS/APC TermRequest or CSI parser state.
-  TermRequestKind termrequest_kind;  ///< Current OSC/DCS/APC sequence kind.
-  TermRequestTerminator termrequest_terminator;  ///< Terminator (BEL or ST) used in request.
+  bool termrequest_active;  ///< Inside an OSC, DCS or APC string collected in termrequest_buffer.
 
   size_t refcount;                  // reference count
 };
@@ -280,7 +269,7 @@ static void emit_termrequest(void **argv)
   }
 }
 
-static void schedule_termrequest(Terminal *term)
+static void schedule_termrequest(Terminal *term, TermRequestTerminator terminator)
 {
   term->pending.send = xmalloc(sizeof(StringBuilder));
   kv_init(*term->pending.send);
@@ -293,86 +282,54 @@ static void schedule_termrequest(Terminal *term)
                  (void *)(intptr_t)term->termrequest_buffer.size, term->pending.send,
                  (void *)(intptr_t)line, (void *)(intptr_t)col,
                  (void *)(intptr_t)term->scrollback_deleted,
-                 (void *)(intptr_t)term->termrequest_terminator);
+                 (void *)(intptr_t)terminator);
 }
 
-static void termrequest_finish(Terminal *term, TermRequestTerminator terminator)
+/// Appends string content from Ghostty's output to the pending TermRequest, if any.
+static void termrequest_append(Terminal *term, const uint8_t *data, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
-  term->termrequest_terminator = terminator;
-  term->termrequest_state = kTermRequestParserNormal;
+  if (term->termrequest_active) {
+    kv_concat_len(term->termrequest_buffer, (const char *)data, len);
+  }
 }
 
-/// Feeds one byte of terminal output to the TermRequest parser.
+/// Handles a boundary reached by ghostty_terminal_vt_write_until().
 ///
-/// @return true if "c" terminated an OSC, DCS or APC request, which is then in
-///         "term->termrequest_buffer" without its terminator.
-static bool termrequest_parse_byte(Terminal *term, uint8_t c)
+/// @param data  The bytes Ghostty consumed, ending with the byte that reached the boundary.
+static void termrequest_handle_stop(Terminal *term, const uint8_t *data,
+                                    const GhosttyTerminalWriteStop *stop)
   FUNC_ATTR_NONNULL_ALL
 {
-  switch (term->termrequest_state) {
-  case kTermRequestParserNormal:
-    // In UTF-8, single bytes in 0x80-0x9f are continuation bytes, not C1 introducers.
-    if (c == ESC) {
-      term->termrequest_state = kTermRequestParserEsc;
+  if ((stop->reached & TERMREQUEST_END) && term->termrequest_active) {
+    // The byte that ended the string isn't part of it.
+    termrequest_append(term, data, stop->consumed - 1);
+    term->termrequest_active = false;
+    // Ghostty discards cancelled and aborted strings, so only report the terminated ones.
+    if (stop->end != GHOSTTY_TERMINAL_STRING_END_CANCELLED
+        && stop->end != GHOSTTY_TERMINAL_STRING_END_ABORTED && has_event(EVENT_TERMREQUEST)) {
+      schedule_termrequest(term, stop->end == GHOSTTY_TERMINAL_STRING_END_BEL
+                           ? kTermRequestTerminatorBel : kTermRequestTerminatorSt);
     }
-    return false;
+  }
 
-  case kTermRequestParserEsc:
-    switch (c) {
-    case ']':
-      term->termrequest_kind = kTermRequestKindOsc;
-      break;
-    case 'P':
-      term->termrequest_kind = kTermRequestKindDcs;
-      break;
-    case '_':
-      term->termrequest_kind = kTermRequestKindApc;
-      break;
-    case ESC:
-      return false;
-    default:
-      term->termrequest_state = kTermRequestParserNormal;
-      return false;
-    }
-    term->termrequest_state = kTermRequestParserString;
+  // An 8-bit introducer can end one string and start another, so check for a start too.
+  char introducer = NUL;
+  if (stop->reached & GHOSTTY_TERMINAL_BOUNDARY_OSC_START) {
+    introducer = ']';
+  } else if (stop->reached & GHOSTTY_TERMINAL_BOUNDARY_DCS_START) {
+    introducer = 'P';
+  } else if ((stop->reached & GHOSTTY_TERMINAL_BOUNDARY_APC_START)
+             && (stop->byte == '_' || stop->byte == 0x9f)) {
+    // SOS and PM strings also reach this boundary, but aren't requests.
+    introducer = '_';
+  }
+  if (introducer != NUL) {
+    term->termrequest_active = true;
     kv_size(term->termrequest_buffer) = 0;
     kv_push(term->termrequest_buffer, ESC);
-    kv_push(term->termrequest_buffer, (char)c);
-    return false;
-
-  case kTermRequestParserStringEsc:
-    if (c == '\\') {
-      termrequest_finish(term, kTermRequestTerminatorSt);
-      return true;
-    }
-    // Not an ST, so the ESC is part of the string, and so is "c" if it's another ESC.
-    kv_push(term->termrequest_buffer, ESC);
-    term->termrequest_state = kTermRequestParserString;
-    if (c == ESC) {
-      kv_push(term->termrequest_buffer, ESC);
-      return false;
-    }
-    FALLTHROUGH;
-
-  case kTermRequestParserString:
-    // Like Ghostty, treat a single 0x9c as ST only in an APC. In OSC and DCS it's UTF-8 content.
-    if (c == 0x9c && term->termrequest_kind == kTermRequestKindApc) {
-      termrequest_finish(term, kTermRequestTerminatorSt);
-      return true;
-    }
-    if (term->termrequest_kind == kTermRequestKindOsc && c == BELL) {
-      termrequest_finish(term, kTermRequestTerminatorBel);
-      return true;
-    }
-    if (c == ESC) {
-      term->termrequest_state = kTermRequestParserStringEsc;
-      return false;
-    }
-    kv_push(term->termrequest_buffer, (char)c);
-    return false;
+    kv_push(term->termrequest_buffer, introducer);
   }
-  return false;
 }
 
 void terminal_init(void)
@@ -1602,30 +1559,22 @@ static void on_sync_flush(void **argv)
 static void vt_write(Terminal *term, const char *data, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
-  size_t chunk_start = 0;
-  for (size_t i = 0; i < len; i++) {
-    if (term->termrequest_state == kTermRequestParserNormal) {
-      // Only ESC starts a sequence handled below, so skip to the next one.
-      const char *esc = memchr(data + i, ESC, len - i);
-      if (esc == NULL) {
-        break;
-      }
-      i = (size_t)(esc - data);
+  const uint8_t *bytes = (const uint8_t *)data;
+  while (len > 0) {
+    GhosttyTerminalWriteStop stop = GHOSTTY_INIT_SIZED(GhosttyTerminalWriteStop);
+    GhosttyResult result = ghostty_terminal_vt_write_until(term->ghostty, bytes, len,
+                                                           TERMREQUEST_START | TERMREQUEST_END,
+                                                           &stop);
+    if (result != GHOSTTY_SUCCESS) {
+      // Ghostty consumed all of "bytes" without reaching a boundary.
+      assert(result == GHOSTTY_NO_VALUE);
+      termrequest_append(term, bytes, len);
+      break;
     }
-
-    if (termrequest_parse_byte(term, (uint8_t)data[i])) {
-      // Ghostty must process the output up to here before schedule_termrequest() reads the
-      // cursor and starts holding back responses to later queries.
-      ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)(data + chunk_start),
-                                i + 1 - chunk_start);
-      if (has_event(EVENT_TERMREQUEST)) {
-        schedule_termrequest(term);
-      }
-      chunk_start = i + 1;
-    }
+    termrequest_handle_stop(term, bytes, &stop);
+    bytes += stop.consumed;
+    len -= stop.consumed;
   }
-  ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)(data + chunk_start),
-                            len - chunk_start);
   invalidate_terminal(term, -1, -1);
 }
 
