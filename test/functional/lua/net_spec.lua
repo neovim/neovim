@@ -109,9 +109,83 @@ describe('vim.net.request', function()
     t.eq(false, rv[2], 'Expected buffer to be unmodified for remote content')
   end)
 
-  it('calls on_response with error on 404 (async failure)', function()
+  it('invokes on_response(error) on 404 (async failure)', function()
     local result = request('GET', http_server('', '404 Not Found'))
     t.matches('404', result.error)
+  end)
+
+  it('with vim.async: await(), Task:close() cancels the request', function()
+    local url = http_server('hello')
+    t.eq(
+      { body = 'hello' },
+      exec_lua(function()
+        local err, res = vim.async
+          .run(function()
+            return vim.async.await(3, vim.net.request, url, {})
+          end)
+          :wait(5000)
+        return { err = err, body = res and res.body }
+      end)
+    )
+    -- is_closing() after the request stopped.
+    url = http_server('hello')
+    t.eq(
+      true,
+      exec_lua(function()
+        local done = false
+        local req = vim.net.request(url, {}, function()
+          done = true
+        end)
+        vim.wait(5000, function()
+          return done
+        end)
+        return req:is_closing()
+      end)
+    )
+
+    url = exec_lua(function()
+      vim.env.no_proxy = '127.0.0.1'
+      -- Accepts a connection, never responds.
+      local server = assert(vim.uv.new_tcp())
+      _G.handles = { server }
+      assert(server:bind('127.0.0.1', 0))
+      assert(server:listen(1, function()
+        local client = assert(vim.uv.new_tcp())
+        table.insert(_G.handles, client)
+        assert(server:accept(client))
+      end))
+      return ('http://127.0.0.1:%d/'):format(server:getsockname().port)
+    end)
+
+    -- is_closing() after close().
+    t.eq(
+      { false, true },
+      exec_lua(function()
+        local req = vim.net.request(url, {})
+        local closing = req:is_closing()
+        req:close()
+        return { closing, req:is_closing() }
+      end)
+    )
+    -- The task completes after the request stops.
+    t.eq(
+      { false, true },
+      exec_lua(function()
+        local task = vim.async.run(function()
+          return vim.async.await(3, vim.net.request, url, {})
+        end)
+        local ok = task:pwait(100)
+        task:close()
+        return { ok, vim.wait(5000, function()
+          return task:completed()
+        end) }
+      end)
+    )
+    exec_lua(function()
+      for _, h in ipairs(_G.handles) do
+        h:close()
+      end
+    end)
   end)
 
   it('plugin writes output to buffer', function()
@@ -202,7 +276,8 @@ describe('vim.net.request', function()
         assert(vim.uv.fs_copyfile(path, opts.outpath))
         callback(nil)
       end
-      vim.cmd.edit('https://example.com/browser.zip')
+      -- The query is not part of the path (see |vim.Uri|).
+      vim.cmd.edit({ 'https://example.com/browser.zip?raw=1', magic = { file = false } })
       vim.wait(1000, function()
         return vim.b.nvim_zip ~= nil
       end)
@@ -215,7 +290,7 @@ describe('vim.net.request', function()
     end, fixture)
 
     t.eq(false, rv.legacy)
-    t.eq('https://example.com/browser.zip', rv.name)
+    t.eq('https://example.com/browser.zip?raw=1', rv.name)
     t.eq(true, rv.nvim_zip)
   end)
 

@@ -67,6 +67,11 @@ local http_methods = {
 --- })
 --- job:close()
 ---
+--- -- Await the response in a task (|lua-async|). Closing the task cancels the request.
+--- vim.async.run(function()
+---   local err, res = vim.async.await(3, vim.net.request, 'https://neovim.io/charter/', {})
+--- end)
+---
 --- -- Add custom headers in the request.
 --- vim.net.request('https://neovim.io/charter/', {
 ---   headers = { Authorization = 'Bearer XYZ' },
@@ -85,7 +90,7 @@ local http_methods = {
 --- @param on_response? vim.net.request.ResponseFunc Callback invoked on request completion.
 --- @overload fun(url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
 --- @overload fun(method: vim.net.HttpMethod, url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
---- @return { close: fun() } # Object with `close()` method which cancels the request.
+--- @return vim.async.Closable # Cancels the request or checks its status.
 function M.request(method, url, opts, on_response)
   if type(url) ~= 'string' then
     on_response = opts --[[@as vim.net.request.ResponseFunc?]]
@@ -151,6 +156,8 @@ function M.request(method, url, opts, on_response)
   table.insert(args, url)
 
   local system_opts = opts.body and { stdin = opts.body } or {}
+  local closing = false -- close() was called.
+  local on_close --- @type fun()?
   local job = vim.system(args, system_opts, function(res)
     --- @cast res.stdout -?
     ---@type string?, vim.net.request.Response?
@@ -173,14 +180,31 @@ function M.request(method, url, opts, on_response)
       end
     end)
 
+    if on_close then
+      on_close()
+    end
     if on_response then
       on_response(err, response)
     end
   end)
 
   return {
-    close = function()
+    -- Calls `callback` after the request stops. |vim.async.Closable|
+    --- @param callback? fun()
+    close = function(_, callback)
+      closing = true
+      if job:is_closing() then -- Stopped already.
+        if callback then
+          callback()
+        end
+        return
+      end
+      on_close = callback
       job:kill('sigint')
+    end,
+    -- Returns true if close() was called, or the request stopped.
+    is_closing = function()
+      return closing or job:is_closing()
     end,
   }
 end
