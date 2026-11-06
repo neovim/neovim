@@ -6,13 +6,13 @@
 typedef int32_t linenr_T;
 /// Format used to print values which have linenr_T type
 #define PRIdLINENR PRId32
+///< Maximal (invalid) line number
+#define MAXLNUM 0x7fffffff
 
 /// Column number type
 typedef int colnr_T;
 /// Format used to print values which have colnr_T type
 #define PRIdCOLNR "d"
-
-enum { MAXLNUM = 0x7fffffff, };  ///< Maximal (invalid) line number
 
 // MAXCOL used to be INT_MAX, but with 64 bit ints that results in running
 // out of memory when trying to allocate a very long line.
