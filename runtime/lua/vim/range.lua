@@ -37,16 +37,16 @@ local util = require('vim.pos._util')
 --- ```
 ---
 ---@class vim.Range
----@field start_row integer 0-based byte index.
----@field start_col integer 0-based byte index.
----@field end_row integer 0-based byte index.
----@field end_col integer 0-based byte index.
----@field buf integer Optional buffer handle.
----@field private [1] integer underlying representation of start_row
----@field private [2] integer underlying representation of start_col
----@field private [3] integer underlying representation of end_row
----@field private [4] integer underlying representation of end_col
----@field private [5] integer underlying representation of buf
+---@field start_row integer same as [1], provided for convenience.
+---@field start_col integer same as [2], provided for convenience.
+---@field end_row integer same as [3], provided for convenience.
+---@field end_col integer same as [4], provided for convenience.
+---@field buf integer same as [5], provided for convenience.
+---@field [1] integer start_row 0-based byte index.
+---@field [2] integer start_col 0-based byte index.
+---@field [3] integer end_row 0-based byte index.
+---@field [4] integer end_col 0-based byte index.
+---@field [5] integer buffer handle.
 local M = {}
 
 ---@private
@@ -100,7 +100,7 @@ end
 ---@overload fun(start: vim.Pos, end_: vim.Pos): vim.Range
 ---@overload fun(buf: integer, start_row: integer, start_col: integer, end_row: integer, end_col: integer): vim.Range
 function M.new(...)
-  ---@type integer, integer, integer, integer, integer|nil
+  ---@type integer, integer, integer, integer, integer
   local start_row, start_col, end_row, end_col, buf
 
   local nargs = select('#', ...)
