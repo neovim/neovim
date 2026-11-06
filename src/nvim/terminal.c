@@ -192,7 +192,7 @@ struct terminal {
   int invalid_start, invalid_end;   // invalid rows in Ghostty screen
   struct {
     int row, col;
-    GhosttyRenderStateCursorVisualStyle shape;
+    GhosttyCursorStyle shape;
     bool visible;  ///< Terminal wants to show cursor.
                    ///< `TerminalState.cursor_visible` indicates whether it is actually shown.
     bool blink;
@@ -445,15 +445,15 @@ static void fetch_cursor(Terminal *term)
   term->cursor.shape = cursor.visual_style;
 }
 
-static GhosttyTerminalCursorStyle default_cursor_style(void)
+static GhosttyCursorStyle default_cursor_style(void)
 {
   switch (shape_table[SHAPE_IDX_TERM].shape) {
   case SHAPE_BLOCK:
-    return GHOSTTY_TERMINAL_CURSOR_STYLE_BLOCK;
+    return GHOSTTY_CURSOR_STYLE_BLOCK;
   case SHAPE_HOR:
-    return GHOSTTY_TERMINAL_CURSOR_STYLE_UNDERLINE;
+    return GHOSTTY_CURSOR_STYLE_UNDERLINE;
   case SHAPE_VER:
-    return GHOSTTY_TERMINAL_CURSOR_STYLE_BAR;
+    return GHOSTTY_CURSOR_STYLE_BAR;
   }
   UNREACHABLE;
 }
@@ -463,7 +463,7 @@ static GhosttyTerminalCursorStyle default_cursor_style(void)
 static void update_default_cursor(Terminal *term)
   FUNC_ATTR_NONNULL_ALL
 {
-  GhosttyTerminalCursorStyle style = default_cursor_style();
+  GhosttyCursorStyle style = default_cursor_style();
   assert_ok(ghostty_terminal_set(term->ghostty,
                                  GHOSTTY_TERMINAL_OPT_DEFAULT_CURSOR_STYLE,
                                  &style));
@@ -537,8 +537,8 @@ static void set_mouse_encoder_size(Terminal *term, uint16_t width, uint16_t heig
     .padding_right = 0,
     .padding_left = 0,
   };
-  ghostty_mouse_encoder_setopt(term->ghostty_mouse_encoder, GHOSTTY_MOUSE_ENCODER_OPT_SIZE,
-                               &size);
+  assert_ok(ghostty_mouse_encoder_set(term->ghostty_mouse_encoder, GHOSTTY_MOUSE_ENCODER_OPT_SIZE,
+                                      &size));
 }
 
 static void sync_mouse_encoder(Terminal *term)
@@ -559,7 +559,7 @@ static void sync_mouse_encoder(Terminal *term)
   term->ghostty_mouse_modes = modes;
 
   // This resets motion deduplication, so call it only when mouse modes changed.
-  ghostty_mouse_encoder_setopt_from_terminal(term->ghostty_mouse_encoder, term->ghostty);
+  assert_ok(ghostty_mouse_encoder_set_from_terminal(term->ghostty_mouse_encoder, term->ghostty));
 }
 
 /// Returns the held button to report in motion events, or GHOSTTY_MOUSE_BUTTON_UNKNOWN if none is.
@@ -609,10 +609,11 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   assert_ok(ghostty_terminal_new(NULL, &term->ghostty, opts.width, opts.height));
   term->width = opts.width;
   term->height = opts.height;
-  // Ghostty has a default scrollback byte limit of 10k bytes, so we set it to NULL to disable it.
+  // Ghostty has a default scrollback byte limit of 10k bytes, so we set it to SIZE_MAX to disable
+  // it.
   assert_ok(ghostty_terminal_set(term->ghostty,
                                  GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_BYTES,
-                                 NULL));
+                                 &(size_t){ SIZE_MAX }));
   // Ghostty has no scrollback line limit by default, so we initially set it to the max value of the
   // 'scrollback' option. The real value will be set when processing TermOpen.
   assert_ok(ghostty_terminal_set(term->ghostty,
@@ -670,9 +671,9 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   assert_ok(ghostty_mouse_event_new(NULL, &term->ghostty_mouse_event));
   set_mouse_encoder_size(term, opts.width, opts.height);
   bool track_last_cell = true;
-  ghostty_mouse_encoder_setopt(term->ghostty_mouse_encoder,
-                               GHOSTTY_MOUSE_ENCODER_OPT_TRACK_LAST_CELL,
-                               &track_last_cell);
+  assert_ok(ghostty_mouse_encoder_set(term->ghostty_mouse_encoder,
+                                      GHOSTTY_MOUSE_ENCODER_OPT_TRACK_LAST_CELL,
+                                      &track_last_cell));
   update_default_cursor(term);
   update_render_state(term);
 
@@ -1483,13 +1484,13 @@ void terminal_paste(int count, String *y_array, size_t y_size)
 static void sync_key_encoder(Terminal *term)
   FUNC_ATTR_NONNULL_ALL
 {
-  ghostty_key_encoder_setopt_from_terminal(term->ghostty_key_encoder, term->ghostty);
+  assert_ok(ghostty_key_encoder_set_from_terminal(term->ghostty_key_encoder, term->ghostty));
 
   // MOD_MASK_ALT is already terminal Alt, so always encode option as Alt.
   GhosttyOptionAsAlt option_as_alt = GHOSTTY_OPTION_AS_ALT_TRUE;
-  ghostty_key_encoder_setopt(term->ghostty_key_encoder,
-                             GHOSTTY_KEY_ENCODER_OPT_MACOS_OPTION_AS_ALT,
-                             &option_as_alt);
+  assert_ok(ghostty_key_encoder_set(term->ghostty_key_encoder,
+                                    GHOSTTY_KEY_ENCODER_OPT_MACOS_OPTION_AS_ALT,
+                                    &option_as_alt));
 }
 
 /// Returns a known unshifted codepoint for a key event.
@@ -1546,15 +1547,19 @@ static void send_key_event(Terminal *term, GhosttyKey key, GhosttyMods mods, con
 {
   sync_key_encoder(term);
 
-  ghostty_key_event_set_action(term->ghostty_key_event, GHOSTTY_KEY_ACTION_PRESS);
-  ghostty_key_event_set_key(term->ghostty_key_event, key);
-  ghostty_key_event_set_mods(term->ghostty_key_event, mods);
-  ghostty_key_event_set_utf8(term->ghostty_key_event, utf8, utf8_len);
+  assert_ok(ghostty_key_event_set_action(term->ghostty_key_event, GHOSTTY_KEY_ACTION_PRESS));
+  assert_ok(ghostty_key_event_set_key(term->ghostty_key_event, key));
+  assert_ok(ghostty_key_event_set_mods(term->ghostty_key_event, mods));
+  assert_ok(ghostty_key_event_set_utf8(term->ghostty_key_event, (GhosttyString) {
+    .ptr = (const uint8_t *)utf8,
+    .len = utf8_len,
+  }));
   uint32_t unshifted_codepoint = get_unshifted_codepoint(utf8, utf8_len);
-  ghostty_key_event_set_unshifted_codepoint(term->ghostty_key_event, unshifted_codepoint);
+  assert_ok(ghostty_key_event_set_unshifted_codepoint(term->ghostty_key_event,
+                                                      unshifted_codepoint));
 
   // An escape sequence with the text of at most one character.
-  char buf[128];
+  uint8_t buf[128];
   size_t len = 0;
   GhosttyResult res = ghostty_key_encoder_encode(term->ghostty_key_encoder,
                                                  term->ghostty_key_event,
@@ -1563,7 +1568,7 @@ static void send_key_event(Terminal *term, GhosttyKey key, GhosttyMods mods, con
                                                  &len);
   assert_ok(res);
   if (res == GHOSTTY_SUCCESS && len > 0) {
-    terminal_send(term, buf, len);
+    terminal_send(term, (const char *)buf, len);
   }
 }
 
@@ -1711,7 +1716,7 @@ static bool get_grid_ref(Terminal *term, GhosttyPointTag tag, uint32_t row, int 
     return false;
   }
 
-  *ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+  *ref = (GhosttyGridRef){ 0 };
   GhosttyPoint point = {
     .tag = tag,
     .value = {
@@ -1854,18 +1859,18 @@ static int cell_attr(Terminal *term, GhosttyCell cell, GhosttyStyle style,
   TerminalColorAttrs fg = convert_color(palette, style.fg_color);
   GhosttyStyleColor bg_color = cell_bg_color(cell, style.bg_color);
   TerminalColorAttrs bg = convert_color(palette, bg_color);
-  int underline = get_underline_hl_flag(style.underline);
+  int underline = get_underline_hl_flag(GHOSTTY_STYLE_UNDERLINE(style));
   int sp = underline ? convert_color(palette, style.underline_color).rgb : -1;
 
-  int hl_attrs = (style.bold ? HL_BOLD : 0)
-                 | (style.faint ? HL_DIM : 0)
-                 | (style.blink ? HL_BLINK : 0)
-                 | (style.invisible ? HL_CONCEALED : 0)
-                 | (style.overline ? HL_OVERLINE : 0)
-                 | (style.italic ? HL_ITALIC : 0)
-                 | (style.inverse ? HL_INVERSE : 0)
+  int hl_attrs = ((style.flags & GHOSTTY_STYLE_FLAG_BOLD) ? HL_BOLD : 0)
+                 | ((style.flags & GHOSTTY_STYLE_FLAG_FAINT) ? HL_DIM : 0)
+                 | ((style.flags & GHOSTTY_STYLE_FLAG_BLINK) ? HL_BLINK : 0)
+                 | ((style.flags & GHOSTTY_STYLE_FLAG_INVISIBLE) ? HL_CONCEALED : 0)
+                 | ((style.flags & GHOSTTY_STYLE_FLAG_OVERLINE) ? HL_OVERLINE : 0)
+                 | ((style.flags & GHOSTTY_STYLE_FLAG_ITALIC) ? HL_ITALIC : 0)
+                 | ((style.flags & GHOSTTY_STYLE_FLAG_INVERSE) ? HL_INVERSE : 0)
                  | underline
-                 | (style.strikethrough ? HL_STRIKETHROUGH : 0);
+                 | ((style.flags & GHOSTTY_STYLE_FLAG_STRIKETHROUGH) ? HL_STRIKETHROUGH : 0);
 
   bool fg_set = fg.idx && fg.idx <= 16 && term->color_set[fg.idx - 1];
   bool bg_set = bg.idx && bg.idx <= 16 && term->color_set[bg.idx - 1];
@@ -1906,7 +1911,7 @@ static int grid_ref_cell_attr(Terminal *term, const GhosttyGridRef *ref,
   GhosttyCell cell = 0;
   assert_ok(ghostty_grid_ref_cell(ref, &cell));
 
-  GhosttyStyle style = GHOSTTY_INIT_SIZED(GhosttyStyle);
+  GhosttyStyle style = { 0 };
   assert_ok(ghostty_grid_ref_style(ref, &style));
 
   int url_attr = cell_has_hyperlink(cell) ? cell_url_attr(ref) : 0;
@@ -2045,7 +2050,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
                                                  GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,
                                                  &cell));
 
-    GhosttyStyle style = GHOSTTY_INIT_SIZED(GhosttyStyle);
+    GhosttyStyle style = { 0 };
     assert_ok(ghostty_render_state_row_cells_get(cells,
                                                  GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE,
                                                  &style));
@@ -2144,14 +2149,14 @@ static void terminal_focus(Terminal *term, bool focus)
   }
 
   enum { FOCUS_BUF_SIZE = 3, };
-  char buf[FOCUS_BUF_SIZE];
+  uint8_t buf[FOCUS_BUF_SIZE];
   size_t len = 0;
   assert_ok(ghostty_focus_encode(focus ? GHOSTTY_FOCUS_GAINED : GHOSTTY_FOCUS_LOST,
                                  buf,
                                  FOCUS_BUF_SIZE,
                                  &len));
 
-  terminal_send(term, buf, len);
+  terminal_send(term, (const char *)buf, len);
 }
 
 // }}}
@@ -2469,24 +2474,24 @@ static void send_mouse_report(Terminal *term, GhosttyMouseAction action, Ghostty
   // Wheel buttons are never held, so a wheel press is only in "action".
   bool any_button_pressed = term->ghostty_mouse_buttons != 0
                             || action == GHOSTTY_MOUSE_ACTION_PRESS;
-  ghostty_mouse_encoder_setopt(term->ghostty_mouse_encoder,
-                               GHOSTTY_MOUSE_ENCODER_OPT_ANY_BUTTON_PRESSED,
-                               &any_button_pressed);
-  ghostty_mouse_event_set_action(term->ghostty_mouse_event, action);
-  ghostty_mouse_event_set_mods(term->ghostty_mouse_event, mods);
-  ghostty_mouse_event_set_position(term->ghostty_mouse_event, (GhosttyMousePosition) {
+  assert_ok(ghostty_mouse_encoder_set(term->ghostty_mouse_encoder,
+                                      GHOSTTY_MOUSE_ENCODER_OPT_ANY_BUTTON_PRESSED,
+                                      &any_button_pressed));
+  assert_ok(ghostty_mouse_event_set_action(term->ghostty_mouse_event, action));
+  assert_ok(ghostty_mouse_event_set_mods(term->ghostty_mouse_event, mods));
+  assert_ok(ghostty_mouse_event_set_position(term->ghostty_mouse_event, (GhosttyMousePosition) {
     .x = (float)col,
     .y = (float)row,
-  });
+  }));
 
   if (button != GHOSTTY_MOUSE_BUTTON_UNKNOWN) {
-    ghostty_mouse_event_set_button(term->ghostty_mouse_event, button);
+    assert_ok(ghostty_mouse_event_set_button(term->ghostty_mouse_event, button));
   } else {
-    ghostty_mouse_event_clear_button(term->ghostty_mouse_event);
+    assert_ok(ghostty_mouse_event_clear_button(term->ghostty_mouse_event));
   }
 
   // Mouse reports are short escape sequences.
-  char buf[128];
+  uint8_t buf[128];
   size_t len = 0;
   GhosttyResult res = ghostty_mouse_encoder_encode(term->ghostty_mouse_encoder,
                                                    term->ghostty_mouse_event,
@@ -2495,7 +2500,7 @@ static void send_mouse_report(Terminal *term, GhosttyMouseAction action, Ghostty
                                                    &len);
   assert_ok(res);
   if (res == GHOSTTY_SUCCESS && len > 0) {
-    terminal_send(term, buf, len);
+    terminal_send(term, (const char *)buf, len);
   }
 }
 
@@ -2720,10 +2725,10 @@ static void mirror_scrollback_rows(Terminal *term, buf_T *buf, size_t row, size_
 {
   while (row < end) {
     GhosttyTerminalScrollViewport viewport = {
-      .tag = GHOSTTY_SCROLL_VIEWPORT_ROW,
+      .tag = GHOSTTY_TERMINAL_SCROLL_VIEWPORT_ROW,
       .value.row = row,
     };
-    ghostty_terminal_scroll_viewport(term->ghostty, viewport);
+    assert_ok(ghostty_terminal_scroll_viewport(term->ghostty, viewport));
     assert_ok(ghostty_render_state_update(term->ghostty_render_state, term->ghostty));
     assert_ok(ghostty_render_state_get(term->ghostty_render_state,
                                        GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR,
@@ -2755,10 +2760,10 @@ static void mirror_scrollback_rows(Terminal *term, buf_T *buf, size_t row, size_
       break;
     }
   }
-  ghostty_terminal_scroll_viewport(term->ghostty,
-                                   (GhosttyTerminalScrollViewport) {
-    .tag = GHOSTTY_SCROLL_VIEWPORT_BOTTOM,
-  });
+  assert_ok(ghostty_terminal_scroll_viewport(term->ghostty,
+                                             (GhosttyTerminalScrollViewport) {
+    .tag = GHOSTTY_TERMINAL_SCROLL_VIEWPORT_BOTTOM,
+  }));
   // Restore the render state before refresh_screen() reads it. Damage was already collected when
   // the refresh started, so the dirty state from moving the viewport can be dropped.
   assert_ok(ghostty_render_state_update(term->ghostty_render_state, term->ghostty));
@@ -2904,19 +2909,19 @@ static void refresh_cursor(Terminal *term, bool *cursor_visible)
   }
 
   switch (term->cursor.shape) {
-  case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK:
-  case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK_HOLLOW:
+  case GHOSTTY_CURSOR_STYLE_BLOCK:
+  case GHOSTTY_CURSOR_STYLE_BLOCK_HOLLOW:
     shape_table[SHAPE_IDX_TERM].shape = SHAPE_BLOCK;
     break;
-  case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_UNDERLINE:
+  case GHOSTTY_CURSOR_STYLE_UNDERLINE:
     shape_table[SHAPE_IDX_TERM].shape = SHAPE_HOR;
     shape_table[SHAPE_IDX_TERM].percentage = 20;
     break;
-  case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BAR:
+  case GHOSTTY_CURSOR_STYLE_BAR:
     shape_table[SHAPE_IDX_TERM].shape = SHAPE_VER;
     shape_table[SHAPE_IDX_TERM].percentage = 25;
     break;
-  case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_MAX_VALUE:
+  case GHOSTTY_CURSOR_STYLE_MAX_VALUE:
     abort();
   }
 
