@@ -1191,6 +1191,8 @@ describe('default statusline', function()
     screen:add_extra_attr_ids {
       [100] = { foreground = Screen.colors.Magenta1, bold = true },
       [131] = { foreground = Screen.colors.NvimDarkGreen },
+      [132] = { bold = true, background = Screen.colors.LightBlue, reverse = true },
+      [133] = { background = Screen.colors.LightBlue, reverse = true },
     }
     command('set laststatus=2')
     command('set ruler')
@@ -1207,6 +1209,7 @@ describe('default statusline', function()
     ]])
 
     local default_statusline = table.concat({
+      "%(%#(%#StatusLineRemote# @%.30(%{ v:lua.require('vim._core.util').remote_host() }%<%) %#) %)",
       '%<',
       '%f',
       "%( %h%w%m%r%{ v:lua.require('vim._core.util').term_exitcode() }%)",
@@ -1271,6 +1274,59 @@ describe('default statusline', function()
     ]])
 
     exec_lua('vim.o.busy = 0')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*13
+      {3:[No Name]                                 0,0-1          All}|
+                                                                  |
+    ]])
+  end)
+
+  it('shows the hostname in an SSH session', function()
+    local function set_hostname(name)
+      exec_lua(function()
+        vim.fn.hostname = function()
+          return name
+        end
+      end)
+    end
+    set_hostname('host')
+    exec_lua("vim.o.statusline = ''")
+    command('let $SSH_CONNECTION = "10.0.0.1 50000 10.0.0.2 22" | redrawstatus')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*13
+      {132: @host }{3: [No Name]                         0,0-1          All}|
+                                                                  |
+    ]])
+
+    -- Only in the bottom-left statusline.
+    command('split | wincmd j | vsplit | wincmd k')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*6
+      {3:[No Name]                                 0,0-1          All}|
+                                    │                             |
+      {1:~                             }│{1:~                            }|*5
+      {133: @host }{2: <e] 0,0-1          All [No Name]  0,0-1          All}|
+                                                                  |
+    ]])
+
+    -- In the global statusline. Truncated from the right.
+    set_hostname(('h'):rep(40))
+    command('set laststatus=3 noruler')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*6
+      ──────────────────────────────┬─────────────────────────────|
+                                    │                             |
+      {1:~                             }│{1:~                            }|*5
+      {132: @hhhhhhhhhhhhhhhhhhhhhhhhhhhhh> }{3: [No Name]                 }|
+                                                                  |
+    ]])
+
+    command('set laststatus=2 ruler | only')
+    command('unlet $SSH_CONNECTION | redrawstatus')
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*13

@@ -109,7 +109,8 @@ end
 ---
 --- @param method string
 --- @param ... any
---- @return boolean, table
+--- @return boolean ok
+--- @return any result Result, or error (if not `ok`).
 function Session:request(method, ...)
   local args = { ... }
   local err, result
