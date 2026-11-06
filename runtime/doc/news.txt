@@ -253,10 +253,12 @@ API
 • |nvim_create_autocmd()| is now |api-fast|, so it can be called from a fast
   event context (e.g. |vim.uv| callbacks).
 • |nvim_create_autocmd()| callback |event-args| provide `win`.
-• |nvim_chan_set()| sets channel properties. With `detach=false`, any RPC
-  channel can enable Nvim "self-exit on channel-close" behavior.
-• |nvim_chan_set()| and |sockconnect()| `trust=false` reject API calls from
-  an untrusted peer.
+• |nvim_chan_set()| sets channel properties.
+  • `detach=false` enables Nvim "self-exit on channel-close" behavior.
+  • `trust=false` rejects API calls from an untrusted peer. Also supported by
+    |sockconnect()|.
+  • `addr` stores the address the client uses to reach Nvim (e.g. a tunnel),
+    which may differ from |v:servername|. |:restart| reconnects UIs through it.
 
 BUILD
 

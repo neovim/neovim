@@ -4896,12 +4896,6 @@ static void ex_exmode(exarg_T *eap)
 /// ":restart +cmd <command>": restart the Nvim server using ":cmd" and runs <command> in the new server.
 static void ex_restart(exarg_T *eap)
 {
-  // XXX: The UI reaches this server through an SSH tunnel, but the "restart" event gives it the new
-  // server's (remote) address.
-  if (strequal(get_vim_var_str(VV_STARTREASON), "remote-ssh")) {
-    emsg(_("E6103: :restart is not supported with remote-ssh"));
-    return;
-  }
   if (!eap->forceit) {
     dict_T *extra_d = tv_dict_alloc();  // Pass +cmd in the `extra` param of nlua_call_excmd.
     tv_dict_add_str(extra_d, S_LEN("quit_cmd"), eap->do_ecmd_cmd ? eap->do_ecmd_cmd : "");
@@ -5105,7 +5099,10 @@ static void ex_restart(exarg_T *eap)
 #endif
 
   // Send restart event with new listen address to all UIs.
-  remote_ui_restart(cstr_as_string(listen_addr));
+  // If the new server reused the --listen address (TODO: not on Windows, it rebinds on exit), UI
+  // reconnects through the `addr` (e.g. a tunnel) stored on its channel (nvim_chan_set).
+  bool reuse_addr = listen_arg != NULL && strequal(listen_addr, listen_arg);
+  remote_ui_restart(cstr_as_string(listen_addr), reuse_addr);
   ui_flush();
   xfree(listen_addr);
 

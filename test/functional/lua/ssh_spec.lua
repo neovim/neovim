@@ -422,13 +422,6 @@ describe('remote-ssh', function()
         }
       end)
     )
-
-    -- The UI could not reach a restarted server through the tunnel.
-    n.clear({ env = { __NVIM_STARTREASON = 'remote-ssh' } })
-    eq(
-      'Vim(restart):E6103: :restart is not supported with remote-ssh',
-      t.pcall_err(n.command, 'restart')
-    )
   end)
 
   it('fails when ssh exits before the remote Nvim is ready', function()

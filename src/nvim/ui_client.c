@@ -68,7 +68,7 @@ uint64_t ui_client_start_server(const char *exepath, size_t argc, char **argv)
   if (!channel) {
     return 0;
   }
-  channel->rpc.trust = false;  // Security.
+  channel->trust = false;  // Security.
 
   // If stdin is not a pty, it is forwarded to the client.
   // Replace stdin in the TUI process with the tty fd.
@@ -153,9 +153,25 @@ void ui_client_detach(void)
   ui_client_attached = false;
 }
 
-void ui_client_run(void)
+/// Sets `addr` (nvim_chan_set) on the server: the address this client connected to, e.g. a tunnel
+/// to the server. :restart sends it back, so the UI reconnects through it.
+static void set_chan_addr(const char *addr)
+{
+  MAXSIZE_TEMP_DICT(config, 1);
+  PUT_C(config, "addr", CSTR_AS_OBJ(addr));
+  MAXSIZE_TEMP_ARRAY(args, 2);
+  ADD_C(args, INTEGER_OBJ(0));
+  ADD_C(args, DICT_OBJ(config));
+  rpc_send_event(ui_client_channel_id, "nvim_chan_set", args);
+}
+
+/// @param server_addr Address of the server (`--server`), or NULL if the client started it (stdio).
+void ui_client_run(const char *server_addr)
   FUNC_ATTR_NORETURN
 {
+  if (server_addr) {
+    set_chan_addr(server_addr);
+  }
   tui_start(&tui, &tui_width, &tui_height, &tui_term, &tui_rgb);
   ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
 
@@ -308,6 +324,7 @@ static void channel_connect_event(void **argv)
   }
 
   ui_client_channel_id = chan;
+  set_chan_addr(server_addr);
   ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
 
   ILOG("Connected to server %s on channel %" PRId64, server_addr, chan);
