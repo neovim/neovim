@@ -38,25 +38,18 @@ describe('CTRL-C (mapped)', function()
                                                           |
     ]])
 
-    local function test_ctrl_c(ms)
-      feed(':global/^/p<CR>')
-      screen:sleep(ms)
-      feed('<C-C>')
-      screen:expect { any = 'Interrupt' }
-    end
-
-    -- The test is time-sensitive. Try different sleep values.
-    local ms_values = { 100, 1000, 10000 }
-    for i, ms in ipairs(ms_values) do
-      if i < #ms_values then
-        local status, _ = pcall(test_ctrl_c, ms)
-        if status then
-          break
-        end
-      else -- Call the last attempt directly.
-        test_ctrl_c(ms)
+    -- Sends CTRL-C during :global. The timer fires when :global first checks for input.
+    n.exec_lua(function()
+      function _G.ctrl_c_soon()
+        local timer = assert(vim.uv.new_timer())
+        timer:start(0, 0, function()
+          timer:close()
+          vim.api.nvim_input('<C-C>')
+        end)
       end
-    end
+    end)
+    feed(':call v:lua.ctrl_c_soon() | global/^/p<CR>')
+    screen:expect({ any = 'Interrupt' })
   end)
 
   it('interrupts :sleep', function()
