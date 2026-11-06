@@ -172,8 +172,6 @@ struct terminal {
   } scrollback_anchors[2];
   size_t scrollback_rows;          ///< Ghostty history rows mirrored in the nvim buffer.
   size_t scrollback_deleted;       ///< Mirrored history rows deleted from the buffer top.
-  bool scrollback_clear_pending;   ///< Ghostty processed CSI 3 J since the last refresh.
-  size_t scrollback_clear_rows;    ///< Buffer rows that became history before CSI 3 J.
 
   // buf_T instance that acts as a "drawing surface" for the terminal.
   // we can't store a direct reference to the buffer because the
@@ -494,31 +492,6 @@ static size_t get_history_rows(Terminal *term)
                                  GHOSTTY_TERMINAL_DATA_SCROLLBACK_ROWS,
                                  &rows));
   return rows;
-}
-
-// TODO(noib3): drop this detection once we pin to a version of Ghostty that includes
-// https://github.com/ghostty-org/ghostty/pull/14838.
-static size_t clear_scrollback_seq_len(const char *data, size_t len, size_t offset)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (data[offset] == ESC && offset + 3 < len && data[offset + 1] == '['
-      && data[offset + 2] == '3' && data[offset + 3] == 'J') {
-    return 4;
-  }
-  return 0;
-}
-
-static void record_scrollback_clear(Terminal *term)
-  FUNC_ATTR_NONNULL_ALL
-{
-  size_t history_rows = get_history_rows(term);
-  size_t clear_rows = history_rows;
-  if (!term->scrollback_clear_pending) {
-    clear_rows = MAX(term->scrollback_rows, history_rows);
-  }
-
-  term->scrollback_clear_pending = true;
-  term->scrollback_clear_rows += clear_rows;
 }
 
 /// Sets the screen size of the mouse encoder. Mouse events are already in cell coordinates, so each
@@ -1625,7 +1598,7 @@ static void on_sync_flush(void **argv)
 }
 
 /// Writes child output to Ghostty. Stops at the end of each TermRequest so Ghostty has processed
-/// the output before it when the request is scheduled, and records each scrollback clear (CSI 3 J).
+/// the output before it when the request is scheduled.
 static void vt_write(Terminal *term, const char *data, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1638,19 +1611,6 @@ static void vt_write(Terminal *term, const char *data, size_t len)
         break;
       }
       i = (size_t)(esc - data);
-      size_t clear_sequence_len = clear_scrollback_seq_len(data, len, i);
-      if (clear_sequence_len > 0) {
-        if (i > chunk_start) {
-          ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)(data + chunk_start),
-                                    i - chunk_start);
-        }
-        record_scrollback_clear(term);
-        ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)(data + i),
-                                  clear_sequence_len);
-        i += clear_sequence_len - 1;
-        chunk_start = i + 1;
-        continue;
-      }
     }
 
     if (termrequest_parse_byte(term, (uint8_t)data[i])) {
@@ -3029,16 +2989,11 @@ static void refresh_scrollback(Terminal *term, buf_T *buf, bool resized)
 
   size_t scrollback_rows = get_history_rows(term);
   size_t old_scrollback_rows = term->scrollback_rows;
-  bool scrollback_cleared = term->scrollback_clear_pending;
-  size_t scrollback_clear_rows = term->scrollback_clear_rows;
-  term->scrollback_clear_pending = false;
-  term->scrollback_clear_rows = 0;
   term->scrollback_rows = scrollback_rows;
 
   if (!resized) {
-    // Delete the rows Ghostty removed from the top. A CSI 3 J removes at least all mirrored rows.
-    size_t dropped = scrollback_cleared ? scrollback_clear_rows
-                                        : count_dropped_rows(term);
+    // Delete the rows Ghostty removed from the top.
+    size_t dropped = count_dropped_rows(term);
     delete_scrollback_lines(term, buf, dropped);
     old_scrollback_rows -= MIN(dropped, old_scrollback_rows);
 
