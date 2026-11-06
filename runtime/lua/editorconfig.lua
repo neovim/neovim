@@ -222,17 +222,21 @@ function properties.spelling_language(bufnr, val)
   end
 end
 
---- Modified version of [glob2regpat()] that does not match path separators on `*`.
+--- Modified version of [glob2regpat()] that does not match path separators on `*` or `?`.
 ---
 --- This function replaces single instances of `*` with the regex pattern `[^/]*`.
 --- However, the star in the replacement pattern also gets interpreted by glob2regpat,
 --- so we insert a placeholder, pass it through glob2regpat, then replace the
---- placeholder with the actual regex pattern.
+--- placeholder with the actual regex pattern. `?` becomes `[^/]` the same way.
 ---
 --- @param glob string Glob to convert into a regular expression
 --- @return string regex Regular expression
 local function glob2regpat(glob)
   local placeholder = '@@PLACEHOLDER@@'
+  local qplaceholder = '@@QUESTION@@'
+  glob = glob:gsub([=[(\?)%?]=], function(esc)
+    return esc == '' and qplaceholder or nil
+  end)
   local glob1 = vim.fn.substitute(
     glob:gsub('{(%d+)%.%.(%d+)}', '[%1-%2]'),
     '\\*\\@<!\\*\\*\\@!',
@@ -244,7 +248,7 @@ local function glob2regpat(glob)
     return esc == '' and '[^' or nil
   end)
   local regpat = vim.fn.glob2regpat(glob1)
-  return (regpat:gsub(placeholder, '[^/]*'))
+  return (regpat:gsub(placeholder, '[^/]*'):gsub(qplaceholder, '[^/]'))
 end
 
 --- Parse a single line in an EditorConfig file
