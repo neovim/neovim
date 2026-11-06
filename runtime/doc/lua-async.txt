@@ -576,13 +576,23 @@ Task:wait({timeout})                                             *Task:wait()*
     Synchronously wait for the Task to complete.
 
     If a timeout is provided, waits for the given time in milliseconds before
-    failing with `"timeout"`. With no timeout, waits indefinitely.
+    failing with `"timeout"`. The task keeps running: use |Task:close()| to
+    cancel it. With no timeout, waits indefinitely.
 
     This is for synchronous code. Inside a task, prefer |vim.async.await()| so
     the current task suspends instead of pumping the event loop itself. >lua
         local result = task:wait(10) -- wait for 10ms or raise "timeout"
 
         local result = task:wait() -- wait indefinitely
+<
+
+    Note: ~
+      • CTRL-C interrupts the wait like a timeout, but fails with
+        `"interrupted"`. >lua
+            local ok, result_or_err = task:pwait(1000)
+            if not ok then
+              task:close() -- Timed out, or CTRL-C.
+            end
 <
 
     Parameters: ~

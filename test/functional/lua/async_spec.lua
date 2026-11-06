@@ -703,6 +703,22 @@ stack traceback:
       check_task_err(task, 'closed')
     end)
 
+    it('CTRL-C interrupts a sync wait', function()
+      exec_lua(function()
+        function _G.Wait()
+          local task = run(eternity)
+          vim.rpcnotify(1, 'ready')
+          local _, err = task:pwait()
+          task:close()
+          vim.rpcnotify(1, 'wait', err)
+        end
+      end)
+      n.feed(':lua _G.Wait()<CR>')
+      t.eq({ 'notification', 'ready', {} }, n.next_msg(5000))
+      n.feed('<C-C>')
+      t.eq({ 'notification', 'wait', { 'interrupted' } }, n.next_msg(5000))
+    end)
+
     it_exec('can async timeout a test', function()
       local task = run(eternity)
       check_task_err(run(Async.timeout, 10, task), 'timeout')
