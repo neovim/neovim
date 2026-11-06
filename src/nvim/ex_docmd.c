@@ -5945,7 +5945,7 @@ static void ex_connect(exarg_T *eap)
     nlua_call_typval("vim.net._ssh", "connect", argvars, &ssh_rettv);
 
     if (ssh_rettv.v_type == VAR_SPECIAL) {
-      return;  // User declined the prompt.
+      return;  // User declined the prompt, or interrupted (CTRL-C).
     }
     if (ssh_rettv.v_type != VAR_STRING || ssh_rettv.vval.v_string == NULL) {
       emsg(_("E6101: SSH connection failed"));

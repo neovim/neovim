@@ -5429,7 +5429,8 @@ SystemObj:wait({timeout}, {cond})                           *SystemObj:wait()*
     This method blocks execution until the associated process has exited or
     the optional `timeout` (in milliseconds) has been reached. If the process
     does not exit before the timeout, it is forcefully terminated with SIGKILL
-    (signal 9), and the exit code is set to 124.
+    (signal 9), and the exit code is set to 124. CTRL-C also terminates it,
+    and fails with `"interrupted"`.
 
     If no `timeout` is provided, the method will wait indefinitely (or use the
     timeout specified in the options when the process was started).
