@@ -40,6 +40,7 @@ static int tui_width = 0;
 static int tui_height = 0;
 static char *tui_term = "";
 static bool tui_rgb = false;
+static char *detached_addr = NULL;  ///< Server address from which `:detach` disconnected.
 
 // uncrustify:off
 #include "ui_client.c.generated.h"
@@ -197,6 +198,11 @@ void ui_client_stop(void)
   if (!tui_is_stopped(tui)) {
     tui_stop(tui);
   }
+  if (detached_addr) {
+    fprintf(stderr, "Detached from %s\nTo reattach: nvim --remote-ui --server \"%s\"\n",
+            detached_addr, detached_addr);
+    XFREE_CLEAR(detached_addr);
+  }
 }
 
 void ui_client_set_size(int width, int height)
@@ -326,6 +332,7 @@ static void channel_connect_event(void **argv)
     os_exit(1);
   }
 
+  XFREE_CLEAR(detached_addr);  // Attached to the new server instead.
   ui_client_channel_id = chan;
   set_chan_addr(server_addr);
   ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
@@ -441,12 +448,18 @@ void ui_client_event_error_exit(Array args)
     return;
   }
   ui_client_error_exit = (int)args.items[0].data.integer;
+  XFREE_CLEAR(detached_addr);
+  if (args.size > 1 && args.items[1].type == kObjectTypeString
+      && args.items[1].data.string.size > 0) {
+    detached_addr = string_to_cstr(args.items[1].data.string);
+  }
 }
 
 #ifdef EXITFREE
 void ui_client_free_all_mem(void)
 {
   tui_free_all_mem(tui);
+  xfree(detached_addr);
   xfree(grid_line_buf_char);
   xfree(grid_line_buf_attr);
 }
