@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "nvim/api/keysets_defs.h"
@@ -318,6 +319,8 @@ static void channel_connect_event(void **argv)
 
   if (!strequal(err, "")) {
     ELOG("Cannot connect to server %s: %s", server_addr, err);
+    ui_client_stop();  // Leave the alternate screen, so the message is visible.
+    fprintf(stderr, "Cannot connect to server %s: %s\n", server_addr, err);
     xfree(server_addr);
     ui_client_exit_status = 1;
     os_exit(1);
