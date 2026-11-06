@@ -745,6 +745,8 @@ describe('autocmd api', function()
             event = 'InsertEnter',
             once = false,
             pattern = '*',
+            lnum = 0,
+            sid = 0,
           },
         }, aus)
       end)
@@ -765,6 +767,8 @@ describe('autocmd api', function()
             event = 'InsertEnter',
             once = false,
             pattern = '<buffer=2>',
+            lnum = 0,
+            sid = 0,
           },
         }, aus)
 
@@ -778,6 +782,8 @@ describe('autocmd api', function()
             event = 'InsertEnter',
             once = false,
             pattern = '<buffer=1>',
+            lnum = 0,
+            sid = 0,
           },
         }, aus)
 
@@ -791,6 +797,8 @@ describe('autocmd api', function()
             event = 'InsertEnter',
             once = false,
             pattern = '<buffer=1>',
+            lnum = 0,
+            sid = 0,
           },
           {
             buf = 2,
@@ -800,6 +808,8 @@ describe('autocmd api', function()
             event = 'InsertEnter',
             once = false,
             pattern = '<buffer=2>',
+            lnum = 0,
+            sid = 0,
           },
         }, aus)
 
@@ -1131,6 +1141,8 @@ describe('autocmd api', function()
             id = id,
             once = false,
             pattern = '*',
+            lnum = 0,
+            sid = -9,
           },
         }, api.nvim_get_autocmds({ id = id }))
       end)
@@ -1156,6 +1168,8 @@ describe('autocmd api', function()
             id = id,
             once = false,
             pattern = '*',
+            lnum = 0,
+            sid = -9,
           },
         }, api.nvim_get_autocmds({ id = id, group = group }))
       end)
@@ -1171,6 +1185,8 @@ describe('autocmd api', function()
             id = id,
             once = false,
             pattern = '*',
+            lnum = 0,
+            sid = -9,
           },
         }, api.nvim_get_autocmds({ id = id, event = 'InsertEnter' }))
       end)
@@ -1192,6 +1208,8 @@ describe('autocmd api', function()
             id = id,
             once = false,
             pattern = '*.c',
+            lnum = 0,
+            sid = -9,
           },
         }, api.nvim_get_autocmds({ id = id, pattern = '*.c' }))
       end)
