@@ -154,7 +154,7 @@ describe('remote-ssh', function()
 
     n.exec_lua(function(ssh_cmd, choice)
       require('vim.net._ssh').ssh_cmd = ssh_cmd
-      require('vim.net._ssh').release_api = ('file://%s'):format(release)
+      require('vim.net._autoinstall').release_api = ('file://%s'):format(release)
       vim.env.XDG_CONFIG_HOME = ('%s/config'):format(dir)
       _G.confirm_log = {}
       vim.fn.confirm = function(...)
