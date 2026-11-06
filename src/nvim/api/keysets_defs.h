@@ -103,7 +103,7 @@ typedef struct {
   DictAs(cmd__magic) magic;
   DictAs(cmd_mods) mods;
   Union(Integer, Enum("?", "+", "*")) nargs;
-  Enum("line", "arg", "buf", "load", "win", "tab", "qf", "none", "?") addr;
+  Enum("line", "char", "arg", "buf", "load", "win", "tab", "qf", "none", "?") addr;
   String nextcmd;
 } Dict(cmd);
 
