@@ -2,12 +2,12 @@
     .name = .neovim,
     .fingerprint = 0x66eb090879307a38,
     .version = "0.13.0",
-    .minimum_zig_version = "0.16.0",
+    .minimum_zig_version = "0.17.0",
 
     .dependencies = .{
         .zlua = .{
-            .url = "git+https://github.com/natecraddock/ziglua.git#9ae39fa50b1ab8427d35f963216116d7bff1e584",
-            .hash = "zlua-0.1.0-hGRpC1mUBQCNQf4CnmRTM4I7gxE3YpCvZ-p2EarlcyER",
+            .url = "git+https://github.com/natecraddock/ziglua#9b9e855e91df9c3d903b5d15ba75e64c8f6ed5f0",
+            .hash = "zlua-0.1.0-hGRpC2mfBQAGjJIw0bTJnMnxPx6ZQxdCAGMtH13Gl3BP",
         },
         .luv = .{
             .url = "git+https://github.com/luvit/luv?ref=1.52.1-0#f65fe9d7616f9fbcd20227fc7a73b38d1c5c180d",
@@ -20,13 +20,13 @@
             .lazy = true,
         },
         .treesitter = .{
-            .url = "git+https://github.com/tree-sitter/tree-sitter?ref=v0.27.1#10eb5ac119eec9cb4267a8e035066473983f5f3a",
-            .hash = "tree_sitter-0.27.1-Tw2sR6zNDQDfaX4mIqMnve2vLRi1xxb2YeeMU7c2h34P",
+            .url = "git+https://github.com/tree-sitter/tree-sitter#31a327a30d437675df7806884886976e1d0738de",
+            .hash = "tree_sitter-0.28.0-Tw2sR0kqDgB63d4rr9BTpo5_SVhS2VOVZ3fOKMnRQ6LS",
             .lazy = true,
         },
         .libuv = .{
-            .url = "git+https://github.com/allyourcodebase/libuv.git#c1ccce24e1077ae7780857c89fb4b3aeb9080315",
-            .hash = "libuv-1.52.0-htqqvzNqAAAB6cHIx-wIffe_mqMW5GOKjHeDBJYHGwls",
+            .url = "git+https://github.com/allyourcodebase/libuv#20d7e88ae35abcd0256dcbbe081064cbd4794bb3",
+            .hash = "libuv-1.53.0-htqqv09uAAARV-6ZqCVoCzfQ9y0UnGaUXEnkcmgbWgCW",
             .lazy = true,
         },
         .utf8proc = .{
@@ -40,8 +40,8 @@
             .lazy = true,
         },
         .uncrustify = .{
-            .url = "git+https://codeberg.org/allyourcodebase/uncrustify#2cdf880e4ffbe438a7946368cd45fca2df9f0f7a",
-            .hash = "uncrustify-0.83.0-qkVd7cVCAADAg1kS3ctVBhY2gkxEIs-W8wgurLadbgC-",
+            .url = "git+https://codeberg.org/allyourcodebase/uncrustify#665879acab693b9f0aa367ed0c5129c5043a8ff5",
+            .hash = "uncrustify-0.83.0-qkVd7ZtCAAAoVbSMcea6Nkungy0rTPbGhoiABj_ug41z",
         },
         .libiconv = .{
             .url = "git+https://github.com/allyourcodebase/libiconv#a244cea3e4f7a0962158307b0e09e656306f4936",
@@ -49,8 +49,8 @@
             .lazy = true,
         },
         .treesitter_c = .{
-            .url = "git+https://github.com/tree-sitter/tree-sitter-c?ref=v0.24.2#b780e47fc780ddc8da13afa35a3f4ed5c157823d",
-            .hash = "tree_sitter_c-0.24.2-y5boS-ptQADHoCoVfjGT_nFtFQ5LbomIkW0fxG3_cmdB",
+            .url = "git+https://github.com/tree-sitter/tree-sitter-c#ff9dc1fd036ec70323664ef942e8090788bad1b7",
+            .hash = "tree_sitter_c-0.24.2-y5boS91tQABVtvyt0f2IXAF-61inw-QDW8GX3NEMV9C9",
         },
         .treesitter_markdown = .{
             .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-markdown?ref=v0.5.4#41ff24a6c775492c543b09228aeb98d1cd2b3a0f",
@@ -72,10 +72,10 @@
             .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-query?ref=v0.8.0#a225e21d81201be77da58de614e2b7851735677a",
             .hash = "N-V-__8AAMR5AwAzZ5_8S2p2COTEf5usBeeT4ORzh-lBGkWy",
         },
-        .compile_commands = .{
-            .url = "https://github.com/the-argus/zig-compile-commands/archive/9400cd1963ea6bb58fe47ba7d9700075b808cdd2.tar.gz",
-            .hash = "zig_compile_commands-0.0.1-OZg5-e_JAAAGg1WHAePtq4l4Uvjs34BexnFFCZk63EaG",
-        },
+        // .compile_commands = .{
+        //     .url = "git+https://github.com/the-argus/zig-compile-commands/#4f6d205217a2eb02e57a7e894ce2188188a00d47",
+        //     .hash = "zig_compile_commands-1.0.3-OZg5-QHMAQCp-SHhO5yA-or-1I-i1uR94wVmtjY1rT2I",
+        // },
         .treesitter_diff = .{
             .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-diff?ref=v0.2.0#ada384ac7bfc1307f32de474620120add29998fb",
             .hash = "N-V-__8AAPUcFACL4N4XTVUilDAwPIkX8066VSaipW5tYXDT",
