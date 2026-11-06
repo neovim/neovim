@@ -3583,4 +3583,25 @@ func Test_diff_fold_scan_finger()
   set diffopt&
 endfunc
 
+func Test_diff_fold_in_other_tabpage()
+  call writefile(range(1, 100), 'Xdifffold1', 'D')
+  call writefile(range(1, 49) + ['changed'] + range(51, 100), 'Xdifffold2', 'D')
+  tabedit Xdifffold1
+  leftabove vertical diffsplit Xdifffold2
+  diffupdate
+  1tabnext
+  " Changing the buffer updates the folds of the diff window in another tab
+  call setbufline(bufnr('Xdifffold1'), 1, '1')
+  2tabnext
+  for nr in [1, 2]
+    exe nr .. 'wincmd w'
+    call assert_equal([1, 43], [foldclosed(1), foldclosedend(1)], 'window ' .. nr)
+    call assert_equal(-1, foldclosed(50), 'window ' .. nr)
+    call assert_equal([57, 100], [foldclosed(100), foldclosedend(100)], 'window ' .. nr)
+  endfor
+  diffoff!
+  tabclose!
+  %bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -3587,12 +3587,18 @@ bool diff_infold(win_T *wp, linenr_T lnum)
     return false;
   }
 
+  // "wp" may be in another tab page.
+  tabpage_T *tp = win_valid(wp) ? curtab : win_find_tabpage(wp);
+  if (tp == NULL) {
+    tp = curtab;
+  }
+
   int idx = -1;
   bool other = false;
   for (int i = 0; i < DB_COUNT; i++) {
-    if (curtab->tp_diffbuf[i] == wp->w_buffer) {
+    if (tp->tp_diffbuf[i] == wp->w_buffer) {
       idx = i;
-    } else if (curtab->tp_diffbuf[i] != NULL) {
+    } else if (tp->tp_diffbuf[i] != NULL) {
       other = true;
     }
   }
@@ -3602,20 +3608,20 @@ bool diff_infold(win_T *wp, linenr_T lnum)
     return false;
   }
 
-  if (curtab->tp_diff_invalid) {
+  if (tp == curtab && tp->tp_diff_invalid) {
     // update after a big change
     ex_diffupdate(NULL);
   }
 
   // Return if there are no diff blocks.  All lines will be folded.
-  if (curtab->tp_first_diff == NULL) {
+  if (tp->tp_first_diff == NULL) {
     return true;
   }
 
   // Resume from the scan finger to avoid restarting at the first block.
   diff_T *le = NULL;             // last block with df_lnum[idx] <= lnum
   bool result = true;
-  for (diff_T *dp = diff_scan_start(curtab, idx, lnum); dp != NULL; dp = dp->df_next) {
+  for (diff_T *dp = diff_scan_start(tp, idx, lnum); dp != NULL; dp = dp->df_next) {
     if (dp->df_lnum[idx] <= lnum) {
       le = dp;
     }
@@ -3629,7 +3635,7 @@ bool diff_infold(win_T *wp, linenr_T lnum)
       break;
     }
   }
-  diff_scan_remember(curtab, idx, lnum, le);
+  diff_scan_remember(tp, idx, lnum, le);
   return result;
 }
 
