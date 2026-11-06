@@ -11,8 +11,12 @@ local line_break_pattern = '[\r\n]'
 --- Command that runs ssh. Tests replace it with a fake.
 M.ssh_cmd = { 'ssh' }
 
+--- |$NVIM_APPNAME| of the remote Nvim. Remote-ssh owns its dirs, e.g. `push_config()` replaces the
+--- config dir.
+local appname = 'nvim-remote'
+
 --- Remote-ssh data dir, relative to the remote `$HOME`.
-local remote_data_dir = '.local/share/nvim-remote'
+local remote_data_dir = ('.local/share/%s'):format(appname)
 
 local _log --- @type vim.Log?
 
@@ -409,6 +413,37 @@ local function run_script(uri, args, opts, on_exit)
   return obj
 end
 
+--- Replaces the remote config dir (`$XDG_CONFIG_HOME/nvim-remote/`) with a copy of `dir`, without
+--- `.git/`. Plugins are not copied: the config's plugin manager (e.g. |vim.pack|) installs them.
+---
+---@param uri vim.Uri & {host:string}
+---@param dir string Local config dir.
+local function push_config(uri, dir)
+  local env = { COPYFILE_DISABLE = '1' } -- No macOS `._*` files.
+  -- -h: Copies symlink targets (e.g. links made by a dotfiles manager).
+  local tar = vim
+    .system({ 'tar', '-czf', '-', '-h', '--exclude=.git', '-C', dir, '.' }, { env = env })
+    :wait()
+  if tar.code ~= 0 then
+    error(('Failed to pack %s: %s'):format(dir, tar.stderr))
+  end
+  local script = table.concat({
+    ('d="${XDG_CONFIG_HOME:-$HOME/.config}/%s"'):format(appname),
+    -- Sanity check before `rm -rf`. Literal, so a bad `appname` (e.g. empty) can't pass it.
+    'case "$d" in */nvim-remote) ;; *) echo "Refusing to replace $d" >&2; exit 1 ;; esac',
+    'rm -rf "$d"',
+    'mkdir -p "$d"',
+    'tar -xzf - -C "$d"',
+  }, ' && ')
+  -- Quoted for the remote login shell (any shell, e.g. fish), which passes it to `sh` verbatim.
+  local ssh_cmd = get_ssh_cmd(uri, { remote_cmd = { 'sh', '-c', ("'%s'"):format(script) } })
+  log().debug('push_config: running', ssh_cmd)
+  local obj = vim.system(ssh_cmd, { stdin = tar.stdout }):wait(300000)
+  if obj.code ~= 0 then
+    error(('Failed to copy %s: %s'):format(dir, obj.stderr))
+  end
+end
+
 --- Gets the operating system and architecture from the remote system.
 ---
 ---@param uri vim.Uri & {host:string}
@@ -504,7 +539,8 @@ end
 ---@param chan? integer
 ---@param report fun(status: 'running'|'success'|'failed', msg: string)
 ---@param update boolean Re-installs the release.
-local function connect(uri_str, chan, report, update)
+---@param config? string Local config dir to copy (see `push_config()`).
+local function connect(uri_str, chan, report, update, config)
   local uri = vim.uri.parse(uri_str)
   if not (uri and uri.host and uri.host ~= '') then
     error(('No host in SSH URI: %s'):format(uri_str), 0)
@@ -512,6 +548,10 @@ local function connect(uri_str, chan, report, update)
   ---@cast uri vim.Uri & {host:string}
   report('running', ('Connecting to %s...'):format(uri_str))
   local dir, url, version = get_release(M.get_system_info(uri))
+  if config then
+    report('running', 'Copying config...')
+    push_config(uri, config)
+  end
 
   local local_sock = ('%s_remote_nvim.sock'):format(vim.fn.tempname())
   local token = vim.text.hexencode(assert(vim.uv.random(8)))
@@ -617,6 +657,15 @@ function M.connect(uri_str, chan)
     uri_str,
     remote_data_dir
   )
+  local config_dir = vim.fn.stdpath('config') --[[@as string]]
+  local config = vim.fn.isdirectory(config_dir) == 1 and config_dir or nil
+  if config then
+    msg = ('%sThis will overwrite the remote ~/.config/%s/ with a copy of %s/.\n'):format(
+      msg,
+      appname,
+      vim.fn.fnamemodify(config, ':~')
+    )
+  end
   local prerelease = vim.version().prerelease ~= nil
   local choices = prerelease and 'Connect? &Yes\n&Update Nvim\n&No' -- Nightly is refreshed if "(U)pdate".
     or 'Connect? &Yes\n&No'
@@ -626,7 +675,7 @@ function M.connect(uri_str, chan)
     return nil
   end
   local report = new_progress_report()
-  local ok, local_sock, teardown = pcall(connect, uri_str, chan, report, update)
+  local ok, local_sock, teardown = pcall(connect, uri_str, chan, report, update, config)
   if not ok then
     report('failed', ('Failed to connect to %s'):format(uri_str))
     error(local_sock, 0)
@@ -690,8 +739,9 @@ function M.serve(sock)
   end)
 
   vim.env.__NVIM_STARTREASON = 'remote-ssh'
-  vim.env.NVIM_APPNAME = 'nvim-remote'
-  local server = vim.system({ vim.v.progpath, '--headless', '--listen', sock }, {
+  vim.env.NVIM_APPNAME = appname
+  -- --embed: Waits for the UI to attach (at `sock`) before sourcing the config.
+  local server = vim.system({ vim.v.progpath, '--embed', '--listen', sock }, {
     stdout = false,
     stderr = function(_, data)
       io.stderr:write(data or '')
