@@ -2772,6 +2772,10 @@ void do_check_cursorbind(void)
       // Only scroll when 'scrollbind' hasn't done this.
       if (!curwin->w_p_scb) {
         update_topline(curwin);
+      } else {
+        // A later view query must not scroll an already bound view.
+        check_cursor_moved(curwin);
+        curwin->w_valid |= VALID_TOPLINE;
       }
       curwin->w_redr_status = true;
     }

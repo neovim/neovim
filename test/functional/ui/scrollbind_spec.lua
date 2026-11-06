@@ -13,6 +13,129 @@ describe('Scrollbind', function()
     screen = Screen.new(40, 12)
   end)
 
+  it('keeps diffs aligned when querying visible lines after a bound cursor moves', function()
+    n.exec_lua(function()
+      vim.o.scrolloff = 2
+      vim.o.laststatus = 3
+      vim.o.statusline = 'diff'
+      vim.o.diffopt = 'internal,filler,foldcolumn:0,linematch:30'
+      local lines = {}
+      for i = 1, 40 do
+        lines[i] = 'common ' .. i
+      end
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+      vim.cmd('diffthis | setlocal nofoldenable')
+      vim.cmd('rightbelow vnew')
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+      local added = {}
+      for i = 1, 12 do
+        added[i] = 'added ' .. i
+      end
+      vim.api.nvim_buf_set_lines(0, 20, 20, false, added)
+      vim.cmd('diffthis | setlocal nofoldenable')
+      vim.api.nvim_create_autocmd('CursorMoved', {
+        callback = function()
+          for _, win in ipairs(vim.api.nvim_list_wins()) do
+            vim.api.nvim_win_call(win, function()
+              vim.fn.line('w0')
+              vim.fn.line('w$')
+            end)
+          end
+        end,
+      })
+    end)
+
+    local function query_visible_lines()
+      n.exec_lua(function()
+        for _, win in ipairs(vim.api.nvim_list_wins()) do
+          vim.api.nvim_win_call(win, function()
+            vim.fn.line('w0')
+            vim.fn.line('w$')
+          end)
+        end
+      end)
+    end
+
+    -- The bound cursor in the left window is below the visible filler.
+    -- Reading its visible lines must not scroll that window to the cursor.
+    n.feed('20Gzzj')
+    query_visible_lines()
+    screen:expect([[
+      common 16          │common 16           |
+      common 17          │common 17           |
+      common 18          │common 18           |
+      common 19          │common 19           |
+      common 20          │common 20           |
+      {23:-------------------}│{22:^added 1             }|
+      {23:-------------------}│{22:added 2             }|
+      {23:-------------------}│{22:added 3             }|
+      {23:-------------------}│{22:added 4             }|
+      {23:-------------------}│{22:added 5             }|
+      {3:diff                                    }|
+                                              |
+    ]])
+
+    n.feed('k')
+    query_visible_lines()
+    screen:expect([[
+      common 16          │common 16           |
+      common 17          │common 17           |
+      common 18          │common 18           |
+      common 19          │common 19           |
+      common 20          │^common 20           |
+      {23:-------------------}│{22:added 1             }|
+      {23:-------------------}│{22:added 2             }|
+      {23:-------------------}│{22:added 3             }|
+      {23:-------------------}│{22:added 4             }|
+      {23:-------------------}│{22:added 5             }|
+      {3:diff                                    }|
+                                              |
+    ]])
+
+    screen:try_resize(40, 16)
+    query_visible_lines()
+    screen:expect([[
+      common 14          │common 14           |
+      common 15          │common 15           |
+      common 16          │common 16           |
+      common 17          │common 17           |
+      common 18          │common 18           |
+      common 19          │common 19           |
+      common 20          │^common 20           |
+      {23:-------------------}│{22:added 1             }|
+      {23:-------------------}│{22:added 2             }|
+      {23:-------------------}│{22:added 3             }|
+      {23:-------------------}│{22:added 4             }|
+      {23:-------------------}│{22:added 5             }|
+      {23:-------------------}│{22:added 6             }|
+      {23:-------------------}│{22:added 7             }|
+      {3:diff                                    }|
+                                              |
+    ]])
+
+    -- Editing the diff must still recompute filler and keep the panes aligned.
+    n.feed('onew<Esc>')
+    query_visible_lines()
+    screen:expect([[
+      common 14          │common 14           |
+      common 15          │common 15           |
+      common 16          │common 16           |
+      common 17          │common 17           |
+      common 18          │common 18           |
+      common 19          │common 19           |
+      common 20          │common 20           |
+      {23:-------------------}│{22:ne^w                 }|
+      {23:-------------------}│{22:added 1             }|
+      {23:-------------------}│{22:added 2             }|
+      {23:-------------------}│{22:added 3             }|
+      {23:-------------------}│{22:added 4             }|
+      {23:-------------------}│{22:added 5             }|
+      {23:-------------------}│{22:added 6             }|
+      {3:diff                                    }|
+                                              |
+    ]])
+  end)
+
   it('works with one buffer with virtual lines', function()
     n.exec_lua(function()
       local lines = {} --- @type string[]
