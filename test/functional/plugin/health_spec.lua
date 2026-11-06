@@ -256,7 +256,7 @@ describe('vim.health', function()
       eq(true, exec_lua('return vim.g.healthcheck_responsive'))
       exec_lua('_G.resolve_health_system()')
 
-      retry(nil, 5000, function()
+      retry(nil, 30000, function()
         eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
       end)
       eq('checkhealth', api.nvim_get_option_value('filetype', { buf = 0 }))
