@@ -1760,16 +1760,21 @@ static int cstrncmp(char *s1, char *s2, int *n)
     char *p = s1;
     int n2 = 0;
     int n1 = *n;
-    // count the number of characters for byte-length of s1
+    // count the number of base characters for the byte length of s1.
+    // composing characters must not be included: they are handled by the
+    // RE_COMPOSING atom or the composing check after the match, same as
+    // without 'ignorecase'.
     while (n1 > 0 && *p != NUL) {
-      n1 -= utfc_ptr2len(p);
-      MB_PTR_ADV(p);
+      int l = utf_ptr2len(p);
+      n1 -= l;
+      p += l;
       n2++;
     }
-    // count the number of bytes to advance the same number of chars for s2
+    // advance s2 over the same number of base characters, leaving any
+    // composing characters unconsumed
     p = s2;
     while (n2-- > 0 && *p != NUL) {
-      MB_PTR_ADV(p);
+      p += utf_ptr2len(p);
     }
 
     n2 = (int)(p - s2);
