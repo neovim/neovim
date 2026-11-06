@@ -415,6 +415,8 @@ LSP
 
 LUA
 
+• CTRL-C during |SystemObj:wait()| fails with "interrupted" (and kills the
+  process) instead of returning a "timeout" (code 124) result.
 • |lua-async|: `vim.async` provides structured concurrency primitives for Lua
   code, including task handles, await helpers, cooperative cancellation,
   completion-order iteration, and semaphores.

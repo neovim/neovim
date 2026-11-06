@@ -511,6 +511,9 @@ local function fetch_sha256s()
     if not ok then
       task:close() -- Timed out, or CTRL-C.
     end
+    if err == 'interrupted' then
+      error(err, 0)
+    end
     local decoded, json = pcall(vim.json.decode, res and res.body or '')
     ---@type { name: string, digest: string? }[]
     local assets = decoded and type(json) == 'table' and json.assets or {}
@@ -571,6 +574,7 @@ local function answers(addr)
     return false
   end
   ---@cast chan integer
+  -- TODO: Let CTRL-C cancel vim.rpcrequest(). #7546
   local answered = pcall(vim.rpcrequest, chan, { timeout = 10000 }, 'nvim_get_api_info')
   pcall(vim.fn.chanclose, chan)
   return answered
@@ -653,9 +657,13 @@ local function connect(uri_str, chan, report, update, config)
     table.insert(args, 1, '--update')
   end
   tunnel = run_script(uri, args, { ssh_args = { '-L', forward } }, on_exit)
-  local res = tunnel:wait(300000, function(stdout)
+  local ok, res = pcall(tunnel.wait, tunnel, 300000, function(stdout)
     return stdout:match('NVIM_READY') ~= nil
   end)
+  if not ok then -- CTRL-C.
+    teardown()
+    error(res, 0)
+  end
   log().debug('connect: tunnel stdout', res.stdout, 'stderr', res.stderr)
 
   local err --- @type string?
@@ -693,7 +701,8 @@ end
 ---
 --- @param uri_str string
 --- @param chan? integer UI to connect: fails (and stops the session) if it detached meanwhile.
---- @return string? local_socket Path to the local forwarded socket, or nil if declined.
+--- @return string? local_socket Path to the local forwarded socket, or nil if declined or
+---   interrupted (CTRL-C).
 --- @return fun()? teardown Stops this session's tunnel (and thus the remote server). Other sessions
 ---   sharing the SSH master are unaffected.
 function M.connect(uri_str, chan)
@@ -720,7 +729,10 @@ function M.connect(uri_str, chan)
   end
   local report = new_progress_report()
   local ok, local_sock, teardown = pcall(connect, uri_str, chan, report, update, config)
-  if not ok then
+  if not ok and local_sock == 'interrupted' then
+    report('failed', ('Interrupted connecting to %s'):format(uri_str))
+    return nil
+  elseif not ok then
     report('failed', ('Failed to connect to %s'):format(uri_str))
     error(local_sock, 0)
   end

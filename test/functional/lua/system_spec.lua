@@ -136,6 +136,27 @@ describe('vim.system', function()
     end)
   end)
 
+  it('SystemObj:wait(): CTRL-C kills the process, fails with "interrupted"', function()
+    exec_lua(function(nvim_prog)
+      function _G.Wait()
+        local signal --- @type integer?
+        local cmd = vim.system({ nvim_prog, '--clean', '--headless' }, nil, function(r)
+          signal = r.signal
+        end)
+        vim.rpcnotify(1, 'ready')
+        local _, err = pcall(cmd.wait, cmd)
+        vim.wait(2000, function()
+          return signal ~= nil
+        end)
+        vim.rpcnotify(1, 'wait', err, signal)
+      end
+    end, n.nvim_prog)
+    n.feed(':lua _G.Wait()<CR>')
+    eq({ 'notification', 'ready', {} }, n.next_msg(5000))
+    n.feed('<C-C>')
+    eq({ 'notification', 'wait', { 'interrupted', 9 } }, n.next_msg(5000))
+  end)
+
   it('SystemObj:wait() can return before process exit', function()
     t.skip(t.is_os('win'), 'shell command is POSIX-only')
 

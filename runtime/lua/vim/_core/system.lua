@@ -122,7 +122,8 @@ end
 --- This method blocks execution until the associated process has exited or
 --- the optional `timeout` (in milliseconds) has been reached. If the process
 --- does not exit before the timeout, it is forcefully terminated with SIGKILL
---- (signal 9), and the exit code is set to 124.
+--- (signal 9), and the exit code is set to 124. CTRL-C also terminates it, and
+--- fails with `"interrupted"`.
 ---
 --- If no `timeout` is provided, the method will wait indefinitely (or use the
 --- timeout specified in the options when the process was started).
@@ -151,7 +152,7 @@ function SystemObj:wait(timeout, cond)
   local function output(buf)
     return buf and buf:tostring() or nil
   end
-  local done = vim.wait(timeout or state.timeout or vim._maxint, function()
+  local done, err = vim.wait(timeout or state.timeout or vim._maxint, function()
     return state.result ~= nil
       or (cond ~= nil and cond(output(state.stdout_data) or '', output(state.stderr_data) or ''))
   end, 200, true)
@@ -163,6 +164,9 @@ function SystemObj:wait(timeout, cond)
   if not done then
     -- Send sigkill since this cannot be caught
     self:_timeout(SIG.KILL)
+    if err == -2 then -- CTRL-C.
+      error('interrupted', 0)
+    end
     vim.wait(timeout or state.timeout or vim._maxint, function()
       return state.result ~= nil
     end, nil, true)
