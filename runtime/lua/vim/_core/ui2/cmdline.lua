@@ -11,6 +11,8 @@ local M = {
   wmnumode = 0, -- wildmenumode() when not using the pum, dialog position adjusted when toggled.
   --- @type integer Non-zero for entered expanded cmdline, incremented for each message emitted as a result of entered command to move and open messages in the pager.
   expand = 0,
+  --- @type [integer, [integer, integer]]? Window and position of the cursor
+  cursor = nil,
 }
 
 --- Set the 'cmdheight' and cmdline window height. Reposition message windows.
@@ -25,11 +27,19 @@ local function win_config(win, hide, height)
     api.nvim_win_resize(win, -1, height)
   end
   if vim.o.cmdheight ~= height then
+    -- Remember cursor when 'cmdheight' is first raised and restore it when reset
+    if vim.o.cmdheight == ui.cmdheight then
+      local cur = api.nvim_get_current_win()
+      M.cursor = { cur, api.nvim_win_get_cursor(cur) }
+    end
     -- Avoid moving the cursor with 'splitkeep' = "screen", and altering the user
     -- configured value with noautocmd.
     vim._with({ noautocmd = true, o = { splitkeep = 'screen' } }, function()
       vim.o.cmdheight = height
     end)
+    if height == ui.cmdheight and M.cursor and api.nvim_win_is_valid(M.cursor[1]) then
+      api.nvim_win_set_cursor(M.cursor[1], M.cursor[2])
+    end
     ui.msg.set_pos()
   elseif M.wmnumode ~= (M.dialog and fn.pumvisible() == 0 and fn.wildmenumode() or 0) then
     M.wmnumode = (M.wmnumode == 1 and 0 or 1)
