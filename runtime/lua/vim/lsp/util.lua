@@ -1419,15 +1419,17 @@ local function close_preview_autocmd(events, winnr, floating_bufnr, bufnr)
 
   -- close the preview window when entered a buffer that is not
   -- the floating window buffer or the buffer that spawned it
-  nvim_on('BufLeave', augroup, { buf = bufnr }, function()
-    vim.schedule(function()
-      -- When jumping to the quickfix window from the preview window,
-      -- do not close the preview window.
-      if api.nvim_get_option_value('filetype', { buf = 0 }) ~= 'qf' then
-        close_preview_window(winnr, { floating_bufnr, bufnr })
-      end
+  for _, buf in ipairs({ bufnr, floating_bufnr }) do
+    nvim_on('BufLeave', augroup, { buf = buf }, function()
+      vim.schedule(function()
+        -- When jumping to the quickfix window from the preview window,
+        -- do not close the preview window.
+        if api.nvim_get_option_value('filetype', { buf = 0 }) ~= 'qf' then
+          close_preview_window(winnr, { floating_bufnr, bufnr })
+        end
+      end)
     end)
-  end)
+  end
 
   if #events > 0 then
     nvim_on(events, augroup, { buf = bufnr }, function()

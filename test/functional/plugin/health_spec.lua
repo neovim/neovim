@@ -120,6 +120,21 @@ describe(':checkhealth', function()
     eq('qf', api.nvim_get_option_value('filetype', { buf = 0 }))
   end)
 
+  it('closes float when leaving the buffer #39307', function()
+    clear {
+      args_rm = { '-u' },
+      args = { '--clean', '+set runtimepath+=test/functional/fixtures' },
+    }
+    command("let g:health = {'style':'float'}")
+    command('checkhealth lsp')
+    local win = api.nvim_get_current_win()
+    command('split foo.lua')
+    retry(nil, 5000, function()
+      eq(false, api.nvim_win_is_valid(win))
+    end)
+    assert_alive()
+  end)
+
   it("vim.provider works with a misconfigured 'shell'", function()
     clear()
     command([[set shell=echo\ WRONG!!!]])
