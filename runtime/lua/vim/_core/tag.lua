@@ -26,7 +26,7 @@ function M.select_tag(eap, extra)
 
   local taglen = 18
   for _, m in ipairs(items) do
-    taglen = math.max(taglen, vim.fn.strdisplaywidth(m.tag) + 2)
+    taglen = math.max(taglen, vim.api.nvim_strwidth(m.tag) + 2)
   end
 
   vim.ui.select(items, {
