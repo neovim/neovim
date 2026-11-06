@@ -3,13 +3,17 @@
 # Bootstraps the headless Nvim server of a |remote-ssh| session: finds or installs `nvim`, which then
 # runs and supervises the server (vim.net._ssh.serve()).
 #
-# Usage: remote_ssh.sh [--update] {sock} {dir} {url} {version}
+# Usage: remote_ssh.sh [--update] {sock} {dir} {url} {sha256} {version}
 #   Runs `nvim` from $PATH if it is {version} or newer, else the release {url}, which it installs
-#   to {dir} (relative to $HOME) unless present. --update: (re)installs and runs the release. E.g.
-#   remote_ssh.sh /tmp/nvim-remote.0123abcd/nvim.sock .local/share/nvim-remote/releases/v0.12.0-linux-x86_64 https://…/nvim-linux-x86_64.tar.gz v0.12.0
+#   to {dir} (relative to $HOME) unless present, if its SHA-256 is {sha256} (`-`: unknown, so it
+#   does not install). --update: (re)installs and runs the release.
+#
+#   Example:
+#     remote_ssh.sh /tmp/nvim-remote.0123abcd/nvim.sock .local/share/nvim-remote/releases/v0.12.0-linux-x86_64 https://…/nvim-linux-x86_64.tar.gz 474430d5…7d87 v0.12.0
 
 set -eu
-# dash (Debian's sh) has no pipefail; tar still fails on an empty or truncated stream.
+# dash (Debian's sh) has no pipefail, so a pipeline must also fail safely without it, e.g.
+# `file_sha256` then prints nothing (a mismatch).
 # shellcheck disable=SC3040
 if (set -o pipefail) 2>/dev/null; then
   set -o pipefail
@@ -27,17 +31,36 @@ system_nvim() {
   echo "$nvim"
 }
 
+# Prints the SHA-256 of file $1.
+file_sha256() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1"
+  else
+    shasum -a 256 "$1" # macOS.
+  fi | cut -d ' ' -f 1
+}
+
 # Installs the release to $dest, unless present (and not $update).
 install_release() (
   if [ -x "$dest/bin/nvim" ] && [ -z "$update" ]; then
     exit 0
   fi
+  if [ "$sha256" = - ]; then
+    echo "Cannot verify $url: SHA-256 unknown (see the local remote-ssh.log)" >&2
+    exit 1
+  fi
   echo "Installing $dest..." >&2
   mkdir -p "${dest%/*}"
   tmp=$(mktemp -d "$dest.XXXXXX")
   trap 'rm -rf "$tmp"' EXIT
+  curl -fsSL --retry 3 -o "$tmp/nvim.tar.gz" "$url"
+  got=$(file_sha256 "$tmp/nvim.tar.gz")
+  if [ "$got" != "$sha256" ]; then
+    echo "SHA-256 mismatch: $url (expected $sha256, got $got)" >&2
+    exit 1
+  fi
   mkdir "$tmp/new"
-  curl -fsSL "$url" | tar -xzf - -C "$tmp/new"
+  tar -xzf "$tmp/nvim.tar.gz" -C "$tmp/new"
   if [ -n "$update" ]; then
     # Removed with $tmp. Gone already if a concurrent update moved it.
     mv "$dest" "$tmp/old" 2>/dev/null || :
@@ -56,7 +79,8 @@ main() {
   sock=$1
   dest="$HOME/$2"
   url=$3
-  want=$4
+  sha256=$4
+  want=$5
   if [ -n "$update" ] || ! nvim=$(system_nvim); then
     install_release
     nvim="$dest/bin/nvim"

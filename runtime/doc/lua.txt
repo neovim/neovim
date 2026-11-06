@@ -4628,6 +4628,11 @@ vim.net.request({method}, {url}, {opts}, {on_response})    *vim.net.request()*
         })
         job:close()
 
+        -- Await the response in a task (|lua-async|). Closing the task cancels the request.
+        vim.async.run(function()
+          local err, res = vim.async.await(3, vim.net.request, 'https://neovim.io/charter/', {})
+        end)
+
         -- Add custom headers in the request.
         vim.net.request('https://neovim.io/charter/', {
           headers = { Authorization = 'Bearer XYZ' },
@@ -4667,8 +4672,7 @@ vim.net.request({method}, {url}, {opts}, {on_response})    *vim.net.request()*
       • `fun(method: vim.net.HttpMethod, url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)`
 
     Return: ~
-        (`{ close: fun() }`) Object with `close()` method which cancels the
-        request.
+        (`vim.async.Closable`) Cancels the request or checks its status.
 
 
 ==============================================================================

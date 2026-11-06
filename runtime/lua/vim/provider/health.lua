@@ -452,64 +452,24 @@ local function check_bin(bin)
   return true
 end
 
---- Fetch the contents of a URL.
----
---- @param url string
-local function download(url)
-  local has_curl = vim.fn.executable('curl') == 1
-  if has_curl then
-    local ok, out = cmd_ok({ 'curl', '-V' })
-    if ok and out:find('Protocols:.*https') then
-      local content, rc = system({ 'curl', '-sL', url }, { stderr = true, ignore_error = true })
-      if rc ~= 0 then
-        return 'curl error with ' .. url .. ': ' .. rc
-      else
-        return content
-      end
-    end
-  elseif vim.fn.executable('python') == 1 then
-    local script = ([[
-try:
-    from urllib.request import urlopen
-except ImportError:
-    from urllib2 import urlopen
-
-response = urlopen('%s')
-print(response.read().decode('utf8'))
-]]):format(url)
-    local out, rc = system({ 'python', '-c', script })
-    if out == '' and rc ~= 0 then
-      return 'python urllib.request error: ' .. rc
-    else
-      return out
-    end
-  end
-
-  local message = 'missing `curl` '
-
-  if has_curl then
-    message = message .. '(with HTTPS support) '
-  end
-  message = message .. 'and `python`, cannot make web request'
-
-  return message
-end
-
---- Get the latest Nvim Python client (pynvim) version from PyPI.
+--- Gets the latest Nvim Python client (pynvim) version from PyPI.
+---@async
 local function latest_pypi_version()
-  local pypi_version = 'unable to get pypi response'
-  local pypi_response = download('https://pypi.org/pypi/pynvim/json')
-  if pypi_response ~= '' then
-    local pcall_ok, output = pcall(vim.fn.json_decode, pypi_response)
-    if not pcall_ok then
-      return 'error: ' .. pypi_response
-    end
-
-    local pypi_data = output
-    local pypi_element = pypi_data['info'] or {}
-    pypi_version = pypi_element['version'] or 'unable to parse'
+  if vim.fn.executable('curl') == 0 then
+    return 'unable to get pypi response: curl not found'
   end
-  return pypi_version
+  local url = 'https://pypi.org/pypi/pynvim/json'
+  local err, res = vim.async.await(3, vim.net.request, url, {})
+  vim.async.await(vim.schedule) -- Leaves the fast event (the `vim.net.request()` callback).
+  if not res then
+    return ('unable to get pypi response: %s'):format(vim.trim(err or ''))
+  end
+  local ok, json = pcall(vim.json.decode, res.body)
+  if not ok or type(json) ~= 'table' then
+    return ('error: %s'):format(res.body)
+  end
+  local version = vim.tbl_get(json, 'info', 'version')
+  return type(version) == 'string' and version or 'unable to parse'
 end
 
 --- @param s string
@@ -532,6 +492,7 @@ end
 ---     {current pypi nvim status},
 ---     {installed version status}
 --- }
+---@async
 local function version_info(python)
   local pypi_version = latest_pypi_version()
 
@@ -606,6 +567,7 @@ local function version_info(python)
   return { python_version, nvim_version, pypi_version, version_status }
 end
 
+---@async
 local function python()
   health.start('Python 3 provider (optional)')
 
@@ -960,6 +922,7 @@ local function ruby()
   end
 end
 
+---@async
 function M.check()
   clipboard()
   node()

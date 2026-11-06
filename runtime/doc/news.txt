@@ -424,6 +424,8 @@ LUA
   your terminal supports it.
 • |vim.net.request()| can specify custom headers by passing `opts.headers`.
 • |vim.net.request()| can now accept  `method` param overload for multiple HTTP methods.
+• |vim.net.request()| works with |vim.async.await()|: closing the task cancels
+  the request.
 • |vim.rpcrequest()| can specify `opts.timeout`.
 • |SystemObj:wait()| accepts a `cond` predicate which allows you to wait for
   a condition instead of process termination.
