@@ -199,8 +199,8 @@ void ui_client_stop(void)
     tui_stop(tui);
   }
   if (detached_addr) {
-    fprintf(stderr, "Detached from %s\nTo reattach: nvim --remote-ui --server \"%s\"\n",
-            detached_addr, detached_addr);
+    fprintf(stderr, "Detached from: %s\nTo reattach run :connect or nvim +\"connect <address>\"\n",
+            detached_addr);
     XFREE_CLEAR(detached_addr);
   }
 }

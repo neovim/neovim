@@ -128,7 +128,13 @@ Restart Nvim
 ------------------------------------------------------------------------------
 Connect UI to a different server
 
-:connect {address}                                      *:connect* *E6102*
+:connect                                                *:connect*
+                Shows a menu (|vim.ui.select()|) of Nvim servers discovered by
+                |serverlist()| and hostnames in `~/.ssh/config`, ordered by
+                last activity (|v:useractive|). Selecting an item connects to
+                it (see below).
+
+:connect {address}                                      *E6102*
                 Attaches the UI to another Nvim instance: detaches from the
                 current server, then attaches to {address}. If {address} is
                 an `ssh://` URI, see |remote-ssh|.
