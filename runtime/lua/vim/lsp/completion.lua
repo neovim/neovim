@@ -767,6 +767,11 @@ local function request(clients, bufnr, win, ctx, callback)
 
     if ok then
       request_ids[client_id] = request_id
+    else
+      remaining_requests = remaining_requests - 1
+      if remaining_requests == 0 and next(responses) ~= nil then
+        callback(responses)
+      end
     end
   end
 
