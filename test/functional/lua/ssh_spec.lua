@@ -109,7 +109,8 @@ end)
 describe('remote-ssh', function()
   local fake_dir --- @type string
 
-  --- Makes `vim.net._ssh` run a fake `ssh` (fixtures/fake-ssh.lua), and stubs `confirm()`.
+  --- Makes `vim.net._ssh` run a fake `ssh` (fixtures/fake-ssh.lua), and stubs `confirm()`. The local
+  --- config dir is `{fake_dir}/config/nvim`, absent unless the test creates it.
   ---
   --- @param behavior? table Optional fields:
   ---   - `confirm`: Result of `confirm()`.
@@ -138,6 +139,7 @@ describe('remote-ssh', function()
 
     n.exec_lua(function(ssh_cmd, choice)
       require('vim.net._ssh').ssh_cmd = ssh_cmd
+      vim.env.XDG_CONFIG_HOME = ('%s/config'):format(dir)
       _G.confirm_log = {}
       vim.fn.confirm = function(...)
         table.insert(_G.confirm_log, { ... })
@@ -268,7 +270,7 @@ describe('remote-ssh', function()
     n.expect_exit(5000, n.exec_lua, session)
   end)
 
-  it('passes the matching release to the remote script', function()
+  it('passes the matching release + user config to the remote', function()
     skip(is_os('win'), 'remote-ssh is POSIX-only')
     setup_fake_ssh()
     local base, prerelease = unpack(n.exec_lua(function()
@@ -297,6 +299,26 @@ describe('remote-ssh', function()
       end)
       t.matches(' sh %-s %-%- %-%-update /tmp/', t.read_file(fake_dir .. '/tunnel.args'))
     end
+
+    -- Overwrites the remote config files from local. Symlinks resolved, no `.git/`.
+    setup_fake_ssh()
+    local config = ('%s/config/nvim'):format(fake_dir)
+    n.mkdir_p(config .. '/.git')
+    t.write_file(fake_dir .. '/init.lua', '-- init')
+    vim.uv.fs_symlink(fake_dir .. '/init.lua', config .. '/init.lua')
+    local remote_config = ('%s/home/.config/nvim-remote'):format(fake_dir)
+    n.mkdir_p(remote_config)
+    t.write_file(remote_config .. '/stale.lua', '')
+    local msg = n.exec_lua(function()
+      local _, teardown = require('vim.net._ssh').connect('ssh://user@test-server')
+      teardown()
+      return _G.confirm_log[1][1]
+    end)
+    local overwrite = 'This will overwrite the remote ~/.config/nvim-remote/ with a copy of %s/.\n'
+    t.matches(('\n%s$'):format(vim.pesc(overwrite:format(n.fn.fnamemodify(config, ':~')))), msg)
+    eq({ 'init.lua' }, n.fn.readdir(remote_config))
+    eq('file', vim.uv.fs_lstat(remote_config .. '/init.lua').type)
+    eq('-- init', t.read_file(remote_config .. '/init.lua'))
   end)
 
   it('remote script runs acceptable `nvim` from $PATH, else installs the release', function()
@@ -321,8 +343,8 @@ describe('remote-ssh', function()
     local dir = 'releases/v1-test'
 
     --- Runs the script locally, as the remote does. Returns `[$NVIM_APPNAME, $NVIM_TEST_RELEASE,
-    --- v:startreason]` of its server, whether its socket dir was removed on exit, and its
-    --- `Installing …` message, if any.
+    --- v:startreason, v:vim_did_init]` of its server, whether its socket dir was removed on exit,
+    --- and its `Installing …` message, if any.
     local function serve(version, update)
       return n.exec_lua(function(...)
         local sock = ('%s/sock/nvim.sock'):format(home)
@@ -335,8 +357,8 @@ describe('remote-ssh', function()
           return stdout:match('NVIM_READY') ~= nil
         end)
         local ch = vim.fn.sockconnect('pipe', sock, { rpc = true })
-        local env =
-          vim.rpcrequest(ch, 'nvim_eval', '[$NVIM_APPNAME, $NVIM_TEST_RELEASE, v:startreason]')
+        local expr = '[$NVIM_APPNAME, $NVIM_TEST_RELEASE, v:startreason, v:vim_did_init]'
+        local env = vim.rpcrequest(ch, 'nvim_eval', expr)
         vim.fn.chanclose(ch)
         obj:write(nil) -- ssh disconnects (stdin closed).
         local res = obj:wait(5000)
@@ -346,15 +368,16 @@ describe('remote-ssh', function()
       end, dir, ('file://%s'):format(tarball), version)
     end
 
-    eq({ { 'nvim-remote', '', 'remote-ssh' }, true }, serve('v0.1.0'))
+    -- v:vim_did_init=0: The server waits for a UI before sourcing the config.
+    eq({ { 'nvim-remote', '', 'remote-ssh', 0 }, true }, serve('v0.1.0'))
     eq(nil, vim.uv.fs_stat(('%s/%s'):format(home, dir)))
     local installing = ('Installing %s/%s...'):format(home, dir)
-    eq({ { 'nvim-remote', '1', 'remote-ssh' }, true, installing }, serve('v999.0.0'))
+    eq({ { 'nvim-remote', '1', 'remote-ssh', 0 }, true, installing }, serve('v999.0.0'))
     -- No version (a prerelease): never uses $PATH; reuses the install.
-    eq({ { 'nvim-remote', '1', 'remote-ssh' }, true }, serve())
+    eq({ { 'nvim-remote', '1', 'remote-ssh', 0 }, true }, serve())
     -- --update replaces the install, and leaves no temp dirs.
     t.write_file(('%s/%s/stale'):format(home, dir), '')
-    eq({ { 'nvim-remote', '1', 'remote-ssh' }, true, installing }, serve(nil, true))
+    eq({ { 'nvim-remote', '1', 'remote-ssh', 0 }, true, installing }, serve(nil, true))
     eq({ 'bin' }, n.fn.readdir(('%s/%s'):format(home, dir)))
     eq({ 'v1-test' }, n.fn.readdir(home .. '/releases'))
 

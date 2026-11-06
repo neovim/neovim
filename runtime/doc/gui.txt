@@ -157,8 +157,11 @@ Connect UI to a different server
 
                 The remote Nvim runs with `NVIM_APPNAME=nvim-remote` (see
                 |$NVIM_APPNAME|), so its config/data are separate from other
-                Nvims.
-                - Config: `~/.config/nvim-remote/`
+                Nvims, and owned by remote-ssh:
+                - Config: `~/.config/nvim-remote/`, overwritten on connect by
+                  a copy of the local config (|stdpath()| "config", e.g.
+                  `~/.config/nvim/`), except `.git/`. Plugins are not copied:
+                  your plugin manager (e.g. |vim.pack|) installs them.
                 - Data: `~/.local/share/nvim-remote/`, kept across sessions
                   for fast reconnects. Caches installed releases, e.g.
                   `releases/v0.12.0-linux-x86_64/`. Nightly is installed once;
