@@ -2698,22 +2698,30 @@ void undo_fmt_time(char *buf, size_t buflen, time_t tt)
   }
 }
 
-/// u_sync: stop adding to the current entry list
+/// Stop adding to the current entry list of "buf".
+///
+/// @param force  if true, also sync when no_u_sync is set.
+void u_sync_buf(buf_T *buf, bool force)
+{
+  // Skip it when already synced or syncing is disabled.
+  if (buf->b_u_synced || (!force && no_u_sync > 0)) {
+    return;
+  }
+
+  if (get_undolevel(buf) < 0) {
+    buf->b_u_synced = true;  // no entries, nothing to do
+  } else {
+    u_getbot(buf);  // compute ue_bot of previous u_save
+    buf->b_u_curhead = NULL;
+  }
+}
+
+/// Stop adding to the current undo entry list.
 ///
 /// @param force  if true, also sync when no_u_sync is set.
 void u_sync(bool force)
 {
-  // Skip it when already synced or syncing is disabled.
-  if (curbuf->b_u_synced || (!force && no_u_sync > 0)) {
-    return;
-  }
-
-  if (get_undolevel(curbuf) < 0) {
-    curbuf->b_u_synced = true;  // no entries, nothing to do
-  } else {
-    u_getbot(curbuf);  // compute ue_bot of previous u_save
-    curbuf->b_u_curhead = NULL;
-  }
+  u_sync_buf(curbuf, force);
 }
 
 /// ":undolist": List the leafs of the undo tree
