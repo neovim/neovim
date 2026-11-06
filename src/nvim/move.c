@@ -316,10 +316,6 @@ static bool scrolloffpad_eof_pressure(win_T *wp, linenr_T lnum, OptInt so)
 // Update wp->w_topline to move the cursor onto the screen.
 void update_topline(win_T *wp)
 {
-  bool check_botline = false;
-  OptInt *so_ptr = wp->w_p_so >= 0 ? &wp->w_p_so : &p_so;
-  OptInt save_so = *so_ptr;
-
   // Cursor is updated instead when this is true for 'splitkeep'.
   if (skip_update_topline) {
     return;
@@ -337,9 +333,18 @@ void update_topline(win_T *wp)
   }
 
   check_cursor_moved(wp);
+  // Cursor position checks update w_valid_cursor. Track the cursor line for
+  // the view separately, so those checks do not hide a pending view update.
+  if (wp->w_cursor.lnum != wp->w_topline_cursor_lnum) {
+    wp->w_valid &= ~VALID_TOPLINE;
+  }
   if (wp->w_valid & VALID_TOPLINE) {
     return;
   }
+
+  bool check_botline = false;
+  OptInt *so_ptr = wp->w_p_so >= 0 ? &wp->w_p_so : &p_so;
+  OptInt save_so = *so_ptr;
 
   // When dragging with the mouse, don't scroll that quickly
   if (mouse_dragging > 0) {
@@ -505,7 +510,7 @@ void update_topline(win_T *wp)
       }
     }
   }
-  wp->w_valid |= VALID_TOPLINE;
+  set_topline_valid(wp);
   wp->w_viewport_invalid = true;
   win_check_anchored_floats(wp);
 
@@ -582,6 +587,15 @@ void update_curswant(void)
   }
 }
 
+/// Mark the current view as valid for the current cursor position.
+/// A bound cursor can be off screen. Later cursor position checks must
+/// preserve this view.
+void set_topline_valid(win_T *wp)
+{
+  wp->w_topline_cursor_lnum = wp->w_cursor.lnum;
+  wp->w_valid |= VALID_TOPLINE;
+}
+
 // Check if the cursor has moved.  Set the w_valid flag accordingly.
 void check_cursor_moved(win_T *wp)
 {
@@ -590,7 +604,7 @@ void check_cursor_moved(win_T *wp)
   }
   if (wp->w_cursor.lnum != wp->w_valid_cursor.lnum) {
     wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL
-                     |VALID_CHEIGHT|VALID_CROW|VALID_TOPLINE);
+                     |VALID_CHEIGHT|VALID_CROW);
 
     if (wp == curwin && wp->w_valid_cursor.lnum > 0 && wp->w_p_cole >= 1
         && !conceal_cursor_line(wp)) {
@@ -1426,7 +1440,7 @@ void scroll_redraw(int up, linenr_T count)
     // valid, otherwise the screen jumps back at the end of the file.
     cursor_correct(curwin);
     check_cursor_moved(curwin);
-    curwin->w_valid |= VALID_TOPLINE;
+    set_topline_valid(curwin);
 
     // If moved back to where we were, at least move the cursor, otherwise
     // we get stuck at one position.  Don't move the cursor up if the
@@ -1449,7 +1463,7 @@ void scroll_redraw(int up, linenr_T count)
       // Mark w_topline as valid, otherwise the screen jumps back at the
       // end of the file.
       check_cursor_moved(curwin);
-      curwin->w_valid |= VALID_TOPLINE;
+      set_topline_valid(curwin);
     }
   }
 
@@ -2034,7 +2048,7 @@ void scroll_cursor_top(win_T *wp, int min_scroll, int always)
       wp->w_valid &=
         ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
     }
-    wp->w_valid |= VALID_TOPLINE;
+    set_topline_valid(wp);
     wp->w_viewport_invalid = true;
   }
 }
@@ -2283,7 +2297,7 @@ void scroll_cursor_bot(win_T *wp, int min_scroll, bool set_topbot)
     wp->w_empty_rows = old_empty_rows;
     wp->w_valid = old_valid;
   }
-  wp->w_valid |= VALID_TOPLINE;
+  set_topline_valid(wp);
   wp->w_viewport_invalid = true;
 
   // Make sure cursor is still visible after adjusting skipcol for "zb".
@@ -2418,7 +2432,7 @@ void scroll_cursor_halfway(win_T *wp, bool atend, bool prefer_above)
   }
   check_topfill(wp, false);
   wp->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
-  wp->w_valid |= VALID_TOPLINE;
+  set_topline_valid(wp);
 }
 
 // Correct the cursor position so that it is in a part of the screen at least
@@ -2502,7 +2516,7 @@ void cursor_correct(win_T *wp)
     }
   }
   check_cursor_moved(wp);
-  wp->w_valid |= VALID_TOPLINE;
+  set_topline_valid(wp);
   wp->w_viewport_invalid = true;
 }
 
@@ -2774,8 +2788,7 @@ void do_check_cursorbind(void)
         update_topline(curwin);
       } else {
         // A later view query must not scroll an already bound view.
-        check_cursor_moved(curwin);
-        curwin->w_valid |= VALID_TOPLINE;
+        set_topline_valid(curwin);
       }
       curwin->w_redr_status = true;
     }

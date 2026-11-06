@@ -538,6 +538,7 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
   } else if (found != 0) {
     curwin->w_cursor = end_pos;
     curwin->w_valid_cursor = end_pos;  // mark as valid for cmdline_show redraw
+    set_topline_valid(curwin);
   }
 
   msg_starthere();
