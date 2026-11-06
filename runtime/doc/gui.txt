@@ -143,10 +143,10 @@ Connect UI to a different server
 :connect ssh://[{user}@]{host}[:{port}]                 *remote-ssh* *E6101*
                 Connects to Nvim on {host} over SSH:
                 1. Uses `nvim` from `$PATH` on {host} if it is the local
-                   version or newer (never for a local prerelease). Else
-                   auto-installs Nvim on the remote system (based on the
-                   current Nvim version). (Note: `$PATH` is derived from
-                   a non-login shell, your shell rc isn't applied.)
+                   version or newer (except when "Update Nvim" is selected).
+                   Else auto-installs Nvim on the remote (based on the local
+                   version). (Note: `$PATH` is derived from a non-login shell,
+                   your shell rc isn't applied.)
                 2. Starts Nvim on {host}.
                 3. Attaches the UI to it, through an SSH tunnel owned by the
                    current (local) server.
@@ -165,8 +165,8 @@ Connect UI to a different server
                 - Data: `~/.local/share/nvim-remote/`, kept across sessions
                   for fast reconnects. Caches installed releases, e.g.
                   `releases/v0.12.0-linux-x86_64/`. Nightly is installed once;
-                  choose "Update Nvim" at the prompt to refresh it (may break
-                  other sessions using it).
+                  choose "Update Nvim" at the prompt to refresh it, and use it
+                  instead of `$PATH` (may break other sessions using it).
 
                 Requirements:
                 - Local: `ssh` (OpenSSH 7.6+). Win32-OpenSSH lacks

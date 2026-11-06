@@ -277,12 +277,17 @@ describe('remote-ssh', function()
       local _, teardown = require('vim.net._ssh').connect('ssh://user@test-server')
       teardown()
       local v = vim.version()
-      return { ('v%d.%d.%d'):format(v.major, v.minor, v.patch), v.prerelease and true or false }
+      return { ('v%d.%d.%d'):format(v.major, v.minor, v.patch), v.prerelease or false }
     end))
     local url = 'https://github.com/neovim/neovim/releases/download/%s/nvim-linux-x86_64.tar.gz'
     local dir = '.local/share/nvim-remote/releases/%s-linux-x86_64'
-    -- A prerelease installs the nightly, and passes no version, so a system `nvim` is never used.
-    local args = prerelease and { dir:format('nightly-' .. base), url:format('nightly') }
+    -- A prerelease installs the nightly, or uses a system `nvim` of that prerelease or newer.
+    local args = prerelease
+        and {
+          dir:format('nightly-' .. base),
+          url:format('nightly'),
+          ('%s-%s'):format(base, prerelease),
+        }
       or { dir:format(base), url:format(base), base }
     eq(
       table.concat(args, ' '),
@@ -370,14 +375,18 @@ describe('remote-ssh', function()
 
     -- v:vim_did_init=0: The server waits for a UI before sourcing the config.
     eq({ { 'nvim-remote', '', 'remote-ssh', 0 }, true }, serve('v0.1.0'))
+    -- A prerelease (e.g. `v0.13.0-dev`) accepts any build of it.
+    local v = n.exec_lua('return vim.version()')
+    local own = ('v%d.%d.%d-%s'):format(v.major, v.minor, v.patch, v.prerelease or 'dev')
+    eq({ { 'nvim-remote', '', 'remote-ssh', 0 }, true }, serve(own))
     eq(nil, vim.uv.fs_stat(('%s/%s'):format(home, dir)))
     local installing = ('Installing %s/%s...'):format(home, dir)
     eq({ { 'nvim-remote', '1', 'remote-ssh', 0 }, true, installing }, serve('v999.0.0'))
-    -- No version (a prerelease): never uses $PATH; reuses the install.
-    eq({ { 'nvim-remote', '1', 'remote-ssh', 0 }, true }, serve())
-    -- --update replaces the install, and leaves no temp dirs.
+    -- Reuses the install.
+    eq({ { 'nvim-remote', '1', 'remote-ssh', 0 }, true }, serve('v999.0.0'))
+    -- --update replaces the install, and runs it instead of $PATH `nvim`. Leaves no temp dirs.
     t.write_file(('%s/%s/stale'):format(home, dir), '')
-    eq({ { 'nvim-remote', '1', 'remote-ssh', 0 }, true, installing }, serve(nil, true))
+    eq({ { 'nvim-remote', '1', 'remote-ssh', 0 }, true, installing }, serve('v0.1.0', true))
     eq({ 'bin' }, n.fn.readdir(('%s/%s'):format(home, dir)))
     eq({ 'v1-test' }, n.fn.readdir(home .. '/releases'))
 
