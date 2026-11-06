@@ -109,8 +109,9 @@ end)
 describe('remote-ssh', function()
   local fake_dir --- @type string
 
-  --- Makes `vim.net._ssh` run a fake `ssh` (fixtures/fake-ssh.lua), and stubs `confirm()`. The local
-  --- config dir is `{fake_dir}/config/nvim`, absent unless the test creates it.
+  --- Makes `vim.net._ssh` run a fake `ssh` (fixtures/fake-ssh.lua), stubs `confirm()` (calls in
+  --- `_G.confirm_log`), and records progress messages in `_G.progress_log`. The local config dir is
+  --- `{fake_dir}/config/nvim`, absent unless the test creates it.
   ---
   --- @param behavior? table Optional fields:
   ---   - `confirm`: Result of `confirm()`.
@@ -160,6 +161,16 @@ describe('remote-ssh', function()
         table.insert(_G.confirm_log, { ... })
         return choice
       end
+
+      _G.progress_log = {} -- Records progress messages.
+      vim.api.nvim_create_autocmd('Progress', {
+        group = vim.api.nvim_create_augroup('test.remote-ssh', {}),
+        pattern = 'remote-ssh',
+        callback = function(ev)
+          local msg = ('%s: %s'):format(ev.data.status, table.concat(ev.data.text))
+          table.insert(_G.progress_log, msg)
+        end,
+      })
     end, { nvim_prog, '-l', fake_ssh, config }, behavior.confirm or 1)
   end
 
@@ -202,16 +213,9 @@ describe('remote-ssh', function()
     local sock, logfile, progress = unpack(n.exec_lua([[
       local logfile = vim.fs.joinpath(vim.fn.stdpath('log'), 'remote-ssh.log')
       os.remove(logfile)
-      local progress = {}
-      vim.api.nvim_create_autocmd('Progress', {
-        pattern = 'remote-ssh',
-        callback = function(ev)
-          table.insert(progress, ('%s: %s'):format(ev.data.status, table.concat(ev.data.text)))
-        end,
-      })
       local sock, teardown = require('vim.net._ssh').connect('ssh://user@test-server')
       teardown()
-      return { sock, logfile, progress }
+      return { sock, logfile, _G.progress_log }
     ]]))
 
     assert(sock:match('_remote_nvim%.sock$'))
@@ -502,24 +506,42 @@ describe('remote-ssh', function()
     )
   end)
 
-  it('fails when ssh exits before the remote Nvim is ready', function()
+  it('fails when ssh exits before remote Nvim is ready', function()
     setup_fake_ssh({
       tunnel = { stderr = 'channel 0: open failed: administratively prohibited\n', exit = 255 },
     })
-    n.exec_lua(function()
-      vim.api.nvim_create_autocmd('Progress', {
-        pattern = 'remote-ssh',
-        callback = function(ev)
-          _G.last_progress = ('%s: %s'):format(ev.data.status, table.concat(ev.data.text))
-        end,
-      })
-    end)
     t.matches(
       'SSH tunnel exited before the remote Nvim was ready: channel 0: open failed',
       t.pcall_err(n.exec_lua, [[require('vim.net._ssh').connect('ssh://user@test-server')]])
     )
-    eq('failed: Failed to connect to ssh://user@test-server', n.exec_lua('return _G.last_progress'))
+    eq(
+      'failed: Failed to connect to ssh://user@test-server',
+      n.exec_lua('return _G.progress_log[#_G.progress_log]')
+    )
     eq(true, vim.uv.fs_stat(fake_dir .. '/forward.cancelled') ~= nil)
+  end)
+
+  it('CTRL-C during :connect, stops the tunnel', function()
+    setup_fake_ssh({ tunnel = {} }) -- Never ready.
+    n.exec_lua(function()
+      function _G.Connect()
+        local local_sock = require('vim.net._ssh').connect('ssh://user@test-server')
+        vim.rpcnotify(1, 'connected', local_sock == nil)
+      end
+    end)
+    n.feed(':lua _G.Connect()<CR>')
+    t.retry(nil, nil, function()
+      assert(vim.uv.fs_stat(fake_dir .. '/tunnel.pid'))
+    end)
+    n.feed('<C-C>')
+    eq({ 'notification', 'connected', { true } }, n.next_msg(5000))
+    eq(
+      'failed: Interrupted connecting to ssh://user@test-server',
+      n.exec_lua('return _G.progress_log[#_G.progress_log]')
+    )
+    eq(true, tunnel_exited())
+    eq(true, vim.uv.fs_stat(fake_dir .. '/forward.cancelled') ~= nil)
+    eq('', n.eval('v:errmsg'))
   end)
 
   it('fails when the remote Nvim crashes during startup, or is unreachable', function()
