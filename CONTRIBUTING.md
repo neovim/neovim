@@ -4,6 +4,8 @@ Contributing to Neovim
 Getting started
 ---------------
 
+Before sending a PR, read [AI-assisted work](#ai-assisted-work), otherwise your PR will be closed and you may be blocked from the org.
+
 If you are new to the codebase, read [:help dev-quickstart](https://neovim.io/doc/user/dev_tools.html#dev-quickstart)
 to see how to run tests and start hacking on the codebase.
 
@@ -11,7 +13,6 @@ If you want to help but don't know where to start, here are some
 low-risk/isolated tasks:
 
 - Try a [complexity:low] issue.
-- Fix bugs found by [Coverity](#coverity).
 - [Merge a Vim patch] (requires strong familiarity with Vim)
   - NOTE: read the above link before sending improvements to "runtime files" (anything in `runtime/`).
     - *Vimscript* files are (mostly) maintained by [Vim], not Nvim.
@@ -68,15 +69,29 @@ Pull requests (PRs)
 
 ### AI-assisted work
 
-Using AI for contributions is acceptable, given the following:
+AI work is only valuable if you, the human, review it and ask questions to drive
+further improvements. Do not send AI "one-shot" PRs.
 
-- YOU review the output before sending a non-Draft PR. Do NOT request review
-  until YOU have checked the AI generated PR and verify the following:
+You are expected to review the generated code yourself, understand it, ask your
+AI questions and guide it through improvements and refinements that consider the
+"whole picture". AI is more valuable when it's guided by you, the human, with
+the goal of producing elegant code that fits the project vision, conventions,
+and architecture.
+
+You are expected to:
+
+- Review the output yourself before sending a non-Draft PR. Do NOT request
+  review until YOU have checked the AI generated code.
 - REMOVE verbosity and blathering from documentation, comments, PR description,
   commit message, etc. All resources, including names, should be CONCISE and
   CLEAR. They should contain USEFUL information and nothing more.
 - REMOVE and DEDUPLICATE redundant code, tests, explanations, etc. Explicitness
   and clarity are GOOD but verbosity, over-explanation, and redundancy is BAD.
+
+If your PR description includes noise such as a "Testing" section with
+excruciating detail about how the AI tested the code (completely useless for
+reviewers: we have CI), that indicates you didn't understand the above guidance;
+your PR will be closed and you will be blocked from the org.
 
 ### Merging to master
 
