@@ -248,7 +248,7 @@ API
 
 BUILD
 
-• Building using "zig build" requires zig 0.16.x.
+• Building using "zig build" requires zig 0.17.x.
 • zig build: "-Dcross" option was removed. Often cross-compilation is now
   detected, so e.g. from a linux host: >
    zig build -Dtarget=aarch64-macos

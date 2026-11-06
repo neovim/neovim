@@ -383,7 +383,7 @@ General requirements (see [#1469](https://github.com/neovim/neovim/issues/1469#i
 - CMake version 3.19+, built with TLS/SSL support
   - Optional: Get the latest CMake from https://cmake.org/download/
     - Provides a shell script which works on most Linux systems. After running it, ensure the resulting `cmake` binary is in your $PATH so the Nvim build will find it.
-- Zig 0.16.x, to build the bundled libghostty-vt (not needed with a system libghostty-vt, see [Build without "bundled" dependencies](#build-without-bundled-dependencies))
+- Zig 0.17.x, to build the bundled libghostty-vt (not needed with a system libghostty-vt, see [Build without "bundled" dependencies](#build-without-bundled-dependencies))
 
 Platform-specific requirements are listed below.
 
@@ -557,7 +557,7 @@ Note that the C++ compiler is explicitly set so that it can be found when the de
 
 ### Prerequisites
 
-- zig 0.16.x
+- zig 0.17.x
 
 ### Instructions
 
