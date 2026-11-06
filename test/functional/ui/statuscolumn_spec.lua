@@ -76,15 +76,17 @@ describe('statuscolumn', function()
   it("widens with irregular 'statuscolumn' width", function()
     screen:try_resize(screen._width, 4)
     command([=[
-      set stc=%{v:relnum?v:relnum:(v:lnum==5?'bbbbb':v:lnum)}
+      set stc=%{v:relnum?v:relnum:(v:lnum==5?'bbbbb':v:lnum)} hlsearch
+      let @/ = 'a'
       let ns = nvim_create_namespace('')
       call nvim_buf_set_extmark(0, ns, 3, 0, {'virt_text':[['virt_text']]})
       norm 5G | redraw!
     ]=])
+    -- Search highlight is kept on lines redrawn after the width changed (#41592)
     screen:expect([[
-      {8:1    }aaaaa virt_text                                 |
-      {8:bbbbb}a^eaaa                                           |
-      {8:1    }aaaaa                                           |
+      {8:1    }{10:aaaaa} virt_text                                 |
+      {8:bbbbb}{10:a}^e{10:aaa}                                           |
+      {8:1    }{10:aaaaa}                                           |
                                                            |
     ]])
     -- Doesn't crash when trying to fill click defs that do not fit (#26845)
@@ -94,9 +96,9 @@ describe('statuscolumn', function()
       norm 5Gzt | redraw!
     ]=])
     screen:expect([[
-      {8:bbbbb}a^eaaa                                           |
-      {8:1    }aaaaa                                           |
-      {8:2    }aaaaa                                           |
+      {8:bbbbb}{10:a}^e{10:aaa}                                           |
+      {8:1    }{10:aaaaa}                                           |
+      {8:2    }{10:aaaaa}                                           |
                                                            |
     ]])
     -- Doesn't crash when clicking inside padded area without click_defs
