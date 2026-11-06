@@ -2,7 +2,7 @@
     .name = .neovim,
     .fingerprint = 0x66eb090879307a38,
     .version = "0.13.0",
-    .minimum_zig_version = "0.16.0",
+    .minimum_zig_version = "0.17.0",
 
     .dependencies = .{
         .zlua = .{
