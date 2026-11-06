@@ -4841,7 +4841,7 @@ static void ex_cquit(exarg_T *eap)
 {
   // this does not always pass on the exit code to the Manx compiler. why?
   int status = eap->addr_count > 0 ? (int)eap->line2 : EXIT_FAILURE;
-  ui_call_error_exit(status);
+  ui_call_error_exit(status, NULL_STRING);
   getout(status);
 }
 

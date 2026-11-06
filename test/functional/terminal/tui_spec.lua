@@ -225,6 +225,14 @@ describe('TUI :detach', function()
       any = [[Process exited 0]],
     }
 
+    -- Shows info message on stderr.
+    local out = table.concat(api.nvim_buf_get_lines(0, 0, -1, false))
+    t.matches(('Detached from %s'):format(vim.pesc(child_server)), out)
+    t.matches(
+      ('To reattach: nvim %%-%%-remote%%-ui %%-%%-server "%s"'):format(vim.pesc(child_server)),
+      out
+    )
+
     child_uis --[[@type any[] ]] = ({ child_session:request('nvim_list_uis') })[2]
     eq(0, #child_uis)
 
@@ -1143,6 +1151,8 @@ describe('TUI :connect', function()
     local server1_session = n.connect(server1)
     server1_session:request('nvim_command', 'qall!')
     screen2:expect({ any = vim.pesc('[Process exited 0]') })
+    -- Not detached from server2 (it connected instead).
+    t.not_matches('Detached from', table.concat(api.nvim_buf_get_lines(0, 0, -1, false)))
 
     screen2:detach()
 

@@ -1709,7 +1709,7 @@ static void handle_tag(char *tagname)
 
     // If the user doesn't want to edit the file then we quit here.
     if (swap_exists_did_quit) {
-      ui_call_error_exit(1);
+      ui_call_error_exit(1, NULL_STRING);
       getout(1);
     }
   }
@@ -1856,7 +1856,7 @@ static void create_windows(mparm_T *parmp)
           if (got_int || only_one_window()) {
             // abort selected or quit and only one window
             did_emsg = false;               // avoid hit-enter prompt
-            ui_call_error_exit(1);
+            ui_call_error_exit(1, NULL_STRING);
             getout(1);
           }
           // We can't close the window, it would disturb what
@@ -1959,7 +1959,7 @@ static void edit_buffers(mparm_T *parmp)
         if (got_int || only_one_window()) {
           // abort selected and only one window
           did_emsg = false;             // avoid hit-enter prompt
-          ui_call_error_exit(1);
+          ui_call_error_exit(1, NULL_STRING);
           getout(1);
         }
         win_close(curwin, true, false);
@@ -2387,7 +2387,7 @@ static void usage(void)
 static void check_swap_exists_action(void)
 {
   if (swap_exists_action == SEA_QUIT) {
-    ui_call_error_exit(1);
+    ui_call_error_exit(1, NULL_STRING);
     getout(1);
   }
   handle_swap_exists(NULL);
