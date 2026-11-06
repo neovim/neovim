@@ -2,6 +2,7 @@
 -- TODO (siddhantdev): deal with include directives
 
 local nvim_on = require('vim._core.util').nvim_on
+local autoinstall = require('vim.net._autoinstall')
 
 local M = {}
 
@@ -10,16 +11,6 @@ local line_break_pattern = '[\r\n]'
 
 --- Command that runs ssh. Tests replace it with a fake.
 M.ssh_cmd = { 'ssh' }
-
---- GitHub API URL of a Nvim release, by tag (see `fetch_sha256s()`). Tests replace it with a file.
-M.release_api = 'https://api.github.com/repos/neovim/neovim/releases/tags/%s'
-
---- |$NVIM_APPNAME| of the remote Nvim. Remote-ssh owns its dirs, e.g. `push_config()` replaces the
---- config dir.
-local appname = 'nvim-remote'
-
---- Remote-ssh data dir, relative to the remote `$HOME`.
-local remote_data_dir = ('.local/share/%s'):format(appname)
 
 local _log --- @type vim.Log?
 
@@ -431,7 +422,7 @@ local function push_config(uri, dir)
     error(('Failed to pack %s: %s'):format(dir, tar.stderr))
   end
   local script = table.concat({
-    ('d="${XDG_CONFIG_HOME:-$HOME/.config}/%s"'):format(appname),
+    ('d="${XDG_CONFIG_HOME:-$HOME/.config}/%s"'):format(autoinstall.appname),
     -- Sanity check before `rm -rf`. Literal, so a bad `appname` (e.g. empty) can't pass it.
     'case "$d" in */nvim-remote) ;; *) echo "Refusing to replace $d" >&2; exit 1 ;; esac',
     'rm -rf "$d"',
@@ -486,82 +477,6 @@ function M.get_system_info(uri)
   return os, arch
 end
 
---- Gets the release tag of the local version.
----
----@return string tag E.g. `v0.12.0`, or `nightly` for a prerelease.
----@return string base Version without prerelease, e.g. `v0.12.0`.
-local function release_tag()
-  local ver = vim.version()
-  local base = ('v%d.%d.%d'):format(ver.major, ver.minor, ver.patch)
-  return ver.prerelease and 'nightly' or base, base
-end
-
---- Starts fetching the release of the local version from `M.release_api`, for the SHA-256 of its
---- assets, as published by GitHub (the asset `digest`).
----
----@return fun(name: string): string get_sha256 Waits for the fetch, then gets the SHA-256 (hex) of
----   asset `name` (e.g. `nvim-linux-x86_64.tar.gz`), or `-` if unavailable (e.g. offline or
----   rate-limited).
-local function fetch_sha256s()
-  local task = vim.async.run(function()
-    return vim.async.await(3, vim.net.request, M.release_api:format((release_tag())), {})
-  end)
-  return function(name)
-    local ok, err, res = task:pwait(30000)
-    if not ok then
-      task:close() -- Timed out, or CTRL-C.
-    end
-    if err == 'interrupted' then
-      error(err, 0)
-    end
-    local decoded, json = pcall(vim.json.decode, res and res.body or '')
-    ---@type { name: string, digest: string? }[]
-    local assets = decoded and type(json) == 'table' and json.assets or {}
-    local asset = vim.iter(assets):find(function(a)
-      return a.name == name
-    end) or {}
-    local sha256 = type(asset.digest) == 'string' and asset.digest:match('^sha256:(%x+)$')
-    if not sha256 then
-      log().warn('fetch_sha256s: no digest of', name, err)
-    end
-    return sha256 or '-'
-  end
-end
-
---- Gets the Nvim release URL/dir/version based on the local version + remote platform.
----
----@param os string
----@param arch string
----@return string dir Install dir, relative to the remote `$HOME`, e.g.
----   `.local/share/nvim-remote/releases/v0.12.0-linux-x86_64`. Per platform too: a shared `$HOME`
----   may be mounted on remote hosts of different platforms.
----@return string url Release archive.
----@return string version Minimum version of an `nvim` on the remote `$PATH` to use instead, e.g.
----   `v0.12.0`, or `v0.13.0-dev` (any build) for a prerelease.
-local function get_release(os, arch)
-  local tag, base = release_tag()
-  local prerelease = vim.version().prerelease
-  -- Prerelease: installs the current nightly once per version, until "Update" (see `M.connect()`).
-  local install_name = prerelease and ('nightly-%s'):format(base) or base
-
-  local os_map = { linux = 'linux', darwin = 'macos' }
-  local arch_map = { x86_64 = 'x86_64', aarch64 = 'arm64', arm64 = 'arm64' }
-
-  local target_os = os_map[os]
-  local target_arch = arch_map[arch]
-  if not target_os or not target_arch then
-    error(('Unsupported OS/Arch combination: %s/%s'):format(os, arch))
-  end
-
-  local release_name = ('nvim-%s-%s'):format(target_os, target_arch)
-  local release_url = ('https://github.com/neovim/neovim/releases/download/%s/%s.tar.gz'):format(
-    tag,
-    release_name
-  )
-  local dir = ('%s/releases/%s-%s-%s'):format(remote_data_dir, install_name, target_os, target_arch)
-  return dir, release_url, prerelease and ('%s-%s'):format(base, prerelease) or base
-end
-
 --- Checks that the Nvim server at `addr` answers a request.
 ---@param addr string
 ---@return boolean
@@ -593,13 +508,16 @@ local function connect(uri_str, chan, report, update, config)
   ---@cast uri vim.Uri & {host:string}
   report('running', ('Connecting to %s...'):format(uri_str))
   -- Fetched meanwhile, for the remote to verify the release, if it installs it.
-  local get_sha256 = fetch_sha256s()
-  local dir, url, version = get_release(M.get_system_info(uri))
+  local get_sha256 = autoinstall.fetch_sha256s()
+  local dir, url, version = autoinstall.get_release(M.get_system_info(uri))
   if config then
     report('running', 'Copying config...')
     push_config(uri, config)
   end
-  local sha256 = get_sha256(vim.fs.basename(url))
+  local sha256, sha256_err = get_sha256(vim.fs.basename(url))
+  if not sha256 then
+    log().warn(sha256_err)
+  end
 
   local local_sock = ('%s_remote_nvim.sock'):format(vim.fn.tempname())
   local token = vim.text.hexencode(assert(vim.uv.random(8)))
@@ -652,7 +570,7 @@ local function connect(uri_str, chan, report, update, config)
 
   report('running', 'Starting remote Nvim...')
   log().debug('connect: local_sock', local_sock)
-  local args = { remote_sock, dir, url, sha256, version }
+  local args = { remote_sock, dir, url, sha256 or '-', version }
   if update then
     table.insert(args, 1, '--update')
   end
@@ -708,14 +626,14 @@ end
 function M.connect(uri_str, chan)
   local msg = ('This will install Nvim on %s (in ~/%s/), if missing.\n'):format(
     uri_str,
-    remote_data_dir
+    autoinstall.data_dir
   )
   local config_dir = vim.fn.stdpath('config') --[[@as string]]
   local config = vim.fn.isdirectory(config_dir) == 1 and config_dir or nil
   if config then
     msg = ('%sThis will overwrite the remote ~/.config/%s/ with a copy of %s/.\n'):format(
       msg,
-      appname,
+      autoinstall.appname,
       vim.fn.fnamemodify(config, ':~')
     )
   end
@@ -795,7 +713,7 @@ function M.serve(sock)
   end)
 
   vim.env.__NVIM_STARTREASON = 'remote-ssh'
-  vim.env.NVIM_APPNAME = appname
+  vim.env.NVIM_APPNAME = autoinstall.appname
   -- --embed: Waits for the UI to attach (at `sock`) before sourcing the config.
   local server = vim.system({ vim.v.progpath, '--embed', '--listen', sock }, {
     stdout = false,

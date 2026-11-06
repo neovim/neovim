@@ -221,7 +221,7 @@ describe('vim.system', function()
         local ok = vim.wait(5000, function()
           return closed
         end)
-        vim.uv.kill(assert(pid), 'sigkill')
+        vim.uv.kill(assert(pid), 'sigkill') -- Cleanup.
         assert(ok)
         return obj:wait(0).signal
       end)
@@ -243,7 +243,7 @@ describe('vim.system', function()
       local ok = vim.wait(5000, function()
         return closed
       end)
-      vim.uv.kill(assert(pid), 'sigkill')
+      vim.uv.kill(assert(pid), 'sigkill') -- Cleanup.
       assert(ok)
     end)
   end)
