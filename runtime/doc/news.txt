@@ -610,7 +610,7 @@ These existing features changed their behavior.
 • |SessionWritePre| and |SessionWritePost| are no longer triggered by
   |:mkview|, |:mkvimrc|, or |:mkexrc|.
 • Editing a local directory now shows its contents in a `filetype=directory`
-  buffer. See |dir|.
+  buffer, which refreshes automatically when entries change. See |dir|.
 • |:Open| with no arguments uses the current file.
 • The "buffer" key was renamed to "buf" in these functions (but the old name
   "buffer" is still accepted, for backwards compatibility):
