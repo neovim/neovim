@@ -403,13 +403,12 @@ win_T *win_float_find_altwin(const win_T *win, const tabpage_T *tp)
 {
   win_T *wp = prevwin;
   if (tp == NULL) {
-    return (win_valid(wp) && wp != win && wp->w_config.focusable
-            && !wp->w_config.hide) ? wp : firstwin;
+    return (win_valid(wp) && wp != win && win_is_focusable(wp)) ? wp : firstwin;
   }
 
   assert(tp != curtab);
   wp = tabpage_win_valid(tp, tp->tp_prevwin) ? tp->tp_prevwin : tp->tp_firstwin;
-  return (wp != win && wp->w_config.focusable && !wp->w_config.hide) ? wp : tp->tp_firstwin;
+  return (wp != win && win_is_focusable(wp)) ? wp : tp->tp_firstwin;
 }
 
 /// Abort win_float_special(): emit any error, tear down the half-built window, unblock autocmds.

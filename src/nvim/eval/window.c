@@ -44,8 +44,7 @@ static const char e_cannot_resize_window_in_another_tab_page[]
 bool win_has_winnr(win_T *wp, tabpage_T *tp)
   FUNC_ATTR_NONNULL_ALL
 {
-  return (wp == (tp == curtab ? curwin : tp->tp_curwin))
-         || (!wp->w_config.hide && wp->w_config.focusable);
+  return wp == (tp == curtab ? curwin : tp->tp_curwin) || win_is_focusable(wp);
 }
 
 win_T *win_find_nr(int nr, tabpage_T *tp)
