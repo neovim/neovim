@@ -157,6 +157,63 @@ describe('vim.system', function()
     eq({ 'notification', 'wait', { 'interrupted', 9 } }, n.next_msg(5000))
   end)
 
+  it('SystemObj:close() stops the process (SIGTERM, SIGKILL), also via Task:close()', function()
+    eq(
+      { 15, true, 15 },
+      exec_lua(function(nvim_prog)
+        local cmd = { nvim_prog, '--clean', '--headless' }
+        local closed = false
+        local obj = vim.system(cmd)
+        obj:close(function()
+          closed = true
+        end)
+        assert(vim.wait(5000, function()
+          return closed
+        end))
+        -- After exit, calls `on_close` at once.
+        local closed_again = false
+        obj:close(function()
+          closed_again = true
+        end)
+
+        local task_obj --- @type vim.SystemObj?
+        local task = vim.async.run(function()
+          return vim.async.await(1, function(on_exit)
+            task_obj = vim.system(cmd, {}, on_exit)
+            return task_obj
+          end)
+        end)
+        task:close()
+        assert(vim.wait(5000, function()
+          return task:completed()
+        end))
+        return { obj:wait(0).signal, closed_again, assert(task_obj):wait(0).signal }
+      end, n.nvim_prog)
+    )
+
+    if t.is_os('win') then
+      return
+    end
+    -- Escalates to SIGKILL after 2s, if SIGTERM doesn't stop it.
+    eq(
+      9,
+      exec_lua(function()
+        local obj = vim.system({ 'sh', '-c', 'trap "" TERM; echo READY; read x' }, { stdin = true })
+        obj:wait(5000, function(stdout)
+          return stdout:find('READY') ~= nil
+        end)
+        local closed = false
+        obj:close(function()
+          closed = true
+        end)
+        assert(vim.wait(5000, function()
+          return closed
+        end))
+        return obj:wait(0).signal
+      end)
+    )
+  end)
+
   it('SystemObj:wait() can return before process exit', function()
     t.skip(t.is_os('win'), 'shell command is POSIX-only')
 

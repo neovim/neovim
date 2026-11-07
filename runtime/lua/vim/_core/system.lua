@@ -60,6 +60,7 @@ local M = {}
 --- @field stdout_data? vim._core.stringbuffer
 --- @field stderr_data? vim._core.stringbuffer
 --- @field result? vim.SystemCompleted
+--- @field on_close? fun()[] Callbacks of `close()`, called after the process exits.
 
 --- @enum vim.SystemSig
 local SIG = {
@@ -75,6 +76,20 @@ local function close_handle(handle)
   if handle and not handle:is_closing() then
     handle:close()
   end
+end
+
+--- @param timeout integer
+--- @param cb fun()
+--- @return uv.uv_timer_t
+local function timer_oneshot(timeout, cb)
+  local timer = assert(uv.new_timer())
+  uv.update_time() -- See time_watcher_start().
+  timer:start(timeout, 0, function()
+    timer:stop()
+    timer:close()
+    cb()
+  end)
+  return timer
 end
 
 --- @class vim.SystemObj
@@ -106,6 +121,41 @@ end
 --- @param signal integer|string Signal to send to the process. See |luv-constants|.
 function SystemObj:kill(signal)
   assert(self._state.handle):kill(signal)
+end
+
+--- Stops the process (SIGTERM, escalates to SIGKILL after 2s) and calls `on_close` after it exits.
+--- Implements |vim.async.Closable|, so closing a task that awaits |vim.system()| stops the process.
+---
+--- Example:
+--- ```lua
+--- local task = vim.async.run(function()
+---   return vim.async.await(3, vim.system, { 'sleep', '10' }, {})
+--- end)
+--- task:close() -- Stops `sleep`.
+--- ```
+---
+--- @param on_close? fun()
+function SystemObj:close(on_close)
+  local state = self._state
+  if state.result then -- Exited already.
+    if on_close then
+      on_close()
+    end
+    return
+  end
+  if on_close then
+    state.on_close = state.on_close or {}
+    table.insert(state.on_close, on_close)
+  end
+  if state.handle and state.handle:is_active() then
+    self:kill(SIG.TERM)
+    close_handle(state.timer) -- Stopping anyway: replaces the `timeout` timer.
+    state.timer = timer_oneshot(2000, function()
+      if state.handle and state.handle:is_active() then
+        self:kill(SIG.KILL)
+      end
+    end)
+  end
 end
 
 --- @package
@@ -379,20 +429,6 @@ local function spawn(cmd, opts, on_exit, on_error)
   return handle, pid_or_err --[[@as integer]]
 end
 
---- @param timeout integer
---- @param cb fun()
---- @return uv.uv_timer_t
-local function timer_oneshot(timeout, cb)
-  local timer = assert(uv.new_timer())
-  uv.update_time() -- See time_watcher_start().
-  timer:start(timeout, 0, function()
-    timer:stop()
-    timer:close()
-    cb()
-  end)
-  return timer
-end
-
 --- @param state vim.SystemState
 --- @param code integer
 --- @param signal integer
@@ -435,6 +471,9 @@ local function _on_exit(state, code, signal, on_exit)
       stderr = stderr_data and stderr_data:tostring() or nil,
     }
 
+    for _, on_close in ipairs(state.on_close or {}) do
+      on_close()
+    end
     if on_exit then
       on_exit(state.result)
     end

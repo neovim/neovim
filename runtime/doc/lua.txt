@@ -5387,6 +5387,8 @@ vim.SystemCompleted                                      *vim.SystemCompleted*
 vim.SystemObj                                                  *vim.SystemObj*
 
     Fields: ~
+      • {close}       (`fun(self: vim.SystemObj, on_close: fun()?)`) See
+                      |SystemObj:close()|.
       • {cmd}         (`string[]`) Command name and args
       • {is_closing}  (`fun(self: vim.SystemObj): boolean`) See
                       |SystemObj:is_closing()|.
@@ -5398,6 +5400,21 @@ vim.SystemObj                                                  *vim.SystemObj*
       • {write}       (`fun(self: vim.SystemObj, data: string[]|string?)`) See
                       |SystemObj:write()|.
 
+
+SystemObj:close({on_close})                                *SystemObj:close()*
+    Stops the process (SIGTERM, escalates to SIGKILL after 2s) and calls
+    `on_close` after it exits. Implements |vim.async.Closable|, so closing a
+    task that awaits |vim.system()| stops the process.
+
+    Example: >lua
+        local task = vim.async.run(function()
+          return vim.async.await(3, vim.system, { 'sleep', '10' }, {})
+        end)
+        task:close() -- Stops `sleep`.
+<
+
+    Parameters: ~
+      • {on_close}  (`fun()?`)
 
 SystemObj:is_closing()                                *SystemObj:is_closing()*
     Checks if the process handle is closing or already closed.
