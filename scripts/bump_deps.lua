@@ -25,6 +25,7 @@ local repos = {
   'tree-sitter-grammars/tree-sitter-markdown',
   'bytecodealliance/wasmtime',
   'uncrustify/uncrustify',
+  'ghostty-org/ghostty',
 }
 
 local zig_mode = {

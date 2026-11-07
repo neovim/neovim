@@ -2703,9 +2703,12 @@ static const char *did_set_scrollback(optset_T *args)
   OptInt old_value = args->os_oldval.data.integer;
   OptInt value = args->os_newval.data.integer;
 
-  if (buf->terminal && value < old_value) {
-    // Force the scrollback to take immediate effect only when decreasing it.
-    on_scrollback_option_changed(buf->terminal);
+  if (buf->terminal && !(args->os_flags & OPT_GLOBAL)) {
+    size_t old_limit = old_value < 1 ? SB_MAX : (size_t)old_value;
+    size_t limit = value < 1 ? SB_MAX : (size_t)value;
+    buf->b_p_scbk = (OptInt)limit;
+    // Force a terminal refresh when the value decreases.
+    on_scrollback_option_changed(buf->terminal, limit, limit < old_limit);
   }
   return NULL;
 }
@@ -2785,6 +2788,14 @@ static const char *did_set_swapfile(optset_T *args)
     // no need to reset buf->b_may_swap, ml_open_file() will check buf->b_p_swf
     mf_close_file(buf, true);              // remove the swap file
   }
+  return NULL;
+}
+
+/// Process the updated 'termguicolors' option value.
+static const char *did_set_termguicolors(optset_T *args FUNC_ATTR_UNUSED)
+{
+  // Terminal default colors use the Normal highlight's GUI colors only with 'termguicolors'.
+  terminal_update_colors_all();
   return NULL;
 }
 

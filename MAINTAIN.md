@@ -135,6 +135,10 @@ Some can be auto-bumped by `scripts/bump_deps.lua`.
 * [gettext](https://ftp.gnu.org/pub/gnu/gettext/)
 * [libiconv](https://ftp.gnu.org/pub/gnu/libiconv)
     * Requires a PR to update the [Zig package](https://github.com/allyourcodebase/libiconv) first.
+* [libghostty-vt](https://github.com/ghostty-org/ghostty) ([docs](https://libghostty.tip.ghostty.org))
+    * Pinned to a commit in both `cmake.deps/deps.txt` and `build.zig.zon`. `scripts/bump_deps.lua` updates both.
+    * A bump may require a newer Zig (Ghostty's `minimum_zig_version`), which affects every Zig-based build.
+    * The C API entry point is [`include/ghostty/vt.h`](https://github.com/ghostty-org/ghostty/blob/main/include/ghostty/vt.h).
 * [lua-compat](https://github.com/keplerproject/lua-compat-5.3)
 * [tree-sitter](https://github.com/tree-sitter/tree-sitter)
 * [treesitter parsers](https://github.com/neovim/neovim/blob/7e97c773e3ba78fcddbb2a0b9b0d572c8210c83e/cmake.deps/deps.txt#L47-L62)

@@ -5,6 +5,7 @@ local Screen = require('test.functional.ui.screen')
 local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local api = n.api
+local exec_lua = n.exec_lua
 local eq = t.eq
 local poke_eventloop = n.poke_eventloop
 local assert_alive = n.assert_alive
@@ -156,5 +157,25 @@ describe(':terminal synchronized output (mode 2026)', function()
                                                         |
                                                         |
     ]])
+  end)
+
+  it('flushes a synchronized update completed in one write', function()
+    api.nvim_chan_send(chan, 'before\r\n')
+    screen:expect([[
+      ^before                                            |
+                                                        |*5
+                                                        |
+    ]])
+
+    exec_lua(function(chan_, buf_, input)
+      vim.api.nvim_chan_send(chan_, input)
+      vim.schedule(function()
+        vim.g.sync_output_line = vim.api.nvim_buf_get_lines(buf_, 1, 2, true)[1]
+      end)
+    end, chan, buf, CSI .. '?2026hcoalesced' .. CSI .. '?2026l')
+    t.retry(nil, nil, function()
+      eq(true, exec_lua('return vim.g.sync_output_line ~= nil'))
+    end)
+    eq('coalesced', exec_lua('return vim.g.sync_output_line'))
   end)
 end)
