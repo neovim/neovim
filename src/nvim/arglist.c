@@ -198,34 +198,43 @@ void alist_set(alist_T *al, int count, char **files, int use_curbuf, int *fnum_l
   }
 }
 
+void alist_buf_add(alist_T *al, int i, char *fname, int set_fnum)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(i <= al->al_ga.ga_len);
+  win_T *wp = curwin;
+
+  arglist_locked = true;
+  wp->w_locked++;
+
+  AARGLIST(al)[i].ae_fname = fname;
+  if (set_fnum > 0) {
+    set_fnum = buflist_add(fname, BLN_LISTED | (set_fnum == 2 ? BLN_CURBUF : 0));
+  }
+  AARGLIST(al)[i].ae_fnum = set_fnum;
+
+  arglist_locked = false;
+  wp->w_locked--;
+}
+
 /// Add file "fname" to argument list "al".
 /// "fname" must have been allocated and "al" must have been checked for room.
 ///
 /// May trigger Buf* autocommands
 ///
-/// @param set_fnum  1: set buffer number; 2: re-use curbuf
+/// @param set_fnum  1: set buffer number; 2: re-use curbuf;
+///                  negative (-1/-2): defer buffer creation (startup only;
+///                  resolved after Lua initialization via alist_buf_add()).
 void alist_add(alist_T *al, char *fname, int set_fnum)
 {
-  win_T *wp = curwin;
-
   if (fname == NULL) {          // don't add NULL file names
     return;
   }
   if (check_arglist_locked() == FAIL) {
     return;
   }
-  arglist_locked = true;
-  wp->w_locked++;
-
-  AARGLIST(al)[al->al_ga.ga_len].ae_fname = fname;
-  if (set_fnum > 0) {
-    AARGLIST(al)[al->al_ga.ga_len].ae_fnum =
-      buflist_add(fname, BLN_LISTED | (set_fnum == 2 ? BLN_CURBUF : 0));
-  }
+  alist_buf_add(al, al->al_ga.ga_len, fname, set_fnum);
   al->al_ga.ga_len++;
-
-  arglist_locked = false;
-  wp->w_locked--;
 }
 
 /// Isolate one argument, taking backticks.

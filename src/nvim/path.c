@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
 #ifdef MSWIN
 # include <direct.h>
 #endif
@@ -19,6 +20,7 @@
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
 #include "nvim/globals.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
@@ -1764,9 +1766,10 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
     TO_SLASH(buf);
     return FAIL;
   }
-
   if (path_with_url(fname)) {
-    xstrlcpy(buf, fname, len);
+    char *ret = nlua_uri_to_fname(fname);
+    xstrlcpy(buf, ret != NULL ? ret : fname, len);
+    xfree(ret);
     return OK;
   }
 
@@ -1793,7 +1796,7 @@ char *fix_fname(const char *fname)
 #ifdef UNIX
   return FullName_save(fname, true);
 #else
-  if (!vim_isAbsName(fname)
+  if (!path_is_absolute(fname)
       || strstr(fname, "..") != NULL
       || strstr(fname, "//") != NULL
 # ifdef BACKSLASH_IN_FILENAME

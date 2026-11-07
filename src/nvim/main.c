@@ -294,10 +294,14 @@ int main(int argc, char **argv)
   // argument list "global_alist".
   command_line_scan(&params);
 
-  set_argf_var();
-
   nlua_init(argv, argc, params.lua_arg0);
   TIME_MSG("init lua interpreter");
+
+  // Create arglist buffers now: name expansion may need Lua (vim.uri.to_fname).
+  for (int i = 0; i < GARGCOUNT; i++) {
+    alist_buf_add(&global_alist, i, GARGLIST[i].ae_fname, abs(-GARGLIST[i].ae_fnum));
+  }
+  set_argf_var();
 
   // On Windows, channel_from_stdio() replaces fd 2 with CONOUT$ (for ConPTY
   // support). Save a dup of the original stderr first so that if server_init()
@@ -1549,10 +1553,7 @@ scripterror:
       path_fix_case(p);
 #endif
 
-      int alist_fnum_flag = edit_stdin(parmp)
-                            ? 1   // add buffer nr after exp.
-                            : 2;  // add buffer number now and use curbuf
-      alist_add(&global_alist, p, alist_fnum_flag);
+      alist_add(&global_alist, p, edit_stdin(parmp) ? -1 : -2);
     }
 
     // If there are no more letters after the current "-", go to next argument.
