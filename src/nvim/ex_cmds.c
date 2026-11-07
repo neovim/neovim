@@ -49,6 +49,7 @@
 #include "nvim/extmark_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/garray.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/help.h"
@@ -350,6 +351,9 @@ static int linelen(int *has_tab)
 // contain the longest line being sorted.
 static char *sortbuf1;
 static char *sortbuf2;
+// Sort keys of all lines, NUL-separated, so that comparing two lines does not
+// need a (random access) ml_get() per comparison.
+static char *sort_keys;
 
 static bool sort_lc;      ///< sort using locale
 static bool sort_ic;      ///< ignore case
@@ -364,8 +368,7 @@ typedef struct {
   linenr_T lnum;          ///< line number
   union {
     struct {
-      varnumber_T start_col_nr;  ///< starting column number
-      varnumber_T end_col_nr;    ///< ending column number
+      size_t key_off;     ///< offset of the NUL-terminated key in "sort_keys"
     } line;
     struct {
       varnumber_T value;         ///< value if sorting by integer
@@ -415,17 +418,8 @@ static int sort_compare(const void *s1, const void *s2)
              ? 0
              : l1.st_u.value_flt > l2.st_u.value_flt ? 1 : -1;
   } else {
-    // We need to copy one line into "sortbuf1", because there is no
-    // guarantee that the first pointer becomes invalid when obtaining the
-    // second one.
-    memcpy(sortbuf1, ml_get(l1.lnum) + l1.st_u.line.start_col_nr,
-           (size_t)(l1.st_u.line.end_col_nr - l1.st_u.line.start_col_nr + 1));
-    sortbuf1[l1.st_u.line.end_col_nr - l1.st_u.line.start_col_nr] = NUL;
-    memcpy(sortbuf2, ml_get(l2.lnum) + l2.st_u.line.start_col_nr,
-           (size_t)(l2.st_u.line.end_col_nr - l2.st_u.line.start_col_nr + 1));
-    sortbuf2[l2.st_u.line.end_col_nr - l2.st_u.line.start_col_nr] = NUL;
-
-    result = string_compare(sortbuf1, sortbuf2);
+    result = string_compare(sort_keys + l1.st_u.line.key_off,
+                            sort_keys + l2.st_u.line.key_off);
   }
 
   // If two lines have the same value, preserve the original line order.
@@ -455,6 +449,9 @@ void ex_sort(exarg_T *eap)
   }
   sortbuf1 = NULL;
   sortbuf2 = NULL;
+  sort_keys = NULL;
+  garray_T keys = GA_EMPTY_INIT_VALUE;
+  ga_init(&keys, 1, 4096);
   regmatch.regprog = NULL;
   sorti_T *nrs = xmalloc(count * sizeof(sorti_T));
 
@@ -597,9 +594,10 @@ void ex_sort(exarg_T *eap)
       }
       *s2 = c;
     } else {
-      // Store the column to sort at.
-      nrs[lnum - eap->line1].st_u.line.start_col_nr = start_col;
-      nrs[lnum - eap->line1].st_u.line.end_col_nr = end_col;
+      // Store a copy of the part of the line to sort on.
+      nrs[lnum - eap->line1].st_u.line.key_off = (size_t)keys.ga_len;
+      ga_concat_len(&keys, s + start_col, (size_t)MAX(end_col - start_col, 0));
+      ga_append(&keys, NUL);
     }
 
     nrs[lnum - eap->line1].lnum = lnum;
@@ -615,6 +613,7 @@ void ex_sort(exarg_T *eap)
   // Allocate a buffer that can hold the longest line.
   sortbuf1 = xmalloc((size_t)maxlen + 1);
   sortbuf2 = xmalloc((size_t)maxlen + 1);
+  sort_keys = keys.ga_data;
 
   // Sort the array of line numbers.  Note: can't be interrupted!
   qsort((void *)nrs, count, sizeof(sorti_T), sort_compare);
@@ -687,6 +686,8 @@ sortend:
   xfree(nrs);
   xfree(sortbuf1);
   xfree(sortbuf2);
+  ga_clear(&keys);
+  sort_keys = NULL;
   vim_regfree(regmatch.regprog);
   if (got_int) {
     emsg(_(e_interr));
