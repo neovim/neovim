@@ -175,6 +175,34 @@ describe('vim.ui.select()', function()
       eq(before, api.nvim_buf_get_name(0))
     end)
 
+    it('aligns multibyte kinds and tag names by display width', function()
+      finally(function()
+        os.remove('XselTags')
+      end)
+      write_file(
+        'XselTags',
+        '!_TAG_FILE_FORMAT\t2\t/extended format/\n'
+          .. 'fooä\tXselTagA.c\t/^int fooä;$/;"\tƒ\n'
+          .. 'foox\tXselTagB.c\t/^int foox;$/;"\tv\n'
+      )
+      api.nvim_set_option_value('tags', 'XselTags', {})
+
+      local got = exec_lua(function()
+        --- @diagnostic disable-next-line: duplicate-set-field
+        vim.ui.select = function(items, opts, on_choice)
+          _G._captured = vim.tbl_map(opts.format_item, items)
+          on_choice(nil, nil)
+        end
+        vim.cmd('tselect /^foo')
+        return _G._captured
+      end)
+
+      eq({
+        '  F   ƒ    fooä               XselTagA.c',
+        '  F   v    foox               XselTagB.c',
+      }, got)
+    end)
+
     it('+ async picker', function()
       prepare_test()
 

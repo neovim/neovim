@@ -3075,16 +3075,23 @@ int expand_tags(bool tagnames, char *pat, int *num_file, char ***file)
       tagptrs_T t_p;
       parse_match((*file)[i], &t_p);
       size_t len = (size_t)(t_p.tagname_end - t_p.tagname);
-      if (len > name_buf_size - 3) {
-        name_buf_size = len + 3;
+      // The kind may be a multi-byte character, copy all of its bytes.
+      const char *kind = "f";
+      size_t kind_len = 1;
+      if (t_p.tagkind != NULL && t_p.tagkind < t_p.tagkind_end) {
+        kind = t_p.tagkind;
+        kind_len = (size_t)utfc_ptr2len(kind);
+      }
+      if (len + kind_len + 2 > name_buf_size) {
+        name_buf_size = len + kind_len + 2;
         char *buf = xrealloc(name_buf, name_buf_size);
         name_buf = buf;
       }
 
       memmove(name_buf, t_p.tagname, len);
       name_buf[len++] = 0;
-      name_buf[len++] = (t_p.tagkind != NULL && *t_p.tagkind)
-                        ? *t_p.tagkind : 'f';
+      memmove(name_buf + len, kind, kind_len);
+      len += kind_len;
       name_buf[len++] = 0;
       memmove((*file)[i] + len, t_p.fname, (size_t)(t_p.fname_end - t_p.fname));
       (*file)[i][len + (size_t)(t_p.fname_end - t_p.fname)] = 0;
