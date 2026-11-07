@@ -306,14 +306,15 @@ local function perl()
   -- set with g:perl_host_prog
   local ok = cmd_ok({ perl_exec, '-W', '-MApp::cpanminus', '-e', '' })
   if not ok then
-    return { perl_exec, '"App::cpanminus" module is not installed' }
+    health.warn('"App::cpanminus" module is not installed')
+    return
   end
 
   local latest_cpan_cmd = {
     perl_exec,
-    '-MApp::cpanminus::fatscript',
     '-e',
-    'my $app = App::cpanminus::script->new; $app->parse_options ("--info", "-q", "Neovim::Ext"); exit $app->doit',
+    'eval { require App::cpanminus::fatscript } or require App::cpanminus::script;'
+      .. ' my $app = App::cpanminus::script->new; $app->parse_options ("--info", "-q", "Neovim::Ext"); exit $app->doit',
   }
   local latest_cpan
   ok, latest_cpan = cmd_ok(latest_cpan_cmd)
@@ -323,7 +324,7 @@ local function perl()
       { "Make sure you're connected to the internet.", 'Are you behind a firewall or proxy?' }
     )
     return
-  elseif latest_cpan[1] == '!' then
+  elseif latest_cpan:sub(1, 1) == '!' then
     local cpanm_errs = vim.split(latest_cpan, '!')
     if assert(cpanm_errs[1]):find("Can't write to ") then
       local advice = {} ---@type string[]
@@ -335,7 +336,7 @@ local function perl()
       -- Last line is the package info
       latest_cpan = cpanm_errs[#cpanm_errs]
     else
-      health.error('Unknown warning from command: ' .. latest_cpan_cmd, cpanm_errs)
+      health.error('Unknown warning from command: ' .. shellify(latest_cpan_cmd), cpanm_errs)
       return
     end
   end
