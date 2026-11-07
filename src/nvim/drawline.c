@@ -1732,7 +1732,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     has_decor = true;
     extra_check = true;
   }
-  if (wp->w_p_lbr && line_has_extconceal(wp, lnum)) {
+  if (draw_text && wp->w_p_lbr && line_has_extconceal(wp, lnum)) {
     conceal_spans_collect(wp, lnum - 1, ml_get_buf_len(wp->w_buffer, lnum), &conceal_spans);
   }
 
