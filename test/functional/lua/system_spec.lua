@@ -222,6 +222,36 @@ describe('vim.system', function()
         return obj:wait(0).signal
       end)
     )
+
+    -- Closes the output pipes without waiting for a descendant that keeps them open: while the
+    -- process runs, or after it exited.
+    eq(
+      { { 'eof', 'closed' }, { 'eof', 'closed' } },
+      exec_lua(function()
+        local function check(script, exited)
+          local log, pid = {}, nil --- @type string[], integer?
+          local obj = vim.system({ 'sh', '-c', script }, {
+            stdout = function(_, data)
+              pid = pid or tonumber(data or '')
+              table.insert(log, data == nil and 'eof' or nil)
+            end,
+          })
+          assert(vim.wait(5000, function()
+            return pid ~= nil and (not exited or obj:is_closing())
+          end))
+          obj:close(function()
+            table.insert(log, 'closed')
+          end)
+          local ok = vim.wait(5000, function()
+            return #log == 2
+          end)
+          vim.uv.kill(assert(pid), 'sigkill') -- The descendant.
+          assert(ok, vim.inspect(log))
+          return log
+        end
+        return { check('sleep 10 & echo $!; wait', false), check('sleep 10 & echo $!', true) }
+      end)
+    )
   end)
 
   it('SystemObj:wait() can return before process exit', function()
