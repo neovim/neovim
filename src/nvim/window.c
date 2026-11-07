@@ -4039,11 +4039,14 @@ static void frame_new_width(frame_T *topfrp, int width, bool leftfirst, bool wfw
       while (frp != NULL) {
         int w = frame_minwidth(frp, NULL);
         if (frp->fr_width + extra_cols < w) {
-          extra_cols += frp->fr_width - w;
+          int old_width = frp->fr_width;
           frame_new_width(frp, w, leftfirst, wfw);
+          extra_cols += old_width - frp->fr_width;
         } else {
-          frame_new_width(frp, frp->fr_width + extra_cols,
-                          leftfirst, wfw);
+          int new_width = frp->fr_width + extra_cols;
+          frame_new_width(frp, new_width, leftfirst, wfw);
+          // A nested frame may not reach the requested width.
+          width += frp->fr_width - new_width;
           break;
         }
         if (leftfirst) {
@@ -7493,6 +7496,18 @@ int min_rows_for_all_tabpages(void)
   return total;
 }
 
+int min_cols_for_all_tabpages(void)
+{
+  if (firstwin == NULL) {
+    return MIN_COLUMNS;
+  }
+
+  int total = 0;
+  FOR_ALL_TABS(tp) {
+    total = MAX(total, frame_minwidth(tp->tp_topframe, NULL));
+  }
+  return total;
+}
 /// Check that there is only one window (and only one tab page), not counting a
 /// help or preview window, unless it is the current window. Does not count
 /// "ctx_win". Does not count floats unless it is current.

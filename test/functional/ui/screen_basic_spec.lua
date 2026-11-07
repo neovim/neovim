@@ -669,6 +669,46 @@ local function screen_tests(linegrid)
       ]])
     end)
 
+    it("keeps the screen wide enough for 'winminwidth' after resize", function()
+      screen:try_resize(321, 16)
+      command('set winwidth=40 winminwidth=40 | vsplit | tabnew')
+      screen:try_resize(25, 16)
+
+      eq(81, api.nvim_get_option_value('columns', {}))
+
+      command('tabprevious | redraw!')
+      eq(
+        { 40, 40 },
+        exec_lua([[ return vim.tbl_map(vim.api.nvim_win_get_width,
+					vim.api.nvim_tabpage_list_wins(0))]])
+      )
+
+      assert_alive()
+    end)
+
+    it('handle nested winfixwidth windows when the screen shrink', function()
+      screen:try_resize(233, 58)
+      command('set laststatus=2 showtabline=2 cmdheight=1 equalalways')
+      command('belowright 9split | wincmd k | belowright 9split | wincmd k')
+      command('leftabove 92vsplit | setlocal winfixwidth')
+      command('topleft 19vsplit | setlocal winfixwidth')
+
+      screen:try_resize(25, 16)
+
+      eq(25, api.nvim_get_option_value('columns', {}))
+
+      eq(
+        true,
+        exec_lua([[
+				return vim.iter(vim.api.nvim_tabpage_list_wins(0)):all(function(win)
+					local col = vim.api.nvim_win_get_position(win)[2]
+					return col + vim.api.nvim_win_get_width(win) <= vim.o.columns
+					end)
+		]])
+      )
+
+      assert_alive()
+    end)
     it('VimResized autocommand does not cause invalid UI events #20692 #20759', function()
       screen:try_resize(25, 5)
       feed('iresize<Esc>')
