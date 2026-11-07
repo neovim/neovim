@@ -5403,8 +5403,9 @@ vim.SystemObj                                                  *vim.SystemObj*
 
 SystemObj:close({on_close})                                *SystemObj:close()*
     Stops the process (SIGTERM, escalates to SIGKILL after 2s) and calls
-    `on_close` after it exits. Implements |vim.async.Closable|, so closing a
-    task that awaits |vim.system()| stops the process.
+    `on_close` after it exits and its output pipes have closed (see
+    `on_exit`). Implements |vim.async.Closable|, so closing a task that awaits
+    |vim.system()| stops the process.
 
     Example: >lua
         local task = vim.async.run(function()
@@ -5441,16 +5442,24 @@ SystemObj:kill({signal})                                    *SystemObj:kill()*
                   |luv-constants|.
 
 SystemObj:wait({timeout}, {cond})                           *SystemObj:wait()*
-    Waits for the process to complete or until the specified timeout elapses.
+    Waits for the process to complete, and stops it on timeout or CTRL-C.
 
-    This method blocks execution until the associated process has exited or
-    the optional `timeout` (in milliseconds) has been reached. If the process
-    does not exit before the timeout, it is forcefully terminated with SIGKILL
-    (signal 9), and the exit code is set to 124. CTRL-C also terminates it,
-    and fails with `"interrupted"`.
+    Blocks until the process exits and its output pipes close, or until
+    `timeout` (ms) or CTRL-C. If `timeout` is not given it defaults to
+    `opts.timeout`, else waits indefinitely.
 
-    If no `timeout` is provided, the method will wait indefinitely (or use the
-    timeout specified in the options when the process was started).
+    On timeout:
+    • Stops the process (|SystemObj:close()|) if it is running, and sets exit
+      code 124.
+    • Waits for process exit (max 2s, escalates to SIGKILL), but not its
+      output pipes (a descendant may inherit them and keep them open, e.g. a
+      browser started by `xdg-open`). close, which a descendant (e.g. a
+      browser started by `xdg-open`) may keep open.
+    • Returns the output collected so far.
+
+    On CTRL-C:
+    • Stops the process (see above).
+    • Raises error "interrupted".
 
     Example: >lua
         local obj = vim.system({'echo', 'hello'}, { text = true })
@@ -5464,7 +5473,7 @@ SystemObj:wait({timeout}, {cond})                           *SystemObj:wait()*
 <
 
     Parameters: ~
-      • {timeout}  (`integer?`)
+      • {timeout}  (`integer?`) Wait duration (ms).
       • {cond}     (`fun(stdout: string, stderr: string): boolean?`) Stops
                    waiting when it returns true, without terminating the
                    process. The `stdout` and `stderr` args have the
@@ -5550,11 +5559,13 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
                    • {text}? (`boolean`) Handle stdout and stderr as text.
                      Normalizes line endings by replacing `\r\n` with `\n`.
                    • {timeout}? (`integer`) Run the command with a time limit
-                     in ms. Upon timeout the process is sent the TERM signal
-                     (15) and the exit code is set to 124.
-      • {on_exit}  (`fun(out: vim.SystemCompleted)?`) Called when subprocess
-                   exits. When provided, the command runs asynchronously. See
-                   return of SystemObj:wait().
+                     (ms). Upon timeout the process is stopped
+                     (|SystemObj:close()|) and exit code is 124.
+      • {on_exit}  (`fun(out: vim.SystemCompleted)?`) Called with the result
+                   (see |SystemObj:wait()|) after the process exits and its
+                   output pipes have closed. A descendant process that
+                   inherited the pipes (e.g. `cmd &` in a shell script) delays
+                   this until it closes them.
 
     Overloads: ~
       • `fun(cmd: string[], on_exit: fun(out: vim.SystemCompleted)): vim.SystemObj`

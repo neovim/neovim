@@ -73,13 +73,13 @@ local function tunnel(opts, cmd)
   write('tunnel.args', ('%s %s'):format(table.concat(_G.arg, ' '), table.concat(script, '\n')))
   write('tunnel.pid', tostring(vim.uv.os_getpid()))
 
-  local server --- @type vim.SystemObj?
+  local server --- @type integer? Job id.
   if config.tunnel.serve then
-    -- Serves a headless Nvim at the local socket, as the remote does at the remote one. Its stdin
-    -- (`--embed`) ends with this process, and so does the server.
+    -- Serves a headless Nvim at the local socket, as the remote does at the remote one. A job (not
+    -- vim.system()), so this Nvim stops it when it exits, also on SIGTERM (`teardown()`).
     local sock = assert(opts.L:match('^[^:]+'))
     local nvim = { config.nvim_prog, '--embed', '--headless', '--clean', '-i', 'NONE' }
-    server = vim.system(vim.list_extend(nvim, { '--listen', sock }), { stdin = true })
+    server = vim.fn.jobstart(vim.list_extend(nvim, { '--listen', sock }))
     vim.wait(10000, function()
       return vim.uv.fs_stat(sock) ~= nil
     end)
@@ -91,7 +91,7 @@ local function tunnel(opts, cmd)
     return config.tunnel.exit
   elseif server then
     -- As the remote script: ends when its server exits.
-    server:wait()
+    vim.fn.jobwait({ server })
     return 0
   end
   vim.wait(60000) -- Until killed.
