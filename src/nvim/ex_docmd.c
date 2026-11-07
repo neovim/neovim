@@ -105,6 +105,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
+#include "nvim/register.h"
 #include "nvim/runtime.h"
 #include "nvim/runtime_defs.h"
 #include "nvim/search.h"
@@ -635,6 +636,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
         xfree(last_cmdline);
         last_cmdline = new_last_cmdline;
         new_last_cmdline = NULL;
+        register_changed(':', kRegChangedCmdline, NULL);
       }
     } else {
       // need to copy the command after the '|' to cmdline_copy, for the
