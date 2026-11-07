@@ -370,6 +370,8 @@ newwindow:
     }
     if (wp == NULL) {
       emsg(_("E441: There is no preview window"));
+    } else if (!win_is_focusable(wp)) {
+      beep_flush();
     } else {
       win_goto(wp);
     }
@@ -394,9 +396,9 @@ newwindow:
     } else {
       win_T *wp;
       if (Prenum) {  // go to specified window
-        win_T *last_focusable = firstwin;
+        win_T *last_focusable = curwin;
         for (wp = firstwin; --Prenum > 0;) {
-          if (!wp->w_floating || win_is_focusable(wp)) {
+          if (win_is_focusable(wp)) {
             last_focusable = wp;
           }
           if (wp->w_next == NULL) {
@@ -404,30 +406,22 @@ newwindow:
           }
           wp = wp->w_next;
         }
-        while (wp != NULL && wp->w_floating && !win_is_focusable(wp)) {
+        while (wp != NULL && !win_is_focusable(wp)) {
           wp = wp->w_next;
         }
         if (wp == NULL) {  // went past the last focusable window
           wp = last_focusable;
         }
       } else {
-        if (nchar == 'W') {  // go to previous window
-          wp = curwin->w_prev;
-          if (wp == NULL) {
-            wp = lastwin;  // wrap around
+        // go to previous or next focusable window, with wrap-around
+        wp = curwin;
+        do {
+          if (nchar == 'W') {
+            wp = wp->w_prev != NULL ? wp->w_prev : lastwin;
+          } else {
+            wp = wp->w_next != NULL ? wp->w_next : firstwin;
           }
-          while (wp != NULL && wp->w_floating && !win_is_focusable(wp)) {
-            wp = wp->w_prev;
-          }
-        } else {  // go to next window
-          wp = curwin->w_next;
-          while (wp != NULL && wp->w_floating && !win_is_focusable(wp)) {
-            wp = wp->w_next;
-          }
-          if (wp == NULL) {
-            wp = firstwin;  // wrap around
-          }
-        }
+        } while (wp != curwin && !win_is_focusable(wp));
       }
       win_goto(wp);
     }
@@ -488,15 +482,26 @@ newwindow:
 
   // cursor to top-left window
   case 't':
-  case Ctrl_T:
-    win_goto(firstwin);
+  case Ctrl_T: {
+    win_T *wp = firstwin_focusable();
+    if (win_is_focusable(wp)) {
+      win_goto(wp);
+    }
     break;
+  }
 
   // cursor to bottom-right window
   case 'b':
-  case Ctrl_B:
-    win_goto(lastwin_nofloating(NULL));
+  case Ctrl_B: {
+    win_T *wp = lastwin_nofloating(NULL);
+    while (wp != NULL && !win_is_focusable(wp)) {
+      wp = wp->w_prev;
+    }
+    if (wp != NULL) {
+      win_goto(wp);
+    }
     break;
+  }
 
   // cursor to last accessed (previous) window
   case 'p':
@@ -1944,13 +1949,14 @@ static void win_exchange(int Prenum)
 
   win_comp_pos();                 // recompute window positions
 
-  if (wp->w_buffer != curbuf) {
-    reset_VIsual_and_resel();
-  } else if (Visual.active) {
-    wp->w_cursor = curwin->w_cursor;
+  if (win_is_focusable(wp)) {
+    if (wp->w_buffer != curbuf) {
+      reset_VIsual_and_resel();
+    } else if (Visual.active) {
+      wp->w_cursor = curwin->w_cursor;
+    }
+    win_enter(wp, true);
   }
-
-  win_enter(wp, true);
   redraw_later(curwin, UPD_NOT_VALID);
 }
 
@@ -5078,16 +5084,18 @@ tabpage_T *win_find_tabpage(win_T *win)
 win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, int count)
 {
   frame_T *foundfr = wp->w_frame;
+  frame_T *curfr = foundfr;
 
   if (wp->w_floating) {
-    return win_valid(prevwin) && !prevwin->w_floating ? prevwin : firstwin;
+    return win_valid(prevwin) && !prevwin->w_floating && win_is_focusable(prevwin)
+           ? prevwin : firstwin_focusable();
   }
 
-  while (count--) {
+  while (count > 0) {
     frame_T *nfr;
     // First go upwards in the tree of frames until we find an upwards or
     // downwards neighbor.
-    frame_T *fr = foundfr;
+    frame_T *fr = curfr;
     while (true) {
       if (fr == tp->tp_topframe) {
         goto end;
@@ -5106,7 +5114,11 @@ win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, int count)
     // Now go downwards to find the bottom or top frame in it.
     while (true) {
       if (nfr->fr_layout == FR_LEAF) {
-        foundfr = nfr;
+        curfr = nfr;
+        if (win_is_focusable(nfr->fr_win)) {
+          foundfr = nfr;
+          count--;
+        }
         break;
       }
       fr = nfr->fr_child;
@@ -5137,7 +5149,7 @@ end:
 static void win_goto_ver(bool up, int count)
 {
   win_T *win = win_vert_neighbor(curtab, curwin, up, count);
-  if (win != NULL) {
+  if (win != NULL && win_is_focusable(win)) {
     win_goto(win);
   }
 }
@@ -5154,16 +5166,18 @@ static void win_goto_ver(bool up, int count)
 win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, int count)
 {
   frame_T *foundfr = wp->w_frame;
+  frame_T *curfr = foundfr;
 
   if (wp->w_floating) {
-    return win_valid(prevwin) && !prevwin->w_floating ? prevwin : firstwin;
+    return win_valid(prevwin) && !prevwin->w_floating
+           && win_is_focusable(prevwin) ? prevwin : firstwin_focusable();
   }
 
-  while (count--) {
+  while (count > 0) {
     frame_T *nfr;
     // First go upwards in the tree of frames until we find a left or
     // right neighbor.
-    frame_T *fr = foundfr;
+    frame_T *fr = curfr;
     while (true) {
       if (fr == tp->tp_topframe) {
         goto end;
@@ -5182,7 +5196,11 @@ win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, int count)
     // Now go downwards to find the leftmost or rightmost frame in it.
     while (true) {
       if (nfr->fr_layout == FR_LEAF) {
-        foundfr = nfr;
+        curfr = nfr;
+        if (win_is_focusable(nfr->fr_win)) {
+          foundfr = nfr;
+          count--;
+        }
         break;
       }
       fr = nfr->fr_child;
@@ -5213,7 +5231,7 @@ end:
 static void win_goto_hor(bool left, int count)
 {
   win_T *win = win_horz_neighbor(curtab, curwin, left, count);
-  if (win != NULL) {
+  if (win != NULL && win_is_focusable(win)) {
     win_goto(win);
   }
 }
@@ -7947,4 +7965,15 @@ win_T *lastwin_nofloating(tabpage_T *tp)
 bool win_is_focusable(const win_T *wp)
 {
   return wp->w_config.focusable && !wp->w_config.hide;
+}
+
+/// @return first focusable non-floating window, or firstwin if there is none.
+win_T *firstwin_focusable(void)
+{
+  for (win_T *wp = firstwin; wp != NULL && !wp->w_floating; wp = wp->w_next) {
+    if (win_is_focusable(wp)) {
+      return wp;
+    }
+  }
+  return firstwin;
 }
