@@ -225,6 +225,14 @@ describe('TUI :detach', function()
       any = [[Process exited 0]],
     }
 
+    -- Shows info message on stderr.
+    local out = table.concat(api.nvim_buf_get_lines(0, 0, -1, false))
+    t.matches(('Detached from %s'):format(vim.pesc(child_server)), out)
+    t.matches(
+      ('To reattach: nvim %%-%%-remote%%-ui %%-%%-server "%s"'):format(vim.pesc(child_server)),
+      out
+    )
+
     child_uis --[[@type any[] ]] = ({ child_session:request('nvim_list_uis') })[2]
     eq(0, #child_uis)
 
@@ -1110,6 +1118,9 @@ describe('TUI :connect', function()
     -- No server at address: fails, UI stays attached (and "!" does not stop server).
     tt.feed_data((':connect! %s\013'):format(new_pipename()))
     screen1:expect({ any = 'E6102: Cannot connect to' })
+    -- Relative to CWD.
+    tt.feed_data(':connect bogus\013')
+    screen1:expect({ any = 'E6102: Cannot connect to .*bogus' })
 
     tt.feed_data('iThis is server 1.\027')
     screen1:expect({ any = vim.pesc('This is server 1^.') })
@@ -1129,13 +1140,19 @@ describe('TUI :connect', function()
     if is_os('win') then
       -- still supports backslashes
       server1 = server1:gsub('/', '\\')
+      tt.feed_data(':connect ' .. server1 .. '\013')
+    else
+      -- Relative to CWD.
+      local dir, name = vim.fs.dirname(server1), vim.fs.basename(server1)
+      tt.feed_data((':cd %s | connect %s\013'):format(dir, name))
     end
-    tt.feed_data(':connect ' .. server1 .. '\013')
     screen2:expect({ any = vim.pesc('This is server 1^.') })
 
     local server1_session = n.connect(server1)
     server1_session:request('nvim_command', 'qall!')
     screen2:expect({ any = vim.pesc('[Process exited 0]') })
+    -- Not detached from server2 (it connected instead).
+    t.not_matches('Detached from', table.concat(api.nvim_buf_get_lines(0, 0, -1, false)))
 
     screen2:detach()
 

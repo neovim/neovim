@@ -99,8 +99,12 @@ void remote_ui_disconnect(uint64_t channel_id, Error *err, bool send_error_exit)
     return;
   }
   if (send_error_exit) {
-    MAXSIZE_TEMP_ARRAY(args, 1);
+    Channel *chan = find_channel(channel_id);
+    // Client may reattach via this address.
+    char *addr = chan && chan->addr ? chan->addr : get_vim_var_str(VV_SEND_SERVER);
+    MAXSIZE_TEMP_ARRAY(args, 2);
     ADD_C(args, INTEGER_OBJ(0));
+    ADD_C(args, CSTR_AS_OBJ(addr));
     push_call(ui, "error_exit", args);
     ui_flush_buf(ui, false);
   }

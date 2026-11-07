@@ -184,8 +184,9 @@ void msg_history_show(Array entries, Boolean prev_cmd)
 //   If "_set_restart_on_crash_exit" has been sent, the UI may start
 //   a new nvim server with this command line and attach to it.
 // - When :detach is used on the server, this event is sent with a zero `status`
-//   argument, to indicate that the UI shouldn't wait for server exit.
-void error_exit(Integer status)
+//   argument, to indicate that the UI shouldn't wait for server exit, and the `addr`
+//   to which the client may reattach.
+void error_exit(Integer status, String addr)
   FUNC_API_SINCE(12) FUNC_API_CLIENT_IMPL;
 
 // Sets a hint for how a client can handle neovim unexpectedly exiting

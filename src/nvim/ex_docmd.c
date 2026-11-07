@@ -4841,7 +4841,7 @@ static void ex_cquit(exarg_T *eap)
 {
   // this does not always pass on the exit code to the Manx compiler. why?
   int status = eap->addr_count > 0 ? (int)eap->line2 : EXIT_FAILURE;
-  ui_call_error_exit(status);
+  ui_call_error_exit(status, NULL_STRING);
   getout(status);
 }
 
@@ -5924,6 +5924,7 @@ static void ex_connect(exarg_T *eap)
 {
   char *addr = eap->arg;
   typval_T ssh_rettv = { .v_type = VAR_UNKNOWN };
+  char *full_addr = NULL;  // "foo.sock" => "/home/me/foo.sock"
   bool is_tcp = socket_address_tcp_host_end(addr) != NULL;
   const char *error = NULL;
 
@@ -5954,10 +5955,16 @@ static void ex_connect(exarg_T *eap)
     }
 
     addr = ssh_rettv.vval.v_string;
-  } else if ((is_tcp || path_is_absolute(addr))  // UI CWD may differ.
-             && !socket_alive(&main_loop, is_tcp, addr, &error)) {
-    semsg(_("E6102: Cannot connect to %s: %s"), addr, error);
-    return;
+  } else {
+    if (!is_tcp && !path_is_absolute(addr)) {
+      // Relative to the current directory (not the UI's), like other file args.
+      addr = full_addr = FullName_save(addr, true);
+    }
+    if (!socket_alive(&main_loop, is_tcp, addr, &error)) {
+      semsg(_("E6102: Cannot connect to %s: %s"), addr, error);
+      xfree(full_addr);
+      return;
+    }
   }
 
   bool stop_server = eap->forceit ? (ui_active() == 1) : false;
@@ -5965,6 +5972,7 @@ static void ex_connect(exarg_T *eap)
   Error err = ERROR_INIT;
   remote_ui_connect(current_ui, addr, &err);
   tv_clear(&ssh_rettv);
+  xfree(full_addr);
 
   if (ERROR_SET(&err)) {
     emsg(err.msg);
