@@ -1909,6 +1909,10 @@ void del_lines(linenr_T nlines, bool undo)
     return;
   }
 
+  if (curbuf->b_ml.ml_line_count == 1 && ml_get_len(1) == 0) {
+    return;
+  }
+
   // save the deleted lines for undo
   if (undo && u_savedel(first, nlines) == FAIL) {
     return;
