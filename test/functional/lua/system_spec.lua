@@ -204,24 +204,48 @@ describe('vim.system', function()
     if t.is_os('win') then
       return
     end
-    -- Escalates to SIGKILL after 2s, if SIGTERM doesn't stop it.
+    -- Escalates to SIGKILL after 2s, if SIGTERM doesn't stop it. Does not wait for its descendant
+    -- (`sleep`), which keeps the output pipes open.
     eq(
       9,
       exec_lua(function()
-        local obj = vim.system({ 'sh', '-c', 'trap "" TERM; echo READY; read x' }, { stdin = true })
-        obj:wait(5000, function(stdout)
-          return stdout:find('READY') ~= nil
-        end)
+        local cmd = { 'sh', '-c', 'trap "" TERM; sleep 10 & echo $!; read x' }
+        local obj = vim.system(cmd, { stdin = true })
+        local pid = tonumber(obj:wait(5000, function(stdout)
+          return stdout:find('\n') ~= nil
+        end).stdout)
         local closed = false
         obj:close(function()
           closed = true
         end)
-        assert(vim.wait(5000, function()
+        local ok = vim.wait(5000, function()
           return closed
-        end))
+        end)
+        vim.uv.kill(assert(pid), 'sigkill')
+        assert(ok)
         return obj:wait(0).signal
       end)
     )
+
+    -- After process exit, does not wait for a descendant (`sleep`) that keeps the pipes open.
+    exec_lua(function()
+      local obj = vim.system({ 'sh', '-c', 'sleep 10 & echo $!' })
+      local pid = tonumber(obj:wait(5000, function(stdout)
+        return stdout:find('\n') ~= nil
+      end).stdout)
+      assert(vim.wait(5000, function()
+        return obj:is_closing()
+      end))
+      local closed = false
+      obj:close(function()
+        closed = true
+      end)
+      local ok = vim.wait(5000, function()
+        return closed
+      end)
+      vim.uv.kill(assert(pid), 'sigkill')
+      assert(ok)
+    end)
   end)
 
   it('SystemObj:wait() can return before process exit', function()
