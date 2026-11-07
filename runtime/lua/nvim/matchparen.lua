@@ -201,15 +201,11 @@ function M.highlight_matching_pair(win)
       end
       return false
     end
-    -- If executing the expression determines that the cursor is currently in
-    -- one of the syntax types, then we want searchpairpos() to find the pair
-    -- within those syntax types (i.e., not skip).  Otherwise, the cursor is
-    -- outside of the syntax types and skip should keep its value so we skip
-    -- any matching pair inside the syntax types.
-    if api.nvim_win_call(win, skip) then
-      skip = function()
-        return false
-      end
+  end
+  -- Allow matching within a string or comment when the cursor starts there.
+  if vim.g.syntax_on ~= nil and api.nvim_win_call(win, skip) then
+    skip = function()
+      return false
     end
   end
 
