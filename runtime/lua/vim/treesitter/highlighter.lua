@@ -434,7 +434,7 @@ local function on_range_impl(
     local root_range = state.root_range
 
     if not Range.intercepts(root_range, range) then
-      -- A tree above the range has nothing left to draw, so it must not hold back the skip position.
+      -- A tree before the range has nothing left to draw, so it must not hold back the skip position.
       if
         cmp_ge(root_range[1], root_range[2], range_end_row, range_end_col)
         and cmp_lt(root_range[1], root_range[2], skip_until_row, skip_until_col)
@@ -445,7 +445,6 @@ local function on_range_impl(
       return
     end
 
-    local root_node = state.tstree:root()
     local tree_region = state.tstree:included_ranges(true)
 
     local next_row = state.next_row
@@ -453,6 +452,7 @@ local function on_range_impl(
     local hl_query = assert(state.highlighter_query:query())
 
     if state.iter == nil or cmp_lt(next_row, next_col, range_start_row, range_start_col) then
+      local root_node = state.tstree:root()
       -- Mainly used to skip over folds
 
       -- TODO(lewis6991): Creating a new iterator loses the cached predicate results for query

@@ -1976,7 +1976,7 @@ it('conceals lines contributed by an injected tree', function()
   )
 end)
 
-it('on_range skips to the next tree past injected trees above the range', function()
+it('on_range skips to the next tree past injected trees before the range', function()
   clear()
   eq(
     { 4, 0 },
