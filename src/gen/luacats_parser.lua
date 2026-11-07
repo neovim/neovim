@@ -38,12 +38,15 @@ local luacats_grammar = require('gen.luacats_grammar') * vim.lpeg.Cp()
 --- @field nodoc? true
 --- @field generics? table<string,string>
 --- @field table? true
+--- @field type? {type: string}[]
 --- @field notes? nvim.luacats.parser.note[]
 --- @field see? nvim.luacats.parser.note[]
 
 --- @class nvim.luacats.parser.field : nvim.luacats.Field
 --- @field classvar? string
+--- @field member_sep? '.'|':'
 --- @field nodoc? true
+--- @field deprecated? true
 
 --- @class nvim.luacats.parser.class : nvim.luacats.Class
 --- @field desc? string
@@ -289,7 +292,9 @@ local function fun2field(fun)
     access = fun.access,
     desc = fun.desc,
     nodoc = fun.nodoc,
+    deprecated = fun.deprecated,
     classvar = fun.classvar,
+    member_sep = fun.member_sep,
   }
 end
 
@@ -323,9 +328,13 @@ local function process_lua_line(line, state, classes, classvars, has_indent)
   end
 
   do
-    local parent_tbl, sep, fun_or_meth_nm =
-      line:match('^function%s+([a-zA-Z0-9_]+)([.:])([a-zA-Z0-9_]+)%s*%(')
+    local parent_tbl, sep, fun_or_meth_nm, first_param =
+      line:match('^function%s+([a-zA-Z0-9_]+)([.:])([a-zA-Z0-9_]+)%s*%(%s*([a-zA-Z0-9_]*)')
     if parent_tbl then
+      -- `Class.foo(self, ...)` has the same method call form as `Class:foo(...)`.
+      if sep == '.' and first_param == 'self' then
+        sep = ':'
+      end
       -- Have a decl. Ensure cur_obj
       state.cur_obj = state.cur_obj or {}
       local cur_obj = assert(state.cur_obj)
@@ -339,7 +348,7 @@ local function process_lua_line(line, state, classes, classvars, has_indent)
         cur_obj.classvar = parent_tbl
         cur_obj.member_sep = sep
         -- Add self param to methods
-        if sep == ':' then
+        if sep == ':' and not (cur_obj.params and cur_obj.params[1].name == 'self') then
           cur_obj.params = cur_obj.params or {}
           table.insert(cur_obj.params, 1, {
             name = 'self',
@@ -484,7 +493,16 @@ end
 
 local M = {}
 
-function M.parse_str(str, filename)
+--- @class nvim.luacats.parser.Section
+--- @field name string
+--- @field classes table<string,nvim.luacats.parser.class>
+--- @field funs nvim.luacats.parser.fun[]
+--- @field briefs string[]
+
+--- @param str string
+--- @param filename string
+--- @param opts? { sections?: boolean }
+function M.parse_str(str, filename, opts)
   local funs = {} --- @type nvim.luacats.parser.fun[]
   local classes = {} --- @type table<string,nvim.luacats.parser.class>
   local briefs = {} --- @type string[]
@@ -514,10 +532,60 @@ function M.parse_str(str, filename)
 
   local comments = {}
   local in_module_metatable = false
+  local sections = {} --- @type nvim.luacats.parser.Section[]
+  local section --- @type nvim.luacats.parser.Section?
+
+  local function process_comments()
+    if #comments == 0 then
+      return
+    end
+    local comment = table.concat(comments, '\n') .. '\n'
+    local pos = 1
+    while pos <= #comment do
+      -- LPeg consumes a complete annotation, which may span several lines.
+      local parsed, next_pos = luacats_grammar:match(comment, pos)
+      local eol = assert(comment:find('\n', next_pos or pos, true))
+      process_doc_line(comment:sub(pos, eol - 1), parsed, state)
+      pos = eol + 1
+    end
+    comments = {}
+    add_doc_lines_to_obj(state)
+  end
+
+  local function commit_to_section(obj)
+    if not section then
+      return
+    end
+    if obj.kind == 'class' then
+      section.classes[obj.name] = obj
+    elseif obj.kind == 'alias' and obj.desc then
+      local values = {}
+      for name, desc in obj.desc:gmatch('|%s*[\'"]([^\'"]+)[\'"]%s*#%s*([^\n]+)') do
+        values[#values + 1] = ('- `%s`: %s'):format(name, desc)
+      end
+      if #values > 0 then
+        section.briefs[#section.briefs + 1] = table.concat(values, '\n')
+      end
+    elseif obj.name and obj.kind ~= 'alias' then
+      section.funs[#section.funs + 1] = obj
+    elseif obj.desc and (not obj.kind or obj.kind == 'brief') then
+      section.briefs[#section.briefs + 1] = obj.desc
+    end
+  end
+
   for line in vim.gsplit(str, '\n') do
     local has_indent = line:match('^%s+') ~= nil
     line = vim.trim(line)
-    if vim.startswith(line, '---') then
+    local heading = line:match('^%-%-%- # (.+)$')
+    if heading and opts and opts.sections then
+      process_comments()
+      if state.cur_obj then
+        commit_to_section(state.cur_obj)
+      end
+      state = {}
+      section = { name = heading, classes = {}, funs = {}, briefs = {} }
+      sections[#sections + 1] = section
+    elseif vim.startswith(line, '---') then
       comments[#comments + 1] = use_type_alt(line:sub(4):gsub('^%s+@', '@'))
     else
       -- Recognize the returned module's inline metatable at file scope.
@@ -527,19 +595,7 @@ function M.parse_str(str, filename)
         in_module_metatable = target ~= nil and target == mod_return
       end
 
-      if #comments > 0 then
-        local comment = table.concat(comments, '\n') .. '\n'
-        local pos = 1
-        while pos <= #comment do
-          -- LPeg consumes a complete annotation, which may span several lines.
-          local parsed, next_pos = luacats_grammar:match(comment, pos)
-          local eol = assert(comment:find('\n', next_pos or pos, true))
-          process_doc_line(comment:sub(pos, eol - 1), parsed, state)
-          pos = eol + 1
-        end
-        comments = {}
-      end
-      add_doc_lines_to_obj(state)
+      process_comments()
 
       if not has_indent then
         local parent, name, value = line:match('^([%w_]+)%.([%w_]+)%s*=%s*(.*)$')
@@ -575,6 +631,11 @@ function M.parse_str(str, filename)
       -- Commit the object
       local cur_obj = state.cur_obj
       if cur_obj then
+        if section and cur_obj.type and not cur_obj.name then
+          cur_obj.name = line:match('^([%w_.]+)%s*=')
+          cur_obj.table = cur_obj.name and true or nil
+        end
+        commit_to_section(cur_obj)
         if not commit_obj(cur_obj, classes, funs, briefs, uncommitted) then
           --- @diagnostic disable-next-line:inject-field
           cur_obj.line = line
@@ -591,7 +652,7 @@ function M.parse_str(str, filename)
 
   -- dump_uncommitted(filename, uncommitted)
 
-  return classes, funs, briefs, uncommitted, module_info
+  return classes, funs, briefs, uncommitted, module_info, sections
 end
 
 --- Connect separately parsed modules by filling their `imports` and `parent` fields.
@@ -633,12 +694,12 @@ function M.resolve_modules(modules)
 end
 
 --- @param filename string
-function M.parse(filename)
+function M.parse(filename, opts)
   local f = assert(io.open(filename, 'r'))
   local txt = f:read('*all')
   f:close()
 
-  return M.parse_str(txt, filename)
+  return M.parse_str(txt, filename, opts)
 end
 
 return M
