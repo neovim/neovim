@@ -4,9 +4,9 @@
 # runs and supervises the server (vim.net._ssh.serve()).
 #
 # Usage: remote_ssh.sh [--update] {sock} {dir} {url} {sha256} {version}
-#   Runs `nvim` from $PATH if it is {version} or newer, else the release {url}, which it installs
-#   to {dir} (relative to $HOME) unless present, if its SHA-256 is {sha256} (`-`: unknown, so it
-#   does not install). --update: (re)installs and runs the release.
+#   Runs `nvim` from $PATH if it is {version} or newer, else the release {url} (`-`: none for this
+#   platform), which it installs to {dir} (relative to $HOME) unless present, if its SHA-256 is
+#   {sha256} (`-`: unknown, so it does not install). --update: (re)installs and runs the release.
 #
 #   Example:
 #     remote_ssh.sh /tmp/nvim-remote.0123abcd/nvim.sock .local/share/nvim-remote/releases/v0.12.0-linux-x86_64 https://…/nvim-linux-x86_64.tar.gz 474430d5…7d87 v0.12.0
@@ -31,6 +31,16 @@ system_nvim() {
   echo "$nvim"
 }
 
+# Fails unless each command $@ is on $PATH.
+require() {
+  for cmd in "$@"; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+      echo "Not found on \$PATH: $cmd" >&2
+      exit 1
+    fi
+  done
+}
+
 # Prints the SHA-256 of file $1.
 file_sha256() {
   if command -v sha256sum >/dev/null 2>&1; then
@@ -45,11 +55,17 @@ install_release() (
   if [ -x "$dest/bin/nvim" ] && [ -z "$update" ]; then
     exit 0
   fi
+  if [ "$url" = - ]; then
+    echo "No Nvim release for $(uname -sm): install nvim $want or newer on \$PATH" >&2
+    exit 1
+  fi
   if [ "$sha256" = - ]; then
     echo "Cannot verify $url: SHA-256 unknown (see the local remote-ssh.log)" >&2
     exit 1
   fi
   echo "Installing $dest..." >&2
+  require curl tar
+  command -v sha256sum >/dev/null 2>&1 || require shasum
   mkdir -p "${dest%/*}"
   tmp=$(mktemp -d "$dest.XXXXXX")
   trap 'rm -rf "$tmp"' EXIT
@@ -61,13 +77,18 @@ install_release() (
   fi
   mkdir "$tmp/new"
   tar -xzf "$tmp/nvim.tar.gz" -C "$tmp/new"
+  # The archive holds one top-level dir, e.g. `nvim-linux-x86_64/`.
+  release=$(echo "$tmp"/new/*)
+  if ! err=$("$release/bin/nvim" --version 2>&1 >/dev/null); then
+    echo "Cannot run $url (Linux releases need glibc): $err" >&2
+    exit 1
+  fi
   if [ -n "$update" ]; then
     # Removed with $tmp. Gone already if a concurrent update moved it.
     mv "$dest" "$tmp/old" 2>/dev/null || :
   fi
-  # The archive holds one top-level dir, e.g. `nvim-linux-x86_64/`. Atomic rename; keeps a
-  # concurrent install that finished first.
-  [ -e "$dest" ] || mv "$tmp"/new/* "$dest"
+  # Atomic rename; keeps a concurrent install that finished first.
+  [ -e "$dest" ] || mv "$release" "$dest"
 )
 
 main() {

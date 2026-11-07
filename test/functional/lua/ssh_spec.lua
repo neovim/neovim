@@ -335,6 +335,14 @@ describe('remote-ssh', function()
       t.matches(' sh %-s %-%- %-%-update /tmp/', t.read_file(fake_dir .. '/tunnel.args'))
     end
 
+    -- No release for the platform: passes `-`, so the remote can only use a `$PATH` nvim.
+    setup_fake_ssh({ uname = 'FreeBSD\namd64\n' })
+    n.exec_lua(function()
+      local _, teardown = require('vim.net._ssh').connect('ssh://user@test-server')
+      teardown()
+    end)
+    eq(('- - - %s'):format(args[4]), script_args())
+
     -- Overwrites the remote config files from local. Symlinks resolved, no `.git/`.
     setup_fake_ssh()
     local config = ('%s/config/nvim'):format(fake_dir)
@@ -365,12 +373,19 @@ describe('remote-ssh', function()
     local nvim_prog = vim.fs.abspath(n.nvim_prog)
     n.mkdir_p(home .. '/bin')
     vim.uv.fs_symlink(nvim_prog, home .. '/bin/nvim')
-    -- Release archive: its `nvim` marks the server it runs.
     local release = home .. '/src/nvim-test'
     n.mkdir_p(release .. '/bin')
+    -- Fake remote autoinstalled `nvim` release.
     t.write_file(
       release .. '/bin/nvim',
-      ('#!/bin/sh\nexport NVIM_TEST_RELEASE=1\nexec %s "$@"\n'):format(nvim_prog)
+      table.concat({
+        '#!/bin/sh',
+        -- Simulates a release that does not run on the system (e.g. glibc-linked, on musl).
+        'if [ -n "$NVIM_TEST_BROKEN" ]; then echo "symbol not found" >&2; exit 127; fi',
+        'export NVIM_TEST_RELEASE=1', -- Marks the server it runs.
+        ('exec %s "$@"'):format(nvim_prog),
+        '',
+      }, '\n')
     )
     vim.uv.fs_chmod(release .. '/bin/nvim', 493)
     local tarball = home .. '/nvim-test.tar.gz'
@@ -415,12 +430,20 @@ describe('remote-ssh', function()
     eq({ { 'nvim-remote', '', 'remote-ssh', 0 }, true }, serve(own))
     eq(nil, vim.uv.fs_stat(('%s/%s'):format(home, dir)))
 
-    -- Doesn't install a release of another, or unknown (`-`), SHA-256. Leaves no temp dirs.
-    for _, c in ipairs({ { ('0'):rep(64), 'SHA%-256 mismatch: ' }, { '-', 'SHA%-256 unknown' } }) do
-      local script = { 'sh', 'runtime/scripts/remote_ssh.sh', 'sock', dir, url, c[1], 'v999.0.0' }
-      local res = vim.system(script, { env = { HOME = home } }):wait()
+    -- Each fails to install, and cleans up its temp dir.
+    for _, c in ipairs({
+      { url, ('0'):rep(64), {}, 'SHA%-256 mismatch: ' },
+      { url, '-', {}, 'SHA%-256 unknown' },
+      { url, sha256, { NVIM_TEST_BROKEN = '1' }, 'Cannot run .*: symbol not found\n$' },
+      { '-', '-', {}, 'No Nvim release for %S+ %S+: install nvim v999%.0%.0 or newer on %$PATH' },
+      { url, sha256, { PATH = home .. '/none' }, 'Not found on %$PATH: curl\n$' },
+    }) do
+      local script =
+        { '/bin/sh', 'runtime/scripts/remote_ssh.sh', 'sock', dir, c[1], c[2], 'v999.0.0' }
+      local res =
+        vim.system(script, { env = vim.tbl_extend('force', { HOME = home }, c[3]) }):wait()
       eq(1, res.code)
-      t.matches(c[2], res.stderr)
+      t.matches(c[4], res.stderr)
     end
 
     eq({}, n.fn.readdir(home .. '/releases'))
@@ -506,7 +529,16 @@ describe('remote-ssh', function()
     )
   end)
 
-  it('fails when ssh exits before remote Nvim is ready', function()
+  it('fails without ssh, or when ssh exits before remote Nvim is ready', function()
+    -- Without ssh: fails before asking to confirm.
+    setup_fake_ssh()
+    n.exec_lua([[require('vim.net._ssh').ssh_cmd = { 'nvim-test-no-ssh' }]])
+    eq(
+      'Not found on $PATH: nvim-test-no-ssh',
+      t.pcall_err(n.exec_lua, [[require('vim.net._ssh').connect('ssh://user@test-server')]])
+    )
+    eq({}, n.exec_lua('return _G.confirm_log'))
+
     setup_fake_ssh({
       tunnel = { stderr = 'channel 0: open failed: administratively prohibited\n', exit = 255 },
     })

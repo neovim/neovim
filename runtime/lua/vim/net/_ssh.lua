@@ -515,7 +515,7 @@ local function connect(uri_str, chan, report, update, config)
     push_config(uri, config)
   end
   local sha256, sha256_err = get_sha256(vim.fs.basename(url))
-  if not sha256 then
+  if not sha256 and url ~= '-' then
     log().warn(sha256_err)
   end
 
@@ -624,6 +624,9 @@ end
 --- @return fun()? teardown Stops this session's tunnel (and thus the remote server). Other sessions
 ---   sharing the SSH master are unaffected.
 function M.connect(uri_str, chan)
+  if vim.fn.executable(M.ssh_cmd[1]) == 0 then
+    error(('Not found on $PATH: %s'):format(M.ssh_cmd[1]), 0)
+  end
   local msg = ('This will install Nvim on %s (in ~/%s/), if missing.\n'):format(
     uri_str,
     autoinstall.data_dir
