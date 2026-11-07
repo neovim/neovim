@@ -2001,7 +2001,11 @@ static bool au_callback(const AutoCmd *ac, const AutoPatCmd *apc)
     MAXSIZE_TEMP_ARRAY(args, 1);
     ADD_C(args, DICT_OBJ(data));
 
+    const int save_did_emsg = did_emsg;
     Object result = nlua_call_ref(callback.data.luaref, NULL, args, kRetNilBool, NULL, NULL);
+    if (did_emsg > save_did_emsg) {
+      force_abort = true;
+    }
     return LUARET_TRUTHY(result);
   } else {
     typval_T argsin = TV_INITIAL_VALUE;
