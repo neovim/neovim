@@ -522,7 +522,8 @@ CTRL-W CTRL-X					*CTRL-W_CTRL-X*
 		Without count: Exchange current window with next one.  If
 		there is no next window, exchange with previous window.
 		With count: Exchange current window with Nth window (first
-		window is 1).  The cursor is put in the other window.
+		window is 1).  The cursor is put in the other window, unless
+		it is not |focusable|.
 		When vertical and horizontal window splits are mixed, the
 		exchange is only done in the row or column of windows that the
 		current window is in.
