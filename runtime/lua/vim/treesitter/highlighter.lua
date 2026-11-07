@@ -2,7 +2,6 @@ local api = vim.api
 local query = vim.treesitter.query
 local Range = require('vim.treesitter._range')
 local cmp_lt = Range.cmp_pos.lt
-local cmp_le = Range.cmp_pos.le
 local cmp_ge = Range.cmp_pos.ge
 
 local ns = api.nvim_create_namespace('nvim.treesitter.highlighter')
