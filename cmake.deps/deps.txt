@@ -30,8 +30,8 @@ LIBICONV_SHA256 88dd96a8c0464eca144fc791ae60cd31cd8ee78321e67397e25fc095c4a19aa6
 UTF8PROC_URL https://github.com/juliastrings/utf8proc/archive/v2.12.0.tar.gz
 UTF8PROC_SHA256 f564011d38b2888d583d510b08e69ffa15aa117155db1b9b49ef1dfe1fa25111
 
-TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.24.2.tar.gz
-TREESITTER_C_SHA256 2eeb4db31f8fa0865e45488503d13403923bcb485a1bdb637abff8c42dd97364
+TREESITTER_C_URL https://github.com/tree-sitter-grammars/tree-sitter-c/archive/v0.24.3.tar.gz
+TREESITTER_C_SHA256 5dfc26299754bfec28fc91db880a16b32c67be28eef728222978b5ae923a00f7
 TREESITTER_DIFF_URL https://github.com/tree-sitter-grammars/tree-sitter-diff/archive/v0.2.0.tar.gz
 TREESITTER_DIFF_SHA256 6092f7fd11e186d96d3c130fdbe8d03cfc426ee9cc62cf4a2112571b1b0372e6
 TREESITTER_LUA_URL https://github.com/tree-sitter-grammars/tree-sitter-lua/archive/v0.5.0.tar.gz
@@ -46,12 +46,12 @@ TREESITTER_QUERY_URL https://github.com/tree-sitter-grammars/tree-sitter-query/a
 TREESITTER_QUERY_SHA256 c2b23b9a54cffcc999ded4a5d3949daf338bebb7945dece229f832332e6e6a7d
 TREESITTER_MARKDOWN_URL https://github.com/tree-sitter-grammars/tree-sitter-markdown/archive/v0.5.4.tar.gz
 TREESITTER_MARKDOWN_SHA256 481ce2c1cce7b1130bc8455c186052bd0fa461f1ff488666994c6a3da7fca2ac
-TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/v0.27.1.tar.gz
-TREESITTER_SHA256 982cd3d4d9eb7be18c243240a622423fd2e4ecb4bec2cd98832c2f3fa1f0f333
+TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/v0.27.2.tar.gz
+TREESITTER_SHA256 356528363bf7fbad12a2cfeb5a2678c0118ef886a4d69ad9a379db5fdef0735f
 
 # NOTE: Also update the find_package() call if bumping the minimum.
-WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v48.0.1.tar.gz
-WASMTIME_SHA256 1ced053e4c04bd7e68c46908f65aac99c90469fc26b7dd86dfaff6551fd40f14
+WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v48.0.8.tar.gz
+WASMTIME_SHA256 7226b04a8d87a3dc2cca2e440622db1fd5b5c2e458be75b674b2eedf985ae76a
 
 UNCRUSTIFY_URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.83.0.tar.gz
 UNCRUSTIFY_SHA256 1d4d3ab3a991c66eb24cb0a3e690573b4882fd98bc6ec64a01c283998c20dc87
