@@ -614,6 +614,31 @@ describe('command line completion', function()
       :sign unplace^                           |
     ]])
   end)
+
+  it("lists multibyte tag kinds with 'wildoptions' tagfile", function()
+    local tagfile = 'Xtest-functional-tagfile-tags'
+    t.write_file(
+      tagfile,
+      'foo1\tXfoo1.c\t/^foo1/;"\tƒ\n'
+        .. 'foo2\tXfoo2.c\t/^foo2/;"\tkind:λ\n'
+        .. 'foo3\tXfoo3.c\t/^foo3/;"\tv\n'
+    )
+    t.finally(function()
+      os.remove(tagfile)
+    end)
+    command('set tags=' .. tagfile .. ' wildoptions=tagfile')
+    screen:add_extra_attr_ids {
+      [101] = { bold = true, foreground = Screen.colors.Magenta1 },
+    }
+    feed(':tj foo<C-D>')
+    screen:expect([[
+      {101:tagname kind file}                       |
+      {18:foo1} ƒ {18:Xfoo1.c}                          |
+      {18:foo2} λ {18:Xfoo2.c}                          |
+      {18:foo3} v {18:Xfoo3.c}                          |
+      :tj foo^                                 |
+    ]])
+  end)
 end)
 
 describe('ui/ext_wildmenu', function()

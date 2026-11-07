@@ -1080,7 +1080,7 @@ static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, in
       msg_advance(maxlen + 1);
       msg_puts(p);
       msg_advance(maxlen + 3);
-      msg_outtrans_long(p + 2, HLF_D);
+      msg_outtrans_long(p + strlen(p) + 1, HLF_D);
       break;
     }
     for (int i = maxlen - lastlen; --i >= 0;) {

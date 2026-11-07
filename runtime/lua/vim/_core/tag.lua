@@ -26,7 +26,7 @@ function M.select_tag(eap, extra)
 
   local taglen = 18
   for _, m in ipairs(items) do
-    taglen = math.max(taglen, vim.fn.strdisplaywidth(m.tag) + 2)
+    taglen = math.max(taglen, vim.api.nvim_strwidth(m.tag) + 2)
   end
 
   vim.ui.select(items, {
@@ -35,11 +35,11 @@ function M.select_tag(eap, extra)
     format_item = function(m)
       local marker = m.cur and '>' or ' '
       local kind = m.kind or ''
-      return ('%s %s %-4s %-' .. taglen .. 's %s%s'):format(
+      return ('%s %s %s %s %s%s'):format(
         marker,
         m.pri,
-        kind,
-        m.tag,
+        kind .. (' '):rep(4 - vim.api.nvim_strwidth(kind)),
+        m.tag .. (' '):rep(taglen - vim.api.nvim_strwidth(m.tag)),
         m.file,
         m.extra and (' ' .. m.extra) or ''
       )
