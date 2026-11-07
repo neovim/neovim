@@ -16,7 +16,7 @@ local repos = {
   'neovim/unibilium',
   'juliastrings/utf8proc',
   'tree-sitter/tree-sitter',
-  'tree-sitter/tree-sitter-c',
+  'tree-sitter-grammars/tree-sitter-c',
   'tree-sitter-grammars/tree-sitter-diff',
   'tree-sitter-grammars/tree-sitter-lua',
   'tree-sitter-grammars/tree-sitter-vim',
