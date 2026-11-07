@@ -431,6 +431,8 @@ LUA
 • |vim.rpcrequest()| can specify `opts.timeout`.
 • |SystemObj:wait()| accepts a `cond` predicate which allows you to wait for
   a condition instead of process termination.
+• |SystemObj:close()| stops the process. Closing a |vim.async| task that
+  awaits |vim.system()| stops the process.
 • |writefile()| treats Lua and RPC strings as |Blob|, so it can be used to
   write binary data.
 • |vim.fs.abspath()| gained `cwd` and `plain` parameters.
