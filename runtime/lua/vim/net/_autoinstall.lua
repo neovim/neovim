@@ -61,12 +61,14 @@ end
 ---@return string dir Install dir, relative to the remote `$HOME`, e.g.
 ---   `.local/share/nvim-remote/releases/v0.12.0-linux-x86_64`. Per platform too: a shared `$HOME`
 ---   may be mounted on remote hosts of different platforms.
----@return string url Release archive.
+---@return string url Release archive, or `-` if the platform has none (e.g. FreeBSD): the remote
+---   can only use an `nvim` on its `$PATH`.
 ---@return string version Minimum version of an `nvim` on the remote `$PATH` to use instead, e.g.
 ---   `v0.12.0`, or `v0.13.0-dev` (any build) for a prerelease.
 function M.get_release(os, arch)
   local tag, base = release_tag()
   local prerelease = vim.version().prerelease
+  local version = prerelease and ('%s-%s'):format(base, prerelease) or base
   -- Prerelease: installs the current nightly once per version, until "Update" (see
   -- `vim.net._ssh.connect()`).
   local install_name = prerelease and ('nightly-%s'):format(base) or base
@@ -77,7 +79,7 @@ function M.get_release(os, arch)
   local target_os = os_map[os]
   local target_arch = arch_map[arch]
   if not target_os or not target_arch then
-    error(('Unsupported OS/Arch combination: %s/%s'):format(os, arch))
+    return '-', '-', version
   end
 
   local release_name = ('nvim-%s-%s'):format(target_os, target_arch)
@@ -86,7 +88,7 @@ function M.get_release(os, arch)
     release_name
   )
   local dir = ('%s/releases/%s-%s-%s'):format(M.data_dir, install_name, target_os, target_arch)
-  return dir, release_url, prerelease and ('%s-%s'):format(base, prerelease) or base
+  return dir, release_url, version
 end
 
 return M
