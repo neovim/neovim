@@ -176,9 +176,10 @@ Connect UI to a different server
                   `BatchMode=yes`, so it never prompts. An unknown host key is
                   accepted and recorded, unless your ssh_config sets
                   `StrictHostKeyChecking`.
-                - Remote: Linux (x86_64, aarch64) or macOS (arm64, x86_64),
-                  with `curl`, `tar`, `sha256sum` or `shasum`, POSIX `sh`, and
-                  a writable `/tmp`.
+                - Remote: POSIX `sh`, `tar`, writable `/tmp`.
+                - Remote (auto-install): Linux (x86_64/aarch64, glibc) or
+                  macOS (arm64/x86_64), `curl`, `sha256sum`. Else `nvim` must
+                  be in `$PATH`.
 
                 Examples: >vim
                     :connect ssh://myhost
