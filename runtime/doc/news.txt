@@ -415,7 +415,7 @@ LSP
 
 LUA
 
-• CTRL-C during |SystemObj:wait()| fails with "interrupted" (and kills the
+• CTRL-C during |SystemObj:wait()| fails with "interrupted" (and stops the
   process) instead of returning a "timeout" (code 124) result.
 • |lua-async|: `vim.async` provides structured concurrency primitives for Lua
   code, including task handles, await helpers, cooperative cancellation,
@@ -433,6 +433,8 @@ LUA
   a condition instead of process termination.
 • |SystemObj:close()| stops the process. Closing a |vim.async| task that
   awaits |vim.system()| stops the process.
+• When stopping a process, |vim.system()| |SystemObj:wait()| sends SIGTERM,
+  then escalates to SIGKILL after 2s.
 • |writefile()| treats Lua and RPC strings as |Blob|, so it can be used to
   write binary data.
 • |vim.fs.abspath()| gained `cwd` and `plain` parameters.
