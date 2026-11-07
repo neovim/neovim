@@ -30,8 +30,8 @@ LIBICONV_SHA256 88dd96a8c0464eca144fc791ae60cd31cd8ee78321e67397e25fc095c4a19aa6
 UTF8PROC_URL https://github.com/juliastrings/utf8proc/archive/v2.12.0.tar.gz
 UTF8PROC_SHA256 f564011d38b2888d583d510b08e69ffa15aa117155db1b9b49ef1dfe1fa25111
 
-TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.24.2.tar.gz
-TREESITTER_C_SHA256 2eeb4db31f8fa0865e45488503d13403923bcb485a1bdb637abff8c42dd97364
+TREESITTER_C_URL https://github.com/tree-sitter-grammars/tree-sitter-c/archive/v0.24.3.tar.gz
+TREESITTER_C_SHA256 5dfc26299754bfec28fc91db880a16b32c67be28eef728222978b5ae923a00f7
 TREESITTER_DIFF_URL https://github.com/tree-sitter-grammars/tree-sitter-diff/archive/v0.2.0.tar.gz
 TREESITTER_DIFF_SHA256 6092f7fd11e186d96d3c130fdbe8d03cfc426ee9cc62cf4a2112571b1b0372e6
 TREESITTER_LUA_URL https://github.com/tree-sitter-grammars/tree-sitter-lua/archive/v0.5.0.tar.gz
