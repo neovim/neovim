@@ -422,7 +422,7 @@ local function on_range_impl(
     end
   end
 
-  local range = { range_start_row, range_start_col, range_end_row, range_end_col }
+  local draw_range = { range_start_row, range_start_col, range_end_row, range_end_col }
 
   local MAX_ROW = 2147483647 -- sentinel for skipping to the end of file
   local skip_until_row = MAX_ROW
@@ -433,7 +433,7 @@ local function on_range_impl(
     subtree_counter = subtree_counter + 1
     local root_range = state.root_range
 
-    if not Range.intercepts(root_range, range) then
+    if not Range.intercepts(root_range, draw_range) then
       -- A tree before the range has nothing left to draw, so it must not hold back the skip position.
       if
         cmp_ge(root_range[1], root_range[2], range_end_row, range_end_col)
