@@ -357,4 +357,31 @@ describe('undo file', function()
       )
     end
   end)
+
+  it('detects old "%" name', function()
+    local dir = 'Xtest_undo_dir'
+    t.finally(function()
+      vim.fs.rm('Xtest_file')
+      vim.fs.rm(dir, { recursive = true })
+    end)
+    command(('set undofile undodir=%s/'):format(dir))
+    command('edit Xtest_file')
+    feed('iline 1<esc>')
+    command('set ul=100')
+    feed('oline 2<esc>')
+    command('write')
+    command('bwipeout')
+
+    local new_name = fn.undofile('Xtest_file')
+    local old_name = ('%s/%s'):format(
+      dir,
+      vim.fs.abspath('Xtest_file'):gsub(t.is_os('win') and '[:/\\]' or '/', '%%')
+    )
+    os.rename(new_name, old_name)
+
+    command('edit Xtest_file')
+    eq(old_name, fn.undofile('Xtest_file'))
+    feed('u')
+    expect('line 1')
+  end)
 end)

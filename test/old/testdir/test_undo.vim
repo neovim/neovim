@@ -592,14 +592,8 @@ funct Test_undofile()
   " Test undofile() with 'undodir' set to an existing directory.
   call mkdir('Xundodir')
   set undodir=Xundodir
-  let cwd = getcwd()
-  if has('win32')
-    " Replace windows drive such as C:... into C%...
-    let cwd = substitute(cwd, '^\([a-zA-Z]\):', '\1%', 'g')
-  endif
-  let cwd = substitute(cwd . '/Xundofoo', '/', '%', 'g')
   if has('persistent_undo')
-    call assert_equal('Xundodir/' . cwd, undofile('Xundofoo'))
+    call assert_match('Xundodir/.*Xundofoo-\x\{8}', undofile('Xundofoo'))
   else
     call assert_equal('', undofile('Xundofoo'))
   endif
@@ -612,9 +606,9 @@ funct Test_undofile()
   if isdirectory('/tmp')
     set undodir=/tmp
     if has('osx')
-      call assert_equal('/tmp/%private%tmp%file', undofile('///tmp/file'))
+      call assert_equal('/tmp/private-tmp-file-f2bfcd66', undofile('///tmp/file'))
     else
-      call assert_equal('/tmp/%tmp%file', undofile('///tmp/file'))
+      call assert_equal('/tmp/tmp-file-27a4c05e', undofile('///tmp/file'))
     endif
   endif
 
