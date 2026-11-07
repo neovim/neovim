@@ -2,6 +2,8 @@ local api = vim.api
 local query = vim.treesitter.query
 local Range = require('vim.treesitter._range')
 local cmp_lt = Range.cmp_pos.lt
+local cmp_le = Range.cmp_pos.le
+local cmp_ge = Range.cmp_pos.ge
 
 local ns = api.nvim_create_namespace('nvim.treesitter.highlighter')
 -- Intra-line conceal, apart from `ns`, where on_range_impl() looks up `conceal_lines` marks.
@@ -57,6 +59,7 @@ end
 
 ---@class (private) vim.treesitter.highlighter.State
 ---@field tstree TSTree
+---@field root_range Range4
 ---@field next_row integer
 ---@field next_col integer
 ---@field iter vim.treesitter.highlighter.Iter?
@@ -267,7 +270,7 @@ function TSHighlighter:prepare_highlight_states(srow, erow)
     end
 
     local root_node = tstree:root()
-    local root_start_row, _, root_end_row, _ = root_node:range()
+    local root_start_row, root_start_col, root_end_row, root_end_col = root_node:range()
 
     -- Only consider trees within the visible range
     if root_start_row > erow or root_end_row < srow then
@@ -284,6 +287,7 @@ function TSHighlighter:prepare_highlight_states(srow, erow)
     -- for_each_tree traversal. This ensures that parents' highlight don't override children's.
     table.insert(self._highlight_states, {
       tstree = tstree,
+      root_range = { root_start_row, root_start_col, root_end_row, root_end_col },
       next_row = 0,
       next_col = 0,
       iter = nil,
@@ -419,6 +423,8 @@ local function on_range_impl(
     end
   end
 
+  local range = { range_start_row, range_start_col, range_end_row, range_end_col }
+
   local MAX_ROW = 2147483647 -- sentinel for skipping to the end of file
   local skip_until_row = MAX_ROW
   local skip_until_col = 0
@@ -426,22 +432,21 @@ local function on_range_impl(
   local subtree_counter = 0
   self:for_each_highlight_state(function(state)
     subtree_counter = subtree_counter + 1
-    local root_node = state.tstree:root()
-    local root_range = { root_node:range() }
+    local root_range = state.root_range
 
-    if
-      not Range.intercepts(
-        root_range,
-        { range_start_row, range_start_col, range_end_row, range_end_col }
-      )
-    then
-      if cmp_lt(root_range[1], root_range[2], skip_until_row, skip_until_col) then
+    if not Range.intercepts(root_range, range) then
+      -- A tree above the range has nothing left to draw, so it must not hold back the skip position.
+      if
+        cmp_ge(root_range[1], root_range[2], range_end_row, range_end_col)
+        and cmp_lt(root_range[1], root_range[2], skip_until_row, skip_until_col)
+      then
         skip_until_row = root_range[1]
         skip_until_col = root_range[2]
       end
       return
     end
 
+    local root_node = state.tstree:root()
     local tree_region = state.tstree:included_ranges(true)
 
     local next_row = state.next_row

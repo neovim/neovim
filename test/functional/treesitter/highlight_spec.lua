@@ -1976,6 +1976,23 @@ it('conceals lines contributed by an injected tree', function()
   )
 end)
 
+it('on_range skips to the next tree past injected trees above the range', function()
+  clear()
+  eq(
+    { 4, 0 },
+    exec_lua(function()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'one', '', 'two', '', 'three' })
+      vim.treesitter.query.set('markdown', 'highlights', '(atx_heading) @markup.heading')
+      vim.treesitter.start(0, 'markdown')
+      vim.treesitter.get_parser():parse(true)
+      local buf = vim.api.nvim_get_current_buf()
+      local hl = require('vim.treesitter.highlighter')
+      hl.active[buf]:prepare_highlight_states(0, 4)
+      return { hl._on_range(nil, nil, buf, 3, 0, 4, 0) }
+    end)
+  )
+end)
+
 describe('treesitter get_captures', function()
   local function captures(start, stop)
     local result = exec_lua(function()
