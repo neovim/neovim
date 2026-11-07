@@ -4763,7 +4763,7 @@ void global_exe(char *cmd)
 
   while (!got_int && (lnum = ml_firstmarked()) != 0 && global_busy == 1) {
     global_exe_one(cmd, lnum);
-    os_breakcheck();
+    line_breakcheck();
   }
 
   global_busy = 0;
