@@ -497,7 +497,8 @@ OPTIONS
   'titlestring', and 'iconstring'.
 • 'winpinned' prevents window from closing unless specifically targeted.
 • 'packlockfile' sets the path used for |vim.pack-lockfile|.
-• 'previewpopup' decides how the preview window is displayed.
+• 'previewpopup' decides how the preview window is displayed. Its "highlight"
+  item sets the highlight group used instead of |hl-NormalFloat|.
 • 'messagesopt' items "pager" and "timeout" configure the |ui2| message pager
   key and how long a message stays in the message window.
 • 'completeopt' takes the new value "pathopt" to make the file name completion
