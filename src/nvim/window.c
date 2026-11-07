@@ -7493,6 +7493,18 @@ int min_rows_for_all_tabpages(void)
   return total;
 }
 
+int min_cols_for_all_tabpages(void)
+{
+  if (firstwin == NULL) {
+    return MIN_COLUMNS;
+  }
+
+  int total = 0;
+  FOR_ALL_TABS(tp) {
+    total = MAX(total, frame_minwidth(tp->tp_topframe, NULL));
+  }
+  return total;
+}
 /// Check that there is only one window (and only one tab page), not counting a
 /// help or preview window, unless it is the current window. Does not count
 /// "ctx_win". Does not count floats unless it is current.
