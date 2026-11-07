@@ -434,7 +434,8 @@ LUA
 • |SystemObj:close()| stops the process. Closing a |vim.async| task that
   awaits |vim.system()| stops the process.
 • When stopping a process, |vim.system()| |SystemObj:wait()| sends SIGTERM,
-  then escalates to SIGKILL after 2s.
+  then escalates to SIGKILL after 2s. Once it exits, its output ends, even if
+  a descendant process keeps the pipes open.
 • |writefile()| treats Lua and RPC strings as |Blob|, so it can be used to
   write binary data.
 • |vim.fs.abspath()| gained `cwd` and `plain` parameters.

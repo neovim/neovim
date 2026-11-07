@@ -5402,10 +5402,10 @@ vim.SystemObj                                                  *vim.SystemObj*
 
 
 SystemObj:close({on_close})                                *SystemObj:close()*
-    Stops the process (SIGTERM, escalates to SIGKILL after 2s) and calls
-    `on_close` after it exits and its output pipes have closed (see
-    `on_exit`). Implements |vim.async.Closable|, so closing a task that awaits
-    |vim.system()| stops the process.
+    Stops the process (SIGTERM, escalates to SIGKILL after 2s). On
+    process-exit, closes its output pipes without waiting for EOF (see
+    `on_exit`), and calls `on_close`. Implements |vim.async.Closable|, so
+    closing a task that awaits |vim.system()| stops the process.
 
     Example: >lua
         local task = vim.async.run(function()
@@ -5453,8 +5453,7 @@ SystemObj:wait({timeout}, {cond})                           *SystemObj:wait()*
       code 124.
     • Waits for process exit (max 2s, escalates to SIGKILL), but not its
       output pipes (a descendant may inherit them and keep them open, e.g. a
-      browser started by `xdg-open`). close, which a descendant (e.g. a
-      browser started by `xdg-open`) may keep open.
+      browser started by `xdg-open`).
     • Returns the output collected so far.
 
     On CTRL-C:
@@ -5562,10 +5561,11 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
                      (ms). Upon timeout the process is stopped
                      (|SystemObj:close()|) and exit code is 124.
       • {on_exit}  (`fun(out: vim.SystemCompleted)?`) Called with the result
-                   (see |SystemObj:wait()|) after the process exits and its
-                   output pipes have closed. A descendant process that
-                   inherited the pipes (e.g. `cmd &` in a shell script) delays
-                   this until it closes them.
+                   on process exit and output pipes closed. Delayed (possibly
+                   indefinitely) if a descendant process inherits the pipes
+                   and does not close them (e.g. `cmd &` in a shell script).
+                   Note that |SystemObj:close()| closes pipes, thus ensuring
+                   `on_exit` is called.
 
     Overloads: ~
       • `fun(cmd: string[], on_exit: fun(out: vim.SystemCompleted)): vim.SystemObj`
