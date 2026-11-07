@@ -379,7 +379,6 @@ function protocol.make_client_capabilities()
           properties = {
             'textEdits',
             'tooltip',
-            'command',
             'label.location',
             'label.tooltip',
             'label.command',
