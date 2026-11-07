@@ -914,6 +914,32 @@ static TermKeyResult peekkey_ctrlstring(TermKey *tk, TermKeyCsi *csi, size_t int
   return TERMKEY_RES_KEY;
 }
 
+/// Checks if the buffer starts with part of a DCS, OSC or APC string that looks like a response to
+/// a query (OSC 52, XTGETTCAP, ...): its content starts with a digit and has no control characters.
+/// <M-]>, <M-P> and <M-_> send the same bytes as the introducer, but keys typed after them rarely
+/// look like that. Use after TERMKEY_RES_AGAIN.
+bool termkey_response_pending(TermKey *tk)
+{
+  size_t introlen;
+  if (tk->buffcount >= 1 && (CHARAT(0) == 0x90 || CHARAT(0) == 0x9d)) {
+    introlen = 1;
+  } else if (tk->buffcount >= 2 && CHARAT(0) == 0x1b
+             && (CHARAT(1) == 0x50 || CHARAT(1) == 0x5d || CHARAT(1) == 0x5f)) {
+    introlen = 2;
+  } else {
+    return false;
+  }
+  if (tk->buffcount == introlen || CHARAT(introlen) < '0' || CHARAT(introlen) > '9') {
+    return false;
+  }
+  for (size_t i = introlen + 1; i < tk->buffcount; i++) {
+    if (CHARAT(i) < 0x20 || CHARAT(i) == 0x7f) {
+      return false;
+    }
+  }
+  return true;
+}
+
 TermKeyResult peekkey_csi(TermKey *tk, void *info, TermKeyKey *key, int force, size_t *nbytep)
 {
   if (tk->buffcount == 0) {
