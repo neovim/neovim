@@ -1591,6 +1591,23 @@ describe('user config init', function()
       end)
     end
 
+    it('(v)iew detects filetype', function()
+      setup_exrc_file('.nvim.lua')
+      clear { args_rm = { '-u' }, env = xstateenv }
+      local screen = Screen.new(50, 8)
+      screen._default_attr_ids = nil
+      fn.jobstart({ nvim_prog }, {
+        term = true,
+        env = {
+          VIMRUNTIME = os.getenv('VIMRUNTIME'),
+        },
+      })
+      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny:') })
+      feed('iv')
+      feed(':echo "ft=" .. &filetype<CR>')
+      screen:expect({ any = 'ft=lua' })
+    end)
+
     it('exrc from parent directories', function()
       setup_exrc_file('.nvim.lua')
       setup_exrc_file('../.exrc')

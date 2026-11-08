@@ -157,7 +157,15 @@ function M.read(path)
     return nil
   elseif result == 2 then
     -- View
-    vim.cmd(('sview %s'):format(vim.fn.fnameescape(fullpath)))
+    local function view()
+      vim.cmd(('sview %s'):format(vim.fn.fnameescape(fullpath)))
+    end
+    -- During startup, filetype detection is not enabled yet.
+    if vim.v.vim_did_enter == 0 then
+      vim.api.nvim_create_autocmd('VimEnter', { once = true, callback = view })
+    else
+      view()
+    end
     return nil
   elseif result == 3 then
     -- Deny
