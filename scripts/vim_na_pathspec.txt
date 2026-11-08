@@ -22,6 +22,7 @@
 :^*vimtutor*
 :^/.*
 :^/AGENTS.md
+:^/CODE_OF_CONDUCT.md
 :^/CONTRIBUTING.md
 :^/Filelist
 :^/LICENSE
@@ -164,7 +165,7 @@
 :^/src/install*
 :^/src/job.c
 :^/src/json[_.]*
-:^/src/kitty.c
+:^/src/*kitty.c
 :^/src/libvterm/*
 :^/src/link.*
 :^/src/logfile.c
@@ -188,7 +189,7 @@
 :^/src/po/zh_CN.po
 :^/src/po/zh_TW.po
 :^/src/proto*
-:^/src/sixel.c
+:^/src/*sixel.c
 :^/src/socketserver.c
 :^/src/sound.c
 :^/src/tabpanel.c
