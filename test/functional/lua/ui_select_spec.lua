@@ -175,6 +175,47 @@ describe('vim.ui.select()', function()
       eq(before, api.nvim_buf_get_name(0))
     end)
 
+    it('passes kind, cmd and extra fields', function()
+      finally(function()
+        os.remove('XselTags')
+      end)
+      write_file(
+        'XselTags',
+        '!_TAG_FILE_FORMAT\t2\t/extended format/\n'
+          .. 'foo\tXselTagA.c\t/^int foo(void)$/;"\tf\tline:3\tclass:Bar\tfile:\n'
+          .. 'foo\tXselTagB.c\t/^int foo;$/;"\tkind:v\tsignature:(int)\n'
+          .. 'foo\tXselTagC.c\t42\n'
+      )
+      api.nvim_set_option_value('tags', 'XselTags', {})
+
+      local got = exec_lua(function()
+        --- @diagnostic disable-next-line: duplicate-set-field
+        vim.ui.select = function(items, opts, on_choice)
+          _G._captured = {
+            items = vim.tbl_map(function(m)
+              return { kind = m.kind, cmd = m.cmd, extra = m.extra }
+            end, items),
+            lines = vim.tbl_map(opts.format_item, items),
+          }
+          on_choice(nil, nil)
+        end
+        vim.cmd('tselect foo')
+        return _G._captured
+      end)
+
+      -- Static ("file:") match sorts last.
+      eq({
+        { kind = 'v', cmd = '/^int foo;$/', extra = 'signature:(int)' },
+        { cmd = '42' },
+        { kind = 'f', cmd = '/^int foo(void)$/', extra = 'line:3 class:Bar file:' },
+      }, got.items)
+      eq({
+        '  F   v    foo                XselTagB.c signature:(int)',
+        '  F        foo                XselTagC.c',
+        '  FS  f    foo                XselTagA.c line:3 class:Bar file:',
+      }, got.lines)
+    end)
+
     it('aligns multibyte kinds and tag names by display width', function()
       finally(function()
         os.remove('XselTags')

@@ -7,6 +7,7 @@ local M = {}
 --- @field kind? string
 --- @field pri string  Priority code, e.g. "FSC" — see `:h tag-priority`.
 --- @field file string
+--- @field cmd string Ex command to locate the tag.
 --- @field extra? string
 --- @field cur boolean True if this is the currently-active tagstack match.
 

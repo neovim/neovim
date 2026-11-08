@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
@@ -764,6 +765,47 @@ end_do_tag:
   xfree(tofree);
 }
 
+/// Collects the extra fields of a tag, except "kind", separated by spaces.
+///
+/// @return allocated string, or NULL if there are no such fields.
+static char *tag_extra_fields(const tagptrs_T *tagp)
+{
+  if (tagp->command_end == NULL) {
+    return NULL;
+  }
+
+  StringBuilder sb = KV_INITIAL_VALUE;
+  const char *p = tagp->command_end + 3;  // skip ";\"<Tab>"
+  while (*p && *p != '\r' && *p != '\n') {
+    while (*p == TAB) {
+      p++;
+    }
+    // skip "kind:<kind>" and "<kind>"
+    if (tagp->tagkind != NULL
+        && (p == tagp->tagkind || (p + 5 == tagp->tagkind && strncmp(p, "kind:", 5) == 0))) {
+      p = tagp->tagkind_end;
+      continue;
+    }
+    const char *end = p;
+    while (*end && *end != TAB && *end != '\r' && *end != '\n') {
+      end++;
+    }
+    if (end > p) {
+      if (kv_size(sb) > 0) {
+        kv_push(sb, ' ');
+      }
+      kv_concat_len(sb, p, (size_t)(end - p));
+    }
+    p = end;
+  }
+
+  if (kv_size(sb) == 0) {
+    return NULL;
+  }
+  kv_push(sb, NUL);
+  return sb.items;
+}
+
 /// Let the user pick from `matches`. Delegates to (async) `vim.ui.select()`.
 static void select_tag_match(exarg_T *eap, bool new_tag, bool use_tagstack, int num_matches,
                              char **matches, const char *name)
@@ -796,6 +838,15 @@ static void select_tag_match(exarg_T *eap, bool new_tag, bool use_tagstack, int 
     char *fname = tag_full_fname(&tagp);
     tv_dict_add_str(d, S_LEN("file"), fname != NULL ? fname : "");
     xfree(fname);
+    char *cmd_end = tagp.command_end;
+    if (cmd_end == NULL) {
+      for (cmd_end = tagp.command; *cmd_end && *cmd_end != '\r' && *cmd_end != '\n'; cmd_end++) {}
+    }
+    tv_dict_add_str_len(d, S_LEN("cmd"), tagp.command, (int)(cmd_end - tagp.command));
+    char *extra = tag_extra_fields(&tagp);
+    if (extra != NULL) {
+      tv_dict_add_allocated_str(d, S_LEN("extra"), extra);
+    }
     tv_dict_add_bool(d, S_LEN("cur"), cur ? kBoolVarTrue : kBoolVarFalse);
 
     typval_T item = { .v_type = VAR_DICT, .vval.v_dict = d };
