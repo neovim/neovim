@@ -304,7 +304,7 @@ describe('autocmd TextChangedT,WinResized', function()
 
     api.nvim_chan_send(term, 'c')
     screen:expect([[
-      hello                    │a^bc                     |
+      hello                    │ab^c                     |
                                │                        |*4
       {31:[Scratch] [-]             }{32:[Scratch] [-]           }|
                                                         |

@@ -90,9 +90,8 @@ describe(':terminal window', function()
 
     feed([[<C-\><C-N><C-W>o]])
     screen:expect([[
-      interact $ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA         |
-      ^                                                  |
-                                                        |*5
+      interact $ AAAAAAAAAAAAAAAAAAAAAAAAAAAAA^A         |
+                                                        |*6
     ]])
     -- Window with less room scrolls anyway to keep its cursor in-view.
     feed('gg$20<C-W>v')
@@ -296,8 +295,8 @@ describe(':terminal window', function()
     command('setlocal number')
     screen:expect([[
       {2:  1 }tty ready                                     |
-      {3:  2 }{12:^rows: 6, cols: 46                             }|
-      {2:  3 }                                              |
+      {2:  2 }rows: 6, cols: 46                             |
+      {3:  3 }{12:^                                              }|
       {2:  4 }                                              |
       {2:  5 }                                              |
       {2:  6 }                                              |
@@ -328,8 +327,9 @@ describe(':terminal window', function()
     screen:expect([[
       {19:t}ty ready                                         |
       {19:r}ows: 6, cols: 46                                 |
-      ^rows: 6, cols: 50                                 |
-      {19: }                                                 |*3
+      {19:r}ows: 6, cols: 50                                 |
+      ^                                                  |
+      {19: }                                                 |*2
                                                         |
     ]])
     feed('i')
@@ -487,10 +487,10 @@ describe(':terminal window', function()
     ]])
 
     command('quit | botright split')
-    -- NOTE: right window's cursor not on the last line, so it's not tailing.
+    -- The top windows left Terminal mode and their cursors weren't moved, so they follow output.
     screen:expect([[
-      rows: 5, cols: 50        │rows: 5, cols: 25       |
-      rows: 2, cols: 50        │rows: 5, cols: 50       |
+      rows: 2, cols: 50        │rows: 2, cols: 50       |
+                               │                        |
       {18:foo [-]                   foo [-]                 }|
       rows: 2, cols: 50                                 |
       ^                                                  |
@@ -499,31 +499,31 @@ describe(':terminal window', function()
     ]])
     command('quit')
     screen:expect([[
-      rows: 5, cols: 25        │tty ready               |
-      rows: 5, cols: 50        │rows: 5, cols: 25       |
-      rows: 2, cols: 50        │rows: 5, cols: 50       |
-      rows: 5, cols: 25        │rows: 2, cols: 50       |
-      ^                         │rows: 5, cols: 25       |
+      rows: 5, cols: 25        │rows: 5, cols: 25       |
+      rows: 5, cols: 50        │rows: 5, cols: 50       |
+      rows: 2, cols: 50        │rows: 2, cols: 50       |
+      rows: 5, cols: 25        │rows: 5, cols: 25       |
+      ^                         │                        |
       {17:foo [-]                   }{18:foo [-]                 }|
       {3:-- TERMINAL --}                                    |
     ]])
     command('call nvim_open_win(0, 0, #{relative: "editor", row: 0, col: 0, width: 40, height: 3})')
     screen:expect([[
-      {2:rows: 5, cols: 25                       }          |
-      {2:rows: 5, cols: 40                       } 25       |
-      {2:                                        } 50       |
-      rows: 5, cols: 40        │rows: 2, cols: 50       |
-      ^                         │rows: 5, cols: 25       |
+      {2:rows: 5, cols: 25                       } 50       |
+      {2:rows: 5, cols: 40                       } 50       |
+      {2:                                        } 25       |
+      rows: 5, cols: 40        │rows: 5, cols: 40       |
+      ^                         │                        |
       {17:foo [-]                   }{18:foo [-]                 }|
       {3:-- TERMINAL --}                                    |
     ]])
     command('fclose!')
     screen:expect([[
-      rows: 2, cols: 50        │tty ready               |
+      rows: 2, cols: 50        │rows: 2, cols: 50       |
       rows: 5, cols: 25        │rows: 5, cols: 25       |
-      rows: 5, cols: 40        │rows: 5, cols: 50       |
-      rows: 5, cols: 25        │rows: 2, cols: 50       |
-      ^                         │rows: 5, cols: 25       |
+      rows: 5, cols: 40        │rows: 5, cols: 40       |
+      rows: 5, cols: 25        │rows: 5, cols: 25       |
+      ^                         │                        |
       {17:foo [-]                   }{18:foo [-]                 }|
       {3:-- TERMINAL --}                                    |
     ]])
@@ -539,11 +539,11 @@ describe(':terminal window', function()
     ]])
     command('tabfirst | tabonly')
     screen:expect([[
-      rows: 5, cols: 40        │tty ready               |
+      rows: 5, cols: 40        │rows: 5, cols: 40       |
       rows: 5, cols: 25        │rows: 5, cols: 25       |
       rows: 5, cols: 50        │rows: 5, cols: 50       |
-      rows: 5, cols: 25        │rows: 2, cols: 50       |
-      ^                         │rows: 5, cols: 25       |
+      rows: 5, cols: 25        │rows: 5, cols: 25       |
+      ^                         │                        |
       {17:foo [-]                   }{18:foo [-]                 }|
       {3:-- TERMINAL --}                                    |
     ]])
@@ -562,8 +562,8 @@ describe(':terminal window', function()
     end)
     command('botright new')
     screen:expect([[
-      rows: 2, cols: 25        │rows: 5, cols: 25       |
-                               │rows: 5, cols: 50       |
+      rows: 2, cols: 25        │rows: 2, cols: 25       |
+                               │                        |
       {18:foo [-]                   foo [-]                 }|
       ^                                                  |
       {4:~                                                 }|
@@ -573,11 +573,11 @@ describe(':terminal window', function()
     command('quit')
     eq(1, eval('g:fired'))
     screen:expect([[
-      rows: 5, cols: 50        │tty ready               |
+      rows: 5, cols: 50        │rows: 5, cols: 50       |
       rows: 5, cols: 25        │rows: 5, cols: 25       |
-      rows: 2, cols: 25        │rows: 5, cols: 50       |
-      rows: 5, cols: 25        │rows: 2, cols: 50       |
-      ^                         │rows: 5, cols: 25       |
+      rows: 2, cols: 25        │rows: 2, cols: 25       |
+      rows: 5, cols: 25        │rows: 5, cols: 25       |
+      ^                         │                        |
       {17:foo [-]                   }{18:foo [-]                 }|
                                                         |
     ]])
@@ -586,11 +586,11 @@ describe(':terminal window', function()
     command('set showtabline=0 | tabnew | tabprevious | wincmd > | tabonly')
     eq(2, eval('g:fired'))
     screen:expect([[
-      rows: 5, cols: 25         │tty ready              |
-      rows: 2, cols: 25         │rows: 5, cols: 25      |
-      rows: 5, cols: 25         │rows: 5, cols: 50      |
-      rows: 5, cols: 26         │rows: 2, cols: 50      |
-      ^                          │rows: 5, cols: 25      |
+      rows: 5, cols: 25         │rows: 5, cols: 25      |
+      rows: 2, cols: 25         │rows: 2, cols: 25      |
+      rows: 5, cols: 25         │rows: 5, cols: 25      |
+      rows: 5, cols: 26         │rows: 5, cols: 26      |
+      ^                          │                       |
       {17:foo [-]                    }{18:foo [-]                }|
                                                         |
     ]])
@@ -635,8 +635,9 @@ describe(':terminal window', function()
     ]])
     screen:expect([[
       {19:t}ty ready                │tty ready               |
-      ^rows: 5, cols: 25        │{12:rows: 5, cols: 25       }|
-      {19: }                        │                        |*3
+      {19:r}ows: 5, cols: 25        │rows: 5, cols: 25       |
+      ^                         │{12:                        }|
+      {19: }                        │                        |*2
       {17:foo [-]                   }{18:foo [-]                 }|
                                                         |
     ]])
@@ -644,8 +645,8 @@ describe(':terminal window', function()
     feed('i')
     screen:expect([[
       tty ready                │tty ready               |
-      rows: 5, cols: 25        │{12:rows: 5, cols: 25       }|
-      ^                         │                        |
+      rows: 5, cols: 25        │rows: 5, cols: 25       |
+      ^                         │{12:                        }|
                                │                        |*2
       {17:foo [-]                   }{18:foo [-]                 }|
       {1:-- TERMINAL --}                                    |
@@ -675,8 +676,9 @@ describe(':terminal window', function()
       {2: }{3:2}{2: foo }{1: foo }{4:                                     }{2:X}|
       {19:t}ty ready                                         |
       {19:r}ows: 5, cols: 25                                 |
-      {12:^rows: 5, cols: 50                                 }|
-      {19: }                                                 |*2
+      {19:r}ows: 5, cols: 50                                 |
+      {12:^                                                  }|
+      {19: }                                                 |
                                                         |
     ]])
     feed('i')
@@ -693,8 +695,8 @@ describe(':terminal window', function()
     screen:expect([[
       {1: }{5:2}{1: foo }{2: foo }{4:                                     }{2:X}|
       {19:r}ows: 5, cols: 25        │rows: 5, cols: 25       |
-      rows: 5, cols: 50        │rows: 5, cols: 50       |
-      {19: }                        │^                        |
+      {19:r}ows: 5, cols: 50        │rows: 5, cols: 50       |
+                               │^                        |
       {19: }                        │                        |
       {18:foo [-]                   }{17:foo [-]                 }|
       {1:-- TERMINAL --}                                    |
@@ -703,8 +705,8 @@ describe(':terminal window', function()
     screen:expect([[
       {1: }{5:2}{1: foo }{2: foo }{4:                                     }{2:X}|
       {19:r}ows: 5, cols: 25        │rows: 5, cols: 25       |
-      rows: 5, cols: 50        │rows: 5, cols: 50       |
-      {19: }                        │{12:^                        }|
+      {19:r}ows: 5, cols: 50        │rows: 5, cols: 50       |
+                               │{12:^                        }|
       {19: }                        │                        |
       {18:foo [-]                   }{17:foo [-]                 }|
                                                         |
@@ -726,8 +728,8 @@ describe(':terminal window', function()
     screen:expect([[
       {1: }{5:2}{1: foo }{2: foo }{4:                                     }{2:X}|
       {19:r}ows: 5, cols: 25        │rows: 5, cols: 25       |
-      rows: 5, cols: 50        │rows: 5, cols: 50       |
-      {19: }                        │^                        |
+      {19:r}ows: 5, cols: 50        │rows: 5, cols: 50       |
+                               │^                        |
       {19: }                        │                        |
       {18:foo [-]                   }{17:foo [-]                 }|
       {1:-- TERMINAL --}                                    |

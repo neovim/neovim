@@ -352,16 +352,17 @@ describe(':terminal buffer', function()
       -- the next key and, since a partial mapping never drains main_loop.events, screen is stale.
       vim.uv.sleep(50)
       feed('j') -- Refresh scheduled for the last 'j' and processed for the one before
+      -- The cursor wasn't moved, so it follows the terminal cursor.
       screen:expect(([[
         tty ready                                         |
-        ^%s%s|
+        %s^j%s|
                                                           |*5
-      ]]):format(('j'):rep(i), (' '):rep(50 - i)))
+      ]]):format(('j'):rep(i - 1), (' '):rep(50 - i)))
     end
     feed('l') -- No partial mapping, so all pending refreshes should be processed
     screen:expect([[
       tty ready                                         |
-      j^jjjjjjjjjjj                                      |
+      jjjjjjjjjjj^j                                      |
                                                         |*5
     ]])
   end)
