@@ -78,6 +78,7 @@
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
+#include "nvim/plines.h"
 #include "nvim/pos_defs.h"
 #include "nvim/state.h"
 #include "nvim/state_defs.h"
@@ -117,6 +118,15 @@ typedef enum {
   kTermRequestTerminatorBel = 0,
   kTermRequestTerminatorSt,
 } TermRequestTerminator;
+
+/// The Ghostty cells at the start of a window's top line and under its cursor.
+typedef struct {
+  handle_T win;
+  GhosttyTrackedGridRef topline;
+  GhosttyTrackedGridRef cursor;
+} TerminalViewAnchor;
+
+typedef kvec_t(TerminalViewAnchor) TerminalViewAnchors;
 
 #include "terminal.c.generated.h"
 
@@ -189,6 +199,7 @@ struct terminal {
 
   struct {
     bool resize;          ///< pending width/height
+    uint16_t width, height;  ///< Size to resize the Ghostty terminal to.
     bool cursor;          ///< pending cursor shape or blink change
     StringBuilder *send;  ///< When there is a pending TermRequest autocommand, block and store input.
     MultiQueue *events;   ///< Events waiting for refresh.
@@ -475,9 +486,9 @@ static void sync_mouse_encoder(Terminal *term)
   FUNC_ATTR_NONNULL_ALL
 {
   const GhosttyMode mouse_modes[] = {
-    GHOSTTY_MODE_X10_MOUSE, GHOSTTY_MODE_NORMAL_MOUSE, GHOSTTY_MODE_BUTTON_MOUSE,
-    GHOSTTY_MODE_ANY_MOUSE, GHOSTTY_MODE_UTF8_MOUSE, GHOSTTY_MODE_SGR_MOUSE,
-    GHOSTTY_MODE_URXVT_MOUSE, GHOSTTY_MODE_SGR_PIXELS_MOUSE,
+    GHOSTTY_MODE_MOUSE_EVENT_X10, GHOSTTY_MODE_MOUSE_EVENT_NORMAL, GHOSTTY_MODE_MOUSE_EVENT_BUTTON,
+    GHOSTTY_MODE_MOUSE_EVENT_ANY, GHOSTTY_MODE_MOUSE_FORMAT_UTF8, GHOSTTY_MODE_MOUSE_FORMAT_SGR,
+    GHOSTTY_MODE_MOUSE_FORMAT_URXVT, GHOSTTY_MODE_MOUSE_FORMAT_SGR_PIXELS,
   };
   unsigned modes = 0;
   for (size_t i = 0; i < ARRAY_SIZE(mouse_modes); i++) {
@@ -856,14 +867,16 @@ void terminal_check_size(Terminal *term)
 
   // if no window displays the terminal, or such all windows are zero-height,
   // don't resize the terminal.
-  if ((term->height == height && term->width == width) || height == 0 || width == 0) {
+  uint16_t old_width = term->pending.resize ? term->pending.width : (uint16_t)term->width;
+  uint16_t old_height = term->pending.resize ? term->pending.height : (uint16_t)term->height;
+  if ((old_height == height && old_width == width) || height == 0 || width == 0) {
     return;
   }
 
-  assert_ok(ghostty_terminal_resize(term->ghostty, width, height, 0, 0));
-  term->width = width;
-  term->height = height;
-  set_mouse_encoder_size(term, width, height);
+  // The Ghostty terminal is resized when refreshing the buffer, after all windows got their new
+  // sizes.
+  term->pending.width = width;
+  term->pending.height = height;
   term->pending.resize = true;
   invalidate_terminal(term, -1, -1);
 }
@@ -1995,7 +2008,7 @@ bool terminal_suspended(const Terminal *term)
 void terminal_notify_theme(Terminal *term, bool dark)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (!mode_enabled(term, GHOSTTY_MODE_COLOR_SCHEME_REPORT)) {
+  if (!mode_enabled(term, GHOSTTY_MODE_REPORT_COLOR_SCHEME)) {
     return;
   }
 
@@ -2688,8 +2701,8 @@ static void invalidate_terminal(Terminal *term, int start_row, int end_row)
   }
 
   // During synchronized output (mode 2026), accumulate damage but defer
-  // the actual refresh until the synchronized update ends.
-  if (term->synchronized_output) {
+  // the actual refresh until the synchronized update ends. A resize ends it.
+  if (term->synchronized_output && !term->pending.resize) {
     return;
   }
 
@@ -2763,13 +2776,15 @@ static void refresh_terminal(Terminal *term)
   }
   linenr_T ml_before = buf->b_ml.ml_line_count;
 
+  TerminalViewAnchors anchors = KV_INITIAL_VALUE;
+  bool resized = refresh_size(term, buf, &anchors);
   update_render_state(term);
-  bool resized = refresh_size(term, buf);
   refresh_scrollback(term, buf, resized);
   refresh_screen(term, buf);
 
   int ml_added = buf->b_ml.ml_line_count - ml_before;
   adjust_topline_cursor(term, buf, ml_added);
+  restore_window_views(buf, &anchors);
 
   // Resized window may have scrolled horizontally to keep its cursor in-view using the old terminal
   // size. Reset the scroll, and let curs_columns correct it if that sends the cursor out-of-view.
@@ -2855,8 +2870,8 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
   Terminal *term;
   set_foreach(&to_refresh, term, {
     // Skip terminals in synchronized output — they will be refreshed
-    // when the synchronized update ends (mode 2026 reset).
-    if (!term->synchronized_output) {
+    // when the synchronized update ends (mode 2026 reset), or resized.
+    if (!term->synchronized_output || term->pending.resize) {
       refresh_terminal(term);
     }
   });
@@ -2865,14 +2880,27 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
   unblock_autocmds();
 }
 
-static bool refresh_size(Terminal *term, buf_T *buf)
+/// Resizes the Ghostty terminal to its pending size, adding the views of the windows that show it
+/// to "anchors" beforehand. Returns whether the size changed.
+static bool refresh_size(Terminal *term, buf_T *buf, TerminalViewAnchors *anchors)
+  FUNC_ATTR_NONNULL_ALL
 {
-  (void)buf;
   if (!term->pending.resize || term->closed) {
     return false;
   }
 
   term->pending.resize = false;
+  uint16_t width = term->pending.width;
+  uint16_t height = term->pending.height;
+  if (width == term->width && height == term->height) {
+    return false;
+  }
+
+  anchor_window_views(term, buf, anchors);
+  assert_ok(ghostty_terminal_resize(term->ghostty, width, height, 0, 0));
+  term->width = width;
+  term->height = height;
+  set_mouse_encoder_size(term, width, height);
   term->invalid_start = 0;
   term->invalid_end = term->height;
   term->opts.resize_cb((uint16_t)term->width, (uint16_t)term->height, term->opts.data);
@@ -3118,6 +3146,82 @@ static void adjust_topline_cursor(Terminal *term, buf_T *buf, int added)
       wip->wi_mark.mark.lnum = ml_end;
     }
   }
+}
+
+/// Adds to "anchors" the cells at the start of the top line and under the cursor of each window that
+/// shows the terminal without following its output.
+static void anchor_window_views(Terminal *term, buf_T *buf, TerminalViewAnchors *anchors)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (term->in_altscreen) {
+    return;
+  }
+
+  size_t dropped = count_dropped_rows(term);
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_buffer != buf || is_ctx_win(wp) || (wp == curwin && is_focused(term))
+        || wp->w_cursor.lnum == buf->b_ml.ml_line_count) {
+      continue;
+    }
+    colnr_T cursor_vcol = 0;
+    getvcol(wp, &wp->w_cursor, &cursor_vcol, NULL, NULL, 0);
+    TerminalViewAnchor anchor = { .win = wp->handle };
+    if (track_buffer_cell(term, wp->w_topline, 0, dropped, &anchor.topline)
+        && track_buffer_cell(term, wp->w_cursor.lnum, cursor_vcol, dropped, &anchor.cursor)) {
+      kv_push(*anchors, anchor);
+    } else {
+      ghostty_tracked_grid_ref_free(anchor.topline);
+    }
+  }
+}
+
+/// Tracks the Ghostty cell mirrored in buffer line "lnum" at virtual column "vcol", where "dropped"
+/// is the number of rows Ghostty pruned from the top of its screen since the last refresh. Returns
+/// false if the cell's row was pruned.
+static bool track_buffer_cell(Terminal *term, linenr_T lnum, colnr_T vcol, size_t dropped,
+                              GhosttyTrackedGridRef *ref)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (dropped == SIZE_MAX || (size_t)lnum <= dropped) {
+    return false;
+  }
+  GhosttyPoint point = {
+    .tag = GHOSTTY_POINT_TAG_SCREEN,
+    .value.coordinate = {
+      .x = (uint16_t)MIN(vcol, term->width - 1),
+      .y = (uint32_t)((size_t)lnum - 1 - dropped),
+    },
+  };
+  return ghostty_terminal_grid_ref_track(term->ghostty, point, ref) == GHOSTTY_SUCCESS;
+}
+
+/// Moves the top line and cursor of each window in "anchors" to the buffer positions that mirror
+/// their tracked cells, then frees "anchors".
+static void restore_window_views(buf_T *buf, TerminalViewAnchors *anchors)
+  FUNC_ATTR_NONNULL_ALL
+{
+  for (size_t i = 0; i < kv_size(*anchors); i++) {
+    TerminalViewAnchor anchor = kv_A(*anchors, i);
+    win_T *wp = handle_get_window(anchor.win);
+    GhosttyPointCoordinate top = { 0 };
+    GhosttyPointCoordinate cursor = { 0 };
+    if (wp && wp->w_buffer == buf
+        && ghostty_tracked_grid_ref_point(anchor.topline, GHOSTTY_POINT_TAG_SCREEN,
+                                          &top) == GHOSTTY_SUCCESS
+        && ghostty_tracked_grid_ref_point(anchor.cursor, GHOSTTY_POINT_TAG_SCREEN,
+                                          &cursor) == GHOSTTY_SUCCESS) {
+      linenr_T line_count = buf->b_ml.ml_line_count;
+      set_topline(wp, MIN((linenr_T)top.y + 1, line_count));
+      wp->w_cursor.lnum = MIN((linenr_T)cursor.y + 1, line_count);
+      wp->w_cursor.col = vcol2col(wp, wp->w_cursor.lnum, cursor.x, NULL);
+      wp->w_cursor.coladd = 0;
+      wp->w_set_curswant = true;
+      mb_check_adjust_col(wp);
+    }
+    ghostty_tracked_grid_ref_free(anchor.topline);
+    ghostty_tracked_grid_ref_free(anchor.cursor);
+  }
+  kv_destroy(*anchors);
 }
 
 static int row_to_linenr(Terminal *term, int row)

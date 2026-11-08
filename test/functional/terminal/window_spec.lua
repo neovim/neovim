@@ -17,6 +17,7 @@ local skip = t.skip
 local is_os = t.is_os
 local testprg = n.testprg
 local api = n.api
+local fn = n.fn
 
 describe(':terminal window', function()
   before_each(clear)
@@ -90,19 +91,58 @@ describe(':terminal window', function()
 
     feed([[<C-\><C-N><C-W>o]])
     screen:expect([[
-      interact $ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA         |
-      ^                                                  |
-                                                        |*5
+      interact $ AAAAAAAAAAAAAAAAAAAAAAAAAAAAA^A         |
+                                                        |*6
     ]])
     -- Window with less room scrolls anyway to keep its cursor in-view.
-    feed('gg$20<C-W>v')
+    feed('gg25|20<C-W>v')
     screen:expect([[
-      interact $ AAAAAAAAAAAAAAAAAA│$ AAAAAAAAAAAAAAAAA^A|
-      AAAAAAAAAAAA                 │AAA                 |
+      interact $ AAAAAAAAAAAAAAAAAA│act $ AAAAAAAAAAAAA^A|
+      AAAAAAAAAAAA                 │AAAAAAA             |
                                    │                    |*3
       {119:1000                          }{120:1002                }|
                                                         |
     ]])
+  end)
+
+  it('keeps the view on the same lines when its width changes', function()
+    Screen.new(40, 8)
+    local buf = api.nvim_create_buf(true, true)
+    local chan = api.nvim_open_term(buf, {})
+    api.nvim_win_set_buf(0, buf)
+    local term_win = api.nvim_get_current_win()
+    local lines = {}
+    for i = 0, 29 do
+      table.insert(lines, ('L%02d'):format(i) .. ('.'):rep((i * 7) % 35))
+    end
+    api.nvim_chan_send(chan, table.concat(lines, '\r\n'))
+    -- Waits for the last line, which is too long for half the window, to be wrapped or not.
+    local function wait_last_line_wrapped(wrapped)
+      retry(nil, nil, function()
+        eq(not wrapped, vim.startswith(api.nvim_buf_get_lines(buf, -2, -1, true)[1], 'L29'))
+      end)
+    end
+    wait_last_line_wrapped(false)
+
+    -- Returns the line IDs at the top of the terminal window and under its cursor.
+    local function view_ids()
+      local topline = eval(('getwininfo(%d)[0].topline'):format(term_win))
+      local cursor = api.nvim_win_get_cursor(term_win)[1]
+      local function id(lnum)
+        return api.nvim_buf_get_lines(buf, lnum - 1, lnum, true)[1]:sub(1, 3)
+      end
+      return { id(topline), id(cursor) }
+    end
+
+    local top = fn.search('^L10', 'n')
+    fn.winrestview({ topline = top, lnum = top + 2 })
+    eq({ 'L10', 'L12' }, view_ids())
+    command('vnew')
+    wait_last_line_wrapped(true)
+    eq({ 'L10', 'L12' }, view_ids())
+    command('close')
+    wait_last_line_wrapped(false)
+    eq({ 'L10', 'L12' }, view_ids())
   end)
 end)
 
@@ -918,11 +958,12 @@ describe(':terminal with multigrid', function()
         [2:--------------------------------------------------]|*6
         [3:--------------------------------------------------]|
       ## grid 2
+        tty ready                                         |
         rows: 10, cols: 20                                |
         rows: 3, cols: 70                                 |
         rows: 6, cols: 50                                 |
         ^                                                  |
-                                                          |*2
+                                                          |
       ## grid 3
         {5:-- TERMINAL --}                                    |
       ]])
