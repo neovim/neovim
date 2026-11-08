@@ -83,6 +83,7 @@
 #include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
+#include "nvim/normal.h"
 #include "nvim/normal_defs.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
@@ -976,6 +977,7 @@ bool terminal_enter(void)
   // Restore the terminal cursor to what is set in 'guicursor'
   (void)parse_shape_opt(SHAPE_CURSOR);
 
+  const handle_T term_win_handle = s->save_curwin_handle;
   unset_terminal_winopts(s);
 
   // Tell the terminal it lost focus
@@ -984,7 +986,11 @@ bool terminal_enter(void)
   curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
 
   if (curbuf->terminal == s->term && !s->close) {
-    terminal_check_cursor();
+    move_cursor_to_terminal_cursor(curwin, false);
+  }
+  win_T *const term_wp = handle_get_window(term_win_handle);
+  if (term_wp && term_wp->w_buffer->terminal && !s->close) {
+    start_following_terminal_cursor(term_wp);
   }
   if (restart_edit) {
     showmode();
@@ -1011,24 +1017,68 @@ bool terminal_enter(void)
   return s->got_bsl_o;
 }
 
-static void terminal_check_cursor(void)
+/// Moves the cursor of "wp" to the cursor of its terminal, and scrolls "wp" to the end.
+///
+/// @param terminal_mode  whether "wp" is in Terminal mode
+static void move_cursor_to_terminal_cursor(win_T *wp, bool terminal_mode)
 {
-  Terminal *term = curbuf->terminal;
-  curwin->w_cursor.lnum = MIN(curbuf->b_ml.ml_line_count,
-                              row_to_linenr(term, term->cursor.row));
-  const linenr_T topline = MAX(curbuf->b_ml.ml_line_count - curwin->w_view_height + 1, 1);
+  buf_T *buf = wp->w_buffer;
+  Terminal *term = buf->terminal;
+  wp->w_cursor.lnum = MIN(buf->b_ml.ml_line_count, row_to_linenr(term, term->cursor.row));
+  const linenr_T topline = MAX(buf->b_ml.ml_line_count - wp->w_view_height + 1, 1);
   // Don't update topline if unchanged to avoid unnecessary redraws.
-  if (topline != curwin->w_topline) {
-    set_topline(curwin, topline);
+  if (topline != wp->w_topline) {
+    set_topline(wp, topline);
   }
-  if (term->suspended && (State & MODE_TERMINAL)) {
+  if (term->suspended && terminal_mode) {
     // Put cursor at the "[Process suspended]" text to hint that pressing a key will
     // change the suspended state.
-    curwin->w_cursor = (pos_T){ .lnum = curbuf->b_ml.ml_line_count };
+    wp->w_cursor = (pos_T){ .lnum = buf->b_ml.ml_line_count };
   } else {
     // Nudge cursor when returning to normal-mode.
-    int off = (State & MODE_TERMINAL) ? 0 : (curwin->w_p_rl ? 1 : -1);
-    coladvance(curwin, MAX(0, term->cursor.col + off));
+    int off = terminal_mode ? 0 : (wp->w_p_rl ? 1 : -1);
+    coladvance(wp, MAX(0, term->cursor.col + off));
+  }
+}
+
+/// Makes the cursor of "wp" follow the terminal cursor.
+static void start_following_terminal_cursor(win_T *wp)
+{
+  wp->w_term_follow = true;
+  record_follow_view(wp);
+}
+
+/// Records the cursor, topline and height of "wp".
+static void record_follow_view(win_T *wp)
+{
+  wp->w_term_follow_cursor = wp->w_cursor;
+  wp->w_term_follow_topline = wp->w_topline;
+  wp->w_term_follow_height = wp->w_view_height;
+}
+
+/// Records the view of each window whose cursor follows the terminal cursor.
+void terminal_record_follow_views(void)
+{
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_term_follow) {
+      record_follow_view(wp);
+    }
+  }
+}
+
+/// Stops the cursor of a window from following the terminal cursor if the window's cursor or
+/// topline changed since its view was recorded, or if it's the current window and has a Visual
+/// selection or a pending operator. A topline change from a change in height doesn't count.
+void terminal_unfollow_changed_views(void)
+{
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_term_follow
+        && (!equalpos(wp->w_cursor, wp->w_term_follow_cursor)
+            || (wp->w_topline != wp->w_term_follow_topline
+                && wp->w_view_height == wp->w_term_follow_height)
+            || (wp == curwin && (Visual.active || op_pending())))) {
+      wp->w_term_follow = false;
+    }
   }
 }
 
@@ -1041,6 +1091,10 @@ static bool terminal_check_focus(TerminalState *const s)
 
   if (s->save_curwin_handle != curwin->handle) {
     // Terminal window changed, update window options.
+    win_T *const prev_wp = handle_get_window(s->save_curwin_handle);
+    if (prev_wp && prev_wp->w_buffer->terminal) {
+      start_following_terminal_cursor(prev_wp);
+    }
     unset_terminal_winopts(s);
     set_terminal_winopts(s);
   }
@@ -1080,7 +1134,7 @@ static int terminal_check(VimState *state)
   terminal_check_refresh();
 
   // Validate topline and cursor position for autocommands. Especially important for WinScrolled.
-  terminal_check_cursor();
+  move_cursor_to_terminal_cursor(curwin, true);
   validate_cursor(curwin);
 
   // Don't let autocommands free the terminal from under our fingers.
@@ -1100,7 +1154,7 @@ static int terminal_check(VimState *state)
   if (!terminal_check_focus(s)) {
     return 0;
   }
-  terminal_check_cursor();
+  move_cursor_to_terminal_cursor(curwin, true);
   validate_cursor(curwin);
 
   show_cursor_info_later(false);
@@ -2593,7 +2647,16 @@ static void adjust_topline_cursor(Terminal *term, buf_T *buf, int added)
     if (wp->w_buffer == buf) {
       if (wp == curwin && is_focused(term)) {
         // Move window cursor to terminal cursor's position and "follow" output.
-        terminal_check_cursor();
+        move_cursor_to_terminal_cursor(curwin, true);
+        continue;
+      }
+
+      if (wp->w_term_follow) {
+        move_cursor_to_terminal_cursor(wp, false);
+        // Scroll for 'scrolloff' now, as the same scroll at the next redraw would look like the
+        // user's.
+        validate_cursor(wp);
+        record_follow_view(wp);
         continue;
       }
 

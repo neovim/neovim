@@ -653,6 +653,8 @@ These existing features changed their behavior.
   can be used when printing to a terminal.
 • It is no longer allowed to change the window layout during a |DiffUpdated|
   autocommand.
+• A |terminal| window that leaves |Terminal-mode| follows output until its
+  cursor is moved or it's scrolled, even if its cursor isn't on the last line.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
