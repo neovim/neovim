@@ -1,6 +1,6 @@
 " Script to define the syntax menu in synmenu.vim
 " Maintainer:		The Vim Project <https://github.com/vim/vim>
-" Last Change:		2026 Oct 12
+" Last Change:		2026 Nov 5
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " This is used by "make menu" in the src directory.
@@ -78,6 +78,7 @@ SynMenu AB.Arc\ Macro\ Language:aml
 SynMenu AB.Arch\ inventory:arch
 SynMenu AB.Arduino:arduino
 SynMenu AB.ART:art
+SynMenu AB.Ascend\ C:ascendc
 SynMenu AB.Ascii\ Doc:asciidoc
 SynMenu AB.ASP\ with\ VBScript:aspvbs
 SynMenu AB.ASP\ with\ Perl:aspperl

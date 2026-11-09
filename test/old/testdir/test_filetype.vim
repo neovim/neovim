@@ -120,6 +120,7 @@ func s:GetFilenameChecks() abort
     \ 'arch': ['.arch-inventory', '=tagging-method'],
     \ 'arduino': ['file.ino', 'file.pde'],
     \ 'art': ['file.art'],
+    \ 'ascendc': ['file.asc'],
     \ 'asciidoc': ['file.asciidoc', 'file.adoc'],
     \ 'asm': ['file.s', 'file.S', 'file.a', 'file.A'],
     \ 'asn': ['file.asn', 'file.asn1'],
