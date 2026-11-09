@@ -56,6 +56,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
+#include "nvim/window.h"
 
 // local declarations. {{{1
 
@@ -86,6 +87,7 @@ enum {
 // Define "fline_T", passed to get fold level for a line.
 typedef struct {
   win_T *wp;              // window
+  tabpage_T *tp;          // tab page of "wp" for diff_infold()
   linenr_T lnum;                // current line number
   linenr_T off;                 // offset between lnum and real line number
   linenr_T lnum_save;           // line nr used by foldUpdateIEMSRecurse()
@@ -1864,6 +1866,7 @@ static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
 
   fold_changed = false;
   fline.wp = wp;
+  fline.tp = NULL;
   fline.off = 0;
   fline.lvl = 0;
   fline.lvl_next = -1;
@@ -1917,6 +1920,7 @@ static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
       getlevel = foldlevelSyntax;
     } else if (foldmethodIsDiff(wp)) {
       getlevel = foldlevelDiff;
+      fline.tp = win_find_tabpage(wp);
     } else {
       getlevel = foldlevelIndent;
       // Start one line back, because if the line above "top" has an
@@ -2802,7 +2806,7 @@ static void foldlevelIndent(fline_T *flp)
 /// Doesn't use any caching.
 static void foldlevelDiff(fline_T *flp)
 {
-  flp->lvl = (diff_infold(flp->wp, flp->lnum + flp->off)) ? 1 : 0;
+  flp->lvl = (diff_infold(flp->wp, flp->tp, flp->lnum + flp->off)) ? 1 : 0;
 }
 
 /// Low level function to get the foldlevel for the "expr" method.

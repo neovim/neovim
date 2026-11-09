@@ -3579,7 +3579,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, diffline_T *diffline)
 /// @param  lnum  line number to check within the buffer
 ///
 /// @return false if there are no diff blocks at all in this window.
-bool diff_infold(win_T *wp, linenr_T lnum)
+bool diff_infold(win_T *wp, tabpage_T *tp, linenr_T lnum)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
   // Return if 'diff' isn't set.
@@ -3587,8 +3587,6 @@ bool diff_infold(win_T *wp, linenr_T lnum)
     return false;
   }
 
-  // "wp" may be in another tab page.
-  tabpage_T *tp = win_valid(wp) ? curtab : win_find_tabpage(wp);
   if (tp == NULL) {
     tp = curtab;
   }
