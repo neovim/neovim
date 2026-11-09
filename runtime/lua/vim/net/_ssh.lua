@@ -303,7 +303,12 @@ end
 --- place.
 ---@return fun(status: 'running'|'success'|'failed', msg: string)
 local function new_progress_report()
-  local progress = { kind = 'progress', source = 'remote-ssh', title = 'remote-ssh' }
+  local progress = {
+    kind = 'progress',
+    source = 'remote-ssh',
+    title = 'remote-ssh',
+    _truncate = true,
+  }
   return function(status, msg)
     if status == 'failed' then
       log().error(msg)
@@ -575,9 +580,21 @@ local function connect(uri_str, chan, report, update, config)
     table.insert(args, 1, '--update')
   end
   tunnel = run_script(uri, args, { ssh_args = { '-L', forward } }, on_exit)
-  local ok, res = pcall(tunnel.wait, tunnel, 300000, function(stdout)
-    return stdout:match('NVIM_READY') ~= nil
+
+  local shown --- @type string? Latest line of stderr, e.g. the status of `remote_ssh.sh`.
+  -- Report stderr lines until NVIM_READY.
+  local ok, res = pcall(tunnel.wait, tunnel, 300000, function(stdout, stderr)
+    if stdout:match('NVIM_READY') then
+      return true
+    end
+    local line = vim.trim(stderr):match('[^\n]+$') -- Skip blank lines.
+    if line and line ~= shown then
+      shown = line
+      report('running', line)
+    end
+    return false
   end)
+
   if not ok then -- CTRL-C.
     teardown()
     error(res, 0)

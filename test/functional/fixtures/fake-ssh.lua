@@ -90,8 +90,10 @@ local function tunnel(opts, cmd)
   if config.tunnel.exit then
     return config.tunnel.exit
   elseif server then
-    -- As the remote script: ends when its server exits.
-    vim.fn.jobwait({ server })
+    -- As the remote script: ends when its server exits. Stops on SIGTERM, unlike `jobwait()` alone.
+    vim.wait(vim._maxint, function()
+      return vim.fn.jobwait({ server }, 0)[1] ~= -1
+    end, 10)
     return 0
   end
   vim.wait(60000) -- Until killed.
