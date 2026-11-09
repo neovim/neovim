@@ -185,27 +185,54 @@ describe('vim.iter', function()
     end
 
     do
-      local function skip(n)
-        return vim.iter(vim.gsplit('a|b|c|d', '|')):skip(n):totable()
+      local function skip(n, peek)
+        local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
+        if peek then
+          eq('a', it:peek())
+        end
+        return it:skip(n):totable()
       end
-      eq({ 'a', 'b', 'c', 'd' }, skip(0))
-      eq({ 'b', 'c', 'd' }, skip(1))
-      eq({ 'c', 'd' }, skip(2))
-      eq({ 'd' }, skip(3))
-      eq({}, skip(4))
-      eq({}, skip(5))
+      for _, peek in ipairs({ false, true }) do
+        eq({ 'a', 'b', 'c', 'd' }, skip(0, peek))
+        eq({ 'b', 'c', 'd' }, skip(1, peek))
+        eq({ 'c', 'd' }, skip(2, peek))
+        eq({ 'd' }, skip(3, peek))
+        eq({}, skip(4, peek))
+        eq({}, skip(5, peek))
+      end
     end
   end)
 
   it('skip(predicate) preserves first non-matching element', function()
-    local it = vim.iter(vim.gsplit('1|2|3|4', '|'))
+    local it = vim.iter(vim.gsplit('1|2|3|1|4', '|'))
+    local calls = 0
 
     it:skip(function(x)
+      calls = calls + 1
       return tonumber(x) < 3
     end)
 
     eq('3', it:next())
+    eq('1', it:next())
     eq('4', it:next())
+    eq(nil, it:next())
+    eq(3, calls)
+
+    for _, peek in ipairs({ false, true }) do
+      for _, skip_false in ipairs({ false, true }) do
+        local values = { false, true, false }
+        local it = vim.iter(function()
+          return table.remove(values, 1)
+        end)
+        if peek then
+          eq(false, it:peek())
+        end
+        it:skip(function(v)
+          return skip_false and v == false
+        end)
+        eq(skip_false and { true, false } or { false, true, false }, it:totable())
+      end
+    end
   end)
 
   it('skip() followed by peek() works correctly', function()
@@ -260,15 +287,21 @@ describe('vim.iter', function()
     end
 
     do
-      local function nth(n)
-        return vim.iter(vim.gsplit('a|b|c|d', '|')):nth(n)
+      local function nth(n, peek)
+        local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
+        if peek then
+          eq('a', it:peek())
+        end
+        return it:nth(n)
       end
-      eq(nil, nth(0))
-      eq('a', nth(1))
-      eq('b', nth(2))
-      eq('c', nth(3))
-      eq('d', nth(4))
-      eq(nil, nth(5))
+      for _, peek in ipairs({ false, true }) do
+        eq(nil, nth(0, peek))
+        eq('a', nth(1, peek))
+        eq('b', nth(2, peek))
+        eq('c', nth(3, peek))
+        eq('d', nth(4, peek))
+        eq(nil, nth(5, peek))
+      end
     end
   end)
 
@@ -447,6 +480,42 @@ describe('vim.iter', function()
         end)
         :last()
     )
+
+    for _, values in ipairs({
+      {},
+      { false },
+      { true, false },
+      { true, false, true },
+      { 1, false, 3, 4 },
+    }) do
+      local expected = values[#values]
+      local it = vim.iter(function()
+        return table.remove(values, 1)
+      end)
+      eq(expected, it:last())
+      eq(nil, it:next())
+    end
+
+    do
+      local it = vim.iter(ipairs({ 'a', 'b' })):map(function(i, v)
+        return i, v, nil
+      end)
+      local function check_last(n, expected, ...)
+        eq(n, select('#', ...))
+        eq(expected, { ... })
+      end
+      check_last(3, { 2, 'b' }, it:last())
+      eq(nil, it:next())
+
+      it = vim.iter(ipairs({ 'a', 'b' })):map(function(i, v)
+        if i == 1 then
+          return i, v, nil
+        end
+        return false
+      end)
+      check_last(1, { false }, it:last())
+      eq(nil, it:next())
+    end
   end)
 
   it('enumerate()', function()
@@ -472,6 +541,20 @@ describe('vim.iter', function()
       eq('h', it:next())
       eq('i', it:peek())
       eq('i', it:next())
+    end
+
+    do
+      local values = { false, true, false }
+      local it = vim.iter(function()
+        return table.remove(values, 1)
+      end)
+      eq(false, it:peek())
+      eq(false, it:peek())
+      eq(false, it:next())
+      eq(true, it:next())
+      eq(false, it:peek())
+      eq(false, it:next())
+      eq(nil, it:peek())
     end
   end)
 
