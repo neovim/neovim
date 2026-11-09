@@ -420,9 +420,24 @@ end
 local function push_config(uri, dir)
   local env = { COPYFILE_DISABLE = '1' } -- No macOS `._*` files.
   -- -h: Copies symlink targets (e.g. links made by a dotfiles manager).
-  local tar = vim
-    .system({ 'tar', '-czf', '-', '-h', '--exclude=.git', '-C', dir, '.' }, { env = env })
-    :wait()
+  local cmd = { 'tar', '-czf', '-', '-h', '--exclude=.git' }
+
+  -- Exclude broken symlinks (fails GNU `tar -h` #42747).
+  for name, type in
+    vim.fs.dir(dir, {
+      depth = vim._maxint,
+      skip = function(d)
+        return vim.fs.basename(d) ~= '.git'
+      end,
+    })
+  do
+    if type == 'link' and not vim.uv.fs_stat(vim.fs.joinpath(dir, name)) then
+      table.insert(cmd, ('--exclude=./%s'):format((name:gsub('[][*?\\]', '\\%0'))))
+    end
+  end
+
+  vim.list_extend(cmd, { '-C', dir, '.' })
+  local tar = vim.system(cmd, { env = env }):wait()
   if tar.code ~= 0 then
     error(('Failed to pack %s: %s'):format(dir, tar.stderr))
   end
