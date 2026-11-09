@@ -5466,13 +5466,11 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
   pos.coladd = 0;
 
   if (name[0] == 'w' && dollar_lnum) {
-    // the "w_valid" flags are not reset when moving the cursor, but they
-    // do matter for update_topline() and validate_botline_win().
-    check_cursor_moved(wp);
-
+    // The "w_valid" flags are not reset when moving the cursor, so update
+    // the view before reading either endpoint.
+    update_topline(wp);
     pos.col = 0;
     if (name[1] == '0') {               // "w0": first visible line
-      update_topline(wp);
       // In silent Ex mode topline is zero, but that's not a valid line
       // number; use one instead.
       pos.lnum = wp->w_topline > 0 ? wp->w_topline : 1;
