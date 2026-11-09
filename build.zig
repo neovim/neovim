@@ -5,7 +5,6 @@ const build_lua = @import("src/build_lua.zig");
 const gen = @import("src/gen/gen_steps.zig");
 const runtime = @import("runtime/gen_runtime.zig");
 const tests = @import("test/run_tests.zig");
-const zcc = @import("compile_commands");
 const lint = @import("src/lint.zig");
 
 const version = struct {
@@ -811,15 +810,16 @@ pub fn build(b: *std.Build) !void {
         unit_headers,
     );
 
-    // compile_commands.json
-    var cdb_targets: std.ArrayListUnmanaged(*std.Build.Step.Compile) = try .initCapacity(b.allocator, 0);
-    try cdb_targets.append(b.allocator, nvim_exe);
-    try cdb_targets.append(b.allocator, tee_exe);
-    try cdb_targets.append(b.allocator, xxd_exe);
-    const cdb_step = zcc.createStep(b, "cdb", cdb_targets.items);
-    for (cdb_targets.items) |ct| cdb_step.dependOn(&ct.step);
-
-    try lint.addSteps(b, target, cdb_step, nvim_exe_install, nvim_sources, nvim_headers, ci_build);
+    try lint.addSteps(
+        b,
+        target,
+        nvim_exe_install,
+        nvim_sources.items,
+        nvim_headers.items,
+        ci_build,
+        unittest_include_path.items,
+        &flags,
+    );
 }
 
 pub fn test_fixture(
