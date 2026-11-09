@@ -3370,6 +3370,26 @@ func Test_range()
   call assert_fails('let x=range([])', 'E745:')
   call assert_fails('let x=range(1, [])', 'E745:')
   call assert_fails('let x=range(1, 4, [])', 'E745:')
+
+  " the number of items must fit in an int
+  "call assert_equal(2147483647, len(range(2147483647)))
+  call assert_fails('let x=range(2147483648)',
+        \ 'E1510: Value too large: 2147483648')
+  call assert_fails('let x=range(0, 2147483647)',
+        \ 'E1510: Value too large: 2147483648')
+  call assert_fails('let x=range(0, 4294967294, 2)',
+        \ 'E1510: Value too large: 2147483648')
+  call assert_fails('let x=range(0, 9223372036854775807)',
+        \ 'E1510: Value too large: 9223372036854775808')
+
+  " the stride must fit in an int
+  call assert_fails('let x=range(0, 100, 3000000000)',
+        \ 'E1510: Value too large: 3000000000')
+  call assert_fails('let x=range(0, 100, -3000000000)',
+        \ 'E1510: Value too large: -3000000000')
+
+  " slicing a range list with an overflowing length crashed
+  call assert_fails('let x=range(2147483648)[: 4]', 'E1510:')
 endfunc
 
 func Test_garbagecollect_now_fails()
