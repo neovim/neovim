@@ -133,6 +133,7 @@ EDITOR
 • After a motion forced blockwise (|o_CTRL-V|), |']| is on the last column
   of the block: "g@<C-v>l" gives 'operatorfunc' the block that "y<C-v>l"
   yanks.
+• ":connect!" (with bang "!") was removed.
 • |cmdwin| (|q:|, |q/|, |q?|, |c_CTRL-F|):
   • Only supports one "cmdline level", not "infinite recursion".
   • Expr-register (|i_CTRL-R_=|, |c_CTRL-R_=|) no longer supports opening
@@ -326,6 +327,8 @@ EDITOR
 • |ZR| restarts Nvim (|:restart|).
 • |:connect| supports `ssh://` URIs. |remote-ssh|
 • |:connect| without arguments shows a menu of known servers and ssh hosts.
+• |:connect| stops the current server if no other UI is attached, or fails if
+  :qall would fail (unsaved changes). ":connect!" (with bang "!") was removed.
 • |:detach| with range "%" detaches all UIs except the current one.
 • |:detach!| (with bang "!") marks the current UI as detachable: Nvim will
   continue running if the UI disconnects unexpectedly (e.g. if you

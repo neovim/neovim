@@ -5918,9 +5918,10 @@ static void ex_detach(exarg_T *eap)
 /// Connects the current UI to a different server
 ///
 /// ":connect" shows a menu of discovered servers.
-/// ":connect <address>" detaches the current UI and connects to the given server.
+/// ":connect <addr>" detaches the UI and connects to <addr>, then stops the current server.
 /// ":connect ssh://<uri>" bootstraps a remote Nvim over SSH, then connects.
-/// ":connect! <address>" stops the current server if no other UIs are attached, then connects to the given server.
+///
+/// Fails if this is the last UI and ":qall" would fail (e.g. unsaved changes).
 static void ex_connect(exarg_T *eap)
 {
   char *addr = eap->arg;
@@ -5937,6 +5938,10 @@ static void ex_connect(exarg_T *eap)
   }
   if (!remote_ui_attached(current_ui)) {
     emsg(_(e_noui));
+    return;
+  }
+  // Abort if this is the last UI and a buffer has unsaved changes.
+  if (ui_active() == 1 && check_changed_any(false, false)) {
     return;
   }
 
@@ -5976,7 +5981,7 @@ static void ex_connect(exarg_T *eap)
     }
   }
 
-  bool stop_server = eap->forceit ? (ui_active() == 1) : false;
+  bool stop_server = !is_ssh && ui_active() == 1;
 
   Error err = ERROR_INIT;
   remote_ui_connect(current_ui, addr, &err);
