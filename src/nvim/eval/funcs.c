@@ -5095,7 +5095,7 @@ static void repeat_list(list_T *l, varnumber_T n, typval_T *rettv)
 {
   const int slen = tv_list_len(l);
 
-  tv_list_alloc_ret(rettv, (n > 0) * n * slen);
+  tv_list_alloc_ret(rettv, kListLenMayKnow);
   if (l == NULL || n <= 0 || slen == 0) {
     return;
   }
