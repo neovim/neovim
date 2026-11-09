@@ -1117,6 +1117,8 @@ static int64_t gethexchrs(int maxinputlen)
 
 // Get and return the value of the decimal string immediately after the
 // current position. Return -1 for invalid.  Consumes all digits.
+// Return the value of the decimal string, or either INT_MAX + 1 or
+// INT_MAX + 2 if it is larger than INT_MAX.
 static int64_t getdecchrs(void)
 {
   int64_t nr = 0;
@@ -1128,8 +1130,12 @@ static int64_t getdecchrs(void)
     if (c < '0' || c > '9') {
       break;
     }
-    nr *= 10;
-    nr += c - '0';
+    if (nr <= INT_MAX / 10) {
+      nr *= 10;
+      nr += c - '0';
+    } else {
+      nr = (int64_t)INT_MAX + 1;
+    }
     regparse++;
     curchr = -1;     // no longer valid
   }
