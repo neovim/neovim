@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Bootstraps the headless Nvim server of a |remote-ssh| session: finds or installs `nvim`, which then
-# runs and supervises the server (vim.net._ssh.serve()).
+# runs and supervises the server (vim.net._ssh.serve()). Its stderr is reported as progress msgs.
 #
 # Usage: remote_ssh.sh [--update] {sock} {dir} {url} {sha256} {version}
 #   Runs `nvim` from $PATH if it is {version} or newer, else the release {url} (`-`: none for this
@@ -106,6 +106,7 @@ main() {
     install_release
     nvim="$dest/bin/nvim"
   fi
+  echo "Starting $nvim..." >&2
   # Nvim inherits stdin from `sh -s` (i.e. from ssh), so EOF tells serve() that ssh disconnected.
   exec "$nvim" --clean -n --headless +"lua require('vim.net._ssh').serve('$sock')" +qa!
 }
