@@ -81,6 +81,22 @@ func Test_list_identity()
   call CheckLegacyAndVim9Success(lines)
 endfunc
 
+" A shallow copy shares the nested items, a deep copy does not
+func Test_list_copy_nested_sharing()
+  let aa = [[1, 'a'], 2, 3]
+  let bb = copy(aa)
+  let cc = deepcopy(aa)
+  call add(aa, 4)
+  let aa[0][1] = 'aaa'
+  call assert_equal([[1, 'aaa'], 2, 3, 4], aa)
+  call assert_equal([[1, 'aaa'], 2, 3], bb)
+  call assert_equal([[1, 'a'], 2, 3], cc)
+  call assert_true(bb[0] is aa[0])
+  call assert_true(cc[0] isnot aa[0])
+  call assert_true(aa[:] isnot aa)
+  call assert_true(aa[:][0] is aa[0])
+endfunc
+
 " removing items with :unlet
 func Test_list_unlet()
   let lines =<< trim END
@@ -272,6 +288,25 @@ func Test_list_func_remove()
   call assert_fails("call remove(l, 3, 2)", 'E16:')
   call assert_fails("call remove(1, 0)", 'E896:')
   call assert_fails("call remove(l, l)", 'E745:')
+
+  " The list is not changed after a failure
+  let l = [1, 2, 3, 4]
+  call assert_fails('call remove(l, 4)', 'E684:')
+  call assert_fails('call remove(l, -5)', 'E684:')
+  call assert_fails('call remove(l, 1, 4)', 'E684:')
+  call assert_fails('call remove(l, 2, 1)', 'E16:')
+  call assert_equal([1, 2, 3, 4], l)
+  call assert_equal(1, remove(l, -4))
+  call assert_equal([2, 3, 4], l)
+
+  " Removing the only item and emptying the list
+  let s = [7]
+  call assert_equal(7, remove(s, 0))
+  call assert_equal([], s)
+  call assert_fails('call remove(s, 0)', 'E684:')
+  let r = [1, 2, 3]
+  call assert_equal([1, 2, 3], remove(r, 0, -1))
+  call assert_equal([], r)
 endfunc
 
 " List add() function
@@ -911,6 +946,26 @@ func Test_let_lock_list_items()
   unlet l
 endfunc
 
+" Functions that change a list fail when the list is locked
+func Test_list_locked_builtins()
+  let l = [3, 1, 2]
+  lockvar 1 l
+  call assert_fails('call add(l, 4)', 'E741:')
+  call assert_fails('call insert(l, 0)', 'E741:')
+  call assert_fails('call remove(l, 0)', 'E741:')
+  call assert_fails('call extend(l, [4])', 'E741:')
+  call assert_fails('call sort(l)', 'E741:')
+  call assert_fails('call uniq(l)', 'E741:')
+  call assert_fails('call reverse(l)', 'E741:')
+  call assert_equal([3, 1, 2], l)
+  " With depth 1 the items can still be changed
+  let l[0] = 9
+  call assert_equal([9, 1, 2], l)
+  unlockvar l
+  call add(l, 4)
+  call assert_equal([9, 1, 2, 4], l)
+endfunc
+
 " lockvar/islocked() triggering script autoloading
 func Test_lockvar_script_autoload()
   let old_rtp = &rtp
@@ -1055,6 +1110,15 @@ func Test_reduce()
     return 1
   endfunc
   call assert_fails("call reduce(g:lut, { acc, val -> EvilRemove() }, 1)", 'E742:')
+  " :unlockvar in the callback does not remove the lock reduce() uses
+  func EvilUnlockRemove()
+    unlockvar g:lut
+    call remove(g:lut, 1)
+    return 1
+  endfunc
+  call assert_fails("call reduce(g:lut, { acc, val -> EvilUnlockRemove() }, 1)", 'E742:')
+  call assert_equal([1, 2, 3, 4], g:lut)
+  delfunc EvilUnlockRemove
   unlet g:lut
   delfunc EvilRemove
 
@@ -1116,6 +1180,124 @@ func Test_listdict_compare()
   call assert_fails('echo {} =~ {}', 'E736:')
 endfunc
 
+" Comparing lists does not convert between number and string, the case
+" argument is also used for nested lists
+func Test_list_compare_strict()
+  call assert_true(4 == '4')
+  call assert_false([4] == ['4'])
+  call assert_false([1, 2] == [2, 1])
+  call assert_false([1, 2] == [1, 2, 3])
+  call assert_true(['a', ['B']] ==? ['A', ['b']])
+  call assert_false(['a'] ==# ['A'])
+  call assert_true(['a'] !=# ['A'])
+endfunc
+
+" In legacy script :for keeps a pointer to the next item, thus removing the
+" current item doesn't skip an item
+func Test_for_loop_remove_current_item()
+  let mylist = [1, 2, 3, 4]
+  let seen = []
+  for item in mylist
+    call add(seen, item)
+    call remove(mylist, 0)
+  endfor
+  call assert_equal([1, 2, 3, 4], seen)
+  call assert_equal([], mylist)
+endfunc
+
+" In legacy script :for also keeps working when the loop body removes other
+" items or empties the list
+func Test_for_loop_change_list()
+  " removing the next item skips it
+  let l = [1, 2, 3, 4]
+  let seen = []
+  for x in l
+    call add(seen, x)
+    if x == 1
+      call remove(l, 1)
+    endif
+  endfor
+  call assert_equal([1, 3, 4], seen)
+
+  " removing the rest of the list ends the loop
+  let l = [1, 2, 3, 4]
+  let seen = []
+  for x in l
+    call add(seen, x)
+    if x == 2
+      call remove(l, 1, -1)
+    endif
+  endfor
+  call assert_equal([1, 2], seen)
+  call assert_equal([1], l)
+
+  " emptying the list with filter() ends the loop
+  let l = [1, 2, 3]
+  let seen = []
+  for x in l
+    call add(seen, x)
+    call filter(l, 0)
+  endfor
+  call assert_equal([1], seen)
+
+  " uniq() removing the current item continues with the next one
+  let l = [1, 1, 2, 3]
+  let seen = []
+  for x in l
+    call add(seen, x)
+    if len(seen) == 2
+      call uniq(l)
+    endif
+  endfor
+  call assert_equal([1, 1, 2, 3], seen)
+  call assert_equal([1, 2, 3], l)
+endfunc
+
+" A List that contains itself
+func Test_list_self_reference()
+  let l = [1]
+  call add(l, l)
+  "call assert_equal('[1, [...]]', string(l))
+  call assert_true(l == l)
+  call assert_true(l[1] is l)
+  let c = deepcopy(l)
+  call assert_true(c isnot l)
+  call assert_true(c[1] is c)
+  "call assert_equal('[1,[]]', json_encode(l))
+endfunc
+
+" Slice indexes and sizes at the Number limits.  The index arguments of
+" get(), index(), remove() and insert() are not tested with these values,
+" they are converted to a C long, which is 32 bits on some systems.
+func Test_list_index_number_limits()
+  let lines =<< trim END
+      VAR l = [1, 2]
+      call assert_equal([1, 2], l[0 : v:numbermax])
+      call assert_equal([], l[v:numbermax :])
+  END
+  call CheckLegacyAndVim9Success(lines)
+
+  let l = [1, 2, 3]
+  call assert_fails('call repeat(l, v:numbermax)', 'E1510:')
+  call assert_fails('call range(v:numbermin, v:numbermax)', 'E1510:')
+  call assert_equal([1, 2, 3], l)
+endfunc
+
+" Compound assignment to List items
+func Test_list_item_compound_assign()
+  let lines =<< trim END
+      VAR l = [7, [7], 'a']
+      LET l[0] -= 2
+      LET l[1][0] *= 2
+      LET l[2] ..= 'b'
+      call assert_equal([5, [14], 'ab'], l)
+      LET l[0] /= 2
+      LET l[1][0] %= 4
+      call assert_equal([2, [2], 'ab'], l)
+  END
+  call CheckLegacyAndVim9Success(lines)
+endfunc
+
 func Test_recursive_listdict_compare()
   let l1 = [0, 1]
   let l1[0] = l1
@@ -1153,6 +1335,12 @@ func Test_listdict_extend()
       VAR l = [1, 2, 3]
       call assert_equal([1, 2, 3, 1, 2, 3], extend(l, l))
       call assert_equal([1, 2, 3, 1, 2, 3], l)
+
+      LET l = [1, 2]
+      VAR same = l
+      LET l += l
+      call assert_equal([1, 2, 1, 2], l)
+      call assert_true(l is same)
 
       LET l = [1, 2, 3]
       call assert_equal([1, 2, 3, 4, 5, 6], extend(l, [4, 5, 6]))
