@@ -613,7 +613,7 @@ end
 --- @since 12
 --- @return V1?, V...
 function Iter:next()
-  if self._peeked then
+  if self._peeked ~= nil then
     local v = self._peeked
     self._peeked = nil
 
@@ -682,7 +682,7 @@ end
 --- @since 12
 --- @return V1?, V...
 function Iter:peek()
-  if not self._peeked then
+  if self._peeked == nil then
     self._peeked = pack(self:next())
   end
 
@@ -964,23 +964,30 @@ end
 function Iter:skip(n)
   if type(n) == 'number' then
     for _ = 1, n do
-      self._peeked = nil
       local _ = self:next()
     end
   elseif type(n) == 'function' then
     local next = self.next
+    local skipping = true
 
     --- @return V1?, V...
     --- @diagnostic disable-next-line:duplicate-set-field
     self.next = function()
+      if not skipping then
+        return next(self)
+      end
       while true do
-        local peeked = self._peeked or pack(next(self))
+        local peeked = self._peeked
+        if peeked == nil then
+          peeked = pack(next(self))
+        end
 
-        if not peeked then
+        if peeked == nil then
           return nil
         end
 
         if not n(unpack(peeked)) then
+          skipping = false
           self._peeked = nil
           return unpack(peeked)
         end
@@ -1172,13 +1179,17 @@ end
 --- @see |IterArray:rpeek()|
 --- @return V1?, V...
 function Iter:last()
-  local last = self:next()
-  local cur = self:next()
-  while cur do
-    last = cur
-    cur = self:next()
-  end
-  return last
+  local last = nil
+  local rest = {}
+  local n = 0
+  self:each(function(v, ...)
+    last = v
+    n = select('#', ...)
+    for i = 1, n do
+      rest[i] = select(i, ...)
+    end
+  end)
+  return last, _G.unpack(rest, 1, n)
 end
 
 --- @nodoc
