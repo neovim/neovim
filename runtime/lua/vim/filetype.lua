@@ -260,6 +260,7 @@ local extension = {
   ino = 'arduino',
   pde = 'arduino',
   art = 'art',
+  asc = 'ascendc',
   asciidoc = 'asciidoc',
   adoc = 'asciidoc',
   asa = function(_path, _bufnr)
