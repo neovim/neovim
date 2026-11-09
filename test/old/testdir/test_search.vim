@@ -1572,6 +1572,22 @@ func Test_large_hex_chars3()
   endtry
 endfunc
 
+func Test_large_dec_chars()
+  " A large decimal number used to wrap around: 2^64 + 97 becomes 'a'
+  for re in [1, 2]
+    let &re = re
+    call assert_fails("call match('xab', '\\%d18446744073709551713')", 'E678:')
+    call assert_fails("call match('xab', '[\\d18446744073709551713]')", 'E1541:')
+    " With a 32-bit long_u, 2^32 + 97 used to become 'a'
+    call assert_fails("call match('xab', '\\%d4294967393')", 'E678:')
+    call assert_fails("call match('xab', '[\\d4294967393]')", 'E1541:')
+    " INT_MAX is the largest accepted value
+    call assert_equal(-1, match('xab', '\%d2147483647'))
+    call assert_fails("call match('xab', '\\%d2147483648')", 'E678:')
+  endfor
+  set re&
+endfunc
+
 func Test_one_error_msg()
   " This was also giving an internal error
   call assert_fails('call search(" \\((\\v[[=P=]]){185}+             ")', 'E871:')
