@@ -484,6 +484,48 @@ describe('vim.iter', function()
     eq('b', it:next())
   end)
 
+  local function boolean_iter()
+    local values, i = { false, true }, 0
+    return vim.iter(function()
+      i = i + 1
+      return values[i]
+    end)
+  end
+
+  it('peek() preserves false on function iterators', function()
+    local it = boolean_iter()
+
+    eq(false, it:peek())
+    eq(false, it:peek())
+    eq(false, it:next())
+    eq(true, it:next())
+    eq(nil, it:next())
+  end)
+
+  it('skip(predicate) preserves false on function iterators', function()
+    for _, peek in ipairs({ false, true }) do
+      local it = boolean_iter()
+      if peek then
+        eq(false, it:peek())
+      end
+      it:skip(function(value)
+        return value
+      end)
+      eq(false, it:next())
+      eq(nil, it:next())
+
+      it = boolean_iter()
+      if peek then
+        eq(false, it:peek())
+      end
+      it:skip(function(value)
+        return not value
+      end)
+      eq(true, it:next())
+      eq(nil, it:next())
+    end
+  end)
+
   it('peek() before skip(predicate) does not break iteration', function()
     local it = vim.iter(vim.gsplit('1|2|3|4', '|'))
 
