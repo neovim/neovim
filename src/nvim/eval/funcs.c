@@ -157,6 +157,8 @@ PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH
 PRAGMA_DIAG_POP
 PRAGMA_DIAG_POP
 
+static const char e_start_past_end[]
+  = N_("E727: Start past end");
 static const char e_invalid_submatch_number_nr[]
   = N_("E935: Invalid submatch number: %d");
 static const char e_string_list_or_blob_required[]
@@ -4873,12 +4875,46 @@ static void f_range(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     emsg(_("E726: Stride is zero"));
     return;
   }
-  if (stride > 0 ? end + 1 < start : end - 1 > start) {
-    emsg(_("E727: Start past end"));
+
+  if (stride < INT_MIN || stride > INT_MAX) {
+    char buf[NUMBUFLEN];
+    vim_snprintf(buf, sizeof(buf), "%" PRIdVARNUMBER, stride);
+    semsg(_(e_val_too_large), buf);
     return;
   }
 
-  tv_list_alloc_ret(rettv, (end - start) / stride);
+  uvarnumber_T len;
+
+  if (stride > 0 ? end < start : end > start) {
+    // One step before the start gives an empty list, further away is
+    // an error.  Subtract unsigned to avoid an overflow.
+    uvarnumber_T back = stride > 0
+                        ? (uvarnumber_T)start - (uvarnumber_T)end
+                        : (uvarnumber_T)end - (uvarnumber_T)start;
+    if (back > 1) {
+      emsg(_(e_start_past_end));
+      return;
+    }
+    len = 0;
+  } else {
+    varnumber_T astride = stride > 0 ? stride : -stride;
+    uvarnumber_T span = stride > 0
+                        ? (uvarnumber_T)end - (uvarnumber_T)start
+                        : (uvarnumber_T)start - (uvarnumber_T)end;
+    uvarnumber_T count = span / (uvarnumber_T)astride;
+    // The number of items is "count" + 1 and must fit in an int.
+    if (count >= (uvarnumber_T)INT_MAX) {
+      char buf[NUMBUFLEN];
+      // "count + 1" can wrap around.
+      vim_snprintf(buf, sizeof(buf), "%" PRIu64,
+                   count < UVARNUMBER_MAX ? count + 1 : UVARNUMBER_MAX);
+      semsg(_(e_val_too_large), buf);
+      return;
+    }
+    len = count + 1;
+  }
+
+  tv_list_alloc_ret(rettv, (ptrdiff_t)len);
   for (varnumber_T i = start; stride > 0 ? i <= end : i >= end; i += stride) {
     tv_list_append_number(rettv->vval.v_list, i);
   }
@@ -5059,7 +5095,7 @@ static void repeat_list(list_T *l, varnumber_T n, typval_T *rettv)
 {
   const int slen = tv_list_len(l);
 
-  tv_list_alloc_ret(rettv, (n > 0) * n * slen);
+  tv_list_alloc_ret(rettv, kListLenMayKnow);
   if (l == NULL || n <= 0 || slen == 0) {
     return;
   }
