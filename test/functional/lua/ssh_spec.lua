@@ -626,6 +626,7 @@ describe('remote-ssh', function()
     setup_fake_ssh({ confirm = 0 })
     eq('Vim(connect):E477: No ! allowed', t.pcall_err(n.command, 'connect! ssh://test-server'))
     eq('Vim(connect):E5768: No UI attached', t.pcall_err(n.command, 'connect ssh://test-server'))
+    eq('Vim(connect):E5768: No UI attached', t.pcall_err(n.command, 'connect foo'))
     -- Typed by a client that is not a UI.
     n.command('let v:errmsg = ""')
     local client = n.connect(n.eval('v:servername'))
