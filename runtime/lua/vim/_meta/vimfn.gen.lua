@@ -7393,6 +7393,8 @@ function vim.fn.rand(expr) end
 --- When the maximum is one before the start the result is an
 --- empty list.  When the maximum is more than one before the
 --- start this is an error.
+--- The list can have at most 2147483647 items and {stride} must
+--- fit in a 32 bit number, otherwise |E1510| is given.
 --- Examples: >vim
 ---   echo range(4)    " [0, 1, 2, 3]
 ---   echo range(2, 4)  " [2, 3, 4]
