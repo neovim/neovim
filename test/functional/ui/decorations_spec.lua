@@ -6003,6 +6003,53 @@ describe('decorations: inline virtual text', function()
     }
   end)
 
+  it('inline virtual text keeps the highlight of a range it starts in with linebreak #42763', function()
+    screen:try_resize(50, 3)
+    command('set linebreak')
+    exec([[
+      hi TestUL gui=underline guifg=Blue
+      hi TestHint guifg=Grey
+      call setline(1, '    f(value, {})')
+    ]])
+    screen:set_default_attr_ids({
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { underline = true, foreground = Screen.colors.Blue1 },
+      [2] = { foreground = Screen.colors.Grey },
+      [3] = { underline = true, foreground = Screen.colors.Grey },
+    })
+    api.nvim_buf_set_extmark(0, ns, 0, 4, { end_col = 15, hl_group = 'TestUL' })
+    api.nvim_buf_set_extmark(0, ns, 0, 13, {
+      virt_text = { { 'opts:', 'TestHint' } },
+      virt_text_pos = 'inline',
+      hl_mode = 'combine',
+    })
+    -- The space before the hint is a 'linebreak' break character, but it does not push the word
+    -- down. The hint sits inside the underlined range, so 'combine' must keep the underline.
+    screen:expect([[
+      ^    {1:f(value, }{3:opts:}{1:{}})                             |
+      {0:~                                                 }|
+                                                        |
+    ]])
+
+    -- Same when the word is pushed down and the gap is filled: the gap itself stays free of the
+    -- underline, the hint on the next screen line still gets it.
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    exec("call setline(1, 'aaaa bbbb cccc dddd')")
+    screen:try_resize(16, 4)
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_col = 19, hl_group = 'TestUL' })
+    api.nvim_buf_set_extmark(0, ns, 0, 10, {
+      virt_text = { { 'opts:', 'TestHint' } },
+      virt_text_pos = 'inline',
+      hl_mode = 'combine',
+    })
+    screen:expect([[
+      {1:^aaaa bbbb }      |
+      {3:opts:}{1:cccc dddd}  |
+      {0:~               }|
+                      |
+    ]])
+  end)
+
   it('before a space with linebreak', function()
     screen:try_resize(50, 12)
     exec([[

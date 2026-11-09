@@ -1302,6 +1302,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
   int saved_search_attr = 0;            // search_attr to be used when n_extra goes to zero
   int saved_area_attr = 0;              // idem for area_attr
   int saved_decor_attr = 0;             // idem for decor_attr
+  int saved_gap_decor_attr = 0;         // decor_attr to restore once a linebreak gap ends
   bool saved_search_attr_from_match = false;
 
   int win_col_offset = 0;               // offset for window columns
@@ -2205,6 +2206,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
             decor_attr = saved_decor_attr;
             saved_decor_attr = 0;
           }
+          if (saved_gap_decor_attr != 0 && decor_attr == 0) {
+            // The gap is over; the text after it is back inside the decorated range.
+            decor_attr = saved_gap_decor_attr;
+            saved_gap_decor_attr = 0;
+          }
           if (wlv.extra_for_extmark) {
             // wlv.extra_attr should be used at this position but not any further.
             wlv.reset_extra_attr = true;
@@ -2496,10 +2502,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
                 if (on_last_col || attr_has_line_deco(search_attr)) {
                   search_attr = 0;
                 }
-                if (has_decor) {
+                if (has_decor && wlv.n_extra > 0) {
+                  // The gap cells must not carry line decoration, but an inline virtual text that
+                  // follows still belongs to the decorated range; keep the attribute for it.
+                  saved_gap_decor_attr = decor_attr;
                   decor_attr = gap_attr_save;
                 }
-                if (attr_has_line_deco(decor_attr)) {
+                if (wlv.n_extra > 0 && attr_has_line_deco(decor_attr)) {
                   decor_attr = 0;
                 }
                 if (attr_has_line_deco(area_attr)) {
