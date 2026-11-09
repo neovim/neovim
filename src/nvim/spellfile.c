@@ -611,6 +611,7 @@ slang_T *spell_load_file(char *fname, char *lang, slang_T *old_lp, bool silent)
   slang_T *lp = NULL;
   int res;
   bool did_estack_push = false;
+  bool had_soundfold = false;
   ESTACK_CHECK_DECLARATION;
 
   FILE *fd = os_fopen(fname, "r");
@@ -722,11 +723,16 @@ slang_T *spell_load_file(char *fname, char *lang, slang_T *old_lp, bool silent)
       break;
 
     case SN_SAL:
-      res = read_sal_section(fd, lp);
-      break;
-
     case SN_SOFO:
-      res = read_sofo_section(fd, lp);
+      // there should either be a SN_SAL or SN_SOFO section
+      if (had_soundfold) {
+        res = SP_FORMERROR;
+      } else if (n == SN_SAL) {
+        res = read_sal_section(fd, lp);
+      } else {
+        res = read_sofo_section(fd, lp);
+      }
+      had_soundfold = true;
       break;
 
     case SN_MAP:
