@@ -343,12 +343,15 @@ describe('remote-ssh', function()
     end)
     eq(('- - - %s'):format(args[4]), script_args())
 
-    -- Overwrites the remote config files from local. Symlinks resolved, no `.git/`.
+    -- Overwrites the remote config files from local. Symlinks resolved, no `.git/`, no broken
+    -- symlinks (which fail GNU `tar -h`). #42747
     setup_fake_ssh()
     local config = ('%s/config/nvim'):format(fake_dir)
     n.mkdir_p(config .. '/.git')
     t.write_file(fake_dir .. '/init.lua', '-- init')
     vim.uv.fs_symlink(fake_dir .. '/init.lua', config .. '/init.lua')
+    n.mkdir_p(config .. '/lua')
+    vim.uv.fs_symlink('doesnotexist', config .. '/lua/broken[1]')
     local remote_config = ('%s/home/.config/nvim-remote'):format(fake_dir)
     n.mkdir_p(remote_config)
     t.write_file(remote_config .. '/stale.lua', '')
@@ -359,7 +362,8 @@ describe('remote-ssh', function()
     end)
     local overwrite = 'This will overwrite the remote ~/.config/nvim-remote/ with a copy of %s/.\n'
     t.matches(('\n%s$'):format(vim.pesc(overwrite:format(n.fn.fnamemodify(config, ':~')))), msg)
-    eq({ 'init.lua' }, n.fn.readdir(remote_config))
+    eq({ 'init.lua', 'lua' }, n.fn.readdir(remote_config))
+    eq({}, n.fn.readdir(remote_config .. '/lua'))
     eq('file', vim.uv.fs_lstat(remote_config .. '/init.lua').type)
     eq('-- init', t.read_file(remote_config .. '/init.lua'))
   end)
