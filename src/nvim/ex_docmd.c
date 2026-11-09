@@ -5917,6 +5917,7 @@ static void ex_detach(exarg_T *eap)
 ///
 /// Connects the current UI to a different server
 ///
+/// ":connect" shows a menu of discovered servers.
 /// ":connect <address>" detaches the current UI and connects to the given server.
 /// ":connect ssh://<uri>" bootstraps a remote Nvim over SSH, then connects.
 /// ":connect! <address>" stops the current server if no other UIs are attached, then connects to the given server.
@@ -5926,20 +5927,28 @@ static void ex_connect(exarg_T *eap)
   typval_T ssh_rettv = { .v_type = VAR_UNKNOWN };
   char *full_addr = NULL;  // "foo.sock" => "/home/me/foo.sock"
   bool is_tcp = socket_address_tcp_host_end(addr) != NULL;
+  bool is_ssh = STRNICMP(addr, "ssh://", 6) == 0;
   const char *error = NULL;
 
-  // SSH URI: bootstrap remote Nvim, get local forwarded socket.
-  if (STRNICMP(addr, "ssh://", 6) == 0) {
-    // XXX: ":connect!" not supported. The tunnel is owned by this server, stopping it would kill the session.
-    if (eap->forceit) {
-      emsg(_(e_nobang));
-      return;
-    }
-    if (!remote_ui_attached(current_ui)) {
-      emsg(_(e_noui));
-      return;
-    }
+  // XXX: No "!" for no-args, SSH (tunnel owned by this server, stopping it would kill the session).
+  if (eap->forceit && (*addr == NUL || is_ssh)) {
+    emsg(_(e_nobang));
+    return;
+  }
+  if (!remote_ui_attached(current_ui)) {
+    emsg(_(e_noui));
+    return;
+  }
 
+  // No address: let the user select from a menu of known servers.
+  if (*addr == NUL) {
+    typval_T no_args[] = { { .v_type = VAR_UNKNOWN } };
+    nlua_call_typval("vim._core.server", "select_connect", no_args, NULL);
+    return;
+  }
+
+  // SSH URI: bootstrap remote Nvim, get local forwarded socket.
+  if (is_ssh) {
     typval_T argvars[] = { { .v_type = VAR_STRING, .vval.v_string = addr },
                            { .v_type = VAR_NUMBER, .vval.v_number = (varnumber_T)current_ui },
                            { .v_type = VAR_UNKNOWN } };

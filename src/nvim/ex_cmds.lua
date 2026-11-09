@@ -646,7 +646,7 @@ M.cmds = {
   },
   {
     command = 'connect',
-    flags = bit.bor(BANG, FILE1, NOTRLCOM, NEEDARG),
+    flags = bit.bor(BANG, FILE1, NOTRLCOM),
     addr_type = 'ADDR_NONE',
     func = 'ex_connect',
   },

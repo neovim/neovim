@@ -227,11 +227,8 @@ describe('TUI :detach', function()
 
     -- Shows info message on stderr.
     local out = table.concat(api.nvim_buf_get_lines(0, 0, -1, false))
-    t.matches(('Detached from %s'):format(vim.pesc(child_server)), out)
-    t.matches(
-      ('To reattach: nvim %%-%%-remote%%-ui %%-%%-server "%s"'):format(vim.pesc(child_server)),
-      out
-    )
+    t.matches(('Detached from: %s'):format(vim.pesc(child_server)), out)
+    t.matches(vim.pesc('To reattach run :connect or nvim +"connect <address>"'), out)
 
     child_uis --[[@type any[] ]] = ({ child_session:request('nvim_list_uis') })[2]
     eq(0, #child_uis)
@@ -1112,9 +1109,6 @@ describe('TUI :connect', function()
     local screen1 = tt.setup_child_nvim({ '--listen', server1, '--clean' })
     screen1:expect({ any = vim.pesc('[No Name]') })
 
-    tt.feed_data(':connect\013')
-    screen1:expect({ any = 'E471: Argument required' })
-
     -- No server at address: fails, UI stays attached (and "!" does not stop server).
     tt.feed_data((':connect! %s\013'):format(new_pipename()))
     screen1:expect({ any = 'E6102: Cannot connect to' })
@@ -1136,6 +1130,17 @@ describe('TUI :connect', function()
 
     tt.feed_data('iThis is server 2.\027')
     screen2:expect({ any = vim.pesc('This is server 2^.') })
+
+    if not is_os('win') then -- serverlist() doesn't discover Windows peers yet.
+      -- Chooses server1 from the menu, if it is there.
+      local choose = 'vim.ui.select = function(addrs, _, on_choice) '
+        .. 'on_choice(vim.list_contains(addrs, %q) and %q or nil) end'
+      tt.feed_data((':lua %s\013'):format(choose:format(server1, server1)))
+      tt.feed_data(':connect\013')
+      screen2:expect({ any = vim.pesc('This is server 1^.') })
+      tt.feed_data((':connect %s\013'):format(server2))
+      screen2:expect({ any = vim.pesc('This is server 2^.') })
+    end
 
     if is_os('win') then
       -- still supports backslashes
