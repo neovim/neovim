@@ -324,8 +324,18 @@ func Test_spellfile_format_error()
 
   " SN_SAL (empty) followed by SN_SOFO with two multi-byte 'from' characters
   " sharing the same low byte.  A preceding SN_SAL poisons sl_sal_first[], so
-  " without a reset set_sofo() under-counts and writes out of bounds.
-  call Spellfile_Test(0z05000000000300000006000000000A0004CAABCEAB00024142FF000000000000000000000000, '')
+  " without a reset set_sofo() under-counts and writes out of bounds.  Both
+  " sections are not allowed.
+  call Spellfile_Test(0z05000000000300000006000000000A0004CAABCEAB00024142FF000000000000000000000000, 'E759:')
+
+  " SN_SOFO twice: the second one freed the first as SN_SAL items.
+  call Spellfile_Test(0z060000000006000161000162060000000006000161000162FF000000000000000000000000, 'E759:')
+
+  " SN_SOFO followed by SN_SAL
+  call Spellfile_Test(0z06000000000600016100016205000000000700000101610162FF000000000000000000000000, 'E759:')
+
+  " SN_SAL twice
+  call Spellfile_Test(0z0500000000070000010161016205000000000700000101610162FF000000000000000000000000, 'E759:')
 
   " SN_COMPOUND: compmax is less than 2
   call Spellfile_Test(0z08000000000101, 'E759:')
