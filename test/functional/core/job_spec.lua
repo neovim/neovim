@@ -1440,6 +1440,62 @@ describe('pty process teardown', function()
     ]])
   end)
 
+  it('can interrupt draining a PTY with a detached writer', function()
+    skip(not is_os('linux'), 'requires Linux PTY behavior')
+    skip(fn.executable('python3') == 0, 'missing python3 command')
+
+    local marker = fn.tempname()
+    local child_pid_file = fn.tempname()
+    local job
+    finally(function()
+      local file = io.open(child_pid_file, 'r')
+      local child_pid = file and tonumber(file:read('*a'))
+      if file then
+        file:close()
+      end
+      if child_pid then
+        pcall(vim.uv.kill, child_pid, 9)
+      end
+      if job then
+        pcall(fn.jobstop, job)
+      end
+      os.remove(marker)
+      os.remove(child_pid_file)
+    end)
+    local writer = t.dedent([[
+      import os, sys, time
+      pid = os.fork()
+      if pid == 0:
+          os.setsid()
+          with open(sys.argv[2], 'w') as f:
+              f.write(str(os.getpid()))
+          while True:
+              try:
+                  os.write(1, b'foobar\n')
+              except OSError:
+                  break
+      time.sleep(0.1)
+      open(sys.argv[1], 'w').close()
+      ]])
+    job = fn.jobstart({
+      'python3',
+      '-c',
+      writer,
+      marker,
+      child_pid_file,
+    }, { term = true })
+
+    retry(nil, 3000, function()
+      ok(vim.uv.fs_stat(marker) ~= nil)
+      ok(vim.uv.fs_stat(child_pid_file) ~= nil)
+    end)
+    -- Let the direct child exit after creating the marker, then interrupt from
+    -- the test runner while its detached child is still writing.
+    vim.uv.sleep(100)
+    feed('<C-C>')
+    assert_alive()
+  end)
+
   it('does not prevent/delay exit. #4798 #4900', function()
     skip(fn.executable('sleep') == 0, 'missing "sleep" command')
     -- Use a nested nvim (in :term) to test without --headless.
