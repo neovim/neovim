@@ -147,10 +147,11 @@ describe('vim.system', function()
   end)
 
   it('SystemObj:wait(): CTRL-C stops the process, fails with "interrupted"', function()
-    exec_lua(function(nvim_prog)
+    exec_lua(function()
       function _G.Wait()
         local signal --- @type integer?
-        local cmd = vim.system({ nvim_prog, '--clean', '--headless' }, nil, function(r)
+        -- "nvim" handles SIGTERM, which is unwanted here, so use "cat" instead.
+        local cmd = vim.system({ 'cat', '-' }, { stdin = true }, function(r)
           signal = r.signal
         end)
         vim.rpcnotify(1, 'ready')
@@ -160,7 +161,7 @@ describe('vim.system', function()
         end)
         vim.rpcnotify(1, 'wait', err, signal)
       end
-    end, n.nvim_prog)
+    end)
     n.feed(':lua _G.Wait()<CR>')
     eq({ 'notification', 'ready', {} }, n.next_msg(5000))
     n.feed('<C-C>')

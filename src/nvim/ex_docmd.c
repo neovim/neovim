@@ -5958,14 +5958,9 @@ static void ex_connect(exarg_T *eap)
                            { .v_type = VAR_NUMBER, .vval.v_number = (varnumber_T)current_ui },
                            { .v_type = VAR_UNKNOWN } };
     nlua_call_typval("vim.net._ssh", "connect", argvars, &ssh_rettv);
-
-    if (ssh_rettv.v_type == VAR_SPECIAL) {
-      return;  // User declined the prompt, or interrupted (CTRL-C).
-    }
     if (ssh_rettv.v_type != VAR_STRING || ssh_rettv.vval.v_string == NULL) {
-      emsg(_("E6101: SSH connection failed"));
       tv_clear(&ssh_rettv);
-      return;
+      return;  // Declined, interrupted (CTRL-C), or failed (E6101 shown).
     }
 
     addr = ssh_rettv.vval.v_string;
