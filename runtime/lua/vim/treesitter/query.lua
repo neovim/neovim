@@ -206,6 +206,7 @@ function M.get_files(lang, query_name, is_included)
         return file:read('*l')
       end
     do
+      modeline = modeline:gsub('^%s+', '')
       if not vim.startswith(modeline, ';') then
         break
       end
@@ -314,6 +315,7 @@ M.get = memoize('concat-2', function(lang, query_name)
     local base_langs = {} ---@type string[]
 
     for line in explicit_queries[lang][query_name]:gmatch('([^\n]*)\n?') do
+      line = line:gsub('^%s+', '')
       if not vim.startswith(line, ';') then
         break
       end
