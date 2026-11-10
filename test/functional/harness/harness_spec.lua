@@ -141,7 +141,7 @@ end
 ---@param extra_args? string[]
 local function assert_harness_passes(suite_dir, extra_args)
   local code, output = run_harness(suite_dir, extra_args)
-  eq(0, code)
+  eq(0, code, output)
   matches('PASSED', output, true)
 end
 
@@ -1461,5 +1461,63 @@ describe('test harness', function()
 
     eq(1, code)
     matches('broken%.lua @ 3: .-one_spec%.lua %[load%]', output)
+  end)
+
+  it('can be vendored out-of-tree (for use by external projects)', function()
+    t.skip(t.is_os('win'), 'N/A: contrib/plugin_test.mk needs a POSIX shell')
+    -- Plugin layout from ":help dev-test-plugin".
+    local plugin_dir = t.tmpname(false)
+    vim.fn.mkdir(plugin_dir .. '/lua', 'p')
+    vim.fn.mkdir(plugin_dir .. '/test', 'p')
+    t.write_file(
+      plugin_dir .. '/lua/myplugin.lua',
+      'return { add = function(a, b) return a + b end }'
+    )
+    t.write_file(
+      plugin_dir .. '/test/myplugin_spec.lua',
+      [[
+      local t = require('test.testutil')
+      local n = require('test.functional.testnvim')()
+      local Screen = require('test.functional.ui.screen')
+
+      t.describe('myplugin', function()
+        t.before_each(function()
+          n.clear()
+          n.exec_lua(function()
+            vim.opt.runtimepath:append(vim.fn.getcwd())
+          end)
+        end)
+
+        t.it('works', function()
+          -- Any startup error (e.g. from loading the colorscheme) delays each test by ~1s.
+          t.eq('', n.exec_capture('messages'))
+          t.eq(2, n.exec_lua(function()
+            return require('myplugin').add(1, 1)
+          end))
+          local screen = Screen.new(20, 3)
+          n.feed('ihello')
+          screen:expect({ any = 'hello' })
+        end)
+      end)
+    ]]
+    )
+
+    local result = vim
+      .system({
+        'make',
+        '-f',
+        root .. '/contrib/plugin_test.mk',
+        'test',
+        'NVIM_PRG=' .. nvim_prog,
+        -- Download from this repo, not GitHub.
+        ('NVIM_TEST_URL=file://%s/test'):format(root),
+        -- Not inherited from the outer test run.
+        'TEST_FILE=test',
+        'TEST_FILTER=',
+      }, { cwd = plugin_dir, env = { MAKEFLAGS = '', MAKELEVEL = '' } })
+      :wait()
+    local output = result.stdout .. result.stderr
+    eq(0, result.code, output)
+    matches('PASSED', output, true)
   end)
 end)
