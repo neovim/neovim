@@ -77,6 +77,7 @@
 #include "nvim/undo.h"
 #include "nvim/undo_defs.h"
 #include "nvim/vim_defs.h"
+#include "nvim/window.h"
 
 #ifdef BACKSLASH_IN_FILENAME
 # include "nvim/charset.h"
@@ -3329,6 +3330,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
   curwin->w_cursor = old_cursor;
   check_cursor(curwin);
   update_topline(curwin);
+  check_lnums(false);
   curbuf->b_keep_filetype = false;
 
   // Update folds unless they are defined manually.
