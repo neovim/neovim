@@ -4037,13 +4037,13 @@ static void frame_new_width(frame_T *topfrp, int width, bool leftfirst, bool wfw
     if (extra_cols < 0) {
       // reduce frame width, rightmost frame first
       while (frp != NULL) {
-        int w = frame_minwidth(frp, NULL);
-        if (frp->fr_width + extra_cols < w) {
-          extra_cols += frp->fr_width - w;
-          frame_new_width(frp, w, leftfirst, wfw);
-        } else {
-          frame_new_width(frp, frp->fr_width + extra_cols,
-                          leftfirst, wfw);
+        int old_width = frp->fr_width;
+        frame_new_width(frp, MAX(old_width + extra_cols, frame_minwidth(frp, NULL)),
+                        leftfirst, wfw);
+        // Take the rest from the next frame. Count the width actually taken: a frame may stay wider
+        // than requested, e.g. if it contains a 'winfixwidth' window.
+        extra_cols += old_width - frp->fr_width;
+        if (extra_cols >= 0) {
           break;
         }
         if (leftfirst) {
@@ -7473,8 +7473,7 @@ int min_rows(tabpage_T *tp) FUNC_ATTR_NONNULL_ALL
   return total;
 }
 
-/// Return the minimal number of rows that is needed on the screen to display
-/// the current number of windows for all tab pages.
+/// Minimum number of screen-rows needed to display the current windows for all tabpages.
 int min_rows_for_all_tabpages(void)
 {
   if (firstwin == NULL) {       // not initialized yet
@@ -7490,6 +7489,20 @@ int min_rows_for_all_tabpages(void)
     total = MAX(total, n);
   }
   total += tabline_height() + global_stl_height();
+  return total;
+}
+
+/// Minimum number of screen-columns needed to display the current windows for all tabpages.
+int min_cols_for_all_tabpages(void)
+{
+  if (firstwin == NULL) {       // not initialized yet
+    return MIN_COLUMNS;
+  }
+
+  int total = 0;
+  FOR_ALL_TABS(tp) {
+    total = MAX(total, frame_minwidth(tp->tp_topframe, NULL));
+  }
   return total;
 }
 
