@@ -699,6 +699,20 @@ describe('vterm', function()
     push('\x1b[12 q', vt)
     expect('csi 71 12 I=20')
 
+    -- CSI with more arguments than CSI_ARGS_MAX: the excess is discarded
+    local max_args = 32
+    local capped = '1' .. (',1'):rep(max_args - 1)
+    push('\x1b[' .. ('1;'):rep(max_args + 8) .. '2m', vt)
+    expect('csi 6d ' .. capped)
+
+    -- ... including the value of the first argument past the end
+    push('\x1b[' .. ('1;'):rep(max_args) .. '4242424242m', vt)
+    expect('csi 6d ' .. capped)
+
+    -- CSI argument saturates instead of overflowing on a long run of digits
+    push('\x1b[99999999999999999999m', vt)
+    expect('csi 6d 2147483646')
+
     -- Mixed CSI
     push('A\x1b[8mB', vt)
     expect('text 41\ncsi 6d 8\ntext 42')
@@ -1456,6 +1470,15 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
 
     push('\x1b[100;105r\x1bD', vt)
     push('\x1b[5;2r\x1bD', vt)
+
+    -- Shrinking past the top of the scroll region drops the region rather than
+    -- leaving a degenerate one behind
+    reset(state, nil)
+    push('\x1b[20;25r', vt)
+    resize(10, 80, vt)
+    push('\x1b[5S', vt)
+    expect('scrollrect 0..10,0..80 => +5,+0')
+    resize(25, 80, vt)
 
     reset(state, nil)
     state = wantstate(vt, { m = true, e = true })
@@ -3095,6 +3118,12 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
   itp('31state_rep', function()
     local vt = init()
     local state = wantstate(vt, { g = true })
+
+    -- REP with no preceding graphic character is ignored, not an infinite loop
+    reset(state, nil)
+    push('\x1b[9bX', vt)
+    expect('putglyph 58 1 0,0')
+    cursor(0, 1, state)
 
     -- REP no argument
     reset(state, nil)
