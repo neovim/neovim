@@ -12,6 +12,7 @@ local line_break_pattern = '[\r\n]'
 --- Command that runs ssh. Tests replace it with a fake.
 M.ssh_cmd = { 'ssh' }
 
+local sock_maxlen = 103 -- Max lenth of Unix socket path. sun_path=104 on macOS, 108 on Linux.
 local _log --- @type vim.Log?
 
 ---@param param string
@@ -332,10 +333,14 @@ local function get_ssh_cmd(ssh_uri, opts)
   opts = opts or {}
   local mux_dir = vim.fs.joinpath(vim.fn.stdpath('cache') --[[@as string]], 'ssh')
   vim.fn.mkdir(mux_dir, 'p')
-  -- `%C` is SSH's hash of (local hostname, remote host, port, user). Its fixed length keeps the
-  -- ControlPath socket under the 104-byte `sun_path` limit, which the raw `%h_%p_%r` name plus a
-  -- long base dir can exceed. See also |vim.fs.slug()|.
+  -- `%C` is SSH's hash of (local hostname, remote host, port, user): 40 chars, unlike `%h_%p_%r`.
+  -- The ssh master listens at it plus a 17-char temp suffix, which must fit `sock_maxlen`. Else
+  -- (e.g. a long stdpath("cache")) no multiplexing: slower, but works.
   local mux_path = vim.fs.joinpath(mux_dir, 'mux_%C')
+  if #mux_path - #'%C' + 40 + 17 > sock_maxlen then
+    log().warn(('ControlPath too long, no multiplexing: %s'):format(mux_path))
+    mux_path = 'none'
+  end
   local ssh_cmd = vim.list_extend(vim.list_slice(M.ssh_cmd), {
     '-T',
     -- Fails instead of prompting for a password or key passphrase.
@@ -544,9 +549,9 @@ local function connect(uri_str, chan, report, update, config)
   -- - relink() finds the remote session from the UI's address (the local socket name).
   local token = vim.text.hexencode(assert(vim.uv.random(4)))
   -- "nvim-ssh.<host>.<token>". Listed by :connect (serverlist()).
-  -- The host is cut to fit the socket path limit (103 bytes on macOS).
+  -- Hostname is truncated to fit `sock_maxlen`.
   local run = vim.fn.stdpath('run')
-  local max_host = 103 - #('%s/nvim-ssh..%s'):format(run, token)
+  local max_host = sock_maxlen - #('%s/nvim-ssh..%s'):format(run, token)
   local host = uri.host:gsub('[^%w.-]', '_'):sub(1, math.max(0, max_host))
   local local_sock = ('%s/nvim-ssh.%s.%s'):format(run, host, token)
   local remote_sock = ('/tmp/nvim-remote.%s/nvim.sock'):format(token)
