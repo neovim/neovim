@@ -238,6 +238,7 @@ describe('remote-ssh', function()
     t.matches('RemoteCommand=none', tunnel_args)
     t.matches('StrictHostKeyChecking=accept%-new', tunnel_args)
     t.matches('ServerAliveInterval=15', tunnel_args)
+    t.matches('ControlPath=[^ ]+/ssh/mux_%%C ', tunnel_args)
     -- Teardown stops the tunnel and cancels its forward, but not the local server.
     eq(true, tunnel_exited())
     eq(true, vim.uv.fs_stat(fake_dir .. '/forward.cancelled') ~= nil)
@@ -245,8 +246,10 @@ describe('remote-ssh', function()
     n.assert_alive()
 
     -- Explicit ssh_config values are kept. The target is decoded, with an IPv6 host unbracketed.
+    -- Long stdpath("cache") disables multiplexing (ControlPath too long).
     setup_fake_ssh({ ssh_config = 'stricthostkeychecking yes\nserveraliveinterval 60\n' })
     local socks = n.exec_lua(function()
+      vim.env.XDG_CACHE_HOME = ('%s/%s'):format(fake_dir, ('c'):rep(60))
       local socks = {} ---@type string[]
       -- A long host is cut to fit the socket path limit.
       for _, uri in ipairs({ ('ssh://%s'):format(('h'):rep(120)), 'ssh://a%40b@[::1]:2222/x' }) do
@@ -261,6 +264,7 @@ describe('remote-ssh', function()
     t.matches('/nvim%-ssh%.__1%.%x+$', socks[2]) -- No ":" (`ssh -L` separator).
     local explicit_args = t.read_file(fake_dir .. '/tunnel.args')
     t.matches(' %-p 2222 %-%- a@b@::1 sh ', explicit_args)
+    t.matches(' ControlPath=none ', explicit_args)
     eq(nil, explicit_args:find('StrictHostKeyChecking', 1, true))
     eq(nil, explicit_args:find('ServerAliveInterval', 1, true))
     eq(
