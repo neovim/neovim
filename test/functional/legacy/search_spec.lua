@@ -485,7 +485,6 @@ describe('search cmdline', function()
       {9:E35: No previous regular expression}     |
       {6:Press ENTER or type command to continue}^ |
     ]])
-    feed('<CR>')
     eq({
       lnum = 1,
       leftcol = 0,

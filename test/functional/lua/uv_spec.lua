@@ -206,7 +206,6 @@ describe('vim.uv', function()
       {9:nil}                                               |
       {6:Press ENTER or type command to continue}^           |
     ]])
-    feed('<cr>')
 
     exec_lua(function()
       _G.idle:close()
@@ -230,7 +229,6 @@ describe('vim.uv', function()
       {9:uv_idle_t: 0x{MATCH:%w+}}{MATCH: +}|
       {6:Press ENTER or type command to continue}^           |
     ]])
-    feed('<cr>')
 
     exec_lua(function()
       _G.idle:close()

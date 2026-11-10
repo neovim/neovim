@@ -57,7 +57,6 @@ describe('thread', function()
       {9:nil}                                               |
       {6:Press ENTER or type command to continue}^           |
     ]])
-    feed('<cr>')
     assert_alive()
   end)
 
@@ -77,7 +76,6 @@ describe('thread', function()
       {9:[string "<nvim>"]:2: Error in thread entry func}   |
       {6:Press ENTER or type command to continue}^           |
     ]])
-    feed('<cr>')
     assert_alive()
   end)
 
@@ -104,7 +102,6 @@ describe('thread', function()
       {9:[string "<nvim>"]:6: Error in thread callback}     |
       {6:Press ENTER or type command to continue}^           |
     ]])
-    feed('<cr>')
     assert_alive()
   end)
 

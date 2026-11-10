@@ -342,7 +342,6 @@ describe(':confirm command dialog', function()
       ]])
     end
     eq('foo\n', read_file('Xconfirm_write_ro'))
-    feed('<CR>') -- suppress hit-enter prompt
 
     os.remove('Xconfirm_write_ro')
   end)
