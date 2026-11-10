@@ -1736,6 +1736,8 @@ function Screen:get_snapshot()
   local attr_state = {
     ids = {},
     mutable = true, -- allow _row_repr to add missing highlights
+    -- add_extra_attr_ids() reserves lower numeric IDs for defaults.
+    next_attr_id = not self._attrs_overridden and 100 or nil,
   }
   local attrs = self._default_attr_ids
 
@@ -1885,6 +1887,20 @@ function Screen:print_snapshot()
   io.stdout:flush()
 end
 
+local function insert_attr(attr_state, attr)
+  local id = attr_state.next_attr_id
+  if id then
+    while attr_state.ids[id] ~= nil do
+      id = id + 1
+    end
+    attr_state.next_attr_id = id + 1
+  else
+    id = #attr_state.ids + 1
+  end
+  attr_state.ids[id] = attr
+  return id
+end
+
 function Screen:_insert_hl_id(attr_state, hl_id)
   if attr_state.id_to_index[hl_id] ~= nil then
     return attr_state.id_to_index[hl_id]
@@ -1917,9 +1933,9 @@ function Screen:_insert_hl_id(attr_state, hl_id)
     attrval = self._options.rgb and entry[1] or entry[2]
   end
 
-  table.insert(attr_state.ids, attrval)
-  attr_state.id_to_index[hl_id] = #attr_state.ids
-  return #attr_state.ids
+  local id = insert_attr(attr_state, attrval)
+  attr_state.id_to_index[hl_id] = id
+  return id
 end
 
 function Screen:linegrid_check_attrs(attrs)
@@ -2076,9 +2092,9 @@ function Screen:_get_attr_id(attr_state, attrs, hl_id)
       end
     end
     if attr_state.mutable then
-      table.insert(attr_state.ids, attrs)
+      local id = insert_attr(attr_state, attrs)
       attr_state.modified = true
-      return #attr_state.ids
+      return id
     end
     return 'UNEXPECTED ' .. self:_pprint_attrs(attrs)
   end
