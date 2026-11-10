@@ -2,7 +2,9 @@
 -- TODO (siddhantdev): deal with include directives
 
 local nvim_on = require('vim._core.util').nvim_on
+local echo_err = require('vim._core.util').echo_err
 local autoinstall = require('vim.net._autoinstall')
+local N_ = vim.fn.gettext
 
 local M = {}
 
@@ -444,7 +446,7 @@ local function push_config(uri, dir)
   vim.list_extend(cmd, { '-C', dir, '.' })
   local tar = vim.system(cmd, { env = env }):wait()
   if tar.code ~= 0 then
-    error(('Failed to pack %s: %s'):format(dir, tar.stderr))
+    error(('Failed to pack %s: %s'):format(dir, vim.trim(tar.stderr or '')), 0)
   end
   local script = table.concat({
     ('d="${XDG_CONFIG_HOME:-$HOME/.config}/%s"'):format(autoinstall.appname),
@@ -459,7 +461,7 @@ local function push_config(uri, dir)
   log().debug('push_config: running', ssh_cmd)
   local obj = vim.system(ssh_cmd, { stdin = tar.stdout }):wait(300000)
   if obj.code ~= 0 then
-    error(('Failed to copy %s: %s'):format(dir, obj.stderr))
+    error(('Failed to copy %s: %s'):format(dir, vim.trim(obj.stderr or '')), 0)
   end
 end
 
@@ -473,12 +475,13 @@ function M.get_system_info(uri)
 
   local obj = vim.system(ssh_cmd, { text = true }):wait(300000)
   log().debug('get_system_info: code', obj.code, 'stdout', obj.stdout, 'stderr', obj.stderr)
+  local stdout = vim.trim(obj.stdout or '')
   if obj.code ~= 0 then
-    local detail = obj.stderr ~= '' and obj.stderr or obj.stdout
-    error(('Failed to detect remote system info: %s'):format(detail))
+    local stderr = vim.trim(obj.stderr or '')
+    error(('Failed to detect remote system info: %s'):format(stderr ~= '' and stderr or stdout), 0)
   end
 
-  local lines = vim.split(vim.trim(obj.stdout or ''), '\n', { plain = true })
+  local lines = vim.split(stdout, '\n', { plain = true })
   local valid_lines = {}
   for _, line in ipairs(lines) do
     if vim.trim(line) ~= '' then
@@ -487,7 +490,7 @@ function M.get_system_info(uri)
   end
 
   if #valid_lines < 2 then
-    error(('Unexpected output from system info detection: %s'):format(obj.stdout))
+    error(('Unexpected output from system info detection: %s'):format(stdout), 0)
   end
 
   ---@type string
@@ -496,7 +499,7 @@ function M.get_system_info(uri)
   local arch = valid_lines[#valid_lines]:lower()
 
   if os:match('msys') or os:match('windows') or os:match('mingw') or os:match('cygwin') then
-    error('Not implemented yet: Windows targets are not supported.')
+    error('Not implemented yet: Windows targets are not supported.', 0)
   end
 
   return os, arch
@@ -652,7 +655,7 @@ local function connect(uri_str, chan, report, update, config)
   if err then
     log().error(err, 'code', res.code, 'stderr', res.stderr)
     teardown()
-    error(err)
+    error(err, 0)
   end
 
   report('success', ('Connected to %s'):format(uri_str))
@@ -661,17 +664,18 @@ local function connect(uri_str, chan, report, update, config)
   return local_sock, teardown
 end
 
---- Asks to confirm, then connects.
+--- Asks to confirm, then connects. Shows E6101 on failure.
 ---
 --- @param uri_str string
 --- @param chan? integer UI to connect: fails (and stops the session) if it detached meanwhile.
---- @return string? local_socket Path to the local forwarded socket, or nil if declined or
----   interrupted (CTRL-C).
+--- @return string? local_socket Path to the local forwarded socket, or nil if declined,
+---   interrupted (CTRL-C), or failed.
 --- @return fun()? teardown Stops this session's tunnel. Other sessions sharing the SSH master are
 ---   unaffected.
 function M.connect(uri_str, chan)
   if vim.fn.executable(M.ssh_cmd[1]) == 0 then
-    error(('Not found on $PATH: %s'):format(M.ssh_cmd[1]), 0)
+    echo_err(N_('E6101: SSH connection failed: Not found on $PATH: %s'):format(M.ssh_cmd[1]))
+    return nil
   end
   local lines = {
     ('Connect to %s'):format(uri_str),
@@ -701,7 +705,8 @@ function M.connect(uri_str, chan)
     return nil
   elseif not ok then
     report('failed', ('Failed to connect to %s'):format(uri_str))
-    error(local_sock, 0)
+    echo_err(N_('E6101: SSH connection failed: %s'):format(local_sock))
+    return nil
   end
   return local_sock, teardown
 end
