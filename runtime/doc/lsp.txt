@@ -1798,6 +1798,7 @@ vim.lsp.Client                                                *vim.lsp.Client*
                                 Client commands. See |vim.lsp.ClientConfig|.
       • {config}                (`vim.lsp.ClientConfig`) Copy of the config
                                 passed to |vim.lsp.start()|.
+      • {data}                  (`table?`) Reserved for users and plugins.
       • {dynamic_capabilities}  (`lsp.DynamicCapabilities`) Capabilities
                                 provided at runtime (after startup).
       • {exec_cmd}              (`fun(self: vim.lsp.Client, cmd: lsp.Command, context: {bufnr?: integer}?, handler: lsp.Handler?)`)
