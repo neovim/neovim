@@ -504,9 +504,10 @@ int update_screen(void)
     diff_redraw(true);
   }
 
-  // Postpone the redrawing when it's not needed and when being called
-  // recursively.
-  if (!redrawing() || updating_screen || cmdline_number_prompt()) {
+  // Postpone redrawing when it's not needed and when called recursively.
+  // Also at hit-enter prompt: redrawing (by an event) would clear the messages.
+  if (!redrawing() || updating_screen || cmdline_number_prompt()
+      || State == MODE_HITRETURN || State == MODE_SETWSIZE) {
     return FAIL;
   }
 

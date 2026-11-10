@@ -506,7 +506,7 @@ describe('API', function()
       api.nvim_input([[:echo "hi\nhi2"<CR>]])
 
       -- Verify hit-enter prompt.
-      eq({ mode = 'r', blocking = true }, api.nvim_get_mode())
+      eq({ mode = 'r', blocking = false }, api.nvim_get_mode())
       api.nvim_input([[<C-c>]])
 
       -- Verify NO hit-enter prompt.
@@ -3164,7 +3164,7 @@ describe('API', function()
       eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
     end)
 
-    it('during hit-enter prompt returns blocking=true', function()
+    it('during hit-enter prompt returns blocking=false', function()
       api.nvim_ui_attach(80, 20, {})
       eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
       command("echom 'msg1'")
@@ -3174,7 +3174,10 @@ describe('API', function()
       command("echom 'msg5'")
       eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
       api.nvim_input(':messages<CR>')
-      eq({ mode = 'r', blocking = true }, api.nvim_get_mode())
+      -- Events are processed during the prompt, RPC calls are *not* blocked.
+      eq({ mode = 'r', blocking = false }, api.nvim_get_mode())
+      eq(2, api.nvim_eval('1+1'))
+      eq({ mode = 'r', blocking = false }, api.nvim_get_mode())
     end)
 
     it('during getchar() returns blocking=false', function()
@@ -3212,7 +3215,7 @@ describe('API', function()
         },
         NIL,
       }, api.nvim_call_atomic(req))
-      eq({ mode = 'r', blocking = true }, api.nvim_get_mode())
+      eq({ mode = 'r', blocking = false }, api.nvim_get_mode())
     end)
     it('during insert-mode map-pending, returns blocking=true #6166', function()
       command('inoremap xx foo')
