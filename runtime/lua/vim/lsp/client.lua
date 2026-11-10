@@ -40,9 +40,9 @@ end
 --- Hint: use |vim.tbl_deep_extend()| to set nested fields easily.
 --- ```lua
 --- before_init = function(_, config)
----   config.settings = vim.tbl_deep_extend('force',
----     config.settings,
----     { tailwindCSS = { experimental = { configFile = find_tailwind_global_css() } } }
+---   config.settings['tailwindCSS'] = vim.tbl_deep_extend('force',
+---     config.settings['tailwindCSS'] or {},
+---     { experimental = { configFile = find_tailwind_global_css() } }
 ---   )
 --- end
 --- ```
