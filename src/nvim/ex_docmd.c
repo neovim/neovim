@@ -5979,6 +5979,23 @@ static void ex_connect(exarg_T *eap)
       xfree(full_addr);
       return;
     }
+
+    // remote-ssh: UI reconnects through same tunnel, relinked to `addr` (vim.net._ssh.relink()).
+    Channel *chan = find_channel(current_ui);
+    if (!is_tcp && chan && chan->addr) {
+      typval_T argvars[] = { { .v_type = VAR_STRING, .vval.v_string = chan->addr },
+                             { .v_type = VAR_STRING, .vval.v_string = addr },
+                             { .v_type = VAR_UNKNOWN } };
+      typval_T relinked = { .v_type = VAR_UNKNOWN };
+      nlua_call_typval("vim.net._ssh", "relink", argvars, &relinked);
+      if (relinked.v_type != VAR_BOOL) {  // Error (already shown).
+        xfree(full_addr);
+        return;
+      }
+      if (relinked.vval.v_bool == kBoolVarTrue) {
+        addr = chan->addr;
+      }
+    }
   }
 
   bool stop_server = !is_ssh && ui_active() == 1;

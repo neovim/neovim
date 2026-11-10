@@ -539,8 +539,16 @@ local function connect(uri_str, chan, report, update, config)
     log().warn(sha256_err)
   end
 
-  local local_sock = ('%s_remote_nvim.sock'):format(vim.fn.tempname())
-  local token = vim.text.hexencode(assert(vim.uv.random(8)))
+  -- Session token, name both ends of the tunnel:
+  -- - Random: avoids /tmp collisions.
+  -- - relink() finds the remote session from the UI's address (the local socket name).
+  local token = vim.text.hexencode(assert(vim.uv.random(4)))
+  -- "nvim-ssh.<host>.<token>". Listed by :connect (serverlist()).
+  -- The host is cut to fit the socket path limit (103 bytes on macOS).
+  local run = vim.fn.stdpath('run')
+  local max_host = 103 - #('%s/nvim-ssh..%s'):format(run, token)
+  local host = uri.host:gsub('[^%w.-]', '_'):sub(1, math.max(0, max_host))
+  local local_sock = ('%s/nvim-ssh.%s.%s'):format(run, host, token)
   local remote_sock = ('/tmp/nvim-remote.%s/nvim.sock'):format(token)
 
   local forward = ('%s:%s'):format(local_sock, remote_sock)
@@ -572,8 +580,8 @@ local function connect(uri_str, chan, report, update, config)
     end)
   end
 
-  --- Stops the tunnel (and thus the remote server), and cancels its forward, which lives in the ssh
-  --- master.
+  --- Stops the tunnel (see `serve()` for the remote server), and cancels its forward, which lives
+  --- in the ssh master.
   local function teardown()
     if cleaned_up then
       return
@@ -586,6 +594,7 @@ local function connect(uri_str, chan, report, update, config)
     -- Waits for the tunnel to close its stdio handles.
     tunnel:wait(1000)
     vim.system(get_ssh_cmd(uri, { ssh_args = { '-O', 'cancel', '-L', forward } })):wait(1000)
+    vim.uv.fs_unlink(local_sock) -- ssh leaves it, e.g. in $XDG_RUNTIME_DIR.
   end
 
   report('running', 'Starting remote Nvim...')
@@ -653,29 +662,29 @@ end
 --- @param chan? integer UI to connect: fails (and stops the session) if it detached meanwhile.
 --- @return string? local_socket Path to the local forwarded socket, or nil if declined or
 ---   interrupted (CTRL-C).
---- @return fun()? teardown Stops this session's tunnel (and thus the remote server). Other sessions
----   sharing the SSH master are unaffected.
+--- @return fun()? teardown Stops this session's tunnel. Other sessions sharing the SSH master are
+---   unaffected.
 function M.connect(uri_str, chan)
   if vim.fn.executable(M.ssh_cmd[1]) == 0 then
     error(('Not found on $PATH: %s'):format(M.ssh_cmd[1]), 0)
   end
-  local msg = ('This will install Nvim on %s (in ~/%s/), if missing.\n'):format(
-    uri_str,
-    autoinstall.data_dir
-  )
+  local lines = {
+    ('Connect to %s'):format(uri_str),
+    ('- Installs Nvim (if needed) to ~/%s/'):format(autoinstall.data_dir),
+  }
   local config_dir = vim.fn.stdpath('config') --[[@as string]]
   local config = vim.fn.isdirectory(config_dir) == 1 and config_dir or nil
   if config then
-    msg = ('%sThis will overwrite the remote ~/.config/%s/ with a copy of %s/.\n'):format(
-      msg,
+    local copy = ('- Overwrites ~/.config/%s/ with your local %s/'):format(
       autoinstall.appname,
       vim.fn.fnamemodify(config, ':~')
     )
+    table.insert(lines, copy)
   end
   local prerelease = vim.version().prerelease ~= nil
   -- "(U)pdate": refreshes the nightly, and runs it instead of `$PATH` nvim.
-  local choices = prerelease and 'Connect? &Yes\n&Update Nvim\n&No' or 'Connect? &Yes\n&No'
-  local choice = vim.fn.confirm(msg, choices, 1, 'Question')
+  local choices = prerelease and '&Yes\n&Update Nvim\n&No' or '&Yes\n&No'
+  local choice = vim.fn.confirm(('%s\n'):format(table.concat(lines, '\n')), choices, 1, 'Question')
   local update = prerelease and choice == 2
   if choice ~= 1 and not update then
     return nil
@@ -692,22 +701,61 @@ function M.connect(uri_str, chan)
   return local_sock, teardown
 end
 
---- Gets the PID of the server at `sock`, or nil if none answers.
+--- Calls API `method` on the server at `sock`. Returns its result, or nil if no answer.
 ---@param sock string
----@return integer?
-local function server_pid(sock)
+---@param method string
+---@return any
+local function request(sock, method, ...)
   local ok, chan = pcall(vim.fn.sockconnect, 'pipe', sock, { rpc = true, trust = false })
   if not ok or chan == 0 then
     return nil
   end
   ---@cast chan integer
-  local _, pid = pcall(vim.rpcrequest, chan, { timeout = 5000 }, 'nvim_call_function', 'getpid', {})
+  local res = { pcall(vim.rpcrequest, chan, { timeout = 5000 }, method, ...) }
   pcall(vim.fn.chanclose, chan)
-  return type(pid) == 'number' and pid --[[@as integer]] or nil
+  return res[1] and res[2] or nil
 end
 
---- Runs on the remote host: starts the server at `sock` and supervises it, following a `:restart`ed
---- server (which re-binds `sock`).
+--- Gets server info, or nil if no answer.
+---@param sock string
+---@return [integer, integer]?
+local function server_info(sock)
+  return request(sock, 'nvim_eval', '[getpid(), v:useractive]')
+end
+
+--- Called by `:connect {addr}` on a server: if UI is connected via tunnel (see `serve()`), links
+--- the session to the server at `addr`, so UI can reconnect through the same tunnel. On attach,
+--- that server detaches other UIs (":%detach"), whose connections presumably dropped silently (sshd
+--- may not notice for hours), which would limit the screen size.
+---@param chan_addr string UI-local tunnel address (nvim_chan_set()). "…/nvim-ssh.<host>.<token>"
+---@param addr string Socket path.
+---@return boolean relinked
+function M.relink(chan_addr, addr)
+  local token = chan_addr:match('/nvim%-ssh%.[^/]*%.(%x+)$')
+  if not token then
+    return false
+  end
+  local sock = ('/tmp/nvim-remote.%s/nvim.sock'):format(token)
+  local stat = vim.uv.fs_lstat(sock)
+  if not (stat and stat.type == 'link' and stat.uid == vim.uv.getuid()) then
+    return false
+  end
+  -- Atomic, so the tunnel always finds a server at `sock`.
+  local tmp = ('%s.%d'):format(sock, vim.fn.getpid())
+  assert(vim.uv.fs_symlink(addr, tmp))
+  assert(vim.uv.fs_rename(tmp, sock))
+  request(addr, 'nvim_create_autocmd', 'UIEnter', {
+    once = true,
+    -- Scheduled: UILeave (of the detached UIs) can't fire during UIEnter, even if nested.
+    command = [[lua vim.schedule(function() vim.cmd('silent %detach') end)]],
+  })
+  return true
+end
+
+--- Runs on the remote host: serves the session at `sock`, a symlink to a new server (or another one,
+--- see `relink()`), and supervises the server it links to, following `:restart` (which re-binds the
+--- server's address). On a dropped connection, the new server stays running if it has user activity
+--- (|v:useractive|).
 ---
 --- PROTOCOL: `remote_ssh.sh` of other (older) Nvim versions calls this, so keep it compatible, or
 --- extend it with an `opts` param (e.g. a protocol version):
@@ -715,12 +763,18 @@ end
 --- - Creates the dir of `sock`, which must not exist (for security), with mode 0700.
 --- - Prints "NVIM_READY" once the server listens, or "NVIM_CRASHED".
 --- - Returns when stdin closes (ssh disconnect) or the server disappears.
---- - On exit (also SIGTERM, SIGHUP): stops the server (SIGTERM) and removes the dir.
+--- - On exit (also SIGTERM, SIGHUP): stops (SIGTERM) the new server if `sock` still links to it and
+---   it has no user activity, and removes the dir.
 ---@param sock string
 function M.serve(sock)
   local dir = vim.fs.dirname(sock)
   -- Fresh private dir (0700): fails if it exists, so nobody can plant a socket.
   assert(vim.uv.fs_mkdir(dir, 448))
+  -- Address of the new server, where `serverlist()` finds it, also after the session: in
+  -- stdpath("run"), or its parent if that is the tempdir of this Nvim (removed on exit).
+  local run = vim.fn.stdpath('run')
+  local run_dir = vim.env.XDG_RUNTIME_DIR and run or vim.fs.dirname(run)
+  local addr = ('%s/nvim-remote.%s'):format(run_dir, vim.text.hexencode(assert(vim.uv.random(8))))
   -- Not a peer (`serverlist()`) of the server.
   vim.fn.serverstop(vim.v.servername)
 
@@ -732,15 +786,14 @@ function M.serve(sock)
     disconnected = disconnected or data == nil
   end)
 
-  local pid --- @type integer? Current server.
-  -- Cleanup: stops the server and removes `dir` when Nvim exits (SIGTERM/SIGHUP).
+  -- Cleanup when Nvim exits (also SIGTERM/SIGHUP).
   nvim_on('VimLeavePre', nil, function()
-    local cur = pid and (server_pid(sock) or pid)
-    if cur then
+    local info = vim.uv.fs_readlink(sock) == addr and server_info(sock)
+    if info and info[2] == 0 then
       -- SIGTERM (unlike `:qall!`) preserves swap files.
-      vim.uv.kill(cur, 'sigterm')
+      vim.uv.kill(info[1], 'sigterm')
       vim.wait(5000, function()
-        return vim.uv.kill(cur, 0) ~= 0
+        return vim.uv.kill(info[1], 0) ~= 0
       end, 50)
     end
     vim.fs.rm(dir, { recursive = true, force = true })
@@ -749,29 +802,36 @@ function M.serve(sock)
 
   vim.env.__NVIM_STARTREASON = 'remote-ssh'
   vim.env.NVIM_APPNAME = autoinstall.appname
-  -- --embed: Waits for the UI to attach (at `sock`) before sourcing the config.
-  local server = vim.system({ vim.v.progpath, '--embed', '--listen', sock }, {
-    stdout = false,
-    stderr = function(_, data)
-      io.stderr:write(data or '')
+  assert(vim.uv.fs_symlink(addr, sock))
+  local exited = false
+  -- --embed: Waits for the UI to attach before sourcing the config.
+  local job = vim.fn.jobstart({ vim.v.progpath, '--embed', '--listen', addr }, {
+    detach = true, -- Not stopped when this Nvim exits (see above).
+    stdin = 'null',
+    on_stderr = function(_, data)
+      io.stderr:write(table.concat(data, '\n'))
+    end,
+    on_exit = function()
+      exited = true
     end,
   })
   vim.wait(vim._maxint, function()
-    return disconnected or server:is_closing() or vim.uv.fs_stat(sock) ~= nil
+    return disconnected or exited or vim.uv.fs_stat(sock) ~= nil
   end, 50)
-  io.stdout:write(server:is_closing() and 'NVIM_CRASHED\n' or 'NVIM_READY\n')
+  local pid = not exited and vim.fn.jobpid(job) or nil --- @type integer? Server that `sock` links to.
+  io.stdout:write(pid and 'NVIM_READY\n' or 'NVIM_CRASHED\n')
   io.stdout:flush()
 
-  pid = server.pid
-  -- Supervises the server (polls every 1s) at `sock` until ssh disconnects, including a new server after `:restart`.
+  -- Supervises (polls every 1s) the server that `sock` links to, until ssh disconnects. Follows
+  -- `:connect` (see `relink()`), and `:restart` (which re-binds the server's address).
   while pid and not disconnected do
-    local cur = pid
+    local cur, target = pid, vim.uv.fs_readlink(sock)
     vim.wait(vim._maxint, function()
-      return disconnected or vim.uv.kill(cur, 0) ~= 0
+      return disconnected or vim.uv.kill(cur, 0) ~= 0 or vim.uv.fs_readlink(sock) ~= target
     end, 1000)
     if not disconnected then
-      -- The server exited. A `:restart`ed server re-binds `sock`.
-      pid = server_pid(sock)
+      local info = server_info(sock)
+      pid = info and info[1]
     end
   end
 end

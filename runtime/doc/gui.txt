@@ -134,6 +134,8 @@ Connect UI to a different server
                 last activity (|v:useractive|). Selecting an item connects to
                 it (see below).
 
+                Also works on a |remote-ssh| session.
+
 :connect {address}                                      *E6102*
                 Attaches the UI to another Nvim instance: detaches from the
                 current server, then attaches to {address}. Stops the current
@@ -156,9 +158,14 @@ Connect UI to a different server
                 4. Attaches the UI to it, through an SSH tunnel owned by the
                    current (local) server.
 
-                The session ends when either side exits or the connection
-                drops: the remote Nvim stops, and so does the local server,
-                unless a UI is attached to it or a buffer is modified.
+                                                        *remote-ssh-reconnect*
+                The session ends when the remote Nvim exits (e.g. |:qall|). If
+                the connection drops, the remote Nvim keeps running (if there
+                was any user activity |v:useractive|). To reconnect to your
+                previous session:
+                1. Run `:connect ssh://{host}` to reconnect to the SSH server.
+                2. Run `:connect` (no args) on the remote to see the most
+                   recent sessions. Select your previous session.
 
                 The remote Nvim runs with `NVIM_APPNAME=nvim-remote`, so its
                 config/data are isolated (appname "nvim-remote" is reserved
