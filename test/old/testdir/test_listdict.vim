@@ -394,8 +394,65 @@ func Test_dict_identity()
       call assert_true(d == dx)
       call assert_false(d is dx)
       call assert_true(d isnot dx)
+      #" copy() shares the nested containers, deepcopy() does not
+      call assert_true(dx['b'] is d['b'])
+      call assert_true(dx[-1] is d[-1])
+      VAR dy = deepcopy(d)
+      call assert_true(dy == d)
+      call assert_true(dy['b'] isnot d['b'])
+      call assert_true(dy[-1] isnot d[-1])
+      LET dy[-1].a = 2
+      call assert_equal({'a': 1}, d[-1])
   END
   call CheckLegacyAndVim9Success(lines)
+endfunc
+
+func s:AddToDict(d)
+  let a:d.added = 1
+  call add(a:d.l, 9)
+  return a:d
+endfunc
+
+" A dict passed to a function is not copied: changes made in the function are
+" visible to the caller and the returned dict is the same.
+func Test_dict_func_arg_alias()
+  let d = {'l': [1]}
+  let alias = d
+  let ret = s:AddToDict(d)
+  call assert_true(ret is d)
+  call assert_equal({'l': [1, 9], 'added': 1}, alias)
+  " a copy shares the nested list but not the dict itself
+  let c = copy(d)
+  let c.cadded = 2
+  call s:AddToDict(c)
+  call assert_equal([1, 9, 9], d.l)
+  call assert_false(has_key(d, 'cadded'))
+
+  let lines =<< trim END
+    vim9script
+    def AddItem(dd: dict<any>): dict<any>
+      dd.added = 1
+      dd.l->add(9)
+      return dd
+    enddef
+    def Test()
+      var d: dict<any> = {l: [1]}
+      var alias = d
+      assert_true(AddItem(d) is d)
+      assert_equal({l: [1, 9], added: 1}, alias)
+      var c = copy(d)
+      c.cadded = 2
+      AddItem(c)
+      assert_equal([1, 9, 9], d.l)
+      assert_false(has_key(d, 'cadded'))
+      var dc = deepcopy(d)
+      AddItem(dc)
+      assert_equal([1, 9, 9], d.l)
+      assert_equal([1, 9, 9, 9], dc.l)
+    enddef
+    Test()
+  END
+  call CheckSourceSuccess(lines)
 endfunc
 
 " removing items with :unlet
@@ -613,6 +670,8 @@ func Test_dict_deepcopy()
       VAR l = [4, d, 6]
       LET d[3] = l
       VAR dc = deepcopy(d)
+      call assert_true(dc[3][1] is dc)
+      call assert_true(dc isnot d)
       call deepcopy(d, 1)
   END
   call CheckLegacyAndVim9Failure(lines, 'E698:')
@@ -866,6 +925,35 @@ func Test_dict_lock_map()
   " call CheckScriptFailure(lines, 'E741:')
 endfunc
 
+" Lock one item in a list
+func Test_list_item_lock_map()
+  let lines =<< trim END
+      VAR l = [99, 100, 101]
+      lockvar l[1]
+      call assert_fails("echo map(l, 'v:val + 200')", 'E741:')
+      call assert_equal([299, 100, 101], l)
+  END
+  " This won't work in a :def function
+  call CheckTransLegacySuccess(lines)
+  call CheckTransVim9Success(lines)
+endfunc
+
+" Lock one item in a dict
+func Test_dict_item_lock_map()
+  let lines =<< trim END
+      VAR d = {'a': 99, 'b': 100, 'c': 101}
+      lockvar d.b
+      call assert_fails("echo map(d, 'v:val + 200')", 'E741:')
+      #" the order of the items is unspecified, items before "b" are changed
+      call assert_equal(100, d.b)
+      call assert_true(index([99, 299], d.a) >= 0)
+      call assert_true(index([101, 301], d.c) >= 0)
+  END
+  " This won't work in a :def function
+  call CheckTransLegacySuccess(lines)
+  call CheckTransVim9Success(lines)
+endfunc
+
 " No extend() after lock on dict item
 func Test_dict_lock_extend()
   let d = {'a': 99, 'b': 100}
@@ -880,6 +968,37 @@ func Test_dict_lock_operator()
   lockvar d
   call assert_fails("let d += {'k' : 10}", 'E741:')
   unlockvar d
+endfunc
+
+" The index of a compound assignment is evaluated only once
+func Test_dict_compound_assign_index_once()
+  let lines =<< trim END
+    let s:calls = 0
+    func s:Key()
+      let s:calls += 1
+      return s:calls == 1 ? 'a' : 'b'
+    endfunc
+    let d = {'a': 10, 'b': 100}
+    let d[s:Key()] += 1
+    call assert_equal(1, s:calls)
+    call assert_equal({'a': 11, 'b': 100}, d)
+  END
+  call CheckSourceSuccess(lines)
+
+  " also at Vim9 script level (not in a :def function)
+  let lines =<< trim END
+    vim9script
+    var calls = 0
+    def Key(): string
+      calls += 1
+      return calls == 1 ? 'a' : 'b'
+    enddef
+    var d = {a: 10, b: 100}
+    d[Key()] += 1
+    assert_equal(1, calls)
+    assert_equal({a: 11, b: 100}, d)
+  END
+  call CheckSourceSuccess(lines)
 endfunc
 
 " No remove() of write-protected scope-level variable
@@ -908,6 +1027,22 @@ func Test_lock_var_unlet()
   call assert_fails('unlet b:testvar', 'E741:')
   unlockvar 1 b:
   unlet! b:testvar
+endfunc
+
+" ":lockvar 0" locks a scope variable, but it can still be deleted
+func Test_dict_lockvar_zero_scope_var()
+  " use w: of a new window, it only has the variables set here
+  new
+  for Del in ['unlet w:x', "call remove(w:, 'x')",
+        \ "call filter(w:, {k, v -> k != 'x'})"]
+    let w:x = 1
+    lockvar 0 w:x
+    call assert_fails('let w:x = 2', 'E1122:')
+    call assert_equal(1, w:x)
+    execute Del
+    call assert_false(exists('w:x'), Del)
+  endfor
+  bwipe!
 endfunc
 
 " No :let += of locked list variable
@@ -1376,9 +1511,7 @@ func Test_listdict_extend()
   let l = [1, 2, 3]
   call assert_fails("call extend(l, [4, 5, 6], 4)", 'E684:')
   call assert_fails("call extend(l, [4, 5, 6], -4)", 'E684:')
-  if has('float')
-    call assert_fails("call extend(l, [4, 5, 6], 1.2)", 'E805:')
-  endif
+  call assert_fails("call extend(l, [4, 5, 6], 1.2)", 'E805:')
 
   " Test extend() with dictionaries.
 
@@ -1408,12 +1541,10 @@ func Test_listdict_extend()
   call CheckLegacyAndVim9Success(lines)
 
   let d = {'a': 'A', 'b': 'B'}
-  call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 'error')", 'E737:')
+  call assert_fails("call extend(d, {'b': 0}, 'error')", 'E737:')
   call assert_fails("call extend(d, {'b': 0}, [])", 'E730:')
   call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 'xxx')", 'E475:')
-  if has('float')
-    call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 1.2)", 'E475:')
-  endif
+  call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 1.2)", 'E475:')
   call assert_equal({'a': 'A', 'b': 'B'}, d)
 
   call assert_fails("call extend([1, 2], 1)", 'E712:')
@@ -1578,6 +1709,199 @@ func Test_deep_nested_dict()
   unlet deep_dict
 endfunc
 
+" Garbage collection of dicts in a reference cycle.  The reference count of a
+" shared List shows whether the dict holding it was freed.
+func Test_dict_cycle_garbagecollect()
+  throw 'Skipped: Nvim does not have test_refcount()'
+  let lines =<< trim END
+    vim9script
+    var l = [1]
+    const base = test_refcount(l)
+
+    # a dict that refers to itself is only freed by garbage collection
+    var d: dict<any> = {l: l}
+    d.self = d
+    assert_equal(base + 1, test_refcount(l))
+    d = null_dict
+    assert_equal(base + 1, test_refcount(l))
+    test_garbagecollect_now()
+    assert_equal(base, test_refcount(l))
+
+    # a cycle through a List
+    var d2: dict<any> = {l: l}
+    var l2: list<any> = [d2]
+    d2.back = l2
+    d2 = null_dict
+    l2 = null_list
+    assert_equal(base + 1, test_refcount(l))
+    test_garbagecollect_now()
+    assert_equal(base, test_refcount(l))
+
+    # a cycle that is still referenced is kept
+    var d3: dict<any> = {l: l, n: {x: 7}}
+    d3.self = d3
+    test_garbagecollect_now()
+    assert_true(d3.self is d3)
+    assert_true(d3.self.self.l is l)
+    assert_equal({x: 7}, d3.self.n)
+    assert_equal(base + 1, test_refcount(l))
+    d3 = null_dict
+    test_garbagecollect_now()
+    assert_equal(base, test_refcount(l))
+
+    # a dict shared by two dicts is kept while one of them is referenced
+    var shared = {s: l}
+    const sbase = test_refcount(shared)
+    var a: dict<any> = {sh: shared}
+    var b: dict<any> = {sh: shared}
+    assert_equal(sbase + 2, test_refcount(shared))
+    a = null_dict
+    assert_equal(sbase + 1, test_refcount(shared))
+    test_garbagecollect_now()
+    assert_true(b.sh is shared)
+    assert_true(b.sh.s is l)
+    shared = null_dict
+    test_garbagecollect_now()
+    assert_equal([1], b.sh.s)
+    b = null_dict
+    test_garbagecollect_now()
+    assert_equal(base, test_refcount(l))
+
+    # a dict only referenced by a closure is kept
+    def MakeClosure(): func(): list<number>
+      var cd = {cl: l}
+      return () => cd.cl
+    enddef
+    var F = MakeClosure()
+    test_garbagecollect_now()
+    assert_true(F() is l)
+    F = null_function
+    test_garbagecollect_now()
+    assert_equal(base, test_refcount(l))
+  END
+  call CheckSourceSuccess(lines)
+
+  " a dict only referenced by a partial for a dict function is kept
+  let lines =<< trim END
+    let s:l = [1]
+    let s:base = test_refcount(s:l)
+    let s:d = {'l': s:l}
+    func s:d.GetList() dict
+      return self.l
+    endfunc
+    let s:F = s:d.GetList
+    unlet s:d
+    call test_garbagecollect_now()
+    call assert_true(s:F() is s:l)
+    unlet s:F
+    call test_garbagecollect_now()
+    call assert_equal(s:base, test_refcount(s:l))
+  END
+  call CheckSourceSuccess(lines)
+endfunc
+
+" Adding, replacing and removing a dict item takes and releases a reference
+" to the value, also when evaluating a dict fails.  Checked with the reference
+" count of a List stored in the dict.
+func Test_dict_item_refcount()
+  throw 'Skipped: Nvim does not have test_refcount()'
+  let lines =<< trim END
+    vim9script
+    var l = [1]
+    const base = test_refcount(l)
+
+    # at script level
+    var d: dict<any> = {a: l}
+    assert_equal(base + 1, test_refcount(l))
+    d.b = l
+    assert_equal(base + 2, test_refcount(l))
+    d.b = 0
+    assert_equal(base + 1, test_refcount(l))
+    unlet d.a
+    assert_equal(base, test_refcount(l))
+    d.a = l
+    var v: any = remove(d, 'a')
+    assert_equal(base + 1, test_refcount(l))
+    v = 0
+    assert_equal(base, test_refcount(l))
+
+    # builtin functions
+    d = {a: l, b: l}
+    filter(d, (k, _) => k == 'a')
+    assert_equal(base + 1, test_refcount(l))
+    map(d, (_, _) => 0)
+    assert_equal(base, test_refcount(l))
+    d = {a: l}
+    extend(d, {a: 0})
+    assert_equal(base, test_refcount(l))
+    extend(d, {a: l}, 'keep')
+    assert_equal(base, test_refcount(l))
+    var c = copy({a: l})
+    assert_equal(base + 1, test_refcount(l))
+    var dc = deepcopy({a: l})
+    assert_equal(base + 1, test_refcount(l))
+    c = {}
+    assert_equal(base, test_refcount(l))
+
+    # in a compiled function, also through a variable of type any
+    def Compiled()
+      var cd: dict<any> = {a: l}
+      assert_equal(base + 1, test_refcount(l))
+      cd.b = l
+      assert_equal(base + 2, test_refcount(l))
+      cd.b = 0
+      assert_equal(base + 1, test_refcount(l))
+      unlet cd.a
+      assert_equal(base, test_refcount(l))
+      var x: any = cd
+      x['c'] = l
+      assert_equal(base + 1, test_refcount(l))
+      x['c'] = 0
+      assert_equal(base, test_refcount(l))
+    enddef
+    Compiled()
+    assert_equal(base, test_refcount(l))
+
+    # evaluating a dict literal fails after an item was evaluated
+    def Throw(): number
+      throw 'oops'
+    enddef
+    try
+      var e = {a: l, b: Throw()}
+    catch /oops/
+    endtry
+    assert_equal(base, test_refcount(l))
+    try
+      var e = {a: l, a: l}
+    catch /E721:/
+    endtry
+    assert_equal(base, test_refcount(l))
+    def DefFail()
+      try
+        var e = {a: l, b: Throw()}
+      catch /oops/
+      endtry
+      var k = 'a'
+      try
+        var e = {[k]: l, z: l, [k]: l}
+      catch /E721:/
+      endtry
+    enddef
+    DefFail()
+    assert_equal(base, test_refcount(l))
+
+    # extending a typed dict fails
+    var td: dict<number> = {}
+    try
+      extend(td, {x: l})
+    catch /E1013:/
+    endtry
+    assert_equal({}, td)
+    assert_equal(base, test_refcount(l))
+  END
+  call CheckSourceSuccess(lines)
+endfunc
+
 " List and dict indexing tests
 func Test_listdict_index()
   call CheckLegacyAndVim9Failure(['echo function("min")[0]'], 'E695:')
@@ -1604,6 +1928,31 @@ func Test_listdict_index()
   call CheckLegacyAndVim9Failure(['VAR l = [1, 2, 3]', 'LET l[: i] = [4, 5]'], ['E121:', 'E1001:', 'E121:'])
   call CheckLegacyAndVim9Failure(['VAR l = [1, 2, 3]', 'LET l[: 3.2] = [4, 5]'], ['E805:', 'E1012:', 'E805:'])
   " call CheckLegacyAndVim9Failure(['VAR t = test_unknown()', 'echo t[0]'], ['E685:', 'E909:', 'E685:'])
+endfunc
+
+" Keys that are not a String are converted to a String
+func Test_dict_key_conversion()
+  let d = {}
+  let d[12] = 'number'
+  let d[1.5] = 'float'
+  let d[v:true] = 'bool'
+  let d[v:null] = 'special'
+  call assert_equal(['1.5', '12', 'v:null', 'v:true'], sort(keys(d)))
+  call assert_equal('number', d['12'])
+  call assert_equal('float', d['1.5'])
+  call assert_fails("let d[[1]] = 1", 'E730:')
+  call assert_fails("let d[{}] = 1", 'E731:')
+
+  " Vim9: a Bool key is "true" and a Float key keeps its decimals
+  let lines =<< trim END
+    vim9script
+    var vd: dict<string> = {}
+    vd[9] = 'number'
+    vd[true] = 'bool'
+    vd[9.2] = 'float'
+    assert_equal(['9', '9.2', 'true'], sort(keys(vd)))
+  END
+  call CheckSourceSuccess(lines)
 endfunc
 
 " Test for a null list
@@ -1778,6 +2127,69 @@ func Test_deep_nested_listdict_compare()
     call assert_true(d3 == d4)
   END
   call CheckLegacyAndVim9Success(lines)
+endfunc
+
+" extend() with the same Dict as source and destination, for each action
+func Test_dict_extend_self_actions()
+  let lines =<< trim END
+      VAR d = {}
+      for i in range(20)
+        LET d['k' .. i] = [i]
+      endfor
+      VAR before = deepcopy(d)
+      call assert_true(extend(d, d, 'keep') is d)
+      call assert_equal(before, d)
+      call assert_true(extend(d, d, 'force') is d)
+      call assert_equal(before, d)
+      VAR err = ''
+      try
+        call extend(d, d, 'error')
+      catch /E737:/
+        LET err = 'E737'
+      endtry
+      call assert_equal('E737', err)
+      call assert_equal(before, d)
+  END
+  call CheckLegacyAndVim9Success(lines)
+endfunc
+
+" deepcopy() keeps a cycle below the top level: the copy refers to the copy
+func Test_dict_deepcopy_inner_cycle()
+  let lines =<< trim END
+      VAR d = {'a': {'b': 0}, 'x': 1}
+      LET d.a.b = d
+      LET d.l = [d, {'m': d}]
+      VAR c = deepcopy(d)
+      call assert_false(c is d)
+      call assert_true(c.a.b is c)
+      call assert_true(c.l[0] is c)
+      call assert_true(c.l[1].m is c)
+      call assert_equal(1, c.x)
+      call assert_true(c == d)
+      LET d.a.b = 0
+      LET d.l = []
+      LET c.a.b = 0
+      LET c.l = []
+  END
+  call CheckLegacyAndVim9Success(lines)
+endfunc
+
+" Dicts and Lists nested in each other past the nesting limit of 100
+func Test_deep_nested_dict_list_mixed()
+  let inner = {'leaf': 1}
+  let m = inner
+  for i in range(60)
+    let m = {'l': [m]}
+  endfor
+  call assert_fails('let c = deepcopy(m)', 'E698:')
+  "call assert_fails('let s = string(m)', 'E724:')
+  call assert_fails('lockvar 130 m', 'E743:')
+  call assert_fails('unlockvar 130 m', 'E743:')
+  " the inner Dict is not affected by the errors part way
+  call assert_equal("{'leaf': 1}", string(inner))
+  let p = deepcopy([inner, inner])
+  call assert_true(p[0] is p[1])
+  call assert_equal({'leaf': 1}, p[0])
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
