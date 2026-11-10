@@ -669,6 +669,33 @@ local function screen_tests(linegrid)
       ]])
     end)
 
+    it('fits the windows after shrinking #41860', function()
+      local function wins()
+        return exec_lua(function()
+          return vim.tbl_map(function(w)
+            return { vim.api.nvim_win_get_position(w)[2], vim.api.nvim_win_get_width(w) }
+          end, vim.api.nvim_tabpage_list_wins(0))
+        end)
+      end
+      -- A 'winfixwidth' window in a nested frame keeps its width: the other windows shrink.
+      screen:try_resize(200, 10)
+      exec([[
+        botright vnew | vertical resize 133
+        belowright new | wincmd k
+        vsplit | setlocal winfixwidth | vertical resize 60
+      ]])
+      eq({ { 0, 66 }, { 67, 60 }, { 128, 72 }, { 67, 133 } }, wins())
+      screen:try_resize(100, 10)
+      eq({ { 0, 37 }, { 38, 60 }, { 99, 1 }, { 38, 62 } }, wins())
+
+      -- Not narrower than the windows ('winminwidth').
+      command('only | set winwidth=40 winminwidth=40 | vsplit')
+      screen:try_resize(25, 10)
+      eq(81, api.nvim_get_option_value('columns', {}))
+      eq({ { 0, 40 }, { 41, 40 } }, wins())
+      assert_alive()
+    end)
+
     it('VimResized autocommand does not cause invalid UI events #20692 #20759', function()
       screen:try_resize(25, 5)
       feed('iresize<Esc>')
