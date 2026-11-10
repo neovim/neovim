@@ -52,7 +52,11 @@ local root = repo_root()
 prepend_package_roots({ root, root .. '/test', '.', './test' })
 local entries = { root .. '/src/?.lua', root .. '/runtime/lua/?.lua' }
 package.path = table.concat(entries, ';') .. ';' .. package.path
-vim.env.VIMRUNTIME = root .. '/runtime'
+-- Prefer local ./runtime/ source tree if available (may not exist if e.g. the test harness is being
+-- used by an external project without fetching the entire Nvim repo).
+if uv.fs_stat(root .. '/runtime') then
+  vim.env.VIMRUNTIME = root .. '/runtime'
+end
 
 -- The harness is not an Nvim instance under test. If its startup server stays
 -- visible, serverlist({ peer = true }) can connect back to the runner and wait
