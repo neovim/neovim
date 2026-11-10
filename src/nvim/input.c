@@ -64,8 +64,6 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
-#include "nvim/event/loop.h"
-#include "nvim/event/multiqueue.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
@@ -81,7 +79,6 @@
 #include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
-#include "nvim/main.h"
 #include "nvim/mapping.h"
 #include "nvim/mapping_defs.h"
 #include "nvim/mbyte.h"
@@ -1931,7 +1928,7 @@ bool char_avail(void)
 
 static int no_reduce_keys = 0;  ///< Do not apply modifiers to the key.
 
-/// "getchar()" and "getcharstr()" functions
+/// Implements getchar() and getcharstr(). Processes events while blocking (state_wait_key()).
 static void getchar_common(typval_T *argvars, typval_T *rettv, bool allow_number)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1992,15 +1989,8 @@ static void getchar_common(typval_T *argvars, typval_T *rettv, bool allow_number
     if (argvars[0].v_type == VAR_UNKNOWN
         || (argvars[0].v_type == VAR_NUMBER && argvars[0].vval.v_number == -1)) {
       // getchar(): blocking wait.
-      // TODO(bfredl): deduplicate shared logic with state_enter ?
-      if (!char_avail()) {
-        // Flush screen updates before blocking.
-        ui_flush();
-        input_get(NULL, 0, -1, typebuf.tb_change_cnt, main_loop.events);
-        if (!input_available() && !multiqueue_empty(main_loop.events)) {
-          state_handle_k_event();
-          continue;
-        }
+      if (!state_wait_key()) {
+        continue;
       }
       n = safe_vgetc();
     } else if (tv_get_bool_chk(&argvars[0], &error)) {

@@ -1803,7 +1803,6 @@ describe('ui/builtin messages', function()
       {6:Press ENTER or type command to}|
       {6: continue}^                     |
     ]])
-    feed('<cr>')
 
     -- screen size doesn't affect internal output #10285
     eq('ErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red', exec_capture('hi ErrorMsg'))
@@ -1841,7 +1840,6 @@ describe('ui/builtin messages', function()
                          {18:links to} Comment                    |
       {6:Press ENTER or type command to continue}^                |
     ]])
-    feed('<cr>')
 
     -- ignore final whitespace inside string
     -- luacheck: push ignore
@@ -2186,6 +2184,48 @@ describe('ui/builtin messages', function()
                                                                   |
     ]])
     eq(1, api.nvim_get_option_value('cmdheight', {}))
+  end)
+
+  it('hit-enter prompt processes events', function()
+    exec_lua(function()
+      vim.schedule(function()
+        vim.api.nvim_echo({ { 'line1\nline2\nline3\nline4\nline5\nline6' } }, true, {})
+        vim.rpcnotify(1, 'echo-done')
+      end)
+    end)
+    screen:expect([[
+      line1                                                       |
+      line2                                                       |
+      line3                                                       |
+      line4                                                       |
+      line5                                                       |
+      line6                                                       |
+      {6:Press ENTER or type command to continue}^                     |
+    ]])
+    -- Not blocked: RPC requests and `vim.schedule()` callbacks are processed.
+    eq({ mode = 'r', blocking = false }, api.nvim_get_mode())
+    exec_lua(function()
+      vim.schedule(function()
+        vim.api.nvim_echo({ { 'from event' } }, true, {}) -- Shown below, then the prompt again.
+        vim.cmd.redraw() -- Postponed: doesn't clear the messages.
+      end)
+    end)
+    screen:expect([[
+      line2                                                       |
+      line3                                                       |
+      line4                                                       |
+      line5                                                       |
+      line6                                                       |
+      from event                                                  |
+      {6:Press ENTER or type command to continue}^                     |
+    ]])
+    feed('<CR>')
+    eq({ 'notification', 'echo-done', {} }, n.next_msg(1000))
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*5
+                                                                  |
+    ]])
   end)
 
   it('using nvim_echo in VimResized does not cause hit-enter prompt #26139', function()

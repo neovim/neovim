@@ -213,7 +213,6 @@ describe("preserve and (R)ecover with custom 'directory'", function()
           },
         })
       end
-      feed('<CR>')
       expect('sometext')
     end)
   end

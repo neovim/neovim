@@ -67,6 +67,7 @@
 #include "nvim/register.h"
 #include "nvim/runtime.h"
 #include "nvim/runtime_defs.h"
+#include "nvim/state.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
@@ -1392,7 +1393,7 @@ void msg_end_prompt(void)
   lines_left = -1;
 }
 
-/// Wait for the user to hit a key (normally Enter)
+/// Waits for the user to hit a key (normally Enter), processing events (state_wait_key()).
 ///
 /// @param redraw  if true, redraw the entire screen UPD_NOT_VALID
 ///                if false, do a normal redraw
@@ -1472,6 +1473,18 @@ void wait_return(int redraw)
         // Remember "got_int", if it is set vgetc() probably returns a
         // CTRL-C, but we need to loop then.
         had_got_int = got_int;
+
+        // Process events while waiting, avoid OOM. #42669
+        const int prompt_row = msg_row;
+        const int prompt_col = msg_col;
+        if (!state_wait_key()) {
+          if (msg_row != prompt_row || msg_col != prompt_col) {
+            hit_return_msg(false);  // Show the prompt again, below the messages.
+          }
+          msg_cursor_goto(msg_row, msg_col);  // Events may move the cursor.
+          c = K_IGNORE;
+          continue;
+        }
 
         // Don't do mappings here, we put the character back in the
         // typeahead buffer.

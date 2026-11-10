@@ -1397,8 +1397,8 @@ describe('decoration_providers', function()
       end
     ]])
     screen:expect([[
-      {3:                                                                 }|
-      {9:Decoration provider "start" (ns=ns1):}                            |
+      {6:Press ENTER or type command to continue}                          |
+      {9:Decoration provider "end" (ns=ns1):}                              |
       {9:Lua: [string "<nvim>"]:4: Foo}                                    |
       {9:stack traceback:}                                                 |
       {9:        [C]: in function 'error'}                                 |

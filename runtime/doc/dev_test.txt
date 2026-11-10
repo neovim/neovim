@@ -440,7 +440,8 @@ Testing plugins                                              *dev-test-plugin*
 Plugins (and CI) can use the test harness without cloning the Nvim repo:
 
 1. Copy `contrib/plugin_test.mk` to your plugin repo as "Makefile" or include
-   it from your existing Makefile. Add `.deps/` to `.gitignore`.
+   it from your existing Makefile. https://github.com/neovim/neovim/blob/master/contrib/plugin_test.mk
+   Add `.deps/` to `.gitignore`.
 2. Write tests in `test/*_spec.lua`. Each test Nvim starts with `-u NONE`, so
    add your plugin to 'runtimepath': >lua
     local t = require('test.testutil')
@@ -460,7 +461,6 @@ Plugins (and CI) can use the test harness without cloning the Nvim repo:
         end))
       end)
     end)
-<
 3. Run the tests: >sh
     make test
     make test TEST_FILE=test/foo_spec.lua TEST_FILTER=works
