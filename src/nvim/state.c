@@ -31,6 +31,18 @@
 
 #include "state.c.generated.h"
 
+/// Blocks until a key is typed or an event (vim.schedule(), timer, RPC request) is queued.
+///
+/// @return  true if a key is available, false if only an event is.
+static bool wait_key_or_event(void)
+{
+  ui_flush();  // Flush screen updates before blocking.
+  // Call `input_get` directly to block for events or user input without consuming anything from
+  // `os/input.c:input_buffer` or calling the mapping engine.
+  input_get(NULL, 0, -1, typebuf.tb_change_cnt, main_loop.events);
+  return input_available() || multiqueue_empty(main_loop.events);
+}
+
 void state_enter(VimState *s)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -72,17 +84,10 @@ getkey:
         update_screen();
         setcursor();  // put cursor back where it belongs
       }
-      // Flush screen updates before blocking.
-      ui_flush();
-      // Call `input_get` directly to block for events or user input without consuming anything from
-      // `os/input.c:input_buffer` or calling the mapping engine.
-      input_get(NULL, 0, -1, typebuf.tb_change_cnt, main_loop.events);
-      // If an event was put into the queue, we send K_EVENT directly.
-      if (!input_available() && !multiqueue_empty(main_loop.events)) {
-        key = K_EVENT;
-      } else {
+      if (wait_key_or_event()) {
         goto getkey;
       }
+      key = K_EVENT;
     }
 
     if (key == K_EVENT) {
@@ -131,6 +136,27 @@ void state_handle_k_event(void)
       return;
     }
   }
+}
+
+/// Waits for a key, meanwhile processing events (vim.schedule(), timers, RPC requests), for a prompt
+/// that gets keys outside of state_enter() (which passes events to the state as K_EVENT).
+///
+/// Legacy ui (not ui2/ext_messages): messages from events overwrite the prompt (last message line)
+/// and don't prompt again.
+///
+/// @return  true if a key is available, false if events were processed instead (caller must restore
+///          its prompt and call again).
+bool state_wait_key(void)
+{
+  if (char_avail() || wait_key_or_event()) {
+    return true;
+  }
+  cmdline_row = msg_row;
+  may_garbage_collect = false;  // See nv_event().
+  no_wait_return++;
+  state_handle_k_event();
+  no_wait_return--;
+  return false;
 }
 
 /// Return true if in the current mode we need to use virtual.

@@ -455,14 +455,15 @@ describe('vim.ui_attach', function()
     feed('@@')
     screen:expect({
       grid = [[
-                                                                          |
-        {1:~                                                                 }|*2
-        {3:                                                                  }|
+        {100:Press ENTER or type command to continue}                           |
+        {9:Error in "msg_show" UI event handler (ns=(UNKNOWN PLUGIN)):}       |
+        {9:fast context failure}                                              |
         {9:Error in "msg_show" UI event handler (ns=(UNKNOWN PLUGIN)):}       |
         {9:Lua: [string "<nvim>"]:3: foo}                                     |
         {9:stack traceback:}                                                  |
         {9:        [C]: in function 'error'}                                  |
         {9:        [string "<nvim>"]:3: in function <[string "<nvim>"]:1>}    |
+        {9:Excessive errors in vim.ui_attach() callback (ns=(UNKNOWN PLUGIN))}|
         {100:Press ENTER or type command to continue}^                           |
       ]],
       condition = function()

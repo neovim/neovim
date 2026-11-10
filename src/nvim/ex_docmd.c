@@ -7040,19 +7040,21 @@ static void ex_redraw(exarg_T *eap)
   } else if (Visual.active) {
     redraw_curbuf_later(UPD_INVERTED);
   }
-  update_screen();
+  const bool redrawn = update_screen() == OK;
   if (need_maketitle) {
     maketitle();
   }
   RedrawingDisabled = r;
   p_lz = p;
 
-  // Reset msg_didout, so that a message that's there is overwritten.
-  msg_didout = false;
-  msg_col = 0;
+  if (redrawn) {  // Else postponed (e.g. at the hit-enter prompt): keep the messages.
+    // Reset msg_didout, so that a message that's there is overwritten.
+    msg_didout = false;
+    msg_col = 0;
 
-  // No need to wait after an intentional redraw.
-  need_wait_return = false;
+    // No need to wait after an intentional redraw.
+    need_wait_return = false;
+  }
 
   ui_flush();
 }
