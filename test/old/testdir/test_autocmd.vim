@@ -4086,6 +4086,37 @@ func Test_v_event_readonly()
   au! TextYankPost
 endfunc
 
+func s:YankWithNestedEvent()
+  let before = deepcopy(v:event)
+  cd Xveventdir
+  cd -
+  call add(g:Xouter, [before, deepcopy(v:event)])
+endfunc
+
+" v:event of an autocommand is restored after a nested autocommand that
+" also uses v:event
+func Test_v_event_nested()
+  call mkdir('Xveventdir', 'R')
+  let g:Xouter = []
+  let g:Xinner = []
+  autocmd TextYankPost * ++nested call s:YankWithNestedEvent()
+  autocmd DirChangedPre * call add(g:Xinner, deepcopy(v:event))
+  new
+  call setline(1, 'text')
+  normal! yy
+  au! TextYankPost
+  au! DirChangedPre
+  bwipe!
+
+  call assert_equal(1, len(g:Xouter))
+  call assert_equal(g:Xouter[0][0], g:Xouter[0][1])
+  call assert_equal('y', g:Xouter[0][1].operator)
+  call assert_equal(['text'], g:Xouter[0][1].regcontents)
+  call assert_equal(2, len(g:Xinner))
+  call assert_match('Xveventdir$', g:Xinner[0].directory)
+  unlet g:Xouter g:Xinner
+endfunc
+
 " Test for ModeChanged pattern
 func Test_mode_changes()
   let g:index = 0
