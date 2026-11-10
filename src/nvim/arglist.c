@@ -1092,8 +1092,10 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
   autocmd_no_leave++;
   last_curwin = curwin;
   last_curtab = curtab;
-  // lastwin may be ctx_win
-  win_enter(lastwin_nofloating(NULL), false);
+  // lastwin may be ctx_win; only enter lastwin when opening windows in current tabpage
+  if (aall.had_tab == 0) {
+    win_enter(lastwin_nofloating(NULL), false);
+  }
 
   // Open up to "count" windows.
   arg_all_open_windows(&aall, count);
@@ -1102,15 +1104,10 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
   alist_unlink(aall.alist);
   arglist_locked = prev_arglist_locked;
 
-  autocmd_no_enter--;
-
-  // restore last referenced tabpage's curwin
+  // restore last referenced tabpage's curwin directly without triggering autocommands
   if (last_curtab != aall.new_curtab) {
-    if (valid_tabpage(last_curtab)) {
-      goto_tabpage_tp(last_curtab, true, true);
-    }
-    if (win_valid(last_curwin)) {
-      win_enter(last_curwin, false);
+    if (valid_tabpage(last_curtab) && win_valid(last_curwin)) {
+      last_curtab->tp_curwin = last_curwin;
     }
   }
   // to window with first arg
@@ -1122,6 +1119,8 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
   if (valid_tabpage(new_lu_tp)) {
     lastused_tabpage = new_lu_tp;
   }
+
+  autocmd_no_enter--;
 
   if (win_valid(aall.new_curwin)) {
     win_enter(aall.new_curwin, false);
