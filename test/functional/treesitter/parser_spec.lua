@@ -416,6 +416,72 @@ describe('treesitter parser API', function()
     }, res)
   end)
 
+  it('can iterate over node children from a start position', function()
+    insert(test_text)
+
+    local res = exec_lua(function()
+      local parser = vim.treesitter.get_parser(0, 'c')
+      local func_node = parser:parse()[1]:root():child(0)
+
+      local function collect(iter)
+        local result = {}
+        for node, field in iter do
+          table.insert(result, { node:type(), field })
+        end
+        return result
+      end
+
+      local declarator = func_node:field('declarator')[1]
+      local declarator_row, declarator_col = declarator:start()
+      local type_end_row, type_end_col = func_node:field('type')[1]:end_()
+      local body = func_node:field('body')[1]
+      local body_row, body_col = body:start()
+      local end_row, end_col = func_node:end_()
+
+      return {
+        empty_opts = collect(func_node:iter_children({})),
+        from_declarator = collect(func_node:iter_children({
+          start = { declarator_row, declarator_col },
+        })),
+        between_type_and_declarator = collect(func_node:iter_children({
+          start = { type_end_row, type_end_col },
+        })),
+        from_body = collect(func_node:iter_children({ start = { body_row, body_col } })),
+        after_end = collect(func_node:iter_children({ start = { end_row, end_col } })),
+        body_children = collect(body:iter_children({ start = { body_row, body_col } })),
+      }
+    end)
+
+    eq({
+      empty_opts = {
+        { 'primitive_type', 'type' },
+        { 'function_declarator', 'declarator' },
+        { 'compound_statement', 'body' },
+      },
+      from_declarator = {
+        { 'function_declarator', 'declarator' },
+        { 'compound_statement', 'body' },
+      },
+      between_type_and_declarator = {
+        { 'function_declarator', 'declarator' },
+        { 'compound_statement', 'body' },
+      },
+      from_body = {
+        { 'compound_statement', 'body' },
+      },
+      after_end = {},
+      body_children = {
+        { '{' },
+        { 'declaration' },
+        { 'declaration' },
+        { 'for_statement' },
+        { 'declaration' },
+        { 'for_statement' },
+        { '}' },
+      },
+    }, res)
+  end)
+
   it('does not get parser for empty filetype', function()
     insert(test_text)
 
