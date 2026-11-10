@@ -48,7 +48,7 @@ M.nvim_argv = {
   -- Source 'vim' color scheme without side effects
   -- TODO: rewrite tests
   '--cmd',
-  'lua dofile("runtime/colors/vim.lua")',
+  ('lua dofile(%q)'):format(vim.fs.joinpath(vim.env.VIMRUNTIME, 'colors/vim.lua')),
   '--cmd',
   'unlet g:colors_name',
   '--embed',
@@ -1109,7 +1109,8 @@ function M.missing_provider(provider)
 end
 
 local load_factor = 1
-if t.is_ci() then
+-- Out of tree (e.g. external project vendors the test harness), there is no load.vim.
+if t.is_ci() and uv.fs_stat('test/old/testdir/load.vim') then
   -- Compute load factor only once (but outside of any tests).
   M.clear()
   M.request('nvim_command', 'source test/old/testdir/load.vim')

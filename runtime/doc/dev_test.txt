@@ -19,8 +19,8 @@ Each test starts a new Nvim process (10-30ms) which is discarded after the
 test finishes. You assert stuff using `t.eq()` and `screen:expect()` (which
 automatically waits as needed). That's pretty much it.
 
-TODO: Expose the test framework as a public interface, for use in 3P plugins:
-https://github.com/neovim/neovim/issues/34592
+External consumers (plugins, …) can use the test framework |dev-test-plugin|.
+Improvements are tracked in: https://github.com/neovim/neovim/issues/34592
 
 ==============================================================================
 Test framework
@@ -432,6 +432,43 @@ https://github.com/EmmyLuaLs/emmylua-analyzer-rust
 
 Ignore the smallest applicable scope (e.g. inside a function, not at the top of
 the file).
+
+
+==============================================================================
+Testing plugins                                              *dev-test-plugin*
+
+Plugins (and CI) can use the test harness without cloning the Nvim repo:
+
+1. Copy `contrib/plugin_test.mk` to your plugin repo as "Makefile" or include
+   it from your existing Makefile. Add `.deps/` to `.gitignore`.
+2. Write tests in `test/*_spec.lua`. Each test Nvim starts with `-u NONE`, so
+   add your plugin to 'runtimepath': >lua
+    local t = require('test.testutil')
+    local n = require('test.functional.testnvim')()
+
+    t.describe('myplugin', function()
+      t.before_each(function()
+        n.clear()
+        n.exec_lua(function()
+          vim.opt.runtimepath:append(vim.fn.getcwd())
+        end)
+      end)
+
+      t.it('works', function()
+        t.eq(2, n.exec_lua(function()
+          return require('myplugin').add(1, 1)
+        end))
+      end)
+    end)
+<
+3. Run the tests: >sh
+    make test
+    make test TEST_FILE=test/foo_spec.lua TEST_FILTER=works
+    make test NVIM_PRG=/path/to/bin/nvim
+<
+`make test` downloads the harness modules to `.deps/`, from the Nvim git ref
+`NVIM_TEST_VERSION` (default "master"). Use a ref that matches the Nvim under
+test.
 
 
 ==============================================================================
