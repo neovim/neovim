@@ -1803,7 +1803,6 @@ describe('ui/builtin messages', function()
       {6:Press ENTER or type command to}|
       {6: continue}^                     |
     ]])
-    feed('<cr>')
 
     -- screen size doesn't affect internal output #10285
     eq('ErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red', exec_capture('hi ErrorMsg'))
@@ -1841,7 +1840,6 @@ describe('ui/builtin messages', function()
                          {18:links to} Comment                    |
       {6:Press ENTER or type command to continue}^                |
     ]])
-    feed('<cr>')
 
     -- ignore final whitespace inside string
     -- luacheck: push ignore

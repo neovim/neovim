@@ -93,7 +93,6 @@ describe('lua rpc', function()
       {6:Press ENTER or type command to continue}^           |
     ]],
     }
-    feed('<cr>')
     retry(10, nil, function()
       eq({ 3, NIL }, api.nvim_get_var('yy'))
     end)

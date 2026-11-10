@@ -1074,7 +1074,6 @@ describe('jobs', function()
         ccc                                               |
         {6:Press ENTER or type command to continue}^           |
       ]])
-      feed('<CR>')
       fn.jobstop(api.nvim_get_var('id'))
     end)
 
@@ -1104,7 +1103,6 @@ describe('jobs', function()
         ccc                                               |
         {6:Press ENTER or type command to continue}^           |
       ]])
-      feed('<CR>')
       fn.jobstop(api.nvim_get_var('id'))
       eq(0, busy)
     end)
