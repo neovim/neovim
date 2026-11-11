@@ -824,35 +824,31 @@ end
 --- @return vim.Iter<V1, V...>
 --- @overload fun<V1, V...>(self: vim.IterArray<V1, V...>, n: integer|fun(v: V1, ...: V...): boolean): vim.IterArray<V1, V...>
 function Iter:take(n)
-  local i = 0
-  local pred --- @type fun(...): boolean
-  if type(n) == 'function' then
-    pred = n
-  else
-    local limit = n
-    pred = function()
-      return i < limit
+  local stop = type(n) == 'number' and n <= 0
+  --- @type fun(...): boolean
+  local pred = type(n) == 'function' and n
+    or function()
+      n = n - 1
+      stop = n <= 0
+      return n >= 0
     end
-  end
-
-  local stop = false
 
   --- @generic A...
   --- @param ... A...
   --- @return A...
   local function fn(...)
-    if not stop and select(1, ...) ~= nil and pred(...) then
-      i = i + 1
+    if select(1, ...) ~= nil and pred(...) then
       return ...
-    else
-      stop = true
     end
+    stop = true
   end
 
   local next = self.next
   --- @diagnostic disable-next-line:duplicate-set-field
   self.next = function()
-    return fn(next(self))
+    if not stop then
+      return fn(next(self))
+    end
   end
   return self
 end
