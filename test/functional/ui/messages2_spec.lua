@@ -686,6 +686,44 @@ describe('messages2', function()
     ]])
   end)
 
+  local function expect_pager(lines, visible)
+    t.retry(nil, nil, function()
+      t.eq(
+        { lines, not visible },
+        exec_lua(function()
+          local ui = require('vim._core.ui2')
+          return {
+            vim.api.nvim_buf_get_lines(ui.bufs.pager, 0, -1, false),
+            vim.api.nvim_win_get_config(ui.wins.pager).hide,
+          }
+        end)
+      )
+    end)
+  end
+
+  it('pager replace_last preserves earlier messages', function()
+    exec_lua(function()
+      require('vim._core.ui2').check_targets()
+      local msg = require('vim._core.ui2.messages')
+      msg.show_msg('pager', '', { { 0, 'earlier', 0 } }, true, false, 1)
+      msg.show_msg('pager', '', { { 0, 'old\nmultiline\n', 0 } }, false, false, 2)
+      msg.show_msg('pager', '', { { 0, 'replacement', 0 } }, true, false, 3)
+    end)
+    expect_pager({ 'earlier', 'replacement' }, true)
+  end)
+
+  it('repeated multiline print commands replace dismissed pager output', function()
+    exec_lua(function()
+      require('vim._core.ui2').enable({ msg = { targets = { lua_print = 'pager' } } })
+    end)
+    for _ = 1, 3 do
+      feed([[:lua print("hello\nworld")<CR>]])
+      expect_pager({ 'hello', 'world' }, true)
+      feed('<Esc>')
+      expect_pager({ 'hello', 'world' }, false)
+    end
+  end)
+
   it('paging prompt dialog #35191', function()
     screen:try_resize(71, screen._height)
     -- Don't consume <Esc> when paging is not necessary.

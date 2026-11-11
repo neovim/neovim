@@ -31,6 +31,10 @@ local M = {
     prev_id = 0, ---@type string|integer Message id of the previous message.
     dupe = 0, -- Number of times message is repeated.
   },
+  pager = { -- Only the last pager message is tracked for replacement.
+    buf = nil, ---@type integer?
+    extid = nil, ---@type integer?
+  },
   virt = { -- Stored virt_text state.
     ---@type [MsgContent, MsgContent, MsgContent, MsgContent]
     last = { {}, {}, {}, {} }, -- Status in last cmdline row.
@@ -255,11 +259,20 @@ function M.expand_msg(src, tgt, focus)
     local opts = { details = true, type = 'highlight' }
     local marks = api.nvim_buf_get_extmarks(ui.bufs[src], -1, 0, -1, opts)
     local lines = api.nvim_buf_get_lines(ui.bufs[src], 0, -1, false)
+    local span = {}
+    if tgt == 'pager' and (src == 'cmd' or src == 'msg') then
+      ---@cast src 'cmd'|'msg'
+      -- Preserve the last message's boundary before msg_clear() removes its mark.
+      local prev = M[src].ids[M[src].prev_id]
+      if prev then
+        span = api.nvim_buf_get_extmark_by_id(ui.bufs[src], ui.ns, prev.extid, { details = true })
+      end
+    end
     -- Clear unless we want to keep the entered command.
     if ui.cmd.expand == 0 then
       M.msg_clear()
     end
-    if M[src] then
+    if src == 'cmd' or src == 'msg' then
       M.virt[src] = { {}, {} }
     end
 
@@ -272,8 +285,19 @@ function M.expand_msg(src, tgt, focus)
         details.hl_group, details.end_col, details.end_row and srow + details.end_row
       api.nvim_buf_set_extmark(ui.bufs[tgt], ui.ns, srow + m[2], m[3], hlopts)
     end
+    if tgt == 'pager' then
+      local buf, details = ui.bufs.pager, span[3]
+      M.pager.extid = api.nvim_buf_set_extmark(buf, ui.ns, srow + (span[1] or 0), span[2] or 0, {
+        id = M.pager.buf == buf and M.pager.extid or nil,
+        end_row = srow + (details and details.end_row or #lines - 1),
+        end_col = details and details.end_col or #lines[#lines],
+        invalidate = true,
+        undo_restore = false,
+      })
+      M.pager.buf = buf
+    end
   else
-    if M[src] then
+    if src == 'cmd' or src == 'msg' then
       M.virt[src][M.virt.idx.dupe][1] = nil
     end
     for _, id in pairs(M.virt.ids) do
@@ -296,8 +320,10 @@ local cmd_timer ---@type uv.uv_timer_t? Timer resetting cmdline state next event
 function M.show_msg(tgt, kind, content, replace_last, append, id)
   local mark, msg, cr, dupe, buf = {}, '', false, 0, ui.bufs[tgt]
 
-  if M[tgt] then -- tgt == 'cmd'|'msg'
-    local extid = M[tgt].ids[id] and M[tgt].ids[id].extid
+  local extid
+  if tgt == 'cmd' or tgt == 'msg' then
+    ---@cast tgt 'cmd'|'msg'
+    extid = M[tgt].ids[id] and M[tgt].ids[id].extid
     -- Save the concatenated message to identify repeated messages.
     for _, chunk in ipairs(content) do
       msg = msg .. chunk[2]
@@ -309,13 +335,15 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
     cr = next(M[tgt].ids) ~= nil and msg:sub(1, 1) == '\r'
     replace_last = next(M[tgt].ids) ~= nil and not extid and (replace_last or dupe > 0)
     extid = extid or replace_last and M[tgt].ids[prev_id] and M[tgt].ids[prev_id].extid
-    mark = extid and api.nvim_buf_get_extmark_by_id(buf, ui.ns, extid, { details = true }) or {}
 
     -- Ensure cmdline is clear when writing the first message.
     if tgt == 'cmd' and dupe == 0 and not next(M.cmd.ids) and ui.cmd.srow == 0 then
       api.nvim_buf_set_lines(buf, 0, -1, false, {})
     end
+  elseif tgt == 'pager' and replace_last and M.pager.buf == buf then
+    extid = M.pager.extid
   end
+  mark = extid and api.nvim_buf_get_extmark_by_id(buf, ui.ns, extid, { details = true }) or {}
 
   -- Filter out empty newline messages. TODO: don't emit them.
   if msg == '\n' then
@@ -325,7 +353,14 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
   ---@type integer Start row after last line in the target buffer, unless
   ---this is the first message, or in case of a repeated or replaced message.
   local row = mark[1]
-    or (M[tgt] and not next(M[tgt].ids) and ui.cmd.srow == 0 and 0)
+    or (
+      (tgt == 'cmd' or tgt == 'msg')
+      and not next(M[
+        tgt --[[@as 'cmd'|'msg']]
+      ].ids)
+      and ui.cmd.srow == 0
+      and 0
+    )
     or (api.nvim_buf_line_count(buf) - ((replace_last or cr or append) and 1 or 0))
   local curline = (cr or append) and api.nvim_buf_get_lines(buf, row, row + 1, false)[1]
   col = mark[2] or (append and not cr and math.min(col, #curline) or 0)
@@ -418,16 +453,28 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
   end
 
   if M[tgt] then
-    -- Keep track of message span to replace by ID.
+    -- Track cmd/msg spans by ID, and only the last span for pager.
     local opts = { end_row = row, end_col = col, invalidate = true, undo_restore = false }
-    M[tgt].ids[id] = M[tgt].ids[id] or {}
-    M[tgt].ids[id].extid = api.nvim_buf_set_extmark(buf, ui.ns, start_row, start_col, opts)
-    M[tgt].prev_id, M[tgt].prev_msg, M[tgt].dupe = id, msg, dupe
+    if tgt == 'pager' then
+      -- Update extmark instead of creating new one for pager.
+      opts.id = M.pager.buf == buf and M.pager.extid or nil
+      M.pager.buf = buf
+      M.pager.extid = api.nvim_buf_set_extmark(buf, ui.ns, start_row, start_col, opts)
+    elseif tgt == 'cmd' or tgt == 'msg' then
+      ---@cast tgt 'cmd'|'msg'
+      M[tgt].ids[id] = M[tgt].ids[id] or {}
+      M[tgt].ids[id].extid = api.nvim_buf_set_extmark(buf, ui.ns, start_row, start_col, opts)
+      M[tgt].prev_id, M[tgt].prev_msg, M[tgt].dupe = id, msg, dupe
+    end
   end
 
   set_target_pos()
 
-  if M[tgt] and not M.cmd_on_key and row == api.nvim_buf_line_count(buf) - 1 then
+  if
+    (tgt == 'cmd' or tgt == 'msg')
+    and not M.cmd_on_key
+    and row == api.nvim_buf_line_count(buf) - 1
+  then
     -- Place (x) indicator for repeated messages. Mainly to mitigate unnecessary
     -- resizing of the message window, but also placed in the cmdline.
     M.virt[tgt][M.virt.idx.dupe][1] = dupe > 0 and { 0, ('(%d)'):format(dupe) } or nil
