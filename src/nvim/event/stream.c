@@ -2,11 +2,11 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <uv.h>
-#include <uv/version.h>
 
 #include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/stream.h"
+#include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/memory.h"
 #include "nvim/types_defs.h"
@@ -15,11 +15,6 @@
 #endif
 
 #include "event/stream.c.generated.h"
-
-// For compatibility with libuv < 1.19.0 (tested on 1.18.0)
-#if UV_VERSION_MINOR < 19
-# define uv_stream_get_write_queue_size(stream) stream->write_queue_size
-#endif
 
 /// Sets the stream associated with `fd` to "blocking" mode.
 ///
@@ -118,8 +113,9 @@ void stream_close_handle(Stream *stream)
 {
   uv_handle_t *handle = NULL;
   if (stream->uvstream) {
-    if (uv_stream_get_write_queue_size(stream->uvstream) > 0) {
-      WLOG("closed Stream (%p) with %zu unwritten bytes",
+    if (!exiting  // Unwritten bytes are expected while exiting (force-closed streams).
+        && uv_stream_get_write_queue_size(stream->uvstream) > 0) {
+      ILOG("closed Stream (%p) with %zu unwritten bytes",
            (void *)stream,
            uv_stream_get_write_queue_size(stream->uvstream));
     }
