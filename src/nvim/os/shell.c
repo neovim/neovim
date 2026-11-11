@@ -904,6 +904,7 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
   MultiQueue *events = multiqueue_new_child(main_loop.events);
   proc->events = events;
   proc->argv = argv;
+  proc->interrupt = true;  // Send CTRL-C as SIGINT to the child. #8678
   int status = proc_spawn(proc, has_input, true, true);
   if (status) {
     loop_poll_events(&main_loop, 0);

@@ -170,7 +170,8 @@ struct proc {
   proc_state_cb state_cb;
   internal_proc_cb internal_exit_cb, internal_close_cb;
   bool closed, detach, overlapped, fwd_err;
-  bool stdio_noinherit;  ///< MSWIN: don't share parent console with child (prevent leaking to TUI).
-                         ///< No equivalent on Unix, where inherited stdio is a pipe, not terminal.
+  bool interrupt;         ///< Enables sending CTRL-C as SIGINT to the process tree. #8678
+  bool stdio_noinherit;   ///< MSWIN: don't share parent console w/ child (prevent leaking to TUI).
+                          ///< No equivalent on Unix (inherited stdio is a pipe, not terminal).
   MultiQueue *events;
 };

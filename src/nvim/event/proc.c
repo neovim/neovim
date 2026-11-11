@@ -196,7 +196,9 @@ int proc_wait(Proc *proc, int ms, MultiQueue *events)
       LOOP_PROCESS_EVENTS(proc->loop, events, 0);
     }
 
-    proc->status = -2;
+    if (!proc->interrupt) {  // An `interrupt` child may handle SIGINT, keep its status (not -2).
+      proc->status = -2;
+    }
   }
 
   if (proc->refcount == 1) {
@@ -224,8 +226,12 @@ void proc_stop(Proc *proc) FUNC_ATTR_NONNULL_ALL
 
   switch (proc->type) {
   case kProcTypeUv:
+#ifdef MSWIN
     proc->exit_signal = SIGTERM;
-    os_proc_tree_kill(proc->pid, SIGTERM);
+#else
+    proc->exit_signal = proc->interrupt ? (uint8_t)SIGINT : (uint8_t)SIGTERM;
+#endif
+    os_proc_tree_kill(proc->pid, proc->exit_signal);
     break;
   case kProcTypePty:
     // close all streams for pty processes to send SIGHUP to the process
@@ -263,7 +269,7 @@ static void children_kill_cb(uv_timer_t *handle)
       continue;
     }
     uint64_t term_sent = UINT64_MAX == proc->stopped_time;
-    if (kProcTypePty != proc->type || term_sent) {
+    if ((kProcTypePty != proc->type && !proc->interrupt) || term_sent) {
       proc->exit_signal = SIGKILL;
       os_proc_tree_kill(proc->pid, SIGKILL);
     } else {
