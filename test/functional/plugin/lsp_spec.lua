@@ -364,6 +364,28 @@ describe('LSP', function()
       })
     end)
 
+    it('before_init can replace settings #42774', function()
+      exec_lua(create_server_definition)
+      local result = exec_lua(function()
+        local server = _G._create_server()
+        local client_id = assert(vim.lsp.start({
+          name = 'dummy',
+          cmd = server.cmd,
+          settings = { a = { b = 1 } },
+          before_init = function(_, config)
+            config.settings = vim.tbl_deep_extend('force', config.settings, { a = { c = 2 } })
+          end,
+        }))
+        local client = assert(vim.lsp.get_client_by_id(client_id))
+        for _, msg in ipairs(server.messages) do
+          if msg.method == 'workspace/didChangeConfiguration' then
+            return { msg.params.settings, client.settings }
+          end
+        end
+      end)
+      eq({ { a = { b = 1, c = 2 } }, { a = { b = 1, c = 2 } } }, result)
+    end)
+
     it(
       "should set the client's offset_encoding when positionEncoding capability is supported",
       function()
