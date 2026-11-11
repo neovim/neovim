@@ -2969,6 +2969,7 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
       }
       clear_string_option(&curwin->w_s->b_syn_isk);
       curwin->w_s->b_syn_isk = xstrdup(arg);
+      memset(curwin->w_s->b_syn_chartab, 0, sizeof(curwin->w_s->b_syn_chartab));
       parse_isopt(curwin->w_s->b_syn_isk, curwin->w_s->b_syn_chartab);
     }
   }
