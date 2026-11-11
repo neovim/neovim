@@ -64,6 +64,25 @@ describe('shell command :!', function()
     ]])
   end)
 
+  it('CTRL-C sends SIGINT (not SIGTERM) #8678', function()
+    skip(is_os('win'), 'N/A: SIGINT interrupt is Unix-only (Proc.interrupt)')
+    -- Sync via filesystem (":!" echoes, so screen would match before the cmd even runs).
+    local out = t.tmpname()
+    tt.feed_data(
+      (':!trap "printf TICKET > %s; exit 0" INT; printf READY > %s; while :; do sleep 0.05; done\n'):format(
+        out,
+        out
+      )
+    )
+    t.retry(nil, 4000, function() -- The trap is installed and the script is waiting.
+      t.eq('READY', t.read_file(out))
+    end)
+    tt.feed_data('\3') -- Ctrl-C: SIGINT runs the trap (fixed); SIGTERM would kill it silently (old)
+    t.retry(nil, 4000, function()
+      t.eq('TICKET', t.read_file(out))
+    end)
+  end)
+
   it('throttles shell-command output greater than ~10KB', { retries = 2 }, function()
     skip(is_os('openbsd'), 'FIXME #10804')
     skip(is_os('win'))
