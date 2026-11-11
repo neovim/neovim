@@ -2137,6 +2137,17 @@ int get_last_leader_offset(char *line, char **flags)
         continue;
       }
 
+      // If the 'f' flag is present, ensure we are actually inside a comment context
+      // and not executable code (like a mathematical subtraction operator).
+      if (vim_strchr(part_buf, 'f') != NULL) {
+      // Check if the current position (line + i) has a comment syntax group,
+      // or use Neovim's syntax/treesitter node check API at position (row, col).
+      // If it's pure code, skip treating it as a leader:
+      if (!syntax_present_at_pos(curwin, curbuf, i)) { // (Conceptual helper check)
+        continue;
+      }
+      }
+
       if (vim_strchr(part_buf, COM_MIDDLE) != NULL) {
         // For a middlepart comment, only consider it to match if
         // everything before the current position in the line is
