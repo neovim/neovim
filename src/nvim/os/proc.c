@@ -97,12 +97,13 @@ bool os_proc_tree_kill(int pid, int sig)
 /// Kills process group where `pid` is the process group leader.
 bool os_proc_tree_kill(int pid, int sig)
 {
-  assert(sig == SIGTERM || sig == SIGKILL);
+  assert(sig == SIGINT || sig == SIGTERM || sig == SIGKILL);
   if (pid == 0) {
     // Never kill self (pid=0).
     return false;
   }
-  ILOG("sending %s to PID %d", sig == SIGTERM ? "SIGTERM" : "SIGKILL", -pid);
+  ILOG("sending %s to PID %d",
+       sig == SIGINT ? "SIGINT" : sig == SIGTERM ? "SIGTERM" : "SIGKILL", -pid);
   return uv_kill(-pid, sig) == 0;
 }
 #endif
