@@ -1526,7 +1526,7 @@ static void tui_set_mode(TUIData *tui, ModeShape mode)
       TPVAR params[9] = { 0 };
       char hexbuf[8];
       if (tui->set_cursor_color_as_str) {
-        snprintf(hexbuf, 7 + 1, "#%06x", aep.rgb_bg_color);
+        snprintf(hexbuf, sizeof(hexbuf), "#%06x", (unsigned)aep.rgb_bg_color & 0xffffffU);
         params[0].string = hexbuf;
       } else {
         params[0].num = aep.rgb_bg_color;
@@ -1549,6 +1549,8 @@ static void tui_set_mode(TUIData *tui, ModeShape mode)
     shape = 3; break;
   case SHAPE_VER:
     shape = 5; break;
+  default:
+    UNREACHABLE;
   }
   terminfo_print_num1(tui, kTerm_set_cursor_style,
                       shape + (int)(c.blinkon == 0 || c.blinkoff == 0));
