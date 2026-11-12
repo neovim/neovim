@@ -929,6 +929,24 @@ describe('API/win', function()
       )
     end)
 
+    it('ASCII before a composing or joined char', function()
+      local x = ('x'):rep(42)
+      api.nvim_buf_set_lines(0, 0, -1, true, {
+        x .. 'a\u{200d}\u{1f600}',
+        x .. 'ab\u{200d}\u{1f600}',
+        x .. 'abc',
+        x .. 'abcd',
+        x .. 'e\u{301}fg',
+        '\t' .. ('y'):rep(37),
+        '\t' .. ('y'):rep(38),
+      })
+      local heights = {}
+      for i = 0, 6 do
+        heights[#heights + 1] = api.nvim_win_text_height(0, { start_row = i, end_row = i }).all
+      end
+      eq({ 1, 2, 1, 2, 1, 1, 2 }, heights)
+    end)
+
     it('with two diff windows', function()
       exec([[
         set diffopt+=context:2 number

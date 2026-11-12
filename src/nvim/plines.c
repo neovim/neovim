@@ -865,6 +865,26 @@ int linesize_regular(CharsizeArg *const csarg, int vcol_arg, colnr_T const len)
   return vcol_arg;
 }
 
+static inline size_t ascii_print_run(const char *const p, const char *const end)
+{
+  const char *s = p;
+  while (end - s >= 8) {
+    uint64_t x;
+    memcpy(&x, s, 8);
+    if ((x | (x - 0x2020202020202020ULL) | (x + 0x0101010101010101ULL)) & 0x8080808080808080ULL) {
+      break;
+    }
+    s += 8;
+  }
+  while (s < end && (uint8_t)(*s - 0x20) < 0x5f) {
+    s++;
+  }
+  if (s > p && (uint8_t)(*s) >= 0x80) {
+    s--;
+  }
+  return (size_t)(s - p);
+}
+
 /// Like linesize_regular(), but can be used when CSType is kCharsizeFast.
 ///
 /// @see linesize_regular
@@ -874,10 +894,24 @@ int linesize_fast(CharsizeArg const *const csarg, int vcol_arg, colnr_T const le
   bool const use_tabstop = csarg->use_tabstop;
 
   char *const line = csarg->line;
+  char *const end = line + strnlen(line, (size_t)MAX(len, 0));
   int64_t vcol = vcol_arg;
 
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
-  while (ci.ptr - line < len && *ci.ptr != NUL) {
+  while (ci.ptr < end) {
+    size_t const run = ascii_print_run(ci.ptr, end);
+    if (run > 0) {
+      vcol += (int64_t)run;
+      if (vcol > MAXCOL) {
+        vcol_arg = MAXCOL;
+        break;
+      }
+      vcol_arg = (int)vcol;
+      ci = utf_ptr2StrCharInfo(ci.ptr + run);
+      if (ci.ptr >= end) {
+        break;
+      }
+    }
     ClusterInfo cli = utf_ClusterInfo(ci);
     vcol += charsize_fast_impl(wp, ci.ptr, use_tabstop, vcol_arg, ci.chr.value, cli.cells).width;
     ci = cli.next;
