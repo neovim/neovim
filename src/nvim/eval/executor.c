@@ -64,8 +64,8 @@ static int tv_op_list(typval_T *tv1, const typval_T *tv2, const char *op)
   }
 
   if (tv1->vval.v_list == NULL) {
-    tv1->vval.v_list = tv2->vval.v_list;
-    tv_list_ref(tv1->vval.v_list);
+    // Make a copy, "tv1" must not become the same List as "tv2".
+    tv1->vval.v_list = tv_list_copy(NULL, tv2->vval.v_list, false, 0);
   } else {
     tv_list_extend(tv1->vval.v_list, tv2->vval.v_list, NULL);
   }
