@@ -546,6 +546,7 @@ PLUGINS
   :packadd old-zip
 <
 • provider: add bun support for Node.js plugins
+• |:DiffTool| now supports `layout = 'unified'` in |difftool.open()|.
 
 STARTUP
 
