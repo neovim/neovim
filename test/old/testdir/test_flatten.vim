@@ -105,4 +105,23 @@ func Test_flattennew()
   call assert_equal([1, 11, 101, 1001], flattennew(l4))
 endfunc
 
+" flatten() on a locked list must fail without affecting the list's
+" reference count: the rettv of the failed :call is always cleared by the
+" caller, and that must not drop a reference flatten() never took.
+func Test_flatten_locked()
+  let l = [1, [2]]
+  lockvar l
+  call assert_fails('call flatten(l)', 'E741:')
+  unlockvar l
+  call assert_equal([1, [2]], l)
+  call test_garbagecollect_now()
+  call assert_equal([1, [2]], l)
+
+  const l2 = [1, [2]]
+  call assert_fails('call flatten(l2)', 'E741:')
+  call assert_equal([1, [2]], l2)
+  call test_garbagecollect_now()
+  call assert_equal([1, [2]], l2)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
