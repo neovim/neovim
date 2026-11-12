@@ -1427,24 +1427,30 @@ static void flatten_common(typval_T *argvars, typval_T *rettv, bool make_copy)
   }
 
   list_T *list = argvars[0].vval.v_list;
-  rettv->v_type = VAR_LIST;
-  rettv->vval.v_list = list;
   if (list == NULL) {
+    rettv->v_type = VAR_LIST;
+    rettv->vval.v_list = NULL;
     return;
   }
 
   if (make_copy) {
     list = tv_list_copy(NULL, list, false, get_copyID());
-    rettv->vval.v_list = list;
     if (list == NULL) {
       return;
     }
   } else {
+    // Do not touch "rettv" before the lock check: on failure "rettv"
+    // must stay VAR_UNKNOWN, since the caller unconditionally calls
+    // clear_tv() on it, which must not drop a reference to "l" that
+    // was never taken.
     if (value_check_lock(tv_list_locked(list), N_("flatten() argument"), TV_TRANSLATE)) {
       return;
     }
     tv_list_ref(list);
   }
+
+  rettv->v_type = VAR_LIST;
+  rettv->vval.v_list = list;
 
   tv_list_flatten(list, NULL, tv_list_len(list), maxdepth);
 }
