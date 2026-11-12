@@ -699,6 +699,9 @@ static size_t on_channel_output(RStream *stream, Channel *chan, const char *buf,
 
   if (eof) {
     reader->eof = true;
+    if (chan->streamtype == kChannelStreamSocket) {
+      rstream_may_close(stream);
+    }
   }
 
 #ifdef MSWIN

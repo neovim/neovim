@@ -63,6 +63,45 @@ describe('channels', function()
     eq({ 'notification', 'data', { id, { '' } } }, next_msg())
   end)
 
+  for _, mode in ipairs({ 'no callback', 'callback', 'buffered callback' }) do
+    it('closes raw TCP socket on EOF with ' .. mode .. ' #11166', function()
+      local id = exec_lua(function(callback_mode)
+        local uv = vim.uv
+        local server = assert(uv.new_tcp())
+        assert(server:bind('127.0.0.1', 0))
+        assert(server:listen(1, function(err)
+          assert(not err, err)
+          local peer = assert(uv.new_tcp())
+          assert(server:accept(peer))
+          peer:write('hello\n', function()
+            peer:shutdown(function()
+              peer:close()
+            end)
+          end)
+          server:close()
+        end))
+        _G.socket_data = {}
+        local opts = vim.empty_dict()
+        if callback_mode ~= 'no callback' then
+          opts.on_data = function(_, data)
+            table.insert(_G.socket_data, data)
+          end
+          opts.data_buffered = callback_mode == 'buffered callback'
+        end
+        return vim.fn.sockconnect('tcp', '127.0.0.1:' .. server:getsockname().port, opts)
+      end, mode)
+      ok(id > 0)
+      retry(nil, 3000, function()
+        eq({}, api.nvim_get_chan_info(id))
+      end)
+      if mode == 'callback' then
+        eq({ { 'hello', '' }, { '' } }, exec_lua('return _G.socket_data'))
+      elseif mode == 'buffered callback' then
+        eq({ { 'hello', '' } }, exec_lua('return _G.socket_data'))
+      end
+    end)
+  end
+
   it('emits ChanClose when RPC socket reaches EOF', function()
     local client = get_session()
     local server = n.new_session(true)
