@@ -100,6 +100,18 @@ describe('vim.system', function()
               return { obj:wait(100).code, obj:wait() }
             end)
           )
+          -- Also if the process handles SIGTERM and exits with another code (e.g. ssh: 255).
+          eq(
+            { code = 124, signal = 0, stdout = 'ready\n', stderr = '' },
+            exec_lua(function()
+              local cmd = 'trap "exit 255" TERM; echo ready; while :; do sleep 0.1; done'
+              local obj = vim.system({ 'sh', '-c', cmd })
+              obj:wait(nil, function(stdout)
+                return stdout ~= '' -- The TERM trap is set (before `echo ready`).
+              end)
+              return obj:wait(1)
+            end)
+          )
         end
 
         eq({
@@ -107,7 +119,7 @@ describe('vim.system', function()
           signal = 15,
           stdout = '',
           stderr = '',
-        }, system({ 'sleep', '10' }, { timeout = 1000 }))
+        }, system({ 'sleep', '10' }, { timeout = 1 }))
       end)
     end)
   end

@@ -100,12 +100,8 @@ end
 --- @return vim.SystemCompleted
 local function completed(state)
   local exit = assert(state.exit)
-  local code = exit.code
-  if (code == 0 or code == 1) and state.stopped == 'timeout' then
-    code = 124 -- Stopped: code 0 (Unix) or 1 (Windows).
-  end
   return {
-    code = code,
+    code = state.stopped == 'timeout' and 124 or exit.code,
     signal = exit.signal,
     stdout = state.stdout_data and state.stdout_data:tostring() or nil,
     stderr = state.stderr_data and state.stderr_data:tostring() or nil,
