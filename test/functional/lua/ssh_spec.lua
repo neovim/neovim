@@ -631,7 +631,7 @@ describe('remote-ssh', function()
       ui2:close()
     end)
     local chan_addr = ('/local/nvim-ssh.host.%s2'):format(token) -- As the TUI sets it.
-    ui2:request('nvim_chan_set', 0, { addr = chan_addr })
+    ui2:request('nvim_chan_set', 0, { addr = chan_addr, detach = false })
     local screen2 = Screen.new(40, 4, nil, ui2)
     local connected --- @type string?
     screen2._handle_connect = function(_, addr)

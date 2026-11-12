@@ -1104,7 +1104,7 @@ describe('TUI :connect', function()
                                                       |
   ]]
 
-  it('leaves server running if other attached UIs; fails if buffer is modified', function()
+  it('does not stop the server after :detach! or with another UI attached', function()
     local server1 = new_pipename()
     local screen1 = tt.setup_child_nvim({ '--listen', server1, '--clean' })
     screen1:expect({ any = vim.pesc('[No Name]') })
@@ -1139,8 +1139,20 @@ describe('TUI :connect', function()
       screen2:expect({ any = vim.pesc('This is server 2^.'), none = 'E162' })
     end
 
-    -- Another UI is attached: the server stays for it.
+    -- With :detach!, the server continues running after its last UI disconnects. #42792
+    tt.feed_data(':detach!\013')
+    screen2:expect({ any = 'Nvim will continue running if the UI disconnects' })
+    tt.feed_data((':connect %s\013'):format(server1))
+    screen2:expect({ any = vim.pesc('This is server 1^.') })
+    tt.feed_data((':connect %s\013'):format(server2))
+    screen2:expect({ any = vim.pesc('This is server 2^.') })
+
+    -- Socket channels have detach=true by default.
     local server2_session = n.connect(server2)
+    local _, uis = server2_session:request('nvim_list_uis')
+    server2_session:request('nvim_chan_set', uis[1].chan, { detach = false })
+
+    -- The server continues running because another UI is attached.
     server2_session:request('nvim_ui_attach', 50, 7, {})
 
     if not is_os('win') then -- serverlist() doesn't discover Windows peers yet.
