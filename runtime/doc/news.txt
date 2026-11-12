@@ -327,8 +327,9 @@ EDITOR
 • |ZR| restarts Nvim (|:restart|).
 • |:connect| supports `ssh://` URIs. |remote-ssh|
 • |:connect| without arguments shows a menu of known servers and ssh hosts.
-• |:connect| stops the current server if no other UI is attached, or fails if
-  :qall would fail (unsaved changes). ":connect!" (with bang "!") was removed.
+• |:connect| stops the current server if no other UI is attached and the current
+  UI is not detachable (|:detach!|). In that case, :connect fails if :qall would
+  fail (unsaved changes). ":connect!" (with bang "!") was removed.
 • |:detach| with range "%" detaches all UIs except the current one.
 • |:detach!| (with bang "!") marks the current UI as detachable: Nvim will
   continue running if the UI disconnects unexpectedly (e.g. if you
