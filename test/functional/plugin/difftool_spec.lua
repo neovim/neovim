@@ -9,19 +9,18 @@ local eq = t.eq
 local eq_partial = t.eq_partial
 local fn = n.fn
 
-local pathsep = n.get_pathsep()
 local testdir_left = 'Xtest-difftool-left'
 local testdir_right = 'Xtest-difftool-right'
 
 setup(function()
   n.mkdir_p(testdir_left)
   n.mkdir_p(testdir_right)
-  t.write_file(testdir_left .. pathsep .. 'file1.txt', 'hello')
-  t.write_file(testdir_left .. pathsep .. 'file2.txt', 'foo')
-  t.write_file(testdir_left .. pathsep .. 'file4 with space.txt', 'hello')
-  t.write_file(testdir_right .. pathsep .. 'file1.txt', 'hello world') -- modified
-  t.write_file(testdir_right .. pathsep .. 'file3.txt', 'bar') -- added
-  t.write_file(testdir_right .. pathsep .. 'file4 with space.txt', 'hello world') -- modified
+  t.write_file(vim.fs.joinpath(testdir_left, 'file1.txt'), 'hello')
+  t.write_file(vim.fs.joinpath(testdir_left, 'file2.txt'), 'foo')
+  t.write_file(vim.fs.joinpath(testdir_left, 'file4 with space.txt'), 'hello')
+  t.write_file(vim.fs.joinpath(testdir_right, 'file1.txt'), 'hello world') -- modified
+  t.write_file(vim.fs.joinpath(testdir_right, 'file3.txt'), 'bar') -- added
+  t.write_file(vim.fs.joinpath(testdir_right, 'file4 with space.txt'), 'hello world') -- modified
 end)
 
 teardown(function()

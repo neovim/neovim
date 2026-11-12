@@ -16,9 +16,9 @@ local command = n.command
 local fname = 'Xtest-functional-eval-writefile'
 local dname = fname .. '.d'
 local dfname_tail = '1'
-local dfname = dname .. '/' .. dfname_tail
+local dfname = vim.fs.joinpath(dname, dfname_tail)
 local ddname_tail = '2'
-local ddname = dname .. '/' .. ddname_tail
+local ddname = vim.fs.joinpath(dname, ddname_tail)
 
 before_each(function()
   mkdir(dname)

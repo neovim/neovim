@@ -224,9 +224,8 @@ describe('fileio', function()
 
     local initial_content = 'foo'
     local backup_dir = 'Xtest_backupdir'
-    local sep = n.get_pathsep()
     local link_file_name = 'Xtest_startup_file2'
-    local backup_file_name = backup_dir .. sep .. link_file_name .. '~'
+    local backup_file_name = vim.fs.joinpath(backup_dir, link_file_name .. '~')
 
     write_file('Xtest_startup_file1', initial_content, false)
     uv.fs_symlink('Xtest_startup_file1', link_file_name)
