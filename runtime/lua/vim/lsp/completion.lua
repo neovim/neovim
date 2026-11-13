@@ -414,13 +414,17 @@ end
 local function complete_item_info(item, popup)
   local info, kind = get_doc(item)
 
-  if item.detail and item.detail ~= '' then
+  if item.detail and item.detail ~= '' and not info:find(item.detail, 1, true) then
     local detail_block = ('```%s\n%s\n```'):format(vim.bo.filetype, item.detail)
     if info == '' then
       info = detail_block
-    elseif not info:find(item.detail, 1, true) then
-      info = detail_block .. '\n' .. info
+    else
+      if kind ~= protocol.MarkupKind.Markdown then
+        info = ('```text\n%s\n```'):format(info)
+      end
+      info = ('%s\n%s'):format(detail_block, info)
     end
+    kind = protocol.MarkupKind.Markdown
   end
 
   if info == '' and popup and item.insertTextFormat == protocol.InsertTextFormat.Snippet then
@@ -428,6 +432,7 @@ local function complete_item_info(item, popup)
     if text then
       local snippet = parse_snippet(text)
       info = ('```%s\n%s\n```'):format(vim.bo.filetype, snippet)
+      kind = protocol.MarkupKind.Markdown
     end
   end
 
