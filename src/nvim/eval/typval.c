@@ -1577,11 +1577,17 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
     goto theend;
   }
 
+  // A user-supplied compare function could otherwise add, remove or
+  // reorder items while do_sort() or do_uniq() still hold pointers into
+  // the list, causing them to use an already freed list item.
+  const VarLockStatus prev_lock = tv_list_locked(l);
+  tv_list_set_lock(l, VAR_FIXED);
   if (sort) {
     do_sort(l, &info);
   } else {
     do_uniq(l, &info);
   }
+  tv_list_set_lock(l, prev_lock);
 
 theend:
   sortinfo = old_sortinfo;
