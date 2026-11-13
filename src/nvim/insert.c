@@ -621,17 +621,14 @@ static int insert_execute(VimState *state, int key)
 
       // Pressing CTRL-Y selects the current match.  When
       // compl_enter_selects is set the Enter key does the same.
-      if ((s->c == Ctrl_Y || is_commit
-           || (ins_compl_enter_selects()
-               && (s->c == CAR || s->c == K_KENTER || s->c == NL)))
-          && stop_arrow() == OK) {
+      if (ins_compl_accepts_match(s->c) && stop_arrow() == OK) {
         ins_compl_delete(false);
         if (ins_compl_preinsert_longest() && !ins_compl_is_match_selected()) {
-          ins_compl_insert(false, true);
+          ins_compl_insert(false, true, false);
           ins_compl_init_get_longest();
           return 1;  // continue
         } else {
-          ins_compl_insert(false, false);
+          ins_compl_insert(false, false, false);
         }
       } else if (ascii_iswhite_nl_or_nul(s->c) && ins_compl_preinsert_effect()) {
         // Delete preinserted text when typing special chars
