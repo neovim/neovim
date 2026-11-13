@@ -1195,6 +1195,12 @@ struct window_S {
   int w_last_width;                 ///< last known value for w_width
   int w_last_height;                ///< last known value for w_height
 
+  // these fields are only used when the window shows a terminal buffer
+  bool w_term_follow;               ///< whether w_cursor follows the terminal cursor
+  pos_T w_term_follow_cursor;       ///< w_cursor when the view was last recorded
+  linenr_T w_term_follow_topline;   ///< w_topline when the view was last recorded
+  int w_term_follow_height;         ///< w_view_height when the view was last recorded
+
   //
   // Layout of the window in the screen.
   // May need to add "msg_scrolled" to "w_winrow" in rare situations.

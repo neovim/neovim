@@ -1679,6 +1679,10 @@ void win_init(win_T *newp, win_T *oldp, int flags)
   newp->w_wrow = oldp->w_wrow;
   newp->w_fraction = oldp->w_fraction;
   newp->w_prev_fraction_row = oldp->w_prev_fraction_row;
+  newp->w_term_follow = oldp->w_term_follow;
+  newp->w_term_follow_cursor = oldp->w_term_follow_cursor;
+  newp->w_term_follow_topline = oldp->w_term_follow_topline;
+  newp->w_term_follow_height = oldp->w_term_follow_height;
   copy_jumplist(oldp, newp);
   if (flags & WSP_NEWLOC) {
     // Don't copy the location list.
