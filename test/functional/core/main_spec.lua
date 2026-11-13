@@ -212,6 +212,7 @@ describe('vim._core', function()
       'vim._core.mcursor',
       'vim._core.options',
       'vim._core.proc',
+      'vim._core.run_in_terminal',
       'vim._core.server',
       'vim._core.shared',
       'vim._core.spell',
