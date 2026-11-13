@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	Fortran 2023 (and Fortran 2018, 2008, 2003, 95, 90, and 77)
-" Version:	(v113) 2024 February 01
+" Version:	(v114) 2026 November 01
 " Maintainers:	Ajit J. Thakkar <ajit@unb.ca>; <https://ajit.ext.unb.ca/>
-" 	        Joshua Hollett <j.hollett@uwinnipeg.ca>
+" Backup:       Joshua Hollett <j.hollett@uwinnipeg.ca>
 " Usage:	For instructions, do :help fortran-syntax from Vim
 " Credits:
 "  Version 0.1 for Fortran 95 was created in April 2000 by Ajit Thakkar from an
@@ -84,16 +84,16 @@ syn match fortranConstructName          "\%(\<end\s*associate\s\+\)\@18<=\a\w*\>
 syn match fortranUnitName               "\%(\<\%(end\s*\)\?\%(subroutine\|function\|module\|program\|submodule\)\s\+\)\@12<=\a\w*"
 syn match fortranUnitHeader             "\<end\>\ze\s*\%(!.*\)\?$"
 
-syn keyword fortranIntrinsic	abs acos aimag aint anint asin atan atan2 cmplx conjg cos cosh exp ichar index int log log10 max min nint sin sinh sqrt tan tanh
+syn keyword fortranIntrinsic	abs acos aimag aint anint asin atan atan2 cmplx conjg cos cosh exp ichar int log log10 nint sin sinh sqrt tan tanh
 syn keyword fortranIntrinsicR	achar iachar transfer dble dprod dim lge lgt lle llt mod
 syn keyword fortranIntrinsic    command_argument_count get_command get_command_argument get_environment_variable is_iostat_end is_iostat_eor move_alloc new_line same_type_as extends_type_of
 syn keyword fortranIntrinsic    selected_real_kind selected_int_kind selected_logical_kind selected_char_kind next previous
 syn keyword fortranIntrinsic    acosh asinh atanh bessel_j0 bessel_j1 bessel_jn bessel_y0 bessel_y1 bessel_yn erf erfc erfc_scaled gamma log_gamma hypot norm2
 syn keyword fortranIntrinsic    adjustl adjustr all allocated any associated bit_size btest ceiling cshift date_and_time digits
 syn keyword fortranIntrinsic    dot_product eoshift exponent floor fraction iand ibclr ibits ibset ieor ior ishft ishftc lbound len_trim matmul maxexponent maxloc merge minexponent minloc
-syn keyword fortranIntrinsic    modulo mvbits nearest pack precision present radix random_number random_seed range repeat reshape rrspacing scale scan set_exponent shape spacing
+syn keyword fortranIntrinsic    modulo mvbits nearest pack precision present radix random_number random_seed range repeat reshape rrspacing scan set_exponent shape spacing
 " intrinsic names often used for variables in older Fortran code
-syn match fortranIntrinsic      '\<\%(count\|epsilon\|maxval\|minval\|product\|sum\|huge\|tiny\|char\)\>\ze\s*('
+syn match fortranIntrinsic      '\<\%(count\|epsilon\|index\|max\|maxval\|min\|minval\|product\|scale\|sum\|huge\|tiny\|char\)\>\ze\s*('
 syn keyword fortranIntrinsic    spread system_clock transpose trim ubound unpack verify is_contiguous event_query
 syn keyword fortranIntrinsic    atomic_define atomic_ref execute_command_line leadz trailz storage_size merge_bits
 syn keyword fortranIntrinsic    bge bgt ble blt dshiftl dshiftr findloc iall iany iparity image_index lcobound ucobound maskl maskr num_images parity popcnt poppar shifta shiftl shiftr this_image
@@ -140,14 +140,15 @@ syn match fortranType           "\%(simple \|pure \|impure \|recursive \|non_rec
 syn match fortranTypeR	       	display "\<double\s*precision\>"
 syn match fortranTypeR  	display "\<double\s\+complex\>"
 syn keyword fortranAttribute    abstract allocatable bind codimension contiguous deferred dimension extends
-syn keyword fortranAttribute    external intent intrinsic non_intrinsic non_overridable nopass optional parameter pass
+syn keyword fortranAttribute    external intrinsic non_intrinsic non_overridable nopass optional parameter pass
 syn keyword fortranAttribute    pointer private protected public save sequence target value volatile
 syn match fortranAttribute      "\<asynchronous\>\ze\s*\%(::\|,\|(\)"
+syn match fortranAttribute      "\<intent\s*(\s*\%(in\s*out\|in\|out\)\s*)"
 
 syn keyword fortranUnitHeader	result operator assignment
 syn match fortranUnitHeader     "\<\%(end\s*\)\?\%(subroutine\|function\|module\|program\|submodule\)\>"
 syn match fortranBlock          "\<\%(end\s*\)\?\%(block\|critical\|associate\)\>"
-syn match fortranCalled		"\<\%(call\s\+\)\@7<=\a\w*"
+syn match fortranCalled		"\<\%(\(call\|use\)\s\+\)\@7<=\a\w*"
 syn match fortranRepeat		"\<do\>"
 syn keyword fortranRepeat       concurrent
 syn keyword fortranRepeatR	while
@@ -155,7 +156,7 @@ syn match fortranRepeat         "\<end\s*do\>"
 syn keyword fortranRepeatOb	forall
 syn match fortranRepeatOb	"\<end\s*forall\>"
 
-syn keyword fortranTodo		contained bug note debug todo fixme
+syn keyword fortranTodo		contained bug check debug fix fixme note todo
 
 "Catch errors caused by too many right parentheses
 syn region fortranParen transparent start="(" end=")" contains=ALLBUT,fortranParenError,@fortranCommentGroup,cIncluded,@spell
@@ -252,7 +253,7 @@ syn match fortranConditional    "\<\%(else\s*\)\?if\>"
 syn match fortranConditional    "\<\%(end\s*\)\?\%(if\|where\|select\)\>"
 syn match fortranConditional    "\<select\s*\%(case\|rank\|type\)\>"
 syn match fortranConditional    "\<\%(case\|rank\|class\)\s\+default\>"
-syn match fortranConditional    "^\s*\zs\%(case\|rank\)\ze\s\+("
+syn match fortranConditional    "^\s*\zs\%(case\|rank\)\ze\s*("
 syn match fortranConditional    "\<\%(class\|type\)\s\+is\>"
 syn match fortranConditionalDel	"\<if\s*(.*)\s*\d\+\s*,\s*\d\+\s*,\s*\d\+\s*$"
 
@@ -267,7 +268,6 @@ syn match fortranImageControl   "\<notify\s\+wait\ze\s*("
 syn keyword fortranUnitHeaderOb	entry
 syn match fortranUnitHeaderOb	display "\<block\s*data\>"
 
-syn keyword fortranStorageClass	        in out inout
 syn match fortranStorageClass           '\<\%(kind\|len\)\>\ze\s*='
 syn match fortranStorageClass           "^\s*data\>\ze\%(\s\+\a\)\@="
 syn match fortranStorageClassOb         "\<common\>\%(\s*\%(/\|\a\)\)\@="
