@@ -70,7 +70,7 @@ end
 ---@param info TS.FoldInfo
 ---@param srow integer?
 ---@param erow integer? 0-indexed, exclusive
----@param callback function?
+---@param callback fun(srow: integer)? called with the actual start row
 local function compute_folds_levels(bufnr, info, srow, erow, callback)
   srow = srow or 0
   erow = erow or api.nvim_buf_line_count(bufnr)
@@ -142,6 +142,19 @@ local function compute_folds_levels(bufnr, info, srow, erow, callback)
       end
     end)
 
+    -- A fold that starts above srow may have just become foldable (e.g. grown past 'foldminlines').
+    -- Recompute from its start if that line is not a fold start yet.
+    local fold_srow = srow
+    for lnum in pairs(enter_counts) do
+      if lnum <= srow and not vim.startswith(info.levels[lnum] or '', '>') then
+        fold_srow = math.min(fold_srow, lnum - 1)
+      end
+    end
+    if fold_srow < srow then
+      compute_folds_levels(bufnr, info, fold_srow, erow, callback)
+      return
+    end
+
     local nestmax = vim.wo.foldnestmax
     local level0_prev = info.levels0[srow] or 0
     local leave_prev = leave_counts[srow] or 0
@@ -192,7 +205,7 @@ local function compute_folds_levels(bufnr, info, srow, erow, callback)
     end
 
     if callback then
-      callback()
+      callback(srow)
     end
   end)
 end
@@ -305,7 +318,8 @@ local function on_changedtree(bufnr, tree_changes)
       srow = math.max(srow - vim.wo.foldminlines, 0)
       srow_upd = srow_upd and math.min(srow_upd, srow) or srow
       erow_upd = erow_upd and math.max(erow_upd, erow) or erow
-      compute_folds_levels(bufnr, foldinfo, srow, erow, function()
+      compute_folds_levels(bufnr, foldinfo, srow, erow, function(fold_srow)
+        srow_upd = math.min(srow_upd, fold_srow)
         iterations = iterations + 1
         if iterations == #tree_changes then
           foldinfo:foldupdate(bufnr, srow_upd, erow_upd)
@@ -374,8 +388,8 @@ local function on_bytes(bufnr, start_row, start_col, old_row, old_col, new_row, 
       foldinfo.on_bytes_range = nil
       -- Start from `srow - foldminlines`, because this edit may have shrunken the fold below limit.
       srow = math.max(srow - vim.wo.foldminlines, 0)
-      compute_folds_levels(bufnr, foldinfo, srow, erow, function()
-        foldinfo:foldupdate(bufnr, srow, erow)
+      compute_folds_levels(bufnr, foldinfo, srow, erow, function(fold_srow)
+        foldinfo:foldupdate(bufnr, fold_srow, erow)
       end)
     end)
   end
