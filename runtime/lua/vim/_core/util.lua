@@ -2,6 +2,62 @@
 
 local M = {}
 
+--- Calls {on_choice} directly for a single item, otherwise delegates to `vim.ui.select()`.
+--- @generic T
+--- @param items T[] Non-empty list of items
+--- @param opts vim.ui.select.Opts
+--- @param on_choice fun(item: T|nil, idx: integer|nil)
+function M.do_or_select(items, opts, on_choice)
+  assert(#items > 0, 'Empty items!')
+  if #items == 1 then
+    return on_choice(items[1], 1)
+  end
+  return vim.ui.select(items, opts, on_choice)
+end
+
+--- Shortens a path for display, relative to {base} if it contains the path, otherwise
+--- using an absolute path with the home directory replaced by `~`.
+--- Examples (with $HOME=/home/user):
+--- - "/home/user/project/src/main.c", base="/home/user/project" => "src/main.c"
+--- - "/home/user/other/main.c", base="/home/user/project" => "~/other/main.c"
+--- - "/home/user/project/src/main.c", no base => "~/project/src/main.c"
+--- - "/var/log/nvim.log", no base => "/var/log/nvim.log"
+--- @param path string
+--- @param base string?
+--- @return string
+function M.shorten_path(path, base)
+  return base and vim.fs.relpath(base, path) or vim.fn.fnamemodify(vim.fs.abspath(path), ':~')
+end
+
+--- Collects {count} asynchronous results in input order, omitting nil results, and calls
+--- {on_complete} once the last one arrives. A {count} of 0 completes immediately.
+--- Example with count=3, results reported in arrival order:
+--- (3, "c"), (1, "a"), (2, nil) => on_complete({ "a", "c" })
+--- @generic T
+--- @param count integer
+--- @param on_complete fun(results: T[])
+--- @return fun(index: integer, result: T?) report Reports the result at `index` (1-based).
+function M.collect_ordered(count, on_complete)
+  local results = {} --- @type table<integer, T>
+  local remaining = count
+  if count == 0 then
+    on_complete({})
+  end
+  return function(index, result)
+    results[index] = result
+    remaining = remaining - 1
+    if remaining == 0 then
+      local ordered = {} --- @type T[]
+      for i = 1, count do
+        if results[i] ~= nil then
+          ordered[#ordered + 1] = results[i]
+        end
+      end
+      on_complete(ordered)
+    end
+  end
+end
+
 -- Generated from async.nvim/lua/async/_errors.lua: start
 local nil_error = 'error(nil)'
 
