@@ -1578,4 +1578,31 @@ func Test_sort_with_marks()
   bw!
 endfunc
 
+" A compare function used by sort()/uniq() must not be able to change the
+" list that is being processed: sort() and uniq() keep pointers into the
+" list while the compare function runs.
+func RemoveWhileSorting(a, b)
+  call assert_fails('call remove(g:sortlist, 0)', 'E742:')
+  return a:a - a:b
+endfunc
+
+func Test_sort_disallow_mutate_during_compare()
+  let g:sortlist = [3, 2, 1]
+  call sort(g:sortlist, 'RemoveWhileSorting')
+  call assert_equal([1, 2, 3], g:sortlist)
+  unlet g:sortlist
+endfunc
+
+func RemoveWhileUniq(a, b)
+  call assert_fails('call remove(g:uniqlist, 0)', 'E742:')
+  return a:a - a:b
+endfunc
+
+func Test_uniq_disallow_mutate_during_compare()
+  let g:uniqlist = [1, 1, 2, 2, 3]
+  call uniq(g:uniqlist, 'RemoveWhileUniq')
+  call assert_equal([1, 2, 3], g:uniqlist)
+  unlet g:uniqlist
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
