@@ -75,6 +75,7 @@
 \*'ttyscroll'\*
 \*'ttytype'\*
 \*'weirdinvert'\*
+\*'wl[a-z]\+'\*
 \*'[a-z]\+dll'\*
 \*--literal\*
 \*--not-a-term\*
@@ -125,6 +126,7 @@
 \*help-toc-install\*
 \*hl-TabPanel[a-zA-Z]\+\*
 \*multibyte-ime\*
+\*multibyte-ime-compatibility\*
 \*os-support\*
 \*patches-\(after-\)\?[0-9].*\*
 \*pkzip\*

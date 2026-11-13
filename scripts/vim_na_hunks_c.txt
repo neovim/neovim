@@ -16,6 +16,7 @@
 ^did_set_swapsync(
 ^did_set_toolbar[a-zA-Z0-9_]\+(
 ^did_set_ttymouse(
+^did_set_wl[a-z]\+(
 ^do_fixdel(
 ^dynamic_feature(
 ^ex_behave(
