@@ -5092,6 +5092,7 @@ vim.go.pvh = vim.go.previewheight
 ---    border  One of the 'winborder' styles.  When omitted, 'winborder'
 ---            is used.  A custom (comma separated) border cannot be
 ---            given here, use 'winborder'.
+---    highlight  Highlight group used instead of `hl-NormalFloat`.
 --- The window background uses `hl-NormalFloat` and the border uses
 --- `hl-FloatBorder`.
 --- Not used for the insert completion info, add "popup" to 'completeopt'
