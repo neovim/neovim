@@ -356,6 +356,13 @@ describe('server', function()
     ui:request('nvim_command', 'connect ' .. n.new_pipename())
     eq({}, n.exec_lua('return _G.events'))
 
+    -- ConnectPre can abort.
+    n.command('autocmd ConnectPre * ++once let v:event.abort = v:true')
+    ui:request('nvim_command', 'connect ' .. addr)
+    eq({ { 'ConnectPre', t.fix_slashes(addr) } }, n.exec_lua('return _G.events'))
+    eq(2, #n.api.nvim_list_uis())
+    n.exec_lua('_G.events = {}')
+
     ui:request('nvim_command', 'connect ' .. addr)
     eq(
       { { 'ConnectPre', t.fix_slashes(addr) }, { 'ConnectPost', t.fix_slashes(addr) } },

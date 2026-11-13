@@ -38,6 +38,7 @@
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
+#include "nvim/eval.h"
 #include "nvim/eval/fs.h"
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
@@ -5913,6 +5914,28 @@ static void ex_detach(exarg_T *eap)
   }
 }
 
+/// Triggers ConnectPre. For remote-ssh, handlers may set v:event "install" and "sync_config".
+///
+/// @return false if a handler set v:event "abort".
+static bool connect_pre(char *addr, bool is_ssh, bool *install, bool *sync_config)
+{
+  save_v_event_T save_v_event;
+  dict_T *dict = get_v_event(&save_v_event);
+  tv_dict_add_bool(dict, S_LEN("abort"), kBoolVarFalse);
+  if (is_ssh) {
+    tv_dict_add_bool(dict, S_LEN("install"), kBoolVarTrue);
+    tv_dict_add_bool(dict, S_LEN("sync_config"), kBoolVarTrue);
+  }
+  apply_autocmds(EVENT_CONNECTPRE, addr, NULL, false, curbuf);
+  bool abort = tv_dict_get_number(dict, "abort") != 0;
+  if (is_ssh) {
+    *install = tv_dict_get_number(dict, "install") != 0;
+    *sync_config = tv_dict_get_number(dict, "sync_config") != 0;
+  }
+  restore_v_event(dict, &save_v_event);
+  return !abort;
+}
+
 /// ":connect"
 ///
 /// Connects the current UI to a different server
@@ -5954,8 +5977,17 @@ static void ex_connect(exarg_T *eap)
 
   // SSH URI: bootstrap remote Nvim, get local forwarded socket.
   if (is_ssh) {
+    bool install = true;
+    bool sync_config = true;
+    if (!connect_pre(eap->arg, true, &install, &sync_config)) {
+      return;
+    }
     typval_T argvars[] = { { .v_type = VAR_STRING, .vval.v_string = addr },
                            { .v_type = VAR_NUMBER, .vval.v_number = (varnumber_T)current_ui },
+                           { .v_type = VAR_BOOL,
+                             .vval.v_bool = install ? kBoolVarTrue : kBoolVarFalse },
+                           { .v_type = VAR_BOOL,
+                             .vval.v_bool = sync_config ? kBoolVarTrue : kBoolVarFalse },
                            { .v_type = VAR_UNKNOWN } };
     nlua_call_typval("vim.net._ssh", "connect", argvars, &ssh_rettv);
     if (ssh_rettv.v_type != VAR_STRING || ssh_rettv.vval.v_string == NULL) {
@@ -5974,7 +6006,10 @@ static void ex_connect(exarg_T *eap)
       xfree(full_addr);
       return;
     }
-    apply_autocmds(EVENT_CONNECTPRE, eap->arg, NULL, false, curbuf);
+    if (!connect_pre(eap->arg, false, NULL, NULL)) {
+      xfree(full_addr);
+      return;
+    }
 
     // remote-ssh: UI reconnects through same tunnel, relinked to `addr` (vim.net._ssh.relink()).
     Channel *chan = find_channel(current_ui);

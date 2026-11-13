@@ -658,11 +658,22 @@ ConnectPost						*ConnectPost*
 
 ConnectPre						*ConnectPre*
 				Before |:connect| connects the UI to the
-				server.  For |remote-ssh| this is after the
-				prompt is confirmed, before Nvim is installed
-				and the config is copied.
+				server.  For |remote-ssh| this is before the
+				confirmation prompt.
 				The pattern is matched against the {address}
 				given to |:connect|.
+
+				Sets these |v:event| keys:
+				    abort (mutable)	cancels |:connect|
+				    install (mutable)	|remote-ssh| only:
+							install Nvim on the
+							remote if needed
+				    sync_config (mutable)
+							|remote-ssh| only:
+							copy the local config
+				Note: Lua must set them via Vimscript: >lua
+				    vim.cmd('let v:event.abort = v:true')
+<
 
 CursorHold						*CursorHold*
 				When there is no user input for 'updatetime'

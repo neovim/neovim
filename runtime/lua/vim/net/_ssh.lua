@@ -528,7 +528,8 @@ end
 ---@param report fun(status: 'running'|'success'|'failed', msg: string)
 ---@param update boolean Re-installs the release, and runs it even if a `$PATH` nvim qualifies.
 ---@param config? string Local config dir to copy (see `push_config()`).
-local function connect(uri_str, chan, report, update, config)
+---@param install boolean Installs the release if no `$PATH` nvim qualifies.
+local function connect(uri_str, chan, report, update, config, install)
   local uri = vim.uri.parse(uri_str)
   if not (uri and uri.host and uri.host ~= '') then
     error(('No host in SSH URI: %s'):format(uri_str), 0)
@@ -536,13 +537,19 @@ local function connect(uri_str, chan, report, update, config)
   ---@cast uri vim.Uri & {host:string}
   report('running', ('Connecting to %s...'):format(uri_str))
   -- Fetched meanwhile, for the remote to verify the release, if it installs it.
-  local get_sha256 = autoinstall.fetch_sha256s()
+  local get_sha256 = install and autoinstall.fetch_sha256s()
   local dir, url, version = autoinstall.get_release(M.get_system_info(uri))
+  if not install then
+    url = '-' -- remote_ssh.sh: only a `$PATH` nvim.
+  end
   if config then
     report('running', 'Copying config...')
     push_config(uri, config)
   end
-  local sha256, sha256_err = get_sha256(vim.fs.basename(url))
+  local sha256, sha256_err --- @type string?, string?
+  if get_sha256 then
+    sha256, sha256_err = get_sha256(vim.fs.basename(url))
+  end
   if not sha256 and url ~= '-' then
     log().warn(sha256_err)
   end
@@ -668,21 +675,24 @@ end
 ---
 --- @param uri_str string
 --- @param chan? integer UI to connect: fails (and stops the session) if it detached meanwhile.
+--- @param install? boolean Installs Nvim on the remote if needed (default true). |ConnectPre|
+--- @param sync_config? boolean Copies the local config to the remote (default true). |ConnectPre|
 --- @return string? local_socket Path to the local forwarded socket, or nil if declined,
 ---   interrupted (CTRL-C), or failed.
 --- @return fun()? teardown Stops this session's tunnel. Other sessions sharing the SSH master are
 ---   unaffected.
-function M.connect(uri_str, chan)
+function M.connect(uri_str, chan, install, sync_config)
+  install = install ~= false
   if vim.fn.executable(M.ssh_cmd[1]) == 0 then
     echo_err(N_('E6101: SSH connection failed: Not found on $PATH: %s'):format(M.ssh_cmd[1]))
     return nil
   end
-  local lines = {
-    ('Connect to %s'):format(uri_str),
-    ('- Installs Nvim (if needed) to ~/%s/'):format(autoinstall.data_dir),
-  }
+  local lines = { ('Connect to %s'):format(uri_str) }
+  if install then
+    table.insert(lines, ('- Installs Nvim (if needed) to ~/%s/'):format(autoinstall.data_dir))
+  end
   local config_dir = vim.fn.stdpath('config') --[[@as string]]
-  local config = vim.fn.isdirectory(config_dir) == 1 and config_dir or nil
+  local config = sync_config ~= false and vim.fn.isdirectory(config_dir) == 1 and config_dir or nil
   if config then
     local copy = ('- Overwrites ~/.config/%s/ with your local %s/'):format(
       autoinstall.appname,
@@ -690,7 +700,7 @@ function M.connect(uri_str, chan)
     )
     table.insert(lines, copy)
   end
-  local prerelease = vim.version().prerelease ~= nil
+  local prerelease = install and vim.version().prerelease ~= nil
   -- "(U)pdate": refreshes the nightly, and runs it instead of `$PATH` nvim.
   local choices = prerelease and '&Yes\n&Update Nvim\n&No' or '&Yes\n&No'
   local choice = vim.fn.confirm(('%s\n'):format(table.concat(lines, '\n')), choices, 1, 'Question')
@@ -698,9 +708,8 @@ function M.connect(uri_str, chan)
   if choice ~= 1 and not update then
     return nil
   end
-  vim.api.nvim_exec_autocmds('ConnectPre', { pattern = uri_str })
   local report = new_progress_report()
-  local ok, local_sock, teardown = pcall(connect, uri_str, chan, report, update, config)
+  local ok, local_sock, teardown = pcall(connect, uri_str, chan, report, update, config, install)
   if not ok and local_sock == 'interrupted' then
     report('failed', ('Interrupted connecting to %s'):format(uri_str))
     return nil

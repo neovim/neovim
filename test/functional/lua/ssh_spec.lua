@@ -387,6 +387,47 @@ describe('remote-ssh', function()
     eq('-- init', t.read_file(remote_config .. '/init.lua'))
   end)
 
+  it('ConnectPre can abort, skip install, skip config sync', function()
+    skip(is_os('win'), 'remote-ssh is POSIX-only')
+    setup_fake_ssh({ confirm = 0 })
+    n.mkdir_p(('%s/config/nvim'):format(fake_dir))
+    Screen.new()
+    local function prompt()
+      n.exec_lua('_G.confirm_log = {}')
+      n.command('connect ssh://user@test-server')
+      return n.exec_lua('return _G.confirm_log')[1]
+    end
+
+    local default = prompt()
+    t.matches('\n%- Installs Nvim', default[1])
+    t.matches('\n%- Overwrites ~/%.config/nvim%-remote/', default[1])
+
+    n.exec_lua(function()
+      vim.api.nvim_create_autocmd('ConnectPre', {
+        callback = function()
+          vim.cmd('let v:event.install = v:false')
+          vim.cmd('let v:event.sync_config = v:false')
+        end,
+      })
+    end)
+    eq({ 'Connect to ssh://user@test-server\n', '&Yes\n&No', 1, 'Question' }, prompt())
+
+    n.command('autocmd ConnectPre * let v:event.abort = v:true')
+    eq(nil, prompt())
+
+    -- Skipped steps: no release to install, no config copy.
+    setup_fake_ssh()
+    n.mkdir_p(('%s/config/nvim'):format(fake_dir))
+    n.exec_lua(function()
+      local ssh = require('vim.net._ssh')
+      local _, teardown = ssh.connect('ssh://user@test-server', nil, false, false)
+      teardown()
+    end)
+    local args = t.read_file(fake_dir .. '/tunnel.args')
+    t.matches(' sh %-s %-%- /tmp/nvim%-remote%.%x+/nvim%.sock %S+ %- %- ', args)
+    eq(nil, vim.uv.fs_stat(('%s/home/.config/nvim-remote'):format(fake_dir)))
+  end)
+
   it('remote script runs acceptable `nvim` from $PATH, else installs the release', function()
     skip(is_os('win'), 'remote-ssh is POSIX-only')
     local home = vim.fs.abspath(t.tmpname(false))

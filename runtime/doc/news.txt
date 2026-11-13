@@ -375,7 +375,8 @@ EVENTS
 • CTRL-C sends SIGINT to ":!" and "system()" child processes (before
   escalating to SIGTERM/SIGKILL, as usual).
 • |ConnectPre| and |ConnectPost| are triggered before/after |:connect|
-  connects the UI to a server.
+  connects the UI to a server. |ConnectPre| can cancel it, or skip the
+  |remote-ssh| install and config copy.
 
 HIGHLIGHTS
 
