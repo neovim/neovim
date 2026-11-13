@@ -71,12 +71,22 @@ describe('version', function()
       ['~1.2'] = { from = { 1, 2, 0 }, to = { 1, 3, 0 } },
       ['~1'] = { from = { 1, 0, 0 }, to = { 2, 0, 0 } },
       ['^1'] = { from = { 1, 0, 0 }, to = { 2, 0, 0 } },
+      ['^0'] = { from = { 0, 0, 0 }, to = { 1, 0, 0 } },
+      ['^0.x'] = { from = { 0, 0, 0 }, to = { 1, 0, 0 } },
+      ['^0.0'] = { from = { 0, 0, 0 }, to = { 0, 1, 0 } },
+      ['^0.0.x'] = { from = { 0, 0, 0 }, to = { 0, 1, 0 } },
+      ['^0.0.0'] = { from = { 0, 0, 0 }, to = { 0, 0, 0 } },
       ['1.*'] = { from = { 1, 0, 0 }, to = { 2, 0, 0 } },
       ['1'] = { from = { 1, 0, 0 }, to = { 2, 0, 0 } },
       ['1.x'] = { from = { 1, 0, 0 }, to = { 2, 0, 0 } },
+      ['1.X'] = { from = { 1, 0, 0 }, to = { 2, 0, 0 } },
       ['1.2.x'] = { from = { 1, 2, 0 }, to = { 1, 3, 0 } },
       ['1.2.*'] = { from = { 1, 2, 0 }, to = { 1, 3, 0 } },
       ['*'] = { from = { 0, 0, 0 } },
+      ['x'] = { from = { 0, 0, 0 } },
+      ['1.2.3-RC.X'] = { from = '1.2.3-RC.X', to = '1.2.3-RC.X' },
+      ['>=1.2.3-RC1'] = { from = '1.2.3-RC1' },
+      ['1.2.3+BUILD.X'] = { from = '1.2.3+BUILD.X', to = '1.2.3+BUILD.X' },
       ['1.2 - 2.3.0'] = { from = { 1, 2, 0 }, to = { 2, 3, 0 } },
       ['1.2.3 - 2.3.4'] = { from = { 1, 2, 3 }, to = { 2, 3, 4 } },
       ['1.2.3 - 2'] = { from = { 1, 2, 3 }, to = { 3, 0, 0 } },
@@ -88,6 +98,7 @@ describe('version', function()
 
       it('parses ' .. input, function()
         eq(output, range)
+        eq(output.from.build, range.from.build)
       end)
 
       it('tostring() ' .. input, function()
@@ -153,8 +164,10 @@ describe('version', function()
       eq(range_alpha, vim.version.range(tostring(range_alpha)))
     end)
 
-    it('returns nil with empty version', function()
+    it('returns nil with invalid input', function()
       eq(nil, vim.version.parse(''))
+      eq(nil, vim.version.range('garbage - 2.0.0'))
+      eq(nil, vim.version.range('1.2.3 - garbage'))
     end)
   end)
 
@@ -372,6 +385,11 @@ describe('version', function()
           want = { major = 1, minor = 2, patch = 3, build = 'build.15' },
         },
         {
+          desc = 'build with hyphen',
+          version = '1.2.3+build.0-rc1',
+          want = { major = 1, minor = 2, patch = 3, build = 'build.0-rc1' },
+        },
+        {
           desc = 'prerelease and build',
           version = '1.2.3-rc1+build.15',
           want = { major = 1, minor = 2, patch = 3, prerelease = 'rc1', build = 'build.15' },
@@ -379,7 +397,7 @@ describe('version', function()
       }
       for _, tc in ipairs(testcases) do
         it(string.format('%q: version = %q', tc.desc, tc.version), function()
-          eq(tc.want, vim.version.parse(tc.version))
+          eq(tc.want, vim.version.parse(tc.version, { strict = true }))
         end)
       end
     end)
@@ -414,7 +432,11 @@ describe('version', function()
         { version = '1.2.3foobar' },
         { version = '1.2.3-%?' },
         { version = '1.2.3+%?' },
-        { version = '1.2.3+build.0-rc1' },
+        { version = '1.2.3+' },
+        { version = '1.2.3+build..15' },
+        { version = '1.2.3+build.' },
+        { version = '1.2.3+.build' },
+        { version = '1.2.3+build+more' },
         { version = '3.2a' },
         { version = 'tmux 3.2a' },
       }
