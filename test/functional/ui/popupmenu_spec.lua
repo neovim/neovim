@@ -2291,7 +2291,17 @@ describe('builtin popupmenu', function()
       end)
 
       it('popup info window reuses bufnr', function()
-        feed('S<C-x><C-o><C-N>')
+        exec([[
+          let g:list = [#{word: 'foo'}, #{word: 'bar', info: 'barinfo'}]
+          autocmd Group CompleteChanged * if v:event.completed_item.word ==# 'foo'
+                \| call timer_start(0, {-> nvim__complete_set(0, #{info: 'fooinfo'})}) | endif
+        ]])
+        feed('S<C-x><C-o>')
+        t.retry(nil, 1000, function()
+          eq(false, api.nvim_win_get_config(fn.complete_info().preview_winid).hide)
+        end)
+        feed('<C-N>')
+        eq(2, #api.nvim_get_var('bufnrs'))
         eq(1, n.eval([[len(uniq(copy(g:bufnrs))) == 1]]))
       end)
 
