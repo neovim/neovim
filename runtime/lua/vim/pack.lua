@@ -255,32 +255,32 @@
 ---A simple example:
 ---```json
 ---{
----  "name": "best-plugin.nvim",
----  "description": "The best plugin for Neovim",
----  "version": "1.0.0",
----  "engines": {
----      "nvim": ">=0.13.0",
----      "vim": ">=9.1.0"
----  },
----  "scripts": {
----    "install": "scripts/install.lua",
----    "preupdate": "scripts/preupdate.vim",
----    "update": "scripts/update.vim",
----    "preuninstall": "scripts/preuninstall.lua"
----  },
----  "dependencies": [
----    {
----      "src": "https://github.com/user/plugin1"
----    },
----    {
----      "src": "https://github.com/user/plugin2",
----      "version": ">=1.0.0"
----    },
----    {
----      "src": "https://github.com/user/plugin3",
----      "version": "'branch'"
----    }
----  ]
+---   "name": "best-plugin.nvim",
+---   "description": "The best plugin for Neovim",
+---   "version": "1.0.0",
+---   "engines": {
+---     "nvim": ">=0.13.0",
+---     "vim": ">=9.1.0"
+---   },
+---   "scripts": {
+---     "install": "scripts/install.lua",
+---     "preupdate": "scripts/preupdate.vim",
+---     "update": "scripts/update.vim",
+---     "preuninstall": "scripts/preuninstall.lua"
+---   },
+---   "dependencies": [
+---     {
+---       "src": "https://github.com/user/plugin1"
+---     },
+---     {
+---       "src": "https://github.com/user/plugin2",
+---       "version": ">=1.0.0"
+---     },
+---     {
+---       "src": "https://github.com/user/plugin3",
+---       "version": "'branch'"
+---     }
+---   ]
 ---}
 ---```
 
