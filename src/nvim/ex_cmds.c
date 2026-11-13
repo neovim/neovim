@@ -92,6 +92,7 @@
 #include "nvim/spell.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
+#include "nvim/syntax.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
@@ -2591,6 +2592,9 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
         if (curbuf == old_curbuf.br_buf) {
           buf_copy_options(buf, BCO_ENTER);
         }
+
+        // The window-local syntax does not apply to the new buffer.
+        reset_synblock(curwin);
 
         // Close the link to the current buffer. This may set
         // curwin->w_buffer to NULL.

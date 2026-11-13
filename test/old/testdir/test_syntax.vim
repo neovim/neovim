@@ -518,6 +518,18 @@ func Test_ownsyntax()
   %bw!
 endfunc
 
+func Test_ownsyntax_edit_hidden()
+  " this used to leak memory, needs ASAN or valgrind to confirm
+  call writefile(['one'], 'Xownsyntax1', 'D')
+  call writefile(['two'], 'Xownsyntax2', 'D')
+  set hidden
+  edit Xownsyntax1
+  ownsyntax c
+  edit Xownsyntax2
+  set hidden&
+  %bwipe!
+endfunc
+
 func Test_ownsyntax_completion()
   call feedkeys(":ownsyntax java\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"ownsyntax java javacc javascript javascriptreact', @:)
