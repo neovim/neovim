@@ -898,13 +898,17 @@ end
 --- Whether to focus/jump to location if possible.
 --- (defaults: true)
 --- @field focus? boolean
+---
+--- Open the document with the system default handler instead of in an editor window.
+--- @field external? boolean
 
 --- Shows document and optionally jumps to the location.
 ---
 ---@param location lsp.Location|lsp.LocationLink
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@param opts? vim.lsp.util.show_document.Opts
----@return boolean `true` if succeeded
+---@return boolean # `true` if succeeded
+---@return string? # Error message if opening an external document failed
 function M.show_document(location, position_encoding, opts)
   validate('position_encoding', position_encoding, 'string')
 
@@ -912,6 +916,15 @@ function M.show_document(location, position_encoding, opts)
   local uri = location.uri or location.targetUri
   if uri == nil then
     return false
+  end
+  if opts and opts.external then
+    -- TODO(lvimuser): ask the user for confirmation
+    local cmd, err = vim.ui.open(uri)
+    local ret = cmd and cmd:wait(2000) or nil
+    if ret == nil or ret.code ~= 0 then
+      return false, ret and ret.stderr or err
+    end
+    return true
   end
   local range = location.range or location.targetSelectionRange
   return M._show_document(uri, range, position_encoding, opts)

@@ -643,39 +643,29 @@ end
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showDocument
 --- @param params lsp.ShowDocumentParams
 RSC['window/showDocument'] = function(_, params, ctx)
-  local uri = params.uri
-
-  if params.external then
-    -- TODO(lvimuser): ask the user for confirmation
-    local cmd, err = vim.ui.open(uri)
-    local ret = cmd and cmd:wait(2000) or nil
-
-    if ret == nil or ret.code ~= 0 then
-      return {
-        success = false,
-        error = {
-          code = protocol.ErrorCodes.UnknownErrorCode,
-          message = ret and ret.stderr or err,
-        },
-      }
-    end
-
-    return { success = true }
-  end
-
   local client_id = ctx.client_id
   local client = vim.lsp.get_client_by_id(client_id)
-  local client_name = client and client.name or string.format('id=%d', client_id)
-  if not client then
+  if not client and not params.external then
+    local client_name = string.format('id=%d', client_id)
     err_message('LSP[', client_name, '] client has shut down after sending ', ctx.method)
     return vim.NIL
   end
 
-  local success = util._show_document(uri, params.selection, client.offset_encoding, {
-    reuse_win = true,
-    focus = params.takeFocus,
-  })
-  return { success = success or false }
+  local success, err = util.show_document(
+    { uri = params.uri, range = params.selection },
+    client and client.offset_encoding or 'utf-16',
+    { reuse_win = true, focus = params.takeFocus, external = params.external }
+  )
+  if not success and params.external then
+    return {
+      success = false,
+      error = {
+        code = protocol.ErrorCodes.UnknownErrorCode,
+        message = err,
+      },
+    }
+  end
+  return { success = success }
 end
 
 ---@see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeLens_refresh

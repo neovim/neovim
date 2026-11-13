@@ -767,6 +767,39 @@ describe('vim.lsp.util', function()
       eq('å', fn.expand('<cword>'))
     end)
 
+    it('opens external documents with vim.ui.open', function()
+      local result = exec_lua(function()
+        vim.ui.open = function(uri)
+          _G.opened_uri = uri
+          return {
+            wait = function()
+              return { code = 0 }
+            end,
+          }
+        end
+        return {
+          success = vim.lsp.util.show_document({ uri = 'file:///fake/uri' }, 'utf-16', {
+            external = true,
+          }),
+          uri = _G.opened_uri,
+        }
+      end)
+      eq({ success = true, uri = 'file:///fake/uri' }, result)
+    end)
+
+    it('reports external document errors', function()
+      local result = exec_lua(function()
+        vim.ui.open = function()
+          return nil, 'no handler'
+        end
+        local success, err = vim.lsp.util.show_document({ uri = 'file:///fake/uri' }, 'utf-16', {
+          external = true,
+        })
+        return { success = success, err = err }
+      end)
+      eq({ success = false, err = 'no handler' }, result)
+    end)
+
     it('jumps to a Location if focus is true via handler', function()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
@@ -792,6 +825,45 @@ describe('vim.lsp.util', function()
       end)
       eq(1, result.cursor[1])
       eq(9, result.cursor[2])
+    end)
+
+    it('opens an external document via handler', function()
+      local result = exec_lua(function()
+        vim.ui.open = function(uri)
+          _G.opened_uri = uri
+          return {
+            wait = function()
+              return { code = 0 }
+            end,
+          }
+        end
+        local result = vim.lsp.handlers['window/showDocument'](nil, {
+          uri = 'file:///fake/uri',
+          external = true,
+        }, {
+          client_id = -1,
+          method = 'window/showDocument',
+        })
+        return { result = result, uri = _G.opened_uri }
+      end)
+      eq({ result = { success = true }, uri = 'file:///fake/uri' }, result)
+    end)
+
+    it('reports external document errors via handler', function()
+      local result = exec_lua(function()
+        vim.ui.open = function()
+          return nil, 'no handler'
+        end
+        return vim.lsp.handlers['window/showDocument'](nil, {
+          uri = 'file:///fake/uri',
+          external = true,
+        }, {
+          client_id = -1,
+          method = 'window/showDocument',
+        })
+      end)
+      eq(false, result.success)
+      eq('no handler', result.error.message)
     end)
 
     it('jumps to a Location if focus not set', function()
