@@ -63,6 +63,8 @@ enum {
   kSHConcealLines = 128,
   kSHConcealOff = 256,
   kSHConcealCont = 512,  ///< Continuation of a conceal range: no replacement at its start.
+  // TODO(justinmk): drop this in favor of "priority"? #41629
+  kSHAboveSearch = 1024,  ///< Special-case so multicursors are visible on search/spell/etc.
 };
 
 typedef struct {
