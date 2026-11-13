@@ -75,6 +75,7 @@
 \*'ttyscroll'\*
 \*'ttytype'\*
 \*'weirdinvert'\*
+\*'wl[a-z]\+'\*
 \*'[a-z]\+dll'\*
 \*--literal\*
 \*--not-a-term\*
