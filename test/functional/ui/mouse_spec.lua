@@ -1970,6 +1970,25 @@ describe('ui/mouse/input', function()
       local columns = api.nvim_get_option_value('columns', {})
 
       api.nvim_input_mouse('left', 'press', '', 0, lines - 1, math.floor(columns / 2))
+
+      -- #34110: a float border cell carries no click defs, so clicking the
+      -- border next to its winbar used to read click_defs[-1]. The float uses
+      -- height = 2: with height = 1 the winbar is dropped and the same click is
+      -- a harmless statuscolumn click instead.
+      local win = api.nvim_open_win(api.nvim_create_buf(false, true), false, {
+        relative = 'editor',
+        row = 2,
+        col = 4,
+        width = 8,
+        height = 2,
+        border = { '', '', '', { 'x' } },
+        mouse = true,
+        zindex = 50,
+      })
+      api.nvim_set_option_value('winbar', 'wb', { win = win })
+      feed('i')
+      api.nvim_input_mouse('left', 'press', '', 0, 2, 4) -- winbar-row border cell
+      api.nvim_input_mouse('left', 'release', '', 0, 2, 4)
       command('redraw')
     end)
 
