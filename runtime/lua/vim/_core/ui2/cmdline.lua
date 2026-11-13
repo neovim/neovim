@@ -42,7 +42,6 @@ local function win_config(win, hide, height)
       local cwin, pos = M.cursor[1], M.cursor[2]
       if api.nvim_win_is_valid(cwin) then
         local last = api.nvim_buf_line_count(api.nvim_win_get_buf(cwin))
-        -- Clamp the old poisition to the current buffer's line count
         api.nvim_win_set_cursor(cwin, { math.min(pos[1], last), pos[2] })
       end
       M.cursor = nil
