@@ -2103,18 +2103,26 @@ static bool has_autocmd_ext(event_T event, char *sfname, buf_T *buf, bool is_ful
   char *tail = path_tail(sfname);
   bool retval = false;
 
-  char *fname = is_full ? xstrdup(sfname) : FullName_save(sfname, false);
-  if (fname == NULL) {
+  if (sfname == NULL) {
     return false;
   }
+  char *fname = NULL;
 
   AutoCmdVec *const acs = &autocmds[(int)event];
   for (size_t i = 0; i < kv_size(*acs); i++) {
     AutoPat *const ap = kv_A(*acs, i).pat;
-    if (ap != NULL
-        && (ap->buflocal_nr == 0
-            ? match_file_pat(NULL, &ap->reg_prog, fname, sfname, tail, ap->allow_dirs)
-            : buf != NULL && ap->buflocal_nr == buf->b_fnum)) {
+    if (ap == NULL) {
+      continue;
+    }
+
+    // Only patterns containing a directory need the full file name.
+    if (ap->buflocal_nr == 0 && ap->allow_dirs && fname == NULL) {
+      fname = is_full ? xstrdup(sfname) : FullName_save(sfname, false);
+      assert(fname != NULL);
+    }
+    if (ap->buflocal_nr == 0
+        ? match_file_pat(NULL, &ap->reg_prog, fname, sfname, tail, ap->allow_dirs)
+        : buf != NULL && ap->buflocal_nr == buf->b_fnum) {
       retval = true;
       break;
     }
