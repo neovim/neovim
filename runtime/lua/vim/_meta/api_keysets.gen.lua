@@ -123,6 +123,8 @@ error('Cannot require a meta file')
 --- |'CompleteChanged'
 --- |'CompleteDone'
 --- |'CompleteDonePre'
+--- |'ConnectPost'
+--- |'ConnectPre'
 --- |'CursorHold'
 --- |'CursorHoldI'
 --- |'CursorMoved'

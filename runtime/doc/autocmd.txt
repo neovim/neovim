@@ -651,6 +651,19 @@ CompleteDonePre						*CompleteDonePre*
 				|complete_info()| is valid during this event.
 				|v:completed_item| gives the completed item.
 
+ConnectPost						*ConnectPost*
+				After |:connect| sends the UI to the server.
+				The pattern is matched against the {address}
+				given to |:connect|.
+
+ConnectPre						*ConnectPre*
+				Before |:connect| connects the UI to the
+				server.  For |remote-ssh| this is after the
+				prompt is confirmed, before Nvim is installed
+				and the config is copied.
+				The pattern is matched against the {address}
+				given to |:connect|.
+
 CursorHold						*CursorHold*
 				When there is no user input for 'updatetime'
 				duration, in Normal-mode. Not triggered while

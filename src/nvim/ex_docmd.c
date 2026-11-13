@@ -5974,6 +5974,7 @@ static void ex_connect(exarg_T *eap)
       xfree(full_addr);
       return;
     }
+    apply_autocmds(EVENT_CONNECTPRE, eap->arg, NULL, false, curbuf);
 
     // remote-ssh: UI reconnects through same tunnel, relinked to `addr` (vim.net._ssh.relink()).
     Channel *chan = find_channel(current_ui);
@@ -6006,6 +6007,7 @@ static void ex_connect(exarg_T *eap)
     return;
   }
 
+  apply_autocmds(EVENT_CONNECTPOST, eap->arg, NULL, false, curbuf);
   ex_detach(NULL);
   if (stop_server) {
     exiting = true;

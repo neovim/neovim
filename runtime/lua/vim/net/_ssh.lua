@@ -698,6 +698,7 @@ function M.connect(uri_str, chan)
   if choice ~= 1 and not update then
     return nil
   end
+  vim.api.nvim_exec_autocmds('ConnectPre', { pattern = uri_str })
   local report = new_progress_report()
   local ok, local_sock, teardown = pcall(connect, uri_str, chan, report, update, config)
   if not ok and local_sock == 'interrupted' then

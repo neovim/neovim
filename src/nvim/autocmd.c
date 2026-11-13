@@ -1629,6 +1629,8 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
         || event == EVENT_CMDWINLEAVE
         || event == EVENT_COLORSCHEME
         || event == EVENT_COLORSCHEMEPRE
+        || event == EVENT_CONNECTPOST
+        || event == EVENT_CONNECTPRE
         || event == EVENT_DIRCHANGED
         || event == EVENT_DIRCHANGEDPRE
         || event == EVENT_FILETYPE

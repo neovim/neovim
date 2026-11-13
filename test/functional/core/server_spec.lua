@@ -332,6 +332,37 @@ describe('server', function()
     client:close()
   end)
 
+  it(':connect triggers ConnectPre, ConnectPost', function()
+    clear()
+    Screen.new() -- Keeps the server running after the other UI connects.
+    n.exec_lua(function()
+      _G.events = {}
+      vim.api.nvim_create_autocmd({ 'ConnectPre', 'ConnectPost' }, {
+        callback = function(ev)
+          table.insert(_G.events, { ev.event, ev.match })
+        end,
+      })
+    end)
+    local addr = eval('v:servername')
+    local ui = n.connect(addr)
+    finally(function()
+      ui:close()
+    end)
+    local screen = Screen.new(40, 4, nil, ui)
+    screen._handle_connect = function() end
+    screen._handle_error_exit = function() end
+
+    -- Not triggered if the server is unreachable.
+    ui:request('nvim_command', 'connect ' .. n.new_pipename())
+    eq({}, n.exec_lua('return _G.events'))
+
+    ui:request('nvim_command', 'connect ' .. addr)
+    eq(
+      { { 'ConnectPre', t.fix_slashes(addr) }, { 'ConnectPost', t.fix_slashes(addr) } },
+      n.exec_lua('return _G.events')
+    )
+  end)
+
   it('v:useractive advances on UI input', function()
     clear()
     local before = eval('v:useractive')

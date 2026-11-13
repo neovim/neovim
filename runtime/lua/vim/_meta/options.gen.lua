@@ -2229,6 +2229,8 @@ vim.go.ei = vim.go.eventignore
 --- 	`CompleteChanged`,
 --- 	`CompleteDone`,
 --- 	`CompleteDonePre`,
+--- 	`ConnectPost`,
+--- 	`ConnectPre`,
 --- 	`DiagnosticChanged`,
 --- 	`DiffUpdated`,
 --- 	`DirChanged`,

@@ -2619,6 +2619,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 		|CompleteChanged|,
 		|CompleteDone|,
 		|CompleteDonePre|,
+		|ConnectPost|,
+		|ConnectPre|,
 		|DiagnosticChanged|,
 		|DiffUpdated|,
 		|DirChanged|,

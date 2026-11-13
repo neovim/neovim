@@ -38,6 +38,8 @@ return {
     CompleteChanged = false, -- after popup menu changed
     CompleteDone = false, -- after finishing insert complete
     CompleteDonePre = false, -- idem, before clearing info
+    ConnectPost = false, -- after connecting the UI to a server
+    ConnectPre = false, -- before connecting the UI to a server
     CursorHold = true, -- cursor in same position for a while
     CursorHoldI = true, -- idem, in Insert mode
     CursorMoved = true, -- cursor was moved
@@ -162,6 +164,8 @@ return {
   --- @type table<string,true>
   --- List of Nvim-specific events or aliases for generating syntax file.
   nvim_specific = {
+    ConnectPost = true,
+    ConnectPre = true,
     DiagnosticChanged = true,
     LspAttach = true,
     LspDetach = true,
