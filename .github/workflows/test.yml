@@ -45,7 +45,7 @@ jobs:
 
       - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
-          version: 0.16.0
+          version: 0.17.0
       - run: sudo apt-get install -y inotify-tools
 
       - name: nvim_bin
@@ -287,7 +287,7 @@ jobs:
 
       - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
-          version: 0.16.0
+          version: 0.17.0
       - run: sudo apt-get install -y inotify-tools
 
       - run: zig fmt --check . # run first, otherwise it will descend into zig-pkg..
@@ -315,7 +315,7 @@ jobs:
 
       - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
-          version: 0.16.0
+          version: 0.17.0
 
       - run: mkdir -p build/ # build/ is used for shared log paths, see global ENV defs
       - run: zig build $OPTS test_nlua0
@@ -334,7 +334,7 @@ jobs:
 
       - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
-          version: 0.16.0
+          version: 0.17.0
 
       - run: mkdir -p build/ # build/ is used for shared log paths, see global ENV defs
       - run: zig build test_nlua0

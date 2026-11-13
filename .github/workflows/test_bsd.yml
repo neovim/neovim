@@ -33,8 +33,12 @@ jobs:
         with:
           usesh: true
           cache-after-prepare: true
+          # Rebuild the cached VM image when the Zig version or install script changes.
+          cache-after-prepare-key-suffix: zig-${{ hashFiles('build.zig.zon', '.github/scripts/install_zig.sh') }}
           prepare: |
+            set -e
             pkg install -y cmake gmake ninja unzip wget gettext python git
+            .github/scripts/install_zig.sh
           run: |
             set -e
             gmake deps
@@ -51,12 +55,16 @@ jobs:
           persist-credentials: false
 
       - name: Build
-        uses: vmactions/openbsd-vm@5f7b2c933b8846a138361d6843c52af4bef5d945 # v1.4.8
+        uses: vmactions/openbsd-vm@f1ca8bc8ecc5b6ef7218e5b914836e067e1546d3 # v1.4.9
         with:
           usesh: true
           cache-after-prepare: true
+          # Rebuild the cached VM image when the Zig version or install script changes.
+          cache-after-prepare-key-suffix: zig-${{ hashFiles('build.zig.zon', '.github/scripts/install_zig.sh') }}
           prepare: |
-            pkg_add -I cmake gmake ninja gettext-tools gettext-runtime git
+            set -e
+            pkg_add -I cmake gmake ninja gettext-tools gettext-runtime git xz
+            .github/scripts/install_zig.sh
           run: |
             set -e
             gmake deps

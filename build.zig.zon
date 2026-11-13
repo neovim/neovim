@@ -2,12 +2,16 @@
     .name = .neovim,
     .fingerprint = 0x66eb090879307a38,
     .version = "0.13.0",
-    .minimum_zig_version = "0.16.0",
+    .minimum_zig_version = "0.17.0",
 
     .dependencies = .{
         .zlua = .{
             .url = "git+https://github.com/natecraddock/ziglua.git#9ae39fa50b1ab8427d35f963216116d7bff1e584",
             .hash = "zlua-0.1.0-hGRpC1mUBQCNQf4CnmRTM4I7gxE3YpCvZ-p2EarlcyER",
+        },
+        .ghostty = .{
+            .url = "https://github.com/ghostty-org/ghostty/archive/b58ef1d678be2747c830bc1b1e6c0a086afecf9a.tar.gz",
+            .hash = "ghostty-1.3.2-dev-5UdBCxFpfAWYAzbzLBh2XerT5JLrXxuv1Q0h1bSjJrqj",
         },
         .luv = .{
             .url = "git+https://github.com/luvit/luv?ref=1.53.0-1#61e08e7b6911b43e4b8d9d16c0fee35f76729354",
