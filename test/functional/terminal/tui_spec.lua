@@ -4204,7 +4204,8 @@ describe('TUI FocusGained/FocusLost', function()
       {5:-- TERMINAL --}                                    |
     ]])
     feed_data('\027[I')
-    screen:expect([[
+    screen:expect {
+      grid = [[
       msg2                                              |
       msg3                                              |
       msg4                                              |
@@ -4212,7 +4213,10 @@ describe('TUI FocusGained/FocusLost', function()
       gained                                            |
       {102:Press ENTER or type command to continue}^           |
       {5:-- TERMINAL --}                                    |
-    ]])
+    ]],
+      -- FocusGained is an async RPC round-trip (nvim_ui_set_focus), slow under conpty.
+      timeout = 4 * screen.timeout,
+    }
   end)
 end)
 
