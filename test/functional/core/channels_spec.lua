@@ -64,7 +64,7 @@ describe('channels', function()
   end)
 
   for _, mode in ipairs({ 'no callback', 'callback', 'buffered callback' }) do
-    it('closes raw TCP socket on EOF with ' .. mode .. ' #11166', function()
+    it('closes TCP socket on EOF with ' .. mode .. ' #11166', function()
       local id = exec_lua(function(callback_mode)
         local uv = vim.uv
         local server = assert(uv.new_tcp())
