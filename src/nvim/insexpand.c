@@ -2925,7 +2925,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
 /// Cancel completion.
 bool ins_compl_cancel(void)
 {
-  return ins_compl_stop(' ', ctrl_x_mode, true);
+  return ins_compl_stop(NUL, ctrl_x_mode, true);
 }
 
 /// Prepare for Insert mode completion, or stop it.
@@ -2967,7 +2967,7 @@ bool ins_compl_prep(int c)
 
       // Other CTRL-X keys first stop completion, then start another
       // completion mode.
-      ins_compl_prep(' ');
+      ins_compl_prep(NUL);
       ctrl_x_mode = CTRL_X_NOT_DEFINED_YET;
     }
   }
@@ -3526,7 +3526,7 @@ static void set_completion(colnr_T startcol, list_T *list)
 
   // If already doing completions stop it.
   if (compl_started || ctrl_x_mode_not_default()) {
-    ins_compl_prep(' ');
+    ins_compl_prep(NUL);
   }
   ins_compl_clear();
   ins_compl_free();
