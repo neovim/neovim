@@ -8,6 +8,7 @@
 "              2025 Jul 22 by phanium (use :hor term #17822)
 "              2026 Jul 10 by Vim Project (quote K argument, prevent command injection)
 "              2026 Sep 01 by Vim Project (use correct terminal feature test)
+"              2026 Nov 14 by Vim Project (quote more single chars)
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin") | finish | endif
@@ -53,10 +54,22 @@ elseif executable('powershell.exe') | let s:pwsh_cmd = 'powershell.exe'
 endif
 
 if exists('s:pwsh_cmd')
+  let s:args = [s:pwsh_cmd, '-NoLogo', '-NoProfile', '-NonInteractive',
+      \ '-ExecutionPolicy', 'RemoteSigned', '-Command']
+
+  func s:PSQuote(args)
+    " quote args by doubling various single quotes
+    let pat = "['\u2018-\u201b]"
+    return substitute(a:args, pat, '&&', 'g')
+  endfunc
+
   if exists('*term_start')
-    command! -buffer -nargs=1 GetHelp call term_start([s:pwsh_cmd, '-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'RemoteSigned', '-Command', "Get-Help -Full '" . substitute(<q-args>, "'", "''", 'g') . "'" . (executable('less') ? ' | less' : '')])
+    command! -buffer -nargs=1 GetHelp call term_start(s:args +
+          \ ["Get-Help -Full '" . s:PSQuote(<q-args>) . "'" .
+          \ (executable('less') ? ' | less' : '')])
   else
-    command! -buffer -nargs=1 GetHelp echo system([s:pwsh_cmd, '-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'RemoteSigned', '-Command', "Get-Help -Full '" . substitute(<q-args>, "'", "''", 'g') . "'"])
+    command! -buffer -nargs=1 GetHelp echo system(s:args +
+          \ ["Get-Help -Full '" . s:PSQuote(<q-args>) . "'"])
   endif
   setlocal keywordprg=:GetHelp
   let b:undo_ftplugin ..= " | setl kp< | sil! delc -buffer GetHelp"
