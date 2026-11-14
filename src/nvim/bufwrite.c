@@ -34,6 +34,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
+#include "nvim/nsfile.h"
 #include "nvim/memline_defs.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -1143,6 +1144,37 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 
   vim_acl_T acl = NULL;                 // ACL copied from original file to
                                         // backup or new file
+
+  // A smart-file buffer: the text is already in the file. ":w" commits it.
+  if (buf->b_ml.ml_nsf != NULL && overwriting && whole && !append && !filtering) {
+    buf->b_saving = true;
+    if (ml_nsf_save(buf) == FAIL) {
+      err = set_err(_("numstore: cannot commit"));
+      goto fail;
+    }
+    no_wait_return--;
+    add_quoted_fname(IObuff, IOSIZE, buf, fname);
+    xstrlcat(IObuff, _("[numstore]"), IOSIZE);
+    if (!buf->b_p_eol && !(buf->b_p_fixeol && !buf->b_p_bin)) {
+      xstrlcat(IObuff, _("[noeol]"), IOSIZE);
+    }
+    msg_add_lines(true, buf->b_ml.ml_line_count, (off_T)nsf_size(buf->b_ml.ml_nsf));
+    if (!shortmess(kShmWrite)) {
+      xstrlcat(IObuff, shortmess(kShmWri) ? _(" [w]") : _(" committed"), IOSIZE);
+    }
+    set_keep_msg(msg_with_id(IObuff, msg_id, "bufwrite", NULL, 0, true, true, false), 0);
+    if (reset_changed && buf_get_changedtick(buf) == write_tick) {
+      unchanged(buf, true, false);
+      const varnumber_T changedtick = buf_get_changedtick(buf);
+      if (buf->b_last_changedtick + 1 == changedtick) {
+        buf->b_last_changedtick = changedtick;
+      }
+      u_unchanged(buf);
+      u_update_save_nr(buf);
+    }
+    buf->b_flags &= ~BF_WRITE_MASK;
+    goto nofail;
+  }
 
   if (get_fileinfo(buf, fname, overwriting, forceit, &file_info_old, &perm, &device, &newfile,
                    &file_readonly, &err) == FAIL) {

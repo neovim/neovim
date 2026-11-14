@@ -85,6 +85,7 @@
 #include "nvim/message.h"
 #include "nvim/move.h"
 #include "nvim/normal.h"
+#include "nvim/nsfile.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
@@ -239,6 +240,34 @@ bool buf_ensure_loaded(buf_T *buf)
   return status != FAIL && bufref_valid(&bufref) && buf->b_ml.ml_mfp != NULL;
 }
 
+/// Finish opening a buffer whose text is in a smart file (after
+/// ml_nsf_attach()): set the options that readfile() would set, give the
+/// file message and apply the BufReadPre and BufReadPost autocommands.
+///
+/// @return  OK
+static int nsf_read_post(exarg_T *eap, bool silent)
+{
+  curbuf->b_flags &= ~(BF_NEW | BF_NEW_W | BF_CHECK_RO | BF_NOTEDITED);
+  set_fileformat(EOL_UNIX, OPT_LOCAL);
+  curbuf->b_p_eol = !nsf_noeol(curbuf->b_ml.ml_nsf);
+
+  apply_autocmds_exarg(EVENT_BUFREADPRE, NULL, curbuf->b_fname, false, curbuf, eap);
+
+  if (!silent && curbuf->b_ml.ml_nsf != NULL) {
+    add_quoted_fname(IObuff, IOSIZE, curbuf, curbuf->b_fname);
+    xstrlcat(IObuff, _("[numstore]"), IOSIZE);
+    if (!curbuf->b_p_eol) {
+      xstrlcat(IObuff, _("[noeol]"), IOSIZE);
+    }
+    msg_add_lines(true, nsf_line_count(curbuf->b_ml.ml_nsf),
+                  (off_T)nsf_size(curbuf->b_ml.ml_nsf));
+    msg_trunc(IObuff, false, 0);
+  }
+
+  apply_autocmds_exarg(EVENT_BUFREADPOST, NULL, curbuf->b_fname, false, curbuf, eap);
+  return OK;
+}
+
 /// Open current buffer, that is: open the memfile and read the file into
 /// memory.
 ///
@@ -334,9 +363,23 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
     }
 #endif
 
-    retval = readfile(curbuf->b_ffname, curbuf->b_fname,
-                      0, 0, (linenr_T)MAXLNUM, eap,
-                      flags | READ_NEW | (read_fifo ? READ_FIFO : 0), silent);
+    // A normal file buffer keeps its text in a Numstore smart file. A file
+    // that is not a smart file (or that numstore cannot open) is read as
+    // usual.
+    char nserr[256] = "";
+    if (!read_fifo && *curbuf->b_p_bt == NUL && !curbuf->b_help
+        && !os_isdir(curbuf->b_ffname)
+        && !has_autocmd(EVENT_BUFREADCMD, curbuf->b_fname, curbuf)  // a plugin reads it
+        && ml_nsf_attach(curbuf, nserr, sizeof(nserr)) == OK) {
+      retval = nsf_read_post(eap, silent);
+    } else {
+      if (nserr[0] != NUL) {
+        semsg(_("numstore: %s: %s"), curbuf->b_fname, nserr);
+      }
+      retval = readfile(curbuf->b_ffname, curbuf->b_fname,
+                        0, 0, (linenr_T)MAXLNUM, eap,
+                        flags | READ_NEW | (read_fifo ? READ_FIFO : 0), silent);
+    }
 #ifdef UNIX
     if (read_fifo) {
       curbuf->b_p_bin = save_bin;

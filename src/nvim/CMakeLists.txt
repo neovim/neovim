@@ -38,6 +38,10 @@ target_link_libraries(main_lib INTERFACE
   treesitter
   utf8proc)
 
+# Numstore smart files store buffer text (see ARCHITECTURE.md).
+find_package(numstore REQUIRED CONFIG)
+target_link_libraries(main_lib INTERFACE numstore::numstore)
+
 if(ENABLE_LIBINTL)
   find_package(Libintl REQUIRED) # Libintl (not Intl) selects our FindLibintl.cmake script. #8464
   target_link_libraries(main_lib INTERFACE libintl)
