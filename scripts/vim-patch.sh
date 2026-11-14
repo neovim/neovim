@@ -955,7 +955,7 @@ is_na_patch() {
           '-I^#\s*define\s+(FEAT|POPUPWIN|XDG|t)_[^_]' \
           '-I^\s+(&&|\|\|)\s.*defined\(.*FEAT_[^_]' \
           '-IEVENT_TERMINALWINOPEN' \
-          '-I^#\s*define\s+(ASSIGN_VAR|IN_TABPANEL|POPF_CURSORLINE)\s' \
+          '-I^#\s*define\s+(ASSIGN_VAR|IN_TABPANEL|POPF_CURSORLINE|USR_VIMRC_FILE)\s' \
           '-I^typedef enum \{$' \
           '-I^\s+(CH_MODE|POPCLOSE)_[A-Z]+,?(\s+//.+)?$' \
           '-I^\} popclose_T;$' \
