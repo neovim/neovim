@@ -2608,6 +2608,56 @@ describe('ext_multigrid', function()
     }
   end)
 
+  it('scroll_delta of a new window counts from line 1', function()
+    command('tabnew | call setline(1, range(1, 1000)) | normal! G')
+    screen:expect {
+      grid = [[
+    ## grid 1
+      {16: [No Name] }{7: + [No Name] }{12:                            }{16:X}|
+      [4:-----------------------------------------------------]|*11
+      {11:[No Name] [+]                                        }|
+      [3:-----------------------------------------------------]|
+    ## grid 2 (hidden)
+                                                           |
+      {1:~                                                    }|*11
+    ## grid 3
+                                                           |
+    ## grid 4
+      990                                                  |
+      991                                                  |
+      992                                                  |
+      993                                                  |
+      994                                                  |
+      995                                                  |
+      996                                                  |
+      997                                                  |
+      998                                                  |
+      999                                                  |
+      ^1000                                                 |
+    ]],
+      win_viewport = {
+        [2] = {
+          win = 1000,
+          topline = 0,
+          botline = 2,
+          curline = 0,
+          curcol = 0,
+          linecount = 1,
+          sum_scroll_delta = 0,
+        },
+        [4] = {
+          win = 1001,
+          topline = 989,
+          botline = 1000,
+          curline = 999,
+          curcol = 0,
+          linecount = 1000,
+          sum_scroll_delta = 989,
+        },
+      },
+    }
+  end)
+
   it('does not crash when dragging mouse across grid boundary', function()
     screen:try_resize(48, 8)
     screen:expect {
