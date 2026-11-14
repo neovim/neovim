@@ -6,7 +6,6 @@ local clear = n.clear
 local eq = t.eq
 local exec_lua = n.exec_lua
 local is_os = t.is_os
-local pathsep = n.get_pathsep()
 local write_file = t.write_file
 
 describe(':log', function()
@@ -16,10 +15,10 @@ describe(':log', function()
   before_each(function()
     clear { env = { XDG_STATE_HOME = xstate } }
 
-    local std_state = xstate .. pathsep .. name
-    n.mkdir_p(std_state .. pathsep .. 'logs')
-    write_file(std_state .. '/logs/nvim.log', [[nvim log]])
-    write_file(std_state .. '/logs/foo.log', [[foo log]])
+    local std_state = vim.fs.joinpath(xstate, name)
+    n.mkdir_p(vim.fs.joinpath(std_state, 'logs'))
+    write_file(vim.fs.joinpath(std_state, 'logs/nvim.log'), [[nvim log]])
+    write_file(vim.fs.joinpath(std_state, 'logs/foo.log'), [[foo log]])
   end)
 
   after_each(function()
@@ -28,7 +27,7 @@ describe(':log', function()
 
   it('without argument opens log folder', function()
     eq(
-      xstate .. '/' .. name .. '/logs',
+      vim.fs.joinpath(xstate, name, 'logs'),
       exec_lua(function()
         vim.cmd('log')
         return vim.fs.normalize(vim.fn.expand('%'))
@@ -38,7 +37,7 @@ describe(':log', function()
 
   it('with argument opens corresponding log file', function()
     eq(
-      xstate .. '/' .. name .. '/logs/foo.log',
+      vim.fs.joinpath(xstate, name, 'logs/foo.log'),
       exec_lua(function()
         vim.cmd('log foo')
         return vim.fs.normalize(vim.fn.expand('%'))

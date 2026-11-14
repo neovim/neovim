@@ -128,12 +128,11 @@ describe('lua stdlib', function()
       eq(NIL, exec_lua([[return vim.g.Unknown_script_func]]))
 
       -- Check if autoload works properly
-      local pathsep = n.get_pathsep()
       local xhome = 'Xhome_lua'
-      local xconfig = xhome .. pathsep .. 'Xconfig'
-      local xdata = xhome .. pathsep .. 'Xdata'
-      local autoload_folder = table.concat({ xconfig, 'nvim', 'autoload' }, pathsep)
-      local autoload_file = table.concat({ autoload_folder, 'testload.vim' }, pathsep)
+      local xconfig = vim.fs.joinpath(xhome, 'Xconfig')
+      local xdata = vim.fs.joinpath(xhome, 'Xdata')
+      local autoload_folder = vim.fs.joinpath(xconfig, 'nvim', 'autoload')
+      local autoload_file = vim.fs.joinpath(autoload_folder, 'testload.vim')
       mkdir_p(autoload_folder)
       write_file(autoload_file, [[let testload#value = 2]])
 

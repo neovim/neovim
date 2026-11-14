@@ -25,8 +25,8 @@ describe('nvim.spellfile', function()
     t.retry(nil, nil, function()
       assert(vim.uv.fs_stat(my_spell))
     end)
-    t.write_file(my_spell .. '/en_gb.utf-8.spl', 'dummy')
-    t.write_file(my_spell .. '/en_gb.utf-8.sug', 'dummy')
+    t.write_file(vim.fs.joinpath(my_spell, 'en_gb.utf-8.spl'), 'dummy')
+    t.write_file(vim.fs.joinpath(my_spell, 'en_gb.utf-8.sug'), 'dummy')
 
     local out = exec_lua(
       [[
