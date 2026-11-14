@@ -632,10 +632,9 @@ _convert_one_value_regular_dict: {}
     internal_error(STR(TYPVAL_ENCODE_CONVERT_ONE_VALUE) "()");
     return FAIL;
   }
+  goto typval_encode_stop_converting_one_item;  // Prevent “unused label” warnings.
 typval_encode_stop_converting_one_item:
   return OK;
-  // Prevent “unused label” warnings.
-  goto typval_encode_stop_converting_one_item;
 }
 
 static int TYPVAL_ENCODE_CONVERT_ALL(
@@ -666,6 +665,7 @@ static int TYPVAL_ENCODE_CONVERT_ALL(
       == FAIL) {
     goto encode_vim_to__error_ret;
   }
+  goto typval_encode_stop_converting_one_item;  // Prevent “unused label” warnings.
 /// Label common for this and convert_one_value functions, used for escaping
 /// from macros like TYPVAL_ENCODE_CONV_DICT_START.
 typval_encode_stop_converting_one_item:
@@ -836,8 +836,6 @@ typval_encode_stop_converting_one_item:
   return OK;
 encode_vim_to__error_ret:
   return FAIL;
-  // Prevent “unused label” warnings.
-  goto typval_encode_stop_converting_one_item;
 }
 
 TYPVAL_ENCODE_SCOPE int TYPVAL_ENCODE_ENCODE(
