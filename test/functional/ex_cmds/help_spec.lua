@@ -118,8 +118,7 @@ describe(':help', function()
     check_tag('help <C-pagedown>', '*CTRL-<PageDown>*')
     check_tag('help ^A', '*CTRL-A*')
     check_tag('help ^', '*^*')
-    check_tag('help ^^', '*CTRL-^*')
-    check_tag('help CTRL-^', '*CTRL-^*')
+    t.matches('E149: No help for %^%.', t.pcall_err(n.command, 'help ^.'))
     check_tag('help ^W_+', '*CTRL-W_+*')
     check_tag('help ^W<up>', '*CTRL-W_<Up>*')
     check_tag('help ^W>', '*CTRL-W_>*')
@@ -145,6 +144,8 @@ describe(':help', function()
     check_tag([[help c_CTRL-SHIFT-Q]], '*c_CTRL-SHIFT-Q*')
 
     check_tag([[exe "help i\<C-\>\<C-G>"]], [[*i_CTRL-\_CTRL-G*]])
+    check_tag([[exe "help i_\<C-_>"]], '*i_CTRL-_*')
+    check_tag([[exe "help \<C-W>\<C-_>"]], '*CTRL-W_CTRL-_*')
     check_tag([[exe "help \<C-V>"]], '*CTRL-V*')
     check_tag([[exe "help! arglistid([{winnr})"]], '*arglistid()*')
     check_tag([[exe "help! 'autoindent'."]], [[*'autoindent'*]])
@@ -213,6 +214,13 @@ describe(':help', function()
     set_lines 'nvim_buf_detach_event[{buf}]'
     cursor(0, { 1, 10 })
     eq({ '*nvim_buf_detach_event*', 'api.txt' }, open_helptag())
+
+    set_lines '|'
+    cursor(0, { 1, 0 })
+    eq({ '*bar*', 'motion.txt' }, open_helptag())
+    set_lines '"'
+    cursor(0, { 1, 0 })
+    eq({ '*quote*', 'change.txt' }, open_helptag())
 
     set_lines '{buf}'
     cursor(0, { 1, 1 })

@@ -80,13 +80,27 @@ function M.escape_subject(word)
     -- '\' --> '\\' (needs to come first)
     -- '[' --> '\[' (escape the opening bracket)
     -- ':[' --> ':\[' (escape the opening bracket)
-    -- '\{' --> '\\{' (for '\{' pattern matching)
     -- '(' --> '' (parentheses around option tags should be ignored)
     word = word:gsub([[\+]], [[\\]])
     word = word:gsub([[^%[]], [[\[]])
     word = word:gsub([[^:%[]], [[:\[]])
-    word = word:gsub([[^\{]], [[\\{]])
     word = word:gsub([[^%(']], [[']])
+
+    -- Change caret notation to 'CTRL-', except '^_'
+    -- E.g. 'i^G^J' --> 'iCTRL-GCTRL-J'
+    -- Only treat '^' as control notation when followed by a caret-notation
+    -- char (a letter or one of "@[\]^{"); otherwise leave it literal so
+    -- patterns like ':set^=' are not wrongly split. '{' is included so
+    -- '^{char}' matches the 'CTRL-{char}' placeholder tag.
+    -- Must come before the rewrites below, else '^.' --> '^\.' --> 'CTRL-\_.'.
+    word = word:gsub('%^([%a@\\[\\%]{^])', 'CTRL-%1')
+    -- Change raw control chars to 'CTRL-', after caret notation (else 0x1E 'a' --> 'CTRL-CTRL-a').
+    -- E.g. 0x01 --> 'CTRL-A', 0x1C --> 'CTRL-\\'
+    ---@type string
+    word = word:gsub('[\1-\31]', function(ctrl_char)
+      local char = string.char(ctrl_char:byte() + 64):gsub([[\]], [[\\]])
+      return ('CTRL-%s'):format(char)
+    end)
 
     word = word:gsub('|', 'bar')
     word = word:gsub([["]], 'quote')
@@ -94,37 +108,20 @@ function M.escape_subject(word)
     word = word:gsub('%*', '.*')
     word = word:gsub('?', '.')
 
-    -- Handle control characters.
-    -- First convert raw control chars to the caret notation
-    -- E.g. 0x01 --> '^A' etc.
-    ---@type string
-    word = word:gsub('([\1-\31])', function(ctrl_char)
-      -- '^\' needs an extra backslash
-      local repr = string.char(ctrl_char:byte() + 64):gsub([[\]], [[\\]])
-      return '^' .. repr
-    end)
-
-    -- Change caret notation to 'CTRL-', except '^_'
-    -- E.g. 'i^G^J' --> 'iCTRL-GCTRL-J'
-    -- Only treat '^' as control notation when followed by a caret-notation
-    -- char (a letter or one of "?@[\]^{"); otherwise leave it literal so
-    -- patterns like ':set^=' are not wrongly split. '{' is included so
-    -- '^{char}' matches the 'CTRL-{char}' placeholder tag.
-    word = word:gsub('%^([%a?@\\[\\%]{^])', 'CTRL-%1')
     -- Add underscores around 'CTRL-X' characters
     -- E.g. 'iCTRL-GCTRL-J' --> 'i_CTRL-G_CTRL-J'
     -- Only exception: 'CTRL-{character}'
     word = word:gsub('([^-_])CTRL%-', '%1_CTRL-')
     word = word:gsub('(CTRL%-[^{])([^%u_\\-])', '%1_%2')
 
-    -- Escape literal carets after converting control notation.
+    -- Escape literal carets, after the underscores (else 'CTRL-\^' --> 'CTRL-\_^').
+    -- E.g. '^' --> '\^', 'CTRL-^' --> 'CTRL-\^'
     word = word:gsub('%^', [[\^]])
 
     -- Skip function arguments
     -- E.g. 'abs({expr})' --> 'abs'
     -- E.g. 'abs([arg])' --> 'abs'
-    word = word:gsub('%({.*', '')
-    word = word:gsub('%(%[.*', '')
+    word = word:gsub('%([{%[].*', '')
 
     -- Skip punctuation after second apostrophe/curly brace
     -- E.g. ''option',' --> ''option''
@@ -166,18 +163,6 @@ local trimmable_punct = {
 ---@param offset integer Cursor position within the tag (-1 if not applicable)
 ---@return string? trimmed Trimmed string, or nil if unchanged
 local function trim_tag(tag, offset)
-  if not tag or tag == '' then
-    return nil
-  end
-
-  -- Special cases: single character tags
-  if tag == '|' then
-    return 'bar'
-  end
-  if tag == '"' then
-    return 'quote'
-  end
-
   local len = #tag
   -- start/end are 1-indexed inclusive positions into tag
   local s = 1
@@ -220,13 +205,7 @@ local function trim_tag(tag, offset)
     end
   end
 
-  -- If nothing changed, return nil
-  if s == 1 and e == len then
-    return nil
-  end
-
-  -- If everything was trimmed, return nil
-  if s > e then
+  if s > e or (s == 1 and e == len) then -- Everything trimmed, or nothing.
     return nil
   end
 
@@ -240,11 +219,7 @@ end
 ---@param tag string The tag to trim
 ---@return string? trimmed Trimmed string, or nil if no dots found
 local function trim_tag_dots(tag)
-  if not tag or tag == '' then
-    return nil
-  end
-  local after_dot = tag:match('^[^.]+%.(.+)$')
-  return after_dot
+  return tag:match('^[^.]+%.(.+)$')
 end
 
 --- For ":help!" (bang, no args): DWIM resolve a help tag from the cursor context.
@@ -267,12 +242,7 @@ function M.resolve_tag()
   -- Compute cursor offset within <cWORD>.
   local line = vim.api.nvim_get_current_line()
   local col = vim.fn.col('.') -- 1-indexed
-  local s = col
-  -- Scan backward from col('.') to find the whitespace boundary.
-  while s > 1 and not line:sub(s - 1, s - 1):match('%s') do
-    s = s - 1
-  end
-  local offset = col - s -- 0-indexed offset within <cWORD>
+  local offset = #line:sub(1, col - 1):match('%S*$') -- 0-indexed offset within <cWORD>
 
   -- Try the original tag first.
   if #vim.fn.getcompletion(tag, 'help') > 0 then
@@ -305,22 +275,8 @@ function M.resolve_tag()
   -- dot-trimming strips from the left and may move away from the cursor position.
   -- E.g. for '@lsp.type.function' with cursor on "lsp", the word is "lsp".
   -- Note: we don't use <cword> because it depends on 'iskeyword'.
-  local word_s, word_e = col, col
-  -- If cursor is not on a word char, find the nearest word char to the right.
-  if not line:sub(col, col):match('[%w_]') then
-    while word_s <= #line and not line:sub(word_s, word_s):match('[%w_]') do
-      word_s = word_s + 1
-    end
-    word_e = word_s
-  end
-  while word_s > 1 and line:sub(word_s - 1, word_s - 1):match('[%w_]') do
-    word_s = word_s - 1
-  end
-  while word_e <= #line and line:sub(word_e, word_e):match('[%w_]') do
-    word_e = word_e + 1
-  end
-  word_e = word_e - 1
-  local cword = line:sub(word_s, word_e)
+  local at = line:find('[%w_]', col) -- Cursor char, or nearest word char to the right.
+  local cword = at and line:sub(1, at):match('[%w_]*$') .. line:sub(at + 1):match('^[%w_]*') or ''
   if #cword > 1 and cword ~= tag and #vim.fn.getcompletion(cword, 'help') > 0 then
     return cword
   end
