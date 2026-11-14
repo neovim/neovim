@@ -101,4 +101,30 @@ m.delsurround_vim = [[
   nnoremap <silent> ds :<C-U>call DelSurround()<CR>
 ]]
 
+-- Example from #41657 (without input "caching"): Lua 'operatorfunc' <expr> mapping that reads
+-- input() and edits via API.
+--
+-- - "sd": not a real operator, "g@l" fixes the motion.
+-- - "sa": true operator, input is read AFTER the textobject.
+m.opfunc_input_lua = [[
+  vim.keymap.set('n', 'sd', function()
+    vim.o.operatorfunc = function()
+      local s = vim.fn.input({ prompt = 'Input: ' })
+      local pos = vim.api.nvim_win_get_cursor(0)
+      vim.api.nvim_buf_set_text(0, pos[1] - 1, pos[2], pos[1] - 1, pos[2], { s .. s })
+    end
+    return 'g@l'
+  end, { expr = true })
+  vim.keymap.set('n', 'sa', function()
+    vim.o.operatorfunc = function()
+      local s = vim.fn.input({ prompt = 'Input: ' })
+      local right = vim.api.nvim_buf_get_mark(0, ']')
+      vim.api.nvim_buf_set_text(0, right[1] - 1, right[2] + 1, right[1] - 1, right[2] + 1, { s })
+      local left = vim.api.nvim_buf_get_mark(0, '[')
+      vim.api.nvim_buf_set_text(0, left[1] - 1, left[2], left[1] - 1, left[2], { s })
+    end
+    return 'g@'
+  end, { expr = true })
+]]
+
 return m
