@@ -347,10 +347,11 @@ static int linelen(int *has_tab)
   return len;
 }
 
-// Buffer for two lines used during sorting.  They are allocated to
-// contain the longest line being sorted.
+// Buffer for a line used during sorting.  It is allocated to contain the
+// longest line being sorted.
 static char *sortbuf1;
-static char *sortbuf2;
+// NUL-terminated sort keys of all lines.
+static char *sort_keys;
 
 static bool sort_lc;      ///< sort using locale
 static bool sort_ic;      ///< ignore case
@@ -364,10 +365,7 @@ static bool sort_abort;   ///< flag to indicate if sorting has been interrupted
 typedef struct {
   linenr_T lnum;          ///< line number
   union {
-    struct {
-      varnumber_T start_col_nr;  ///< starting column number
-      varnumber_T end_col_nr;    ///< ending column number
-    } line;
+    size_t key_off;       ///< offset of the key in "sort_keys"
     struct {
       varnumber_T value;         ///< value if sorting by integer
       bool is_number;            ///< true when line contains a number
@@ -401,8 +399,6 @@ static int sort_compare(const void *s1, const void *s2)
     sort_abort = true;
   }
 
-  // When sorting numbers "start_col_nr" is the number, not the column
-  // number.
   if (sort_nr) {
     if (l1.st_u.num.is_number != l2.st_u.num.is_number) {
       result = l1.st_u.num.is_number > l2.st_u.num.is_number ? 1 : -1;
@@ -416,17 +412,7 @@ static int sort_compare(const void *s1, const void *s2)
              ? 0
              : l1.st_u.value_flt > l2.st_u.value_flt ? 1 : -1;
   } else {
-    // We need to copy one line into "sortbuf1", because there is no
-    // guarantee that the first pointer becomes invalid when obtaining the
-    // second one.
-    memcpy(sortbuf1, ml_get(l1.lnum) + l1.st_u.line.start_col_nr,
-           (size_t)(l1.st_u.line.end_col_nr - l1.st_u.line.start_col_nr + 1));
-    sortbuf1[l1.st_u.line.end_col_nr - l1.st_u.line.start_col_nr] = NUL;
-    memcpy(sortbuf2, ml_get(l2.lnum) + l2.st_u.line.start_col_nr,
-           (size_t)(l2.st_u.line.end_col_nr - l2.st_u.line.start_col_nr + 1));
-    sortbuf2[l2.st_u.line.end_col_nr - l2.st_u.line.start_col_nr] = NUL;
-
-    result = string_compare(sortbuf1, sortbuf2);
+    result = string_compare(sort_keys + l1.st_u.key_off, sort_keys + l2.st_u.key_off);
   }
 
   // If two lines have the same value, preserve the original line order.
@@ -455,7 +441,7 @@ void ex_sort(exarg_T *eap)
     return;
   }
   sortbuf1 = NULL;
-  sortbuf2 = NULL;
+  sort_keys = NULL;
   regmatch.regprog = NULL;
   sorti_T *nrs = xmalloc(count * sizeof(sorti_T));
 
@@ -531,12 +517,22 @@ void ex_sort(exarg_T *eap)
   // sorting.
   sort_nr |= sort_what;
 
-  // Make an array with all line numbers.  This avoids having to copy all
-  // the lines into allocated memory.
-  // When sorting on strings "start_col_nr" is the offset in the line, for
-  // numbers sorting it's the number to sort on.  This means the pattern
-  // matching and number conversion only has to be done once per line.
-  // Also get the longest line length for allocating "sortbuf".
+  // Make an array with all line numbers and what to sort them on: a copy of
+  // the key for strings, the number itself for numbers.  This means the
+  // pattern matching and number conversion only has to be done once per line.
+  // Also get the longest line length for allocating "sortbuf1".
+  bool sort_str = !sort_nr && !sort_flt;
+  size_t keys_len = 0;
+  if (sort_str) {
+    size_t keys_size = 0;
+    for (linenr_T lnum = eap->line1; lnum <= eap->line2; lnum++) {
+      keys_size += (size_t)ml_get_len(lnum) + 1;
+    }
+    sort_keys = verbose_try_malloc(keys_size);
+    if (sort_keys == NULL) {
+      goto sortend;
+    }
+  }
   for (linenr_T lnum = eap->line1; lnum <= eap->line2; lnum++) {
     char *s = ml_get(lnum);
     int len = ml_get_len(lnum);
@@ -598,9 +594,10 @@ void ex_sort(exarg_T *eap)
       }
       *s2 = c;
     } else {
-      // Store the column to sort at.
-      nrs[lnum - eap->line1].st_u.line.start_col_nr = start_col;
-      nrs[lnum - eap->line1].st_u.line.end_col_nr = end_col;
+      nrs[lnum - eap->line1].st_u.key_off = keys_len;
+      memcpy(sort_keys + keys_len, s + start_col, (size_t)(end_col - start_col));
+      keys_len += (size_t)(end_col - start_col);
+      sort_keys[keys_len++] = NUL;
     }
 
     nrs[lnum - eap->line1].lnum = lnum;
@@ -615,7 +612,6 @@ void ex_sort(exarg_T *eap)
 
   // Allocate a buffer that can hold the longest line.
   sortbuf1 = xmalloc((size_t)maxlen + 1);
-  sortbuf2 = xmalloc((size_t)maxlen + 1);
 
   // Sort the array of line numbers.  Note: can't be interrupted!
   qsort((void *)nrs, count, sizeof(sorti_T), sort_compare);
@@ -628,9 +624,12 @@ void ex_sort(exarg_T *eap)
   bcount_t new_count = 0;
 
   // Insert the lines in the sorted order below the last one.
+  const bool keys_are_lines = sort_str && regmatch.regprog == NULL;
+  char *prev = sortbuf1;
   linenr_T lnum = eap->line2;
   for (i = 0; i < count; i++) {
-    const linenr_T get_lnum = nrs[eap->forceit ? count - i - 1 : i].lnum;
+    const sorti_T *const nr = &nrs[eap->forceit ? count - i - 1 : i];
+    const linenr_T get_lnum = nr->lnum;
 
     // If the original line number of the line being placed is not the same
     // as "lnum" (accounting for offset), we know that the buffer changed.
@@ -638,14 +637,19 @@ void ex_sort(exarg_T *eap)
       change_occurred = true;
     }
 
-    char *s = ml_get(get_lnum);
-    colnr_T bytelen = ml_get_len(get_lnum) + 1;  // include EOL in bytelen
+    char *s = keys_are_lines ? sort_keys + nr->st_u.key_off : ml_get(get_lnum);
+    colnr_T bytelen = (keys_are_lines ? (colnr_T)strlen(s) : ml_get_len(get_lnum))
+                      + 1;  // include EOL in bytelen
     old_count += bytelen;
-    if (!unique || i == 0 || string_compare(s, sortbuf1) != 0) {
+    if (!unique || i == 0 || string_compare(s, prev) != 0) {
       // Copy the line into a buffer, it may become invalid in
       // ml_append(). And it's needed for "unique".
-      STRCPY(sortbuf1, s);
-      if (ml_append(lnum++, sortbuf1, 0, false) == FAIL) {
+      if (!keys_are_lines) {
+        STRCPY(sortbuf1, s);
+        s = sortbuf1;
+      }
+      prev = s;
+      if (ml_append(lnum++, s, 0, false) == FAIL) {
         break;
       }
       new_count += bytelen;
@@ -687,7 +691,7 @@ void ex_sort(exarg_T *eap)
 sortend:
   xfree(nrs);
   xfree(sortbuf1);
-  xfree(sortbuf2);
+  XFREE_CLEAR(sort_keys);
   vim_regfree(regmatch.regprog);
   if (got_int) {
     emsg(_(e_interr));
