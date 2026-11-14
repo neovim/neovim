@@ -117,6 +117,9 @@ function M.escape_subject(word)
     word = word:gsub('([^-_])CTRL%-', '%1_CTRL-')
     word = word:gsub('(CTRL%-[^{])([^%u_\\-])', '%1_%2')
 
+    -- Escape literal carets after converting control notation.
+    word = word:gsub('%^', [[\^]])
+
     -- Skip function arguments
     -- E.g. 'abs({expr})' --> 'abs'
     -- E.g. 'abs([arg])' --> 'abs'
