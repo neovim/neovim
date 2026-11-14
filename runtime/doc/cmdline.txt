@@ -1247,9 +1247,8 @@ Key		Action ~
 <Enter>		Execute the command-line under the cursor, then close the
 		window(s) where cmdwin is visible.  Works both in Insert and
 		in Normal mode.
-CTRL-C		Continue in Command-line mode.  The command-line under the
-		cursor is pre-filled in the command-line.  Works both in
-		Insert and in Normal mode.
+CTRL-C		Continue in Command-line mode.  Pre-fills the command-line and
+		keeps cursor position. Works in both Insert and Normal mode.
 :quit		Discard the command line and go back to Normal mode.
 		":close", CTRL-W c, ":exit", ":xit" and CTRL-\ CTRL-N also
 		work.

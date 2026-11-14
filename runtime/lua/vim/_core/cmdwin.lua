@@ -2,7 +2,7 @@
 ---
 --- Implements cmdwin as a normal window+buffer, instead of the legacy nested `state_enter` loop.
 --- - On confirm, curline is fed back through the cmdline via |nvim_feedkeys()|.
---- - On cancel, curline is pre-filled in the ":" cmdline.
+--- - On cancel, curline and cursor are restored in the cmdline.
 
 local M = {}
 
@@ -198,9 +198,21 @@ function M.cancel()
   if state == nil then -- Not in cmdwin (closed already?).
     return
   end
+  local col = vim.api.nvim_win_get_cursor(0)[2]
+  local insert = vim.api.nvim_get_mode().mode:find('^[iR]') ~= nil
   local line, type = _close()
-  line = line:gsub('%z', '\n'):gsub('(%c)', '\022%1') -- Escape control characters.
-  vim.api.nvim_feedkeys(type .. line, 'nt', true)
+  line = line:gsub('%z', '\n')
+  -- Special case: for non-Insert mode, treat cursor at last char as "after".
+  if not insert and vim.fn.strcharlen(line:sub(col + 1)) <= 1 then
+    col = #line
+  end
+  -- Escape control chars, quotes and bytes >= 0x80 (K_SPECIAL) for a "string" literal.
+  local str = line:gsub('[%c"\\\128-\255]', function(c)
+    return ('\\x%02x'):format(c:byte())
+  end)
+  -- TODO(justinmk): `setcmdline()` is "fed" for scheduling purposes. Use #40419 when it lands.
+  local keys = ('%s%scall setcmdline("%s", %d)\r'):format(type, vim.keycode('<Cmd>'), str, col + 1)
+  vim.api.nvim_feedkeys(keys, 'nt', false)
 end
 
 return M

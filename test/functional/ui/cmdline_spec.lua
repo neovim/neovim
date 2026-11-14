@@ -910,7 +910,7 @@ describe('cmdline redraw', function()
     screen:expect([[
                                               |
       {1:~                                       }|*8
-      :abc^                                    |
+      :^abc                                    |
     ]])
   end)
 
