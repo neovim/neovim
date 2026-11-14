@@ -112,7 +112,6 @@ describe('--embed UI', function()
     clear { args_rm = { '--headless' }, io_extra = pipe.read, env = { NVIM_LOG_FILE = testlog } }
 
     -- attach immediately after startup, for early UI
-    -- rpc_async: Avoid hanging. #24888
     local screen = Screen.new(40, 8, { stdin_fd = 3 }, false)
     screen.rpc_async = true -- Avoid hanging. #24888
     screen:attach()
@@ -142,6 +141,22 @@ describe('--embed UI', function()
     if not is_os('win') then
       assert_log('Failed to get flags on descriptor 3: Bad file descriptor', testlog, 100)
     end
+  end)
+
+  it('ignores "[-s] -" if UI did not forward stdin (stdin_fd=nil)', function()
+    clear {
+      args_rm = { '--headless' },
+      args = { '--cmd', 'autocmd StdinReadPre * let g:stdin_read = 1', '-s', '-', '-' },
+    }
+    local screen = Screen.new(40, 8, {}, false)
+    screen.rpc_async = true -- Avoid hanging. #24888
+    screen:attach()
+    screen:expect([[
+      ^                                        |
+      {1:~                                       }|*6
+                                              |
+    ]])
+    eq(0, fn.exists('g:stdin_read'))
   end)
 
   it('can pass stdin to -q - #17523', function()
