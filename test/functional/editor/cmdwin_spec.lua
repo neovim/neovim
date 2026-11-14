@@ -102,7 +102,7 @@ describe('cmdwin', function()
     eq(2, fn.histnr('cmd')) -- History unchanged (the in-flight cmdline was not added).
   end)
 
-  it('<C-C> in normal mode cancels without executing', function()
+  it('<C-C> cancels without executing, keeps cursor position', function()
     feed('q:')
     feed('ilet g:executed = 1<Esc>')
     n.poke_eventloop() -- Ensure previous input is processed before <C-C>.
@@ -114,6 +114,23 @@ describe('cmdwin', function()
     eq(-1, fn.histnr('cmd'))
     eq('let g:executed = 1', fn.getcmdline())
     eq(':', fn.getcmdtype())
+    -- Normal mode: cursor on last char.
+    eq(19, fn.getcmdpos())
+    -- Normal mode: cursor on "=".
+    feed('<Esc>q:ilet g:executed = 1<Left><Left><Esc>')
+    n.poke_eventloop()
+    feed('<C-C>')
+    eq(16, fn.getcmdpos())
+    -- Insert mode: cursor before "1".
+    feed('<Esc>q:ilet g:executed = 1<Left>')
+    n.poke_eventloop()
+    feed('<C-C>')
+    eq(18, fn.getcmdpos())
+    -- Search cmdline.
+    feed('<Esc>q/ifoo<Esc>')
+    n.poke_eventloop()
+    feed('<C-C>')
+    eq({ '/', 'foo', 4 }, { fn.getcmdtype(), fn.getcmdline(), fn.getcmdpos() })
   end)
 
   it('history entry or current cmdline with control chars or 0x80 byte', function()
