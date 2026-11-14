@@ -519,6 +519,7 @@ OPTIONS
 
 PERFORMANCE
 
+• |:global| is up to 5x faster on large buffers.
 • If :write or :edit is slow it emits `msg_show.progress` events.
 • LSP shares identical file watcher registrations, reducing startup work in
   large workspaces. On macOS and Windows, watchers with different glob
