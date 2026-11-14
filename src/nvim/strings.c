@@ -2794,9 +2794,14 @@ void f_strdisplaywidth(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "strwidth()" function
 void f_strwidth(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  const char *const s = tv_get_string(&argvars[0]);
-
-  rettv->vval.v_number = (varnumber_T)mb_string2cells(s);
+  varnumber_T ret = 0;
+  StrCharInfo ci = utf_ptr2StrCharInfo(tv_get_string(&argvars[0]));
+  while (*ci.ptr != NUL) {
+    ClusterInfo cli = utf_ClusterInfo(ci);
+    ret += ci.chr.value < 0x80 ? 1 : cli.cells;  // "A Tab character is counted as one cell"
+    ci = cli.next;
+  }
+  rettv->vval.v_number = ret;
 }
 
 /// "strcharpart()" function
