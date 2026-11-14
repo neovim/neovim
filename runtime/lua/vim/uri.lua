@@ -530,12 +530,14 @@ function M.from_buf(buf)
   return M.from_fname(vim.api.nvim_buf_get_name(buf))
 end
 
----Gets a filename from a URI. Drops the query and fragment, so "?" and "#" in a filename must be
----percent-encoded.
+---Gets a normalized filename from a URI. Drops the query and fragment, so "?" and "#" in a
+---filename must be percent-encoded.
 ---
 ---Example:
 ---
 ---```lua
+---vim.uri.to_fname('file:///a/./b/../c') --> '/a/c'
+---vim.uri.to_fname('file:///a/%2E%2E/b') --> '/b'
 ---vim.uri.to_fname('file:///a%3Fb?c#d') --> '/a?b'
 ---vim.uri.to_fname('file:///C:/a/b') --> 'C:/a/b'
 ---vim.uri.to_fname('file://server/share/a') --> '//server/share/a'
@@ -557,6 +559,7 @@ function M.to_fname(uri)
   if parts.scheme ~= 'file' then
     return tostring(uri)
   end
+  parts = M.normalize(parts)
   local host = parts.host or ''
   local path = M.decode(parts.path)
   -- Collapses leading slashes: "file:a" => "/a", "file:////a" => "/a".
@@ -578,7 +581,7 @@ end
 ---@param uri string|vim.Uri
 ---@return integer buf
 function M.to_buf(uri)
-  return vim.fn.bufadd(M.to_fname(uri))
+  return vim.fn.bufadd(tostring(uri))
 end
 
 return M

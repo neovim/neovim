@@ -8,6 +8,7 @@ local eq = t.eq
 local is_os = t.is_os
 local skip = t.skip
 local write_file = t.write_file
+local api, fn = n.api, n.fn
 
 describe('vim.uri', function()
   before_each(function()
@@ -117,6 +118,22 @@ describe('vim.uri', function()
       -- Filepath with uri query, fragment.
       exec_lua("uri = 'file:///Foo/Bar/Baz.txt?query#fragment'")
       eq('/Foo/Bar/Baz.txt', exec_lua('return vim.uri.to_fname(uri)'))
+    end)
+
+    it('removes "." and ".." segments #39278', function()
+      eq(
+        { '/a/b/', '/', '/a/c', '/b', '//h/b' },
+        exec_lua(function()
+          local uris = {
+            'file:///a/b/.',
+            'file:///a/..',
+            'file:///a/./b/../c',
+            'file:///a/%2E%2E/b',
+            'file://h/a/../b',
+          }
+          return vim.tbl_map(vim.uri.to_fname, uris)
+        end)
+      )
     end)
 
     describe('Windows filepath', function()
@@ -287,6 +304,17 @@ describe('vim.uri', function()
       eq(uri, exec_lua(test_case))
       -- Deprecated aliases.
       eq(uri, exec_lua('return vim.uri_from_bufnr(vim.uri_to_bufnr(...))', uri))
+    end)
+
+    it('yields the same buffer as symlink and real path #39278', function()
+      local file = t.tmpname()
+      local link = t.tmpname(false)
+      vim.uv.fs_symlink(file, link)
+
+      local buf = exec_lua('return vim.uri.to_buf(...)', vim.uri.from_fname(link))
+      eq(link, api.nvim_buf_get_name(buf))
+      eq(buf, fn.bufadd(link))
+      eq(buf, fn.bufadd(file))
     end)
   end)
 
