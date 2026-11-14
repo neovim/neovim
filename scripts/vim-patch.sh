@@ -881,7 +881,7 @@ is_na_patch() {
           '-I compiled (with|without) .*\(\|.+\|\) feature\.$' \
           '-I\{.+ (available|compiled) (with|without) .+\}' \
           '-I\|(added|changed|patches|version)-[0-9]+\.[0-9]+\|' \
-          '-I\|:(cscope|export|import|redrawtabpanel)\|' \
+          '-I\|:(cscope|export|hardcopy|import|import-cycle|redrawtabpanel)\|' \
           '-I\|52\.6\|' \
           '-I\|channel-open-[^|]+\|' \
           '-I\|comment-install\|' \
@@ -949,7 +949,7 @@ is_na_patch() {
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^\s*/?\*/?$' \
-          '-I^\s*(//|/?\*).*\s\+?([vV]im9|E[0-9]{,4} unused|E[0-9]{4} - |FEAT_|JSON-RPC|channel|job|popup|sound|tabpanel|terminal)' \
+          '-I^\s*(//|/?\*).*\s\+?([vV]im9|E[0-9]{,4} (not used|unused)|E[0-9]{4} - |FEAT_|JSON-RPC|channel|job|popup|sound|tabpanel|terminal)' \
           '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*(FEAT_[^_]|USE_GTK)' \
           '-I^#\s*(else|endif)' \
           '-I^#\s*define\s+(FEAT|POPUPWIN|XDG|t)_[^_]' \
@@ -981,6 +981,7 @@ is_na_patch() {
           '-I^EXTERN char e_dictnull' \
           '-I^EXTERN char e_failed_to_source_defaults' \
           '-I^EXTERN char e_gethostbyname_in_channel_' \
+          '-I^EXTERN char e_import_nesting_too_deep' \
           '-I^EXTERN char e_invalid_identifier_in_defineannotype' \
           '-I^EXTERN int\s+redraw_tabpanel\s' \
           '-I\sINIT\(= .+"E[0-9]+: (Abstract|Const|Class|Enum|Final|Interface|Public|Static|Type) ' \
@@ -990,6 +991,7 @@ is_na_patch() {
           '-I\sINIT\(= .+"E[0-9]+: .* (ch|channel)_[_a-z]+\(\)' \
           '-I\sINIT\(= .+"E649: Invalid identifier name in defineAnnoType' \
           '-I\sINIT\(= .+"E1016: Cannot declare .* variable: ' \
+          '-I\sINIT\(= .+"E1045: Import nesting too deep' \
           '-I\sINIT\(= .+"E1103: Dictionary not set' \
           '-I\sINIT\(= .+"E1187: .*defaults\.vim' \
           '-I\sINIT\(= .+"E1365: Cannot use a return type with the \\"new\\" function"' \
