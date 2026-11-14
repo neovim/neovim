@@ -1947,6 +1947,19 @@ describe('completion', function()
     poke_eventloop()
     feed('(')
     eq('foobar(', n.api.nvim_get_current_line())
+
+    exec_lua(function()
+      vim.keymap.set('i', '<F5>', function()
+        vim.fn.complete(1, { { word = 'foo', commit_chars = ' ' } })
+      end)
+      vim.api.nvim_create_autocmd('CompleteDone', {
+        callback = function()
+          _G.reason = vim.v.event.reason
+        end,
+      })
+    end)
+    feed('<Esc>cc<F5><F5>')
+    eq('discard', exec_lua('return _G.reason'))
   end)
 
   it('complete_info() reports completion item fields', function()
