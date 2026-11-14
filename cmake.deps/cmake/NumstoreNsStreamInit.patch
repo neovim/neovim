@@ -1,0 +1,259 @@
+diff --git a/libs/common/ns_stream.c b/libs/common/ns_stream.c
+index 8439cec..d1a25ad 100644
+--- a/libs/common/ns_stream.c
++++ b/libs/common/ns_stream.c
+@@ -26,7 +26,7 @@
+ ////// Stream
+ 
+ void
+-stream_init (struct stream *s, const struct stream_ops *ops, void *ctx)
++ns_stream_init (struct stream *s, const struct stream_ops *ops, void *ctx)
+ {
+   ASSERT (s);
+   ASSERT (ops);
+@@ -59,14 +59,14 @@ static const struct stream_ops test_noclose_ops = {
+     .close = NULL,
+ };
+ 
+-TEST (stream_init)
++TEST (ns_stream_init)
+ {
+   TEST_CASE ("sets ops, ctx, and done fields")
+   {
+     bool          dummy_ctx = false;
+     struct stream s;
+ 
+-    stream_init (&s, &test_noclose_ops, &dummy_ctx);
++    ns_stream_init (&s, &test_noclose_ops, &dummy_ctx);
+ 
+     test_assert_ptr_equal (s.ops, &test_noclose_ops);
+     test_assert_ptr_equal (s.ctx, &dummy_ctx);
+@@ -91,7 +91,7 @@ TEST (stream_finish)
+   TEST_CASE ("marks the stream done")
+   {
+     struct stream s;
+-    stream_init (&s, &test_noclose_ops, NULL);
++    ns_stream_init (&s, &test_noclose_ops, NULL);
+ 
+     test_assert (!stream_isdone (&s));
+     stream_finish (&s);
+@@ -120,7 +120,7 @@ TEST (stream_isdone)
+   TEST_CASE ("reflects finish state")
+   {
+     struct stream s;
+-    stream_init (&s, &test_noclose_ops, NULL);
++    ns_stream_init (&s, &test_noclose_ops, NULL);
+ 
+     test_assert (!stream_isdone (&s));
+     stream_finish (&s);
+@@ -149,7 +149,7 @@ TEST (stream_close)
+     bool          flag = false;
+     struct stream s;
+ 
+-    stream_init (&s, &test_close_ops, &flag);
++    ns_stream_init (&s, &test_close_ops, &flag);
+     stream_close (&s);
+ 
+     test_assert (flag);
+@@ -159,7 +159,7 @@ TEST (stream_close)
+   {
+     struct stream s;
+ 
+-    stream_init (&s, &test_noclose_ops, NULL);
++    ns_stream_init (&s, &test_noclose_ops, NULL);
+ 
+     // Should not crash even though close is NULL.
+     stream_close (&s);
+@@ -263,7 +263,7 @@ TEST (stream_bread)
+     struct test_pull_ctx sctx   = {.data = data, .len = sizeof (data), .pos = 0};
+     struct stream        src;
+ 
+-    stream_init (&src, &test_pull_ops, &sctx);
++    ns_stream_init (&src, &test_pull_ops, &sctx);
+ 
+     u8  buf[4] = {0};
+ 
+@@ -280,7 +280,7 @@ TEST (stream_bread)
+     struct test_pull_ctx sctx   = {.data = data, .len = sizeof (data), .pos = 0};
+     struct stream        src;
+ 
+-    stream_init (&src, &test_pull_ops, &sctx);
++    ns_stream_init (&src, &test_pull_ops, &sctx);
+ 
+     u8  buf[10] = {0};
+ 
+@@ -348,7 +348,7 @@ TEST (stream_bwrite)
+     struct test_push_ctx sctx   = {.data = out, .cap = sizeof (out), .pos = 0};
+     struct stream        dest;
+ 
+-    stream_init (&dest, &test_push_ops, &sctx);
++    ns_stream_init (&dest, &test_push_ops, &sctx);
+ 
+     const u8 src[4] = {10, 20, 30, 40};
+ 
+@@ -365,7 +365,7 @@ TEST (stream_bwrite)
+     struct test_push_ctx sctx   = {.data = out, .cap = sizeof (out), .pos = 0};
+     struct stream        dest;
+ 
+-    stream_init (&dest, &test_push_ops, &sctx);
++    ns_stream_init (&dest, &test_push_ops, &sctx);
+ 
+     const u8 src[5] = {1, 2, 3, 4, 5};
+ 
+@@ -452,13 +452,13 @@ TEST (stream_read)
+     struct test_pull_ctx pctx    = {.data = data, .len = sizeof (data), .pos = 0};
+     struct stream        src;
+ 
+-    stream_init (&src, &test_pull_ops, &pctx);
++    ns_stream_init (&src, &test_pull_ops, &pctx);
+ 
+     u8                   out[6] = {0};
+     struct test_push_ctx octx   = {.data = out, .cap = sizeof (out), .pos = 0};
+     struct stream        dest;
+ 
+-    stream_init (&dest, &test_push_ops, &octx);
++    ns_stream_init (&dest, &test_push_ops, &octx);
+ 
+     i32 total = stream_read (&dest, 1, 6, &src, &ctx->e);
+ 
+@@ -485,11 +485,11 @@ TEST (stream_read)
+ 
+     struct test_pull_ctx pctx = {.data = data, .len = N, .pos = 0};
+     struct stream        src;
+-    stream_init (&src, &test_pull_ops, &pctx);
++    ns_stream_init (&src, &test_pull_ops, &pctx);
+ 
+     struct test_push_ctx octx = {.data = out, .cap = N, .pos = 0};
+     struct stream        dest;
+-    stream_init (&dest, &test_push_ops, &octx);
++    ns_stream_init (&dest, &test_push_ops, &octx);
+ 
+     i32 total = stream_read (&dest, 1, N, &src, &ctx->e);
+ 
+@@ -503,13 +503,13 @@ TEST (stream_read)
+     struct test_pull_ctx pctx    = {.data = data, .len = 3, .pos = 0};
+     struct stream        src;
+ 
+-    stream_init (&src, &test_pull_ops, &pctx);
++    ns_stream_init (&src, &test_pull_ops, &pctx);
+ 
+     u8                   out[10] = {0};
+     struct test_push_ctx octx    = {.data = out, .cap = 10, .pos = 0};
+     struct stream        dest;
+ 
+-    stream_init (&dest, &test_push_ops, &octx);
++    ns_stream_init (&dest, &test_push_ops, &octx);
+ 
+     i32 total = stream_read (&dest, 1, 10, &src, &ctx->e);
+ 
+@@ -524,13 +524,13 @@ TEST (stream_read)
+     struct test_pull_ctx pctx     = {.data = data, .len = 10, .pos = 0};
+     struct stream        src;
+ 
+-    stream_init (&src, &test_pull_ops, &pctx);
++    ns_stream_init (&src, &test_pull_ops, &pctx);
+ 
+     u8                   out[7] = {0};
+     struct test_push_ctx octx   = {.data = out, .cap = 7, .pos = 0};
+     struct stream        dest;
+ 
+-    stream_init (&dest, &test_push_ops, &octx);
++    ns_stream_init (&dest, &test_push_ops, &octx);
+ 
+     i32 total = stream_read (&dest, 1, 10, &src, &ctx->e);
+ 
+@@ -558,11 +558,11 @@ TEST (stream_read)
+ 
+     struct test_pull_ctx pctx = {.data = data, .len = sizeof data, .pos = 0};
+     struct stream        src;
+-    stream_init (&src, &test_pull_ops, &pctx);
++    ns_stream_init (&src, &test_pull_ops, &pctx);
+ 
+     struct test_push_ctx octx = {.data = out, .cap = sizeof out, .pos = 0};
+     struct stream        dest;
+-    stream_init (&dest, &test_push_ops, &octx);
++    ns_stream_init (&dest, &test_push_ops, &octx);
+ 
+     // TODO: an element larger than the 4096 byte staging buffer overflows it
+     // in stream_read (batch_max is clamped to 1, but one element still does
+@@ -573,12 +573,12 @@ TEST (stream_read)
+   TEST_CASE ("a failing pull is propagated")
+   {
+     struct stream src;
+-    stream_init (&src, &test_failing_ops, NULL);
++    ns_stream_init (&src, &test_failing_ops, NULL);
+ 
+     u8                   out[4] = {0};
+     struct test_push_ctx octx   = {.data = out, .cap = sizeof out, .pos = 0};
+     struct stream        dest;
+-    stream_init (&dest, &test_push_ops, &octx);
++    ns_stream_init (&dest, &test_push_ops, &octx);
+ 
+     test_err_t_check (stream_read (&dest, 1, 4, &src, &ctx->e), ERR_IO, &ctx->e);
+   }
+@@ -588,10 +588,10 @@ TEST (stream_read)
+     const u8             data[4] = {1, 2, 3, 4};
+     struct test_pull_ctx pctx    = {.data = data, .len = sizeof data, .pos = 0};
+     struct stream        src;
+-    stream_init (&src, &test_pull_ops, &pctx);
++    ns_stream_init (&src, &test_pull_ops, &pctx);
+ 
+     struct stream dest;
+-    stream_init (&dest, &test_failing_ops, NULL);
++    ns_stream_init (&dest, &test_failing_ops, NULL);
+ 
+     test_err_t_check (stream_read (&dest, 1, 4, &src, &ctx->e), ERR_IO, &ctx->e);
+   }
+@@ -752,7 +752,7 @@ stream_ibuf_init (struct stream *s, struct stream_ibuf_ctx *ctx, const void *buf
+   ctx->buf  = (const u8 *)buf;
+   ctx->size = size;
+   ctx->pos  = 0;
+-  stream_init (s, &stream_ibuf_ops, ctx);
++  ns_stream_init (s, &stream_ibuf_ops, ctx);
+ }
+ 
+ #ifndef NDEBUG
+@@ -848,7 +848,7 @@ stream_obuf_init (struct stream *s, struct stream_obuf_ctx *ctx, void *buf, cons
+   ctx->buf = buf;
+   ctx->cap = cap;
+   ctx->pos = 0;
+-  stream_init (s, &stream_obuf_ops, ctx);
++  ns_stream_init (s, &stream_obuf_ops, ctx);
+ }
+ 
+ #ifndef NDEBUG
+@@ -1009,7 +1009,7 @@ stream_dyn_obuf_init (struct stream *s, struct stream_dyn_obuf_ctx *ctx, u32 lim
+   ASSERT (ctx);
+   ctx->buffer = ext_array_create (default_mem ());
+   ctx->limit  = limit;
+-  stream_init (s, &stream_dyn_obuf_ops, ctx);
++  ns_stream_init (s, &stream_dyn_obuf_ops, ctx);
+ }
+ 
+ #ifndef NDEBUG
+diff --git a/libs/common/ns_stream.h b/libs/common/ns_stream.h
+index a0252ca..3b1fe42 100644
+--- a/libs/common/ns_stream.h
++++ b/libs/common/ns_stream.h
+@@ -60,7 +60,7 @@ DEFINE_DBG_ASSERT (struct stream, stream, s, {
+   ASSERT (s->ops);
+ })
+ 
+-void stream_init (struct stream *s, const struct stream_ops *ops, void *ctx);
++void ns_stream_init (struct stream *s, const struct stream_ops *ops, void *ctx);
+ void stream_close (const struct stream *s);
+ void stream_finish (struct stream *s);
+ bool stream_isdone (const struct stream *s);
+diff --git a/libs/nslang/types/ns_types.c b/libs/nslang/types/ns_types.c
+index bdc8952..d0a90e9 100644
+--- a/libs/nslang/types/ns_types.c
++++ b/libs/nslang/types/ns_types.c
+@@ -2209,7 +2209,7 @@ type_stream_printer_init (struct stream *s, struct type *t, error *e)
+   ctx->t    = t;
+   ctx->pos  = 0;
+   ctx->size = size;
+-  stream_init (s, &type_printer_os_ops, ctx);
++  ns_stream_init (s, &type_printer_os_ops, ctx);
+ 
+   return SUCCESS;
+ }

@@ -1,10 +1,11 @@
--- Compare the speed of line operations: nsfile (Numstore smart file) against
+-- Compare the speed of line operations: nsfile (a u8 variable in a Numstore
+-- database) against
 -- native Neovim (memline, through the buffer API).
 --
 -- Usage:
---   build/bin/nvim -l test/benchmark/nsfile_bench.lua nsfile [N]
---   build/bin/nvim -l test/benchmark/nsfile_bench.lua txn [N]
---   build/bin/nvim -l test/benchmark/nsfile_bench.lua native [N]
+--   build/bin/nsnvim -l test/benchmark/nsfile_bench.lua nsfile [N]
+--   build/bin/nsnvim -l test/benchmark/nsfile_bench.lua txn [N]
+--   build/bin/nsnvim -l test/benchmark/nsfile_bench.lua native [N]
 --
 -- "nsfile" commits each call. "txn" runs all phases in one open transaction
 -- and commits once at the end.
@@ -17,7 +18,7 @@
 local mode = arg[1]
 local n = tonumber(arg[2]) or 1000
 if mode ~= 'nsfile' and mode ~= 'txn' and mode ~= 'native' then
-  print('usage: nvim -l test/benchmark/nsfile_bench.lua nsfile|txn|native [N]')
+  print('usage: nsnvim -l test/benchmark/nsfile_bench.lua nsfile|txn|native [N]')
   os.exit(1)
 end
 
@@ -30,7 +31,9 @@ local backend = {}
 if mode == 'nsfile' or mode == 'txn' then
   ffi.cdef([[
     typedef struct nsfile nsfile_T;
-    nsfile_T *nsf_open(const char *path, char *errbuf, size_t errlen);
+    int nsf_db_open(const char *path, char *errbuf, size_t errlen);
+    int nsf_db_close(void);
+    nsfile_T *nsf_open(const char *var, char *errbuf, size_t errlen);
     int nsf_close(nsfile_T *f);
     int nsf_cleanup(const char *path);
     const char *nsf_errmsg(const nsfile_T *f);
@@ -43,7 +46,7 @@ if mode == 'nsfile' or mode == 'txn' then
     int nsf_commit(nsfile_T *f);
   ]])
   local C = ffi.C
-  local path = 'Xbench-nsfile.smf'
+  local path = 'Xbench-nsfile.db'
   local f
 
   local function check(ret)
@@ -55,7 +58,10 @@ if mode == 'nsfile' or mode == 'txn' then
   function backend.open()
     C.nsf_cleanup(path)
     local err = ffi.new('char[256]')
-    f = C.nsf_open(path, err, 256)
+    if C.nsf_db_open(path, err, 256) ~= 1 then
+      error(ffi.string(err))
+    end
+    f = C.nsf_open('bench', err, 256)
     if f == nil then
       error(ffi.string(err))
     end
@@ -68,6 +74,7 @@ if mode == 'nsfile' or mode == 'txn' then
   end
   function backend.close()
     C.nsf_close(f)
+    C.nsf_db_close()
     C.nsf_cleanup(path)
   end
   function backend.count()

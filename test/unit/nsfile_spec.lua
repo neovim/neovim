@@ -7,22 +7,39 @@ local ffi = t.ffi
 local cimport = t.cimport
 local NULL = t.NULL
 
+if not t.paths.is_numstore then
+  describe('nsfile', function()
+    t.pending('needs a build with -DENABLE_NUMSTORE=ON', function() end)
+  end)
+  return
+end
+
 local m = cimport('./src/nvim/nsfile.h')
 
-local path = 'Xtest-unit-nsfile.smf'
+local path = 'Xtest-unit-nsfile.db'
 
---- Remove the file. Run at the start and end of each test.
+--- Remove the database. Run at the start and end of each test.
 local function cleanup()
   m.nsf_cleanup(path)
 end
 
+--- Open the database and the u8 variable "text" in it.
 local function open()
   local err = ffi.new('char[256]')
-  local f = m.nsf_open(path, err, 256)
+  if m.nsf_db_open(path, err, 256) ~= 1 then
+    error('nsf_db_open failed: ' .. ffi.string(err))
+  end
+  local f = m.nsf_open('text', err, 256)
   if f == NULL then
     error('nsf_open failed: ' .. ffi.string(err))
   end
   return f
+end
+
+--- Close the variable and the database.
+local function close(f)
+  m.nsf_close(f)
+  m.nsf_db_close()
 end
 
 local function errmsg(f)
@@ -117,7 +134,7 @@ describe('nsfile', function()
     check(f, {}, true)
     eq(nil, get(f, 1))
     eq(0, m.nsf_delete(f, 1))
-    m.nsf_close(f)
+    close(f)
     cleanup()
   end)
 
@@ -130,10 +147,10 @@ describe('nsfile', function()
     insert(f, 2, 'three')
     check(f, { 'one', 'two', 'three', 'four' }, true)
 
-    replace(f, 2, 'TWO')          -- same length
+    replace(f, 2, 'TWO') -- same length
     replace(f, 3, 'three-and-a-bit') -- longer, common prefix
-    replace(f, 4, 'r')            -- shorter, common suffix
-    replace(f, 1, '')             -- empty
+    replace(f, 4, 'r') -- shorter, common suffix
+    replace(f, 1, '') -- empty
     check(f, { '', 'TWO', 'three-and-a-bit', 'r' }, true)
 
     delete(f, 1)
@@ -142,7 +159,7 @@ describe('nsfile', function()
     delete(f, 1)
     delete(f, 1)
     check(f, {}, true)
-    m.nsf_close(f)
+    close(f)
     cleanup()
   end)
 
@@ -153,11 +170,11 @@ describe('nsfile', function()
     insert(f, 1, 'world')
     replace(f, 1, 'Hello,')
     set_eol(f, false)
-    m.nsf_close(f)
+    close(f)
 
     f = open()
     check(f, { 'Hello,', 'world' }, false)
-    m.nsf_close(f)
+    close(f)
     cleanup()
   end)
 
@@ -168,7 +185,7 @@ describe('nsfile', function()
     check(f, { 'a\nb' }, true)
     replace(f, 1, 'a\n\nb')
     check(f, { 'a\n\nb' }, true)
-    m.nsf_close(f)
+    close(f)
     cleanup()
   end)
 
@@ -208,7 +225,7 @@ describe('nsfile', function()
     check(f, { 'y' }, false)
     delete(f, 1)
     check(f, {}, true)
-    m.nsf_close(f)
+    close(f)
     cleanup()
   end)
 
@@ -235,11 +252,11 @@ describe('nsfile', function()
       table.remove(ls, 100)
     end
     check(f, ls, true)
-    m.nsf_close(f)
+    close(f)
 
     f = open()
     check(f, ls, true)
-    m.nsf_close(f)
+    close(f)
     cleanup()
   end)
 
@@ -307,12 +324,12 @@ describe('nsfile', function()
         validate(f)
       end
       if step % 500 == 0 then
-        m.nsf_close(f)
+        close(f)
         f = open()
         check(f, ls, eol)
       end
     end
-    m.nsf_close(f)
+    close(f)
     cleanup()
   end)
 
@@ -332,17 +349,17 @@ describe('nsfile', function()
     ok(f, m.nsf_begin(f))
     insert(f, 1, 'kept')
     ok(f, m.nsf_commit(f))
-    m.nsf_close(f)
+    close(f)
     f = open()
     check(f, { 'base', 'kept' }, true)
 
     -- Close with an open transaction commits it.
     ok(f, m.nsf_begin(f))
     delete(f, 1)
-    m.nsf_close(f)
+    close(f)
     f = open()
     check(f, { 'kept' }, true)
-    m.nsf_close(f)
+    close(f)
     cleanup()
   end)
 
@@ -355,7 +372,43 @@ describe('nsfile', function()
     p[2] = string.byte('X') -- change the cached line in place
     ok(f, m.nsf_replace(f, 1, p, len[0]))
     check(f, { 'abXdef' }, true)
-    m.nsf_close(f)
+    close(f)
+    cleanup()
+  end)
+
+  itp('keeps variables apart in one database', function()
+    cleanup()
+    local f = open()
+    local err = ffi.new('char[256]')
+    local g = m.nsf_open('other', err, 256)
+    eq(false, g == NULL, ffi.string(err))
+    insert(f, 0, 'in text')
+    insert(g, 0, 'in other')
+    check(f, { 'in text' }, true)
+    check(g, { 'in other' }, true)
+
+    -- A change of "g" commits the transaction of "f" first: a rollback of
+    -- "f" then has nothing to drop.
+    ok(f, m.nsf_begin(f))
+    ok(g, m.nsf_begin(g))
+    insert(f, 1, 'f kept')
+    insert(g, 1, 'g dropped')
+    ok(g, m.nsf_rollback(g))
+    ok(f, m.nsf_rollback(f))
+    check(f, { 'in text', 'f kept' }, true)
+    check(g, { 'in other' }, true)
+    m.nsf_close(g)
+    close(f)
+    cleanup()
+  end)
+
+  itp('refuses a variable that is not u8 or has a bad name', function()
+    cleanup()
+    local f = open()
+    local err = ffi.new('char[256]')
+    eq(true, m.nsf_open('a.b', err, 256) == NULL)
+    eq(true, ffi.string(err):find('create') ~= nil)
+    close(f)
     cleanup()
   end)
 end)

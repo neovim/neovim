@@ -1,7 +1,9 @@
 #pragma once
 
 #include "nvim/memfile_defs.h"
-#include "nvim/nsfile_defs.h"
+#ifdef NVIM_NUMSTORE
+# include "nvim/nsfile_defs.h"
+#endif
 #include "nvim/pos_defs.h"
 
 ///
@@ -72,8 +74,10 @@ typedef struct {
   int ml_numchunks;
   int ml_usedchunks;
 
-  // When not NULL, the lines live in this Numstore smart file and not in
+#ifdef NVIM_NUMSTORE
+  // When not NULL, the lines live in this Numstore variable and not in
   // ml_mfp (which then only holds one unused empty line). See memline.c.
   nsfile_T *ml_nsf;
   bool ml_nsf_dirty;            // changes since the last commit
+#endif
 } memline_T;

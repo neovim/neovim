@@ -1,14 +1,21 @@
 /// @file nsfile.c
 ///
-/// Line index over a Numstore smart file.
+/// Line index over a Numstore u8 variable.
 ///
-/// The smart file holds the text of a buffer as plain bytes. Lines end with
+/// One Numstore database holds all buffers. Each buffer is one variable of
+/// type u8, named after the buffer. The variable holds the text as bytes. Lines end with
 /// '\n'. The last line can have no '\n' ("noeol"). An empty file has zero
 /// lines.
 ///
 /// This module keeps an in-memory index of the length of each line, so that
 /// a line number maps to a byte offset without a read. All changes go to the
-/// smart file at once. Numstore persists them.
+/// database at once, as queries ("insert", "write", "remove").
+///
+/// Transactions: a Numstore handle has one open transaction at most (a second
+/// ns_begin() blocks). So all variables share one transaction. Its "owner" is
+/// the variable that changed last. When another variable changes, the open
+/// transaction is committed first. So a rollback only drops the changes of
+/// the owner.
 ///
 /// Text crosses this API in the Nvim memory format: a line has no '\n', and
 /// a NUL byte in the file is a NL ('\n') in memory. This module does that
@@ -31,6 +38,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/memory.h"
 #include "nvim/nsfile.h"
+#include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/vim_defs.h"
 
@@ -58,8 +66,8 @@ typedef struct {
 } nsf_chunk_T;
 
 struct nsfile {
-  nsdb_t *smf;
-  nsdb_txn_t *tx;       ///< open transaction, or NULL (each call commits)
+  char *var;            ///< name of the u8 variable
+  bool use_txn;         ///< changes go into the shared transaction
 
   nsf_chunk_T *chunks;
   int nchunks;
@@ -89,6 +97,14 @@ struct nsfile {
   char errmsg[kNsfErrLen];
 };
 
+/// The database that holds all variables.
+static struct {
+  nsdb_t *db;
+  char *path;           ///< full path of the database file
+  nsdb_txn_t *tx;       ///< the shared transaction, or NULL (each call commits)
+  nsfile_T *owner;      ///< the variable whose changes are in "tx"
+} nsdb;
+
 #include "nsfile.c.generated.h"
 
 // ---------------------------------------------------------------------------
@@ -107,11 +123,22 @@ static void grow_buf(char **bufp, size_t *capp, size_t need)
   *capp = cap;
 }
 
+/// Copy the pending Numstore error into "buf", after "what".
+static void ns_error_to(char *buf, size_t len, const char *what)
+{
+  const char *msg = nsdb.db != NULL ? ns_strerror(nsdb.db, false) : NULL;
+  snprintf(buf, len, "%s: %s", what, msg != NULL ? msg : "unknown error");
+  // Numstore messages can end in a newline.
+  size_t n = strlen(buf);
+  while (n > 0 && (buf[n - 1] == '\n' || buf[n - 1] == '\r')) {
+    buf[--n] = NUL;
+  }
+}
+
 /// Copy the pending Numstore error into f->errmsg.
 static void set_ns_error(nsfile_T *f, const char *what)
 {
-  const char *msg = ns_strerror(f->smf, false);
-  snprintf(f->errmsg, sizeof(f->errmsg), "%s: %s", what, msg != NULL ? msg : "unknown error");
+  ns_error_to(f->errmsg, sizeof(f->errmsg), what);
 }
 
 /// Convert memory format to file format: NL becomes NUL.
@@ -138,14 +165,58 @@ static void invalidate_cache(nsfile_T *f)
 }
 
 // ---------------------------------------------------------------------------
-// Numstore wrappers. Each one returns OK or FAIL and sets f->errmsg.
+// Transactions and Numstore wrappers. Each one returns OK or FAIL and sets
+// an error message.
+
+/// Commit the shared transaction (OK when none is open).
+///
+/// @param[out] errbuf  error message on failure
+static int db_commit(char *errbuf, size_t errlen)
+{
+  if (nsdb.tx == NULL) {
+    return OK;
+  }
+  nsdb_txn_t *tx = nsdb.tx;
+  nsfile_T *owner = nsdb.owner;
+  nsdb.tx = NULL;  // ns_commit() ends the transaction, also when it fails
+  nsdb.owner = NULL;
+  if (ns_commit(nsdb.db, tx) < 0) {
+    ns_error_to(errbuf, errlen, "commit");
+    if (owner != NULL) {
+      recover_index(owner);
+    }
+    return FAIL;
+  }
+  return OK;
+}
+
+/// Get ready for a change of "f". A transaction of another variable is
+/// committed first. When "f" uses transactions, one is begun for it.
+static int prepare_change(nsfile_T *f)
+{
+  if (nsdb.tx != NULL && nsdb.owner != f) {
+    if (db_commit(f->errmsg, sizeof(f->errmsg)) == FAIL) {
+      return FAIL;
+    }
+  }
+  if (f->use_txn && nsdb.tx == NULL) {
+    nsdb.tx = ns_begin(nsdb.db);
+    if (nsdb.tx == NULL) {
+      set_ns_error(f, "begin");
+      return FAIL;
+    }
+    nsdb.owner = f;
+  }
+  return OK;
+}
 
 static int ns_read_bytes(nsfile_T *f, char *dst, uint64_t off, size_t len)
 {
   if (len == 0) {
     return OK;
   }
-  sb_size n = ns_smfile_read(f->smf, f->tx, dst, 1, (sb_size)off, 1, (b_size)len);
+  sb_size n = ns_read(nsdb.db, nsdb.tx, dst, (b_size)len, "read %s[%" PRIu64 ":%" PRIu64 "]",
+                      f->var, off, off + len);
   if (n != (sb_size)len) {
     set_ns_error(f, "read");
     return FAIL;
@@ -158,7 +229,11 @@ static int ns_insert_bytes(nsfile_T *f, const char *src, uint64_t off, size_t le
   if (len == 0) {
     return OK;
   }
-  sb_size n = ns_smfile_insert(f->smf, f->tx, src, (sb_size)off, (b_size)len);
+  if (prepare_change(f) == FAIL) {
+    return FAIL;
+  }
+  sb_size n = ns_write(nsdb.db, nsdb.tx, src, (b_size)len, "insert %s %" PRIu64 " %" PRIu64,
+                       f->var, off, (uint64_t)len);
   if (n != (sb_size)len) {
     set_ns_error(f, "insert");
     return FAIL;
@@ -171,7 +246,11 @@ static int ns_write_bytes(nsfile_T *f, const char *src, uint64_t off, size_t len
   if (len == 0) {
     return OK;
   }
-  sb_size n = ns_smfile_write(f->smf, f->tx, src, 1, (sb_size)off, 1, (b_size)len);
+  if (prepare_change(f) == FAIL) {
+    return FAIL;
+  }
+  sb_size n = ns_write(nsdb.db, nsdb.tx, src, (b_size)len, "write %s[%" PRIu64 ":%" PRIu64 "]",
+                       f->var, off, off + len);
   if (n != (sb_size)len) {
     set_ns_error(f, "write");
     return FAIL;
@@ -184,12 +263,28 @@ static int ns_remove_bytes(nsfile_T *f, uint64_t off, size_t len)
   if (len == 0) {
     return OK;
   }
-  sb_size n = ns_smfile_remove(f->smf, f->tx, NULL, 1, (sb_size)off, 1, (b_size)len);
-  if (n != (sb_size)len) {
+  if (prepare_change(f) == FAIL) {
+    return FAIL;
+  }
+  if (ns_execute(nsdb.db, nsdb.tx, "remove %s[%" PRIu64 ":%" PRIu64 "]",
+                 f->var, off, off + len) < 0) {
     set_ns_error(f, "remove");
     return FAIL;
   }
   return OK;
+}
+
+/// @return the length of the variable in bytes, or -1 on failure
+static sb_size ns_var_bytes(nsfile_T *f)
+{
+  nsdb_var_t *v = ns_get_var(nsdb.db, nsdb.tx, "get %s", f->var);
+  if (v == NULL) {
+    set_ns_error(f, "get");
+    return -1;
+  }
+  b_size len = ns_var_len(v);
+  ns_var_free(v);
+  return (sb_size)len;
 }
 
 // ---------------------------------------------------------------------------
@@ -408,14 +503,13 @@ static void idx_adjust(nsfile_T *f, linenr_T lnum, int64_t delta)
   f->size = (uint64_t)((int64_t)f->size + delta);
 }
 
-/// Build the index from the content of the smart file.
+/// Build the index from the content of the variable.
 static int idx_build(nsfile_T *f)
 {
   idx_clear(f);
 
-  sb_size fsize = ns_smfile_size(f->smf, f->tx);
+  sb_size fsize = ns_var_bytes(f);
   if (fsize < 0) {
-    set_ns_error(f, "size");
     return FAIL;
   }
 
@@ -506,41 +600,131 @@ static int fix_empty_noeol(nsfile_T *f)
 // ---------------------------------------------------------------------------
 // Public API
 
-/// Open (or create) the smart file at "path" and build its line index.
-///
-/// @param[out] errbuf  error message on failure (may be NULL)
-/// @return the file, or NULL on failure
-nsfile_T *nsf_open(const char *path, char *errbuf, size_t errlen)
-  FUNC_ATTR_NONNULL_ARG(1)
+/// Set the path of the database that nsf_db_open() opens when it gets no path.
+void nsf_set_db_path(const char *path)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char nserr[MAX_ERRSTR_LEN] = { 0 };
-  nsdb_t *smf = ns_smfile_open_with_error(path, nserr, sizeof(nserr));
-  if (smf == NULL) {
+  xfree(nsdb.path);
+  nsdb.path = FullName_save(path, false);
+}
+
+/// @return the full path of the database, or NULL when none is set
+const char *nsf_db_path(void)
+  FUNC_ATTR_PURE
+{
+  return nsdb.path;
+}
+
+/// @return true when the database is open
+bool nsf_db_is_open(void)
+  FUNC_ATTR_PURE
+{
+  return nsdb.db != NULL;
+}
+
+/// Open the database. No change if it is already open.
+///
+/// @param path  the database file; NULL for the path of nsf_set_db_path()
+/// @param[out] errbuf  error message on failure (may be NULL)
+/// @return OK or FAIL
+int nsf_db_open(const char *path, char *errbuf, size_t errlen)
+{
+  if (nsdb.db != NULL) {
+    return OK;
+  }
+  if (path != NULL) {
+    nsf_set_db_path(path);
+  }
+  if (nsdb.path == NULL) {
     if (errbuf != NULL && errlen > 0) {
-      snprintf(errbuf, errlen, "%s", nserr[0] != NUL ? nserr : "cannot open smart file");
-      // Numstore messages can end in a newline.
+      snprintf(errbuf, errlen, "no database");
+    }
+    return FAIL;
+  }
+  char nserr[MAX_ERRSTR_LEN] = { 0 };
+  nsdb.db = ns_open_with_error(nsdb.path, nserr, sizeof(nserr));
+  if (nsdb.db == NULL) {
+    if (errbuf != NULL && errlen > 0) {
+      snprintf(errbuf, errlen, "%s: %s", nsdb.path,
+               nserr[0] != NUL ? nserr : "cannot open database");
       size_t n = strlen(errbuf);
       while (n > 0 && (errbuf[n - 1] == '\n' || errbuf[n - 1] == '\r')) {
         errbuf[--n] = NUL;
       }
     }
-    return NULL;
+    return FAIL;
+  }
+  return OK;
+}
+
+/// Commit the open transaction and close the database. The variables that
+/// are still open must not be used after this.
+///
+/// @return OK or FAIL
+int nsf_db_close(void)
+{
+  if (nsdb.db == NULL) {
+    return OK;
+  }
+  char err[kNsfErrLen];
+  int ret = db_commit(err, sizeof(err));
+  if (ns_close(nsdb.db) < 0) {
+    ret = FAIL;
+  }
+  nsdb.db = NULL;
+  return ret;
+}
+
+/// Open the u8 variable "var" in the open database and build its line index.
+/// Create the variable when it does not exist. Fail when it exists with
+/// another type, or when Numstore does not accept "var" as a name.
+///
+/// @param[out] errbuf  error message on failure (may be NULL)
+/// @return the file, or NULL on failure
+nsfile_T *nsf_open(const char *var, char *errbuf, size_t errlen)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  char err[kNsfErrLen] = "no database is open";
+  if (nsdb.db == NULL) {
+    goto fail;
+  }
+
+  // A new variable must not be in the transaction of another variable: a
+  // rollback of that transaction would remove it again.
+  if (db_commit(err, sizeof(err)) == FAIL) {
+    goto fail;
+  }
+  // "create" does nothing when "var" is already a u8, and fails when "var"
+  // has another type.
+  if (ns_execute(nsdb.db, NULL, "create %s u8", var) < 0) {
+    ns_error_to(err, sizeof(err), "create");
+    goto fail;
   }
 
   nsfile_T *f = xcalloc(1, sizeof(*f));
-  f->smf = smf;
+  f->var = xstrdup(var);
   if (idx_build(f) == FAIL) {
-    if (errbuf != NULL && errlen > 0) {
-      snprintf(errbuf, errlen, "%s", f->errmsg);
-    }
+    snprintf(err, sizeof(err), "%s", f->errmsg);
     nsf_close(f);
-    return NULL;
+    goto fail;
   }
   return f;
+
+fail:
+  if (errbuf != NULL && errlen > 0) {
+    snprintf(errbuf, errlen, "%s", err);
+  }
+  return NULL;
 }
 
-/// Close the smart file and free the index. An open transaction is
-/// committed first.
+/// @return the name of the variable
+const char *nsf_var(const nsfile_T *f)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  return f->var;
+}
+
+/// Free the index of the variable. Its open transaction is committed first.
 ///
 /// @return OK or FAIL (the file is freed in both cases)
 int nsf_close(nsfile_T *f)
@@ -549,67 +733,54 @@ int nsf_close(nsfile_T *f)
     return OK;
   }
   int ret = nsf_commit(f);
-  if (ns_close(f->smf) < 0) {
-    ret = FAIL;
-  }
   idx_clear(f);
+  xfree(f->var);
   xfree(f->linebuf);
   xfree(f->scratch);
   xfree(f);
   return ret;
 }
 
-/// Begin a transaction. Until nsf_commit() or nsf_rollback(), all changes
-/// and reads go through it. No change if a transaction is already open.
+/// Begin a transaction. Until nsf_commit() or nsf_rollback(), changes go
+/// into the shared transaction. It is begun at the first change.
 ///
-/// @return OK or FAIL
+/// @return OK
 int nsf_begin(nsfile_T *f)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (f->tx != NULL) {
-    return OK;
-  }
-  f->tx = ns_begin(f->smf);
-  if (f->tx == NULL) {
-    set_ns_error(f, "begin");
-    return FAIL;
-  }
+  f->use_txn = true;
   return OK;
 }
 
-/// Commit the open transaction. OK when no transaction is open.
+/// Commit the changes of "f". OK when the open transaction is not of "f".
 ///
 /// @return OK or FAIL
 int nsf_commit(nsfile_T *f)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (f->tx == NULL) {
+  f->use_txn = false;
+  if (nsdb.tx == NULL || nsdb.owner != f) {
     return OK;
   }
-  nsdb_txn_t *tx = f->tx;
-  f->tx = NULL;  // ns_commit() ends the transaction, also when it fails
-  if (ns_commit(f->smf, tx) < 0) {
-    set_ns_error(f, "commit");
-    recover_index(f);
-    return FAIL;
-  }
-  return OK;
+  return db_commit(f->errmsg, sizeof(f->errmsg));
 }
 
-/// Roll back the open transaction: the file returns to the last commit.
-/// The index is built again. OK when no transaction is open.
+/// Roll back the changes of "f" since the last commit. Changes that a change
+/// of another variable already committed stay. The index is built again.
 ///
 /// @return OK or FAIL
 int nsf_rollback(nsfile_T *f)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (f->tx == NULL) {
+  f->use_txn = false;
+  if (nsdb.tx == NULL || nsdb.owner != f) {
     return OK;
   }
-  nsdb_txn_t *tx = f->tx;
-  f->tx = NULL;
+  nsdb_txn_t *tx = nsdb.tx;
+  nsdb.tx = NULL;
+  nsdb.owner = NULL;
   int ret = OK;
-  if (ns_rollback(f->smf, tx) < 0) {
+  if (ns_rollback(nsdb.db, tx) < 0) {
     set_ns_error(f, "rollback");
     ret = FAIL;
   }
@@ -619,11 +790,11 @@ int nsf_rollback(nsfile_T *f)
   return ret;
 }
 
-/// @return true when a transaction is open
+/// @return true when changes go into a transaction
 bool nsf_in_txn(const nsfile_T *f)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  return f->tx != NULL;
+  return f->use_txn;
 }
 
 /// @return the message of the last failure
@@ -941,7 +1112,7 @@ int nsf_set_eol(nsfile_T *f, bool eol)
   return OK;
 }
 
-/// Remove the smart file at "path" (and the files Numstore keeps with it).
+/// Remove the database at "path" (and the files Numstore keeps with it).
 ///
 /// @return OK or FAIL
 int nsf_cleanup(const char *path)
@@ -1005,7 +1176,7 @@ void nsf_clearmarked(nsfile_T *f)
 bool nsf_validate(nsfile_T *f)
   FUNC_ATTR_NONNULL_ALL
 {
-  nsfile_T check = { .smf = f->smf, .tx = f->tx };
+  nsfile_T check = { .var = f->var };
   if (idx_build(&check) == FAIL) {
     snprintf(f->errmsg, sizeof(f->errmsg), "validate: %s", check.errmsg);
     idx_clear(&check);

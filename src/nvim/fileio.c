@@ -2998,11 +2998,13 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
 int buf_check_timestamp(buf_T *buf)
   FUNC_ATTR_NONNULL_ALL
 {
-  // A smart file changes on disk with each commit: that is not a change
+#ifdef NVIM_NUMSTORE
+  // The database changes on disk with each commit: that is not a change
   // made by another program.
   if (buf->b_ml.ml_nsf != NULL) {
     return 0;
   }
+#endif
 
   int retval = 0;
   char *mesg = NULL;

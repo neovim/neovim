@@ -38,9 +38,13 @@ target_link_libraries(main_lib INTERFACE
   treesitter
   utf8proc)
 
-# Numstore smart files store buffer text (see ARCHITECTURE.md).
-find_package(numstore REQUIRED CONFIG)
-target_link_libraries(main_lib INTERFACE numstore::numstore)
+# nsnvim: buffer text lives in a Numstore database (see ARCHITECTURE.md).
+if(ENABLE_NUMSTORE)
+  find_package(numstore REQUIRED CONFIG)
+  target_link_libraries(main_lib INTERFACE numstore::numstore)
+  target_compile_definitions(main_lib INTERFACE NVIM_NUMSTORE)
+  set_target_properties(nvim_bin PROPERTIES OUTPUT_NAME nsnvim)
+endif()
 
 if(ENABLE_LIBINTL)
   find_package(Libintl REQUIRED) # Libintl (not Intl) selects our FindLibintl.cmake script. #8464
@@ -391,6 +395,10 @@ file(MAKE_DIRECTORY ${TOUCHES_DIR} ${GENERATED_DIR} ${GENERATED_INCLUDES_DIR})
 
 file(GLOB NVIM_SOURCES CONFIGURE_DEPENDS *.c)
 file(GLOB NVIM_HEADERS CONFIGURE_DEPENDS *.h)
+if(NOT ENABLE_NUMSTORE)
+  list(FILTER NVIM_SOURCES EXCLUDE REGEX "/nsfile\\.c$")
+  list(FILTER NVIM_HEADERS EXCLUDE REGEX "/nsfile(_defs)?\\.h$")
+endif()
 file(GLOB EXTERNAL_SOURCES CONFIGURE_DEPENDS ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c ../lpeg/*.c)
 file(GLOB EXTERNAL_HEADERS CONFIGURE_DEPENDS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h ../lpeg/*.h)
 

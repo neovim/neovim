@@ -37,6 +37,7 @@ option(USE_BUNDLED_TS "Use the bundled treesitter runtime." ${USE_BUNDLED})
 option(USE_BUNDLED_TS_PARSERS "Use the bundled treesitter parsers." ${USE_BUNDLED})
 option(USE_BUNDLED_UNIBILIUM "Use the bundled unibilium." ${USE_BUNDLED})
 option(USE_BUNDLED_UTF8PROC "Use the bundled utf8proc library." ${USE_BUNDLED})
+option(USE_BUNDLED_NUMSTORE "Use the bundled numstore library (for ENABLE_NUMSTORE)." ${USE_BUNDLED})
 
 if(USE_BUNDLED AND MSVC)
   option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." ON)
@@ -160,6 +161,10 @@ endif()
 
 if(USE_BUNDLED_UTF8PROC)
   include(BuildUTF8proc)
+endif()
+
+if(USE_BUNDLED_NUMSTORE)
+  include(BuildNumstore)
 endif()
 
 if(WIN32)

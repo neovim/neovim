@@ -34,7 +34,6 @@
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
-#include "nvim/nsfile.h"
 #include "nvim/memline_defs.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -54,6 +53,10 @@
 #include "nvim/undo.h"
 #include "nvim/undo_defs.h"
 #include "nvim/vim_defs.h"
+
+#ifdef NVIM_NUMSTORE
+# include "nvim/nsfile.h"
+#endif
 
 static const char *err_readonly = "is read-only (cannot override: \"W\" in 'cpoptions')";
 static const char e_patchmode_cant_touch_empty_original_file[]
@@ -1145,7 +1148,8 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   vim_acl_T acl = NULL;                 // ACL copied from original file to
                                         // backup or new file
 
-  // A smart-file buffer: the text is already in the file. ":w" commits it.
+#ifdef NVIM_NUMSTORE
+  // A Numstore buffer: the text is already in the database. ":w" commits it.
   if (buf->b_ml.ml_nsf != NULL && overwriting && whole && !append && !filtering) {
     buf->b_saving = true;
     if (ml_nsf_save(buf) == FAIL) {
@@ -1175,6 +1179,15 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     buf->b_flags &= ~BF_WRITE_MASK;
     goto nofail;
   }
+
+  // All text lives in the Numstore database: never write a real file from a
+  // normal buffer. (Filtering writes a temp file: that is allowed.)
+  if (*buf->b_p_bt == NUL && !filtering) {
+    err = set_err(_("numstore: only \":w\" of a whole numstore buffer is supported, "
+                    "no file is written"));
+    goto fail;
+  }
+#endif
 
   if (get_fileinfo(buf, fname, overwriting, forceit, &file_info_old, &perm, &device, &newfile,
                    &file_readonly, &err) == FAIL) {

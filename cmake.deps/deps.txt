@@ -17,6 +17,9 @@ LUV_SHA256 e7d7c872637560e9e9ac0cdcaad1b06c4058152fb0eb9d039f38612b183d01a7
 LUA_COMPAT53_URL https://github.com/lunarmodules/lua-compat-5.3/archive/v0.13.tar.gz
 LUA_COMPAT53_SHA256 f5dc30e7b1fda856ee4d392be457642c1f0c259264a9b9bfbcb680302ce88fc2
 
+NUMSTORE_URL https://github.com/NumstoreDB/Numstore/archive/f8b944b6f18401267587621be5660b2cee77979d.tar.gz
+NUMSTORE_SHA256 de066fb597ba11902206ae888268709f4b5ec675ab19d38d06b4631c45390335
+
 WIN32YANK_X86_64_URL https://github.com/equalsraf/win32yank/releases/download/v0.1.1/win32yank-x64.zip
 WIN32YANK_X86_64_SHA256 247c9a05b94387a884b49d3db13f806b1677dfc38020f955f719be6902260cd6
 

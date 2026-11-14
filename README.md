@@ -55,6 +55,13 @@ make CMAKE_BUILD_TYPE=RelWithDebInfo
 sudo make install
 ```
 
+This fork builds `nsnvim`: every buffer is a u8 variable in a
+[Numstore](https://github.com/NumstoreDB/Numstore) database, and it starts with
+no user config and no plugins. Run `nsnvim notes` or `nsnvim notes --var todo`.
+The bundled Numstore build needs a Rust toolchain (`cargo`). For stock Neovim,
+build with `make CMAKE_EXTRA_FLAGS=-DENABLE_NUMSTORE=OFF DEPS_CMAKE_FLAGS=-DUSE_BUNDLED_NUMSTORE=OFF`
+in a fresh checkout.
+
 To install to a non-default location:
 ```bash
 make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX=/full/path/

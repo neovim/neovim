@@ -125,6 +125,9 @@ function Gcc:init_defines()
   self:define('_GNU_SOURCE')
   self:define('UNIT_TESTING')
   self:define('UNIT_TESTING_LUA_PREPROCESSING')
+  if global_t.paths.is_numstore then
+    self:define('NVIM_NUMSTORE')
+  end
   -- Needed for FreeBSD
   self:define('_Thread_local', nil, '')
   -- Needed for macOS Sierra

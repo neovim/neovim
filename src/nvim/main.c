@@ -81,6 +81,9 @@
 #include "nvim/move.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
+#ifdef NVIM_NUMSTORE
+# include "nvim/nsfile.h"
+#endif
 #include "nvim/normal.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
@@ -293,6 +296,16 @@ int main(int argc, char **argv)
   // Process the command line arguments.  File names are put in the global
   // argument list "global_alist".
   command_line_scan(&params);
+
+#ifdef NVIM_NUMSTORE
+  // nsnvim is self-contained, like "-u NONE -i NONE --noplugin": no
+  // init.lua/init.vim, no system vimrc, no exrc, no plugins, no filetype
+  // and syntax scripts, no ShaDa, whatever the arguments say.
+  params.use_vimrc = "NONE";
+  params.clean = false;
+  p_lpl = false;
+  set_option_value_give_err(kOptShadafile, STATIC_CSTR_AS_OBJ("NONE"), 0);
+#endif
 
   set_argf_var();
 
@@ -1129,6 +1142,29 @@ static void command_line_scan(mparm_T *parmp)
   bool want_argument;                   // option argument with argument
   int n;
 
+#ifdef NVIM_NUMSTORE
+  // "--var {var}" or "--var={var}": the first file argument is the Numstore
+  // database and {var} is the variable to edit in it. Find it first, because
+  // the file argument can come before "--var".
+  const char *ns_var = NULL;
+  for (int i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "--") == 0) {
+      break;
+    }
+    if (strcmp(argv[i], "--var") == 0) {
+      if (i + 1 >= argc) {
+        mainerr(err_arg_missing, argv[i], NULL);
+      }
+      ns_var = argv[i + 1];
+      break;
+    }
+    if (strncmp(argv[i], "--var=", 6) == 0) {
+      ns_var = argv[i] + 6;
+      break;
+    }
+  }
+#endif
+
   argc--;
   argv++;
   argv_idx = 1;  // active option letter is argv[0][argv_idx]
@@ -1217,6 +1253,14 @@ static void command_line_scan(mparm_T *parmp)
           parmp->use_vimrc = "NONE";
           parmp->clean = true;
           set_option_value_give_err(kOptShadafile, STATIC_CSTR_AS_OBJ("NONE"), 0);
+#ifdef NVIM_NUMSTORE
+        } else if (STRICMP(argv[0] + argv_idx, "var") == 0) {
+          // "--var {var}": found before the loop. Skip {var}.
+          argc--;
+          argv++;
+        } else if (STRNICMP(argv[0] + argv_idx, "var=", 4) == 0) {
+          // "--var={var}": found before the loop.
+#endif
         } else if (STRNICMP(argv[0] + argv_idx, "luamod-dev", 9) == 0) {
           nlua_disable_preload = true;
         } else {
@@ -1549,6 +1593,15 @@ scripterror:
       path_fix_case(p);
 #endif
 
+#ifdef NVIM_NUMSTORE
+      // "nvim {db} --var {var}": edit {var} in the database {db}.
+      if (ns_var != NULL && GARGCOUNT == 0 && nsf_db_path() == NULL) {
+        nsf_set_db_path(p);
+        xfree(p);
+        p = xstrdup(ns_var);
+      }
+
+#endif
       int alist_fnum_flag = edit_stdin(parmp)
                             ? 1   // add buffer nr after exp.
                             : 2;  // add buffer number now and use curbuf
@@ -1564,6 +1617,12 @@ scripterror:
     }
   }
 
+#ifdef NVIM_NUMSTORE
+  if (ns_var != NULL && nsf_db_path() == NULL) {
+    mainerr(_("--var needs a Numstore database file argument"), NULL, NULL);
+  }
+
+#endif
   if (embedded_mode && (silent_mode || parmp->luaf)) {
     mainerr(_("--embed conflicts with -es/-Es/-l"), NULL, NULL);
   }
@@ -2367,6 +2426,9 @@ static void usage(void)
   printf(_("  -p[N]                 Open N tab pages (default: one per file)\n"));
   printf(_("  -R                    Read-only (view) mode\n"));
   printf(_("  -v, --version         Print version information\n"));
+#ifdef NVIM_NUMSTORE
+  printf(_("  {db} --var <var>      Edit Numstore variable <var> in database {db}\n"));
+#endif
   printf(_("  -V[N][file]           Verbose [level][file]\n"));
   printf("\n");
   printf(_("  --                    Only file names after this\n"));
