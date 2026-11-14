@@ -1559,4 +1559,20 @@ describe('messages2', function()
                                                            |
     ]])
   end)
+
+  it('cancelling a prompt at the end of the buffer does not move the cursor #42386', function()
+    exec_lua(function()
+      vim.o.cmdheight = 0
+      require('vim._core.ui2').enable({})
+      vim.o.scrolloff = 3
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, vim.split(('x\n'):rep(200), '\n'))
+      vim.cmd('normal! G')
+    end)
+    t.eq(201, n.fn.line('.'))
+    feed(':lua vim.ui.select({ "a", "b", "c" }, {}, function() end)<CR>')
+    screen:expect({ any = 'empty cancels' })
+    feed('q')
+    screen:expect({ none = 'empty cancels' })
+    t.eq(201, n.fn.line('.'))
+  end)
 end)
