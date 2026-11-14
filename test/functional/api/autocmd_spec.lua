@@ -1,7 +1,8 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
-local describe, it, before_each, pending = t.describe, t.it, t.before_each, t.pending
+local describe, it, before_each, after_each, pending =
+  t.describe, t.it, t.before_each, t.after_each, t.pending
 local clear = n.clear
 local command = n.command
 local eq = t.eq
@@ -337,6 +338,48 @@ describe('autocmd api', function()
       api.nvim_set_var('some_condition', true)
       api.nvim_exec_autocmds('User', { pattern = 'Test' })
       eq({}, api.nvim_get_autocmds({ event = 'User', pattern = 'Test' }))
+    end)
+
+    describe('error in callback aborts the command #36153', function()
+      local fname --- @type string
+
+      before_each(function()
+        fname = t.tmpname()
+        t.write_file(fname, 'original\n')
+        command('edit ' .. fname)
+        api.nvim_buf_set_lines(0, 0, -1, true, { 'changed' })
+        exec_lua [[
+          vim.api.nvim_create_autocmd('BufWritePre', {
+            callback = function()
+              error('Buffer unchanged')
+            end,
+          })
+        ]]
+      end)
+
+      after_each(function()
+        os.remove(fname)
+      end)
+
+      it('BufWritePre prevents writing', function()
+        -- Not command(): API calls run inside an implicit :try, which already aborts.
+        n.feed(':write<CR>')
+        n.poke_eventloop()
+        matches('Buffer unchanged', api.nvim_get_vvar('errmsg'))
+        eq('original\n', t.read_file(fname))
+      end)
+
+      it('can be caught by :try', function()
+        source([[
+          try
+            write
+          catch
+            let g:caught = v:exception
+          endtry
+        ]])
+        matches('Buffer unchanged', api.nvim_get_var('caught'))
+        eq('original\n', t.read_file(fname))
+      end)
     end)
 
     local function test_autocmd_args(event)
