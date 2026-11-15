@@ -446,7 +446,7 @@ int main(int argc, char **argv)
     params.edit_type = EDIT_STDIN;
   }
 
-  if (params.scriptin) {
+  if (params.scriptin && (has_stdin() || !strequal(params.scriptin, "-"))) {
     if (!open_scriptin(params.scriptin)) {
       os_exit(2);
     }
@@ -553,14 +553,7 @@ int main(int argc, char **argv)
   no_wait_return = false;
   msg_scroll = false;
 
-  // Read file (text, not commands) from stdin if:
-  //    - stdin is not a tty
-  //    - and -e/-es was not given
-  //
-  // Do this before starting Raw mode, because it may change things that the
-  // writing end of the pipe doesn't like, e.g., in case stdin and stderr
-  // are the same terminal: "cat | vim -".
-  // Using autocommands here may cause trouble...
+  // Read stdin as text (not commands).
   if (params.edit_type == EDIT_STDIN && !recoverymode) {
     read_stdin();
   }
@@ -1106,12 +1099,18 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
   }
 }
 
+/// Is stdin readable? Only if stdio is not RPC, or if the UI forwarded stdin. |ui-startup-stdin|
+static bool has_stdin(void)
+{
+  return stdin_fd > 0 || !find_channel(CHAN_STDIO);
+}
+
 /// Decides whether text (as opposed to commands) will be read from stdin.
 /// @see EDIT_STDIN
 static bool edit_stdin(mparm_T *parmp)
 {
   bool implicit = !headless_mode
-                  && !(embedded_mode && stdin_fd <= 0)
+                  && (!embedded_mode || stdin_fd > 0)  // Like --headless, --embed needs "-".
                   && (!parmp->exmode || parmp->input_istext)
                   && !stdin_isatty
                   && parmp->edit_type <= EDIT_STDIN
@@ -1736,7 +1735,9 @@ static void read_stdin(void)
 
     // set the buffer we just created as curbuf so we can read stdin into it
     set_curbuf(stdin_buf, 0, false);
-    readfile(NULL, NULL, 0, 0, (linenr_T)MAXLNUM, NULL, READ_NEW + READ_STDIN, true);
+    if (has_stdin()) {
+      readfile(NULL, NULL, 0, 0, (linenr_T)MAXLNUM, NULL, READ_NEW + READ_STDIN, true);
+    }
 
     // remember stdin_buf_handle so we can close it if stdin_buf ends up empty
     handle_T stdin_buf_handle = stdin_buf->handle;
@@ -1757,7 +1758,7 @@ static void read_stdin(void)
     // stdin buffer is first so we can just use curbuf
     set_buflisted(true);
     // Create memfile and read from stdin.
-    open_buffer(true, NULL, 0);
+    open_buffer(has_stdin(), NULL, 0);
     // stdin was empty so we should wipe it (e.g. "echo file1 | xargs nvim"). #8561
     if (buf_is_empty(curbuf) && curbuf->b_next != NULL) {
       do_cmdline_cmd("silent! bnext");
