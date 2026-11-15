@@ -1609,6 +1609,35 @@ describe('TUI', function()
     ]])
   end)
 
+  it('terminal responses are not user input #29047', function()
+    -- Uses XTGETTCAP (DCS) responses: on Windows, ConPTY passes DCS input but not OSC.
+    poke_both_eventloop() -- Make sure startup requests have finished.
+    child_exec_lua([[
+      _G.termresponses = {}
+      vim.api.nvim_create_autocmd('TermResponse', {
+        callback = function(ev) table.insert(_G.termresponses, ev.data.sequence) end,
+      })
+    ]])
+    local expected = {} ---@type string[]
+    -- Windows: ConPTY treats a incomplete-at-end-of-write sequence as keys?
+    if not is_os('win') then
+      -- Response split by a pause longer than 'ttimeoutlen'.
+      feed_data('\027P1+r6E76')
+      vim.uv.sleep(300)
+      feed_data('696D=31\027\\')
+      table.insert(expected, '\027P1+r6E76696D=31')
+    end
+    -- Response read atomically, with 'nottimeout'.
+    child_session:request('nvim_command', 'set nottimeout | echo "nottimeout"')
+    screen:expect({ any = 'nottimeout' }) -- The TUI received the option.
+    feed_data('\027P1+r6E76696D=32\027\\')
+    table.insert(expected, '\027P1+r6E76696D=32')
+    -- Each response arrives as a complete TermResponse (not typed as user-input keys).
+    retry(nil, nil, function()
+      eq(expected, child_exec_lua('return _G.termresponses'))
+    end)
+  end)
+
   it('accepts ASCII control sequences', function()
     feed_data('i')
     feed_data('\022\007') -- ctrl+g

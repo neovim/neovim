@@ -7665,17 +7665,20 @@ vim.go.titleold = vim.o.titleold
 vim.o.titlestring = ""
 vim.go.titlestring = vim.o.titlestring
 
---- This option and 'ttimeoutlen' determine the behavior when part of a
---- key code sequence has been received by the `TUI`.
+--- This option and 'ttimeoutlen' decide how the `TUI` treats a (possibly)
+--- incomplete key code sequence.
 ---
 --- For example if <Esc> (the \x1b byte) is received and 'ttimeout' is
---- set, Nvim waits 'ttimeoutlen' milliseconds for the terminal to
+--- enabled, Nvim waits 'ttimeoutlen' milliseconds for the terminal to
 --- complete a key code sequence. If no input arrives before the timeout,
---- a single <Esc> is assumed. Many TUI cursor key codes start with <Esc>.
+--- a single <Esc> is assumed.
 ---
---- On very slow systems this may fail, causing cursor keys not to work
---- sometimes.  If you discover this problem you can ":set ttimeoutlen=9999".
---- Nvim will wait for the next character to arrive after an <Esc>.
+--- On very slow systems this may fail, so e.g. cursor keys may not work
+--- consistently (they often start with <Esc>). If you discover this
+--- problem you can try ":set ttimeoutlen=9999", then Nvim will wait for
+--- the next character to arrive after an <Esc>.
+---
+--- If 'ttimeout' is disabled, Nvim does not wait (same as 'ttimeoutlen'=0).
 ---
 --- @type boolean
 vim.o.ttimeout = true

@@ -440,9 +440,8 @@ static TermKeyResult tk_getkey(TermKey *tk, TermKeyKey *key, bool force)
 static void tk_getkeys(TermInput *input, bool force)
 {
   TermKeyKey key;
-  TermKeyResult result;
 
-  while ((result = tk_getkey(input->tk, &key, force)) == TERMKEY_RES_KEY) {
+  while (tk_getkey(input->tk, &key, force) == TERMKEY_RES_KEY) {
     // Only press and repeat events are handled for now
     switch (key.event) {
     case TERMKEY_EVENT_PRESS:
@@ -468,21 +467,6 @@ static void tk_getkeys(TermInput *input, bool force)
                || key.type == TERMKEY_TYPE_APC) {
       handle_term_response(input, &key);
     }
-  }
-
-  if (result != TERMKEY_RES_AGAIN) {
-    return;
-  }
-  // else: Partial keypress event was found in the buffer, but it does not
-  // yet contain all the bytes required. `key` structure indicates what
-  // termkey_getkey_force() would return.
-
-  if (input->ttimeout && input->ttimeoutlen >= 0) {
-    // Stop the current timer if already running
-    uv_timer_stop(&input->timer_handle);
-    uv_timer_start(&input->timer_handle, tinput_timer_cb, (uint64_t)input->ttimeoutlen, 0);
-  } else {
-    tk_getkeys(input, true);
   }
 }
 
@@ -908,16 +892,14 @@ static size_t tinput_read_cb(RStream *stream, const char *buf, size_t count_, vo
     return consumed;
   }
 
-  // An incomplete sequence was found. Leave it in the raw buffer and wait for
-  // the next input.
-  if (consumed < count_) {
-    // If 'ttimeout' is not set, start the timer with a timeout of 0 to process
-    // the next input.
-    int64_t ms = input->ttimeout
-                 ? (input->ttimeoutlen >= 0 ? input->ttimeoutlen : 0) : 0;
-    // Stop the current timer if already running
-    uv_timer_stop(&input->timer_handle);
-    uv_timer_start(&input->timer_handle, tinput_timer_cb, (uint32_t)ms, 0);
+  // Wait for the rest of an incomplete sequence (in the raw buffer, or termkey). A response may
+  // arrive in fragments with pauses (e.g. over SSH), so wait longer for it than for keys.
+  uv_timer_stop(&input->timer_handle);
+  if (consumed < count_
+      || termkey_get_buffer_remaining(input->tk) < termkey_get_buffer_size(input->tk)) {
+    int64_t ms = input->ttimeout ? MAX(input->ttimeoutlen, 0) : 0;
+    ms = termkey_response_pending(input->tk) ? MAX(ms, 1000) : ms;  // Like Vim 'osctimeoutlen'.
+    uv_timer_start(&input->timer_handle, tinput_timer_cb, (uint64_t)ms, 0);
   }
 
   return consumed;
