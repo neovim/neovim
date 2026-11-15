@@ -1099,10 +1099,10 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
   }
 }
 
-/// Is stdin readable? Server (--embed) reads stdin only if the UI forwarded it. |ui-startup-stdin|
+/// Is stdin readable? Only if stdio is not RPC, or if the UI forwarded stdin. |ui-startup-stdin|
 static bool has_stdin(void)
 {
-  return !embedded_mode || stdin_fd > 0;
+  return stdin_fd > 0 || !find_channel(CHAN_STDIO);
 }
 
 /// Decides whether text (as opposed to commands) will be read from stdin.
@@ -1110,7 +1110,7 @@ static bool has_stdin(void)
 static bool edit_stdin(mparm_T *parmp)
 {
   bool implicit = !headless_mode
-                  && has_stdin()
+                  && (!embedded_mode || stdin_fd > 0)  // Like --headless, --embed needs "-".
                   && (!parmp->exmode || parmp->input_istext)
                   && !stdin_isatty
                   && parmp->edit_type <= EDIT_STDIN

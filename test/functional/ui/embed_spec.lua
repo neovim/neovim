@@ -144,19 +144,38 @@ describe('--embed UI', function()
   end)
 
   it('ignores "[-s] -" if UI did not forward stdin (stdin_fd=nil)', function()
-    clear {
-      args_rm = { '--headless' },
-      args = { '--cmd', 'autocmd StdinReadPre * let g:stdin_read = 1', '-s', '-', '-' },
-    }
-    local screen = Screen.new(40, 8, {}, false)
-    screen.rpc_async = true -- Avoid hanging. #24888
-    screen:attach()
-    screen:expect([[
-      ^                                        |
-      {1:~                                       }|*6
-                                              |
-    ]])
-    eq(0, fn.exists('g:stdin_read'))
+    t.skip(is_os('win'), 'uses sh')
+    clear()
+    local child_server = assert(n.new_pipename())
+    -- stdin is the RPC channel, so fd 0 is stderr: the terminal (like the TUI's tty).
+    tt.setup_screen(
+      nil,
+      {
+        'sh',
+        '-c',
+        'sleep 99 | exec "$0" "$@"',
+        nvim_prog,
+        '--embed',
+        '--listen',
+        child_server,
+        '--clean',
+        '-s',
+        '-',
+        '-',
+      },
+      nil,
+      {
+        VIMRUNTIME = os.getenv('VIMRUNTIME'),
+        NVIM_TEST = os.getenv('NVIM_TEST'),
+        XDG_RUNTIME_DIR = os.getenv('XDG_RUNTIME_DIR'),
+      }
+    )
+    local child_session = retry(nil, nil, function()
+      return n.connect(child_server)
+    end)
+    tt.feed_data('ifoo\27\n\4') -- Pending input: keys for "-s -", text for "-".
+    Screen.new(40, 6, nil, child_session)
+    eq({ true, { '' } }, { child_session:request('nvim_buf_get_lines', 0, 0, -1, false) })
   end)
 
   it('can pass stdin to -q - #17523', function()
@@ -390,6 +409,23 @@ describe('--embed --listen', function()
     child_screen:expect({ any = vim.pesc('[No Name]') })
 
     -- The UI can claim the server: Nvim self-exits when the UI disconnects.
+    child_session:request('nvim_chan_set', 0, { detach = false })
+    child_session:close()
+    screen:expect({ any = 'Process exited' })
+  end)
+
+  it('"-" reads stdin if stdin is not the UI channel', function()
+    t.skip(is_os('win'), 'CTRL-D is not EOF on Windows')
+    clear()
+    local child_server = assert(n.new_pipename())
+    local screen = tt.setup_child_nvim({ '--embed', '--listen', child_server, '--clean', '-' })
+    screen:expect({ any = 'waiting for UI' })
+    tt.feed_data('foo\n\4') -- CTRL-D: EOF
+
+    local child_session = n.connect(child_server)
+    Screen.new(40, 6, nil, child_session)
+    eq({ true, { 'foo' } }, { child_session:request('nvim_buf_get_lines', 0, 0, -1, false) })
+
     child_session:request('nvim_chan_set', 0, { detach = false })
     child_session:close()
     screen:expect({ any = 'Process exited' })
