@@ -3267,6 +3267,38 @@ describe('ext_multigrid', function()
     feed(':test')
     screen:expect(expected)
   end)
+
+  it('resends window grid contents to a new UI #30583', function()
+    insert('hello\nworld')
+    screen:expect([[
+    ## grid 1
+      [2:-----------------------------------------------------]|*12
+      {11:[No Name] [+]                                        }|
+      [3:-----------------------------------------------------]|
+    ## grid 2
+      hello                                                |
+      worl^d                                                |
+      {1:~                                                    }|*10
+    ## grid 3
+                                                           |
+    ]])
+    screen:detach()
+
+    -- win_pos is not resent at the same size (#19559), hence "hidden".
+    local screen2 = Screen.new(53, 14, { ext_multigrid = true })
+    screen2:expect([[
+    ## grid 1
+                                                           |*12
+      {3:[No Name] [+]                                        }|
+      [3:-----------------------------------------------------]|
+    ## grid 2 (hidden)
+      hello                                                |
+      worl^d                                                |
+      {1:~                                                    }|*10
+    ## grid 3
+                                                           |
+    ]])
+  end)
 end)
 
 it('headless attach with showcmd', function()
