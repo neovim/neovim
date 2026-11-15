@@ -220,6 +220,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   linenr_T lnum = from;
   char *ptr = NULL;              // pointer into read buffer
   char *buffer = NULL;           // read buffer
+  size_t buffer_size = 0;        // allocated size of "buffer"
   char *new_buffer = NULL;       // init to shut up gcc
   char *line_start = NULL;       // init to shut up gcc
   int wasempty;                         // buffer was empty before reading
@@ -937,9 +938,8 @@ retry:
     // up to max_unsigned characters (and other things).
     {
       if (!skip_read) {
-        // Use buffer >= 64K.  Add linerest to double the size if the
-        // line gets very long, to avoid a lot of copying. But don't
-        // read more than 1 Mbyte at a time, so we can be interrupted.
+        // Read at least 64K plus the partial line length, but not more than
+        // 1 Mbyte at a time, so we can be interrupted.
         size = MIN(0x10000 + linerest, 0x100000);
       }
 
@@ -954,21 +954,32 @@ retry:
         *ptr = NL;  // split line by inserting a NL
         size = 1;
       } else if (!skip_read) {
-        for (; size >= 10; size /= 2) {
-          new_buffer = verbose_try_malloc((size_t)size + (size_t)linerest + 1);
-          if (new_buffer) {
+        size_t need = (size_t)size + (size_t)linerest + 1;
+        if (need > buffer_size) {
+          size_t alloc_size = MAX(need, buffer_size * 2);
+          new_buffer = try_malloc(alloc_size);
+          if (new_buffer == NULL) {
+            for (; size >= 10; size /= 2) {
+              alloc_size = (size_t)size + (size_t)linerest + 1;
+              new_buffer = verbose_try_malloc(alloc_size);
+              if (new_buffer) {
+                break;
+              }
+            }
+          }
+          if (new_buffer == NULL) {
+            error = true;
             break;
           }
+          if (linerest) {         // copy characters from the previous buffer
+            memmove(new_buffer, ptr - linerest, (size_t)linerest);
+          }
+          xfree(buffer);
+          buffer = new_buffer;
+          buffer_size = alloc_size;
+        } else if (linerest && ptr - linerest != buffer) {
+          memmove(buffer, ptr - linerest, (size_t)linerest);
         }
-        if (new_buffer == NULL) {
-          error = true;
-          break;
-        }
-        if (linerest) {         // copy characters from the previous buffer
-          memmove(new_buffer, ptr - linerest, (size_t)linerest);
-        }
-        xfree(buffer);
-        buffer = new_buffer;
         ptr = buffer + linerest;
         line_start = buffer;
 
