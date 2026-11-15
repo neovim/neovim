@@ -175,7 +175,7 @@ where the substitute command doesn't find a match for "5.1".  You can then
 make a change to insert "5.1" and continue by typing ",," again.  Or the
 ":wnext" fails, because you are in the last file in the list.
    When a mapping runs into an error halfway, the rest of the mapping is
-discarded.  CTRL-C interrupts the mapping (CTRL-Break on MS-Windows).
+discarded.  CTRL-C interrupts the mapping.
 
 
 DELETE A MAPPING

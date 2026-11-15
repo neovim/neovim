@@ -131,6 +131,17 @@ describe('cmdwin', function()
     n.poke_eventloop()
     feed('<C-C>')
     eq({ '/', 'foo', 4 }, { fn.getcmdtype(), fn.getcmdline(), fn.getcmdpos() })
+    -- <C-C> read between queued events is a key, not an interrupt.
+    feed('<Esc>q:')
+    eq(':', fn.getcmdwintype())
+    exec_lua(function()
+      vim.schedule(function()
+        vim.uv.sleep(100) -- <C-C> arrives while this event runs.
+      end)
+      vim.schedule(function() end)
+    end)
+    feed('<C-C>')
+    eq('', fn.getcmdwintype())
   end)
 
   it('history entry or current cmdline with control chars or 0x80 byte', function()

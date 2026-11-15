@@ -529,21 +529,12 @@ static int str_to_mapargs(const char *strargs, bool is_unmap, MapArguments *mapa
 /// @param args  "rhs", "rhs_lua", "orig_rhs", "expr", "silent", "nowait",
 ///              "replace_keycodes" and "desc" fields are used.
 /// @param sid  0 to use current_sctx
-static mapblock_T *map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr_table,
-                           const char *keys, MapArguments *args, int noremap, int mode,
-                           bool is_abbr, scid_T sid, linenr_T lnum, bool simplified)
+static mapblock_T *map_add(mapblock_T **map_table, mapblock_T **abbr_table, const char *keys,
+                           MapArguments *args, int noremap, int mode, bool is_abbr, scid_T sid,
+                           linenr_T lnum, bool simplified)
   FUNC_ATTR_NONNULL_RET
 {
   mapblock_T *mp = xcalloc(1, sizeof(mapblock_T));
-
-  // If CTRL-C has been mapped, don't always use it for Interrupting.
-  if (*keys == Ctrl_C) {
-    if (map_table == buf->b_maphash) {
-      buf->b_mapped_ctrl_c |= mode;
-    } else {
-      mapped_ctrl_c |= mode;
-    }
-  }
 
   mp->m_keys = xstrdup(keys);
   mp->m_str = args->rhs;
@@ -885,17 +876,8 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
 
     if (maptype == MAPTYPE_UNMAP) {
       // delete entry
-      if (!did_it) {
-        if (!keyround1_simplified) {
-          retval = 2;  // no match
-        }
-      } else if (*lhs == Ctrl_C) {
-        // If CTRL-C has been unmapped, reuse it for Interrupting.
-        if (map_table == buf->b_maphash) {
-          buf->b_mapped_ctrl_c &= ~mode;
-        } else {
-          mapped_ctrl_c &= ~mode;
-        }
+      if (!did_it && !keyround1_simplified) {
+        retval = 2;  // no match
       }
       continue;
     }
@@ -917,7 +899,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
     }
 
     // Get here when adding a new entry to the maphash[] list or abbrlist.
-    mp_result[keyround - 1] = map_add(buf, map_table, abbr_table, lhs,
+    mp_result[keyround - 1] = map_add(map_table, abbr_table, lhs,
                                       args, noremap, mode, is_abbrev,
                                       0,  // sid
                                       0,  // lnum
@@ -2412,10 +2394,10 @@ void f_mapset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   mapblock_T *mp_result[2] = { NULL, NULL };
 
-  mp_result[0] = map_add(curbuf, map_table, abbr_table, lhsraw, &args,
+  mp_result[0] = map_add(map_table, abbr_table, lhsraw, &args,
                          noremap, mode, is_abbr, sid, lnum, false);
   if (lhsrawalt != NULL) {
-    mp_result[1] = map_add(curbuf, map_table, abbr_table, lhsrawalt, &args,
+    mp_result[1] = map_add(map_table, abbr_table, lhsrawalt, &args,
                            noremap, mode, is_abbr, sid, lnum, true);
   }
 

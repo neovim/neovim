@@ -366,7 +366,6 @@ bool invoke_prompt_interrupt(void)
   }
   argv[0].v_type = VAR_UNKNOWN;
 
-  got_int = false;  // don't skip executing commands
   int ret = callback_call(&curbuf->b_prompt_interrupt, 0, argv, &rettv);
   tv_clear(&rettv);
   return ret != FAIL;

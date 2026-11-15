@@ -2072,18 +2072,7 @@ describe('lua stdlib', function()
         KEYCB: key '^', typed '^'                                   |
         {6:Press ENTER or type command to continue}^                     |
       ]])
-      feed('<C-C>')
-      screen:expect([[
-                                                                    |
-        {1:~                                                           }|*3
-        {3:                                                            }|
-        key_cb                                                      |
-        KEYCB: key '^', typed '^'                                   |
-        key_cb                                                      |
-        KEYCB: key '{18:^C}', typed '{18:^C}'                                 |
-        {6:Press ENTER or type command to continue}^                     |
-      ]])
-      feed('<C-C>')
+      feed('<C-C>') -- Consumed by the prompt, not passed to the callback.
       screen:expect([[
         ^                                                            |
         {1:~                                                           }|*8

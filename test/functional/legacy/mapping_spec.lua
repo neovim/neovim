@@ -35,10 +35,7 @@ describe('mapping', function()
     command('inoremap <c-c> <ctrl-c>')
     command('cnoremap <c-c> dummy')
     command('cunmap <c-c>')
-    feed('GA<cr>')
-    -- XXX: editor must be in Insert mode before <C-C> is put into input buffer
-    poke_eventloop()
-    feed('TEST2: CTRL-C |<c-c>A|<cr><esc>')
+    feed('GA<cr>TEST2: CTRL-C |<c-c>A|<cr><esc>')
     command('unmap! <c-c>')
 
     expect([[
@@ -50,10 +47,7 @@ describe('mapping', function()
   -- oldtest: Test_map_ctrl_c_visual()
   it('Ctrl-c works in Visual mode', function()
     command([[vnoremap <c-c> :<C-u>$put ='vmap works'<cr>]])
-    feed('GV')
-    -- XXX: editor must be in Visual mode before <C-C> is put into input buffer
-    poke_eventloop()
-    feed('vV<c-c>')
+    feed('GVvV<c-c>')
     command('vunmap <c-c>')
 
     expect([[

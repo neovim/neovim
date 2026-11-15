@@ -742,8 +742,6 @@ struct file_buffer {
 
   AdditionalData *additional_data;      // Additional data from shada file if any.
 
-  int b_mapped_ctrl_c;          // modes where CTRL-C is mapped
-
   MarkTree b_marktree[1];
   Map(uint32_t, uint32_t) b_extmark_ns[1];         // extmark namespaces
   int b_conceal_providers;  // See nvim__buf_set_conceal_provider().

@@ -47,7 +47,12 @@ void state_enter(VimState *s)
   FUNC_ATTR_NONNULL_ALL
 {
   while (true) {
+    // check() counts as waiting: it may peek for typed keys, e.g. ins_redraw().
+    const bool waiting = !s->prompt && is_safe_now();
+    const bool save_state_waiting = state_waiting;
+    state_waiting = waiting;
     int check_result = s->check ? s->check(s) : 1;
+    state_waiting = save_state_waiting;
 
     if (!check_result) {
       break;     // Terminate this state.
@@ -59,6 +64,7 @@ void state_enter(VimState *s)
     int key;
 
 getkey:
+    state_waiting = waiting;
     // Apply mappings first by calling vpeekc() directly.
     // - If vpeekc() returns non-NUL, there is a character already available for processing, so
     //   don't block for events. vgetc() may still block, in case of an incomplete UTF-8 sequence.
@@ -89,6 +95,10 @@ getkey:
       }
       key = K_EVENT;
     }
+    state_waiting = save_state_waiting;
+    if (waiting) {
+      got_int = false;  // Absorb the interrupt (see got_int).
+    }
 
     if (key == K_EVENT) {
       // An event handler may use the value of reg_executing.
@@ -115,7 +125,9 @@ getkey:
 ///
 /// This should be used to handle K_EVENT in states accepting input
 /// otherwise bursts of events can block break checking indefinitely.
-void state_handle_k_event(void)
+///
+/// @param prompt  Called by a prompt (see VimState.prompt).
+void state_handle_k_event(bool prompt)
 {
   while (true) {
     Event event = multiqueue_get(main_loop.events);
@@ -123,7 +135,7 @@ void state_handle_k_event(void)
       event.handler(event.argv);
     }
 
-    if (multiqueue_empty(main_loop.events)) {
+    if (multiqueue_empty(main_loop.events) || got_int) {
       // don't breakcheck before return, caller should return to main-loop
       // and handle input already.
       return;
@@ -131,8 +143,11 @@ void state_handle_k_event(void)
 
     // TODO(bfredl): as an further micro-optimization, we could check whether
     // event.handler already checked input.
-    os_breakcheck();
-    if (input_available() || got_int) {
+    const bool save_state_waiting = state_waiting;
+    state_waiting = !prompt && is_safe_now();  // Still waiting for user input.
+    os_char_avail();
+    state_waiting = save_state_waiting;
+    if (input_available()) {
       return;
     }
   }
@@ -154,7 +169,7 @@ bool state_wait_key(void)
   cmdline_row = msg_row;
   may_garbage_collect = false;  // See nv_event().
   no_wait_return++;
-  state_handle_k_event();
+  state_handle_k_event(true);
   no_wait_return--;
   return false;
 }
@@ -307,17 +322,18 @@ void may_trigger_modechanged(void)
   restore_v_event(v_event, &save_v_event);
 }
 
-/// When true in a safe state when starting to wait for a character.
+/// Whether SafeState was triggered (see may_trigger_safestate()).
 static bool was_safe = false;
 
-/// Return whether currently it is safe, assuming it was safe before (high level
-/// state didn't change).
+/// True if nothing is pending (typeahead, :normal, :global, …) before waiting for user input.
+/// |SafeState|  Mode-specific conditions are the `safe` arg of may_trigger_safestate().
 static bool is_safe_now(void)
 {
   return stuff_empty()
          && typebuf.tb_len == 0
          && !using_script()
          && !global_busy
+         && !ex_normal_busy
          && !debug_mode;
 }
 

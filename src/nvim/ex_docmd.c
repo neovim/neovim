@@ -6607,12 +6607,6 @@ void do_sleep(int64_t msec, bool hide_cursor)
   ui_flush();  // flush before waiting
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, msec, got_int);
 
-  // If CTRL-C was typed to interrupt the sleep, drop the CTRL-C from the
-  // input buffer, otherwise a following call to input() fails.
-  if (got_int) {
-    vpeekc();
-  }
-
   if (hide_cursor) {
     ui_busy_stop();
   }

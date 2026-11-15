@@ -87,7 +87,7 @@ matter if 'ignorecase' or 'smartcase' was changed.
 
 	Note:
 	If your search takes much longer than you expected, you can interrupt
-	it with CTRL-C on Unix and CTRL-Break on MS-Windows.
+	it with CTRL-C.
 
 ==============================================================================
 *27.2*	Wrapping around the file end

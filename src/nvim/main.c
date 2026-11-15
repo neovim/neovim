@@ -1873,7 +1873,6 @@ static void create_windows(mparm_T *parmp)
       }
       os_breakcheck();
       if (got_int) {
-        vgetc();          // only break the file loading, not the rest
         break;
       }
     }
@@ -1973,7 +1972,6 @@ static void edit_buffers(mparm_T *parmp)
     }
     os_breakcheck();
     if (got_int) {
-      vgetc();            // only break the file loading, not the rest
       break;
     }
   }

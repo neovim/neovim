@@ -2762,18 +2762,12 @@ static int vgetorpeek(bool advance)
       // try re-mapping.
       while (true) {
         check_end_reg_executing(advance);
-        // os_breakcheck() is slow, don't use it too often when
-        // inside a mapping.  But call it each time for typed
-        // characters.
+        // Executing a mapping or register is work: check for CTRL-C, but not too often.
+        // Else check for typed characters.
         if (typebuf.tb_maplen) {
           line_breakcheck();
         } else {
-          // os_breakcheck() can call input_enqueue()
-          if ((mapped_ctrl_c | curbuf->b_mapped_ctrl_c) & get_real_state()) {
-            ctrl_c_interrupts = false;
-          }
-          os_breakcheck();  // check for CTRL-C
-          ctrl_c_interrupts = true;
+          os_char_avail();
         }
         int keylen = 0;
         if (got_int) {
@@ -3285,10 +3279,8 @@ int get_keystroke(MultiQueue *events)
   int buflen = 150;
   int len = 0;
   int n;
-  int save_mapped_ctrl_c = mapped_ctrl_c;
 
   mod_mask = 0;
-  mapped_ctrl_c = 0;        // mappings are not used here
   while (true) {
     // flush output before waiting
     ui_flush();
@@ -3319,6 +3311,10 @@ int get_keystroke(MultiQueue *events)
       len = n;
     }
     if (len == 0) {  // nothing typed yet
+      if (got_int) {  // Interrupted while waiting.
+        n = Ctrl_C;
+        break;
+      }
       continue;
     }
 
@@ -3350,7 +3346,6 @@ int get_keystroke(MultiQueue *events)
   }
   xfree(buf);
 
-  mapped_ctrl_c = save_mapped_ctrl_c;
   return merge_modifiers(n, &mod_mask);
 }
 

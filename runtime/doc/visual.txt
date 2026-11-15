@@ -180,7 +180,6 @@ CTRL-C							*v_CTRL-C*
 			In Visual mode: Stop Visual mode.  When insert mode is
 			pending (the mode message shows
 			"-- (insert) VISUAL --"), it is also stopped.
-			On MS-Windows, you may need to press CTRL-Break.
 
 ==============================================================================
 3. Changing the Visual area				*visual-change*

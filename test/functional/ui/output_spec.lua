@@ -57,9 +57,12 @@ describe('shell command :!', function()
     ]])
     tt.feed_data('\3') -- Ctrl-C
     screen:expect([[
-      ^                                                  |
-      {100:~                                                 }|*4
                                                         |
+      {3:                                                  }|
+      :!printf foo; sleep 200                           |
+      foo                                               |
+      shell returned 130                                |
+      {123:Press ENTER or type command to continue}^           |
       {5:-- TERMINAL --}                                    |
     ]])
   end)

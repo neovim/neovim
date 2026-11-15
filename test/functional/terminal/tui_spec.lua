@@ -3410,7 +3410,7 @@ describe('TUI', function()
       ^                                                  |
       {100:~                                                 }|*3
       {3:[No Name]                                         }|
-      Type  :qa  and press <Enter> to exit Nvim         |
+      :call jobwait([g:id])                             |
       {5:-- TERMINAL --}                                    |
     ]])
   end)

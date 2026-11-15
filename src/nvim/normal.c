@@ -6206,7 +6206,6 @@ static void nv_esc(cmdarg_T *cap)
   bool cmdwin_cancel = cap->arg && bt_cmdwin(curbuf);
 
   if (cmdwin_cancel) {
-    got_int = false;  // CTRL-C cancels cmdwin; don't interrupt autocmds etc.
     cmdwin_do_action("cancel");
   } else if (cap->arg) {        // true for CTRL-C
     if (restart_edit == 0 && !Visual.active && no_reason) {
@@ -6739,7 +6738,7 @@ static void nv_event(cmdarg_T *cap)
   // lists or dicts being used.
   may_garbage_collect = false;
   bool may_restart = (restart_edit != 0 || Visual.restart_select != 0);
-  state_handle_k_event();
+  state_handle_k_event(false);
   finish_op = false;
   if (may_restart) {
     // Tricky: if restart_edit was set before the handler we are in ctrl-o mode,

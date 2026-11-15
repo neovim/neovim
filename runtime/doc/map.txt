@@ -568,8 +568,6 @@ when using nested mappings.
 Using CTRL-C in the {lhs} is possible, but it will only work when Vim is
 waiting for a key, not when Vim is busy with something.  When Vim is busy
 CTRL-C interrupts/breaks the command.
-When using the GUI version on MS-Windows CTRL-C can be mapped to allow a Copy
-command to the clipboard.  Use CTRL-Break to interrupt Vim.
 
 					*map_space_in_lhs* *map-space_in_lhs*
 To include a space in {lhs} precede it with a CTRL-V (type two CTRL-Vs for

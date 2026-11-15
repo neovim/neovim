@@ -6396,10 +6396,8 @@ int ins_complete(int c, bool enable_pum)
   compl_curr_match = compl_shown_match;
   compl_direction = compl_shows_dir;
 
-  // Eat the ESC that vgetc() returns after a CTRL-C to avoid leaving Insert
-  // mode.
-  if (got_int && !global_busy) {
-    vgetc();
+  // An interrupted completion stays in Insert mode.
+  if (!global_busy) {
     got_int = false;
   }
 

@@ -614,11 +614,7 @@ static int nlua_check_interrupt(lua_State *lstate)
   FUNC_ATTR_NONNULL_ALL
 {
   bool interrupted = got_int;
-  if (got_int) {
-    got_int = false;
-    vgetc();
-  }
-
+  got_int = false;
   lua_pushboolean(lstate, interrupted);
   return 1;
 }

@@ -2424,7 +2424,6 @@ static void f_wait(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     rettv->vval.v_number = -3;
   } else if (got_int) {
     got_int = false;
-    vgetc();
     rettv->vval.v_number = -2;
   } else if (tv_get_number_chk(&exprval, &error)) {
     rettv->vval.v_number = 0;

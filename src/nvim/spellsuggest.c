@@ -945,8 +945,7 @@ static void spell_suggest_intern(suginfo_T *su, bool interactive)
   // When CTRL-C was hit while searching do show the results.  Only clear
   // got_int when using a command, not for spellsuggest().
   os_breakcheck();
-  if (interactive && got_int) {
-    vgetc();
+  if (interactive) {
     got_int = false;
   }
 

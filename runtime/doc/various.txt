@@ -14,10 +14,11 @@ Various commands					*various*
 
 CTRL-C							*CTRL-C*
 			Interrupt the current command, script, mapping,
-			prompt, or search.
+			prompt, or search, and discard typeahead.
 
-			In Normal mode, any pending command is aborted. During
-			a search, interrupts the search.
+			While Nvim is waiting for input, CTRL-C behavior
+			depends on the current mode: Normal mode aborts a
+			pending command. |i_CTRL-C| |c_CTRL-C| |v_CTRL-C| |map-CTRL-C|
 
 			Lua code cannot be interrupted unless it "yields" via
 			|vim.wait()|.
