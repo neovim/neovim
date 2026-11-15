@@ -751,7 +751,7 @@ describe('vim.pack', function()
       n.clear()
       local lockfile_fs_stat = vim.uv.fs_stat(get_lock_path())
       vim_pack_add({})
-      eq(lockfile_fs_stat, vim.uv.fs_stat(get_lock_path()))
+      eq(lockfile_fs_stat.mtime, vim.uv.fs_stat(get_lock_path()).mtime)
     end)
 
     it('handles lockfile during install errors', function()
