@@ -82,14 +82,25 @@ describe('version', function()
       ['1.X'] = { from = { 1, 0, 0 }, to = { 2, 0, 0 } },
       ['1.2.x'] = { from = { 1, 2, 0 }, to = { 1, 3, 0 } },
       ['1.2.*'] = { from = { 1, 2, 0 }, to = { 1, 3, 0 } },
+      ['1.x.*'] = { from = { 1, 0, 0 }, to = { 2, 0, 0 } },
       ['*'] = { from = { 0, 0, 0 } },
       ['x'] = { from = { 0, 0, 0 } },
+      ['X'] = { from = { 0, 0, 0 } },
+      ['x.x'] = { from = { 0, 0, 0 } },
+      ['^x'] = { from = { 0, 0, 0 } },
       ['1.2.3-RC.X'] = { from = '1.2.3-RC.X', to = '1.2.3-RC.X' },
       ['>=1.2.3-RC1'] = { from = '1.2.3-RC1' },
+      ['^1.2.3-beta'] = { from = '1.2.3-beta', to = { 2, 0, 0 } },
+      ['~1.2.3-rc+b'] = { from = '1.2.3-rc+b', to = { 1, 3, 0 } },
       ['1.2.3+BUILD.X'] = { from = '1.2.3+BUILD.X', to = '1.2.3+BUILD.X' },
+      ['1.2+build.x'] = { from = '1.2.0+build.x', to = { 1, 3, 0 } },
+      ['1.x+b.c'] = { from = '1.0.0+b.c', to = { 2, 0, 0 } },
+      ['^0.x+b.c'] = { from = '0.0.0+b.c', to = { 1, 0, 0 } },
       ['1.2 - 2.3.0'] = { from = { 1, 2, 0 }, to = { 2, 3, 0 } },
       ['1.2.3 - 2.3.4'] = { from = { 1, 2, 3 }, to = { 2, 3, 4 } },
       ['1.2.3 - 2'] = { from = { 1, 2, 3 }, to = { 3, 0, 0 } },
+      ['1.2.3 - 2.3.x'] = { from = { 1, 2, 3 }, to = { 2, 4, 0 } },
+      ['1.2.3 - X'] = { from = { 1, 2, 3 } },
     }
     for input, output in pairs(tests) do
       output.from = v(output.from)
@@ -99,6 +110,7 @@ describe('version', function()
       it('parses ' .. input, function()
         eq(output, range)
         eq(output.from.build, range.from.build)
+        eq(output.to and output.to.build, range.to and range.to.build)
       end)
 
       it('tostring() ' .. input, function()
@@ -168,6 +180,11 @@ describe('version', function()
       eq(nil, vim.version.parse(''))
       eq(nil, vim.version.range('garbage - 2.0.0'))
       eq(nil, vim.version.range('1.2.3 - garbage'))
+      eq(nil, vim.version.range('>='))
+      eq(nil, vim.version.range('X.1'))
+      eq(nil, vim.version.range('1.x.3'))
+      eq(nil, vim.version.range('<*'))
+      eq(nil, vim.version.range('>x'))
     end)
   end)
 
@@ -390,6 +407,11 @@ describe('version', function()
           want = { major = 1, minor = 2, patch = 3, build = 'build.0-rc1' },
         },
         {
+          desc = 'zeros',
+          version = '0.0.0-0.rc.0a+007',
+          want = { major = 0, minor = 0, patch = 0, prerelease = '0.rc.0a', build = '007' },
+        },
+        {
           desc = 'prerelease and build',
           version = '1.2.3-rc1+build.15',
           want = { major = 1, minor = 2, patch = 3, prerelease = 'rc1', build = 'build.15' },
@@ -431,6 +453,15 @@ describe('version', function()
         { version = 'foobar1.2.3' },
         { version = '1.2.3foobar' },
         { version = '1.2.3-%?' },
+        { version = '1.2.3-rc$' },
+        { version = '1.2.3-' },
+        { version = '1.2.3-rc.' },
+        { version = '1.2.3-rc..1' },
+        { version = '1.2.3-01' },
+        { version = '1.2.3-rc.01' },
+        { version = '01.2.3' },
+        { version = '1.02.3' },
+        { version = '1.2.03' },
         { version = '1.2.3+%?' },
         { version = '1.2.3+' },
         { version = '1.2.3+build..15' },
