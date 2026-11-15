@@ -538,6 +538,8 @@ PERFORMANCE
   linewise regions.
 • The display of multibyte text with grapheme clusters has been optimized,
   by calculating byte length and cell width of clusters in a single loop.
+• Reading a file with very long lines no longer copies each line once per
+  1 MB read, so a 100 MB single-line file opens in 90 ms instead of 530 ms.
 
 PLUGINS
 
