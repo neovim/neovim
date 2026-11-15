@@ -95,6 +95,145 @@ describe('vim.loader', function()
     eq(2, exec_lua('return loadfile(...)()', tmp2))
   end)
 
+  it('loads deeply nested module paths when the cache path is too long #29372 #25008', function()
+    local root = t.tmpname(false)
+    t.finally(function()
+      n.rmdir(root)
+    end)
+    local rtp = root .. ('/' .. ('x'):rep(80)):rep(3)
+    n.fn.mkdir(rtp .. '/lua', 'p')
+    t.write_file(rtp .. '/lua/long_path.lua', 'return 42')
+    eq(
+      { 42, 42, 42, 42 },
+      exec_lua(function(path, cache)
+        vim.loader.path = cache
+        vim.loader.enable()
+        vim.opt.runtimepath:prepend(path)
+        local first = require('long_path')
+        package.loaded.long_path = nil
+        local second = require('long_path')
+        local source = path .. '/lua/long_path.lua'
+        return { first, second, assert(loadfile(source))(), assert(loadfile(source))() }
+      end, rtp, root .. '/cache')
+    )
+    eq({}, n.fn.readdir(root .. '/cache'))
+  end)
+
+  it('still reuses cache entries for ordinary paths', function()
+    local root = t.tmpname(false)
+    n.fn.mkdir(root, 'p')
+    t.finally(function()
+      n.rmdir(root)
+    end)
+    t.write_file(root .. '/module.lua', 'return 42')
+    eq(
+      { 42, 42, 1 },
+      exec_lua(function(path, cache)
+        vim.loader.path = cache
+        vim.loader.enable()
+        local fs_open = vim.uv.fs_open
+        local writes = 0
+        vim.uv.fs_open = function(name, mode, ...)
+          if mode == 'w' and vim.startswith(name, cache .. '/') then
+            writes = writes + 1
+          end
+          return fs_open(name, mode, ...)
+        end
+        local first = assert(loadfile(path))()
+        local second = assert(loadfile(path))()
+        vim.uv.fs_open = fs_open
+        return { first, second, writes }
+      end, root .. '/module.lua', root .. '/cache')
+    )
+  end)
+
+  for _, long in ipairs({ false, true }) do
+    it('loads ' .. (long and 'long' or 'ordinary') .. ' paths in fast events', function()
+      local root = t.tmpname(false)
+      t.finally(function()
+        n.rmdir(root)
+      end)
+      local dir = root .. (long and ('/' .. ('x'):rep(80)):rep(3) or '')
+      n.fn.mkdir(dir, 'p')
+      t.write_file(dir .. '/module.lua', 'return 42')
+      eq(
+        { true, 42, 42 },
+        exec_lua(function(path, cache)
+          vim.loader.path = cache
+          vim.loader.enable()
+          local timer = vim.uv.new_timer()
+          local result
+          timer:start(0, 0, function()
+            result = {
+              pcall(function()
+                return assert(loadfile(path))(), assert(loadfile(path))()
+              end),
+            }
+            timer:close()
+          end)
+          assert(vim.wait(1000, function()
+            return result ~= nil
+          end))
+          return result
+        end, dir .. '/module.lua', root .. '/cache')
+      )
+    end)
+  end
+
+  it('preserves missing and invalid source errors when the cache path is too long', function()
+    local root = t.tmpname(false)
+    t.finally(function()
+      n.rmdir(root)
+    end)
+    local dir = root .. ('/' .. ('x'):rep(80)):rep(3)
+    n.fn.mkdir(dir, 'p')
+    t.write_file(dir .. '/invalid.lua', 'return )')
+    eq(
+      { true, true },
+      exec_lua(function(path, cache)
+        local raw_loadfile = loadfile
+        vim.loader.path = cache
+        vim.loader.enable()
+        local result = {}
+        for _, name in ipairs({ 'missing.lua', 'invalid.lua' }) do
+          local source = path .. '/' .. name
+          local expected, expected_err = raw_loadfile(source)
+          local actual, actual_err = loadfile(source)
+          assert(expected == nil and expected_err ~= nil)
+          result[#result + 1] = actual == nil and actual_err == expected_err
+        end
+        return result
+      end, dir, root .. '/cache')
+    )
+    eq({}, n.fn.readdir(root .. '/cache'))
+  end)
+
+  it('does not suppress unrelated cache write errors', function()
+    local root = t.tmpname(false)
+    n.fn.mkdir(root, 'p')
+    t.finally(function()
+      n.rmdir(root)
+    end)
+    t.write_file(root .. '/module.lua', 'return 42')
+    eq(
+      true,
+      exec_lua(function(path, cache)
+        vim.loader.path = cache
+        vim.loader.enable()
+        local fs_open = vim.uv.fs_open
+        vim.uv.fs_open = function(name, mode, ...)
+          if mode == 'w' and vim.startswith(name, cache .. '/') then
+            return nil, 'EACCES: test cache write denied', 'EACCES'
+          end
+          return fs_open(name, mode, ...)
+        end
+        local ok, err = pcall(loadfile, path)
+        vim.uv.fs_open = fs_open
+        return not ok and err:find('EACCES: test cache write denied', 1, true) ~= nil
+      end, root .. '/module.lua', root .. '/cache')
+    )
+  end)
+
   it('indents error message #29809', function()
     local errmsg = exec_lua [[
       vim.loader.enable()
