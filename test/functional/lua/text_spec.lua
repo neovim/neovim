@@ -49,6 +49,11 @@ describe('vim.text', function()
       )
       -- Tabs expand when old indent matches new indent #40932.
       eq({ '  a', 2 }, { vim.text.indent(2, '\t a', { expandtab = 1 }) })
+      -- Single-tab blank line with expandtab #42847.
+      eq({ 'a\n\nb', 4 }, { vim.text.indent(0, '    a\n\t\n    b', { expandtab = 4 }) })
+      -- CRLF blank lines #42847.
+      eq({ 'a\r\n\r\nb\r\n', 2 }, { vim.text.indent(0, '  a\r\n\r\n  b\r\n') })
+      eq({ '  a\r\n\r\n  b\r\n', 0 }, { vim.text.indent(2, 'a\r\n\r\nb\r\n') })
     end)
 
     it('real-world cases', function()
