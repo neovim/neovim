@@ -33,6 +33,8 @@
 --- ^1.2.3            is >=1.2.3 <2.0.0       "compatible with 1.2.3"
 --- ^0.2.3            is >=0.2.3 <0.3.0       (0.x.x is special)
 --- ^0.0.1            is =0.0.1               (0.0.x is special)
+--- ^0.0              is >=0.0.0 <0.1.0       (like ^0.0.x)
+--- ^0                is >=0.0.0 <1.0.0       (like ^0.x)
 --- ^1.2              is >=1.2.0 <2.0.0       (like ^1.2.0)
 --- ~1.2              is >=1.2.0 <1.3.0       (like ~1.2.0)
 --- ^1                is >=1.0.0 <2.0.0       "compatible with 1"
@@ -42,6 +44,7 @@
 --- 1                 same
 --- *                 any version
 --- x                 same
+--- X                 same
 ---
 --- 1.2.3 - 2.3.4     is >=1.2.3 <2.3.4
 ---
@@ -188,25 +191,26 @@ function M._version(version, strict) -- Adapted from https://github.com/folke/la
 
   local build = version:match('%+(.*)$')
   version = version:gsub('%+.*$', '')
-  if strict and build then
-    for part in (build .. '.'):gmatch('(.-)%.') do
-      if not part:match('^[0-9A-Za-z-]+$') then
+  local prerel = version:match('%-(.*)$')
+  if strict then
+    -- Dot-separated identifiers: "rc.1", "build.007". Only build allows numeric leading zeros.
+    for _, id in ipairs(prerel and vim.split(prerel, '.', { plain = true }) or {}) do
+      if not id:match('^[0-9A-Za-z-]+$') or id:match('^0%d+$') then
+        return nil -- Invalid prerelease.
+      end
+    end
+    for _, id in ipairs(build and vim.split(build, '.', { plain = true }) or {}) do
+      if not id:match('^[0-9A-Za-z-]+$') then
         return nil -- Invalid build metadata.
       end
     end
   end
 
-  local prerel = version:match('%-(.*)$')
-  local prerel_strict = version:match('%-([0-9A-Za-z-]*)')
-  if
-    strict
-    and prerel
-    and (prerel_strict == nil or prerel_strict == '' or not vim.startswith(prerel, prerel_strict))
-  then
-    return nil -- Invalid prerelease.
-  end
   local major, minor, patch =
     version:match('^v?(%d+)%.?(%d*)%.?(%d*)' .. (strict and (prerel and '%-' or '$') or ''))
+  if strict and major and ('.%s.%s.%s'):format(major, minor, patch):match('%.0%d') then
+    return nil -- Leading zero: "01.2.3".
+  end
 
   if
     (not strict and major)
@@ -301,31 +305,34 @@ local range_mt = {
 --- @param spec string Version range "spec"
 --- @return vim.VersionRange?
 function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
-  if spec == '*' or spec == 'x' or spec == '' then
-    return setmetatable({ from = M.parse('0.0.0') }, range_mt)
-  end
-
   local hyphen = spec:find(' - ', 1, true)
   if hyphen then
-    local a = spec:sub(1, hyphen - 1)
-    local b = spec:sub(hyphen + 3)
-    local parts = vim.split(b, '.', { plain = true })
-    local ra = M.range(a)
-    local rb = M.range(b)
+    local ra = M.range(spec:sub(1, hyphen - 1))
+    local rb = M.range(spec:sub(hyphen + 3))
     if not ra or not rb then
       return nil
     end
-    return setmetatable({
-      from = ra.from,
-      to = #parts == 3 and rb.from or rb.to,
-    }, range_mt)
+    -- "1 - 2.3.4" => <2.3.4, "1 - 2.3" => <2.4.0, "1 - x" => no upper bound.
+    return setmetatable({ from = ra.from, to = rb.to }, range_mt)
   end
-  local mods, version = spec:match('^([%^=<>~]*)(.*)$')
-  assert(mods and version) -- The pattern matches every string.
-  version = version:gsub('^[^+-]+', function(core)
-    return (core:gsub('%.[%*xX]', ''))
-  end)
-  local parts = vim.split(version:gsub('%-.*', ''), '.', { plain = true })
+  local mods, core, suffix = spec:match('^([%^=<>~]*)([^+-]*)(.*)$')
+  assert(mods and core and suffix) -- The pattern matches every string.
+  local parts = vim.split(core, '.', { plain = true })
+  while #parts > 0 and parts[#parts]:match('^[%*xX]$') do
+    parts[#parts] = nil -- Drop trailing wildcards: "1.x.*" => "1".
+  end
+  for _, part in ipairs(parts) do
+    if part:match('^[%*xX]$') then
+      return nil -- Wildcard before a number: "x.1", "1.x.3".
+    end
+  end
+  if #parts == 0 and (mods == '<' or mods == '>') then
+    return nil -- Empty range: "<*", ">x".
+  end
+  if spec == '' or #parts == 0 then
+    return setmetatable({ from = M.parse('0.0.0') }, range_mt) -- Any version: "*", "x.x", "^X".
+  end
+  local version = ('%s%s'):format(table.concat(parts, '.'), suffix)
   if #parts < 3 and mods == '' then
     mods = '~'
   end
@@ -368,6 +375,7 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
         to[2] = 0
         to[3] = 0
       end
+      to.prerelease, to.build = nil, nil -- End is a release: "~1.2.3-rc" => <1.3.0.
     elseif mods == '^' then
       for i = 1, 3 do
         if to[i] ~= 0 or (i == #parts and i < 3) then
@@ -375,6 +383,7 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
           for j = i + 1, 3 do
             to[j] = 0
           end
+          to.prerelease, to.build = nil, nil
           break
         end
       end
