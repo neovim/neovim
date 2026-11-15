@@ -624,6 +624,14 @@ size_t termkey_get_buffer_remaining(TermKey *tk)
   return tk->buffsize - tk->buffcount;
 }
 
+/// True if `tk->buffer` starts with a DCS/OSC/APC string whose content starts with a digit, like
+/// a response to a query ("\x1b]52;c;…", "\x1bP1+r…"), not <M-P>, <M-]>, <M-_>.
+bool termkey_response_pending(TermKey *tk)
+{
+  return tk->buffcount > 2 && CHARAT(0) == 0x1b
+         && (CHARAT(1) == 'P' || CHARAT(1) == ']' || CHARAT(1) == '_') && isdigit(CHARAT(2));
+}
+
 static void eat_bytes(TermKey *tk, size_t count)
 {
   if (count >= tk->buffcount) {
