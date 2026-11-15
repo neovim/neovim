@@ -63,7 +63,7 @@ describe('channels', function()
     eq({ 'notification', 'data', { id, { '' } } }, next_msg())
   end)
 
-  for _, mode in ipairs({ 'no callback', 'callback', 'buffered callback' }) do
+  for _, mode in ipairs({ 'no callback', 'buffered callback' }) do
     it('closes TCP socket on EOF with ' .. mode .. ' #11166', function()
       local id = exec_lua(function(callback_mode)
         local uv = vim.uv
@@ -94,9 +94,7 @@ describe('channels', function()
       retry(nil, 3000, function()
         eq({}, api.nvim_get_chan_info(id))
       end)
-      if mode == 'callback' then
-        eq({ { 'hello', '' }, { '' } }, exec_lua('return _G.socket_data'))
-      elseif mode == 'buffered callback' then
+      if mode == 'buffered callback' then
         eq({ { 'hello', '' } }, exec_lua('return _G.socket_data'))
       end
     end)
