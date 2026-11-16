@@ -33,6 +33,7 @@ struct loop {
 
   uv_async_t async;
   uv_mutex_t mutex;
+  uint64_t poll_time;  ///< Time (os_hrtime()) when the last loop_poll_events() finished polling.
   int recursive;
   bool closing;  ///< Set to true if loop_close() has been called
 };

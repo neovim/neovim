@@ -904,7 +904,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
           Search.match_endcol = endpos.col;
           break;
         }
-        line_breakcheck();              // stop if ctrl-C typed
+        fast_breakcheck();              // stop if ctrl-C typed
         if (got_int) {
           break;
         }
@@ -3458,7 +3458,7 @@ exit_matched:
         goto search_line;
       }
     }
-    line_breakcheck();
+    fast_breakcheck();
     if (action == ACTION_EXPAND) {
       ins_compl_check_keys(30, false);
     }

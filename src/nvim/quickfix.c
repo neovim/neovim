@@ -5616,7 +5616,7 @@ static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *sp
         }
       }
     }
-    line_breakcheck();
+    fast_breakcheck();
     if (got_int) {
       break;
     }
@@ -7533,7 +7533,7 @@ static void hgr_search_file(qf_list_T *qfl, char *fname, regmatch_T *p_regmatch)
       xfree(line);
     }
     lnum++;
-    line_breakcheck();
+    fast_breakcheck();
   }
   fclose(fd);
 }

@@ -16,6 +16,7 @@ void loop_init(Loop *loop, void *data)
 {
   uv_loop_init(&loop->uv);
   loop->recursive = 0;
+  loop->poll_time = os_hrtime();
   loop->closing = false;
   loop->uv.data = loop;
   kv_init(loop->children);
@@ -78,6 +79,8 @@ static bool loop_uv_run(Loop *loop, int64_t ms)
 bool loop_poll_events(Loop *loop, int64_t ms)
 {
   bool timeout_expired = loop_uv_run(loop, ms);
+  // Before `fast_events`, else their breakchecks count the wait as time without polling.
+  loop->poll_time = os_hrtime();  // Not uv_now(): timer_start(), etc. update it without polling.
   multiqueue_process_events(loop->fast_events);
   return timeout_expired;
 }

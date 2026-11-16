@@ -1043,7 +1043,7 @@ static int list_join_inner(garray_T *const gap, list_T *const l, const char *con
     if (p->s.data != NULL) {
       ga_concat_len(gap, p->s.data, p->s.size);
     }
-    line_breakcheck();
+    fast_breakcheck();
   }
 
   return OK;

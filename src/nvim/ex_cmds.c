@@ -4467,7 +4467,7 @@ skip:
       kv_destroy(line_matches);         // clean up match data
     }
 
-    line_breakcheck();
+    fast_breakcheck();
 
     if (timed_out || profile_passed_limit(tm)) {
       got_quit = true;
@@ -4727,7 +4727,7 @@ void ex_global(exarg_T *eap)
         ml_setmarked(lnum);
         ndone++;
       }
-      line_breakcheck();
+      fast_breakcheck();
     }
 
     // pass 2: execute the command for each line that has been marked
@@ -4771,7 +4771,7 @@ void global_exe(char *cmd)
 
   while (!got_int && (lnum = ml_firstmarked()) != 0 && global_busy == 1) {
     global_exe_one(cmd, lnum);
-    os_breakcheck();
+    line_breakcheck();
   }
 
   global_busy = 0;
