@@ -502,6 +502,7 @@ EXTERN char *fenc_default INIT( = NULL);
 ///    motion_force:   Last motion_force from do_pending_operator()
 ///    debug_mode:     Debug mode
 EXTERN int State INIT( = MODE_NORMAL);
+EXTERN bool state_waiting INIT( = false);  ///< Current state is waiting for user input.
 
 EXTERN bool debug_mode INIT( = false);
 EXTERN bool finish_op INIT( = false);    // true while an operator is pending
@@ -531,9 +532,6 @@ EXTERN bool ins_at_eol INIT( = false);   // put cursor after eol when
                                          // restarting edit after CTRL-O
 
 EXTERN bool no_abbr INIT( = true);       // true when no abbreviations loaded
-
-EXTERN int mapped_ctrl_c INIT( = 0);  // Modes where CTRL-C is mapped.
-EXTERN bool ctrl_c_interrupts INIT( = true);  // CTRL-C sets got_int
 
 EXTERN cmdmod_T cmdmod;                 // Ex command modifiers
 
@@ -595,9 +593,9 @@ EXTERN bool need_highlight_changed INIT( = true);
 
 EXTERN FILE *scriptout INIT( = NULL);  ///< Write input to this file ("nvim -w").
 
-// Note that even when handling SIGINT, volatile is not necessary because the
-// callback is not called directly from the signal handlers.
-EXTERN bool got_int INIT( = false);          // set to true when interrupt signal occurred
+/// Interrupts the current command, e.g. on CTRL-C (process_ctrl_c()).
+/// Editor features (modes) treat it as the CTRL-C key (vgetorpeek()).
+EXTERN bool got_int INIT( = false);
 EXTERN bool bangredo INIT( = false);         // set to true with ! command
 EXTERN int reg_do_extmatch INIT( = 0);       // Used when compiling regexp:
                                              // REX_SET to allow \z\(...\),

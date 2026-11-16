@@ -4414,10 +4414,7 @@ static int expand_pattern_in_buf(char *pat, Direction dir, char ***matches, int 
 
     // Abort if user typed a character or interrupted
     if (char_avail() || got_int) {
-      if (got_int) {
-        (void)vpeekc();  // Remove <C-C> from input stream
-        got_int = false;  // Don't abandon the command line
-      }
+      got_int = false;  // Don't abandon the command line
       goto cleanup;
     }
 

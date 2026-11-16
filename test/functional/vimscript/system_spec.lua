@@ -273,8 +273,9 @@ describe('system()', function()
       screen:expect([[
         ^                                                     |
         {1:~                                                    }|*12
-        Type  :qa  and press <Enter> to exit Nvim            |
-      ]])
+]] .. (is_os('win') and [[
+        :call system("for /L %I in (1,0,2) do @echo y")      |]] or [[
+        :call system("yes")                                  |]]))
     end)
 
     it('`yes` interrupted with mapped CTRL-C', function()
@@ -290,12 +291,14 @@ describe('system()', function()
 ]] .. (is_os('win') and [[
         :call system("for /L %I in (1,0,2) do @echo y")      |]] or [[
         :call system("yes")                                  |]]))
-      feed('foo<c-c>')
+      feed('foo<c-c>') -- Interrupts, not mapped.
       screen:expect([[
         ^                                                     |
         {1:~                                                    }|*12
-        {5:-- INSERT --}                                         |
-      ]])
+]] .. (is_os('win') and [[
+        :call system("for /L %I in (1,0,2) do @echo y")      |]] or [[
+        :call system("yes")                                  |]]))
+      eq('n', api.nvim_get_mode().mode)
     end)
   end)
 
@@ -461,7 +464,7 @@ describe('systemlist()', function()
       screen:expect([[
         ^                                                     |
         {1:~                                                    }|*12
-        Type  :qa  and press <Enter> to exit Nvim            |
+        :call systemlist("yes | xargs")                      |
       ]])
     end)
   end)

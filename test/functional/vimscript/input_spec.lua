@@ -195,6 +195,11 @@ describe('input()', function()
     feed(':let var = input({"cancelreturn": v:null})<CR>')
     feed('<Esc>')
     eq(NIL, api.nvim_get_var('var'))
+    -- CTRL-C also interrupts the caller.
+    feed(':let var = input("") | let after = 1<CR>')
+    n.poke_eventloop() -- Typed at input(), not typeahead.
+    feed('<C-C>')
+    eq(0, n.fn.exists('g:after'))
   end)
   it('supports default string', function()
     feed(':let var = input("", "DEF1")<CR>')

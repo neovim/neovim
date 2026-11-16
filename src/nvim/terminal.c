@@ -935,7 +935,6 @@ bool terminal_enter(void)
   int save_state = State;
   s->save_rd = RedrawingDisabled;
   State = MODE_TERMINAL;
-  mapped_ctrl_c |= MODE_TERMINAL;  // Always map CTRL-C to avoid interrupt.
   RedrawingDisabled = false;
 
   set_terminal_winopts(s);
@@ -1162,7 +1161,7 @@ static int terminal_execute(VimState *state, int key)
   case K_EVENT:
     // We cannot let an event free the terminal yet. It is still needed.
     s->term->refcount++;
-    state_handle_k_event();
+    state_handle_k_event(false);
     s->term->refcount--;
     if (s->term->buf_handle == 0) {
       s->close = true;
@@ -1197,12 +1196,6 @@ static int terminal_execute(VimState *state, int key)
     FALLTHROUGH;
 
   default:
-    if (mod_key == Ctrl_C) {
-      // terminal_enter() always sets `mapped_ctrl_c` to avoid `got_int`. 8eeda7169aa4
-      // But `got_int` may be set elsewhere, e.g. by interrupt() or an autocommand,
-      // so ensure that it is cleared.
-      got_int = false;
-    }
     if (mod_key == Ctrl_BSL && !s->got_bsl) {
       s->got_bsl = true;
       break;

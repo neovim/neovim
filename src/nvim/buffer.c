@@ -3835,7 +3835,6 @@ void ex_buffer_all(exarg_T *eap)
 
     os_breakcheck();
     if (got_int) {
-      vgetc();            // only break the file loading, not the rest
       break;
     }
     // Autocommands deleted the buffer or aborted script processing!!!

@@ -744,7 +744,6 @@ static int insert_handle_key(InsertState *s)
 
   case Ctrl_C:        // End input mode
     if (s->c == Ctrl_C && bt_cmdwin(curbuf)) {
-      got_int = false;  // Don't interrupt autocmds etc.
       cmdwin_do_action("cancel");  // cmdwin: CTRL-C closes cmdwin, pre-fills cmdline.
       return 0;  // exit insert mode
     }
@@ -957,7 +956,7 @@ static int insert_handle_key(InsertState *s)
     if (s->c == K_PASTE_START) {
       paste_repeat(1);
     } else if (s->c == K_EVENT) {
-      state_handle_k_event();
+      state_handle_k_event(false);
       // If CTRL-G U was used apply it to the next typed key.
       if (Ins.dont_sync_undo == kTrue) {
         Ins.dont_sync_undo = kNone;

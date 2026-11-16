@@ -138,7 +138,6 @@ typedef struct {
   // mouse drag and release events are ignored, unless they are
   // preceded with a mouse down event
   bool ignore_drag_release;
-  bool break_ctrl_c;
   expand_T xpc;
   OptInt *b_im_ptr;
   buf_T *b_im_ptr_buf;  ///< buffer where b_im_ptr is valid
@@ -475,7 +474,6 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
 
     // if interrupted while searching, behave like it failed
     if (got_int) {
-      vpeekc();               // remove <C-C> from input stream
       got_int = false;              // don't abandon the command line
       found = 0;
     } else if (char_avail()) {
@@ -717,9 +715,9 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
     CLEAR_FIELD(ccline);
   }
 
+  s->state.prompt = s->firstc == '@' || s->firstc == -1;  // input(), prompt_for_input()
   if (s->firstc == -1) {
     s->firstc = NUL;
-    s->break_ctrl_c = true;
   }
 
   init_ccline(s->firstc, s->indent);
@@ -1166,7 +1164,6 @@ static int command_line_wildchar_complete(CommandLineState *s)
 
     // if interrupted while completing, behave like it failed
     if (got_int) {
-      vpeekc();               // remove <C-C> from input stream
       got_int = false;              // don't abandon the command line
       ExpandOne(&s->xpc, NULL, NULL, 0, WILD_FREE);
       s->xpc.xp_context = EXPAND_NOTHING;
@@ -1276,7 +1273,7 @@ static int command_line_execute(VimState *state, int key)
 
   if (s->c == K_EVENT || s->c == K_COMMAND || s->c == K_LUA) {
     if (s->c == K_EVENT) {
-      state_handle_k_event();
+      state_handle_k_event(s->state.prompt);
     } else if (s->c == K_COMMAND) {
       do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
     } else {
@@ -1336,17 +1333,6 @@ static int command_line_execute(VimState *state, int key)
         s->c = K_C_RIGHT; break;
       }
     }
-  }
-
-  // Ignore got_int when CTRL-C was typed here.
-  // Don't ignore it in :global, we really need to break then, e.g., for
-  // ":g/pat/normal /pat" (without the <CR>).
-  // Don't ignore it for the input() function.
-  if ((s->c == Ctrl_C)
-      && s->firstc != '@'
-      && !s->break_ctrl_c
-      && !global_busy) {
-    got_int = false;
   }
 
   // free old command line when finished moving around in the history
