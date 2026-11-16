@@ -1061,16 +1061,21 @@ describe('vim.lsp.completion: protocol', function()
   it('merges results from multiple clients', function()
     create_server('dummy1', { isIncomplete = false, items = { { label = 'hello' } } })
     create_server('dummy2', { isIncomplete = false, items = { { label = 'hallo' } } })
-    create_server('dummy3', { { label = 'hallo' } })
-
+    -- This client's request never gets sent, so it must not block the others.
+    local client_id =
+      create_server('dummy3', { isIncomplete = false, items = { { label = 'hola' } } })
+    exec_lua(function()
+      assert(vim.lsp.get_client_by_id(client_id)).request = function()
+        return false
+      end
+    end)
     feed('ih')
     trigger_at_pos({ 1, 1 })
 
     assert_matches(function(matches)
-      eq(3, #matches)
+      eq(2, #matches)
       eq('hello', matches[1].word)
       eq('hallo', matches[2].word)
-      eq('hallo', matches[3].word)
     end)
   end)
 
