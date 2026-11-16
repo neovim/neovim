@@ -1083,6 +1083,7 @@ static int normal_execute(VimState *state, int key)
   atom_cmd_start(&frame, key);
 
   NormalState *s = (NormalState *)state;
+  terminal_record_follow_views();
   s->command_finished = false;
   s->ctrl_w = false;                  // got CTRL-W command
   s->old_col = curwin->w_curswant;
@@ -1255,6 +1256,7 @@ static int normal_execute(VimState *state, int key)
 finish:
   normal_finish_command(s, &frame);
   xfree(s->ca.searchbuf);
+  terminal_unfollow_changed_views();
   return 1;
 }
 

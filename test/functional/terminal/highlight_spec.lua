@@ -248,12 +248,12 @@ it('CursorLine and CursorColumn work in :terminal buffer in Normal mode', functi
   tt.feed_data(' foobar')
   tt.clear_attrs()
   screen:expect([[
-    tty ready{21: }                                        |
-     foobar f{21:o}obar foobar foobar foobar foobar foobar |
-    foobar fo{21:o}bar foobar foobar foobar foobar foobar f|
-    oobar foo{21:b}ar foobar foobar foobar foobar foobar fo|
-    obar foob{21:a}r foobar foobar foobar foobar foobar foo|
-    {21:bar fooba^r}{100: foobar}{21:                                 }|
+    tty ready       {21: }                                 |
+     foobar foobar f{21:o}obar foobar foobar foobar foobar |
+    foobar foobar fo{21:o}bar foobar foobar foobar foobar f|
+    oobar foobar foo{21:b}ar foobar foobar foobar foobar fo|
+    obar foobar foob{21:a}r foobar foobar foobar foobar foo|
+    {21:bar foobar}{100: fooba^r}{21:                                 }|
                                                       |
   ]])
   feed('2gg15|')

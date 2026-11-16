@@ -62,8 +62,8 @@ describe(':terminal cursor', function()
     it('is positioned correctly when unfocused', function()
       screen:expect([[
         {121:  1 }tty ready                                     |
-        {121:  2 }^rows: 6, cols: 46                             |
-        {121:  3 }                                              |
+        {121:  2 }rows: 6, cols: 46                             |
+        {121:  3 }^                                              |
         {121:  4 }                                              |
         {121:  5 }                                              |
         {121:  6 }                                              |
@@ -74,8 +74,8 @@ describe(':terminal cursor', function()
     it('is positioned correctly when focused', function()
       screen:expect([[
         {121:  1 }tty ready                                     |
-        {121:  2 }^rows: 6, cols: 46                             |
-        {121:  3 }                                              |
+        {121:  2 }rows: 6, cols: 46                             |
+        {121:  3 }^                                              |
         {121:  4 }                                              |
         {121:  5 }                                              |
         {121:  6 }                                              |

@@ -1384,3 +1384,162 @@ describe('scrollback is correct', function()
     end)
   end)
 end)
+
+describe(':terminal in Normal mode with cursor not at last row', function()
+  local screen --- @type test.functional.ui.screen
+
+  before_each(function()
+    clear()
+    screen = tt.setup_screen()
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      tty ready                                         |
+      ^                                                  |
+                                                        |*5
+    ]])
+  end)
+
+  it('follows output until the cursor is moved', function()
+    feed_data('line1\nline2\nline3\nline4\nline5\nline6\nline7\nline8\n')
+    screen:expect([[
+      line4                                             |
+      line5                                             |
+      line6                                             |
+      line7                                             |
+      line8                                             |
+      ^                                                  |
+                                                        |
+    ]])
+    feed('k')
+    feed_data('line9\nline10\n')
+    screen:expect([[
+      line4                                             |
+      line5                                             |
+      line6                                             |
+      line7                                             |
+      ^line8                                             |
+      line9                                             |
+                                                        |
+    ]])
+    -- Moving the cursor back doesn't make it follow output again.
+    feed('j')
+    feed_data('line11\n')
+    screen:expect([[
+      line4                                             |
+      line5                                             |
+      line6                                             |
+      line7                                             |
+      line8                                             |
+      ^line9                                             |
+                                                        |
+    ]])
+  end)
+
+  it('stops following output when scrolled', function()
+    -- Leave the terminal cursor above the last row, so that scrolling doesn't move the cursor.
+    feed_data('line1\nline2\nline3\nline4\nline5\nline6\nline7\nline8\n\027[2A')
+    screen:expect([[
+      line4                                             |
+      line5                                             |
+      line6                                             |
+      ^line7                                             |
+      line8                                             |
+                                                        |
+                                                        |
+    ]])
+    feed('<C-Y>')
+    screen:expect([[
+      line3                                             |
+      line4                                             |
+      line5                                             |
+      line6                                             |
+      ^line7                                             |
+      line8                                             |
+                                                        |
+    ]])
+    feed_data('\027[2Bline9\nline10\n')
+    retry(nil, 1000, function()
+      eq({ 'line10', '' }, api.nvim_buf_get_lines(0, -3, -1, true))
+    end)
+    screen:expect_unchanged()
+  end)
+
+  it('follows output in both windows after splitting', function()
+    command('file term')
+    -- Shrinking the window changes its topline, which doesn't count as scrolling.
+    feed(':split<CR>')
+    screen:expect([[
+      rows: 2, cols: 50                                 |
+      ^                                                  |
+      {120:term [-]                                          }|
+      rows: 2, cols: 50                                 |
+                                                        |
+      {119:term [-]                                          }|
+      :split                                            |
+    ]])
+    -- Leave the terminal cursor above the last row, so that the cursor isn't on the last line.
+    feed_data('line1\nline2\nline3\n\027[A')
+    screen:expect([[
+      ^line3                                             |
+                                                        |
+      {120:term [-]                                          }|
+      line3                                             |
+                                                        |
+      {119:term [-]                                          }|
+      :split                                            |
+    ]])
+  end)
+
+  it("follows output after a redraw scrolls for 'scrolloff'", function()
+    command('set scrolloff=3')
+    feed_data('line1\nline2\nline3\nline4\nline5\nline6\nline7\nline8\n')
+    screen:expect([[
+      line4                                             |
+      line5                                             |
+      line6                                             |
+      line7                                             |
+      line8                                             |
+      ^                                                  |
+                                                        |
+    ]])
+    -- Leave the terminal cursor on the top row, and redraw in the same command.
+    exec_lua(function()
+      local cursor = vim.fn.line('.')
+      vim.fn.chansend(vim.bo.channel, '\027[Htop\027[K\n\027[A')
+      vim.wait(1000, function()
+        return vim.fn.line('.') ~= cursor
+      end)
+      vim.cmd.redraw()
+    end)
+    screen:expect([[
+      line2                                             |
+      line3                                             |
+      ^top                                               |
+      line5                                             |
+      line6                                             |
+      line7                                             |
+                                                        |
+    ]])
+    feed_data('\027[5Bline9\n')
+    screen:expect([[
+      line5                                             |
+      line6                                             |
+      line7                                             |
+      line8                                             |
+      line9                                             |
+      ^                                                  |
+                                                        |
+    ]])
+  end)
+
+  it('stops following output in Visual mode', function()
+    feed('v')
+    feed_data('line1\n')
+    screen:expect([[
+      tty ready                                         |
+      {108:^l}ine1                                             |
+                                                        |*4
+      {5:-- VISUAL --}                                      |
+    ]])
+  end)
+end)
