@@ -147,9 +147,11 @@ local function parse_ref(ref)
       not (tail == '' or p)
       or (port and port > 65535)
       or (userinfo and not has_only(userinfo, ('%s:'):format(authority_chars)))
-      -- IPv6, with zone ID ("fe80::1%25en0"), or IPvFuture ("v1.x").
-      or (ip and not (ip:find('^[%x:.]+$') or ip:find('^[%x:.]+%%25.') or ip:find('^v%x+%.')))
+      -- IPv6, with zone ID ("fe80::1%25en0"). Not IPvFuture ("v1.x"): `host` can't distinguish it from a reg-name.
+      or (ip and not (ip:find('^[%x:.]+$') or ip:find('^[%x:.]+%%25.')))
       or (not ip and not has_only(h, authority_chars))
+      -- A reg-name with "%3A" would print as IPv6 (see `__tostring`).
+      or (not ip and h:find('%%3[Aa]'))
     then
       return nil
     end
@@ -267,8 +269,12 @@ end
 
 --- Removes "." and ".." segments (RFC 3986 5.2.4): "/a/./b/../c" => "/a/c".
 ---@param path string
+---@param keep_drive boolean Keep a drive letter (maybe encoded, like vscode-uri) as the root:
+---   "/C:/a/../.." => "/C:/", "/c%3A/a/.." => "/c%3A/". Not "/x:y" (see path_has_drive_letter()).
 ---@return string
-local function remove_dot_segments(path)
+local function remove_dot_segments(path, keep_drive)
+  local drive = keep_drive and (path:match('^(/%a:)/') or path:match('^(/%a%%3[Aa])/')) or ''
+  path = path:sub(#drive + 1)
   local out = {} --- @type string[]
   while path ~= '' do
     local dots = path:match('^%.%.?/') --- @type string?
@@ -287,7 +293,7 @@ local function remove_dot_segments(path)
       path = path:sub(#segment + 1)
     end
   end
-  return table.concat(out)
+  return ('%s%s'):format(drive, table.concat(out))
 end
 
 --- Appends path segments to the path of `base`, like |vim.fs.joinpath()|, and removes "." and ".."
@@ -323,9 +329,7 @@ function M.join(base, ...)
     path = ('%s/%s'):format(path, M.encode(segment))
   end
   path = path:gsub('/+', '/')
-  -- Keeps a drive letter as the root: "/C:/a/../.." => "/C:/".
-  local drive = u.scheme == 'file' and path:match('^/%a:') or ''
-  u.path = ('%s%s'):format(drive, remove_dot_segments(path:sub(#drive + 1)))
+  u.path = remove_dot_segments(path, u.scheme == 'file')
   return u
 end
 
@@ -370,7 +374,7 @@ function M.normalize(uri)
   u.port = u.port ~= default_port and u.port or nil
   u.path = normalize_percent(u.path)
   if u.path:find('^/') then
-    u.path = remove_dot_segments(u.path)
+    u.path = remove_dot_segments(u.path, u.scheme == 'file')
   elseif u.host and u.path == '' and default_port then
     -- Empty path of a "special" scheme: "http://h" => "http://h/".
     u.path = '/'
@@ -487,8 +491,8 @@ function M.decode(str)
   end))
 end
 
----Gets a URI from a file path, or returns `path` if already a URI. Relative paths are resolved to
----|current-directory| (RFC 8089 disallows relative URIs).
+---Gets a URI from a file path, or returns `path` if already a URL ("scheme:/…"). Relative paths
+---are resolved to |current-directory| (RFC 8089 disallows relative URIs).
 ---
 ---Example:
 ---
@@ -504,7 +508,7 @@ end
 ---@param path string Path to file
 ---@return string URI
 function M.from_fname(path)
-  if M.parse(path) then
+  if vim._core.path_is_url(path) then
     return path
   end
   if iswin or path:find('^%a:') then

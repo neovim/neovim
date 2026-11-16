@@ -26,10 +26,15 @@ describe('vim.uri', function()
           return {
             vim.uri.from_fname(cwd .. '/a.txt'),
             vim.uri.from_fname(vim.fs.dirname(cwd) .. '/b'),
+            vim.uri.from_fname(cwd .. '/foo:bar.txt'),
           }
         end),
         exec_lua(function()
-          return { vim.uri.from_fname('a.txt'), vim.uri.from_fname('../b') }
+          return {
+            vim.uri.from_fname('a.txt'),
+            vim.uri.from_fname('../b'),
+            vim.uri.from_fname('foo:bar.txt'), -- Not a URL.
+          }
         end)
       )
 
@@ -358,6 +363,8 @@ describe('vim.uri', function()
       'http://h:65536/',
       'http://a b/',
       'http://a%2@h/',
+      'http://[v1.x]/',
+      'http://foo%3Abar/',
     }
     local parsed = exec_lua(function()
       -- Roundtrip: tostring() gives the original URI, or its normalized form.
@@ -418,6 +425,8 @@ describe('vim.uri', function()
       {},
       {},
       {},
+      {},
+      {},
     }, parsed)
   end)
 
@@ -428,6 +437,7 @@ describe('vim.uri', function()
         'http://h/',
         'mailto:a/../b',
         'file:///b',
+        { 'file:///C:/x', 'file:///c%3A/x', 'file:///z' },
         true,
         false,
       },
@@ -439,6 +449,12 @@ describe('vim.uri', function()
           tostring(vim.uri.normalize('http://h:80')),
           tostring(vim.uri.normalize('mailto:a/../b')),
           tostring(vim.uri.normalize('file://LocalHost/a/../b')),
+          -- Not above the drive letter.
+          {
+            tostring(vim.uri.normalize('file:///C:/a/../../x')),
+            tostring(vim.uri.normalize('file:///c%3a/a/../../x')),
+            tostring(vim.uri.normalize('file:///x:y/../z')),
+          },
           vim.uri.normalize('HTTP://h/%7E') == vim.uri.normalize(vim.uri.parse('http://h:80/~')),
           (pcall(vim.uri.normalize, 'a/b')),
         }

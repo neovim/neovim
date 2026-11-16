@@ -6035,9 +6035,9 @@ vim.uri.from_buf({buf})                                   *vim.uri.from_buf()*
         (`string`) URI
 
 vim.uri.from_fname({path})                              *vim.uri.from_fname()*
-    Gets a URI from a file path, or returns `path` if already a URI. Relative
-    paths are resolved to |current-directory| (RFC 8089 disallows relative
-    URIs).
+    Gets a URI from a file path, or returns `path` if already a URL
+    ("scheme:/…"). Relative paths are resolved to |current-directory| (RFC
+    8089 disallows relative URIs).
 
     Example: >lua
         vim.uri.from_fname('/a b/c#') --> 'file:///a%20b/c%23'
