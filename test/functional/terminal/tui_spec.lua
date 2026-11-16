@@ -1262,8 +1262,13 @@ describe('TUI', function()
     child_exec_lua([[
       _G.termresponse = nil
       vim.api.nvim_create_autocmd('TermResponse', {
-        once = true,
-        callback = function(ev) _G.termresponse = ev.data.sequence end,
+        callback = function(ev)
+          -- Ignore other responses, e.g. a late "\027[0n" (DSR) from startup.
+          if ev.data.sequence == '\027P0$r' then
+            _G.termresponse = ev.data.sequence
+            return true
+          end
+        end,
       })
     ]])
     feed_data('\027P0$r\027\\')
