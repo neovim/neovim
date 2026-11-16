@@ -140,7 +140,7 @@ char *base64_encode(const char *src, size_t src_len)
 /// @param src Base64 encoded string
 /// @param src_len Length of {src}
 /// @param [out] out_lenp Returns the length of the decoded string
-/// @return Decoded string
+/// @return Decoded string, or NULL if `src` is invalid.
 char *base64_decode(const char *src, size_t src_len, size_t *out_lenp)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -153,13 +153,12 @@ char *base64_decode(const char *src, size_t src_len, size_t *out_lenp)
     goto invalid;
   }
 
-  size_t out_len = (src_len / 4) * 3;
-  if (src_len >= 1 && src[src_len - 1] == '=') {
-    out_len--;
+  size_t pad = 0;  // Trailing "=" or "==".
+  while (pad < 2 && pad < src_len && src[src_len - 1 - pad] == '=') {
+    pad++;
   }
-  if (src_len >= 2 && src[src_len - 2] == '=') {
-    out_len--;
-  }
+  const size_t data_len = src_len - pad;
+  const size_t out_len = src_len / 4 * 3 - pad;
 
   const uint8_t *s = (const uint8_t *)src;
 
@@ -168,17 +167,10 @@ char *base64_decode(const char *src, size_t src_len, size_t *out_lenp)
   int acc = 0;
   int acc_len = 0;
   size_t out_i = 0;
-  size_t src_i = 0;
-  int leftover_i = -1;
 
-  for (; src_i < src_len; src_i++) {
-    const uint8_t c = s[src_i];
-    const uint8_t d = char_to_index[c];
-    if (d == 0) {
-      if (c == '=') {
-        leftover_i = (int)src_i;
-        break;
-      }
+  for (size_t src_i = 0; src_i < data_len; src_i++) {
+    const uint8_t d = char_to_index[s[src_i]];
+    if (d == 0) {  // Not in the alphabet, e.g. "=" before the padding.
       goto invalid;
     }
 
@@ -191,34 +183,19 @@ char *base64_decode(const char *src, size_t src_len, size_t *out_lenp)
     }
   }
 
-  if (acc_len > 4 || ((acc & ((1 << acc_len) - 1)) != 0)) {
+  // Each "=" pads 2 leftover bits, which must be zero.
+  assert(acc_len == 2 * (int)pad);
+  if ((acc & ((1 << acc_len) - 1)) != 0) {
     goto invalid;
   }
 
-  if (leftover_i > -1) {
-    int padding_len = acc_len / 2;
-    int padding_chars = 0;
-    for (; (size_t)leftover_i < src_len; leftover_i++) {
-      const uint8_t c = s[leftover_i];
-      if (c != '=') {
-        goto invalid;
-      }
-      padding_chars += 1;
-    }
-
-    if (padding_chars != padding_len) {
-      goto invalid;
-    }
-  }
-
+  assert(out_i == out_len);
   *out_lenp = out_len;
 
   return dest;
 
 invalid:
-  if (dest) {
-    xfree((void *)dest);
-  }
+  xfree(dest);
 
   *out_lenp = 0;
 
