@@ -62,8 +62,9 @@ local uri_mt = {
       local password = uri.password and (':%s'):format(encode_authority_part(uri.password)) or ''
       local userinfo = uri.user and ('%s%s@'):format(encode_authority_part(uri.user), password)
         or ''
-      -- IPv6 in brackets, "%" of a zone ID encoded: "fe80::1%en0" => "[fe80::1%25en0]".
-      local host = uri.host:find(':', 1, true) and ('[%s]'):format((uri.host:gsub('%%', '%%25')))
+      -- IPv6/IPvFuture in brackets, "%" of a zone ID encoded: "fe80::1%en0" => "[fe80::1%25en0]".
+      local is_ip = uri.host:gsub('%%.+', ''):find('^[%x.]*:[%x:.]*$') or uri.host:find('^v%x+%.')
+      local host = is_ip and ('[%s]'):format((uri.host:gsub('%%', '%%25')))
         or encode_authority_part(uri.host)
       local port = uri.port and (':%d'):format(uri.port) or ''
       authority = ('%s%s%s'):format(userinfo, host, port)
@@ -370,7 +371,9 @@ function M.normalize(uri)
   u.port = u.port ~= default_port and u.port or nil
   u.path = normalize_percent(u.path)
   if u.path:find('^/') then
-    u.path = remove_dot_segments(u.path)
+    -- Keeps a drive letter as the root: "/C:/a/../.." => "/C:/".
+    local drive = u.scheme == 'file' and u.path:match('^/%a:') or ''
+    u.path = ('%s%s'):format(drive, remove_dot_segments(u.path:sub(#drive + 1)))
   elseif u.host and u.path == '' and default_port then
     -- Empty path of a "special" scheme: "http://h" => "http://h/".
     u.path = '/'
@@ -504,7 +507,8 @@ end
 ---@param path string Path to file
 ---@return string URI
 function M.from_fname(path)
-  if M.parse(path) then
+  local u = M.parse(path)
+  if u and (u.host or u.path:find('^/')) then
     return path
   end
   if iswin or path:find('^%a:') then

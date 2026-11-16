@@ -19,17 +19,22 @@ describe('vim.uri', function()
       exec_lua("filepath = '/Foo/Bar/Baz.txt'")
 
       eq('file:///Foo/Bar/Baz.txt', exec_lua('return vim.uri.from_fname(filepath)'))
-      -- Resolves a relative path.
+      -- Resolves a relative path (including filenames with ":").
       eq(
         exec_lua(function()
           local cwd = assert(vim.uv.cwd())
           return {
             vim.uri.from_fname(cwd .. '/a.txt'),
+            vim.uri.from_fname(cwd .. '/foo:bar.txt'),
             vim.uri.from_fname(vim.fs.dirname(cwd) .. '/b'),
           }
         end),
         exec_lua(function()
-          return { vim.uri.from_fname('a.txt'), vim.uri.from_fname('../b') }
+          return {
+            vim.uri.from_fname('a.txt'),
+            vim.uri.from_fname('foo:bar.txt'),
+            vim.uri.from_fname('../b'),
+          }
         end)
       )
 
@@ -348,6 +353,8 @@ describe('vim.uri', function()
       'stuff:?',
       'jdt://contents/A.class?=a/%5C/b+c',
       'http://[fe80::1%25en0]:8080/',
+      'http://[v1.x]/a',
+      'http://foo%3Abar/a',
       'C:/a',
       '/a',
       -- Invalid.
@@ -409,6 +416,8 @@ describe('vim.uri', function()
         querystr = '=a/%5C/b+c',
       },
       { scheme = 'http', host = 'fe80::1%en0', port = 8080, path = '/' },
+      { scheme = 'http', host = 'v1.x', path = '/a' },
+      { scheme = 'http', host = 'foo:bar', path = '/a' },
       {},
       {},
       {},
@@ -428,6 +437,7 @@ describe('vim.uri', function()
         'http://h/',
         'mailto:a/../b',
         'file:///b',
+        'file:///C:/x',
         true,
         false,
       },
@@ -439,6 +449,7 @@ describe('vim.uri', function()
           tostring(vim.uri.normalize('http://h:80')),
           tostring(vim.uri.normalize('mailto:a/../b')),
           tostring(vim.uri.normalize('file://LocalHost/a/../b')),
+          tostring(vim.uri.normalize('file:///C:/a/../../x')),
           vim.uri.normalize('HTTP://h/%7E') == vim.uri.normalize(vim.uri.parse('http://h:80/~')),
           (pcall(vim.uri.normalize, 'a/b')),
         }
