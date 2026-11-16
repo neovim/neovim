@@ -562,7 +562,8 @@ static bool inbuf_poll(int ms, MultiQueue *events)
   }
 
   if (!got_int && input_unanswerable() && !os_input_ready(events)) {
-    // Dismiss the prompt (CTRL-C) instead of waiting forever.
+    // Nvim is exiting: instead of waiting forever, dismiss the prompt and interrupt the code that
+    // prompted. Skips remaining exit autocmds.
     static bool did_log = false;  // Log once (the interrupt may be caught...).
     if (!did_log) {
       did_log = true;
@@ -570,8 +571,6 @@ static bool inbuf_poll(int ms, MultiQueue *events)
       get_mode(mode);
       WLOG("Interrupted prompt (mode=%s): user input is unlikely", mode);
     }
-    input_enqueue_raw("\003", 1);
-    // Also interrupt the code that prompted. Skips remaining exit autocmds.
     got_int = true;
   }
 
