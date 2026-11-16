@@ -1099,6 +1099,10 @@ void mc_vsel_refresh(void)
     if (!mc_ctx_resolve(ctx, &ctx->pos)) {
       continue;
     }
+    if (ctx->visual.vi_start.lnum == 0 && strncmp(span.data, "gv", 2) == 0) {
+      // No Visual-reselect area: "gv" fails and the keys after it would run in Normal mode.
+      continue;
+    }
     ctx_load(ctx, kCtxCursor | kCtxVisual | kCtxMarks, 0);
     check_cursor(curwin);
     Visual.active = false;
