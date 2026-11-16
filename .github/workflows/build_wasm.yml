@@ -19,7 +19,7 @@ jobs:
   build-wasm:
     name: Build nvim.wasm (Emscripten + Zig)
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 30
 
     steps:
       - name: Checkout

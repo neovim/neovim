@@ -22,7 +22,7 @@ jobs:
   freebsd:
     name: FreeBSD
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -44,7 +44,7 @@ jobs:
   openbsd:
     name: OpenBSD
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7.0.1
         with:

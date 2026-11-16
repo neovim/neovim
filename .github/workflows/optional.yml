@@ -67,4 +67,4 @@ jobs:
     uses: ./.github/workflows/test_windows.yml
     with:
       build_flags: "-D ENABLE_ASAN_UBSAN=ON"
-      functionaltest_timeout: 40
+      timeout: 30
