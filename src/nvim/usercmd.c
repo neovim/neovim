@@ -31,6 +31,7 @@
 #include "nvim/message.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/input.h"
+#include "nvim/pos_defs.h"
 #include "nvim/runtime.h"
 #include "nvim/strings.h"
 #include "nvim/usercmd.h"
@@ -108,7 +109,8 @@ static struct {
   char *shortname;
 } addr_type_complete[] = {
   { ADDR_ARGUMENTS, "arguments", "arg" },
-  { ADDR_LINES, "lines", "line" },
+  { ADDR_POSITIONS, "lines", "line" },
+  { ADDR_POSITIONS, "chars", "char" },
   { ADDR_LOADED_BUFFERS, "loaded_buffers", "load" },
   { ADDR_TABS, "tabs", "tab" },
   { ADDR_BUFFERS, "buffers", "buf" },
@@ -177,6 +179,7 @@ char *find_ucmd(exarg_T *eap, char *p, int *full, expand_T *xp, int *complp)
           eap->argt = uc->uc_argt;
           eap->useridx = j;
           eap->addr_type = uc->uc_addr_type;
+          eap->addr_mode = uc->uc_addr_mode;
 
           if (complp != NULL) {
             *complp = uc->uc_compl;
@@ -584,7 +587,7 @@ static void uc_list(char *name, size_t name_len)
 
       // Address Type
       for (int j = 0; addr_type_complete[j].expand != ADDR_NONE; j++) {
-        if (addr_type_complete[j].expand != ADDR_LINES
+        if (addr_type_complete[j].expand != ADDR_POSITIONS
             && addr_type_complete[j].expand == cmd->uc_addr_type) {
           int rc = snprintf(IObuff + len, IOSIZE - len, "%s", addr_type_complete[j].shortname);
           assert(rc > 0);
@@ -644,7 +647,7 @@ static void uc_list(char *name, size_t name_len)
 }
 
 /// Parse address type argument
-int parse_addr_type_arg(char *value, int vallen, cmd_addr_T *addr_type_arg)
+int parse_addr_type_arg(char *value, int vallen, cmd_addr_T *addr_type_arg, addr_mode_T *addr_mode)
   FUNC_ATTR_NONNULL_ALL
 {
   int i;
@@ -652,8 +655,17 @@ int parse_addr_type_arg(char *value, int vallen, cmd_addr_T *addr_type_arg)
   for (i = 0; addr_type_complete[i].expand != ADDR_NONE; i++) {
     int a = (int)strlen(addr_type_complete[i].name) == vallen;
     int b = strncmp(value, addr_type_complete[i].name, (size_t)vallen) == 0;
-    if (a && b) {
+    int c = (int)strlen(addr_type_complete[i].shortname) == vallen;
+    int d = strncmp(value, addr_type_complete[i].shortname, (size_t)vallen) == 0;
+    if ((a && b) || (c && d)) {
       *addr_type_arg = addr_type_complete[i].expand;
+      if (addr_type_complete[i].expand == ADDR_POSITIONS) {
+        if (strncmp("char", addr_type_complete[i].shortname, (size_t)vallen) == 0) {
+          *addr_mode = kOmCharWise;
+        } else if (strncmp("line", addr_type_complete[i].shortname, (size_t)vallen) == 0) {
+          *addr_mode = kOmLineWise;
+        }
+      }
       break;
     }
   }
@@ -735,7 +747,7 @@ int parse_compl_arg(const char *value, int vallen, int *complp, uint32_t *argt, 
 }
 
 static int uc_scan_attr(char *attr, size_t len, uint32_t *argt, int *def, int *flags, int *complp,
-                        char **compl_arg, cmd_addr_T *addr_type_arg)
+                        char **compl_arg, cmd_addr_T *addr_type_arg, addr_mode_T *addr_mode)
   FUNC_ATTR_NONNULL_ALL
 {
   if (len == 0) {
@@ -814,7 +826,7 @@ invalid_count:
       }
       // default for -range is using buffer lines
       if (*addr_type_arg == ADDR_NONE) {
-        *addr_type_arg = ADDR_LINES;
+        *addr_type_arg = ADDR_POSITIONS;
       }
     } else if (STRNICMP(attr, "count", attrlen) == 0) {
       *argt |= (EX_COUNT | EX_ZEROR | EX_RANGE);
@@ -853,10 +865,10 @@ invalid_count:
         semsg(_(e_argument_required_for_str), "-addr");
         return FAIL;
       }
-      if (parse_addr_type_arg(val, (int)vallen, addr_type_arg) == FAIL) {
+      if (parse_addr_type_arg(val, (int)vallen, addr_type_arg, addr_mode) == FAIL) {
         return FAIL;
       }
-      if (*addr_type_arg != ADDR_LINES) {
+      if (*addr_type_arg != ADDR_POSITIONS) {
         *argt |= EX_ZEROR;
       }
     } else {
@@ -896,8 +908,8 @@ char *uc_validate_name(char *name)
 /// @return  OK if the command is created, FAIL otherwise.
 int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, int64_t def,
                    int flags, int context, char *compl_arg, LuaRef compl_luaref,
-                   LuaRef preview_luaref, cmd_addr_T addr_type, LuaRef luaref, const char *desc,
-                   bool force)
+                   LuaRef preview_luaref, cmd_addr_T addr_type, addr_mode_T addr_mode,
+                   LuaRef luaref, const char *desc, bool force)
   FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   ucmd_T *cmd = NULL;
@@ -988,6 +1000,7 @@ int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, 
   cmd->uc_compl_luaref = compl_luaref;
   cmd->uc_preview_luaref = preview_luaref;
   cmd->uc_addr_type = addr_type;
+  cmd->uc_addr_mode = addr_mode;
   cmd->uc_luaref = luaref;
 
   return OK;
@@ -1011,6 +1024,7 @@ void ex_command(exarg_T *eap)
   int context = EXPAND_NOTHING;
   char *compl_arg = NULL;
   cmd_addr_T addr_type_arg = ADDR_NONE;
+  addr_mode_T addr_mode = kOmUnknown;
   int has_attr = (eap->arg[0] == '-');
 
   char *p = eap->arg;
@@ -1020,7 +1034,7 @@ void ex_command(exarg_T *eap)
     p++;
     end = skiptowhite(p);
     if (uc_scan_attr(p, (size_t)(end - p), &argt, &def, &flags, &context, &compl_arg,
-                     &addr_type_arg) == FAIL) {
+                     &addr_type_arg, &addr_mode) == FAIL) {
       goto theend;
     }
     p = skipwhite(end);
@@ -1048,7 +1062,7 @@ void ex_command(exarg_T *eap)
     emsg(_(e_complete_used_without_allowing_arguments));
   } else {
     uc_add_command(name, name_len, p, argt, def, flags, context, compl_arg, LUA_NOREF, LUA_NOREF,
-                   addr_type_arg, LUA_NOREF, NULL, eap->forceit);
+                   addr_type_arg, addr_mode, LUA_NOREF, NULL, eap->forceit);
 
     return;  // success
   }
@@ -1760,7 +1774,14 @@ int do_ucmd(exarg_T *eap, bool preview)
     save_current_sctx = current_sctx;
     current_sctx.sc_sid = cmd->uc_script_ctx.sc_sid;
   }
-  do_cmdline(buf, eap->ea_getline, eap->cookie,
+  exarg_T ea = {
+    .cmd = buf,
+    .line1 = 1,
+    .line2 = 1,
+    .ea_getline = eap->ea_getline,
+    .cookie = eap->cookie
+  };
+  do_cmdline(&ea,
              DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
 
   // Careful: Do not use "cmd" here, it may have become invalid if a user
@@ -1856,7 +1877,7 @@ Dict commands_array(buf_T *buf, Arena *arena)
 
     obj = NIL;
     for (int j = 0; addr_type_complete[j].expand != ADDR_NONE; j++) {
-      if (addr_type_complete[j].expand != ADDR_LINES
+      if (addr_type_complete[j].expand != ADDR_POSITIONS
           && addr_type_complete[j].expand == cmd->uc_addr_type) {
         obj = CSTR_AS_OBJ(addr_type_complete[j].name);
         break;

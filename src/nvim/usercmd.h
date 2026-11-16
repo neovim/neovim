@@ -8,6 +8,7 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/garray_defs.h"
+#include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 
 typedef struct {
@@ -17,6 +18,7 @@ typedef struct {
   int64_t uc_def;            ///< The default value for a range/count
   int uc_compl;              ///< completion type
   cmd_addr_T uc_addr_type;   ///< The command's address type
+  addr_mode_T uc_addr_mode;  ///< operation mode if address is a ADDR_POSITION
   sctx_T uc_script_ctx;      ///< SCTX where the command was defined
   char *uc_compl_arg;        ///< completion argument if any
   LuaRef uc_compl_luaref;    ///< Reference to Lua completion function
