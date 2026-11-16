@@ -848,6 +848,7 @@ function Iter:take(n)
     if not stop then
       return _next()
     end
+    return nil
   end
 
   local next = self.next
