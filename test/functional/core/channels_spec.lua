@@ -34,7 +34,7 @@ describe('channels', function()
     source(init)
   end)
 
-  it('can connect to socket', function()
+  it('sockconnect(bytes), closes on read-EOF', function()
     local server = n.new_session(true)
     set_session(server)
     local address = fn.serverlist()[1]
@@ -59,11 +59,21 @@ describe('channels', function()
     local res = eval('msgpackdump([[1,0,v:null,5]])')
     eq({ '\148\001\n\192\005' }, res)
     eq({ 'notification', 'data', { id, res } }, next_msg())
+    -- Buffered mode without a callback saves the data in the opts dict.
+    command("let g:opts = {'data_buffered': v:true}")
+    command("call sockconnect('pipe', address, g:opts)")
+    -- Temporary opts dict: valid until EOF writes into it (no use-after-free).
+    command("call sockconnect('pipe', address, {'data_buffered': v:true})")
     command("call chansend(g:id, msgpackdump([[2,'nvim_command',['quit']]]))")
     eq({ 'notification', 'data', { id, { '' } } }, next_msg())
+    -- EOF closes the channel. #11166
+    retry(nil, nil, function()
+      eq({}, api.nvim_get_chan_info(id))
+      eq({ '' }, eval('g:opts.data'))
+    end)
   end)
 
-  it('emits ChanClose when RPC socket reaches EOF', function()
+  it('sockconnect(rpc): emits ChanClose on read-EOF', function()
     local client = get_session()
     local server = n.new_session(true)
     finally(function()
@@ -103,7 +113,7 @@ describe('channels', function()
     end)
   end)
 
-  it('dont crash due to garbage in rpc #23781', function()
+  it('sockconnect(bytes): no crash on garbage in rpc #23781', function()
     local client = get_session()
     local server = n.new_session(true)
     set_session(server)
@@ -140,7 +150,7 @@ describe('channels', function()
     server:close()
   end)
 
-  it('can use stdio channel', function()
+  it('stdio channel', function()
     source([[
       let g:job_opts = {
       \ 'on_stdout': function('OnEvent'),
@@ -190,7 +200,7 @@ describe('channels', function()
     eq({ 'notification', 'exit', { 3, 0 } }, next_msg())
   end)
 
-  it('can use stdio channel and on_print callback', function()
+  it('stdio channel with on_print callback', function()
     source([[
       let g:job_opts = {
       \ 'on_stdout': function('OnEvent'),
@@ -246,7 +256,7 @@ describe('channels', function()
     eq(expected, accumulated)
   end
 
-  it('can use stdio channel with pty', function()
+  it('stdio channel with pty', function()
     source([[
       let g:job_opts = {
       \ 'on_stdout': function('OnEvent'),
@@ -375,7 +385,7 @@ describe('channels', function()
     eq('foobar', t.read_file('Xstdio_redir'))
   end)
 
-  it('can use buffered output mode', function()
+  it('buffered output mode', function()
     skip(fn.executable('grep') == 0, 'missing "grep" command')
     source([[
       let g:job_opts = {
@@ -410,7 +420,7 @@ describe('channels', function()
     eq({ 'notification', 'exit', { id, 1 } }, next_msg())
   end)
 
-  it('can use buffered output mode with no stream callback', function()
+  it('buffered output mode with no stream callback', function()
     skip(fn.executable('grep') == 0, 'missing "grep" command')
     source([[
       function! OnEvent(id, data, event) dict
@@ -558,7 +568,7 @@ describe('channels', function()
     end)
   end)
 
-  it('no stack-buffer-overflow with Nvim exit during connection #39387', function()
+  it('sockconnect(bytes): no stack-buffer-overflow on Nvim exit during connect #39387', function()
     local nvim0 = n.get_session()
     -- Need a valid pipe so that connecting to it doesn't fail immediately.
     local server = fn.serverstart()
@@ -580,7 +590,7 @@ describe('channels', function()
   end)
 end)
 
-describe('loopback', function()
+describe('sockconnect(rpc) loopback', function()
   before_each(function()
     clear()
     command("let chan = sockconnect('pipe', v:servername, {'rpc': v:true})")
