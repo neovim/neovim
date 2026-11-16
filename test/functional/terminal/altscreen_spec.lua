@@ -5,6 +5,7 @@ local tt = require('test.functional.testterm')
 local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, eq, api = n.clear, t.eq, n.api
 local feed = n.feed
+local command = n.command
 local feed_data = tt.feed_data
 local enter_altscreen = tt.enter_altscreen
 local exit_altscreen = tt.exit_altscreen
@@ -42,6 +43,23 @@ describe(':terminal altscreen', function()
       {5:-- TERMINAL --}                                    |
     ]])
     eq(10, api.nvim_buf_line_count(0))
+  end)
+
+  it('preserves contents with winbar when switching from buffer with signcolumn', function()
+    command('setglobal signcolumn=yes')
+    command('setlocal winbar=terminal')
+    screen:expect({ any = 'rows: 5, cols: 50' })
+    -- rightmost chars YZ would be lost without #42681
+    feed_data(('X'):rep(48) .. 'YZ')
+    screen:expect([[
+      {5:terminal                                          }|
+                                                        |*3
+      rows: 5, cols: 50                                 |
+      XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXY^Z|
+      {5:-- TERMINAL --}                                    |
+    ]])
+    command('enew | buffer #')
+    screen:expect_unchanged()
   end)
 
   it('wont clear lines already in the scrollback', function()
