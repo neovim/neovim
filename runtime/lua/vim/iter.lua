@@ -843,12 +843,17 @@ function Iter:take(n)
     stop = true
   end
 
+  local _next = self._next
+  self._next = function()
+    if not stop then
+      return _next()
+    end
+  end
+
   local next = self.next
   --- @diagnostic disable-next-line:duplicate-set-field
   self.next = function()
-    if not stop then
-      return fn(next(self))
-    end
+    return fn(next(self))
   end
   return self
 end
