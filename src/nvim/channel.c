@@ -681,7 +681,13 @@ static inline list_T *buffer_to_tv_list(const char *const buf, const size_t len)
 size_t on_channel_data(RStream *stream, const char *buf, size_t count, void *data, bool eof)
 {
   Channel *chan = data;
-  return on_channel_output(stream, chan, buf, count, eof, &chan->on_data);
+  size_t consumed = on_channel_output(stream, chan, buf, count, eof, &chan->on_data);
+  if (eof && chan->streamtype == kChannelStreamSocket) {
+    // Peer stopped sending (half-close not supported), close the channel (like receive_msgpack()).
+    // Other streams stay open on read-side EOF: a job may read stdin, stdio stdout is writable.
+    channel_close(chan->id, kChannelPartAll, NULL);
+  }
+  return consumed;
 }
 
 size_t on_job_stderr(RStream *stream, const char *buf, size_t count, void *data, bool eof)
