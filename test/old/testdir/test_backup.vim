@@ -44,10 +44,10 @@ func Test_backup2()
   " backup file is only created after
   " writing a second time (before overwriting)
   :w! Xbackup.txt
-  sp *Xbackup.txt~
+  sp *Xbackup.txt*~
   call assert_equal(['line1', 'line2', 'line3'], getline(1,'$'))
   let f = expand('%')
-  call assert_match('%testdir%Xbackup.txt\~', f)
+  call assert_match('testdir-Xbackup.txt.*\~', f)
   bw!
   bw!
   call delete('Xbackup.txt')
@@ -64,10 +64,10 @@ func Test_backup2_backupcopy()
   " backup file is only created after
   " writing a second time (before overwriting)
   :w! Xbackup.txt
-  sp *Xbackup.txt~
+  sp *Xbackup.txt*~
   call assert_equal(['line1', 'line2', 'line3'], getline(1,'$'))
   let f = expand('%')
-  call assert_match('%testdir%Xbackup.txt\~', f)
+  call assert_match('testdir-Xbackup.txt.*\~', f)
   bw!
   bw!
   call delete('Xbackup.txt')

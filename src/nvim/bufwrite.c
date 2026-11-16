@@ -10,6 +10,7 @@
 #include <uv.h>
 
 #include "auto/config.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
@@ -696,27 +697,24 @@ char *buf_get_backup_name(char *fname, char **dirp, bool no_prepend_dot, char *b
 {
   char *backup = NULL;
   // Isolate one directory name, using an entry in 'bdir'.
-  size_t dir_len = copy_option_part(dirp, IObuff, IOSIZE, ",");
-  char *p = IObuff + dir_len;
-  if (**dirp == NUL && !os_isdir(IObuff)) {
+  String dir = cbuf_as_string(IObuff, 0);
+  dir.size = copy_option_part(dirp, dir.data, IOSIZE, ",");
+  if (**dirp == NUL && !os_isdir(dir.data)) {
     int ret;
     char *failed_dir;
-    if ((ret = os_mkdir_recurse(IObuff, 0755, &failed_dir, NULL)) != 0) {
+    if ((ret = os_mkdir_recurse(dir.data, 0755, &failed_dir, NULL)) != 0) {
       semsg(_("E303: Unable to create directory \"%s\" for backup file: %s"),
             failed_dir, os_strerror(ret));
       xfree(failed_dir);
     }
   }
-  if (dir_len > 1 && after_pathsep(IObuff, p) && p[-1] == p[-2]) {
+  char *p = dir.data + dir.size;
+  if (dir.size > 1 && after_pathsep(dir.data, p) && p[-1] == p[-2]) {
     // path ends with '//', use full path
-    if ((p = make_percent_swname(IObuff, p, fname))
-        != NULL) {
-      backup = modname(p, backup_ext, no_prepend_dot);
-      xfree(p);
-    }
+    backup = make_slug_swname(dir, fname, backup_ext, true);
   }
   if (backup == NULL) {
-    char *rootname = get_file_in_dir(fname, IObuff);
+    char *rootname = get_file_in_dir(fname, dir.data);
     if (rootname != NULL) {
       backup = modname(rootname, backup_ext, no_prepend_dot);
       xfree(rootname);

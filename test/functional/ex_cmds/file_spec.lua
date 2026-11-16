@@ -32,6 +32,7 @@ describe(':file', function()
     command('edit! ' .. testfile)
     -- Before #6487 this gave "E301: Oops, lost the swap file !!!" on Windows.
     command('file ' .. testfile_renamed)
-    eq(testfile_renamed .. '.swp', string.match(fn.execute('swapname'), '[^%%]+$'))
+    local slug = vim.fs.slug(fn.fnamemodify(testfile_renamed, ':p'), { maxlen = 64 })
+    eq(('%s.swp'):format(slug), fn.swapname('%'):match('[^/]+$'))
   end)
 end)
