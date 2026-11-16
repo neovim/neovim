@@ -1,6 +1,7 @@
 /// Nvim's own UI client, which attaches to a child or remote Nvim server.
 
 #include <assert.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -262,13 +263,17 @@ void ui_client_event_grid_resize(Array args)
       || args.items[0].type != kObjectTypeInteger
       || args.items[1].type != kObjectTypeInteger
       || args.items[2].type != kObjectTypeInteger) {
-    ELOG("Error handling ui event 'grid_resize'");
+    ELOG("Invalid UI event: 'grid_resize' wrong type");
     return;
   }
 
   Integer grid = args.items[0].data.integer;
   Integer width = args.items[1].data.integer;
   Integer height = args.items[2].data.integer;
+  if (width < 0 || width > INT_MAX || height < 0 || height > INT_MAX) {
+    ELOG("Invalid UI event: 'grid_resize' out of range");
+    return;
+  }
   tui_grid_resize(tui, grid, width, height);
 
   if (grid_line_buf_size < (size_t)width) {

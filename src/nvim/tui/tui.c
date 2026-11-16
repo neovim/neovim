@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -835,6 +836,15 @@ static void sigwinch_cb(SignalWatcher *watcher, int signum, void *cbdata)
   tui_guess_size(tui);
 }
 
+/// Gets the attributes of highlight `id`, or the default attributes if the server didn't define it.
+static HlAttrs get_attrs(TUIData *tui, int id)
+{
+  if (id < 0 || (size_t)id >= kv_size(tui->attrs)) {
+    return HLATTRS_INIT;
+  }
+  return kv_A(tui->attrs, (size_t)id);
+}
+
 static bool attrs_differ(TUIData *tui, int id1, int id2, bool rgb)
 {
   if (id1 == id2) {
@@ -842,8 +852,8 @@ static bool attrs_differ(TUIData *tui, int id1, int id2, bool rgb)
   } else if (id1 < 0 || id2 < 0) {
     return true;
   }
-  HlAttrs a1 = kv_A(tui->attrs, (size_t)id1);
-  HlAttrs a2 = kv_A(tui->attrs, (size_t)id2);
+  HlAttrs a1 = get_attrs(tui, id1);
+  HlAttrs a2 = get_attrs(tui, id2);
 
   if (a1.url != a2.url) {
     return true;
@@ -870,7 +880,7 @@ static void update_attrs(TUIData *tui, int attr_id)
     return;
   }
   tui->print_attr_id = attr_id;
-  HlAttrs attrs = kv_A(tui->attrs, (size_t)attr_id);
+  HlAttrs attrs = get_attrs(tui, attr_id);
   int attr = tui->rgb ? attrs.rgb_ae_attr : attrs.cterm_ae_attr;
 
   bool bold = attr & HL_BOLD;
@@ -1084,6 +1094,10 @@ static void print_cell(TUIData *tui, char *buf, sattr_T attr)
 static bool cheap_to_print(TUIData *tui, int row, int col, int next)
 {
   UGrid *grid = &tui->grid;
+  // Cursor may be outside the grid (the server's `grid_cursor_goto` is not validated).
+  if (row < 0 || row >= grid->height || col + next > grid->width) {
+    return false;
+  }
   UCell *cell = grid->cells[row] + col;
   while (next) {
     next--;
@@ -1378,7 +1392,7 @@ void tui_grid_clear(TUIData *tui, Integer g)
 
 void tui_grid_cursor_goto(TUIData *tui, Integer grid, Integer row, Integer col)
 {
-  // cursor position is validated in tui_flush
+  // Applied by tui_flush().
   tui->row = (int)row;
   tui->col = (int)col;
 }
@@ -1418,8 +1432,8 @@ static cursorentry_T decode_cursor_entry(Dict args)
     char *key = args.items[i].key.data;
     Object value = args.items[i].value;
 
-    if (strequal(key, "cursor_shape")) {
-      r.shape = tui_cursor_decode_shape(args.items[i].value.data.string.data);
+    if (strequal(key, "cursor_shape") && value.type == kObjectTypeString) {
+      r.shape = tui_cursor_decode_shape(value.data.string.data);
     } else if (strequal(key, "blinkon")) {
       r.blinkon = (int)value.data.integer;
     } else if (strequal(key, "blinkoff")) {
@@ -1439,11 +1453,11 @@ void tui_mode_info_set(TUIData *tui, bool guicursor_enabled, Array args)
     return;
   }
 
-  assert(args.size);
-
   // cursor style entries as defined by `shape_table`.
-  for (size_t i = 0; i < args.size; i++) {
-    assert(args.items[i].type == kObjectTypeDict);
+  for (size_t i = 0; i < MIN(args.size, SHAPE_IDX_COUNT); i++) {
+    if (args.items[i].type != kObjectTypeDict) {
+      continue;
+    }
     cursorentry_T r = decode_cursor_entry(args.items[i].data.dict);
     tui->cursor_shapes[i] = r;
   }
@@ -1495,10 +1509,12 @@ static void tui_set_mode(TUIData *tui, ModeShape mode)
   if (!cursor_style_enabled) {
     tui_cursor_reset_style(tui);
     return;
+  } else if ((size_t)mode >= SHAPE_IDX_COUNT) {
+    return;
   }
   cursorentry_T c = tui->cursor_shapes[mode];
 
-  if (c.id != 0 && c.id < (int)kv_size(tui->attrs) && tui->rgb) {
+  if (c.id > 0 && c.id < (int)kv_size(tui->attrs) && tui->rgb) {
     HlAttrs aep = kv_A(tui->attrs, c.id);
 
     tui->want_invisible = aep.hl_blend == 100;
@@ -1570,6 +1586,12 @@ void tui_grid_scroll(TUIData *tui, Integer g, Integer startrow, Integer endrow, 
                      Integer endcol, Integer rows, Integer cols FUNC_ATTR_UNUSED)
 {
   UGrid *grid = &tui->grid;
+  if (startrow < 0 || startrow > endrow || endrow > grid->height || startcol < 0
+      || startcol >= endcol || endcol > grid->width || rows < startrow - endrow
+      || rows > endrow - startrow) {
+    ELOG("Invalid UI event: 'grid_scroll' out of range");
+    return;
+  }
   int top = (int)startrow;
   int bot = (int)endrow - 1;
   int left = (int)startcol;
@@ -1646,6 +1668,11 @@ int32_t tui_add_url(TUIData *tui, const char *url)
 
 void tui_hl_attr_define(TUIData *tui, Integer id, HlAttrs attrs, HlAttrs cterm_attrs, Array info)
 {
+  // Bound `id` so its allocation size can't overflow (kv_a() may double the capacity).
+  if (id < 0 || (uint64_t)id >= SIZE_MAX / sizeof(HlAttrs) / 2) {
+    ELOG("Invalid UI event: 'hl_attr_define' out of range");
+    return;
+  }
   attrs.cterm_ae_attr = cterm_attrs.cterm_ae_attr;
   attrs.cterm_fg_color = cterm_attrs.cterm_fg_color;
   attrs.cterm_bg_color = cterm_attrs.cterm_bg_color;
@@ -1932,9 +1959,13 @@ void tui_raw_line(TUIData *tui, Integer g, Integer linerow, Integer startcol, In
                   const sattr_T *attrs)
 {
   UGrid *grid = &tui->grid;
+  if (linerow < 0 || linerow >= grid->height || startcol < 0 || startcol > endcol
+      || endcol > clearcol || clearcol > grid->width) {
+    ELOG("Invalid UI event: 'grid_line' out of range");
+    return;
+  }
   for (Integer c = startcol; c < endcol; c++) {
     grid->cells[linerow][c].data = chunk[c - startcol];
-    assert((size_t)attrs[c - startcol] < kv_size(tui->attrs));
     grid->cells[linerow][c].attr = attrs[c - startcol];
   }
   UGRID_FOREACH_CELL(grid, (int)linerow, (int)startcol, (int)endcol, {
