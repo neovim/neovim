@@ -348,6 +348,29 @@ static int make_bom(char *buf_in, char *name)
   return (int)((uint8_t *)p - buf);
 }
 
+/// Gets the `buf` field that holds `name`, or NULL if `name` is not a name of `buf`.
+static char **buf_name_ref(buf_T *buf, const char *name)
+{
+  if (name == buf->b_ffname) {
+    return &buf->b_ffname;
+  }
+  if (name == buf->b_sfname) {
+    return &buf->b_fname;  // Not `b_sfname`: a CWD change may clear it.
+  }
+  return NULL;
+}
+
+/// Replaces `*namep` with a copy of buffer name `ref`, or keeps `*namep` if not a buffer name.
+static void buf_name_update(char **namep, char *const *ref)
+{
+  if (ref != NULL && *ref != NULL) {
+    xfree(*namep);
+    *namep = xstrdup(*ref);
+  }
+}
+
+/// Applies the PRE autocmds. Replaces `*fnamep`, `*sfnamep` and `*ffnamep` with allocated
+/// copies, also when not returning NOTDONE.
 static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char **ffnamep,
                                  linenr_T start, linenr_T *endp, exarg_T *eap, bool append,
                                  bool filtering, bool reset_changed, bool overwriting, bool whole,
@@ -362,15 +385,20 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
   bool empty_memline = buf->b_ml.ml_mfp == NULL;
   bufref_T bufref;
 
+  // Autocmds may rename the buffer, or ":0file" may UNname it, which frees the buffer names.
+  // Remember which names are buffer names and continue with copies.
+  char **const fname_ref = buf_name_ref(buf, *fnamep);
+  char **const sfname_ref = buf_name_ref(buf, *sfnamep);
+  char **const ffname_ref = buf_name_ref(buf, *ffnamep);
+  *fnamep = xstrdup(*fnamep);
+  *sfnamep = xstrdup(*sfnamep);
+  *ffnamep = xstrdup(*ffnamep);
+
   char *sfname = *sfnamep;
 
   // Apply PRE autocommands.
   // Set curbuf to the buffer to be written.
   // Careful: The autocommands may call buf_write() recursively!
-  bool buf_ffname = *ffnamep == buf->b_ffname;
-  bool buf_sfname = sfname == buf->b_sfname;
-  bool buf_fname_f = *fnamep == buf->b_ffname;
-  bool buf_fname_s = *fnamep == buf->b_sfname;
 
   // Set curwin/curbuf to buf and save a few things.
   ctx_switch(&aco, NULL, NULL, buf, 0);
@@ -499,21 +527,10 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
     }
   }
 
-  // The autocommands may have changed the name of the buffer, which may
-  // be kept in fname, ffname and sfname. A CWD change may also clear b_sfname;
-  // use b_fname, which falls back to the full name when there is no short name.
-  if (buf_ffname) {
-    *ffnamep = buf->b_ffname;
-  }
-  if (buf_sfname) {
-    *sfnamep = buf->b_fname;
-  }
-  if (buf_fname_f) {
-    *fnamep = buf->b_ffname;
-  }
-  if (buf_fname_s) {
-    *fnamep = buf->b_fname;
-  }
+  // If buffer was renamed, write to its new name. If ":0file" unnamed it, write to old name.
+  buf_name_update(fnamep, fname_ref);
+  buf_name_update(sfnamep, sfname_ref);
+  buf_name_update(ffnamep, ffname_ref);
   return NOTDONE;
 }
 
@@ -1070,18 +1087,20 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   int res = buf_write_do_autocmds(buf, &fname, &sfname, &ffname, start, &end, eap, append,
                                   filtering, reset_changed, overwriting, whole, orig_start,
                                   orig_end);
+  // The names are now copies. Emitting a msg below can run user code (ui2 `msg_show` handler),
+  // which may change CWD and thus reallocate the buffer names. #41417
+  char *const fname_copy = fname;
+  char *const sfname_copy = sfname;
+  char *const ffname_copy = ffname;
   if (res != NOTDONE) {
+    xfree(fname_copy);
+    xfree(sfname_copy);
+    xfree(ffname_copy);
     return res;
   }
 
-  // Emitting a msg below can run user code (ui2 `msg_show` handler), which may change CWD and thus
-  // reallocate the buffer names. #41417
-  char *const fname_copy = xstrdup(fname);
-  char *const sfname_copy = xstrdup(sfname);
-  char *const ffname_copy = xstrdup(ffname);
-  fname = fname_copy;
-  sfname = sfname_copy;
-  ffname = ffname_copy;
+  // Autocmds may have renamed the buffer, or ":0file" unnamed it (stays modified).
+  overwriting = buf->b_ffname != NULL && path_equal(ffname, buf->b_ffname, kPathCmpLiteral);
 
   if (cmdmod.cmod_flags & CMOD_LOCKMARKS) {
     // restore the original '[ and '] positions

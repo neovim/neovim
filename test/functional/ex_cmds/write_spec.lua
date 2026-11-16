@@ -264,7 +264,7 @@ describe(':write', function()
     )
   end)
 
-  it('unaffected if a BufWritePre autocmd changes CWD away from the file #41838', function()
+  it('BufWritePre autocmd changes CWD away from the file #41838', function()
     -- Leaving the file's directory clears its short name; the write must fall back to the full one.
     local dir = vim.fs.normalize(t.tmpname(false))
     t.mkdir(dir)
@@ -279,6 +279,35 @@ describe(':write', function()
 
     eq(file, fn.bufname('%'))
     eq({ 'hello' }, fn.readfile(file))
+  end)
+
+  it('BufWritePre autocmd UNnames the buffer (:0file)', function()
+    -- Writes the old name, but the buffer stays modified. ("F" in 'cpoptions' names the buffer.)
+    n.mkdir_p('Xtest_write')
+    command('autocmd BufWritePre * 0file')
+    for i, write in ipairs({ 'file %s | write', 'saveas %s', 'write %s' }) do
+      local f = ('Xtest_write/%d'):format(i)
+      command('enew!')
+      fn.setline(1, write)
+      command(write:format(f))
+      eq({ write }, fn.readfile(f))
+      eq('', fn.bufname('%'))
+      eq(1, eval('&modified'))
+    end
+  end)
+
+  it('BufWritePre autocmd renames a buffer without a short name', function()
+    -- The rename frees the name being written. (Checked by ASAN)
+    n.mkdir_p('Xtest_write/b')
+    command('edit Xtest_write/f.txt | cd Xtest_write/b')
+    eq(1, fn.isabsolutepath(fn.bufname('%')))
+    -- BufWritePre renames via :file.
+    command('autocmd BufWritePre * ++once file ../g.txt')
+    fn.setline(1, 'hello')
+    command('write')
+    eq({ 'hello' }, fn.readfile('../g.txt'))
+    eq(0, fn.filereadable('../f.txt'))
+    eq(0, eval('&modified'))
   end)
 
   it('unaffected if a Progress handler changes CWD #41417', function()
