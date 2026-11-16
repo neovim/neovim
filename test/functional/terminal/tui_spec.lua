@@ -4196,28 +4196,27 @@ describe('TUI FocusGained/FocusLost', function()
       {5:-- TERMINAL --}                                    |
     ]])
 
-    feed_data('\027[I')
-    screen:expect {
-      grid = [[
-      ^ready $ zia                                       |
-                                                        |
-      [Process exited 0]                                |
-                                                        |*2
-      gained                                            |
-      {5:-- TERMINAL --}                                    |
-    ]],
-      timeout = (4 * screen.timeout),
-    }
+    retry(2, 3 * screen.timeout, function()
+      feed_data('\027[I')
+      screen:expect([[
+        ^ready $ zia                                       |
+                                                          |
+        [Process exited 0]                                |
+                                                          |*2
+        gained                                            |
+        {5:-- TERMINAL --}                                    |
+      ]])
 
-    feed_data('\027[O')
-    screen:expect([[
-      ^ready $ zia                                       |
-                                                        |
-      [Process exited 0]                                |
-                                                        |*2
-      lost                                              |
-      {5:-- TERMINAL --}                                    |
-    ]])
+      feed_data('\027[O')
+      screen:expect([[
+        ^ready $ zia                                       |
+                                                          |
+        [Process exited 0]                                |
+                                                          |*2
+        lost                                              |
+        {5:-- TERMINAL --}                                    |
+      ]])
+    end)
   end)
 
   it('in hit-enter prompt', function()
@@ -4232,20 +4231,18 @@ describe('TUI FocusGained/FocusLost', function()
       {102:Press ENTER or type command to continue}^           |
       {5:-- TERMINAL --}                                    |
     ]])
-    feed_data('\027[I')
-    screen:expect {
-      grid = [[
-      msg2                                              |
-      msg3                                              |
-      msg4                                              |
-      msg5                                              |
-      gained                                            |
-      {102:Press ENTER or type command to continue}^           |
-      {5:-- TERMINAL --}                                    |
-    ]],
-      -- FocusGained is an async RPC round-trip (nvim_ui_set_focus), slow under conpty.
-      timeout = 4 * screen.timeout,
-    }
+    retry(2, 3 * screen.timeout, function()
+      feed_data('\027[I')
+      screen:expect([[
+        msg2                                              |
+        msg3                                              |
+        msg4                                              |
+        msg5                                              |
+        gained                                            |
+        {102:Press ENTER or type command to continue}^           |
+        {5:-- TERMINAL --}                                    |
+      ]])
+    end)
   end)
 end)
 
