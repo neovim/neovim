@@ -88,6 +88,7 @@ describe('vim.base64', function()
       'A/==',
       'A===',
       '====',
+      'AAAA=AAA',
       'Zm9vYmFyZm9vYmFyA..A',
       'Zm9vYmFyZm9vYmFyAA=A',
       'Zm9vYmFyZm9vYmFyAA/=',
