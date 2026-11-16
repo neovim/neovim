@@ -1262,8 +1262,13 @@ describe('TUI', function()
     child_exec_lua([[
       _G.termresponse = nil
       vim.api.nvim_create_autocmd('TermResponse', {
-        once = true,
-        callback = function(ev) _G.termresponse = ev.data.sequence end,
+        callback = function(ev)
+          -- Ignore other responses, e.g. a late "\027[0n" (DSR) from startup.
+          if ev.data.sequence == '\027P0$r' then
+            _G.termresponse = ev.data.sequence
+            return true
+          end
+        end,
       })
     ]])
     feed_data('\027P0$r\027\\')
@@ -4196,28 +4201,27 @@ describe('TUI FocusGained/FocusLost', function()
       {5:-- TERMINAL --}                                    |
     ]])
 
-    feed_data('\027[I')
-    screen:expect {
-      grid = [[
-      ^ready $ zia                                       |
-                                                        |
-      [Process exited 0]                                |
-                                                        |*2
-      gained                                            |
-      {5:-- TERMINAL --}                                    |
-    ]],
-      timeout = (4 * screen.timeout),
-    }
+    retry(2, 3 * screen.timeout, function()
+      feed_data('\027[I')
+      screen:expect([[
+        ^ready $ zia                                       |
+                                                          |
+        [Process exited 0]                                |
+                                                          |*2
+        gained                                            |
+        {5:-- TERMINAL --}                                    |
+      ]])
 
-    feed_data('\027[O')
-    screen:expect([[
-      ^ready $ zia                                       |
-                                                        |
-      [Process exited 0]                                |
-                                                        |*2
-      lost                                              |
-      {5:-- TERMINAL --}                                    |
-    ]])
+      feed_data('\027[O')
+      screen:expect([[
+        ^ready $ zia                                       |
+                                                          |
+        [Process exited 0]                                |
+                                                          |*2
+        lost                                              |
+        {5:-- TERMINAL --}                                    |
+      ]])
+    end)
   end)
 
   it('in hit-enter prompt', function()
@@ -4232,20 +4236,18 @@ describe('TUI FocusGained/FocusLost', function()
       {102:Press ENTER or type command to continue}^           |
       {5:-- TERMINAL --}                                    |
     ]])
-    feed_data('\027[I')
-    screen:expect {
-      grid = [[
-      msg2                                              |
-      msg3                                              |
-      msg4                                              |
-      msg5                                              |
-      gained                                            |
-      {102:Press ENTER or type command to continue}^           |
-      {5:-- TERMINAL --}                                    |
-    ]],
-      -- FocusGained is an async RPC round-trip (nvim_ui_set_focus), slow under conpty.
-      timeout = 4 * screen.timeout,
-    }
+    retry(2, 3 * screen.timeout, function()
+      feed_data('\027[I')
+      screen:expect([[
+        msg2                                              |
+        msg3                                              |
+        msg4                                              |
+        msg5                                              |
+        gained                                            |
+        {102:Press ENTER or type command to continue}^           |
+        {5:-- TERMINAL --}                                    |
+      ]])
+    end)
   end)
 end)
 

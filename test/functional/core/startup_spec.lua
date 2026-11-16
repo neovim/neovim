@@ -1605,13 +1605,11 @@ describe('user config init', function()
         },
       })
       -- current directory exrc is found first
-      screen:expect({ any = '.nvim.lua' })
-      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny:'), unchanged = true })
+      screen:expect({ any = { pesc('/.nvim.lua'), pesc('[i]gnore, (v)iew, (d)eny:') } })
       feed('iv')
 
       -- after that the exrc in the parent directory
-      screen:expect({ any = '.exrc', unchanged = true })
-      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny:'), unchanged = true })
+      screen:expect({ any = { pesc('/.exrc'), pesc('[i]gnore, (v)iew, (d)eny:') } })
       feed('v')
 
       -- trust .exrc
