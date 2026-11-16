@@ -5416,6 +5416,78 @@ describe('TUI client', function()
     ]])
   end)
 
+  it('validates UI events from server', function()
+    clear()
+    local server_pipe = new_pipename()
+    -- Fake server: sends invalid events after the client attaches.
+    exec_lua(function(addr)
+      local function line(row, col, cells)
+        return { 'grid_line', { 1, row, col, cells, false } }
+      end
+      local shapes = {}
+      for _ = 1, 30 do
+        shapes[#shapes + 1] = { cursor_shape = 'block' }
+      end
+      local events = {
+        { 'grid_resize', { 1, 50, 6 } },
+        { 'grid_resize', { 1, -1, 6 } },
+        { 'grid_cursor_goto', { 1, 1000, 5 } },
+        { 'flush', {} },
+        { 'grid_cursor_goto', { 1, 1000, 1 } },
+        { 'flush', {} },
+        line(0, 50, { { 'X', 0 } }), -- Past the last column.
+        line(0x7fffffff, 0, { { 'X', 0 } }),
+        line(0, 48, { { 'X', 0, 3 } }),
+        line(0, 0, { { 'Y', 1000 } }), -- Undefined attr: drawn with default attrs.
+        { 'grid_scroll', { 1, 0, 0x7fffffff, 0, 50, 1, 0 } },
+        { 'hl_attr_define', { -2, vim.empty_dict(), vim.empty_dict(), {} } },
+        { 'mode_info_set', { true, shapes } },
+        { 'mode_change', { 'normal', 1000 } },
+        line(1, 0, { { 'o', 0 }, { 'k', 0 } }),
+        { 'grid_cursor_goto', { 1, 1, 2 } },
+        { 'flush', {} },
+      }
+      _G.server = assert(vim.uv.new_pipe())
+      assert(_G.server:bind(addr))
+      _G.server:listen(1, function()
+        _G.conn = assert(vim.uv.new_pipe())
+        _G.server:accept(_G.conn)
+        local buf = ''
+        _G.conn:read_start(function(_, data)
+          buf = buf .. (data or '')
+          if buf:find('nvim_ui_attach', 1, true) then
+            _G.conn:read_stop()
+            _G.conn:write(vim.mpack.encode({ 2, 'redraw', events }))
+          end
+        end)
+      end)
+    end, server_pipe)
+    finally(function()
+      exec_lua(function()
+        for _, h in ipairs({ _G.conn, _G.server }) do
+          if not h:is_closing() then
+            h:close()
+          end
+        end
+      end)
+      os.remove(testlog)
+    end)
+
+    local screen = tt.setup_child_nvim(
+      { '--remote-ui', '--server', server_pipe },
+      { env = { NVIM_LOG_FILE = testlog } }
+    )
+    screen:expect([[
+      Y                                                 |
+      ok^                                                |
+                                                        |*4
+      {5:-- TERMINAL --}                                    |
+    ]])
+    for _, event in ipairs({ 'grid_resize', 'grid_line', 'grid_scroll', 'hl_attr_define' }) do
+      assert_log(("Invalid UI event: '%s' out of range"):format(event), testlog, 100)
+    end
+  end)
+
   local function test_remote_tui_quit(status)
     local server_super, screen_server, screen_client = start_tui_and_remote_client()
 
