@@ -4,7 +4,8 @@ on:
     inputs:
       build_flags:
         type: string
-      functionaltest_timeout:
+      # Job timeout (minutes). GitHub cancels a wedged runner (no logs) ~10 minutes after it.
+      timeout:
         default: 20
         type: number
   workflow_dispatch:
@@ -15,7 +16,7 @@ permissions:
 jobs:
   windows:
     runs-on: windows-2025
-    timeout-minutes: 45
+    timeout-minutes: ${{ inputs.timeout || 20 }}
     strategy:
       fail-fast: false
       matrix:
@@ -61,7 +62,6 @@ jobs:
 
       - if: ${{ matrix.test == 'functional' }}
         name: functionaltest
-        timeout-minutes: ${{ inputs.functionaltest_timeout }}
         env:
           # With parallel tests, use shorter timeout for a single group.
           TEST_TIMEOUT: 600

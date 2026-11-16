@@ -165,7 +165,7 @@ jobs:
           - test: oldtest
             build: { runner: ubuntu-24.04-arm }
     runs-on: ${{ matrix.build.runner }}
-    timeout-minutes: 45
+    timeout-minutes: 30
     env:
       # The setup action adds this to PATH for neovim-ruby-host.
       BIN_DIR: ${{ github.workspace }}/.deps/bin
@@ -275,7 +275,7 @@ jobs:
   # TODO: matrixify
   zig-build-linux:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 30
     name: build using zig build (linux)
     env:
       # NB: tests assume there is a chosen install path, but nothing needs to be actually installed
@@ -304,7 +304,7 @@ jobs:
 
   zig-build-macos-15:
     runs-on: macos-15
-    timeout-minutes: 45
+    timeout-minutes: 30
     name: build using zig build (macos 15)
     env:
       OPTS: -Dinstall-path=/usr/
@@ -325,7 +325,7 @@ jobs:
 
   zig-build-windows:
     runs-on: windows-2025
-    timeout-minutes: 45
+    timeout-minutes: 30
     name: build using zig build (windows)
     steps:
       - uses: actions/checkout@v7.0.1
