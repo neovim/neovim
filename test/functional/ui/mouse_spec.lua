@@ -1959,7 +1959,7 @@ describe('ui/mouse/input', function()
       })
     end)
 
-    it("mouse click on window separator in statusline doesn't crash", function()
+    it("click outside statusline/winbar/statuscolumn doesn't crash #33091 #34110", function()
       api.nvim_set_option_value('winwidth', 1, {})
       api.nvim_set_option_value('statusline', '%f', {})
 
@@ -1969,7 +1969,37 @@ describe('ui/mouse/input', function()
       local lines = api.nvim_get_option_value('lines', {})
       local columns = api.nvim_get_option_value('columns', {})
 
+      -- Window separator in the statusline.
       api.nvim_input_mouse('left', 'press', '', 0, lines - 1, math.floor(columns / 2))
+      command('redraw')
+
+      local function click(row, col)
+        api.nvim_input_mouse('left', 'press', '', 0, row, col)
+        api.nvim_input_mouse('left', 'release', '', 0, row, col)
+      end
+      local win = api.nvim_open_win(api.nvim_create_buf(false, true), true, {
+        relative = 'editor',
+        row = 2,
+        col = 4,
+        width = 8,
+        height = 2,
+        border = { '', '', '', 'x' },
+      })
+      exec([[
+        function StcClick(...)
+          let g:stc_clicked = 1
+        endfunction
+      ]])
+      api.nvim_set_option_value('statuscolumn', '%@StcClick@s%X', { win = win })
+      command('redraw')
+      click(2, 5) -- statuscolumn
+      eq(1, api.nvim_get_var('stc_clicked'))
+      click(2, 4) -- left border next to statuscolumn
+
+      api.nvim_set_option_value('winbar', 'wb', { win = win })
+      command('redraw')
+      click(2, 4) -- left border next to winbar
+      click(2, 13) -- right border next to winbar
       command('redraw')
     end)
 

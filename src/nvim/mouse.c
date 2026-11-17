@@ -697,36 +697,33 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       return false;
     }
 
-    StlClickDefinition *click_defs = in_status_line ? wp->w_status_click_defs
-                                                    : in_winbar ? wp->w_winbar_click_defs : NULL;
-    if (in_statuscol && wp->w_p_rl) {
-      click_col = wp->w_view_width - click_col - 1;
+    if (in_global_statusline) {
+      // global statusline is displayed for the current window, and spans the whole screen.
+      wp = curwin;
+      click_col = mouse_col;
     }
 
-    if (in_statuscol) {
+    StlClickDefinition *click_defs = NULL;
+    size_t click_defs_size = 0;
+    if (in_status_line) {
+      click_defs = wp->w_status_click_defs;
+      click_defs_size = wp->w_status_click_defs_size;
+    } else if (in_winbar) {
+      click_defs = wp->w_winbar_click_defs;
+      click_defs_size = wp->w_winbar_click_defs_size;
+    } else if (in_statuscol) {
+      if (wp->w_p_rl) {
+        click_col = wp->w_view_width - click_col - 1;
+      }
       int lnum = (int)get_vim_var_nr(VV_LNUM);
       int virtnum = (int)get_vim_var_nr(VV_VIRTNUM);
       StcClicks lnum_click_defs = map_get(int, StcClicks)(wp->w_statuscol_click_defs, lnum);
       StcClick row_click_defs = map_get(int, StcClick)(&lnum_click_defs, virtnum);
-      if (click_col >= (int)row_click_defs.size) {
-        return false;
-      }
       click_defs = row_click_defs.def;
+      click_defs_size = row_click_defs.size;
     }
 
-    if (in_global_statusline) {
-      // global statusline is displayed for the current window,
-      // and spans the whole screen.
-      click_defs = curwin->w_status_click_defs;
-      click_col = mouse_col;
-    }
-
-    if (in_status_line && click_col >=
-        (int)(in_global_statusline ? curwin : wp)->w_status_click_defs_size) {
-      return false;
-    }
-
-    if (click_defs != NULL) {
+    if (click_defs != NULL && click_col >= 0 && click_col < (int)click_defs_size) {
       switch (click_defs[click_col].type) {
       case kStlClickDisabled:
         // If there is no click definition, still open the popupmenu for a
