@@ -638,10 +638,11 @@ void terminal_open(Terminal **termpp, buf_T *buf)
   // - b:terminal_color_{NUM}
   // - g:terminal_color_{NUM}
   // - the VTerm instance
+  Arena arena = ARENA_EMPTY;
   for (int i = 0; i < 16; i++) {
     char var[64];
     snprintf(var, sizeof(var), "terminal_color_%d", i);
-    char *name = get_config_string(buf, var);
+    char *name = get_config_string(buf, var, &arena);
     if (name) {
       int dummy;
       RgbValue color_val = name_to_color(name, &dummy);
@@ -657,6 +658,7 @@ void terminal_open(Terminal **termpp, buf_T *buf)
       }
     }
   }
+  arena_mem_free(arena_finish(&arena));
 }
 
 /// Closes the Terminal buffer.
@@ -2630,19 +2632,20 @@ static bool is_focused(Terminal *term)
   return State & MODE_TERMINAL && curbuf->terminal == term;
 }
 
-static char *get_config_string(buf_T *buf, char *key)
+static char *get_config_string(buf_T *buf, char *key, Arena *arena)
+  FUNC_ATTR_NONNULL_ALL
 {
   Error err = ERROR_INIT;
-  Object obj = dict_get_value(buf->b_vars, cstr_as_string(key), NULL, &err);
+
+  Object obj = dict_get_value(buf->b_vars, cstr_as_string(key), arena, &err);
   api_clear_error(&err);
   if (obj.type == kObjectTypeNil) {
-    obj = dict_get_value(get_globvar_dict(), cstr_as_string(key), NULL, &err);
+    obj = dict_get_value(get_globvar_dict(), cstr_as_string(key), arena, &err);
     api_clear_error(&err);
   }
   if (obj.type == kObjectTypeString) {
     return obj.data.string.data;
   }
-  api_free_object(obj);
   return NULL;
 }
 

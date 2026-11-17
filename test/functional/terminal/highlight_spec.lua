@@ -8,9 +8,9 @@ local assert_alive = n.assert_alive
 local feed, clear = n.feed, n.clear
 local api = n.api
 local testprg, command = n.testprg, n.command
-local fn = n.fn
+local fn, eval = n.fn, n.eval
 local nvim_set = n.nvim_set
-local is_os = t.is_os
+local is_os, eq = t.is_os, t.eq
 local skip = t.skip
 
 describe(':terminal highlight', function()
@@ -405,6 +405,13 @@ describe(':terminal highlight with custom palette', function()
 
   describe('using b:termimal_color_*', function()
     test_term_hl_custom_palette(true)
+  end)
+
+  it('will not UAF after converting invalid value #42868', function()
+    command("let g:terminal_color_0 = ['red']")
+    -- note: there is no warning for invalid value, it is just ignored
+    command(("call jobstart(['%s'], {'term': v:true})"):format(testprg('tty-test')))
+    eq('red', eval('g:terminal_color_0[0]'))
   end)
 end)
 
