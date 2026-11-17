@@ -60,7 +60,7 @@ Use cases:
 ------------------------------------------------------------------------------
 Stop or detach the current UI
 
-                                                             *:detach* *E5768*
+                                                        *:detach* *E5768*
 :[range]detach  Detaches the current UI. Other UIs (if any) remain attached,
                 unless [range] was given. If [range] is "%", all UIs _except_
                 the current UI are detached: >vim
@@ -78,12 +78,11 @@ Stop or detach the current UI
                 for any GUI/UI; but if the client isn't expecting this, it may
                 (incorrectly) report an error.
 
-                                                                    *:detach!*
-:detach!        Sets the current UI as "detachable" without detaching it now:
-                the UI stays attached, but if it later disconnects
-                unexpectedly (e.g. host terminal closed, ssh disconnect,
-                etc.), the server keeps running in the background.
-                Use |:connect| or |--remote-ui| to reattach.
+                                                        *detachable* *:detach!*
+:detach!        Sets the current UI as "detachable" without detaching now. If
+                the UI disconnects unexpectedly (host terminal closed, ssh
+                disconnect, …), the server keeps running in the background.
+                Use |:connect| to reattach.
 
                 Same as |nvim_chan_set()| `detach=true` on the UI channel.
                 Preserved across |:restart|.
@@ -139,9 +138,9 @@ Connect UI to a different server
 :connect {address}                                      *E6102*
                 Attaches the UI to another Nvim instance: detaches from the
                 current server, then attaches to {address}. Stops the current
-                server if no other UIs are attached and ":qall" succeeds,
-                unless the current UI is detachable (|:detach!|). If
-                {address} is an `ssh://` URI, see |remote-ssh|.
+                server if this is its only UI and ":qall" succeeds, unless the
+                current UI is |detachable|. If {address} is an `ssh://` URI,
+                see |remote-ssh|.
 
                 Note: If the current UI hasn't implemented the "connect" UI
                 event, this command is equivalent to |:detach|.

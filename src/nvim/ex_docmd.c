@@ -5942,7 +5942,7 @@ static void ex_connect(exarg_T *eap)
   }
   Channel *chan = find_channel(current_ui);
   // Abort if the last UI is not detachable and a buffer has unsaved changes.
-  if (ui_active() == 1 && !chan->detach && check_changed_any(false, false)) {
+  if (ui_active() == 1 && chan && !chan->detach && check_changed_any(false, false)) {
     return;
   }
 
@@ -6009,7 +6009,9 @@ static void ex_connect(exarg_T *eap)
   }
 
   ex_detach(NULL);
-  if (stop_server) {
+  // `stop_server` was decided before connecting; socket_alive() and relink() ran the event loop
+  // meanwhile, so re-check unsaved changes before getout().
+  if (stop_server && !check_changed_any(false, false)) {
     exiting = true;
     getout(0);
   }
