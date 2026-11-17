@@ -65,22 +65,3 @@ endif()
 if (LIBINTL_LIBRARY)
   list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES "${LIBINTL_LIBRARY}")
 endif()
-
-set(REQUIRED_VARIABLES LIBINTL_LIBRARY LIBINTL_INCLUDE_DIR)
-if (HAVE_WORKING_LIBINTL)
-  # On some systems (linux+glibc) libintl is passively available.
-  # If HAVE_WORKING_LIBINTL then we consider the requirement satisfied.
-  unset(REQUIRED_VARIABLES)
-
-  check_variable_exists(_nl_msg_cat_cntr HAVE_NL_MSG_CAT_CNTR)
-endif()
-
-find_package_handle_standard_args(Libintl DEFAULT_MSG
-  ${REQUIRED_VARIABLES})
-mark_as_advanced(LIBINTL_LIBRARY LIBINTL_INCLUDE_DIR)
-
-add_library(libintl INTERFACE)
-target_include_directories(libintl SYSTEM BEFORE INTERFACE ${LIBINTL_INCLUDE_DIR})
-if (LIBINTL_LIBRARY)
-  target_link_libraries(libintl INTERFACE ${LIBINTL_LIBRARY})
-endif()
