@@ -52,21 +52,8 @@ static enum {
 static uint64_t cursorhold_time = 0;  ///< Time (ns) spent waiting for CursorHold event.
 static int cursorhold_tb_change_cnt = 0;  ///< tb_change_cnt when waiting started
 static unsigned breakcheck_count = 0;
-static unsigned breakcheck_mask = 0;  ///< Decides how often line_breakcheck reads the clock.
 
 #include "os/input.c.generated.h"
-
-void breakcheck_init(void)
-{
-  // Measure os_hrtime performance to decide how frequently line_breakcheck should read it.
-  uint64_t start = os_hrtime();
-  uint64_t end = start;
-  for (int i = 0; i < 32; i++) {
-    end = os_hrtime();
-  }
-  // Read the clock less often if it takes >50ns (presumably a kernel fallback to HPET/ACPI).
-  breakcheck_mask = end - start > 32 * 50 ? 31 : 0;
-}
 
 static void cursorhold_event(void **argv)
 {
@@ -235,9 +222,7 @@ void os_breakcheck(void)
 /// For loops that check per-line or per-command: CTRL-C is caught after ~20ms or 1 iteration.
 void line_breakcheck(void)
 {
-  // Read the clock every call (or every 32 calls on "old" systems with a slow clock).
-  if ((++breakcheck_count & breakcheck_mask) == 0
-      && os_hrtime() - main_loop.poll_time >= BREAKCHECK_NS) {
+  if (os_hrtime() - main_loop.poll_time >= BREAKCHECK_NS) {
     os_breakcheck();
   }
 }

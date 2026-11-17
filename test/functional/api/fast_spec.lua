@@ -90,7 +90,7 @@ describe('|api-fast| functions', function()
       end)
       local function polled(fn)
         polls = 0
-        vim.uv.sleep(30) -- Ensure that {line,fast}_breakcheck() poll within 32/1024 calls.
+        vim.uv.sleep(30) -- Ensure that {line,fast}_breakcheck() poll within 1/1024 calls.
         fn()
         return polls ~= 0
       end
