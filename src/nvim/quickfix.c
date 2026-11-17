@@ -2966,6 +2966,13 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, int
       no_write_message();
       return FAIL;
     }
+
+    // Set the previous context mark when going to another buffer, like
+    // buflist_getfile() does for a normal file.
+    if (qf_ptr->qf_fnum != curbuf->b_fnum) {
+      setpcmark();
+    }
+
     retval = do_ecmd(qf_ptr->qf_fnum, NULL, NULL, NULL, 1,
                      ECMD_HIDE + ECMD_SET_HELP,
                      prev_winid == curwin->handle ? curwin : NULL);
