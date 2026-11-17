@@ -266,9 +266,25 @@ describe('vim.ui_attach', function()
 
   it('msg_show in fast context', function()
     exec_lua([[
+    vim.cmd([=[
+      function! F()
+        sleep 1m
+        return 'x'
+      endfunction
+    ]=])
     vim.ui_attach(ns, { ext_messages = true }, function(event, _, content)
       if event == "msg_show" then
         vim.api.nvim_get_runtime_file("foo", false)
+
+        -- os_breakcheck() and :sleep do not poll in fast context.
+        local chk = assert(vim.uv.new_check())
+        _G.polls = 0
+        chk:start(function() _G.polls = _G.polls + 1 end)
+        vim.uv.sleep(25) -- Ensure that line_breakcheck() polls.
+        vim.api.nvim_eval_statusline('%{F()}', {})
+        chk:stop()
+        chk:close()
+
         -- non-"fast-api" is not allowed in msg_show callback and should be scheduled
         local _, err = pcall(vim.api.nvim_buf_set_lines, 0, -2, -1, false, { content[1][2] })
         pcall(vim.api.nvim__redraw, { flush = true })
@@ -278,6 +294,7 @@ describe('vim.ui_attach', function()
       end
     end)
     ]])
+
     -- "fast-api" does not prevent aborting :function
     feed(':func Foo()<cr>bar<cr>endf<cr>:func Foo()<cr>')
     screen:expect({
@@ -296,6 +313,7 @@ describe('vim.ui_attach', function()
         },
       },
     })
+    eq(0, exec_lua('return _G.polls'))
   end)
 
   it('ext_cmdline completion popupmenu', function()

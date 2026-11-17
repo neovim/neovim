@@ -260,21 +260,26 @@ API
 
                                                         *dev-api-fast*
 API functions and Vimscript "eval" functions may be marked as |api-fast| which
-means they are safe to call in Lua callbacks and other scenarios. A function
-CANNOT be marked as "fast" if it could trigger `os_breakcheck()`, which may
-"yield" the current execution and start a new execution of code not expecting
-this:
-- accidentally recursing into a function not expecting this.
-- changing (global) state without restoring it before returning to the
-  "yielded" callsite.
+means they are safe to call "preemptively" in the middle of other internal
+work, because they are self-contained and don't interfere with shared global
+state. Such functions are therefore safe to invoke from inside `uv_run()` (Luv
+callbacks, non-deferred RPC requests), and |vim.ui_attach()| "msg_show"
+(redraw) callbacks.
 
-In practice, this means any code that could trigger `os_breakcheck()` cannot
-be "fast". For example, commit 3940c435e405 fixed such a bug with
-`nvim__get_runtime` by explicitly disallowing `os_breakcheck()` via the
-`EW_NOBREAK` flag.
+A function CANNOT be marked as "fast" if it could:
+- wait for events (that would re-enter `uv_run()`).
+- recurse or "nest" a function not expecting recursion.
+- change (global) state without restoring it.
+- run user code (e.g. expression evaluation).
 
-Common examples of non-fast code: regexp matching, wildcard expansion,
-expression evaluation.
+Common examples of NON-fast code: expression evaluation (user code), wildcard
+expansion (shell code). (Exception: |nvim_eval_statusline()| is api-fast, and
+evaluates `%{}` items.)
+
+`os_breakcheck()` skips itself in a fast context, but normal (non-fast) code
+not expecting to be interrupted mid-operation must skip it manually, to avoid
+yielding. For example, commit 3940c435e405 fixed such a bug with
+`nvim__get_runtime` by explicitly disallowing `os_breakcheck()` via `EW_NOBREAK`.
 
 ==============================================================================
 Extmarks                                                        *dev-extmarks*

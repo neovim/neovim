@@ -305,7 +305,7 @@ int nlua_regex(lua_State *lstate)
   regprog_T *prog = NULL;
 
   TRY_WRAP(&err, {
-    // RE_NOBREAK: so vim.regex() works in api-fast context. #18111
+    // RE_NOBREAK #18111 technically not needed bc os_breakcheck skips if !nlua_is_deferred_safe().
     prog = vim_regcomp(text, RE_AUTO | RE_MAGIC | RE_STRICT | RE_NOBREAK);
   });
 
