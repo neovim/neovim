@@ -2096,6 +2096,26 @@ func Test_indexof()
   delfunc TestIdx
 endfunc
 
+" The indexof() expression cannot change the List.  Freeing the current item
+" was only detected with valgrind or ASan.
+func Test_indexof_change_list()
+  let g:il = [10, 20, 30]
+  call assert_fails('call indexof(g:il, {i, v -> remove(g:il, i) == 99})', 'E742:')
+  call assert_equal([10, 20, 30], g:il)
+  call assert_fails('call indexof(g:il, "add(g:il, 1)")', 'E742:')
+  call assert_fails('call indexof(g:il, {i, v -> execute("unlockvar g:il") .. remove(g:il, 0)})', 'E742:')
+  call assert_equal([10, 20, 30], g:il)
+  " the List is not locked afterwards
+  call add(g:il, 40)
+  call assert_equal(1, indexof(g:il, {i, v -> v == 20}))
+  call assert_equal(0, islocked('g:il'))
+  lockvar 1 g:il
+  call assert_equal(3, indexof(g:il, 'v:val == 40'))
+  call assert_equal(1, islocked('g:il'))
+  unlockvar g:il
+  unlet g:il
+endfunc
+
 func Test_extendnew_leak()
   " This used to leak memory
   for i in range(100) | silent! call extendnew([], [], []) | endfor
