@@ -515,7 +515,7 @@ func Test_set_register_blockwise_width_unprintable()
   call setreg('a', ["qqq\x82", "123"], 'b')
   call assert_equal("\<c-v>7", getreginfo('a').regtype)
 
-  " embeded NUL (as NL in list), displayed as ^@
+  " embedded NUL (as NL in list), displayed as ^@
   call setreg('a', ["q\n434", "12345"], 'b')
   call assert_equal("\<c-v>6", getreginfo('a').regtype)
 endfunc
