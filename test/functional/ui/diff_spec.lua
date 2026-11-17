@@ -2687,6 +2687,48 @@ it('diff mode inline highlighting', function()
   command('windo set nolist')
 end)
 
+it('diff mode inline highlighting with ignore whitespace and change at EOL #42876', function()
+  write_file('Xdifile1', '')
+  write_file('Xdifile2', '')
+  finally(function()
+    os.remove('Xdifile1')
+    os.remove('Xdifile2')
+  end)
+
+  local screen = Screen.new(37, 10)
+  screen:add_extra_attr_ids({
+    [100] = { background = Screen.colors.Blue1 },
+  })
+  command('set winwidth=10')
+  command('args Xdifile1 Xdifile2 | vert all | windo diffthis | 1wincmd w')
+  command('hi DiffTextAdd guibg=Blue')
+
+  -- Text appended at end of line: only the added part is DiffTextAdd, not
+  -- the whole line DiffAdd.
+  WriteDiffFiles('foo bar baz', 'foo bar baz qux')
+  for _, flag in ipairs({ 'iwhite', 'iwhiteeol', 'iwhiteall' }) do
+    command('set diffopt=internal,filler diffopt+=inline:char,' .. flag)
+    screen:expect([[
+      {7:  }{4:^foo bar baz     }│{7:  }{4:foo bar baz }{100:qux}{4: }|
+      {1:~                 }│{1:~                 }|*7
+      {3:Xdifile1           }{2:Xdifile2          }|
+                                           |
+    ]])
+  end
+
+  -- Lines appended at the end of a diff block are still highlighted as added.
+  WriteDiffFiles('foo\nbar', 'foo\nbar\nbaz')
+  command('set diffopt=internal,filler diffopt+=inline:char,iwhite')
+  screen:expect([[
+    {7:  }^foo             │{7:  }foo             |
+    {7:  }bar             │{7:  }bar             |
+    {7:  }{23:----------------}│{7:  }{22:baz             }|
+    {1:~                 }│{1:~                 }|*5
+    {3:Xdifile1           }{2:Xdifile2          }|
+                                         |
+  ]])
+end)
+
 -- oldtest: Test_diff_inline_multibuffer()
 it('diff mode inline highlighting with 3 buffers', function()
   write_file('Xdifile1', '')

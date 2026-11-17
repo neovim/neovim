@@ -3564,7 +3564,12 @@ bool diff_find_change(win_T *wp, linenr_T lnum, diffline_T *diffline)
       }
       diffline_change_T *change =
         &((diffline_change_T *)dp->df_changes.ga_data)[dp->df_changes.ga_len - 1];
-      if (change->dc_start_lnum_off[i] != INT_MAX) {
+      // A change on a line that exists in the other buffer's diff block is a
+      // within-line change (e.g. text appended at end-of-line), not an added
+      // line, even when it maps past the end of the other buffer's linemap
+      // (which can happen when 'ignore whitespace' diffopts trim tokens).
+      if (change->dc_start_lnum_off[i] != INT_MAX
+          || change->dc_start_lnum_off[idx] < dp->df_count[i]) {
         added = false;
         break;
       }
