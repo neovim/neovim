@@ -615,6 +615,48 @@ describe('vim.iter', function()
   end)
 
   describe('peek() after transformations', function()
+    it('peek() returns mapped values without running earlier stages twice', function()
+      local calls = 0
+      local it = vim.iter(string.gmatch('1 2', '%d+')):map(function(v)
+        calls = calls + 1
+        return tonumber(v) * 2
+      end)
+
+      eq(2, it:peek())
+      eq(2, it:peek())
+      eq(1, calls)
+      eq(2, it:next())
+      eq(4, it:next())
+      eq(2, calls)
+    end)
+
+    it('peek() applies newly added pipeline stages once', function()
+      local it = vim.iter(string.gmatch('1 2', '%d+')):map(function(v)
+        return tonumber(v) * 2
+      end)
+
+      eq(2, it:peek())
+      it:map(function(v)
+        return v + 1
+      end)
+      eq(3, it:peek())
+      eq(3, it:next())
+      eq(5, it:next())
+    end)
+
+    it('skip(predicate) after peeking uses the current pipeline', function()
+      local it = vim.iter(string.gmatch('1 2', '%d+')):map(tonumber)
+      eq(1, it:peek())
+      it:map(function(v)
+        return v * 2
+      end)
+      it:skip(function(v)
+        return v < 3
+      end)
+      eq(4, it:next())
+      eq(nil, it:next())
+    end)
+
     it('peek() works after map() on function iterator', function()
       local it = vim.iter(vim.gsplit('1|2|3', '|')):map(tonumber)
 

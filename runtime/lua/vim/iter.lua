@@ -77,6 +77,7 @@ local M = {}
 --- @nodoc
 --- @class vim.Iter<V1, V...>
 --- @field private _peeked V1|[V1, V...]? Cached peek value, if any. Nil if no value is peeked.
+--- @field private _peeked_next? function Pipeline stage that owns the cached value.
 --- @field private _next fun(): V1, V... The underlying function that returns the next packed value from the source.
 --- @overload fun(self: vim.Iter<V1, V...>): V1?, V...
 local Iter = {}
@@ -682,8 +683,24 @@ end
 --- @since 12
 --- @return V1?, V...
 function Iter:peek()
-  if self._peeked == nil then
+  if self._peeked == nil or self._peeked_next ~= self.next then
     self._peeked = pack(self:next())
+    if self._peeked ~= nil then
+      local next = self.next
+      local function cached_next(it)
+        local v = it._peeked
+        if v ~= nil then
+          it._peeked = nil
+          if it.next == cached_next then
+            it.next = next
+          end
+          return unpack(v)
+        end
+        return next(it)
+      end
+      self.next = cached_next
+      self._peeked_next = cached_next
+    end
   end
 
   return unpack(self._peeked)
@@ -978,7 +995,7 @@ function Iter:skip(n)
       end
       while true do
         local peeked = self._peeked
-        if peeked == nil then
+        if peeked == nil or self._peeked_next ~= next then
           peeked = pack(next(self))
         end
 
