@@ -11,6 +11,12 @@
 
 local nvim_bin = vim.v.progpath -- must be absolute
 
+if #arg == 0 then
+  error 'nvim -l runner.lua BUILD_DIR [testfiles]'
+end
+local build_dir = table.remove(arg, 1)
+vim.env.BUILD_DIR = vim.fs.abspath(vim.fs.normalize(build_dir))
+
 vim.api.nvim_set_current_dir('test/old/testdir/')
 
 local function readable(fn)
