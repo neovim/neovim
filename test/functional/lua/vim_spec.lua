@@ -1771,9 +1771,10 @@ describe('lua stdlib', function()
         local res
         local timer = assert(vim.uv.new_timer())
         timer:start(10, 0, function()
-          -- Enough matches to reach BREAKCHECK_SKIP, which would abort (reentrant event loop).
+          vim.uv.sleep(30) -- Ensure that fast_breakcheck() would poll within 1024 calls.
+          -- Enough to exceed the fast_breakcheck() window: must not poll (reentrant eventloop).
           local ok = true
-          for _ = 1, 3000 do
+          for _ = 1, 100 do
             ok = ok and re:match_str('internal/config/config.go') ~= nil
           end
           res = { ok, vim.in_fast_event() }

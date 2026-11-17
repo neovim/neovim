@@ -5484,7 +5484,7 @@ static void ex_print(exarg_T *eap)
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
     emsg(_(e_empty_buffer));
   } else {
-    for (linenr_T line = eap->line1; line <= eap->line2 && !got_int; os_breakcheck()) {
+    for (linenr_T line = eap->line1; line <= eap->line2 && !got_int; line_breakcheck()) {
       print_line(line,
                  (eap->cmdidx == CMD_number || eap->cmdidx == CMD_pound
                   || (eap->flags & EXFLAG_NR)),

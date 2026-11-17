@@ -545,6 +545,9 @@ PERFORMANCE
 • The display of multibyte text with grapheme clusters has been optimized,
   by calculating byte length and cell width of clusters in a single loop.
 • |:sort| is up to 10x faster on large buffers.
+• |:global| is up to 20x faster on large buffers.
+• |CTRL-C| responds much faster in various long-running loops (e.g. Vimscript
+  |:for| loop calling slow functions).
 
 PLUGINS
 

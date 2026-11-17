@@ -2168,7 +2168,7 @@ static void ins_compl_files(int count, char **files, bool thesaurus, int flags,
           }
         }
       }
-      line_breakcheck();
+      fast_breakcheck();
       ins_compl_check_keys(50, false);
     }
     fclose(fp);

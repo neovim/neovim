@@ -90,26 +90,27 @@ describe('|api-fast| functions', function()
       end)
       local function polled(fn)
         polls = 0
+        vim.uv.sleep(30) -- Ensure that {line,fast}_breakcheck() poll within 1/1024 calls.
         fn()
         return polls ~= 0
       end
 
-      -- Big (multibyte) input => per-char breakcheck would exceed BREAKCHECK_SKIP (1000, or 100_000
-      -- for `veryfast_breakcheck`). Small input could pass (false negative).
-      local big = ('héllo wörld '):rep(100000) -- 1.2M chars.
+      -- Big (multibyte) input => per-char fast_breakcheck() would exceed 1024 calls. Small input
+      -- could pass (false negative).
+      local big = ('héllo wörld '):rep(1000) -- 12K chars.
 
       local aupat = ('a'):rep(80000) -- Must stay under the "E339: Pattern too long" limit.
       vim.api.nvim_create_autocmd('User', { pattern = aupat, callback = function() end })
 
       local cases = {
         byteidx = function()
-          vim.fn.byteidx(big, 500000)
+          vim.fn.byteidx(big, 5000)
         end,
         char2nr = function()
           vim.fn.char2nr('A')
         end,
         charidx = function()
-          vim.fn.charidx(big, 500000)
+          vim.fn.charidx(big, 5000)
         end,
         getenv = function()
           -- Unset, so getenv() computes it.
@@ -129,7 +130,9 @@ describe('|api-fast| functions', function()
           vim.api.nvim_chan_set(1, { detach = false })
         end,
         nvim_create_autocmd = function()
-          vim.api.nvim_exec_autocmds('User', { pattern = aupat })
+          -- Intentionally NON-matching pattern: want to test pattern comparison, not the per-match
+          -- poll in aucmd_next().
+          vim.api.nvim_exec_autocmds('User', { pattern = aupat .. 'x' })
         end,
         nvim_replace_termcodes = function()
           vim.api.nvim_replace_termcodes('<Esc>', true, true, true)
@@ -150,7 +153,7 @@ describe('|api-fast| functions', function()
           vim.fn.strdisplaywidth(big)
         end,
         strgetchar = function()
-          vim.fn.strgetchar(big, 500000)
+          vim.fn.strgetchar(big, 5000)
         end,
         strlen = function()
           vim.fn.strlen(big)
@@ -168,7 +171,7 @@ describe('|api-fast| functions', function()
           vim.fn.trim(big)
         end,
         utf16idx = function()
-          vim.fn.utf16idx(big, 500000)
+          vim.fn.utf16idx(big, 5000)
         end,
       }
 
@@ -180,9 +183,9 @@ describe('|api-fast| functions', function()
       end
       table.sort(bad)
 
-      -- Positive control: a big Vimscript loop calls line_breakcheck() every iteration.
+      -- Positive control: a Vimscript loop calls line_breakcheck() every iteration.
       local control = polled(function()
-        vim.api.nvim_exec2('for i in range(1500000)|endfor', {})
+        vim.api.nvim_exec2('for i in range(100)|endfor', {})
       end)
 
       chk:stop()

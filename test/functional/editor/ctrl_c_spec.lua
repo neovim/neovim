@@ -48,6 +48,17 @@ describe('CTRL-C (mapped)', function()
         end)
       end
     end)
+
+    -- Interrupts even if the cmd never checks for input, within ~20ms (line 2 at 10ms/line).
+    t.eq(
+      'Keyboard interrupt',
+      t.pcall_err(
+        command,
+        '1,1000global/^/lua _G.n = (_G.n or 0) + 1; if _G.n == 1 then _G.ctrl_c_soon() end; vim.uv.sleep(10)'
+      )
+    )
+    t.ok(n.exec_lua('return _G.n') < 5)
+
     feed(':call v:lua.ctrl_c_soon() | global/^/p<CR>')
     screen:expect({ any = 'Interrupt' })
   end)

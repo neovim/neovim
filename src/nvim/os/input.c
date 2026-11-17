@@ -37,6 +37,7 @@
 
 #define READ_BUFFER_SIZE 0xfff
 #define INPUT_BUFFER_SIZE ((READ_BUFFER_SIZE * 4) + MAX_KEY_CODE_LEN)
+#define BREAKCHECK_NS (20 * 1000000)  // 20ms.
 
 static char input_buffer[INPUT_BUFFER_SIZE];
 static char *input_read_pos = input_buffer;
@@ -50,6 +51,7 @@ static enum {
 } polling = kPollNone;
 static uint64_t cursorhold_time = 0;  ///< Time (ns) spent waiting for CursorHold event.
 static int cursorhold_tb_change_cnt = 0;  ///< tb_change_cnt when waiting started
+static unsigned breakcheck_count = 0;
 
 #include "os/input.c.generated.h"
 
@@ -198,7 +200,7 @@ bool os_char_avail(void)
   return inbuf_poll(0, NULL);
 }
 
-/// Poll for fast events. `got_int` will be set to `true` if CTRL-C was typed.
+/// Polls for fast events, and checks for CTRL-C (`got_int`).
 ///
 /// This invokes a full libuv loop iteration which can be quite costly.
 /// Prefer `line_breakcheck()` if called in a busy inner loop.
@@ -209,44 +211,28 @@ bool os_char_avail(void)
 /// available)
 void os_breakcheck(void)
 {
-  if (got_int) {
+  if (got_int || !main_loop.events || main_loop.closing) {
     return;
   }
 
   loop_poll_events(&main_loop, 0);
 }
 
-#define BREAKCHECK_SKIP 1000
-static int breakcheck_count = 0;
-
-/// Check for CTRL-C pressed, but only once in a while.
-///
-/// Should be used instead of os_breakcheck() for functions that check for
-/// each line in the file.  Calling os_breakcheck() each time takes too much
-/// time, because it will use system calls to check for input.
+/// Calls os_breakcheck() if main loop has not polled for 20ms.
+/// For loops that check per-line or per-command: CTRL-C is caught after ~20ms or 1 iteration.
 void line_breakcheck(void)
 {
-  if (++breakcheck_count >= BREAKCHECK_SKIP) {
-    breakcheck_count = 0;
+  if (os_hrtime() - main_loop.poll_time >= BREAKCHECK_NS) {
     os_breakcheck();
   }
 }
 
-/// Like line_breakcheck() but check 10 times less often.
+/// Like line_breakcheck(), but reads the clock less frequently.
+/// For tight loops where a call does under ~1µs of work (and doesn't run user code).
 void fast_breakcheck(void)
 {
-  if (++breakcheck_count >= BREAKCHECK_SKIP * 10) {
-    breakcheck_count = 0;
-    os_breakcheck();
-  }
-}
-
-/// Like line_breakcheck() but check 100 times less often.
-void veryfast_breakcheck(void)
-{
-  if (++breakcheck_count >= BREAKCHECK_SKIP * 100) {
-    breakcheck_count = 0;
-    os_breakcheck();
+  if ((++breakcheck_count & 1023) == 0) {  // Read the clock every 1024 calls.
+    line_breakcheck();
   }
 }
 

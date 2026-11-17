@@ -3348,7 +3348,7 @@ void spell_dump_compl(char *pat, int ic, Direction *dir, int dumpflags_arg)
         if (curi[depth] > byts[arridx[depth]]) {
           // Done all bytes at this node, go up one level.
           depth--;
-          line_breakcheck();
+          fast_breakcheck();
           ins_compl_check_keys(50, false);
         } else {
           // Do one more byte at this node.
@@ -3534,7 +3534,7 @@ static linenr_T dump_prefixes(slang_T *slang, char *word, char *pat, Direction *
       if (curi[depth] > len) {
         // Done all bytes at this node, go up one level.
         depth--;
-        line_breakcheck();
+        fast_breakcheck();
       } else {
         // Do one more byte at this node.
         n += curi[depth];
