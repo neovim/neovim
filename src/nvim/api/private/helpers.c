@@ -137,6 +137,7 @@ void try_leave(const TryState *const tstate, Error *const err)
 /// @param key The key
 /// @param[out] err Details of an error that may have occurred
 Object dict_get_value(dict_T *dict, String key, Arena *arena, Error *err)
+  FUNC_ATTR_NONNULL_ALL
 {
   dictitem_T *const di = tv_dict_find(dict, key.data, (ptrdiff_t)key.size);
 

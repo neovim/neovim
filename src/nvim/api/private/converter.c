@@ -239,9 +239,10 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 ///
 /// @param obj The source object
 /// @param arena if NULL, use direct allocation
-/// @param reuse_strdata when true, don't copy string data to Arena but reference
-///                      typval strings directly. takes no effect when arena is
-///                      NULL
+/// @param reuse_strdata when true, don't copy string data but reference
+///                      typval strings directly. This should be used
+///                      when copying to an arena which is more short
+///                      lived than the converted data.
 /// @return The converted value
 Object vim_to_object(typval_T *obj, Arena *arena, bool reuse_strdata)
 {
