@@ -215,6 +215,11 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
   int match_count = 0;
   uint32_t matches[FUZZY_MATCH_MAX_LEN];
 
+  // The "text_cb" callback must not change the List, it could free the
+  // current item.  VAR_FIXED, so that :unlockvar can't undo it.
+  const VarLockStatus prev_lock = tv_list_locked(l);
+  tv_list_set_lock(l, VAR_FIXED);
+
   // For all the string items in items, get the fuzzy matching score
   TV_LIST_ITER(l, li, {
     if (max_matches > 0 && match_count >= max_matches) {
@@ -287,6 +292,8 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
     }
     tv_clear(&rettv);
   });
+
+  tv_list_set_lock(l, prev_lock);
 
   if (match_count > 0) {
     // Sort the list by the descending order of the match score

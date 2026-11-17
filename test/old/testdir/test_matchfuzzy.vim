@@ -111,6 +111,18 @@ func Test_matchfuzzy()
   let &encoding = save_enc
 endfunc
 
+" The "text_cb" callback cannot change the List.  Freeing the current item
+" was only detected with valgrind or ASan.
+func Test_matchfuzzy_text_cb_change_list()
+  let g:fl = [{'t': 'ab'}, {'t': 'ac'}, {'t': 'ad'}]
+  call assert_fails("call matchfuzzy(g:fl, 'a', {'text_cb': {d -> remove(g:fl, 0).t}})", 'E742:')
+  call assert_fails("call matchfuzzypos(g:fl, 'a', {'text_cb': {d -> execute('unlockvar g:fl') .. remove(g:fl, 0).t}})", 'E742:')
+  call assert_equal(3, len(g:fl))
+  call assert_equal(0, islocked('g:fl'))
+  call assert_equal([{'t': 'ab'}], matchfuzzy(g:fl, 'ab', {'text_cb': {d -> d.t}}))
+  unlet g:fl
+endfunc
+
 " Test for the matchfuzzypos() function
 func Test_matchfuzzypos()
   call assert_equal([['curl', 'world'], [[2,3], [2,3]], [990, 985]], matchfuzzypos(['world', 'curl'], 'rl'))
