@@ -47,6 +47,8 @@ for _, model in ipairs(mousemodels) do
       api.nvim_set_option_value('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T', {})
       api.nvim_input_mouse('left', 'press', '', 0, 6, 16)
       eq('', eval('g:testvar'))
+      api.nvim_input_mouse('left', 'press', '', 0, 7, 17) -- Cmdline.
+      eq('', eval('g:testvar'))
       api.nvim_input_mouse('right', 'press', '', 0, 6, 29)
       eq('', eval('g:testvar'))
       api.nvim_input_mouse('left', 'press', '', 0, 6, 17)
@@ -270,6 +272,19 @@ for _, model in ipairs(mousemodels) do
       eq('0 1 l', eval('g:testvar'))
       api.nvim_input_mouse('right', 'press', '', 0, 6, 5)
       eq('0 1 r', eval('g:testvar'))
+
+      -- Same column on the cmdline, or on a win separator. #42572
+      command('let g:testvar = "" | split')
+      local hsep_row = api.nvim_win_get_height(0)
+      for _, row in ipairs({ 7, hsep_row }) do
+        api.nvim_input_mouse('left', 'press', '', 0, row, 5)
+        eq('', eval('g:testvar'))
+      end
+      -- Dragging the separator resizes the window.
+      api.nvim_input_mouse('left', 'drag', '', 0, hsep_row + 1, 5)
+      n.poke_eventloop()
+      api.nvim_input_mouse('left', 'release', '', 0, hsep_row + 1, 5)
+      eq(hsep_row + 1, api.nvim_win_get_height(0))
     end)
 
     it('no memory leak with zero-width click labels', function()
