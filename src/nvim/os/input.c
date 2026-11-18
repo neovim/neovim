@@ -22,6 +22,7 @@
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/log.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/mouse.h"
@@ -200,7 +201,10 @@ bool os_char_avail(void)
   return inbuf_poll(0, NULL);
 }
 
-/// Polls for fast events, and checks for CTRL-C (`got_int`).
+/// Polls for fast events, and checks for CTRL-C (`got_int`). No-op during |api-fast|.
+///
+/// Yields to api-fast requests and luv callbacks! Skip it when code is not prepared to "resume"
+/// mid-operation (e.g. RE_NOBREAK). |dev-api-fast|
 ///
 /// This invokes a full libuv loop iteration which can be quite costly.
 /// Prefer `line_breakcheck()` if called in a busy inner loop.
@@ -211,7 +215,8 @@ bool os_char_avail(void)
 /// available)
 void os_breakcheck(void)
 {
-  if (got_int || !main_loop.events || main_loop.closing) {
+  if (got_int || main_loop.recursive || !nlua_is_deferred_safe() || !main_loop.events
+      || main_loop.closing) {
     return;
   }
 

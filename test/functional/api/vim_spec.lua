@@ -4627,6 +4627,24 @@ describe('API', function()
       }, api.nvim_eval_statusline('%%StatusLineString%#WarningMsg#WithHighlights', {}))
     end)
 
+    it('api-fast, uv_run(): no crash with %{vimscript}', function()
+      exec([[
+        function! F_breakcheck()
+          return 'x'
+        endfunction
+        function! F_sleep()
+          sleep 1m
+          return 'y'
+        endfunction
+      ]])
+      uv.sleep(30) -- Ensure that line_breakcheck() polls.
+      eq(
+        { str = ('x'):rep(64), width = 64 },
+        api.nvim_eval_statusline(('%{F_breakcheck()}'):rep(64), {})
+      )
+      eq({ str = 'y', width = 1 }, api.nvim_eval_statusline('%{F_sleep()}', {}))
+    end)
+
     it('rejects invalid format characters', function()
       eq('E539: Illegal character <^>', pcall_err(api.nvim_eval_statusline, '%^', {}))
       eq('E539: Illegal character <}>', pcall_err(api.nvim_eval_statusline, '%{%}', {}))

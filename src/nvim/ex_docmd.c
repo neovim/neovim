@@ -6600,6 +6600,13 @@ static void ex_sleep(exarg_T *eap)
 /// @param hide_cursor  hide the cursor if true
 void do_sleep(int64_t msec, bool hide_cursor)
 {
+  if (main_loop.recursive || !nlua_is_deferred_safe()) {
+    // Can't re-enter uv_run() (e.g. from `%{F()}` in api-fast nvim_eval_statusline()).
+    // Can't process deferred events in a fast callback (e.g. vim.ui_attach() "msg_show").
+    os_sleep((uint64_t)MAX(msec, 0));
+    return;
+  }
+
   if (hide_cursor) {
     ui_busy_start();
   }

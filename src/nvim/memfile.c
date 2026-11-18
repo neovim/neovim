@@ -50,7 +50,6 @@
 #include "nvim/fileio.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
-#include "nvim/main.h"
 #include "nvim/map_defs.h"
 #include "nvim/memfile.h"
 #include "nvim/memfile_defs.h"
@@ -412,7 +411,7 @@ int mf_sync(memfile_T *mfp, int flags)
         if (os_char_avail()) {
           break;
         }
-      } else if (!main_loop.recursive) {  // May reach here on OOM in libuv callback
+      } else {
         os_breakcheck();
       }
       if (got_int) {
