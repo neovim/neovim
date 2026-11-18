@@ -4,6 +4,8 @@ local n = require('test.functional.testnvim')()
 local describe, it, setup, teardown, pending = t.describe, t.it, t.setup, t.teardown, t.pending
 local clear = n.clear
 local eq = t.eq
+local matches = t.matches
+local skip = t.skip
 local exec = n.exec
 local exec_capture = n.exec_capture
 local write_file = t.write_file
@@ -308,6 +310,19 @@ describe('lua :verbose with -V1', function()
 
   describe('"Last set" shows full location using :luafile', function()
     last_set_lua_verbose_tests('luafile', true)
+  end)
+
+  it('"Last set" shows the runtime file of a builtin module #28556', function()
+    clear({ args = { '-V1' } })
+    skip(
+      n.exec_lua('return debug.getinfo(vim.fs.joinpath, "S").source') ~= '@vim/fs',
+      'N/A: builtin modules are not precompiled'
+    )
+    local dir = fn.fnamemodify(fn.resolve(fn.expand('$VIMRUNTIME/lua/vim/_core')), ':~')
+    matches(
+      '\tLast set from ' .. vim.pesc(dir) .. '/[%w_]+%.lua line %d+',
+      exec_capture('verbose autocmd nvim.terminal TermClose')
+    )
   end)
 end)
 
