@@ -2197,8 +2197,8 @@ static bool term_has_truecolor(TUIData *tui, const char *colorterm)
   }
 
   // Check for setrgbf and setrgbb
-  bool setrgbf = tui->ti.defs[kTerm_set_rgb_foreground];
-  bool setrgbb = tui->ti.defs[kTerm_set_rgb_background];
+  bool setrgbf = tui->ti.defs[kTerm_set_rgb_foreground] != NULL;
+  bool setrgbb = tui->ti.defs[kTerm_set_rgb_background] != NULL;
 
   return setrgbf && setrgbb;
 }
