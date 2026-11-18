@@ -271,6 +271,7 @@ error('Cannot require a meta file')
 --- @field width integer
 --- @field height integer
 --- @field relative 'cursor'|'editor'|'laststatus'|'mouse'|'tabline'|'win'
+--- @field border 'none'|(string|[string,string])[]?
 ---
 --- @field noautocmd nil
 --- @field title nil
