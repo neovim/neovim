@@ -6,8 +6,8 @@
 
     .dependencies = .{
         .zlua = .{
-            .url = "git+https://github.com/natecraddock/ziglua#9b9e855e91df9c3d903b5d15ba75e64c8f6ed5f0",
-            .hash = "zlua-0.1.0-hGRpC2mfBQAGjJIw0bTJnMnxPx6ZQxdCAGMtH13Gl3BP",
+            .url = "git+https://github.com/natecraddock/ziglua#89b445c92113170c4ca2ff16b256cd24f300c743",
+            .hash = "zlua-0.1.0-hGRpC1yrBQD9E43yOh9oeuNDrmg2hQwCD_3GmJdI1bCn",
         },
         .luv = .{
             .url = "git+https://github.com/luvit/luv?ref=1.53.0-1#61e08e7b6911b43e4b8d9d16c0fee35f76729354",
