@@ -981,54 +981,65 @@ void ui_ext_win_position(win_T *wp, bool validate)
   }
 }
 
+/// Gets the |ui-event-win_viewport| "scroll_delta": the rows wp.w_topline moved since the last
+/// event. PERF: Beyond the viewport it counts buffer-lines, to limit the cost of win_text_height().
+static int64_t win_viewport_scroll_delta(win_T *wp, linenr_T line_count)
+{
+  // Avoid ml_get errors.
+  const linenr_T cur_topline = MIN(wp->w_topline, line_count);
+  const linenr_T cur_botline = MIN(wp->w_botline, line_count);
+  int64_t const max = wp->w_view_height;  // Measure within viewport; beyond it, only count lines.
+  int64_t delta = 0;
+  linenr_T last_topline = wp->w_viewport_last_topline;
+  linenr_T last_botline = wp->w_viewport_last_botline;
+  int last_topfill = wp->w_viewport_last_topfill;
+  int64_t last_skipcol = wp->w_viewport_last_skipcol;
+  if (last_topline > line_count) {
+    delta -= last_topline - line_count;
+    last_topline = line_count;
+    last_topfill = 0;
+    last_skipcol = MAXCOL;
+  }
+  last_botline = MIN(last_botline, line_count);
+  if (cur_topline < last_topline
+      || (cur_topline == last_topline && wp->w_skipcol < last_skipcol)) {
+    int64_t vcole = last_skipcol;
+    linenr_T lnume = last_topline;
+    if (last_topline > 0 && cur_botline < last_topline) {
+      // Scrolling too many lines: only give an approximate "scroll_delta".
+      delta -= last_topline - cur_botline;
+      lnume = cur_botline;
+      vcole = 0;
+    }
+    linenr_T const lnum_end = lnume;
+    int64_t const height = win_text_height(wp, cur_topline, wp->w_skipcol, &lnume, &vcole, NULL,
+                                           max, true);
+    delta -= height + (height >= max ? MAX(lnum_end - lnume - 1, 0) : 0);
+  } else if (cur_topline > last_topline
+             || (cur_topline == last_topline && wp->w_skipcol > last_skipcol)) {
+    int64_t vcole = wp->w_skipcol;
+    linenr_T lnume = cur_topline;
+    if (last_botline > 0 && cur_topline > last_botline) {
+      // Scrolling too many lines: only give an approximate "scroll_delta".
+      delta += cur_topline - last_botline;
+      lnume = last_botline;
+      vcole = 0;
+    }
+    linenr_T const lnum_end = lnume;
+    int64_t const height = win_text_height(wp, last_topline, last_skipcol, &lnume, &vcole, NULL,
+                                           max, true);
+    delta += height + (height >= max ? MAX(lnum_end - lnume - 1, 0) : 0);
+  }
+  return delta + last_topfill - wp->w_topfill;
+}
+
 void ui_ext_win_viewport(win_T *wp)
 {
   // NOTE: The win_viewport command is delayed until the next flush when there are pending updates.
   // This ensures that the updates and the viewport are sent together.
   if ((wp == curwin || ui_has(kUIMultigrid)) && wp->w_viewport_invalid && wp->w_redr_type == 0) {
     const linenr_T line_count = wp->w_buffer->b_ml.ml_line_count;
-    // Avoid ml_get errors when producing "scroll_delta".
-    const linenr_T cur_topline = MIN(wp->w_topline, line_count);
-    const linenr_T cur_botline = MIN(wp->w_botline, line_count);
-    int64_t delta = 0;
-    linenr_T last_topline = wp->w_viewport_last_topline;
-    linenr_T last_botline = wp->w_viewport_last_botline;
-    int last_topfill = wp->w_viewport_last_topfill;
-    int64_t last_skipcol = wp->w_viewport_last_skipcol;
-    if (last_topline > line_count) {
-      delta -= last_topline - line_count;
-      last_topline = line_count;
-      last_topfill = 0;
-      last_skipcol = MAXCOL;
-    }
-    last_botline = MIN(last_botline, line_count);
-    if (cur_topline < last_topline
-        || (cur_topline == last_topline && wp->w_skipcol < last_skipcol)) {
-      int64_t vcole = last_skipcol;
-      linenr_T lnume = last_topline;
-      if (last_topline > 0 && cur_botline < last_topline) {
-        // Scrolling too many lines: only give an approximate "scroll_delta".
-        delta -= last_topline - cur_botline;
-        lnume = cur_botline;
-        vcole = 0;
-      }
-      delta -= win_text_height(wp, cur_topline, wp->w_skipcol, &lnume, &vcole, NULL, INT64_MAX,
-                               true);
-    } else if (cur_topline > last_topline
-               || (cur_topline == last_topline && wp->w_skipcol > last_skipcol)) {
-      int64_t vcole = wp->w_skipcol;
-      linenr_T lnume = cur_topline;
-      if (last_botline > 0 && cur_topline > last_botline) {
-        // Scrolling too many lines: only give an approximate "scroll_delta".
-        delta += cur_topline - last_botline;
-        lnume = last_botline;
-        vcole = 0;
-      }
-      delta += win_text_height(wp, last_topline, last_skipcol, &lnume, &vcole, NULL, INT64_MAX,
-                               true);
-    }
-    delta += last_topfill;
-    delta -= wp->w_topfill;
+    int64_t const delta = win_viewport_scroll_delta(wp, line_count);
     linenr_T ev_botline = wp->w_botline;
     if (ev_botline == line_count + 1 && wp->w_empty_rows == 0) {
       // TODO(bfredl): The might be more cases to consider, like how does this
