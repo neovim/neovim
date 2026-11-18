@@ -1742,7 +1742,7 @@ vim._maxint = 2 ^ 32 - 1
 ---
 --- @since 15
 --- @generic T
---- @param ... T
+--- @param ... T?
 --- @return T
 function vim.nonnil(...)
   local nargs = select('#', ...)
