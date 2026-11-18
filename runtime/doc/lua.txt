@@ -5170,8 +5170,8 @@ Lua module: vim.regex                                              *vim.regex*
 
 The `vim.regex` interface allows Lua code to use Vim regexes.
 • Matches within a single line.
-• Does not check for interrupts (CTRL-C), so can be used from an |api-fast|
-  context.
+• Can be used in |api-fast| context.
+• On CTRL-C: raises error "interrupted".
 
 
 regex:match_line({buf}, {line_idx}, {start}, {end_})      *regex:match_line()*

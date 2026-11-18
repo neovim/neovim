@@ -1786,6 +1786,20 @@ describe('lua stdlib', function()
         return res
       end)
     )
+
+    -- CTRL-C interrupts a slow match.
+    eq(
+      { false, 'interrupted' },
+      exec_lua(function()
+        local timer = assert(vim.uv.new_timer())
+        timer:start(0, 0, function()
+          timer:close()
+          vim.api.nvim_input('<C-C>')
+        end)
+        local re = vim.regex([[\%#=1\v^((a|aa)*c|.*b)]]) -- Backtracks for ~1s.
+        return { pcall(re.match_str, re, ('a'):rep(34) .. 'b') }
+      end)
+    )
   end)
 
   describe('vim.defer_fn', function()
