@@ -95,7 +95,8 @@ static const uint32_t inline_filter[kMTMetaCount] = {[kMTMetaInline] = kMTFilter
 /// 'concealcursor' does not reveal the line. Cheap: does not walk the marktree.
 bool line_has_extconceal(win_T *wp, linenr_T lnum)
 {
-  return lnum > 0 && has_extconceal(wp) && !conceal_cursor_reveals_line(wp, lnum);
+  return lnum > 0 && lnum <= wp->w_buffer->b_ml.ml_line_count && has_extconceal(wp)
+         && !conceal_cursor_reveals_line(wp, lnum);
 }
 
 /// Whether extmark-conceal (see CharsizeArg.extconceal_off), including marks an `_on_conceal`
@@ -151,7 +152,7 @@ CSType init_charsize_arg_extconceal(CharsizeArg *csarg, win_T *wp, linenr_T lnum
   *spans = (ConcealSpans)KV_INITIAL_VALUE;
   if (line_has_extconceal(wp, lnum)) {
     decor_providers_invoke_conceal(wp, lnum - 1, false);
-    conceal_spans_collect(wp, lnum - 1, ml_get_buf_len(wp->w_buffer, lnum), spans);
+    conceal_spans_collect(wp, lnum - 1, spans);
   }
   CSType const cstype = init_charsize_arg(csarg, wp, lnum, ml_get_buf(wp->w_buffer, lnum));
   if (kv_size(*spans) == 0) {
@@ -199,13 +200,13 @@ static int inline_virt_text_width(win_T *wp, MarkTreeIter *iter, int row, int co
   return width;
 }
 
-/// Collects the extmark-conceal of row `row` (`len` bytes) into `spans`, without invoking
-/// `_on_conceal`.
-void conceal_spans_collect(win_T *wp, int row, int len, ConcealSpans *spans)
+/// Collects the extmark-conceal of row `row` into `spans`, without invoking `_on_conceal`.
+void conceal_spans_collect(win_T *wp, int row, ConcealSpans *spans)
 {
   if (!decor_row_has_conceal(wp, row)) {
     return;
   }
+  int const len = ml_get_buf_len(wp->w_buffer, row + 1);
   DecorState state = { .conceal_only = true };
   decor_redraw_reset(wp, &state);
   decor_redraw_line(wp, row, &state);

@@ -1209,6 +1209,35 @@ describe('conceal-aware wrapping (#14409)', function()
     ]])
   end)
 
+  it("'linebreak' with virt_lines below the last line does not read past the buffer", function()
+    -- virt_lines below the last line are drawn as a row past the end of the buffer.
+    command('set linebreak')
+    conceal_line('aaaHIDDENbbb')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_lines = { { { 'footer' } } } })
+    screen0:expect([[
+      ^aaabbb              |
+      footer              |
+      {1:~                   }|*3
+                          |
+    ]])
+
+    -- Also with conceal only from an `_on_conceal` provider (e.g. treesitter).
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    exec_lua(function()
+      vim.api.nvim_set_decoration_provider(vim.api.nvim_create_namespace('provider'), {
+        _on_conceal = function() end,
+      })
+      vim.api.nvim__buf_set_conceal_provider(0, true)
+    end)
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_lines = { { { 'footer' } } } })
+    screen0:expect([[
+      ^aaaHIDDENbbb        |
+      footer              |
+      {1:~                   }|*3
+                          |
+    ]])
+  end)
+
   it('ephemeral (decoration-provider) conceal does not reflow', function()
     -- Ephemeral conceal exists only while drawing, so geometry cannot read it from the marktree.
     api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(9) })

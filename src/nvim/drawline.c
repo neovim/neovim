@@ -1732,15 +1732,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     has_decor = true;
     extra_check = true;
   }
-  if (wp->w_p_lbr && line_has_extconceal(wp, lnum)) {
-    conceal_spans_collect(wp, lnum - 1, ml_get_buf_len(wp->w_buffer, lnum), &conceal_spans);
-  }
-
   if (wlv.fromcol >= wlv.tocol) {
     wlv.fromcol = -1;
   }
 
   if (col_rows == 0 && draw_text && !has_foldtext) {
+    if (wp->w_p_lbr && line_has_extconceal(wp, lnum)) {
+      conceal_spans_collect(wp, lnum - 1, &conceal_spans);
+    }
     const int v = (int)(ptr - line);
     area_highlighting |= prepare_search_hl_line(wp, lnum, v,
                                                 &line, &screen_search_hl, &search_attr,
