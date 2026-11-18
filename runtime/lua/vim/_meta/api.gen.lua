@@ -407,7 +407,7 @@ function vim.api.nvim_buf_get_changedtick(buf) end
 ---
 --- @param buf integer Buffer id, or 0 for current buffer
 --- @param opts vim.api.keyset.get_commands? Optional parameters. Currently not used.
---- @return vim.api.keyset.command_info # Map of maps describing commands.
+--- @return table<string,vim.api.keyset.command_info> # Map of maps describing commands.
 function vim.api.nvim_buf_get_commands(buf, opts) end
 
 --- Gets the position (0-indexed) of an `extmark`.
