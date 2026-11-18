@@ -111,13 +111,11 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize_lua,
         .lang = if (use_luajit) E.luajit else E.lua51,
         .shared = false,
-        .system_lua = sys_opts.lua,
     });
     const ziglua_host = if (cross_compiling) b.dependency("zlua", .{
         .target = target_host,
         .optimize = .small,
         .lang = if (host_use_luajit) E.luajit else E.lua51,
-        .system_lua = sys_opts.lua,
         .shared = false,
     }) else ziglua;
     var lua: ?*Compile = null;
