@@ -277,7 +277,16 @@ describe('listlbr', function()
 
   it('does not bleed match/extmark highlight into the filler before a wrapped word', function()
     local screen = Screen.new(60, 3)
-    screen:add_extra_attr_ids({ [100] = { underline = true } })
+    screen:add_extra_attr_ids({
+      [100] = { underline = true },
+      [101] = { bold = true, underline = true },
+      [102] = {
+        background = Screen.colors.LightGray,
+        foreground = Screen.colors.Gray0,
+        italic = true,
+        underline = true,
+      },
+    })
     source([[
       set wrap linebreak
       call setline(1, '[license-commit]: https://github.com/neovim/neovim/commit/b17d9691a24099c9210289f16afb1a498a89d803')
@@ -307,6 +316,38 @@ describe('listlbr', function()
 
     command([[call nvim_buf_add_highlight(0, -1, 'TestUL', 0, 18, -1)]])
     screen:expect(expected)
+
+    -- Only the filler: "hl_mode=combine" inline virtual text after a break character keeps the
+    -- highlight, after the filler (the pushed-down word) or without one (line 2). #42763
+    screen:try_resize(60, 4)
+    command('highlight TestHint gui=bold cterm=bold')
+    n.api.nvim_buf_set_lines(0, 1, -1, true, { '    f(value, {})' })
+    local ns = n.api.nvim_create_namespace('')
+    n.api.nvim_buf_set_extmark(0, ns, 1, 4, { end_col = 16, hl_group = 'TestUL' })
+    for _, pos in ipairs({ { 0, 58 }, { 1, 13 } }) do
+      n.api.nvim_buf_set_extmark(0, ns, pos[1], pos[2], {
+        virt_text = { { 'opts:', 'TestHint' } },
+        virt_text_pos = 'inline',
+        hl_mode = 'combine',
+      })
+    end
+    screen:expect([[
+      ^[license-commit]: {100:https://github.com/neovim/neovim/commit/}  |
+      {101:opts:}{100:b17d9691a24099c9210289f16afb1a498a89d803}               |
+          {100:f(value, }{101:opts:}{100:{})}                                       |
+                                                                  |
+    ]])
+
+    -- Same for a Visual highlight: it continues after the filler.
+    n.api.nvim_buf_clear_namespace(0, -1, 0, -1)
+    command('highlight Visual gui=underline,italic cterm=underline,italic')
+    feed('gg0v70|')
+    screen:expect([[
+      {102:[license-commit]: https://github.com/neovim/neovim/commit/}  |
+      {102:b17d9691a^2}4099c9210289f16afb1a498a89d803                    |
+          f(value, {})                                            |
+      {5:-- VISUAL --}                                                |
+    ]])
   end)
 
   it('extends a to-end-of-line syntax highlight through the filler', function()

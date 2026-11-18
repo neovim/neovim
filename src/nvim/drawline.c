@@ -1895,16 +1895,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         }
       }
 
-      // Check if 'breakindent' applies and show it. Like the 'linebreak' filler, attrs must not
-      // extend into this gap either (see attr_has_line_deco()).
-      int const gap_decor_attr = attr_has_line_deco(gap_attr_save) ? 0 : gap_attr_save;
+      // Check if 'breakindent' applies and show it.
       prefix_vcol = wlv.vcol;
       if (!wp->w_briopt_sbr) {
-        handle_breakindent(wp, &wlv, gap_decor_attr);
+        handle_breakindent(wp, &wlv, gap_attr_save);
       }
-      handle_showbreak_and_filler(wp, &wlv, gap_decor_attr);
+      handle_showbreak_and_filler(wp, &wlv, gap_attr_save);
       if (wp->w_briopt_sbr) {
-        handle_breakindent(wp, &wlv, gap_decor_attr);
+        handle_breakindent(wp, &wlv, gap_attr_save);
       }
       prefix_width = wlv.vcol - prefix_vcol;
 
@@ -2200,7 +2198,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
             area_attr = saved_area_attr;
             saved_area_attr = 0;
           }
-          if (decor_attr == 0) {
+          if (saved_decor_attr != 0) {
             decor_attr = saved_decor_attr;
             saved_decor_attr = 0;
           }
@@ -2456,9 +2454,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         }
 
         // Gaps ('linebreak' filler, 'breakindent'/'showbreak' padding) show no buffer text, so only
-        // an "hl_eol" decoration draws there.
+        // an "hl_eol" decoration draws there, and no line decoration (see attr_has_line_deco()).
         gap_attr_save = has_decor ? hl_combine_attr(syntax_attr, decor_state.current_hl_eol)
                                   : decor_attr;
+        if (attr_has_line_deco(gap_attr_save)) {
+          gap_attr_save = 0;
+        }
 
         // Found last space before word: check for line break (see charsize_regular()).
         int lbr_char = mb_c;
@@ -2491,17 +2492,17 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
               // Do not bleed attrs into the filler for the pushed-down word (TABs keep their own
               // full-width highlight; see attr_has_line_deco()). search_attr also resets when its
               // own span ends exactly here (on_last_col), matching its pre-existing semantics.
-              if (mb_c != TAB) {
+              if (mb_c != TAB && wlv.n_extra > 0) {
                 if (on_last_col || attr_has_line_deco(search_attr)) {
                   search_attr = 0;
                 }
-                if (has_decor) {
+                // Restored after the filler (see "n_extra <= 0").
+                if (decor_attr != gap_attr_save) {
+                  saved_decor_attr = decor_attr;
                   decor_attr = gap_attr_save;
                 }
-                if (attr_has_line_deco(decor_attr)) {
-                  decor_attr = 0;
-                }
                 if (attr_has_line_deco(area_attr)) {
+                  saved_area_attr = area_attr;
                   area_attr = 0;
                 }
               }
