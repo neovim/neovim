@@ -219,6 +219,21 @@ describe('ui/mouse/input', function()
             'this is fo%^o',
           },
         })
+        -- Dragging outside the screen acts like dragging to its edge.
+        api.nvim_input_mouse('left', 'drag', '', 0, 0, -5)
+        screen:expect({
+          any = {
+            '{5: %+ foo }{24: %+ bar }{2:          }{24:X}',
+            'this is fo%^o',
+          },
+        })
+        api.nvim_input_mouse('left', 'drag', '', 0, 0, 99)
+        screen:expect({
+          any = {
+            '{24: %+ bar }{5: %+ foo }{2:          }{24:X}',
+            'this is fo%^o',
+          },
+        })
       end)
 
       it('in tabline to the left moves tab left', function()
@@ -1959,7 +1974,7 @@ describe('ui/mouse/input', function()
       })
     end)
 
-    it("click outside statusline/winbar/statuscolumn doesn't crash #33091 #34110", function()
+    it('click outside statusline/winbar/statuscolumn/tabline #33091 #34110', function()
       api.nvim_set_option_value('winwidth', 1, {})
       api.nvim_set_option_value('statusline', '%f', {})
 
@@ -1970,36 +1985,46 @@ describe('ui/mouse/input', function()
       local columns = api.nvim_get_option_value('columns', {})
 
       -- Window separator in the statusline.
-      api.nvim_input_mouse('left', 'press', '', 0, lines - 1, math.floor(columns / 2))
+      api.nvim_input_mouse('left', 'press', '', 0, lines - 2, math.floor(columns / 2))
       command('redraw')
 
+      -- Sets g:clicked to the clicked region (1: statuscolumn, 2: winbar), or 0 if none.
       local function click(row, col)
+        api.nvim_set_var('clicked', 0)
         api.nvim_input_mouse('left', 'press', '', 0, row, col)
         api.nvim_input_mouse('left', 'release', '', 0, row, col)
+        return api.nvim_get_var('clicked')
       end
+      exec([[
+        function Click(minwid, ...)
+          let g:clicked = a:minwid
+        endfunction
+      ]])
+      -- Float with border "x" except at the top, winbar on row 1, statuscolumn on row 2.
       local win = api.nvim_open_win(api.nvim_create_buf(false, true), true, {
         relative = 'editor',
-        row = 2,
+        row = 1,
         col = 4,
         width = 8,
         height = 2,
-        border = { '', '', '', 'x' },
+        border = { '', '', '', 'x', 'x', 'x', 'x', 'x' },
       })
-      exec([[
-        function StcClick(...)
-          let g:stc_clicked = 1
-        endfunction
-      ]])
-      api.nvim_set_option_value('statuscolumn', '%@StcClick@s%X', { win = win })
+      api.nvim_set_option_value('statuscolumn', '%1@Click@s%X', { win = win })
+      api.nvim_set_option_value('winbar', '%2@Click@wb%X', { win = win })
       command('redraw')
-      click(2, 5) -- statuscolumn
-      eq(1, api.nvim_get_var('stc_clicked'))
-      click(2, 4) -- left border next to statuscolumn
+      eq(1, click(2, 5)) -- Statuscolumn.
+      eq(0, click(2, 4)) -- Left border next to statuscolumn.
+      eq(2, click(1, 5)) -- Winbar.
+      command('wincmd p')
+      eq(0, click(1, 4)) -- Left border next to winbar: focuses the float like any border click.
+      eq(win, api.nvim_get_current_win())
+      eq(0, click(1, 13)) -- Right border next to winbar.
+      command('wincmd p')
+      eq(0, click(3, 5)) -- Bottom border below statuscolumn.
+      eq(win, api.nvim_get_current_win())
 
-      api.nvim_set_option_value('winbar', 'wb', { win = win })
-      command('redraw')
-      click(2, 4) -- left border next to winbar
-      click(2, 13) -- right border next to winbar
+      command('tabnew | redraw')
+      api.nvim_input_mouse('left', 'press', '', 0, 0, -1) -- Left of the tabline.
       command('redraw')
     end)
 

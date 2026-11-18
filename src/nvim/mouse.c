@@ -132,7 +132,8 @@ static void find_end_of_word(pos_T *pos)
 /// tabline if there is no tab there.
 static void move_tab_to_mouse(void)
 {
-  int tabnr = tab_page_click_defs[mouse_col].tabnr;
+  int col = MAX(0, MIN(mouse_col, Columns - 1));  // A drag may leave the screen.
+  int tabnr = tab_page_click_defs[col].tabnr;
   if (tabnr <= 0) {
     tabpage_move(9999);
   } else if (tabnr < tabpage_index(curtab)) {
@@ -252,10 +253,14 @@ static int get_fpos_of_mouse(pos_T *mpos, win_T **wpp)
   int winrow = row;
   int wincol = col;
 
+  // Columns outside the view are the vertical separator or a float border.
+  bool in_view_col = wincol >= 0 && wincol < wp->w_view_width;
+
   // compute the position in the buffer line from the posn on the screen
   bool below_buffer = mouse_comp_pos(wp, &row, &col, &mpos->lnum);
 
-  if (!below_buffer && *wp->w_p_stc != NUL
+  if (!below_buffer && in_view_col && winrow >= 0 && winrow < wp->w_view_height
+      && *wp->w_p_stc != NUL
       && (wp->w_p_rl
           ? wincol >= wp->w_view_width - win_col_off(wp)
           : wincol < win_col_off(wp))) {
@@ -273,7 +278,7 @@ static int get_fpos_of_mouse(pos_T *mpos, win_T **wpp)
     return IN_STATUS_LINE;
   }
 
-  if (winrow < 0 && winrow + wp->w_winbar_height >= 0) {  // In winbar
+  if (in_view_col && winrow < 0 && winrow + wp->w_winbar_height >= 0) {  // In winbar
     return MOUSE_WINBAR;
   }
 
@@ -529,7 +534,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       }
 
       // click in a tab selects that tab page
-      if (is_click && mouse_col < Columns) {
+      if (is_click && mouse_col >= 0 && mouse_col < Columns) {
         int tabnr = tab_page_click_defs[mouse_col].tabnr;
         in_tab_line = true;
 
@@ -723,7 +728,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       click_defs_size = row_click_defs.size;
     }
 
-    if (click_defs != NULL && click_col >= 0 && click_col < (int)click_defs_size) {
+    if (click_col >= 0 && click_col < (int)click_defs_size) {
       switch (click_defs[click_col].type) {
       case kStlClickDisabled:
         // If there is no click definition, still open the popupmenu for a
@@ -1343,8 +1348,10 @@ retnomove:
   bool below_window = grid == DEFAULT_GRID_HANDLE && row + wp->w_winbar_height >= wp->w_height;
   on_status_line = below_window && row + wp->w_winbar_height - wp->w_height + 1 == 1;
   on_sep_line = grid == DEFAULT_GRID_HANDLE && col >= wp->w_width && col - wp->w_width + 1 == 1;
-  on_winbar = row < 0 && row + wp->w_winbar_height >= 0;
-  on_statuscol = !below_window && !on_status_line && !on_sep_line && !on_winbar
+  // Columns outside the view are e.g. the vertical separator or a float border.
+  bool in_view_col = col >= 0 && col < wp->w_view_width;
+  on_winbar = in_view_col && row < 0 && row + wp->w_winbar_height >= 0;
+  on_statuscol = in_view_col && row >= 0 && row < wp->w_view_height
                  && *wp->w_p_stc != NUL
                  && (wp->w_p_rl
                      ? col >= wp->w_view_width - win_col_off(wp)
