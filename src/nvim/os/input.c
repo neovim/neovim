@@ -45,11 +45,13 @@ static char *input_read_pos = input_buffer;
 static char *input_write_pos = input_buffer;
 
 /// What inbuf_poll() is doing.
-static enum {
+typedef enum {
   kPollNone,
   kPollInput,     ///< Polling input; the caller processes `main_loop.events`.
   kPollBlocking,  ///< Waiting for input; nobody processes `main_loop.events`.
-} polling = kPollNone;
+} PollState;
+
+static PollState polling = kPollNone;
 static uint64_t cursorhold_time = 0;  ///< Time (ns) spent waiting for CursorHold event.
 static int cursorhold_tb_change_cnt = 0;  ///< tb_change_cnt when waiting started
 static unsigned breakcheck_count = 0;
@@ -215,8 +217,7 @@ bool os_char_avail(void)
 /// available)
 void os_breakcheck(void)
 {
-  if (got_int || main_loop.recursive || !nlua_is_deferred_safe() || !main_loop.events
-      || main_loop.closing) {
+  if (got_int || !nlua_is_deferred_safe() || !main_loop.events || main_loop.closing) {
     return;
   }
 
@@ -528,9 +529,10 @@ static bool inbuf_poll(int ms, MultiQueue *events)
   }
 
   if (ms == 0) {
+    PollState prev = polling;  // Save/restore, in case of nested wait.
     polling = kPollInput;
     LOOP_PROCESS_EVENTS(&main_loop, NULL, 0);
-    polling = kPollNone;
+    polling = prev;
     return os_input_ready(events);
   }
 

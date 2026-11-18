@@ -4636,6 +4636,9 @@ describe('API', function()
           sleep 1m
           return 'y'
         endfunction
+        function! F_getchar()
+          return getchar(0)
+        endfunction
       ]])
       uv.sleep(30) -- Ensure that line_breakcheck() polls.
       eq(
@@ -4643,6 +4646,7 @@ describe('API', function()
         api.nvim_eval_statusline(('%{F_breakcheck()}'):rep(64), {})
       )
       eq({ str = 'y', width = 1 }, api.nvim_eval_statusline('%{F_sleep()}', {}))
+      eq({ str = '0', width = 1 }, api.nvim_eval_statusline('%{F_getchar()}', {}))
     end)
 
     it('rejects invalid format characters', function()
