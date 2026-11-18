@@ -362,6 +362,7 @@ EDITOR
     lost if events are pending.
   • CTRL-C that interrupts a command only interrupts the command; it doesn't
     "fallthrough" to the mapping subsystem and (redundantly) also act as a key.
+  • |vim.regex()| matching can be interrupted by CTRL-C.
 
 EVENTS
 

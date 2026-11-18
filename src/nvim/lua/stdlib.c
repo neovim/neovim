@@ -79,6 +79,9 @@ static int regex_match_str(lua_State *lstate)
   if (!*prog) {
     return luaL_error(lstate, "regex: internal error");
   }
+  if (got_int) {
+    return luaL_error(lstate, "interrupted");
+  }
 
   return nret;
 }
@@ -139,6 +142,9 @@ static int regex_match_line(lua_State *lstate)
 
   if (!*prog) {
     return luaL_error(lstate, "regex: internal error");
+  }
+  if (got_int) {
+    return luaL_error(lstate, "interrupted");
   }
 
   return nret;
@@ -305,8 +311,7 @@ int nlua_regex(lua_State *lstate)
   regprog_T *prog = NULL;
 
   TRY_WRAP(&err, {
-    // RE_NOBREAK #18111 technically not needed bc os_breakcheck skips if !nlua_is_deferred_safe().
-    prog = vim_regcomp(text, RE_AUTO | RE_MAGIC | RE_STRICT | RE_NOBREAK);
+    prog = vim_regcomp(text, RE_AUTO | RE_MAGIC | RE_STRICT);
   });
 
   if (ERROR_SET(&err)) {
