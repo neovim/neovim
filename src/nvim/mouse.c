@@ -228,6 +228,13 @@ static void call_click_def_func(StlClickDefinition *click_defs, int col, int whi
   got_click = false;
 }
 
+/// Whether the mouse is on the global statusline ('laststatus'=3).
+static bool mouse_in_global_stl(void)
+{
+  return mouse_grid <= 1 && mouse_row < Rows - p_ch
+         && mouse_row >= Rows - p_ch - global_stl_height();
+}
+
 /// Translate window coordinates to buffer position without any side effects.
 /// Returns IN_BUFFER and sets `mpos` (0-based column) when in buffer text.
 ///
@@ -269,8 +276,7 @@ static int get_fpos_of_mouse(pos_T *mpos, win_T **wpp)
 
   // winpos and height may change in win_enter()!
   if (winrow >= wp->w_view_height + wp->w_status_height) {  // Below window
-    if (mouse_grid <= 1 && mouse_row < Rows - p_ch
-        && mouse_row >= Rows - p_ch - global_stl_height()) {  // In global status line
+    if (mouse_in_global_stl()) {
       return IN_STATUS_LINE;
     }
     return IN_UNKNOWN;
@@ -689,7 +695,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   bool in_winbar = (jump_flags & MOUSE_WINBAR);
   bool in_statuscol = (jump_flags & MOUSE_STATUSCOL);
   bool in_status_line = (jump_flags & IN_STATUS_LINE);
-  bool in_global_statusline = in_status_line && global_stl_height() > 0;
+  bool in_global_stl = in_status_line && mouse_in_global_stl();
   bool in_sep_line = (jump_flags & IN_SEP_LINE);
 
   if ((in_winbar || in_status_line || in_statuscol) && is_click) {
@@ -702,10 +708,14 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       return false;
     }
 
-    if (in_global_statusline) {
+    if (in_global_stl) {
       // global statusline is displayed for the current window, and spans the whole screen.
       wp = curwin;
       click_col = mouse_col;
+    } else if (in_status_line
+               && (wp->w_status_height == 0 || click_row != wp->w_height - wp->w_winbar_height)) {
+      // Below the window but not on its statusline: cmdline or win separator (laststatus=3).
+      return false;
     }
 
     StlClickDefinition *click_defs = NULL;
