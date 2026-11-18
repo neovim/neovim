@@ -209,6 +209,13 @@ describe(':source', function()
     test_source_lua_file(true)
   end)
 
+  it('file:// URI #39278', function()
+    local file = tmpname()
+    write_file(file, 'let g:sourced = 42\n')
+    command(('source %s'):format(vim.uri.from_fname(file)))
+    eq(42, eval('g:sourced'))
+  end)
+
   describe('can source current buffer', function()
     local function test_source_lua_curbuf()
       it('selected region', function()

@@ -198,12 +198,12 @@ void alist_set(alist_T *al, int count, char **files, int use_curbuf, int *fnum_l
   }
 }
 
-/// Adds the buffer for argument-list entry "i", or stores "set_fnum" as-is.
+/// Adds the buffer for argument-list entry `i`, or stores `set_fnum` as-is.
 ///
 /// May trigger Buf* autocommands.
 ///
 /// @param set_fnum  1: set buffer number; 2: re-use curbuf; <= 0: store as-is
-///                  (see alist_add()).
+///                  (see `alist_add()`).
 void alist_buf_add(alist_T *al, int i, char *fname, int set_fnum)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -223,14 +223,14 @@ void alist_buf_add(alist_T *al, int i, char *fname, int set_fnum)
   wp->w_locked--;
 }
 
-/// Add file "fname" to argument list "al".
-/// "fname" must have been allocated and "al" must have been checked for room.
+/// Adds file `fname` to argument list `al`.
+/// `fname` must have been allocated and `al` must have been checked for room.
 ///
 /// May trigger Buf* autocommands
 ///
 /// @param set_fnum  1: set buffer number; 2: re-use curbuf;
 ///                  negative (-1/-2): buffer creation is deferred, completed later by
-///                  another alist_buf_add() (startup only).
+///                  another `alist_buf_add()` (startup only).
 void alist_add(alist_T *al, char *fname, int set_fnum)
 {
   if (fname == NULL) {          // don't add NULL file names

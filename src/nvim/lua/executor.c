@@ -1778,28 +1778,15 @@ char *nlua_uri_to_fname(const char *uri)
     return xstrdup(uri);
   }
 
-  lua_State *const lstate = global_lstate;
-  const int top = lua_gettop(lstate);
-
-  lua_getglobal(lstate, "require");
-  lua_pushstring(lstate, "vim.uri");
-  if (nlua_pcall(lstate, 1, 1)) {
-    lua_settop(lstate, top);
-    return xstrdup(uri);
-  }
-  lua_getfield(lstate, -1, "to_fname");
-  lua_remove(lstate, -2);
-  lua_pushstring(lstate, uri);
-  if (nlua_pcall(lstate, 1, 1)) {
-    lua_settop(lstate, top);
-    return xstrdup(uri);
-  }
-
-  size_t len = 0;
-  const char *ret = lua_tolstring(lstate, -1, &len);
-  char *fname = ret != NULL ? xmemdupz(ret, len) : xstrdup(uri);
-  lua_settop(lstate, top);
-  return fname;
+  MAXSIZE_TEMP_ARRAY(args, 1);
+  ADD_C(args, CSTR_AS_OBJ(uri));
+  Error err = ERROR_INIT;
+  Object result = NLUA_EXEC_STATIC("return require('vim.uri').to_fname(...)", args,
+                                   kRetObject, NULL, &err);
+  char *fname = result.type == kObjectTypeString ? string_to_cstr(result.data.string) : NULL;
+  api_clear_error(&err);
+  api_free_object(result);
+  return fname != NULL ? fname : xstrdup(uri);
 }
 
 /// Calls Lua to implement an excmd. Passes `eap` + `cmdmod` to Lua as a dict arg, which is arranged

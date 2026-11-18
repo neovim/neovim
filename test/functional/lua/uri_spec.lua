@@ -306,7 +306,7 @@ describe('vim.uri', function()
       eq(uri, exec_lua('return vim.uri_from_bufnr(vim.uri_to_bufnr(...))', uri))
     end)
 
-    it('yields the same buffer as symlink and real path #39278', function()
+    it('reuses the buffer for symlink and real path #39278', function()
       local file = t.tmpname()
       local link = t.tmpname(false)
       vim.uv.fs_symlink(file, link)
