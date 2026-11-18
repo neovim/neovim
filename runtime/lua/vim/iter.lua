@@ -683,7 +683,26 @@ end
 --- @return V1?, V...
 function Iter:peek()
   if self._peeked == nil then
-    self._peeked = pack(self:next())
+    local next = self.next
+    self._peeked = pack(next(self))
+
+    if self._peeked ~= nil then
+      local peek_next
+      peek_next = function()
+        if self._peeked ~= nil then
+          local v = self._peeked
+          self._peeked = nil
+          if self.next == peek_next then
+            self.next = next
+          end
+          return unpack(v)
+        end
+
+        return next(self)
+      end
+
+      self.next = peek_next
+    end
   end
 
   return unpack(self._peeked)
@@ -977,10 +996,7 @@ function Iter:skip(n)
         return next(self)
       end
       while true do
-        local peeked = self._peeked
-        if peeked == nil then
-          peeked = pack(next(self))
-        end
+        local peeked = pack(next(self))
 
         if peeked == nil then
           return nil
@@ -988,11 +1004,8 @@ function Iter:skip(n)
 
         if not n(unpack(peeked)) then
           skipping = false
-          self._peeked = nil
           return unpack(peeked)
         end
-
-        self._peeked = nil
       end
     end
   end

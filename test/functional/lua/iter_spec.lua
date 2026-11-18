@@ -623,6 +623,31 @@ describe('vim.iter', function()
       eq(2, it:peek())
     end)
 
+    it('does not repeat transformations on the peeked value', function()
+      local it = vim.iter(vim.gsplit('1 2', ' ')):map(function(x)
+        return tonumber(x) * 2
+      end)
+
+      eq(2, it:peek())
+      eq(2, it:peek())
+      eq(2, it:next())
+      eq(4, it:next())
+    end)
+
+    it('applies transformations added after peeking', function()
+      local it = vim.iter(vim.gsplit('1 2', ' ')):map(function(x)
+        return tonumber(x) * 2
+      end)
+
+      eq(2, it:peek())
+      it:map(function(x)
+        return x + 1
+      end)
+
+      eq(3, it:next())
+      eq(5, it:next())
+    end)
+
     it('peek() at end of iterator returns nil', function()
       local it = vim.iter({ 1 })
 
