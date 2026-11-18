@@ -1613,7 +1613,7 @@ bool marktree_itr_step_out_filter(MarkTree *b, MarkTreeIter *itr, MetaFilter met
     marktree_itr_next_skip(b, itr, true, false, NULL, NULL);
   }
 
-  return itr->x;
+  return itr->x != NULL;
 }
 
 bool marktree_itr_next_filter(MarkTree *b, MarkTreeIter *itr, int stop_row, int stop_col,
