@@ -8,6 +8,7 @@ local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local command = n.command
 local eq = t.eq
+local exec_lua = n.exec_lua
 local feed = n.feed
 
 describe('example', function()
@@ -64,5 +65,15 @@ describe('example', function()
         }, event_tabs)
       end,
     }
+  end)
+
+  it('exec_lua passes false upvalues', function()
+    local x = false
+    eq(
+      false,
+      exec_lua(function()
+        return x
+      end)
+    )
   end)
 end)

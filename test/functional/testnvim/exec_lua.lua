@@ -23,7 +23,7 @@ local function set_upvalues(f, upvalues)
     if not n then
       break
     end
-    if upvalues[n] then
+    if upvalues[n] ~= nil then
       debug.setupvalue(f, i, upvalues[n])
     end
     i = i + 1
