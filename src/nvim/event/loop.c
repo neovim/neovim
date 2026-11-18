@@ -72,12 +72,15 @@ static bool loop_uv_run(Loop *loop, int64_t ms)
 /// Does NOT process `Loop.events`, that is an application-specific decision.
 ///
 /// @param loop
-/// @param ms  0: non-blocking poll.
+/// @param ms  0: non-blocking poll (no-op if nested in uv_run(), e.g. an api-fast request).
 ///            > 0: timeout after `ms`.
 ///            < 0: wait forever.
 /// @return  true if `ms` > 0 and was reached
 bool loop_poll_events(Loop *loop, int64_t ms)
 {
+  if (loop->recursive && ms == 0) {
+    return false;  // The outer uv_run() polls after the current callback returns.
+  }
   bool timeout_expired = loop_uv_run(loop, ms);
   // Before `fast_events`, else their breakchecks count the wait as time without polling.
   loop->poll_time = os_hrtime();  // Not uv_now(): timer_start(), etc. update it without polling.
