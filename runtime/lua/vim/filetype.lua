@@ -736,6 +736,7 @@ local extension = {
   cps = 'json',
   json5 = 'json5',
   jsonc = 'jsonc',
+  hujson = 'jsonc',
   jsonl = 'jsonl',
   jsonld = 'jsonld',
   jsonnet = 'jsonnet',
