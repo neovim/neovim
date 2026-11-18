@@ -923,7 +923,7 @@ static void term_write(const char *buf, size_t size, void *data)
 static void term_resize(uint16_t width, uint16_t height, void *data)
 {
   Channel *chan = data;
-  pty_proc_resize(&chan->stream.pty, width, height);
+  pty_proc_resize(&chan->stream.pty, width, height, 0, 0);
 }
 
 static void term_resume(void *data)
