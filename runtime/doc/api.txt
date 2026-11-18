@@ -2923,7 +2923,8 @@ nvim_buf_get_commands({buf}, {opts})                 *nvim_buf_get_commands()*
                 Currently not used.
 
     Return: ~
-        (`vim.api.keyset.command_info`) Map of maps describing commands.
+        (`table<string,vim.api.keyset.command_info>`) Map of maps describing
+        commands.
 
 nvim_cmd({cmd}, {opts})                                           *nvim_cmd()*
     Executes an Ex command `cmd`, specified as a Dict with the same structure

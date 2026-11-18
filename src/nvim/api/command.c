@@ -1248,8 +1248,8 @@ DictOf(DictAs(command_info)) nvim_get_commands(Dict(get_commands) *opts, Arena *
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Map of maps describing commands.
-DictAs(command_info) nvim_buf_get_commands(Buffer buf, Dict(get_commands) *opts, Arena *arena,
-                                           Error *err)
+DictOf(DictAs(command_info)) nvim_buf_get_commands(Buffer buf, Dict(get_commands) *opts,
+                                                   Arena *arena, Error *err)
   FUNC_API_SINCE(4)
 {
   bool global = (buf == -1);
