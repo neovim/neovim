@@ -197,9 +197,12 @@ const char *pty_proc_tty_name(PtyProc *ptyproc)
   return "?";
 }
 
-void pty_proc_resize(PtyProc *ptyproc, uint16_t width, uint16_t height)
+void pty_proc_resize(PtyProc *ptyproc, uint16_t width, uint16_t height, uint16_t pixel_width,
+                     uint16_t pixel_height)
   FUNC_ATTR_NONNULL_ALL
 {
+  (void)pixel_width;
+  (void)pixel_height;
   os_conpty_set_size(ptyproc->conpty, width, height);
 }
 
