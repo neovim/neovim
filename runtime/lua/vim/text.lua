@@ -174,17 +174,21 @@ function M.indent(size, text, opts)
   --- Check all non-empty lines, capturing leading whitespace (if any).
   --- @diagnostic disable-next-line: no-unknown
   for line_ws, extra in text:gmatch('([\t ]*)([^\n]+)') do
-    line_ws = tabspaces and line_ws:gsub('[\t]', tabspaces) or line_ws
-    -- XXX: blank line will miss the last whitespace char in `line_ws`, so we need to check `extra`.
-    line_ws = line_ws .. (extra:match('^%s+$') or '')
-    if 0 == #line_ws then
-      -- Optimization: If any non-empty line has indent=0, there is no common indent.
-      old_indent = 0
-      break
+    if line_ws == '' and extra == '\r' then
+      -- Ignore empty CRLF lines when calculating the common indent.
+    else
+      -- XXX: blank line will miss the last whitespace char in `line_ws`, so we need to check `extra`.
+      line_ws = line_ws .. (extra:match('^[\t ]+$') or '')
+      line_ws = tabspaces and line_ws:gsub('[\t]', tabspaces) or line_ws
+      if 0 == #line_ws then
+        -- Optimization: If any non-empty line has indent=0, there is no common indent.
+        old_indent = 0
+        break
+      end
+      prefix = prefix and prefix or line_ws:sub(1, 1)
+      local _, end_ = line_ws:find('^[' .. prefix .. ']+')
+      old_indent = math.min(old_indent or math.huge, end_ or 0) --[[@as integer?]]
     end
-    prefix = prefix and prefix or line_ws:sub(1, 1)
-    local _, end_ = line_ws:find('^[' .. prefix .. ']+')
-    old_indent = math.min(old_indent or math.huge, end_ or 0) --[[@as integer?]]
   end
   -- Default to 0 if all lines are empty.
   old_indent = old_indent or 0
@@ -200,13 +204,15 @@ function M.indent(size, text, opts)
   --- Replaces indentation of a line.
   --- @param line string
   local function replace_line(line)
+    if line == '\r' then
+      return line
+    end
     -- Match the existing indent exactly; avoid over-matching any following whitespace.
     local pat = prefix:rep(old_indent)
     -- Expand tabs before replacing indentation.
-    line = not tabspaces and line
-      or line:gsub('^[\t ]+', function(s)
-        return s:gsub('\t', assert(tabspaces))
-      end)
+    line = not tabspaces and line or line:gsub('^[\t ]+', function(s)
+      return s:gsub('\t', assert(tabspaces))
+    end)
     -- Text following the indent.
     local line_text = line:match('^' .. pat .. '(.*)') or line
     return new_indent .. line_text

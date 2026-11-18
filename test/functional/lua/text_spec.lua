@@ -51,6 +51,14 @@ describe('vim.text', function()
       eq({ '  a', 2 }, { vim.text.indent(2, '\t a', { expandtab = 1 }) })
     end)
 
+    it('handles whitespace-only lines and blank CRLF lines', function()
+      eq({ 'a\n\nb', 4 }, {
+        vim.text.indent(0, '    a\n\t\n    b', { expandtab = 4 }),
+      })
+      eq({ 'a\r\n\r\nb\r\n', 2 }, { vim.text.indent(0, '  a\r\n\r\n  b\r\n') })
+      eq({ '  a\r\n\r\n  b\r\n', 0 }, { vim.text.indent(2, 'a\r\n\r\nb\r\n') })
+    end)
+
     it('real-world cases', function()
       -- Dedent.
       eq({
