@@ -260,6 +260,7 @@ describe("'inccommand' for user commands", function()
         preview = function(ev)
           vim.bo.modifiable = true
           vim.api.nvim_buf_set_lines(0, 0, -1, false, {"cats"})
+          vim.bo.modifiable = false -- The preview itself may set 'nomodifiable'. #42893
           return 2
         end,
       })
@@ -274,7 +275,7 @@ describe("'inccommand' for user commands", function()
     screen:expect([[
       cats                                    |
       {1:~                                       }|*8
-      {3:[No Name] [+]                           }|
+      {3:[No Name] [+-]                          }|
                                               |
       {1:~                                       }|*4
       {2:[Preview]                               }|

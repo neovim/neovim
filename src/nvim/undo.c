@@ -3414,7 +3414,11 @@ void u_rollback(UndoCheckpoint *uc, buf_T *buf)
       u_sync(true);
     }
     // Undo invisibly. This also moves the cursor!
-    if (!u_undo_and_forget(count, false)) {
+    int const save_ma = buf->b_p_ma;
+    buf->b_p_ma = true;  // |:command-preview| may set 'nomodifiable'. #42893
+    bool const ok = u_undo_and_forget(count, false);
+    buf->b_p_ma = save_ma;
+    if (!ok) {
       abort();
     }
     ctx_restore(&cs);
