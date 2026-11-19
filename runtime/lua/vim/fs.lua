@@ -502,7 +502,7 @@ function M.find(names, opts)
 
   --- @param match string
   local function add(match)
-    matches[#matches + 1] = M.normalize(match)
+    matches[#matches + 1] = M.normalize(match, { plain = true })
     if #matches == limit then
       return true
     end
@@ -519,7 +519,7 @@ function M.find(names, opts)
       --- @param p string
       test = function(p)
         local t = {}
-        for name, type, err in M.dir(p, { err = true }) do
+        for name, type, err in M.dir(p, { err = true, plain = true }) do
           if type == 'link' and opts.follow then
             type = (uv.fs_stat(M.joinpath(p, name)) or {}).type or type
           end
@@ -577,7 +577,7 @@ function M.find(names, opts)
         break
       end
 
-      for other, type_, err in M.dir(dir, { err = true }) do
+      for other, type_, err in M.dir(dir, { err = true, plain = true }) do
         if type_ == 'link' and opts.follow then
           type_ = (uv.fs_stat(M.joinpath(dir, other)) or {}).type or type_
         end
@@ -968,7 +968,7 @@ local function rm(path, ty, recursive, force)
 
   if ty == 'directory' then
     if recursive then
-      for file, fty in vim.fs.dir(path) do
+      for file, fty in vim.fs.dir(path, { plain = true }) do
         rm(M.joinpath(path, file), fty, true, force)
       end
     elseif not force then
