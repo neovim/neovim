@@ -1023,26 +1023,28 @@ bool atom_visual_redoable(void)
   return true;
 }
 
-/// The pending visual atom's uncascaded "tail" keys (allocated; NULL data if inactive/void).
+/// The pending visual atom's uncascaded "tail" (allocates `keys`, NULL if inactive/void).
 /// Replaying produces the per-cursor selection. Prefixed with "gv" if a span cascaded.
-String atom_visual_span(void)
+CmdAtom atom_visual_span(void)
 {
+  CmdAtom span = { .type = kAVisualSpan, .origin = vatom.origin };
   if (!atom_visual_replayable()) {
-    return (String)STRING_INIT;
+    return span;
   }
   String tail = atoms_concat_keys(vatom.atoms, vatom.done);
   if (vatom.done == 0) {
-    return tail;
+    span.keys = tail.data;
+    return span;
   }
 
   // Prefix with "gv".
   StringBuilder keys = KV_INITIAL_VALUE;
   kv_concat(keys, "gv");
   kv_concat_len(keys, tail.data, tail.size);
-  size_t len = kv_size(keys);
   kv_push(keys, NUL);
   api_free_string(tail);
-  return (String){ .data = keys.items, .size = len };
+  span.keys = keys.items;
+  return span;
 }
 
 /// Cascades the Visual session's uncascaded subatoms as a span, if one of them edited the buffer.
@@ -1063,9 +1065,9 @@ static void atom_visual_span_flush(void)
   if (!edited) {
     return;
   }
-  String span = atom_visual_span();
+  CmdAtom span = atom_visual_span();
   vatom.done = kv_size(vatom.atoms);
-  kv_push(g_atoms, ((CmdAtom){ .type = kAVisualSpan, .keys = span.data, .origin = vatom.origin }));
+  kv_push(g_atoms, span);
 }
 
 /// Ends the pending visual atom, appends `suffix`, and stages it. Or discards if unreplayable.
@@ -1152,8 +1154,7 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
   atom.cascaded = vatom.done > 0;
   if (atom.cascaded && vatom.done < kv_size(vatom.atoms)) {
     // Spans cascaded the selection's edits. This last one completes it (the operator).
-    String span = atom_visual_span();
-    kv_push(g_atoms, ((CmdAtom){ .type = kAVisualSpan, .keys = span.data, .origin = origin }));
+    kv_push(g_atoms, atom_visual_span());
   }
   atom.atoms = vatom.atoms;
   vatom.atoms = (CmdAtomVec)KV_INITIAL_VALUE;
@@ -1276,12 +1277,12 @@ void atom_capture_op(oparg_T *oap, cmdarg_T *cap, bool redo_yank)
       // Visual-entered Insert: redo body opens with the selection's captured keys; appends the
       // op+text+<Esc>. Unreplayable (void, "gv") selection falls back to "1v" (fixed-size reselect).
       // (Ex/Lua-motion selections were already prepped above, as the motion's keys.)
-      String v = atom_visual_redoable() ? atom_visual_span() : (String)STRING_INIT;
-      prep_redo_visual(v.data != NULL ? v.data : "1v", v.data != NULL ? v.size : 2, (CmdSpec){
+      char *v = atom_visual_redoable() ? atom_visual_span().keys : NULL;
+      prep_redo_visual(v != NULL ? v : "1v", v != NULL ? strlen(v) : 2, (CmdSpec){
         .regname = oap->regname,
         .op = get_op_char(oap->op_type), .op_extra = get_extra_op_char(oap->op_type),
       });
-      xfree(v.data);
+      xfree(v);
     }
   }
 }
@@ -1311,7 +1312,7 @@ InsSession atom_ins_start(int cmd, long count, VisualIns vis, bool vblock)
 
   if (vis != kVInsNone && !mc_replaying() && !is_child_frame()) {
     if (vis == kVInsOther && atom_visual_replayable() && !atom_visual_redoable()) {
-      session.vsel = atom_visual_span().data;
+      session.vsel = atom_visual_span().keys;
       session.origin = vatom.origin;
     }
     if (vis == kVInsKeys || session.vsel != NULL) {
@@ -1675,7 +1676,9 @@ void atom_cmd_end(cmdarg_T *ca, CmdFrame *old)
     }
   }
   if (refresh_visual) {
-    mc_vsel_refresh();
+    CmdAtom span = atom_visual_span();
+    mc_vsel_refresh(&span);
+    xfree(span.keys);
   }
   XFREE_CLEAR(old->cmdline);
   cur_frame = old->parent;

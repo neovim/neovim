@@ -2332,14 +2332,41 @@ describe('multicursor', function()
       ]])
       feed('<Esc>')
 
-      -- A cursor without a previous area (added after the selection) has nothing to reselect.
+      -- Cursor without a previous/gv area (added after the selection) cannot reselect: dropped.
+      command('set showcmd')
+      for _, keys in ipairs({ 'gvo', '2gvo' }) do
+        clear_cursors()
+        cursors({ 'aa bb', 'cc dd', 'ee ff' }, 'Qj')
+        feed('viw<Esc>')
+        feed('jQk') -- Cursor on line 3: no area.
+        feed(keys) -- Not Normal-mode "o" there. #42821
+        screen:expect({ any = '1×' }) -- Dropped by the preview already.
+        feed('d')
+        eq({ ' bb', ' dd', 'ee ff' }, get_lines(), keys)
+        eq(1, ncursors())
+      end
+      command('set noshowcmd')
+      -- Mapping LHS "gv…" is not "gv": LHS-replays at a cursor without an area.
+      command([[nnoremap gvs <Cmd>call setline('.', 'x')<CR>]])
       clear_cursors()
-      cursors({ 'aa bb', 'cc dd', 'ee ff' }, 'Qj')
-      feed('viw<Esc>')
-      feed('jQk') -- Cursor on line 3: no area.
-      feed('gvd')
-      eq({ ' bb', ' dd', 'ee ff' }, get_lines())
-      eq(2, ncursors())
+      cursors({ 'aa', 'bb' }, 'Qj')
+      feed('gvs')
+      eq({ 'x', 'x' }, get_lines())
+      eq(1, ncursors())
+      command('nunmap gvs')
+
+      -- Primary-overlapping cursor: not previewed, like its replay.
+      clear_cursors()
+      cursors({ 'aaaaa bbbbb' }, 'QwQ')
+      feed('viwo<Esc>gvo')
+      screen:expect([[
+        {17:aaaaa} {17:bbbb^b}                   |
+        {1:~                             }|*4
+        {5:-- VISUAL --}                  |
+      ]])
+      eq(2, ncursors()) -- Not dropped, thus not previewed (the "gv" check would drop it).
+
+      feed('<Esc>')
       clear_cursors()
       cursors({ 'aa bb', 'cc dd', 'ee ff' }, 'Qj')
       feed('viw<Esc>')
@@ -2353,13 +2380,15 @@ describe('multicursor', function()
       feed('viw<Esc>')
       feed('gvcX<Esc>')
       eq({ 'X bb', 'X dd', 'X ff' }, get_lines())
-      -- Cursor without a previous area is skipped.
-      clear_cursors()
-      cursors({ 'aa bb', 'cc dd', 'ee ff' }, 'Qj')
-      feed('<C-v>l<Esc>')
-      feed('jQk') -- Cursor on line 3: no area.
-      feed('gvIX<Esc>')
-      eq('ee ff', fn.getline(3))
+      -- Cursor without a previous/gv area is dropped, so the inserted "X" does not reach it either.
+      for _, keys in ipairs({ { '<C-v>l', 'gvIX<Esc>' }, { 'viw', 'gvcX<Esc>' } }) do
+        clear_cursors()
+        cursors({ 'aa bb', 'cc dd', 'ee ff' }, 'Qj')
+        feed(('%s<Esc>'):format(keys[1]))
+        feed('jQk') -- Cursor on line 3: no area.
+        feed(keys[2])
+        eq('ee ff', fn.getline(3), keys[2])
+      end
     end)
 
     it('selection moved by mapping via API/Lua #41956', function()
