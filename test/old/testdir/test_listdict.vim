@@ -220,8 +220,33 @@ func Test_list_range_assign()
       call assert_equal([1, 2], l)
       LET l[-4 : -1] = [5, 6]
       call assert_equal([5, 6], l)
+
+      LET l = [0, 1, 2, 3]
+      LET l[-3 : -2] = [8, 9]
+      call assert_equal([0, 8, 9, 3], l)
+      LET l = [0, 1, 2, 3]
+      LET l[-3 : 2] = [8, 9]
+      call assert_equal([0, 8, 9, 3], l)
+      LET l = [0, 1, 2, 3]
+      LET l[1 : -2] = [8, 9]
+      call assert_equal([0, 8, 9, 3], l)
+      LET l = range(4)
+      LET l[-1 : -1] = [9]
+      call assert_equal([0, 1, 2, 9], l)
   END
   call CheckLegacyAndVim9Success(lines)
+
+  let lines =<< trim END
+      VAR l = [0, 1, 2, 3]
+      LET l[-1 : -2] = [8, 9]
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E684:')
+
+  let lines =<< trim END
+      VAR l = [0, 1, 2, 3]
+      LET l[0 : -5] = [8, 9]
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E684:')
 
   let lines =<< trim END
     var l = [7]

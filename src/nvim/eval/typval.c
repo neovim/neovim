@@ -658,6 +658,14 @@ listitem_T *tv_list_check_range_index_one(list_T *const l, int *const n1, const 
 int tv_list_check_range_index_two(list_T *const l, int *const n1, const listitem_T *const li1,
                                   int *const n2, const bool quiet)
 {
+  if (*n1 < 0) {
+    if (l->lv_idx_item == li1) {
+      *n1 = l->lv_idx;
+    } else {
+      *n1 = tv_list_idx_of_item(l, li1);
+    }
+  }
+
   if (*n2 < 0) {
     listitem_T *ni = tv_list_find(l, *n2);
     if (ni == NULL) {
@@ -666,13 +674,11 @@ int tv_list_check_range_index_two(list_T *const l, int *const n1, const listitem
       }
       return FAIL;
     }
-    *n2 = tv_list_idx_of_item(l, ni);
+    // tv_list_find() caches the normalized index.
+    *n2 = l->lv_idx;
   }
 
   // Check that n2 isn't before n1.
-  if (*n1 < 0) {
-    *n1 = tv_list_idx_of_item(l, li1);
-  }
   if (*n2 < *n1) {
     if (!quiet) {
       semsg(_(e_list_index_out_of_range_nr), (int64_t)(*n2));
