@@ -25,7 +25,7 @@ emcc --version
 zig version
 
 # Install Binaryen if it is not already available.
-BINARYEN_VERSION=132
+BINARYEN_VERSION=133
 BINARYEN_DIR="$ROOT/.binaryen"
 BINARYEN_BIN="$BINARYEN_DIR/binaryen-version_${BINARYEN_VERSION}/bin"
 
