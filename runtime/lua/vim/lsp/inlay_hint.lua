@@ -6,6 +6,47 @@ local util = require('vim.lsp.util')
 local Capability = require('vim.lsp._capability')
 
 local M = {}
+local function same_range(a, b)
+  return a
+    and b
+    and a.start.line == b.start.line
+    and a.start.character == b.start.character
+    and a['end'].line == b['end'].line
+    and a['end'].character == b['end'].character
+end
+
+local function get_viewport(bufnr)
+  local start_row, end_row
+  for _, win in ipairs(api.nvim_list_wins()) do
+    if api.nvim_win_get_buf(win) == bufnr then
+      local f = vim.fn.line('w0', win) - 1 -- First visible line of the win
+      local l = vim.fn.line('w$', win)     -- Last visible line of the win
+
+      -- NOTE:  This calculate union of the range from all win with the same buffer
+      --      
+      --        Example:
+      --          win A, bufnr 1 -> f = 5,   l = 37
+      --          win B, bufnr 2 -> f = 169, l = 201
+      --          start_row = 5, end_row = 201
+      --        That means client:request('textDocument/InlayHint', ...) from InlayHint:refresh()
+      --        should calculate a whole 100+ line of inlayHint for nothing.
+      --        This is indeed much cheaper than request the inlayHint for the full window (at least
+      --        in large file)
+      --
+      --        Solution could be to keep each visible range win related and send one request for
+      --        range, like:
+      --
+      --        ranges[#ranges + 1] = {
+      --             start = first,
+      --             finish = last,
+      --             }
+      --             
+      start_row = start_row and math.min(start_row, f) or f
+      end_row = end_row and math.max(end_row, l) or l
+    end
+  end
+  return start_row, end_row
+end
 
 ---@class (private) vim.lsp.inlay_hint.LineHints
 ---@field hints lsp.InlayHint[]
@@ -15,11 +56,12 @@ local M = {}
 ---@field version? integer document version associated with this result
 ---@field namespace_cleared? boolean whether the namespace was cleared for this result yet
 ---@field hints? table<integer, vim.lsp.inlay_hint.LineHints> lnum -> hints
-
+---@field range? lsp.Range
+---
 ---@class (private) vim.lsp.inlay_hint.ActiveRequest
 ---@field request_id? integer the LSP request ID of the most recent request sent to the server
 ---@field version? integer the document version associated with the most recent request
-
+---@field range? lsp.Range
 ---@class (private) vim.lsp.inlay_hint.ClientState Buffer local state for inlay hints
 ---@field namespace integer
 ---@field active_request vim.lsp.inlay_hint.ActiveRequest
@@ -45,6 +87,23 @@ function InlayHint:new(bufnr)
   nvim_on('BufWinEnter', self.augroup, { buf = self.bufnr }, function()
     for client_id, _ in pairs(self.client_state) do
       self:refresh(client_id)
+    end
+  end)
+  
+  
+  nvim_on({'WinScrolled', 'WinResized', 'WinEnter'}, self.augroup, {}, function(args)
+    local win = tonumber(args.match) or api.nvim_get_current_win()
+    if not api.nvim_win_is_valid(win) then
+      return
+    end
+
+    if api.nvim_win_get_buf(win) ~= self.bufnr then
+      return
+    end
+
+    for client_id, _ in pairs(self.client_state) do
+      self:refresh(client_id)
+
     end
   end)
 
@@ -104,7 +163,6 @@ end
 ---@package
 ---@param client_id integer
 function InlayHint:refresh(client_id)
-  vim.notify('InlayHint:refresh called')
   local version = util.buf_versions[self.bufnr]
   local state = self.client_state[client_id]
   local client = vim.lsp.get_client_by_id(client_id)
@@ -113,53 +171,40 @@ function InlayHint:refresh(client_id)
     local current_result = state.current_result
     local active_request = state.active_request
 
-    -- Only send a request for this client if the current result is out of date and
-    -- there isn't a current a request in flight for this version
-    if current_result.version == version or active_request.version == version then
+    local start_line, end_line = get_viewport(self.bufnr)
+
+    if not start_line then
+      return
+    end
+
+    local range = vim.range(self.bufnr, start_line, 0, end_line, 0):to_lsp(client.offset_encoding)
+    
+    -- Skip if the current result already covers this version and range
+    if current_result.version == version and same_range(current_result.range, range) then
+      return
+    end
+    
+    -- Skip if an identical request is already in-flight
+    if active_request.version == version and same_range(active_request.range, range) then
       return
     end
 
     -- cancel stale in-flight request
     self:cancel_active_request(client_id)
 
-    --[[ 
-    ---@type lsp.InlayHintParams
     local params = {
       textDocument = util.make_text_document_params(self.bufnr),
-      range = vim
-
-        .range(self.bufnr, 0, 0, api.nvim_buf_line_count(self.bufnr), 0)
-        :to_lsp(client.offset_encoding),
-    } --]]  
-
-      ---TODO: :h vim.range give us the field inverted.
-      -- Fields: ~
-      -- • {buf}        (`integer`) Optional buffer handle.
-      -- • {end_col}    (`integer`) 0-based byte index.
-      -- • {end_row}    (`integer`) 0-based byte index.
-      -- • {start_col}  (`integer`) 0-based byte index.
-      -- • {start_row}  (`integer`) 0-based byte index.
-      -- Insead is => 
-      -- Fields: ~
-      -- • {buf}        (`integer`) Optional buffer handle.
-      -- • {start_col}  (`integer`) 0-based byte index.
-      -- • {start_row}  (`integer`) 0-based byte index.
-      -- • {end_col}    (`integer`) 0-based byte index.
-      -- • {end_row}    (`integer`) 0-based byte index.
-    
-    ---@type lsp.InlayHintParams
-    local params = {
-      textDocument = util.make_text_document_params(self.bufnr),
-      range = vim.range(self.bufnr, vim.fn.line('w0'), 0, vim.fn.line('w$'), 0):to_lsp(client.offset_encoding) 
+      range = range
     }
-    local success, request_id = client:request('textDocument/inlayHint', params, nil, self.bufnr)
-   -- De  
-    -- vim.notify(vim.inspect(params.range))
-    if success then
+
+    local succes, request_id = client:request('textDocument/inlayHint', params, nil, self.bufnr)
+
+    if succes then
       active_request.request_id = request_id
       active_request.version = version
+      active_request.range = range
     end
-  end
+  end 
 end
 
 --- |lsp-handler| for the method `textDocument/inlayHint`
@@ -216,11 +261,14 @@ function M.on_inlayhint(err, result, ctx)
     table.insert(new_lnum_hints[lnum].hints, hint)
 
   end
+  
+  local requested_range = state.active_request.range
 
   state.active_request = {}
   state.current_result = {
     hints = new_lnum_hints,
     version = ctx.version,
+    range = requested_range,
     namespace_cleared = false,
   }
 
@@ -240,6 +288,7 @@ function InlayHint:cancel_active_request(client_id)
     client:cancel_request(active_request.request_id)
     active_request.request_id = nil
     active_request.version = nil
+    active_request.range = nil
   end
 end
 
@@ -290,7 +339,7 @@ end
 --- local resp = client:request_sync('inlayHint/resolve', hint.inlay_hint, 100, 0)
 --- local resolved_hint = assert(
 ---   resp and resp.result,
----   resp and resp.err and vim.lsp.rpc.format_rpc_error(resp.err) or 'request failed'
+---   resp and resp.trr and vim.lsp.rpc.format_rpc_error(resp.err) or 'request failed'
 --- )
 --- vim.lsp.util.apply_text_edits(resolved_hint.textEdits, 0, client.encoding)
 ---
