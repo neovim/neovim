@@ -262,6 +262,30 @@ func Test_comment_join_lines_fo_j()
   call setline(1, ['i++; > ) > ) comment1', '           > ) comment2'])
   normal J
   call assert_equal('i++; > ) > ) comment1 comment2', getline(1))
+  " Test with leaders with the 'f' flag
+  setlocal comments=b:#,fb:-
+  call setline(1, ['b', '- c', '- d', '# e'])
+  normal 4J
+  call assert_equal('b - c - d # e', getline(1))
+  call setline(1, ['x = (a  # note', '     - b)'])
+  normal J
+  call assert_equal('x = (a  # note - b)', getline(1))
+  call setline(1, ['x = a - b', '# c', '# - d', '# e'])
+  normal 4J
+  call assert_equal('x = a - b # c - d e', getline(1))
+  setlocal comments=s1fl:{-,mb:-,ex:-},:--
+  call setline(1, ['{- first', ' - second -}'])
+  normal 2J
+  call assert_equal('{- first second -}', getline(1))
+  setlocal comments=fb:..
+  call setline(1, ['.. a', '.. b'])
+  normal J
+  call assert_equal('.. a .. b', getline(1))
+  " Folding still takes it as a comment
+  setlocal fdm=marker cms=..\ %s
+  call setline(1, ['.. a', 'b'])
+  1,2fold
+  call assert_equal(['.. a{{{', 'b.. }}}'], getline(1, 2))
   bw!
 endfunc
 

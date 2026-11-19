@@ -2083,7 +2083,9 @@ int get_leader_len(char *line, char **flags, bool backward, bool include_space)
 ///
 /// When "flags" is not null, it is set to point to the flags describing the
 /// recognized comment leader.
-int get_last_leader_offset(char *line, char **flags)
+/// When "skip_first" is true, ignore a leader with the 'f' flag, unless it is
+/// part of a three-piece comment.
+int get_last_leader_offset(char *line, char **flags, bool skip_first)
 {
   int result = -1;
   int j;
@@ -2110,6 +2112,11 @@ int get_last_leader_offset(char *line, char **flags)
       }
       *string++ = NUL;          // Isolate flags from string.
       com_leader = string;
+
+      if (skip_first && vim_strchr(part_buf, COM_FIRST) != NULL
+          && strpbrk(part_buf, "sme") == NULL) {
+        continue;
+      }
 
       // Line contents and string must match.
       // When string starts with white space, must have some white space
