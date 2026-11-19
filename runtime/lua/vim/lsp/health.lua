@@ -113,8 +113,7 @@ local function check_active_clients()
       else
         dirs_info = string.format(
           '- Root directory: %s',
-          -- vim.fs.relpath does not prepend '~/' while fnamemodify does
-          client.root_dir and vim.fn.fnamemodify(client.root_dir, ':~')
+          client.root_dir and require('vim._core.util').shorten_path(client.root_dir)
         ) or nil
       end
       report_info(table.concat({
