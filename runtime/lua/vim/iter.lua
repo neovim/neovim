@@ -77,7 +77,7 @@ local M = {}
 --- @nodoc
 --- @class vim.Iter<V1, V...>
 --- @field private _peeked V1|[V1, V...]? Cached peek value, if any. Nil if no value is peeked.
---- @field private _next fun(): V1, V... The underlying function that returns the next packed value from the source.
+--- @field private _next fun(): V1?, V... The current pipeline, without the lookahead cache.
 --- @overload fun(self: vim.Iter<V1, V...>): V1?, V...
 local Iter = {}
 Iter.__index = Iter
@@ -118,6 +118,27 @@ local function pack(...)
     return setmetatable({ n = n, ... }, packedmt)
   end
   return ...
+end
+
+--- @private
+--- @return fun(): V1?, V...
+function Iter:_previous_stage()
+  local next = self._next
+  local peeked = self._peeked
+  if peeked == nil then
+    return next
+  end
+
+  -- A new stage must see the peeked value before pulling from the old pipeline.
+  self._peeked = nil
+  return function()
+    if peeked ~= nil then
+      local value = peeked
+      peeked = nil
+      return unpack(value)
+    end
+    return next()
+  end
 end
 
 --- @generic T
@@ -373,7 +394,7 @@ function Iter:map(f)
   -- values along to another function. Hence the intricate function passing you
   -- see here.
 
-  local next = self.next
+  local next = self:_previous_stage()
 
   --- Drain values from the upstream iterator source until a value can be
   --- returned.
@@ -390,14 +411,13 @@ function Iter:map(f)
   --- @return any
   local function fn(cont, ...)
     if cont then
-      return fn(apply(f, next(self)))
+      return fn(apply(f, next()))
     end
     return ...
   end
 
-  --- @diagnostic disable-next-line: duplicate-set-field
-  self.next = function()
-    return fn(apply(f, next(self)))
+  self._next = function()
+    return fn(apply(f, next()))
   end
   return self
 end
@@ -849,10 +869,9 @@ function Iter:take(n)
     end
   end
 
-  local next = self.next
-  --- @diagnostic disable-next-line:duplicate-set-field
-  self.next = function()
-    return fn(next(self))
+  local next = self:_previous_stage()
+  self._next = function()
+    return fn(next())
   end
   return self
 end
@@ -967,32 +986,24 @@ function Iter:skip(n)
       local _ = self:next()
     end
   elseif type(n) == 'function' then
-    local next = self.next
+    local next = self:_previous_stage()
     local skipping = true
 
     --- @return V1?, V...
-    --- @diagnostic disable-next-line:duplicate-set-field
-    self.next = function()
+    self._next = function()
       if not skipping then
-        return next(self)
+        return next()
       end
       while true do
-        local peeked = self._peeked
-        if peeked == nil then
-          peeked = pack(next(self))
-        end
-
-        if peeked == nil then
+        local value = pack(next())
+        if value == nil then
           return nil
         end
 
-        if not n(unpack(peeked)) then
+        if not n(unpack(value)) then
           skipping = false
-          self._peeked = nil
-          return unpack(peeked)
+          return unpack(value)
         end
-
-        self._peeked = nil
       end
     end
   end
