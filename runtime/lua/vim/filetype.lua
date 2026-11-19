@@ -877,7 +877,6 @@ local extension = {
   ig = 'modula3',
   lm3 = 'modula3',
   mojo = 'mojo',
-  ['🔥'] = 'mojo', -- 🙄
   ssc = 'monk',
   monk = 'monk',
   tsc = 'monk',
