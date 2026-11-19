@@ -104,6 +104,7 @@ end
 ---@package
 ---@param client_id integer
 function InlayHint:refresh(client_id)
+  vim.notify('InlayHint:refresh called')
   local version = util.buf_versions[self.bufnr]
   local state = self.client_state[client_id]
   local client = vim.lsp.get_client_by_id(client_id)
@@ -121,16 +122,39 @@ function InlayHint:refresh(client_id)
     -- cancel stale in-flight request
     self:cancel_active_request(client_id)
 
+    --[[ 
     ---@type lsp.InlayHintParams
     local params = {
       textDocument = util.make_text_document_params(self.bufnr),
       range = vim
+
         .range(self.bufnr, 0, 0, api.nvim_buf_line_count(self.bufnr), 0)
         :to_lsp(client.offset_encoding),
+    } --]]  
+
+      ---TODO: :h vim.range give us the field inverted.
+      -- Fields: ~
+      -- • {buf}        (`integer`) Optional buffer handle.
+      -- • {end_col}    (`integer`) 0-based byte index.
+      -- • {end_row}    (`integer`) 0-based byte index.
+      -- • {start_col}  (`integer`) 0-based byte index.
+      -- • {start_row}  (`integer`) 0-based byte index.
+      -- Insead is => 
+      -- Fields: ~
+      -- • {buf}        (`integer`) Optional buffer handle.
+      -- • {start_col}  (`integer`) 0-based byte index.
+      -- • {start_row}  (`integer`) 0-based byte index.
+      -- • {end_col}    (`integer`) 0-based byte index.
+      -- • {end_row}    (`integer`) 0-based byte index.
+    
+    ---@type lsp.InlayHintParams
+    local params = {
+      textDocument = util.make_text_document_params(self.bufnr),
+      range = vim.range(self.bufnr, vim.fn.line('w0'), 0, vim.fn.line('w$'), 0):to_lsp(client.offset_encoding) 
     }
-
     local success, request_id = client:request('textDocument/inlayHint', params, nil, self.bufnr)
-
+   -- De  
+    -- vim.notify(vim.inspect(params.range))
     if success then
       active_request.request_id = request_id
       active_request.version = version
@@ -190,6 +214,7 @@ function M.on_inlayhint(err, result, ctx)
       }
     end
     table.insert(new_lnum_hints[lnum].hints, hint)
+
   end
 
   state.active_request = {}
