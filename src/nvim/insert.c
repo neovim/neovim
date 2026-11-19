@@ -43,6 +43,7 @@
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/input.h"
+#include "nvim/input_cmdatom.h"
 #include "nvim/insert.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
@@ -949,9 +950,7 @@ static int insert_handle_key(InsertState *s)
   case K_EVENT:       // some event
   case K_COMMAND:     // <Cmd>command<CR>
   case K_LUA: {
-    bufref_T save_curbuf;
-    const varnumber_T tick = buf_get_changedtick(curbuf);
-    set_bufref(&save_curbuf, curbuf);
+    const CmdOrigin origin = atom_origin();
 
     if (s->c == K_PASTE_START) {
       paste_repeat(1);
@@ -985,17 +984,13 @@ static int insert_handle_key(InsertState *s)
       pum_want.active = false;
     }
 
-    const bool changed = bufref_valid(&save_curbuf) && curbuf == save_curbuf.br_buf
-                         && tick != buf_get_changedtick(curbuf);
+    const bool changed = curbuf == origin.buf.br_buf && atom_origin_changed(origin);
     if (curbuf->b_u_synced || changed) {
       // The K_EVENT, K_COMMAND, or K_LUA synced undo or changed this buffer.
       // Save the cursor line before the next typed edit.
       Ins.need_undo = true;
     }
-    if (changed && !ins_compl_active()) {  // Multicursor: keep the edit as preview text.
-      mc_ins_cascade();
-      mc_ins_cascade_restart();
-    }
+    atom_ins_opaque_end(origin);
     break;
   }
 
@@ -1442,17 +1437,14 @@ void ins_redraw(bool ready)
       && curbuf->b_last_changedtick_i != buf_get_changedtick(curbuf)
       && !pum_visible()) {
     CtxSwitch aco = { 0 };
-    varnumber_T tick = buf_get_changedtick(curbuf);
+    const CmdOrigin origin = atom_origin();
 
     // save and restore curwin and curbuf, in case the autocmd changes them
     ctx_switch(&aco, NULL, NULL, curbuf, 0);
     apply_autocmds(EVENT_TEXTCHANGEDI, NULL, NULL, false, curbuf);
     ctx_restore(&aco);
-    curbuf->b_last_changedtick_i = buf_get_changedtick(curbuf);
-    if (tick != buf_get_changedtick(curbuf)) {  // see ins_apply_autocmds()
-      u_save(curwin->w_cursor.lnum,
-             (linenr_T)(curwin->w_cursor.lnum + 1));
-    }
+    ins_autocmd_done(EVENT_TEXTCHANGEDI, origin);
+    curbuf->b_last_changedtick_i = buf_get_changedtick(curbuf);  // Also absorbs multicursor edits.
   }
 
   // Trigger TextChangedP if changedtick_pum differs. When the popupmenu
@@ -1462,17 +1454,14 @@ void ins_redraw(bool ready)
       && curbuf->b_last_changedtick_pum != buf_get_changedtick(curbuf)
       && pum_visible()) {
     CtxSwitch aco = { 0 };
-    varnumber_T tick = buf_get_changedtick(curbuf);
+    const CmdOrigin origin = atom_origin();
 
     // save and restore curwin and curbuf, in case the autocmd changes them
     ctx_switch(&aco, NULL, NULL, curbuf, 0);
     apply_autocmds(EVENT_TEXTCHANGEDP, NULL, NULL, false, curbuf);
     ctx_restore(&aco);
     curbuf->b_last_changedtick_pum = buf_get_changedtick(curbuf);
-    if (tick != buf_get_changedtick(curbuf)) {  // see ins_apply_autocmds()
-      u_save(curwin->w_cursor.lnum,
-             (linenr_T)(curwin->w_cursor.lnum + 1));
-    }
+    ins_autocmd_done(EVENT_TEXTCHANGEDP, origin);
   }
 
   if (ready) {
@@ -4437,16 +4426,25 @@ void set_can_cindent(bool val)
 /// Trigger "event" and take care of fixing undo.
 int ins_apply_autocmds(event_T event)
 {
-  varnumber_T tick = buf_get_changedtick(curbuf);
+  const CmdOrigin origin = atom_origin();
 
   int r = apply_autocmds(event, NULL, NULL, false, curbuf);
 
+  ins_autocmd_done(event, origin);
+  return r;
+}
+
+/// Called after an Insert-mode autocommand for `event` ran.
+static void ins_autocmd_done(event_T event, CmdOrigin origin)
+{
   // If u_savesub() was called then we are not prepared to start
   // a new line.  Call u_save() with no contents to fix that.
   // Except when leaving Insert mode.
-  if (event != EVENT_INSERTLEAVE && tick != buf_get_changedtick(curbuf)) {
+  if (event != EVENT_INSERTLEAVE && origin.tick != buf_get_changedtick(curbuf)) {
     u_save(curwin->w_cursor.lnum, (linenr_T)(curwin->w_cursor.lnum + 1));
   }
-
-  return r;
+  // Mid-session only: not before capture starts, nor after ESC ended it.
+  if (event != EVENT_INSERTENTER && event != EVENT_INSERTLEAVEPRE && event != EVENT_INSERTLEAVE) {
+    atom_ins_opaque_end(origin);
+  }
 }
