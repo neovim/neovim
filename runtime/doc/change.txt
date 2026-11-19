@@ -1585,6 +1585,7 @@ type of comment string.  A part consists of:
 
   f	Only the first line has the comment string.  Do not repeat comment on
 	the next line, but preserve indentation (e.g., a bullet-list).
+	When joining lines with |fo-j| the comment string is not removed.
 
   s	Start of three-piece comment
 

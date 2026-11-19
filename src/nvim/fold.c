@@ -1544,7 +1544,7 @@ static void foldAddMarker(buf_T *buf, pos_T pos, const char *marker, size_t mark
   }
 
   // Check if the line ends with an unclosed comment
-  skip_comment(line, false, false, &line_is_comment);
+  skip_comment(line, false, false, false, &line_is_comment);
   char *newline = xmalloc(line_len + markerlen + strlen(cms) + 1);
   STRCPY(newline, line);
   // Append the marker to the end of the line

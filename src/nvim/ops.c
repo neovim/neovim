@@ -1834,12 +1834,14 @@ void adjust_cursor_eol(void)
 /// @param process - if false, will only check whether the line ends
 ///         with an unclosed comment,
 /// @param include_space - whether to skip space following the comment leader
+/// @param skip_first - whether to ignore a leader with the 'f' flag when
+///         checking for an unclosed comment
 /// @param[out] is_comment - whether the current line ends with an unclosed
 ///  comment.
-char *skip_comment(char *line, bool process, bool include_space, bool *is_comment)
+char *skip_comment(char *line, bool process, bool include_space, bool skip_first, bool *is_comment)
 {
   char *comment_flags = NULL;
-  int leader_offset = get_last_leader_offset(line, &comment_flags);
+  int leader_offset = get_last_leader_offset(line, &comment_flags, skip_first);
 
   *is_comment = false;
   if (leader_offset != -1) {
@@ -1867,6 +1869,9 @@ char *skip_comment(char *line, bool process, bool include_space, bool *is_commen
     return line;
   }
 
+  bool first = false;
+  bool three_piece = false;
+
   // Find:
   // - COM_END,
   // - colon,
@@ -1876,13 +1881,20 @@ char *skip_comment(char *line, bool process, bool include_space, bool *is_commen
         || *comment_flags == ':') {
       break;
     }
+    if (*comment_flags == COM_FIRST) {
+      first = true;
+    } else if (*comment_flags == COM_START || *comment_flags == COM_MIDDLE) {
+      three_piece = true;
+    }
     comment_flags++;
   }
 
   // If we found a colon, it means that we are not processing a line
   // starting with a closing part of a three-part comment. That's good,
   // because we don't want to remove those as this would be annoying.
-  if (*comment_flags == ':' || *comment_flags == NUL) {
+  // A leader with the 'f' flag starts a new item, don't remove it either,
+  // unless it is part of a three-piece comment.
+  if ((*comment_flags == ':' || *comment_flags == NUL) && (!first || three_piece)) {
     line += lead_len;
   }
 
@@ -1939,11 +1951,11 @@ int do_join(size_t count, bool insert_space, bool save_undo, bool use_formatopti
       // We don't want to remove the comment leader if the
       // previous line is not a comment.
       if (t > 0 && prev_was_comment) {
-        char *new_curr = skip_comment(curr, true, insert_space, &prev_was_comment);
+        char *new_curr = skip_comment(curr, true, insert_space, true, &prev_was_comment);
         comments[t] = (int)(new_curr - curr);
         curr = new_curr;
       } else {
-        curr = skip_comment(curr, false, insert_space, &prev_was_comment);
+        curr = skip_comment(curr, false, insert_space, true, &prev_was_comment);
       }
     }
 
