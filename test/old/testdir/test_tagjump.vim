@@ -1242,8 +1242,8 @@ func Test_tselect_listing()
   " Nvim: :tselect goes through vim.ui.select().
   let expected =<< [DATA]
 Select a tag:
-1:   FS  v    first              Xfoo
-2:   FS  v    first              Xfoo
+1:   FS  v    first              Xfoo typeref:typename:int file:
+2:   FS  v    first              Xfoo typeref:typename:char file:
 [DATA]
 
   call assert_equal(expected, l)
