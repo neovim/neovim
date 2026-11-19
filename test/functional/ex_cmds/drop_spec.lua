@@ -6,6 +6,7 @@ local describe, it, before_each = t.describe, t.it, t.before_each
 local command = n.command
 local clear, feed, feed_command = n.clear, n.feed, n.feed_command
 local exec = n.exec
+local eq, fn = t.eq, n.fn
 
 describe(':drop', function()
   local screen
@@ -97,5 +98,20 @@ describe(':drop', function()
       {1:Xdrop_line.txt [+]                 }|
       :drop +2 Xdrop_line.txt            |
     ]])
+  end)
+
+  it('does not trigger BufEnter on previous windows with :tab drop #27758', function()
+    command('set splitright')
+    command('edit file1.txt')
+    command('vsplit file2.txt')
+    command('wincmd h')
+    command('let g:entered = []')
+    command('autocmd BufEnter file2.txt let g:entered += ["file2"]')
+    command('tab drop file3.txt')
+    eq({}, fn.eval('g:entered'))
+    eq(2, fn.tabpagenr())
+    eq(1, fn.tabpagenr('#'))
+    command('tabprevious')
+    eq('file1.txt', fn.expand('%:t'))
   end)
 end)
