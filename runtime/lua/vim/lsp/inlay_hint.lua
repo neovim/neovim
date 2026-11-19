@@ -17,13 +17,14 @@ end
 
 local function get_viewport(bufnr)
   local start_row, end_row
+  local end_col = 0
   for _, win in ipairs(api.nvim_list_wins()) do
     if api.nvim_win_get_buf(win) == bufnr then
       local f = vim.fn.line('w0', win) - 1 -- First visible line of the win
-      local l = vim.fn.line('w$', win)     -- Last visible line of the win
+      local l = vim.fn.line('w$', win) -- Last visible line of the win
 
       -- NOTE:  This calculate union of the range from all win with the same buffer
-      --      
+      --
       --        Example:
       --          win A, bufnr 1 -> f = 5,   l = 37
       --          win B, bufnr 2 -> f = 169, l = 201
@@ -40,12 +41,13 @@ local function get_viewport(bufnr)
       --             start = first,
       --             finish = last,
       --             }
-      --             
+      --
       start_row = start_row and math.min(start_row, f) or f
       end_row = end_row and math.max(end_row, l) or l
     end
   end
-  return start_row, end_row
+
+  return start_row, end_row, end_col
 end
 
 ---@class (private) vim.lsp.inlay_hint.LineHints
@@ -89,9 +91,8 @@ function InlayHint:new(bufnr)
       self:refresh(client_id)
     end
   end)
-  
-  
-  nvim_on({'WinScrolled', 'WinResized', 'WinEnter'}, self.augroup, {}, function(args)
+
+  nvim_on({ 'WinScrolled', 'WinResized', 'WinEnter' }, self.augroup, {}, function(args)
     local win = tonumber(args.match) or api.nvim_get_current_win()
     if not api.nvim_win_is_valid(win) then
       return
@@ -103,7 +104,6 @@ function InlayHint:new(bufnr)
 
     for client_id, _ in pairs(self.client_state) do
       self:refresh(client_id)
-
     end
   end)
 
@@ -166,24 +166,29 @@ function InlayHint:refresh(client_id)
   local version = util.buf_versions[self.bufnr]
   local state = self.client_state[client_id]
   local client = vim.lsp.get_client_by_id(client_id)
+  local range = {}
 
   if state and client then
     local current_result = state.current_result
     local active_request = state.active_request
 
-    local start_line, end_line = get_viewport(self.bufnr)
+    local start_line, end_line, end_col = get_viewport(self.bufnr)
 
-    if not start_line then
-      return
+    -- This is not the perfect solution but is needed to get range from buffer with 'noeol' set.
+    if vim.bo[self.bufnr].eol == false then
+      start_line = 0
+      end_line = api.nvim_buf_line_count(self.bufnr) - 1
+      end_col = #api.nvim_buf_get_lines(self.bufnr, end_line, end_line + 1, false)[1]
+      print(start_line, end_line, end_col)
     end
 
-    local range = vim.range(self.bufnr, start_line, 0, end_line, 0):to_lsp(client.offset_encoding)
-    
+    range = vim.range(self.bufnr, start_line, 0, end_line, end_col):to_lsp(client.offset_encoding)
+
     -- Skip if the current result already covers this version and range
     if current_result.version == version and same_range(current_result.range, range) then
       return
     end
-    
+
     -- Skip if an identical request is already in-flight
     if active_request.version == version and same_range(active_request.range, range) then
       return
@@ -194,7 +199,7 @@ function InlayHint:refresh(client_id)
 
     local params = {
       textDocument = util.make_text_document_params(self.bufnr),
-      range = range
+      range = range,
     }
 
     local succes, request_id = client:request('textDocument/inlayHint', params, nil, self.bufnr)
@@ -204,7 +209,7 @@ function InlayHint:refresh(client_id)
       active_request.version = version
       active_request.range = range
     end
-  end 
+  end
 end
 
 --- |lsp-handler| for the method `textDocument/inlayHint`
@@ -259,9 +264,8 @@ function M.on_inlayhint(err, result, ctx)
       }
     end
     table.insert(new_lnum_hints[lnum].hints, hint)
-
   end
-  
+
   local requested_range = state.active_request.range
 
   state.active_request = {}
