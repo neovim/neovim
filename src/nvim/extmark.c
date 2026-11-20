@@ -418,8 +418,10 @@ bool extmark_get_pos(buf_T *buf, uint32_t ns_id, uint32_t id, pos_T *pos)
   if (mtp.start.id == 0) {
     return false;
   }
-  pos->lnum = mtp.start.pos.row + 1;
-  pos->col = mtp.start.pos.col;
+  if (pos != NULL) {
+    pos->lnum = mtp.start.pos.row + 1;
+    pos->col = mtp.start.pos.col;
+  }
   return true;
 }
 
