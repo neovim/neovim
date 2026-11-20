@@ -440,10 +440,10 @@ LUA
   and `end_col`. |:Inspect| accepts line ranges, including Visual selections.
 • |vim.ui.img| can display images. Use `:checkhealth vim.health` to confirm
   your terminal supports it.
-• |vim.net.request()| can specify custom headers by passing `opts.headers`.
-• |vim.net.request()| can now accept  `method` param overload for multiple HTTP methods.
-• |vim.net.request()| works with |vim.async.await()|: closing the task cancels
-  the request.
+• |vim.net.request()|:
+  • Works with |vim.async.await()|: closing the task cancels the request.
+  • Accepts `method` and `opts.headers` params. `url` can be |vim.Uri|.
+  • Response includes `status` and `headers`. `on_response` is scheduled.
 • |vim.rpcrequest()| can specify `opts.timeout`.
 • |SystemObj:wait()| accepts a `cond` predicate which allows you to wait for
   a condition instead of process termination.

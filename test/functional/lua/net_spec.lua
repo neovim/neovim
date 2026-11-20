@@ -5,18 +5,23 @@ local skip_integ = os.getenv('NVIM_TEST_INTEG') ~= '1'
 
 local exec_lua = n.exec_lua
 
--- Serve one request and record what curl sent.
+-- Serve one request per status (default "200 OK") and record what curl sent.
+---@param status? string|string[]
 local function http_server(body, status)
   t.skip(n.fn.executable('curl') == 0, 'curl not found')
   return exec_lua(function()
     vim.env.no_proxy = '127.0.0.1'
+    local statuses = type(status) == 'table' and status or { status or '200 OK' }
     local server = assert(vim.uv.new_tcp())
     assert(server:bind('127.0.0.1', 0))
     assert(server:listen(1, function(err)
       assert(not err, err)
       local client = assert(vim.uv.new_tcp())
       assert(server:accept(client))
-      server:close()
+      local client_status = table.remove(statuses, 1)
+      if #statuses == 0 then
+        server:close()
+      end
       local data = ''
       client:read_start(function(read_err, chunk)
         assert(not read_err, read_err)
@@ -37,9 +42,9 @@ local function http_server(body, status)
         end
         client:read_stop()
         local method = data:match('^(%S+)')
-        _G.http_request = { method = method, headers = headers, body = request_body }
-        local response = ('HTTP/1.1 %s\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s'):format(
-          status or '200 OK',
+        _G.http_request = { method = method, headers = headers, body = request_body, raw = data }
+        local response = ('HTTP/1.1 %s\r\nContent-Length: %d\r\nSet-Cookie: a=1\r\nSet-Cookie: b=2\r\nConnection: close\r\n\r\n%s'):format(
+          client_status,
           #body,
           method == 'HEAD' and '' or body
         )
@@ -60,7 +65,7 @@ end
 local function request(method, url, opts)
   exec_lua(function()
     vim.net.request(method, url, opts, function(err, res)
-      vim.rpcnotify(1, 'response', { error = err, response = res and res.body })
+      vim.rpcnotify(1, 'response', { error = err, response = res })
     end)
   end)
 
@@ -76,10 +81,37 @@ describe('vim.net.request', function()
 
   it('fetches a URL into memory (async success)', function()
     ---@type table
-    local result = request('GET', http_server('hello'))
-
+    local result = request('GET', http_server('a<>b'))
     t.eq(nil, result.error)
-    t.eq('hello', result.response)
+    t.eq('a<>b', result.response.body)
+    t.eq(200, result.response.status)
+    t.eq('4', result.response.headers['content-length'])
+    t.eq({ 'a=1', 'b=2' }, result.response.headers['set-cookie'])
+
+    -- Output of a retried attempt is not in the response.
+    result = request('GET', http_server('ok', { '503 Service Unavailable', '200 OK' }))
+    t.eq({ 'ok', 200 }, { result.response.body, result.response.status })
+
+    -- Non-HTTP URL: no status, no headers. Accepts a vim.Uri. `on_response` is deferred/scheduled.
+    local fname = t.tmpname()
+    t.write_file(fname, 'local\n')
+    local url = exec_lua('return vim.uri.from_fname(...)', fname)
+    t.eq(
+      { fast = false, response = { body = 'local\n', status = 0, headers = {} } },
+      exec_lua(function()
+        local rv ---@type table?
+        vim.net.request(vim.uri.parse(url), {}, function()
+          local fast = vim.in_fast_event()
+          vim.net.request(url, {}, function(err, res)
+            rv = { fast = fast, error = err, response = res }
+          end)
+        end)
+        vim.wait(5000, function()
+          return rv ~= nil
+        end)
+        return rv
+      end)
+    )
   end)
 
   it("detects filetype, sets 'nomodified'", function()
@@ -110,8 +142,21 @@ describe('vim.net.request', function()
   end)
 
   it('invokes on_response(error) on 404 (async failure)', function()
-    local result = request('GET', http_server('', '404 Not Found'))
+    local result = request('GET', http_server('not found page', '404 Not Found'))
     t.matches('404', result.error)
+    t.eq(404, result.response.status)
+    t.eq({ 'a=1', 'b=2' }, result.response.headers['set-cookie'])
+
+    -- The error page is not written to `outpath`.
+    local outpath = t.tmpname(false)
+    result = request('GET', http_server('not found page', '404 Not Found'), { outpath = outpath })
+    t.matches('404', result.error)
+    t.eq(nil, vim.uv.fs_stat(outpath))
+
+    -- curl rejects a malformed URL.
+    result = request('GET', 'http://127.0.0.1/a b')
+    t.eq(nil, result.response)
+    t.matches('^curl: %(3%)', result.error)
   end)
 
   it('with vim.async: await(), Task:close() cancels the request', function()
@@ -197,8 +242,7 @@ describe('vim.net.request', function()
 
       local buf = vim.api.nvim_create_buf(false, true)
       vim.api.nvim_set_current_buf(buf)
-      ---@diagnostic disable-next-line: param-type-mismatch
-      vim.net.request(url, { outbuf = 0 })
+      vim.net.request(url, { outbuf = 0 }, function() end) -- Like plugin/net.lua.
 
       -- Switch buffers before the response arrives.
       local other = vim.api.nvim_create_buf(true, false)
@@ -251,7 +295,7 @@ describe('vim.net.request', function()
         'edit https://github.com/neovim/neovim/releases/download/nightly/nvim-macos-x86_64.tar.gz'
       )
 
-      vim.wait(2500, function()
+      vim.wait(20000, function()
         return vim.bo.filetype == 'tar' or vim.b.tarfile ~= nil
       end)
 
@@ -301,7 +345,7 @@ describe('vim.net.request', function()
     local rv = exec_lua(function()
       vim.cmd('edit https://github.com/neovim/neovim/releases/download/nightly/nvim-win-arm64.zip')
 
-      vim.wait(2500, function()
+      vim.wait(20000, function()
         return vim.bo.filetype == 'zip' or vim.b.zipfile ~= nil
       end)
 
@@ -331,10 +375,12 @@ describe('vim.net.request', function()
         Authorization = 'Bearer test-token',
         ['X-Custom-Header'] = 'custom-value',
         ['Empty'] = '',
+        ['X-Multi'] = { 'a', 'b' },
       },
     })
 
     t.eq(nil, result.error)
+    t.matches('\r\nX%-Multi: a\r\nX%-Multi: b\r\n', exec_lua('return http_request.raw'))
     local headers = exec_lua('return http_request.headers')
     t.eq('Bearer test-token', headers.authorization, 'Expected Authorization header')
     t.eq('custom-value', headers['x-custom-header'], 'Expected X-Custom-Header')
@@ -357,6 +403,11 @@ describe('vim.net.request', function()
     local result = request('HEAD', http_server('hello'))
     t.eq(nil, result.error)
     t.eq('HEAD', exec_lua('return http_request.method'))
+    t.eq({ '', 200, '5' }, {
+      result.response.body,
+      result.response.status,
+      result.response.headers['content-length'],
+    })
 
     -- testing body payload
     result = request('POST', http_server('hello'), {
@@ -385,8 +436,14 @@ describe('vim.net.request', function()
       t.matches(expected_err, result)
     end
 
-    -- headers asserts
+    -- request headers asserts
     assert_wrong_request('opts.headers: expected table, got number', { headers = 123 })
+    t.matches(
+      'url: expected URI, got example.com',
+      t.pcall_err(exec_lua, function()
+        vim.net.request('GET', 'example.com', {})
+      end)
+    )
 
     --- FIXME(ellisonleao): this special assert is failing because the opts table is putting [""] in
     --- the key value instead of [123] upon calling the helper method

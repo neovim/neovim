@@ -4597,7 +4597,13 @@ Lua module: vim.net                                                  *vim.net*
 vim.net.request.Response                            *vim.net.request.Response*
 
     Fields: ~
-      • {body}  (`string`) The HTTP body of the request
+      • {body}     (`string`) The HTTP body of the request.
+      • {headers}  (`table<string, string|string[]>`) Headers of the last
+                   response. Names are lowercase; a repeated header's values
+                   are a list:
+                   `{ ['content-type'] = 'text/html', ['set-cookie'] = { 'a=1', 'b=2' } }`
+      • {status}   (`integer`) HTTP status code of the last response (after
+                   redirects), or 0 if the URL is not HTTP (`file://`).
 
 
 vim.net.request({method}, {url}, {opts}, {on_response})    *vim.net.request()*
@@ -4611,15 +4617,12 @@ vim.net.request({method}, {url}, {opts}, {on_response})    *vim.net.request()*
         })
 
         -- Process the response.
-        vim.net.request(
-          'https://api.github.com/repos/neovim/neovim',
-          {},
-          function (err, res)
-            if err then return end
-            local stars = vim.json.decode(res.body).stargazers_count
-            vim.print(('Neovim currently has %d stars'):format(stars))
-          end
-        )
+        vim.net.request('https://api.github.com/repos/neovim/neovim', {}, function(err, res)
+          if err then return end
+          local stars = vim.json.decode(res.body).stargazers_count
+          vim.print(('Neovim currently has %d stars'):format(stars))
+          vim.print(res.status, res.headers['content-type'])
+        end)
 
         -- Write to both file and current buffer, but cancel it.
         local job = vim.net.request('https://neovim.io/charter/', {
@@ -4634,7 +4637,13 @@ vim.net.request({method}, {url}, {opts}, {on_response})    *vim.net.request()*
         end)
 
         -- Add custom headers in the request.
-        vim.net.request('https://neovim.io/charter/', {
+        local url = vim.uri.new({
+          scheme = 'https',
+          host = 'api.github.com',
+          path = '/search/repositories',
+          query = { q = 'vim lua' },
+        })
+        vim.net.request(url, {
           headers = { Authorization = 'Bearer XYZ' },
         })
 
@@ -4648,15 +4657,17 @@ vim.net.request({method}, {url}, {opts}, {on_response})    *vim.net.request()*
     Parameters: ~
       • {method}       (`vim.net.HttpMethod`) (default: GET) The HTTP method
                        (GET, POST, PUT, PATCH, HEAD, DELETE).
-      • {url}          (`string`) The URL for the request.
+      • {url}          (`string|vim.Uri`) The URL for the request.
       • {opts}         (`table?`) A table with the following fields:
                        • {body}? (`string`) Request body for POST/PUT/PATCH
                          requests.
-                       • {headers}? (`table<string, string>`) Custom headers
-                         to send with the request. Supports basic key/value
-                         headers and empty headers as supported by curl. Does
-                         not support "@filename" style, internal header
-                         deletion ("Header:").
+                       • {headers}? (`table<string, string|string[]>`) Custom
+                         headers to send with the request. Supports basic
+                         key/value headers and empty headers as supported by
+                         curl. Does not support "@filename" style, internal
+                         header deletion ("Header:"). A list value expands to
+                         one header per item:
+                         `{ Accept = { 'text/html', 'application/json' } }`.
                        • {outbuf}? (`integer`) Buffer to save the response
                          body to.
                        • {outpath}? (`string`) File path to save the response
@@ -4664,12 +4675,13 @@ vim.net.request({method}, {url}, {opts}, {on_response})    *vim.net.request()*
                        • {retry}? (`integer`) Number of retries on transient
                          failures (default: 3).
                        • {verbose}? (`boolean`) Enables verbose output.
-      • {on_response}  (`vim.net.request.ResponseFunc?`) Callback invoked on
-                       request completion.
+      • {on_response}  (`fun(err?: string, response?: vim.net.request.Response)?`)
+                       Invoked (|deferred|) on request completion. On HTTP
+                       status >= 400, `err` is set and `response` has the
+                       status and headers (empty `body`).
 
     Overloads: ~
-      • `fun(url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)`
-      • `fun(method: vim.net.HttpMethod, url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)`
+      • `fun(url: string|vim.Uri, opts?: vim.net.request.Opts, on_response?: fun(err?: string, response?: vim.net.request.Response)): vim.async.Closable`
 
     Return: ~
         (`vim.async.Closable`) Cancels the request or checks its status.
