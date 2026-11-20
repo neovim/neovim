@@ -928,10 +928,11 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   // delete the last combining character.
   if (p_deco && use_delcombine && utfc_ptr2len(oldp + col) >= count) {
     char *p0 = oldp + col;
+    int n = col + utf_ptr2len(p0);
     GraphemeState state = GRAPHEME_STATE_INIT;
-    if (utf_composinglike(p0, p0 + utf_ptr2len(p0), &state)) {
+    if (utf_composinglike(p0, oldp + n, &state)) {
       // Find the last composing char, there can be several.
-      int n = col;
+      // Continue from the second character: the first pair already advanced state.
       do {
         col = n;
         count = utf_ptr2len(oldp + n);
