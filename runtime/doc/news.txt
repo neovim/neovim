@@ -680,6 +680,8 @@ These existing features changed their behavior.
   autocommand.
 • |sockconnect()| channels are closed when the peer closes the connection
   (EOF), like RPC channels.
+• |--server| without a |--remote| option reports an error, instead of being
+  silently ignored.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

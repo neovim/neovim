@@ -57,9 +57,10 @@ The following command line arguments are available:
 				are forwarded to the server.
 								*--server*
    --server {addr}		Connect to the named pipe or socket at the
-				given address for executing remote commands.
-				See |--listen| for specifying an address when
-				starting a server.
+				given address for |--remote| commands or
+				|--remote-ui|. Not supported without one of
+				them. See |--listen| for specifying an address
+				when starting a server.
 
 Examples ~
 

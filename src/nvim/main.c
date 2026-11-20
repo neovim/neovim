@@ -1567,6 +1567,10 @@ scripterror:
     mainerr(_("--embed conflicts with -es/-Es/-l"), NULL, NULL);
   }
 
+  if (parmp->server_addr != NULL && !parmp->remote) {
+    mainerr(_("Not supported: --server without --remote"), NULL, NULL);
+  }
+
   // If there is a "+123" or "-c" command, set v:swapcommand to the first one.
   if (parmp->n_commands > 0) {
     const size_t swcmd_len = strlen(parmp->commands[0]) + 2;
@@ -2375,7 +2379,7 @@ static void usage(void)
   printf(_("  --headless            Don't start a user interface\n"));
   printf(_("  --listen <address>    Serve RPC API from this address\n"));
   printf(_("  --remote[-subcommand] Execute commands remotely on a server\n"));
-  printf(_("  --server <address>    Connect to this Nvim server\n"));
+  printf(_("  --server <address>    Server address for --remote[-subcommand]\n"));
   printf(_("  --startuptime <file>  Write startup timing messages to <file>\n"));
   printf(_("\nSee \":help startup-options\" for all options.\n"));
 }

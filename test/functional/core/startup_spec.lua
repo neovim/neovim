@@ -817,6 +817,13 @@ describe('startup', function()
     )
   end)
 
+  it('fails on --server without --remote #36448', function()
+    matches(
+      'nvim[.exe]*: Not supported: %-%-server without %-%-remote',
+      n.spawn_wait('--server', 'Xnoserver', '--headless', '+q').stderr
+    )
+  end)
+
   it('-es does not exit early with closed stdin', function()
     write_file('Xinput.txt', 'line1\nline2\nline3\nline4\n')
     write_file('Xoutput.txt', 'OUT\n')
