@@ -1,7 +1,7 @@
 --- @brief
 ---<pre>help
 ---:DiffTool {left} {right}                                           *:DiffTool*
----Compares two directories or files side-by-side.
+---Compares two directories or files.
 ---Supports directory diffing, rename detection, and highlights changes
 ---in quickfix list. Replaces the built-in `nvim -d` diff mode with this interface.
 ---</pre>
@@ -31,9 +31,23 @@ local layout = {
   group = nil, --- @type integer?
   left_win = nil, --- @type integer?
   right_win = nil, --- @type integer?
+  unified = false, --- @type boolean
 }
 
 local util = require('vim._core.util')
+local diff_scheme = 'difftool://'
+
+--- @param path string
+--- @return string
+local function read_file(path)
+  local fd = io.open(path, 'rb')
+  if not fd then
+    return ''
+  end
+  local content = fd:read('*a')
+  fd:close()
+  return content
+end
 
 --- Clean up the layout state, autocmds and quickfix list
 --- @param with_qf boolean whether the layout included a quickfix window
@@ -47,7 +61,9 @@ local function cleanup_layout(with_qf)
 
   if with_qf then
     vim.fn.setqflist({})
-    vim.cmd.cclose()
+    if not layout.unified then
+      vim.cmd.cclose()
+    end
   end
 end
 
@@ -57,28 +73,49 @@ local function setup_layout(with_qf)
   local left_valid = layout.left_win and vim.api.nvim_win_is_valid(layout.left_win)
   local right_valid = layout.right_win and vim.api.nvim_win_is_valid(layout.right_win)
 
-  if left_valid and right_valid then
+  if right_valid and (layout.unified or left_valid) then
     return false
   end
 
   vim.cmd.only({ mods = { silent = true } })
-  layout.left_win = vim.api.nvim_get_current_win()
-  vim.cmd('rightbelow vsplit')
-  layout.right_win = vim.api.nvim_get_current_win()
+  if vim.bo.buftype == 'quickfix' then
+    vim.cmd.enew()
+  end
+  if layout.unified then
+    layout.right_win = vim.api.nvim_get_current_win()
+  else
+    layout.left_win = vim.api.nvim_get_current_win()
+    vim.cmd('rightbelow vsplit')
+    layout.right_win = vim.api.nvim_get_current_win()
+  end
 
   if with_qf then
     vim.cmd('botright copen')
   end
   vim.api.nvim_set_current_win(layout.right_win)
 
+  if with_qf and layout.unified then
+    -- The diff window is the last one besides quickfix, so close quickfix before `:quit` checks
+    vim.api.nvim_create_autocmd('QuitPre', {
+      group = layout.group,
+      callback = function()
+        if vim.api.nvim_get_current_win() == layout.right_win then
+          vim.cmd.cclose()
+        end
+      end,
+    })
+  end
+
   -- When one of the windows is closed, clean up the layout
-  vim.api.nvim_create_autocmd('WinClosed', {
-    group = layout.group,
-    pattern = tostring(layout.left_win),
-    callback = function()
-      cleanup_layout(with_qf)
-    end,
-  })
+  if layout.left_win then
+    vim.api.nvim_create_autocmd('WinClosed', {
+      group = layout.group,
+      pattern = tostring(layout.left_win),
+      callback = function()
+        cleanup_layout(with_qf)
+      end,
+    })
+  end
   vim.api.nvim_create_autocmd('WinClosed', {
     group = layout.group,
     pattern = tostring(layout.right_win),
@@ -88,12 +125,41 @@ local function setup_layout(with_qf)
   })
 end
 
+--- @param bufnr integer
+--- @param left_file string
+--- @param right_file string
+local function populate_unified(bufnr, left_file, right_file)
+  local left, right = read_file(left_file), read_file(right_file)
+  local lines = { '--- ' .. left_file, '+++ ' .. right_file }
+  if left:find('\0', 1, true) or right:find('\0', 1, true) then
+    lines[#lines + 1] = 'Binary files differ'
+  else
+    local diff = vim.text.diff(left, right, { ctxlen = 3 })
+    --- @cast diff string
+    vim.list_extend(lines, vim.split(diff, '\n', { trimempty = true }))
+  end
+  vim.bo[bufnr].modifiable = true -- a reload from 'unload' restores 'nomodifiable'
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+  vim.bo[bufnr].filetype = 'diff'
+  vim.bo[bufnr].modifiable = false
+  vim.bo[bufnr].readonly = true
+  vim.bo[bufnr].bufhidden = 'unload'
+end
+
 --- Diff two files
 --- @param left_file string
 --- @param right_file string
 --- @param with_qf boolean? whether to open the quickfix window
 local function diff_files(left_file, right_file, with_qf)
   setup_layout(with_qf or false)
+
+  if layout.unified then
+    vim.cmd('diffoff!')
+    local buf = vim.api.nvim_create_buf(false, true)
+    populate_unified(buf, left_file, right_file)
+    vim.api.nvim_win_set_buf(assert(layout.right_win), buf)
+    return
+  end
 
   util.edit_in(assert(layout.left_win), left_file)
   util.edit_in(assert(layout.right_win), right_file)
@@ -367,6 +433,13 @@ local function diff_dirs(left_dir, right_dir, opt)
     return a.user_data.rel < b.user_data.rel
   end)
 
+  for _, entry in ipairs(qf_entries) do
+    local ud = entry.user_data
+    if layout.unified then
+      entry.filename = diff_scheme .. ud.rel
+    end
+  end
+
   vim.fn.setqflist({}, 'r', {
     nr = '$',
     title = 'DiffTool',
@@ -396,6 +469,10 @@ local M = {}
 --- (default: `auto`)
 --- @field method 'auto'|'builtin'|'diffr'
 ---
+--- Window layout: `split` shows both files, `unified` shows a read-only unified diff
+--- (default: `'split'`)
+--- @field layout 'split'|'unified'
+---
 --- List of file patterns to ignore (for example: `'.git', '*.log'`)
 --- (default: `{}`)
 --- @field ignore string[]
@@ -419,6 +496,7 @@ function M.open(left, right, opt)
 
   local config = vim.tbl_deep_extend('force', {
     method = 'auto',
+    layout = 'split',
     ignore = {},
     rename = {
       detect = false,
@@ -428,6 +506,8 @@ function M.open(left, right, opt)
   }, opt or {})
 
   layout.group = vim.api.nvim_create_augroup('nvim.difftool.events', { clear = true })
+  layout.unified = config.layout == 'unified'
+  layout.left_win, layout.right_win = nil, nil
   local hl_id = vim.api.nvim_create_namespace('nvim.difftool.hl')
 
   --- @param bufnr? integer
@@ -449,6 +529,24 @@ function M.open(left, right, opt)
 
     return entry
   end
+
+  -- Delete stale diff buffers, so that reopening shows the current diff
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.startswith(vim.api.nvim_buf_get_name(buf), diff_scheme) then
+      vim.api.nvim_buf_delete(buf, { force = true })
+    end
+  end
+
+  vim.api.nvim_create_autocmd('BufReadCmd', {
+    group = layout.group,
+    pattern = diff_scheme .. '*',
+    callback = function(ev)
+      local entry = get_diff_entry(ev.buf)
+      if entry then
+        populate_unified(ev.buf, entry.user_data.left, entry.user_data.right)
+      end
+    end,
+  })
 
   vim.api.nvim_create_autocmd('BufWinEnter', {
     group = layout.group,
@@ -477,7 +575,7 @@ function M.open(left, right, opt)
     pattern = '*',
     callback = function(ev)
       local entry = get_diff_entry(ev.buf)
-      if not entry then
+      if not entry or layout.unified then
         return
       end
 
