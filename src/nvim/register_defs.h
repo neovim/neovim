@@ -67,6 +67,21 @@ typedef struct {
   AdditionalData *additional_data;  ///< Additional data from ShaDa file.
 } yankreg_T;
 
+/// What wrote a register: the "reason" of |RegisterChanged|.
+typedef enum {
+  kRegChangedYank,     ///< yank operator
+  kRegChangedDelete,   ///< delete or change operator
+  kRegChangedShift,    ///< rotation of the numbered registers "1 to "9
+  kRegChangedRecord,   ///< macro recording finished
+  kRegChangedSetreg,   ///< setreg(), ":let @x = ..."
+  kRegChangedRedir,    ///< ":redir @x"
+  kRegChangedShada,    ///< ShaDa read after startup, e.g. ":rshada"
+  kRegChangedSearch,   ///< new search pattern
+  kRegChangedExpr,     ///< assignment to the expression register
+  kRegChangedCmdline,  ///< a command line was executed
+  kRegChangedInsert,   ///< text was inserted
+} RegisterChangedReason;
+
 /// Modes for get_yank_register()
 typedef enum {
   YREG_PASTE,
