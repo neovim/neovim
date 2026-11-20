@@ -2034,6 +2034,25 @@ describe(':substitute', function()
       {1:~                             }|*9
       :%s/2\_.*X/MMM\rK\rLLL^        |
     ]])
+
+    -- Preview is applied to the whole range when the added lines fit in the window. #42781
+    feed('<C-U>%s/$/\\rK/')
+    screen:expect([[
+      1 2 3                         |
+      {20:K}                             |
+      A B C                         |
+      {20:K}                             |
+      4 5 6                         |
+      {20:K}                             |
+      X Y Z                         |
+      {20:K}                             |
+      7 8 9                         |
+      {20:K}                             |
+                                    |
+      {20:K}                             |
+      {1:~                             }|*2
+      :%s/$/\rK/^                    |
+    ]])
   end)
 
   it('inccommand=split, highlights multiple matches on a line', function()
@@ -2198,6 +2217,20 @@ describe(':substitute', function()
                                     |
       {1:~                             }|*10
       :%s/[QR]\n/KKK^                |
+    ]])
+  end)
+
+  it('inccommand=nosplit, contraction of lines beyond the window', function()
+    screen:try_resize(30, 6)
+    common_setup(screen, 'nosplit', string.rep('a\nb\n', 6))
+    command('set cmdwinheight=1')
+    feed('gg')
+
+    -- Removed lines move lines from below the window into view.
+    feed(':%s/a\\nb/X/')
+    screen:expect([[
+      {20:X}                             |*5
+      :%s/a\nb/X/^                   |
     ]])
   end)
 
