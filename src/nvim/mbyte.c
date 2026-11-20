@@ -1674,12 +1674,17 @@ static bool always_break(int bc)
 
 /// @return true if bc2 always starts a cluster after bc1
 /// false negatives are allowed (perf cost, not correctness)
-static bool always_break_two(int bc1, int bc2)
+static bool always_break_two(int bc1, int bc2, int icb1, int icb2)
   FUNC_ATTR_CONST
 {
+  // GB9c may join a consonant after a linker and intervening Extend characters.
+  const bool indic_context = icb2 == UTF8PROC_INDIC_CONJUNCT_BREAK_CONSONANT
+                             && (icb1 == UTF8PROC_INDIC_CONJUNCT_BREAK_LINKER
+                                 || icb1 == UTF8PROC_INDIC_CONJUNCT_BREAK_EXTEND);
   // don't check for UTF8PROC_BOUNDCLASS_CONTROL for bc2 as it either has been checked by
   // "always_break" on first iteration or when it was bc1 in the previous iteration
-  return ((bc1 != UTF8PROC_BOUNDCLASS_PREPEND && bc2 == UTF8PROC_BOUNDCLASS_OTHER)
+  return ((bc1 != UTF8PROC_BOUNDCLASS_PREPEND && bc2 == UTF8PROC_BOUNDCLASS_OTHER
+           && !indic_context)
           || (bc1 >= UTF8PROC_BOUNDCLASS_CR && bc1 <= UTF8PROC_BOUNDCLASS_CONTROL)
           || (bc2 == UTF8PROC_BOUNDCLASS_EXTENDED_PICTOGRAPHIC
               && (bc1 == UTF8PROC_BOUNDCLASS_OTHER
@@ -1715,8 +1720,8 @@ int utf_head_off(const char *base_in, const char *p_in)
   }
   const uint8_t * const safe_end = start + last_len;
 
-  int cur_bc = utf8proc_get_property(cur_code)->boundclass;
-  if (always_break(cur_bc) || start == base) {
+  const utf8proc_property_t *cur_prop = utf8proc_get_property(cur_code);
+  if (always_break(cur_prop->boundclass) || start == base) {
     return (int)(p - start);
   }
 
@@ -1745,15 +1750,17 @@ int utf_head_off(const char *base_in, const char *p_in)
       break;
     }
 
-    int prev_bc = utf8proc_get_property(prev_code)->boundclass;
-    if (always_break_two(prev_bc, cur_bc) && !arabic_combine(prev_code, cur_code)) {
+    const utf8proc_property_t *prev_prop = utf8proc_get_property(prev_code);
+    if (always_break_two(prev_prop->boundclass, cur_prop->boundclass,
+                         prev_prop->indic_conjunct_break, cur_prop->indic_conjunct_break)
+        && !arabic_combine(prev_code, cur_code)) {
       start = cur_pos;  // prev_code cannot be a part of this cluster
       break;
     } else if (start == base) {
       break;
     }
     cur_pos = start;
-    cur_bc = prev_bc;
+    cur_prop = prev_prop;
     cur_code = prev_code;
   }
 
