@@ -2191,7 +2191,7 @@ int get_c_indent(void)
           if (start_off != 0) {
             amount += start_off;
           } else if (start_align == COM_RIGHT) {
-            amount += vim_strsize(lead_start) - vim_strsize(lead_middle);
+            amount += mb_string2cells(lead_start) - mb_string2cells(lead_middle);
           }
           break;
         }
@@ -2205,7 +2205,7 @@ int get_c_indent(void)
           if (off != 0) {
             amount += off;
           } else if (align == COM_RIGHT) {
-            amount += vim_strsize(lead_start) - vim_strsize(lead_middle);
+            amount += mb_string2cells(lead_start) - mb_string2cells(lead_middle);
           }
           done = true;
           break;

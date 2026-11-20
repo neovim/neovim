@@ -1202,9 +1202,9 @@ int showmatches(expand_T *xp, bool display_wildmenu, bool display_list, int wim_
                         || xp->xp_context == EXPAND_SHELLCMD
                         || xp->xp_context == EXPAND_BUFFERS)) {
         home_replace(NULL, matches[i], NameBuff, MAXPATHL, true);
-        len = vim_strsize(NameBuff);
+        len = mb_string2cells(NameBuff);
       } else {
-        len = vim_strsize(SHOW_MATCH(i));
+        len = mb_string2cells(SHOW_MATCH(i));
       }
       maxlen = MAX(maxlen, len);
     }
