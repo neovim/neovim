@@ -163,7 +163,7 @@ local function reload(buf, provider)
     return
   end
   local restore_view = api.nvim_get_current_buf() == buf and vim.fn.winsaveview() or nil
-  load(buf, api.nvim_buf_get_name(buf), provider, restore_view)
+  load(buf, api.nvim_buf_get_name(buf), provider, restore_view, nil, current_entry(buf))
 end
 
 ---@param buf integer

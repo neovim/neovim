@@ -7,11 +7,79 @@ local is_url = vim._core.path_is_url
 local M = {}
 
 local navigating = false
+---@type table<integer, { path: string, cancel: fun() }>
+local watchers = {}
 
 ---@param path string
 ---@return string
 function M.normalize(path)
   return fs.normalize(fs.abspath(path), { plain = true })
+end
+
+---@param buf integer
+local function stop_watcher(buf)
+  local watcher = watchers[buf]
+  if watcher then
+    watcher.cancel()
+    watchers[buf] = nil
+  end
+end
+
+local group = api.nvim_create_augroup('nvim.dir.fs', { clear = false })
+api.nvim_create_autocmd({ 'BufUnload', 'BufWipeout', 'BufFilePost' }, {
+  group = group,
+  callback = function(ev)
+    local watcher = watchers[ev.buf]
+    if
+      watcher
+      and (ev.event ~= 'BufFilePost' or M.normalize(api.nvim_buf_get_name(ev.buf)) ~= watcher.path)
+    then
+      stop_watcher(ev.buf)
+    end
+  end,
+})
+api.nvim_create_autocmd('VimLeavePre', {
+  group = group,
+  callback = function()
+    for buf in pairs(watchers) do
+      stop_watcher(buf)
+    end
+  end,
+})
+
+---@param buf integer
+---@param path string
+local function watch_directory(buf, path)
+  path = M.normalize(path)
+  if watchers[buf] and watchers[buf].path == path then
+    return
+  end
+  stop_watcher(buf)
+  local timer = assert(vim.uv.new_timer())
+  local refresh = vim.schedule_wrap(function()
+    if timer:is_closing() or timer:is_active() then
+      return
+    end
+    local state = api.nvim_buf_is_loaded(buf) and vim.b[buf].nvim_dir
+    if not state or not state.provider or state.provider.list ~= M.list then
+      stop_watcher(buf)
+      return
+    end
+    require('nvim.dir')._reload(buf)
+  end)
+  local cancel = vim._watch.watch(path, {}, function(fullpath)
+    if not timer:is_closing() and (fullpath == path or fs.dirname(fullpath) == path) then
+      timer:start(100, 0, refresh)
+    end
+  end)
+  watchers[buf] = {
+    path = path,
+    cancel = function()
+      cancel()
+      timer:stop()
+      timer:close()
+    end,
+  }
 end
 
 ---@return boolean
@@ -57,13 +125,14 @@ function M.open_parent_path(path)
   navigate(fs.dirname(path), { name = fs.basename(path), dir = vim.fn.isdirectory(path) == 1 })
 end
 
----@param _ integer
+---@param buf integer
 ---@param path string
 ---@param cb fun(err?: string, entries?: nvim.dir.Entry[])
-function M.list(_, path, cb)
+function M.list(buf, path, cb)
   local entries = {} ---@type nvim.dir.Entry[]
   for name, type, err in fs.dir(path, { err = true, plain = true }) do
     if err then
+      stop_watcher(buf)
       cb(err)
       return
     end
@@ -81,6 +150,7 @@ function M.list(_, path, cb)
     end
     return a.name < b.name
   end)
+  watch_directory(buf, path)
   cb(nil, entries)
 end
 

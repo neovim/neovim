@@ -12,6 +12,7 @@ local feed = n.feed
 local fn = n.fn
 local ok = t.ok
 local poke_eventloop = n.poke_eventloop
+local retry = t.retry
 
 local function lines()
   return api.nvim_buf_get_lines(0, 0, -1, true)
@@ -724,6 +725,83 @@ describe('nvim.dir', function()
     feed('R')
     poke_eventloop()
     line_of('beta.txt')
+  end)
+
+  it('refreshes local entries without autoread and preserves the selected entry #41727', function()
+    make_fixture()
+    n.clear({ args = { '--clean', '--cmd', 'set noautoread' }, env = { LC_ALL = 'C' } })
+    edit(root)
+    api.nvim_win_set_cursor(0, { line_of('alpha.txt'), 0 })
+
+    t.write_file(root .. '/aardvark.txt', 'new', true)
+    t.mkdir(root .. '/newdir')
+    retry(nil, 3000, function()
+      eq({ 'newdir/', 'subdir/', '.hidden', 'aardvark.txt', 'alpha.txt' }, lines())
+      eq('alpha.txt', api.nvim_get_current_line())
+    end)
+
+    assert(vim.uv.fs_rename(root .. '/aardvark.txt', root .. '/beta.txt'))
+    retry(nil, 3000, function()
+      eq({ 'newdir/', 'subdir/', '.hidden', 'alpha.txt', 'beta.txt' }, lines())
+      eq('alpha.txt', api.nvim_get_current_line())
+    end)
+
+    assert(os.remove(root .. '/beta.txt'))
+    assert(vim.uv.fs_rmdir(root .. '/newdir'))
+    retry(nil, 3000, function()
+      eq({ 'subdir/', '.hidden', 'alpha.txt' }, lines())
+      eq('alpha.txt', api.nvim_get_current_line())
+    end)
+    eq(false, bufopt('modifiable'))
+    eq(false, bufopt('modified'))
+    eq(true, bufopt('readonly'))
+  end)
+
+  it('keeps one non-recursive watcher per loaded directory buffer', function()
+    make_fixture()
+    n.clear({ args = { '--clean' } })
+    exec_lua(function()
+      local watch = vim._watch.watch
+      _G.dir_watches = {}
+      vim._watch.watch = function(path, opts, cb)
+        table.insert(_G.dir_watches, { path, opts })
+        return watch(path, opts, cb)
+      end
+      vim._watch.watchdirs = function()
+        error('directory listings must not use recursive watchers')
+      end
+    end)
+
+    edit(root)
+    local buf = api.nvim_get_current_buf()
+    exec_lua(function()
+      require('nvim.dir').open(0, vim.api.nvim_buf_get_name(0), require('nvim.dir.fs'))
+    end)
+    command('split')
+    feed('R')
+    poke_eventloop()
+    eq({ { root, {} } }, exec_lua('return _G.dir_watches'))
+
+    command('close')
+    command('set hidden')
+    edit(subdir)
+    eq({ { root, {} }, { subdir, {} } }, exec_lua('return _G.dir_watches'))
+    eq(2, exec_lua('return vim._watch.active().watch'))
+
+    t.write_file(root .. '/beta.txt', 'beta', true)
+    retry(nil, 3000, function()
+      ok(vim.tbl_contains(api.nvim_buf_get_lines(buf, 0, -1, true), 'beta.txt'))
+    end)
+    assert_directory(subdir)
+
+    command('bunload ' .. buf)
+    eq(1, exec_lua('return vim._watch.active().watch'))
+    command('buffer ' .. buf)
+    eq(2, exec_lua('return vim._watch.active().watch'))
+    command('bwipeout')
+    eq(1, exec_lua('return vim._watch.active().watch'))
+    command('bwipeout')
+    eq(0, exec_lua('return vim._watch.active().watch'))
   end)
 
   it("follows global 'hidden' when abandoned", function()

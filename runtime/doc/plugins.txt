@@ -50,6 +50,11 @@ Nvim opens a directory listing when you |:edit| a directory path, handled by
 the builtin "dir" plugin.  The listing is read-only, dir.lua does not provide
 actions which modify the filesystem.
 
+Local directory listings refresh automatically when files are added, renamed,
+or removed. Nvim watches only the listed directory, not its subdirectories.
+This is independent of 'autoread' and |:checktime|. Watchers stop when the buffer
+is unloaded. Use R to refresh manually if filesystem events are unavailable.
+
 Each "dir" buffer is initialized as follows:
 - Sets 'filetype' to "directory".
 - Sets |current-directory| via |:bcd|, so |gf|, |:!| and friends work as
