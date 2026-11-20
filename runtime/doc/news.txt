@@ -557,6 +557,7 @@ PLUGINS
   :packadd old-zip
 <
 • provider: add bun support for Node.js plugins
+• |:DiffTool| now shows line counts in the quickfix list.
 
 STARTUP
 

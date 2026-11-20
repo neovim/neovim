@@ -21,10 +21,10 @@
 --- ```
 
 local highlight_groups = {
-  A = 'DiffAdd',
-  D = 'DiffDelete',
-  M = 'DiffText',
-  R = 'DiffChange',
+  A = 'Added',
+  D = 'Removed',
+  M = 'Changed',
+  R = 'Changed',
 }
 
 local layout = {
@@ -34,6 +34,59 @@ local layout = {
 }
 
 local util = require('vim._core.util')
+
+--- @param path string
+--- @return string
+local function read_file(path)
+  local fd = io.open(path, 'rb')
+  if not fd then
+    return ''
+  end
+  local content = fd:read('*a')
+  fd:close()
+  return content
+end
+
+--- @param left string
+--- @param right string
+--- @return integer added
+--- @return integer deleted
+local function count_lines(left, right)
+  local a, b = read_file(left), read_file(right)
+  if a:find('\0', 1, true) or b:find('\0', 1, true) then
+    return 0, 0
+  end
+  local added, deleted = 0, 0
+  vim.text.diff(a, b, {
+    on_hunk = function(_, count_a, _, count_b)
+      deleted, added = deleted + count_a, added + count_b
+    end,
+  })
+  return added, deleted
+end
+
+--- @param bufnr integer
+local function highlight_qf(bufnr)
+  local hl_id = vim.api.nvim_create_namespace('nvim.difftool.hl')
+  vim.api.nvim_buf_clear_namespace(bufnr, hl_id, 0, -1)
+  for i, line in ipairs(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)) do
+    local hl_group = highlight_groups[line:match('^(%a) ')]
+    if hl_group then
+      vim.hl.range(bufnr, hl_id, hl_group, { i - 1, 0 }, { i - 1, 1 })
+    end
+    -- `+N`/`-N` stats follow the path
+    local stats = line:match('( %+%d+ +%-%d+)$') or line:match('( [%+%-]%d+)$')
+    if stats then
+      local col = #line - #stats
+      for _, stat in ipairs({ { '%+%d+', 'Added' }, { '%-%d+', 'Removed' } }) do
+        local s, e = stats:find(stat[1])
+        if s and e then
+          vim.hl.range(bufnr, hl_id, stat[2], { i - 1, col + s - 1 }, { i - 1, col + e })
+        end
+      end
+    end
+  end
+end
 
 --- Clean up the layout state, autocmds and quickfix list
 --- @param with_qf boolean whether the layout included a quickfix window
@@ -159,15 +212,17 @@ end
 --- @param opt difftool.opt
 --- @return table[] list of quickfix entries
 local function diff_dirs_builtin(left_dir, right_dir, opt)
-  --- @param rel_path string?
-  --- @param ignore string[]
+  --- @type vim.regex[]
+  local ignore_patterns = {}
+  for _, pat in ipairs(opt.ignore) do
+    table.insert(ignore_patterns, vim.regex(vim.o.ignorecase and (pat .. '\\c') or pat))
+  end
+
+  --- @param rel_path string
   --- @return boolean
-  local function is_ignored(rel_path, ignore)
-    if not rel_path then
-      return false
-    end
-    for _, pat in ipairs(ignore) do
-      if vim.fn.match(rel_path, pat) >= 0 then
+  local function is_ignored(rel_path)
+    for _, pat in ipairs(ignore_patterns) do
+      if pat:match_str(rel_path) then
         return true
       end
     end
@@ -203,11 +258,19 @@ local function diff_dirs_builtin(left_dir, right_dir, opt)
     local matches = 0
     local len = math.min(#chunk1, #chunk2)
     for i = 1, len do
-      if chunk1:sub(i, i) == chunk2:sub(i, i) then
-        matches = matches + 1
-      end
+      matches = matches + (chunk1:byte(i) == chunk2:byte(i) and 1 or 0)
     end
     return matches / len
+  end
+
+  --- @param file1 string
+  --- @param file2 string
+  --- @return boolean
+  local function files_equal(file1, file2)
+    if vim.fn.getfsize(file1) ~= vim.fn.getfsize(file2) then
+      return false
+    end
+    return read_file(file1) == read_file(file2)
   end
 
   -- Create a map of all relative paths
@@ -222,17 +285,18 @@ local function diff_dirs_builtin(left_dir, right_dir, opt)
   --- @param dir_path string
   --- @param is_left boolean
   local function process_files_in_directory(dir_path, is_left)
-    local files = vim.fs.find(function(name, path)
-      local rel_path = vim.fs.relpath(dir_path, vim.fs.joinpath(path, name))
-      return not is_ignored(rel_path, opt.ignore)
-    end, { limit = math.huge, path = dir_path, follow = false })
+    local results = vim.fs.dir(dir_path, {
+      depth = vim._maxint,
+      skip = function(dir_rel)
+        return not is_ignored(dir_rel)
+      end,
+    })
 
-    for _, full_path in ipairs(files) do
-      local rel_path = vim.fs.relpath(dir_path, full_path)
-      if rel_path then
-        full_path = vim.fn.resolve(full_path)
-
-        if vim.fn.isdirectory(full_path) == 0 then
+    for rel_path, ftype in results do
+      if ftype ~= 'directory' and not is_ignored(rel_path) then
+        local full_path = vim.fn.resolve(vim.fs.joinpath(dir_path, rel_path))
+        local stat = vim.uv.fs_stat(full_path)
+        if stat and stat.type == 'file' then
           all_paths[rel_path] = all_paths[rel_path] or { left = nil, right = nil }
 
           if is_left then
@@ -295,23 +359,15 @@ local function diff_dirs_builtin(left_dir, right_dir, opt)
   for rel_path, files in pairs(all_paths) do
     local status = nil
     if files.left and files.right then
-      --- @type number
-      local similarity
-      if opt.rename.detect then
-        similarity =
-          calculate_similarity(files.left, files.right, opt.rename.chunk_size, chunk_cache)
-      else
-        similarity = vim.fn.getfsize(files.left) == vim.fn.getfsize(files.right) and 1 or 0
-      end
-      if similarity < 1 then
+      if not files_equal(files.left, files.right) then
         status = renamed[rel_path] and 'R' or 'M'
       end
     elseif files.left then
       status = 'D'
-      files.right = right_dir .. rel_path
+      files.right = vim.fs.joinpath(right_dir, rel_path)
     elseif files.right then
       status = 'A'
-      files.left = left_dir .. rel_path
+      files.left = vim.fs.joinpath(left_dir, rel_path)
     end
 
     if status then
@@ -367,18 +423,56 @@ local function diff_dirs(left_dir, right_dir, opt)
     return a.user_data.rel < b.user_data.rel
   end)
 
+  -- Fill per-file stats
+  local width, added_width = 0, 0
+  for _, entry in ipairs(qf_entries) do
+    local ud = entry.user_data
+    ud.added, ud.deleted = count_lines(ud.left, ud.right)
+    width = math.max(width, vim.fn.strdisplaywidth(ud.rel))
+    if ud.added > 0 then
+      added_width = math.max(added_width, #('+' .. ud.added))
+    end
+  end
+
+  local hl_pending = false
   vim.fn.setqflist({}, 'r', {
     nr = '$',
     title = 'DiffTool',
     items = qf_entries,
-    ---@param info {id: integer, start_idx: integer, end_idx: integer}
+    ---@param info {id: integer, winid: integer, start_idx: integer, end_idx: integer}
     quickfixtextfunc = function(info)
       local items = assert(vim.fn.getqflist({ id = info.id, items = 1 }).items)
       local out = {}
       for item = info.start_idx, info.end_idx do
         local entry = assert(items[item])
-        table.insert(out, entry.text .. ' ' .. entry.user_data.rel)
+        local ud = entry.user_data
+        local stats = {}
+        if ud.added > 0 then
+          stats[#stats + 1] = '+' .. ud.added
+        end
+        if ud.deleted > 0 then
+          if added_width > 0 then
+            local added = stats[1] or ''
+            stats[1] = added .. string.rep(' ', added_width - #added)
+          end
+          stats[#stats + 1] = '-' .. ud.deleted
+        end
+        local pad = #stats > 0 and string.rep(' ', width - vim.fn.strdisplaywidth(ud.rel) + 1) or ''
+        table.insert(out, ('%s %s%s%s'):format(entry.text, ud.rel, pad, table.concat(stats, ' ')))
       end
+
+      -- refresh highlights when quickfix entries are displayed
+      if info.winid > 0 and not hl_pending then
+        hl_pending = true
+        local bufnr = vim.api.nvim_win_get_buf(info.winid)
+        vim.schedule(function()
+          hl_pending = false
+          if vim.api.nvim_buf_is_valid(bufnr) then
+            highlight_qf(bufnr)
+          end
+        end)
+      end
+
       return out
     end,
   })
@@ -428,16 +522,15 @@ function M.open(left, right, opt)
   }, opt or {})
 
   layout.group = vim.api.nvim_create_augroup('nvim.difftool.events', { clear = true })
-  local hl_id = vim.api.nvim_create_namespace('nvim.difftool.hl')
 
   --- @param bufnr? integer
   local function get_diff_entry(bufnr)
-    local qf_info = vim.fn.getqflist({ idx = 0, items = 1, size = 1 })
-    if qf_info.size == 0 then
+    local idx = vim.fn.getqflist({ idx = 0 }).idx
+    if idx == 0 then
       return false
     end
 
-    local entry = assert(qf_info.items)[assert(qf_info.idx)]
+    local entry = assert(vim.fn.getqflist({ idx = idx, items = 1 }).items)[1]
     if
       not entry
       or not entry.user_data
@@ -449,28 +542,6 @@ function M.open(left, right, opt)
 
     return entry
   end
-
-  vim.api.nvim_create_autocmd('BufWinEnter', {
-    group = layout.group,
-    pattern = 'quickfix',
-    callback = function(ev)
-      if not get_diff_entry() then
-        return
-      end
-
-      vim.api.nvim_buf_clear_namespace(ev.buf, hl_id, 0, -1)
-      local lines = vim.api.nvim_buf_get_lines(ev.buf, 0, -1, false)
-
-      -- Map status codes to highlight groups
-      for i, line in ipairs(lines) do
-        local status = line:match('^(%a) ')
-        local hl_group = highlight_groups[status]
-        if hl_group then
-          vim.hl.range(ev.buf, hl_id, hl_group, { i - 1, 0 }, { i - 1, 1 })
-        end
-      end
-    end,
-  })
 
   vim.api.nvim_create_autocmd('BufWinEnter', {
     group = layout.group,
