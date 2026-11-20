@@ -87,9 +87,9 @@ describe('nvim.spellfile', function()
           if name and name:find('%.spl$') then
             vim.fn.mkdir(vim.fs.dirname(opts.outpath), 'p')
             vim.fn.writefile({'ok'}, opts.outpath)
-            cb(nil, { status = 200 })
+            cb(nil, { body = '', status = 200, headers = {} })
           else
-            cb(nil, { status = 404 })
+            cb('Request failed with status 404', { body = '', status = 404, headers = {} })
           end
         end
 
@@ -139,7 +139,7 @@ describe('nvim.spellfile', function()
         return orig_cmd(c)
       end
 
-      vim.net.request = function(_, _, cb) cb(nil, { status = 404 }) end
+      vim.net.request = function(_, _, cb) cb('Request failed with status 404', { body = '', status = 404, headers = {} }) end
 
       local info = s.get('zz')
       local done = s._done[info.key] == true

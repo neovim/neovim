@@ -460,8 +460,7 @@ local function latest_pypi_version()
   end
   local url = 'https://pypi.org/pypi/pynvim/json'
   local err, res = vim.async.await(3, vim.net.request, url, {})
-  vim.async.await(vim.schedule) -- Leaves the fast event (the `vim.net.request()` callback).
-  if not res then
+  if err or not res then
     return ('unable to get pypi response: %s'):format(vim.trim(err or ''))
   end
   local ok, json = pcall(vim.json.decode, res.body)
