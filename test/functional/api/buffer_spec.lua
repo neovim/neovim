@@ -50,6 +50,32 @@ describe('api/buf', function()
       assert_alive()
     end)
 
+    it("syncs non-current buffers when global 'undolevels' changes #42447", function()
+      local buf = api.nvim_create_buf(false, true)
+      api.nvim_set_option_value('undolevels', -1, { scope = 'global' })
+      api.nvim_buf_set_lines(buf, 0, -1, false, { 'a' })
+
+      api.nvim_set_option_value('undolevels', 1000, { scope = 'global' })
+      api.nvim_buf_set_lines(buf, 0, -1, false, { 'b' })
+
+      api.nvim_set_current_buf(buf)
+      command('undo')
+      eq({ 'a' }, api.nvim_buf_get_lines(buf, 0, -1, false))
+    end)
+
+    it("syncs a non-current buffer when local 'undolevels' changes #42447", function()
+      local buf = api.nvim_create_buf(false, true)
+      api.nvim_set_option_value('undolevels', -1, { buf = buf, scope = 'local' })
+      api.nvim_buf_set_lines(buf, 0, -1, false, { 'a' })
+
+      api.nvim_set_option_value('undolevels', 1000, { buf = buf, scope = 'local' })
+      api.nvim_buf_set_lines(buf, 0, -1, false, { 'b' })
+
+      api.nvim_set_current_buf(buf)
+      command('undo')
+      eq({ 'a' }, api.nvim_buf_get_lines(buf, 0, -1, false))
+    end)
+
     it('cursor position is maintained after lines are inserted #9961', function()
       -- replace the buffer contents with these three lines.
       api.nvim_buf_set_lines(0, 0, -1, true, { 'line1', 'line2', 'line3', 'line4' })
