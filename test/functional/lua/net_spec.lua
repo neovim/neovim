@@ -92,7 +92,7 @@ describe('vim.net.request', function()
     result = request('GET', http_server('ok', { '503 Service Unavailable', '200 OK' }))
     t.eq({ 'ok', 200 }, { result.response.body, result.response.status })
 
-    -- Non-HTTP URL: no status, no headers. Accepts a vim.Uri. `on_response` is deferred/scheduled.
+    -- Non-HTTP URL: no status, no headers. Accepts vim.Uri. `on_response` is deferred/scheduled.
     local fname = t.tmpname()
     t.write_file(fname, 'local\n')
     local url = exec_lua('return vim.uri.from_fname(...)', fname)
@@ -102,7 +102,7 @@ describe('vim.net.request', function()
         local rv ---@type table?
         vim.net.request(vim.uri.parse(url), {}, function()
           local fast = vim.in_fast_event()
-          vim.net.request(url, {}, function(err, res)
+          vim.net.request('GET', setmetatable(vim.uri.parse(url), nil), {}, function(err, res)
             rv = { fast = fast, error = err, response = res }
           end)
         end)
@@ -112,6 +112,18 @@ describe('vim.net.request', function()
         return rv
       end)
     )
+
+    -- User's ".curlrc" should not change the output.
+    local curl_home = t.tmpname(false)
+    n.mkdir_p(curl_home)
+    t.write_file(vim.fs.joinpath(curl_home, '.curlrc'), 'include\ncompressed\n')
+    exec_lua(function()
+      vim.env.CURL_HOME = curl_home
+    end)
+    result = request('GET', http_server('ok'))
+    t.eq('ok', result.response.body)
+    t.eq(nil, exec_lua('return http_request.headers')['accept-encoding'])
+    n.rmdir(curl_home)
   end)
 
   it("detects filetype, sets 'nomodified'", function()
@@ -202,14 +214,25 @@ describe('vim.net.request', function()
       return ('http://127.0.0.1:%d/'):format(server:getsockname().port)
     end)
 
-    -- is_closing() after close().
+    -- is_closing() after close(). Calls each close() callback. `on_response` gets an error.
     t.eq(
-      { false, true },
+      { false, true, 2, 'Request closed' },
       exec_lua(function()
-        local req = vim.net.request(url, {})
+        local closed = 0
+        local rv ---@type string?
+        local req = vim.net.request(url, {}, function(err)
+          rv = err
+        end)
         local closing = req:is_closing()
-        req:close()
-        return { closing, req:is_closing() }
+        for _ = 1, 2 do
+          req:close(function()
+            closed = closed + 1
+          end)
+        end
+        vim.wait(5000, function()
+          return rv ~= nil
+        end)
+        return { closing, req:is_closing(), closed, rv }
       end)
     )
     -- The task completes after the request stops.
@@ -233,8 +256,8 @@ describe('vim.net.request', function()
     end)
   end)
 
-  it('plugin writes output to buffer', function()
-    local url = http_server('<html>test</html>')
+  it('writes response to `outbuf`', function()
+    local url = http_server('<html>test</html>', { '200 OK', '200 OK', '200 OK' })
 
     local content = exec_lua(function()
       ---@type string[]
@@ -242,7 +265,7 @@ describe('vim.net.request', function()
 
       local buf = vim.api.nvim_create_buf(false, true)
       vim.api.nvim_set_current_buf(buf)
-      vim.net.request(url, { outbuf = 0 }, function() end) -- Like plugin/net.lua.
+      vim.net.request(url, { outbuf = 0 })
 
       -- Switch buffers before the response arrives.
       local other = vim.api.nvim_create_buf(true, false)
@@ -258,6 +281,39 @@ describe('vim.net.request', function()
     end)
     t.eq({ '<html>test</html>' }, content[1])
     t.eq({ 'unrelated text' }, content[2])
+
+    -- Writes both `outpath` and `outbuf`.
+    local outpath = t.tmpname(false)
+    t.eq(
+      { '<html>test</html>' },
+      exec_lua(function()
+        local done = false
+        vim.net.request(url, { outpath = outpath, outbuf = 0 }, function()
+          done = true
+        end)
+        vim.wait(2000, function()
+          return done
+        end)
+        return vim.api.nvim_buf_get_lines(0, 0, -1, true)
+      end)
+    )
+    t.eq('<html>test</html>', t.read_file(outpath))
+
+    -- A failed `outbuf` write is passed to `on_response`.
+    t.matches(
+      "not 'modifiable'",
+      exec_lua(function()
+        vim.bo.modifiable = false
+        local rv ---@type string?
+        vim.net.request(url, { outbuf = 0 }, function(err)
+          rv = err
+        end)
+        vim.wait(2000, function()
+          return rv ~= nil
+        end)
+        return rv
+      end)
+    )
   end)
 
   it('works with :read', function()
@@ -318,7 +374,7 @@ describe('vim.net.request', function()
     local rv = exec_lua(function(path)
       vim.net.request = function(_, opts, callback)
         assert(vim.uv.fs_copyfile(path, opts.outpath))
-        callback(nil)
+        vim.schedule(callback)
       end
       -- The query is not part of the path (see |vim.Uri|).
       vim.cmd.edit({ 'https://example.com/browser.zip?raw=1', magic = { file = false } })
@@ -399,6 +455,10 @@ describe('vim.net.request', function()
     assert_accept_method('PATCH')
     assert_accept_method('DELETE')
 
+    -- `method` defaults to GET.
+    t.eq(nil, request(nil, http_server('hello')).error)
+    t.eq('GET', exec_lua('return http_request.method'))
+
     -- HEAD request
     local result = request('HEAD', http_server('hello'))
     t.eq(nil, result.error)
@@ -444,15 +504,35 @@ describe('vim.net.request', function()
         vim.net.request('GET', 'example.com', {})
       end)
     )
+    t.matches(
+      'url: expected URI, got example.com',
+      t.pcall_err(exec_lua, function()
+        vim.net.request('example.com', {})
+      end)
+    )
+    t.matches(
+      'url: expected URI, got function',
+      t.pcall_err(exec_lua, function()
+        vim.net.request('GET', print, {})
+      end)
+    )
 
-    --- FIXME(ellisonleao): this special assert is failing because the opts table is putting [""] in
-    --- the key value instead of [123] upon calling the helper method
-    -- assert_wrong_request(
-    --   'headers keys and values must be strings',
-    --   { headers = { [123] = 'value' } }
-    -- )
+    t.matches(
+      'headers keys/values must be strings',
+      t.pcall_err(exec_lua, function()
+        vim.net.request('https://example.com', { headers = { [123] = 'value' } })
+      end)
+    )
 
-    assert_wrong_request('headers keys and values must be strings', { headers = { Header = 123 } })
+    assert_wrong_request('headers keys/values must be strings', { headers = { Header = 123 } })
+    assert_wrong_request(
+      'headers keys/values must be strings',
+      { headers = { Header = { a = 'b' } } }
+    )
+    assert_wrong_request(
+      'header keys must not start with @ or end with : and ;',
+      { headers = { ['Header:'] = {} } }
+    )
     assert_wrong_request(
       'header keys must not start with @ or end with : and ;',
       { headers = { ['Header:'] = 'value' } }
