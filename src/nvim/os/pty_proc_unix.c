@@ -180,7 +180,12 @@ int pty_proc_spawn(PtyProc *ptyproc)
   Proc *proc = (Proc *)ptyproc;
   assert(proc->err.s.closed);
   uv_signal_start(&proc->loop->children_watcher, chld_handler, SIGCHLD);
-  ptyproc->winsize = (struct winsize){ ptyproc->height, ptyproc->width, 0, 0 };
+  ptyproc->winsize = (struct winsize){
+    .ws_row = ptyproc->height,
+    .ws_col = ptyproc->width,
+    .ws_xpixel = ptyproc->winsize.ws_xpixel,
+    .ws_ypixel = ptyproc->winsize.ws_ypixel,
+  };
   uv_disable_stdio_inheritance();
   int master;
   int pid = forkpty(&master, NULL, &termios_default, &ptyproc->winsize);
@@ -238,10 +243,16 @@ const char *pty_proc_tty_name(PtyProc *ptyproc)
   return ptsname(ptyproc->tty_fd);
 }
 
-void pty_proc_resize(PtyProc *ptyproc, uint16_t width, uint16_t height)
+void pty_proc_resize(PtyProc *ptyproc, uint16_t width, uint16_t height, uint16_t pixel_width,
+                     uint16_t pixel_height)
   FUNC_ATTR_NONNULL_ALL
 {
-  ptyproc->winsize = (struct winsize){ height, width, 0, 0 };
+  ptyproc->winsize = (struct winsize){
+    .ws_row = height,
+    .ws_col = width,
+    .ws_xpixel = pixel_width,
+    .ws_ypixel = pixel_height,
+  };
   ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
 }
 
