@@ -337,8 +337,12 @@ void remote_ui_connect(uint64_t channel_id, char *server_addr, Error *err)
     return;
   }
 
-  MAXSIZE_TEMP_ARRAY(args, 1);
+  Channel *chan = find_channel(channel_id);
+  MAXSIZE_TEMP_DICT(chan_config, 1);
+  PUT_C(chan_config, "detach", BOOLEAN_OBJ(chan->detach));
+  MAXSIZE_TEMP_ARRAY(args, 2);
   ADD_C(args, CSTR_AS_OBJ(server_addr));
+  ADD_C(args, DICT_OBJ(chan_config));
 
   push_call(ui, "connect", args);
 }

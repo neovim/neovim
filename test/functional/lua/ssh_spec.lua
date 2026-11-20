@@ -631,17 +631,17 @@ describe('remote-ssh', function()
       ui2:close()
     end)
     local chan_addr = ('/local/nvim-ssh.host.%s2'):format(token) -- As the TUI sets it.
-    ui2:request('nvim_chan_set', 0, { addr = chan_addr })
+    ui2:request('nvim_chan_set', 0, { addr = chan_addr, detach = false })
     local screen2 = Screen.new(40, 4, nil, ui2)
-    local connected --- @type string?
-    screen2._handle_connect = function(_, addr)
-      connected = addr
+    local connected --- @type table?
+    screen2._handle_connect = function(_, addr, config)
+      connected = { addr, config }
     end
     screen2._handle_error_exit = function() end
     ui2:request('nvim_command', ('connect %s'):format(server1.addr))
     t.retry(nil, 5000, function()
       screen2:sleep(10) -- No flush: the server stops.
-      eq(chan_addr, connected)
+      eq({ chan_addr, { detach = false } }, connected)
     end)
     eq(server1.addr, vim.uv.fs_readlink(sock2))
     eq(true, n.exec_lua('return vim.wait(5000, function() return not _G.alive(_G.pid2) end)'))

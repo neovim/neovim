@@ -249,11 +249,16 @@ the editor.
 	Indicates to the UI that it must stop rendering the cursor. This event
 	is misnamed and does not actually have anything to do with busyness.
 
-["connect", server_addr] ~
+["connect", server_addr, chan_config] ~
 	User invoked the |:connect| command. Nvim detached the current UI.
 
+	`chan_config` contains channel properties from the old server, excluding
+	`addr` (|nvim_chan_set()|).
+
 	UI is expected to:
-	1. Attach to the server at `server_addr`.
+	1. Call `nvim_chan_set(0, chan_config)` on the server at `server_addr`.
+	2. Set the channel's `addr` to `server_addr` via |nvim_chan_set()|.
+	3. Attach to the server at `server_addr`.
 
 							*ui-event-restart*
 ["restart", listen_addr, chan_config] ~

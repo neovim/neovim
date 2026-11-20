@@ -5918,10 +5918,10 @@ static void ex_detach(exarg_T *eap)
 /// Connects the current UI to a different server
 ///
 /// ":connect" shows a menu of discovered servers.
-/// ":connect <addr>" detaches the UI and connects to <addr>, then stops the current server.
+/// ":connect <addr>" detaches the UI and connects to <addr>, then may stop the current server.
 /// ":connect ssh://<uri>" bootstraps a remote Nvim over SSH, then connects.
 ///
-/// Fails if this is the last UI and ":qall" would fail (e.g. unsaved changes).
+/// Fails if the last UI is not detachable and ":qall" would fail (e.g. unsaved changes).
 static void ex_connect(exarg_T *eap)
 {
   char *addr = eap->arg;
@@ -5940,8 +5940,9 @@ static void ex_connect(exarg_T *eap)
     emsg(_(e_noui));
     return;
   }
-  // Abort if this is the last UI and a buffer has unsaved changes.
-  if (ui_active() == 1 && check_changed_any(false, false)) {
+  Channel *chan = find_channel(current_ui);
+  // Abort if the last UI is not detachable and a buffer has unsaved changes.
+  if (ui_active() == 1 && !chan->detach && check_changed_any(false, false)) {
     return;
   }
 
@@ -5976,7 +5977,7 @@ static void ex_connect(exarg_T *eap)
     }
 
     // remote-ssh: UI reconnects through same tunnel, relinked to `addr` (vim.net._ssh.relink()).
-    Channel *chan = find_channel(current_ui);
+    chan = find_channel(current_ui);
     if (!is_tcp && chan && chan->addr) {
       typval_T argvars[] = { { .v_type = VAR_STRING, .vval.v_string = chan->addr },
                              { .v_type = VAR_STRING, .vval.v_string = addr },
@@ -5993,7 +5994,8 @@ static void ex_connect(exarg_T *eap)
     }
   }
 
-  bool stop_server = !is_ssh && ui_active() == 1;
+  chan = find_channel(current_ui);
+  bool stop_server = !is_ssh && ui_active() == 1 && chan && !chan->detach;
 
   Error err = ERROR_INIT;
   remote_ui_connect(current_ui, addr, &err);

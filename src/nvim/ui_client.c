@@ -312,16 +312,18 @@ void ui_client_event_connect(Array args)
     return;
   }
 
-  String s = args.items[0].data.string;
-  char *server_addr = xmemdupz(s.data, s.size);
-  multiqueue_put(main_loop.fast_events, channel_connect_event, server_addr);
+  Array *connect_args = xmalloc(sizeof(*connect_args));
+  *connect_args = copy_array(args, NULL);
+  multiqueue_put(main_loop.fast_events, channel_connect_event, connect_args);
   // Set a dummy channel ID to prevent client exit when server detaches.
   ui_client_channel_id = UINT64_MAX;
 }
 
 static void channel_connect_event(void **argv)
 {
-  char *server_addr = argv[0];
+  Array args = *(Array *)argv[0];
+  xfree(argv[0]);
+  const char *server_addr = args.items[0].data.string.data;
 
   const char *err = "";
   bool is_tcp = socket_address_tcp_host_end(server_addr) != NULL;
@@ -332,18 +334,24 @@ static void channel_connect_event(void **argv)
     ELOG("Cannot connect to server %s: %s", server_addr, err);
     ui_client_stop();  // Leave the alternate screen, so the message is visible.
     fprintf(stderr, "Cannot connect to server %s: %s\n", server_addr, err);
-    xfree(server_addr);
+    api_free_array(args);
     ui_client_exit_status = 1;
     os_exit(1);
   }
 
   XFREE_CLEAR(detached_addr);  // Attached to the new server instead.
   ui_client_channel_id = chan;
+  if (args.size > 1 && args.items[1].type == kObjectTypeDict) {
+    MAXSIZE_TEMP_ARRAY(chan_args, 2);
+    ADD_C(chan_args, INTEGER_OBJ(0));
+    ADD_C(chan_args, args.items[1]);
+    rpc_send_event(chan, "nvim_chan_set", chan_args);
+  }
   set_chan_addr(server_addr);
   ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
 
   ILOG("Connected to server %s on channel %" PRId64, server_addr, chan);
-  xfree(server_addr);
+  api_free_array(args);
 }
 
 /// When a "restart" ui-event is received, its arguments are saved here when
