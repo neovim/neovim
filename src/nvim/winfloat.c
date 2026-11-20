@@ -491,6 +491,15 @@ win_T *win_float_special(bool enter, bool new_buf, WinKind kind)
     wp->w_p_pvw = true;
     RESET_BINDING(wp);
     win_float_anchor_preview(wp);
+    OptKeyDict_pvp *v = opt_keyset(p_pvp, kOptPreviewpopup, NULL);
+    if (HAS_KEY(v, pvp, highlight)) {
+      char *old = wp->w_p_winhl;
+      size_t len = strlen(old) + sizeof(",NormalFloat:") + strlen(v->highlight);
+      wp->w_p_winhl = xmalloc(len);
+      snprintf(wp->w_p_winhl, len, "%s%sNormalFloat:%s", old, *old == NUL ? "" : ",", v->highlight);
+      free_string_option(old);
+      parse_winhl_opt(NULL, wp);
+    }
   }
   wp->w_kind = kind;
 
@@ -579,7 +588,7 @@ void win_float_update_preview(win_T *wp)
   win_config_float(wp, wp->w_config);
 }
 
-/// Applies a 'previewpopup' value ("height:N,width:N,border:style") to `config`.
+/// Applies a 'previewpopup' value ("height:N,width:N,border:style,highlight:Group") to `config`.
 ///
 /// @return false on an invalid value; caller emits E474.
 bool win_previewpopup_config(const char *value, WinConfig *config)
@@ -592,6 +601,11 @@ bool win_previewpopup_config(const char *value, WinConfig *config)
   }
   config->height = HAS_KEY(v, pvp, height) ? (int)v->height : 0;
   config->width = HAS_KEY(v, pvp, width) ? (int)v->width : 0;
+
+  if (HAS_KEY(v, pvp, highlight)
+      && (*v->highlight == NUL || syn_check_group(v->highlight, strlen(v->highlight)) == 0)) {
+    return false;
+  }
 
   // Use 'previewpopup' border if set, else fallback to 'winborder'.
   char *border = NULL;

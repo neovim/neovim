@@ -68,6 +68,14 @@ describe("'previewpopup'", function()
       -- height/width must be >= 1 (semantic check, not the schema).
       err = pcall_err(n.exec_capture, 'set previewpopup=height:0')
       eq('nvim_exec2(), line 1: Vim(set):E474: Invalid argument: previewpopup=height:0', err)
+
+      err = pcall_err(n.exec_capture, 'set previewpopup=highlight:')
+      eq('nvim_exec2(), line 1: Vim(set):E474: Invalid argument: previewpopup=highlight:', err)
+      err = pcall_err(n.exec_capture, 'set previewpopup=highlight:Foo#Bar')
+      eq('nvim_exec2(), line 1: Vim(set):E5248: Invalid character in group name', err)
+
+      command('set previewpopup=highlight:Search')
+      eq('highlight:Search', api.nvim_get_option_value('previewpopup', {}))
     end)
 
     -- oldtest: Test_previewpopup
@@ -634,6 +642,43 @@ describe("'previewpopup'", function()
       local conf = api.nvim_win_get_config(pwin)
       eq(23, conf.width) -- longest line
       eq(2, conf.height) -- line count
+    end)
+
+    it('highlight item replaces NormalFloat', function()
+      command('call writefile(["foo"], "foo")')
+      finally(function()
+        os.remove('foo')
+      end)
+      command('set previewpopup=height:1,width:5,border:none,highlight:Search | pedit foo')
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            ^                                        |
+            {1:~                                       }|*5
+          ## grid 3
+                                                    |
+          ## grid 4
+            {10:foo  }|
+          ]],
+          win_pos = {
+            [2] = { height = 6, startcol = 0, startrow = 0, width = 40, win = 1000 },
+          },
+          float_pos = {
+            [4] = { 1001, 'NW', 1, 1, 1, true, 50, 1, 1, 1 },
+          },
+        })
+      else
+        screen:expect([[
+          ^                                        |
+          {1:~}{10:foo  }{1:                                  }|
+          {1:~                                       }|*4
+                                                  |
+        ]])
+      end
     end)
   end
 
