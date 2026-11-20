@@ -615,12 +615,40 @@ describe('vim.iter', function()
   end)
 
   describe('peek() after transformations', function()
-    it('peek() works after map() on function iterator', function()
-      local it = vim.iter(vim.gsplit('1|2|3', '|')):map(tonumber)
+    it('does not remap a peeked value #42862', function()
+      local calls = 0
+      local it = vim.iter(string.gmatch('1 2', '%d+')):map(function(value)
+        calls = calls + 1
+        return tonumber(value) * 2
+      end)
 
-      eq(1, it:peek())
-      eq(1, it:next())
       eq(2, it:peek())
+      eq(2, it:peek())
+      eq(2, it:next())
+      eq(1, calls)
+      eq(4, it:next())
+    end)
+
+    it('applies only newly appended stages to a peeked tuple', function()
+      local it = vim.iter(ipairs({ 'a', 'b' })):map(function(i, value)
+        return i * 2, nil, value
+      end)
+
+      eq({ 2, nil, 'a' }, { it:peek() })
+      it:map(function(i, _, value)
+        return i + 1, nil, value
+      end)
+      eq({ 3, nil, 'a' }, { it:peek() })
+      eq({ 3, nil, 'a' }, { it:next() })
+      eq({ 5, nil, 'b' }, { it:next() })
+    end)
+
+    it('does not count a peeked value twice in take()', function()
+      local it = vim.iter(ipairs({ 'a', 'b' })):take(1)
+
+      eq({ 1, 'a' }, { it:peek() })
+      eq({ 1, 'a' }, { it:next() })
+      eq(nil, it:next())
     end)
 
     it('peek() at end of iterator returns nil', function()
