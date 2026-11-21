@@ -38,7 +38,7 @@ describe('luaeval(vim.api.…)', function()
     it('transforms API error from nvim_buf_set_lines into lua error', function()
       fn.setline(1, { 'abc', 'def', 'a\nb', 'ttt' })
       eq(
-        { false, "'replacement string' item contains newlines" },
+        { false, "'lines' item contains newlines" },
         fn.luaeval('{pcall(vim.api.nvim_buf_set_lines, 1, 1, 2, false, {"b\\na"})}')
       )
     end)

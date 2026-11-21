@@ -508,7 +508,7 @@ function vim.api.nvim_buf_get_keymap(buf, mode) end
 --- @param start integer First line index
 --- @param end_ integer Last line index, exclusive
 --- @param strict_indexing boolean Whether out-of-bounds should be an error.
---- @return string[] # Array of lines, or empty array for unloaded buffer.
+--- @return string[] # Lines, or empty array for unloaded buffer. |api-lines|
 function vim.api.nvim_buf_get_lines(buf, start, end_, strict_indexing) end
 
 --- Returns a `(row,col)` tuple representing the position of the named mark.
@@ -573,7 +573,7 @@ function vim.api.nvim_buf_get_option(buffer, name) end
 --- @param end_row integer Last line index, inclusive
 --- @param end_col integer Ending column (byte offset) on last line, exclusive
 --- @param opts vim.api.keyset.empty? Optional parameters. Currently unused.
---- @return string[] # Array of lines, or empty array for unloaded buffer.
+--- @return string[] # Lines (|api-lines| binary mode), or empty array for unloaded buffer.
 function vim.api.nvim_buf_get_text(buf, start_row, start_col, end_row, end_col, opts) end
 
 --- Gets a buffer-scoped (b:) variable.
@@ -740,7 +740,7 @@ function vim.api.nvim_buf_set_keymap(buf, mode, lhs, rhs, opts) end
 --- or delete the last line use start=-2 and end=-1.
 ---
 --- To insert lines at a given index, set `start` and `end` to the same index.
---- To delete a range of lines, set `replacement` to an empty array.
+--- To delete a range of lines, set `lines` to an empty array.
 ---
 --- Out-of-bounds indices are clamped to the nearest valid value, unless
 --- `strict_indexing` is set.
@@ -751,8 +751,8 @@ function vim.api.nvim_buf_set_keymap(buf, mode, lhs, rhs, opts) end
 --- @param start integer First line index
 --- @param end_ integer Last line index, exclusive
 --- @param strict_indexing boolean Whether out-of-bounds should be an error.
---- @param replacement string[] Array of lines to use as replacement
-function vim.api.nvim_buf_set_lines(buf, start, end_, strict_indexing, replacement) end
+--- @param lines string|string[] List of lines `api-lines`, or a multiline String `api-string`: `"a\nb\n"` => `{ "a", "b" }`.
+function vim.api.nvim_buf_set_lines(buf, start, end_, strict_indexing, lines) end
 
 --- Sets a named mark in the given buffer, all marks are allowed
 --- file/uppercase, visual, last change, etc. See `mark-motions`.
@@ -796,7 +796,7 @@ function vim.api.nvim_buf_set_option(buffer, name, value) end
 ---
 --- To insert text at a given `(row, column)` location, use `start_row = end_row
 --- = row` and `start_col = end_col = col`. To delete the text in a range, use
---- `replacement = {}`.
+--- `text = {}`.
 ---
 --- Note:
 --- Prefer |nvim_buf_set_lines()| (for performance) to add or delete entire lines.
@@ -808,8 +808,9 @@ function vim.api.nvim_buf_set_option(buffer, name, value) end
 --- @param start_col integer Starting column (byte offset) on first line
 --- @param end_row integer Last line index, inclusive
 --- @param end_col integer Ending column (byte offset) on last line, exclusive
---- @param replacement string[] Array of lines to use as replacement
-function vim.api.nvim_buf_set_text(buf, start_row, start_col, end_row, end_col, replacement) end
+--- @param text string|string[] List of lines (`api-lines` binary mode), or a multiline String
+--- `api-string`: `"a\nb"` => `{ "a", "b" }`, `"a\n"` => `{ "a", "" }`.
+function vim.api.nvim_buf_set_text(buf, start_row, start_col, end_row, end_col, text) end
 
 --- Sets a buffer-scoped (b:) variable
 ---
@@ -857,7 +858,7 @@ function vim.api.nvim_call_function(fn, args) end
 --- To write data to the `TUI` host terminal, see `nvim_ui_send()`.
 ---
 --- @param chan integer Channel id
---- @param data string Data to write. 8-bit clean: may contain NUL bytes.
+--- @param data string Data to write. `api-string`
 function vim.api.nvim_chan_send(chan, data) end
 
 --- Sets channel properties.
@@ -1916,7 +1917,7 @@ function vim.api.nvim_out_write(str) end
 ---
 --- Doesn't check the validity of command arguments.
 ---
---- @param str string Command line string to parse. Cannot contain "\n".
+--- @param str string Command line string to parse. Cannot contain NL.
 --- @param opts vim.api.keyset.empty? Optional parameters. Reserved for future use.
 --- @return vim.api.keyset.cmd_ret # Dict containing command information, with these keys:
 --- - cmd: (string) Command name.
@@ -2067,7 +2068,7 @@ function vim.api.nvim_parse_expression(expr, flags, hl) end
 --- end, { buf = 0 })
 --- ```
 ---
---- @param data string Multiline input. Lines break at LF ("\n"). May be binary (containing NUL bytes).
+--- @param data string Input text. `api-string`
 --- @param crlf boolean Also break lines at CR and CRLF.
 --- @param phase integer -1: paste in a single call (i.e. without streaming).
 --- To "stream" a paste, call `nvim_paste` sequentially with
@@ -2084,7 +2085,8 @@ function vim.api.nvim_paste(data, crlf, phase) end
 ---
 --- Compare `:put` and `p` which are always linewise.
 ---
---- @param lines string[] `readfile()`-style list of lines. `channel-lines`
+--- @param lines string|string[] Input text: List of lines (`api-lines` binary mode), or a multiline String `api-string`
+--- (split like `setreg()`).
 --- @param type string Edit behavior: any `getregtype()` result, or:
 --- - "b" `blockwise-visual` mode (may include width, e.g. "b3")
 --- - "c" `charwise` mode
@@ -2427,7 +2429,7 @@ function vim.api.nvim_tabpage_set_win(tabpage, win) end
 --- Emits a "ui_send" event to all UIs with the "stdout_tty" `ui-option` set. UIs are expected to
 --- write the received data to a connected TTY if one exists.
 ---
---- @param content string Content to write to the TTY
+--- @param content string Content to write to the TTY. `api-string`
 function vim.api.nvim_ui_send(content) end
 
 --- Calls function `fn` in the context of window `win` and returns its result (may be multiple

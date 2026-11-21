@@ -412,6 +412,9 @@ String ga_take_string(garray_T *ga)
 /// - Lines break at \n (NL/LF/line-feed).
 /// - NUL bytes are replaced with NL.
 /// - If the last byte is a linebreak an extra empty list item is added.
+/// - Empty input gives an empty array.
+///
+/// @see api_object_to_lines()
 ///
 /// @param input  Binary string
 /// @param crlf  Also break lines at CR and CRLF.
@@ -723,6 +726,53 @@ bool api_object_to_bool(Object obj, const char *what, bool nil_value, Error *err
   } else {
     VALIDATE_EXP(false, what, "boolean", NULL, {});
     return false;
+  }
+}
+
+/// Gets the lines of a `Union(String, ArrayOf(String))` param. Splits multiline String at NL; the
+/// items point into the String (not copied).
+///
+/// @see string_to_array()
+///
+/// @param what         Name used in error messages.
+/// @param disallow_nl  Raise an error if an Array item contains NL.
+/// @param binary       NL separates lines (|api-lines| binary mode): "a\n" => ["a", ""]. Else NL
+///                     ends a line, so a final NL is optional: "a\n", "a" => ["a"]. Either way "" => [].
+/// @param[out] lines   Returns the lines.
+/// @return false (and sets `err`) if `obj` is not String or Array of Strings.
+bool api_object_to_lines(Object obj, char *what, bool disallow_nl, bool binary, Array *lines,
+                         Arena *arena, Error *err)
+{
+  if (obj.type != kObjectTypeString) {
+    VALIDATE_EXP(obj.type == kObjectTypeArray, what, "String or Array", api_typename(obj.type), {
+      return false;
+    });
+    *lines = obj.data.array;
+    return check_string_array(*lines, what, disallow_nl, err);
+  }
+
+  String str = obj.data.string;
+  if (str.size == 0) {
+    *lines = (Array)ARRAY_DICT_INIT;
+    return true;
+  } else if (!binary && str.data[str.size - 1] == NL) {
+    str.size--;
+  }
+  char *p = str.data;
+  char *end = p + str.size;
+  // Count lines first to allocate the array once (memchr is cheap, a growable array is not).
+  size_t count = 1;
+  for (char *c = p; (c = memchr(c, NL, (size_t)(end - c))) != NULL; c++) {
+    count++;
+  }
+  *lines = arena_array(arena, count);
+  while (true) {
+    char *line_end = xmemscan(p, NL, (size_t)(end - p));
+    ADD_C(*lines, STRING_OBJ(((String){ .data = p, .size = (size_t)(line_end - p) })));
+    if (line_end == end) {
+      return true;
+    }
+    p = line_end + 1;
   }
 }
 

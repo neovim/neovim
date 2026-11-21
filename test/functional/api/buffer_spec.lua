@@ -672,8 +672,12 @@ describe('api/buf', function()
     it('fails correctly when input is not valid', function()
       eq(1, lua_or_rpc.nvim_buf_get_number(0))
       eq(
-        [['replacement string' item contains newlines]],
+        [['lines' item contains newlines]],
         pcall_err(lua_or_rpc.nvim_buf_set_lines, 1, 1, 2, false, { 'b\na' })
+      )
+      eq(
+        "Invalid 'lines': expected String or Array, got Integer",
+        pcall_err(lua_or_rpc.nvim_buf_set_lines, 1, 1, 2, false, 1)
       )
     end)
 
@@ -746,6 +750,8 @@ describe('api/buf', function()
     it('can handle NULs', function()
       set_lines(0, 1, true, { 'ab\0cd' })
       eq({ 'ab\0cd' }, get_lines(0, -1, true))
+      set_lines(0, -1, true, 'ab\0cd\nef')
+      eq({ 'ab\0cd', 'ef' }, get_lines(0, -1, true))
     end)
 
     it('works with multiple lines', function()
@@ -769,6 +775,13 @@ describe('api/buf', function()
         set_lines(0, -1, mode, {})
         eq({ '' }, get_lines(0, -1, mode))
       end
+      -- A String is split into lines. A final newline ends the last line.
+      set_lines(0, -1, true, 'a\nb')
+      eq({ 'a', 'b' }, get_lines(0, -1, true))
+      set_lines(1, 1, true, 'x\n\n')
+      eq({ 'a', 'x', '', 'b' }, get_lines(0, -1, true))
+      set_lines(1, 3, true, '') -- No lines: deletes.
+      eq({ 'a', 'b' }, get_lines(0, -1, true))
     end)
 
     it('can get line ranges with non-strict indexing', function()
@@ -942,6 +955,14 @@ describe('api/buf', function()
       -- can use negative column numbers
       set_text(0, -5, 0, -1, { '!' })
       eq({ 'goodbye!' }, get_lines(0, 1, true))
+
+      -- accepts a String, split at newlines (a final newline starts a line)
+      set_text(0, 0, 0, 7, 'hi\nbye')
+      eq({ 'hi', 'bye!' }, get_lines(0, 2, true))
+      set_text(1, 0, 1, 0, 'x\n')
+      eq({ 'hi', 'x', 'bye!' }, get_lines(0, 3, true))
+      set_text(0, 0, 0, 2, '') -- Deletes.
+      eq({ '', 'x', 'bye!' }, get_lines(0, 3, true))
     end)
 
     it('works with undo', function()

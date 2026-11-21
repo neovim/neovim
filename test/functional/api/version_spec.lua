@@ -101,6 +101,12 @@ describe('api metadata', function()
     if old_fn.return_type == 'void' then
       old_fn.return_type = new_fn.return_type
     end
+    -- Relaxing a param to Object (e.g. `Union(String, ArrayOf(String))`) is compatible.
+    for idx, old_param in ipairs(old_fn.parameters) do
+      if new_fn.parameters[idx] and new_fn.parameters[idx][1] == 'Object' then
+        old_param[1] = 'Object'
+      end
+    end
     eq(old_fn, new_fn)
   end
 
@@ -166,7 +172,7 @@ describe('api metadata', function()
     local funcs = name_table(api_info.functions)
     eq('ArrayOf(String)', funcs.nvim_list_runtime_paths.return_type)
     eq('ArrayOf(Integer, 2)', funcs.nvim_buf_get_mark.return_type)
-    eq('ArrayOf(String)', funcs.nvim_buf_set_lines.parameters[5][1])
+    eq('ArrayOf(Array)', funcs.nvim_echo.parameters[1][1])
   end)
 
   it('function parameters', function()
@@ -248,6 +254,25 @@ describe('api metadata', function()
     matches(
       '"nvim_example": parameter 2 was optional, now required',
       pcall_err(assert_func_backcompat, example_fn(true), example_fn(false))
+    )
+  end)
+
+  it('param type may be relaxed to Object', function()
+    local function example_fn(param_type)
+      return {
+        name = 'nvim_example',
+        method = false,
+        since = 1,
+        return_type = 'void',
+        parameters = { { param_type, 'lines', false } },
+      }
+    end
+    -- "ArrayOf(String) -> Object" (e.g. Union(String, ArrayOf(String))) is allowed.
+    assert_func_backcompat(example_fn('ArrayOf(String)'), example_fn('Object'))
+    -- "Object -> ArrayOf(String)" is breaking.
+    matches(
+      'Expected values to be equal',
+      pcall_err(assert_func_backcompat, example_fn('Object'), example_fn('ArrayOf(String)'))
     )
   end)
 

@@ -757,10 +757,9 @@ static void mc_ins_preview_replace(pos_T start, pos_T end, const String *text)
 {
   Arena arena = ARENA_EMPTY;
   Error err = ERROR_INIT;
-  // Empty text (a delete) has NULL data; an empty array deletes the range.
-  Array lines = string_to_array(text->data != NULL ? *text : (String)STRING_INIT, false, &arena);
+  // Empty text (a delete) has NULL data; an empty String deletes the range.
   nvim_buf_set_text(LUA_INTERNAL_CALL, 0, start.lnum - 1, start.col,
-                    end.lnum - 1, end.col, lines, &arena, &err);
+                    end.lnum - 1, end.col, STRING_OBJ(*text), &arena, &err);
   if (ERROR_SET(&err)) {
     DLOG("preview replace failed: %s", err.msg);
     api_clear_error(&err);

@@ -1561,10 +1561,17 @@ describe('API', function()
   describe('nvim_put', function()
     it('validation', function()
       eq(
-        "Invalid 'line': expected String, got Integer",
+        "Invalid 'lines' item: expected String, got Integer",
         pcall_err(request, 'nvim_put', { 42 }, 'l', false, false)
       )
+      eq(
+        "Invalid 'lines': expected String or Array, got Integer",
+        pcall_err(request, 'nvim_put', 42, 'l', false, false)
+      )
       eq("Invalid 'type': 'x'", pcall_err(request, 'nvim_put', { 'foo' }, 'x', false, false))
+      -- BACKCOMPAT: NL in an item is not rejected, it becomes NUL. |NL-used-for-Nul|
+      request('nvim_put', { 'a\nb' }, 'c', false, false)
+      eq({ 'a\0b' }, api.nvim_buf_get_lines(0, 0, -1, true))
     end)
     it("fails if 'nomodifiable'", function()
       command('set nomodifiable')
@@ -1674,6 +1681,28 @@ describe('API', function()
         line 2
         line 3]])
       eq({ 0, 3, 6, 0 }, fn.getpos('.'))
+      command('%delete _')
+      -- String: linewise (final NL)
+      api.nvim_put('line 1\nline 2\n', '', true, true)
+      expect([[
+
+        line 1
+        line 2]])
+      eq({ 0, 3, 1, 0 }, fn.getpos('.'))
+      command('%delete _')
+      -- String: charwise (no final NL), may contain NUL
+      api.nvim_put('line\0 1\nline 2', '', true, true)
+      eq({ 'line\0 1', 'line 2' }, api.nvim_buf_get_lines(0, 0, -1, true))
+      eq({ 0, 2, 6, 0 }, fn.getpos('.'))
+      api.nvim_put('', '', true, true) -- No-op.
+      eq({ 'line\0 1', 'line 2' }, api.nvim_buf_get_lines(0, 0, -1, true))
+      command('%delete _')
+      -- String, linewise/blockwise: a final NL ends the last line, like setreg().
+      api.nvim_put('a\nb\n', 'l', true, false)
+      eq({ '', 'a', 'b' }, api.nvim_buf_get_lines(0, 0, -1, true))
+      api.nvim_win_set_cursor(0, { 2, 0 })
+      api.nvim_put('x\ny\n', 'b', false, false)
+      eq({ '', 'xa', 'yb' }, api.nvim_buf_get_lines(0, 0, -1, true))
     end)
 
     it('allows block width', function()

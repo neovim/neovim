@@ -251,6 +251,8 @@ API
 • |nvim_set_option_value()| accepts a new `operation` field to modify the
   existing option value.
 • |nvim_set_option_value()| returns the new option value.
+• |nvim_buf_set_lines()| |nvim_buf_set_text()| |nvim_put()| accept a String
+  instead of array-of-lines.
 • |nvim_create_autocmd()| is now |api-fast|, so it can be called from a fast
   event context (e.g. |vim.uv| callbacks).
 • |nvim_create_autocmd()| callback |event-args| provide `win`.
@@ -547,6 +549,8 @@ PERFORMANCE
   by calculating byte length and cell width of clusters in a single loop.
 • |:sort| is up to 10x faster on large buffers.
 • |:global| is up to 20x faster on large buffers.
+• Scripts using |vim.split()| before calling |nvim_buf_set_lines()| or
+  |nvim_buf_set_text()|, can gain a 2x speedup by passing the string directly.
 • |CTRL-C| responds much faster in various long-running loops (e.g. Vimscript
   |:for| loop calling slow functions).
 

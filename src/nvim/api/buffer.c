@@ -260,7 +260,7 @@ Boolean nvim_buf_detach(uint64_t channel_id, Buffer buf, Error *err)
 /// @param end              Last line index, exclusive
 /// @param strict_indexing  Whether out-of-bounds should be an error.
 /// @param[out] err         Error details, if any
-/// @return Array of lines, or empty array for unloaded buffer.
+/// @return Lines, or empty array for unloaded buffer. |api-lines|
 ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
                                    Buffer buf,
                                    Integer start,
@@ -309,7 +309,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
 /// or delete the last line use start=-2 and end=-1.
 ///
 /// To insert lines at a given index, set `start` and `end` to the same index.
-/// To delete a range of lines, set `replacement` to an empty array.
+/// To delete a range of lines, set `lines` to an empty array.
 ///
 /// Out-of-bounds indices are clamped to the nearest valid value, unless
 /// `strict_indexing` is set.
@@ -321,10 +321,10 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
 /// @param start            First line index
 /// @param end              Last line index, exclusive
 /// @param strict_indexing  Whether out-of-bounds should be an error.
-/// @param replacement      Array of lines to use as replacement
+/// @param lines            List of lines |api-lines|, or a multiline String |api-string|: `"a\nb\n"` => `{ "a", "b" }`.
 /// @param[out] err         Error details, if any
 void nvim_buf_set_lines(uint64_t channel_id, Buffer buf, Integer start, Integer end,
-                        Boolean strict_indexing, ArrayOf(String) replacement, Arena *arena,
+                        Boolean strict_indexing, Union(String, ArrayOf(String)) lines, Arena *arena,
                         Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_TEXTLOCK
@@ -347,22 +347,23 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buf, Integer start, Integer 
   });
 
   bool disallow_nl = (channel_id != VIML_INTERNAL_CALL);
-  if (!check_string_array(replacement, "replacement string", disallow_nl, err)) {
+  Array repl;
+  if (!api_object_to_lines(lines, "lines", disallow_nl, false, &repl, arena, err)) {
     return;
   }
 
-  size_t new_len = replacement.size;
+  size_t new_len = repl.size;
   size_t old_len = (size_t)(end - start);
   ptrdiff_t extra = 0;  // lines added to text, can be negative
-  char **lines = (new_len != 0) ? arena_alloc(arena, new_len * sizeof(char *), true) : NULL;
+  char **new_lines = (new_len != 0) ? arena_alloc(arena, new_len * sizeof(char *), true) : NULL;
 
   for (size_t i = 0; i < new_len; i++) {
-    const String l = replacement.items[i].data.string;
+    const String l = repl.items[i].data.string;
 
-    // Fill lines[i] with l's contents. Convert NULs to newlines as required by
+    // Fill new_lines[i] with l's contents. Convert NULs to newlines as required by
     // NL-used-for-NUL.
-    lines[i] = arena_memdupz(arena, l.data, l.size);
-    memchrsub(lines[i], NUL, NL, l.size);
+    new_lines[i] = arena_memdupz(arena, l.data, l.size);
+    memchrsub(new_lines[i], NUL, NL, l.size);
   }
 
   TRY_WRAP(err, {
@@ -405,12 +406,12 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buf, Integer start, Integer 
         goto end;
       });
 
-      if (ml_replace_buf(b, (linenr_T)lnum, lines[i], false, true) == FAIL) {
+      if (ml_replace_buf(b, (linenr_T)lnum, new_lines[i], false, true) == FAIL) {
         api_set_error(err, kErrorTypeException, "Failed to replace line");
         goto end;
       }
 
-      inserted_bytes += (bcount_t)strlen(lines[i]) + 1;
+      inserted_bytes += (bcount_t)strlen(new_lines[i]) + 1;
     }
 
     // Now we may need to insert the remaining new old_len
@@ -421,12 +422,12 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buf, Integer start, Integer 
         goto end;
       });
 
-      if (ml_append_buf(b, (linenr_T)lnum, lines[i], 0, false) == FAIL) {
+      if (ml_append_buf(b, (linenr_T)lnum, new_lines[i], 0, false) == FAIL) {
         api_set_error(err, kErrorTypeException, "Failed to insert line");
         goto end;
       }
 
-      inserted_bytes += (bcount_t)strlen(lines[i]) + 1;
+      inserted_bytes += (bcount_t)strlen(new_lines[i]) + 1;
 
       extra++;
     }
@@ -470,7 +471,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buf, Integer start, Integer 
 ///
 /// To insert text at a given `(row, column)` location, use `start_row = end_row
 /// = row` and `start_col = end_col = col`. To delete the text in a range, use
-/// `replacement = {}`.
+/// `text = {}`.
 ///
 /// @note Prefer |nvim_buf_set_lines()| (for performance) to add or delete entire lines.
 /// @note Prefer |nvim_paste()| or |nvim_put()| to insert (instead of replace) text at cursor.
@@ -481,18 +482,24 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buf, Integer start, Integer 
 /// @param start_col        Starting column (byte offset) on first line
 /// @param end_row          Last line index, inclusive
 /// @param end_col          Ending column (byte offset) on last line, exclusive
-/// @param replacement      Array of lines to use as replacement
+/// @param text             List of lines (|api-lines| binary mode), or a multiline String
+///                         |api-string|: `"a\nb"` => `{ "a", "b" }`, `"a\n"` => `{ "a", "" }`.
 /// @param[out] err         Error details, if any
 void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integer start_col,
-                       Integer end_row, Integer end_col, ArrayOf(String) replacement, Arena *arena,
-                       Error *err)
+                       Integer end_row, Integer end_col, Union(String, ArrayOf(String)) text,
+                       Arena *arena, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_TEXTLOCK
 {
+  bool disallow_nl = (channel_id != VIML_INTERNAL_CALL);
+  Array repl;
+  if (!api_object_to_lines(text, "text", disallow_nl, true, &repl, arena, err)) {
+    return;
+  }
   MAXSIZE_TEMP_ARRAY(scratch, 1);
-  if (replacement.size == 0) {
+  if (repl.size == 0) {
     ADD_C(scratch, STATIC_CSTR_AS_OBJ(""));
-    replacement = scratch;
+    repl = scratch;
   }
 
   buf_T *b = api_buf_ensure_loaded(buf, err);
@@ -536,12 +543,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
     return;
   });
 
-  bool disallow_nl = (channel_id != VIML_INTERNAL_CALL);
-  if (!check_string_array(replacement, "replacement string", disallow_nl, err)) {
-    return;
-  }
-
-  size_t new_len = replacement.size;
+  size_t new_len = repl.size;
 
   bcount_t new_byte = 0;
   bcount_t old_byte = 0;
@@ -558,12 +560,12 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
     old_byte += (bcount_t)end_col + 1;
   }
 
-  String first_item = replacement.items[0].data.string;
-  String last_item = replacement.items[replacement.size - 1].data.string;
+  String first_item = repl.items[0].data.string;
+  String last_item = repl.items[repl.size - 1].data.string;
 
   size_t firstlen = (size_t)start_col + first_item.size;
   size_t last_part_len = (size_t)len_at_end - (size_t)end_col;
-  if (replacement.size == 1) {
+  if (repl.size == 1) {
     firstlen += last_part_len;
   }
   char *first = arena_allocz(arena, firstlen);
@@ -571,7 +573,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
   memcpy(first, str_at_start, (size_t)start_col);
   memcpy(first + start_col, first_item.data, first_item.size);
   memchrsub(first + start_col, NUL, NL, first_item.size);
-  if (replacement.size == 1) {
+  if (repl.size == 1) {
     memcpy(first + start_col + first_item.size, str_at_end + end_col, last_part_len);
   } else {
     last = arena_allocz(arena, last_item.size + last_part_len);
@@ -584,7 +586,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
   lines[0] = first;
   new_byte += (bcount_t)(first_item.size);
   for (size_t i = 1; i < new_len - 1; i++) {
-    const String l = replacement.items[i].data.string;
+    const String l = repl.items[i].data.string;
 
     // Fill lines[i] with l's contents. Convert NULs to newlines as required by
     // NL-used-for-NUL.
@@ -592,8 +594,8 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
     memchrsub(lines[i], NUL, NL, l.size);
     new_byte += (bcount_t)(l.size) + 1;
   }
-  if (replacement.size > 1) {
-    lines[replacement.size - 1] = last;
+  if (repl.size > 1) {
+    lines[repl.size - 1] = last;
     new_byte += (bcount_t)(last_item.size) + 1;
   }
 
@@ -714,7 +716,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
 /// @param end_col    Ending column (byte offset) on last line, exclusive
 /// @param opts       Optional parameters. Currently unused.
 /// @param[out] err   Error details, if any
-/// @return Array of lines, or empty array for unloaded buffer.
+/// @return Lines (|api-lines| binary mode), or empty array for unloaded buffer.
 ArrayOf(String) nvim_buf_get_text(uint64_t channel_id, Buffer buf,
                                   Integer start_row, Integer start_col,
                                   Integer end_row, Integer end_col,

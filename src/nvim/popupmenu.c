@@ -936,7 +936,6 @@ static void pum_preview_set_text(win_T *win, char *info, linenr_T *lnum, int *ma
 {
   Error err = ERROR_INIT;
   Arena arena = ARENA_EMPTY;
-  Array replacement = ARRAY_DICT_INIT;
   buf_T *buf = win->w_buffer;
   buf->b_p_ma = true;
 
@@ -956,7 +955,6 @@ static void pum_preview_set_text(win_T *win, char *info, linenr_T *lnum, int *ma
     int line_width = win_linetabsize(win, 0, curr, MAXCOL);
     win->w_p_wrap = save_wrap;
     *max_width = MAX(*max_width, line_width);
-    ADD(replacement, STRING_OBJ(cstr_to_string(curr)));
     (*lnum)++;
 
     if (next) {
@@ -966,14 +964,13 @@ static void pum_preview_set_text(win_T *win, char *info, linenr_T *lnum, int *ma
 
   int original_textlock = textlock;
   textlock = 0;
-  nvim_buf_set_lines(0, buf->handle, 0, -1, false, replacement, &arena, &err);
+  nvim_buf_set_lines(0, buf->handle, 0, -1, false, STRING_OBJ(cstr_as_string(info)), &arena, &err);
   textlock = original_textlock;
   if (ERROR_SET(&err)) {
     emsg(err.msg);
     api_clear_error(&err);
   }
   arena_mem_free(arena_finish(&arena));
-  api_free_array(replacement);
   buf->b_p_ma = false;
 }
 

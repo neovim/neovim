@@ -319,7 +319,7 @@ void buffer_insert(Buffer buffer, Integer lnum, ArrayOf(String) lines, Arena *ar
 {
   // "lnum" will be the index of the line after inserting,
   // no matter if it is negative or not
-  nvim_buf_set_lines(0, buffer, lnum, lnum, true, lines, arena, err);
+  nvim_buf_set_lines(0, buffer, lnum, lnum, true, ARRAY_OBJ(lines), arena, err);
 }
 
 /// Gets a buffer line
@@ -367,7 +367,7 @@ void buffer_set_line(Buffer buffer, Integer index, String line, Arena *arena, Er
   Object l = STRING_OBJ(line);
   Array array = { .items = &l, .size = 1 };
   index = convert_index(index);
-  nvim_buf_set_lines(0, buffer, index, index + 1, true,  array, arena, err);
+  nvim_buf_set_lines(0, buffer, index, index + 1, true, ARRAY_OBJ(array), arena, err);
 }
 
 /// Deletes a buffer line
@@ -385,7 +385,7 @@ void buffer_del_line(Buffer buffer, Integer index, Arena *arena, Error *err)
 {
   Array array = ARRAY_DICT_INIT;
   index = convert_index(index);
-  nvim_buf_set_lines(0, buffer, index, index + 1, true, array, arena, err);
+  nvim_buf_set_lines(0, buffer, index, index + 1, true, ARRAY_OBJ(array), arena, err);
 }
 
 /// Retrieves a line range from the buffer
@@ -437,7 +437,7 @@ void buffer_set_line_slice(Buffer buffer, Integer start, Integer end, Boolean in
 {
   start = convert_index(start) + !include_start;
   end = convert_index(end) + include_end;
-  nvim_buf_set_lines(0, buffer, start, end, false, replacement, arena, err);
+  nvim_buf_set_lines(0, buffer, start, end, false, ARRAY_OBJ(replacement), arena, err);
 }
 
 /// Sets a buffer-scoped (b:) variable
