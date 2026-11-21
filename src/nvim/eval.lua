@@ -12928,7 +12928,7 @@ M.funcs = {
 
     ]=],
     name = 'tabpagewinnr',
-    params = { { 'tabarg', 'integer' }, { 'arg', "'$'|'#'" } },
+    params = { { 'tabarg', 'integer' }, { 'arg', 'string' } },
     returns = 'integer',
     signature = 'tabpagewinnr({tabarg} [, {arg}])',
     see_lua = {
