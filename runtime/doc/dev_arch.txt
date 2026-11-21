@@ -697,6 +697,7 @@ Examples where RHS replay behaves better than LHS:
   - `nnoremap X Gdd`: RHS replays only dd, per cursor.
   - `nnoremap <Down> ]C`: LHS (follow-mode) moves each cursor to its neighbor.
   - `nnoremap u u`: LHS would undo N times.
+  - `nnoremap X <Cmd>lua place_cursors()<CR>`: LHS would replay at the cursors it placed.
 - Editor state outside of current buffer:
   - `nnoremap ]x <Cmd>cnext<CR>x`:
     - LHS is nonsense.

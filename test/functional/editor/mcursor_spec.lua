@@ -902,7 +902,7 @@ describe('multicursor', function()
       eq({ 'a', 'c' }, get_lines())
     end)
 
-    it('global op (undo/redo, g CTRL-A) does not cascade', function()
+    it('global op (undo/redo, g CTRL-A, Q) does not cascade', function()
       -- Mapping that performs a "global op" must not cascade.
 
       -- vim-repeat maps u/U/<C-R> to undo/redo wrappers.
@@ -954,6 +954,24 @@ describe('multicursor', function()
         cursors({ 'a', 'b', 'c' }, place)
         feed(',n')
         eq({ '1a', '2b', '3c' }, get_lines(), place)
+      end
+
+      -- Mapping that adds/removes a cursor is not LHS-replayed, though it moved (follow-mode).
+      local ns = api.nvim_create_namespace('nvim.multicursor')
+      command(
+        ('nnoremap ,a <Cmd>call nvim_buf_set_extmark(0, %d, 1, 0, {}) <Bar> 1<CR>'):format(ns)
+      )
+      command('nnoremap ,r <Cmd>1<CR>2Q')
+      for _, case in ipairs({
+        { 'G', ',a' },
+        { 'jQG', ',a' }, -- Duplicate.
+        { 'QjQG', ',r' },
+      }) do
+        clear_cursors()
+        cursors({ 'a', 'b', 'c' }, case[1])
+        command('setlocal follow') -- "Q" ended follow-mode.
+        feed(case[2])
+        eq({ { 1, 0 } }, anchors(), case[1])
       end
     end)
 
@@ -3770,11 +3788,11 @@ describe('multicursor', function()
     end)
 
     it('cursors placed inside the opfunc are live for the next typed cascade', function()
-      -- Occurrence-operator pattern (vim-mode-plus "co{motion}", issue #21334): the
-      -- 'operatorfunc' places a cursor at each occurrence of the word within the motion, then
-      -- a following typed edit cascades to all of them. Rule: extmarks added from WITHIN
-      -- an opfunc yield cursors the next command cascades to (the g@ itself has no
-      -- effect, so it does not cascade and the placed cursors survive, like |v_Q| placement).
+      -- Occurrence-operator pattern (vim-mode-plus "co{motion}", issue #21334): the 'operatorfunc'
+      -- places a cursor at each occurrence of the word within the motion, then a following typed
+      -- edit cascades to all of them. Rule: extmarks added from WITHIN an opfunc yield cursors the
+      -- next command cascades to (the g@ itself does not cascade: adding cursors is a global op,
+      -- like |v_Q| placement).
       n.exec_lua([==[
         _G.occur_opfunc = function()
           local ms = vim.fn.matchbufline('%', _G.occur_pat, vim.fn.line("'["), vim.fn.line("']"))

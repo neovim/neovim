@@ -878,7 +878,7 @@ void atom_typed_del(size_t len)
   kv_size(typed.keys) -= MIN(len, kv_size(typed.keys));
 }
 
-/// Flags the running command as already applying to every cursor. E.g.: undo, "g CTRL-A"
+/// Indicates the running cmd already "applied" to all cursors. E.g.: undo, "g CTRL-A", "Q" itself.
 void atom_did_global_op(void)
 {
   if (!mc_replaying()) {
