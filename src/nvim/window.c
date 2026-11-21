@@ -5066,6 +5066,14 @@ tabpage_T *win_find_tabpage(win_T *win)
   return NULL;
 }
 
+// Floats have no neighbors, so use prevwin (or firstwin) of "tp".
+static win_T *win_float_neighbor(tabpage_T *tp)
+{
+  win_T *wp = tp == curtab ? prevwin : tp->tp_prevwin;
+  return tabpage_win_valid(tp, wp) && !wp->w_floating
+         ? wp : (tp == curtab ? firstwin : tp->tp_firstwin);
+}
+
 /// Get the above or below neighbor window of the specified window.
 ///
 /// Returns the specified window if the neighbor is not found.
@@ -5080,7 +5088,7 @@ win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, int count)
   frame_T *foundfr = wp->w_frame;
 
   if (wp->w_floating) {
-    return win_valid(prevwin) && !prevwin->w_floating ? prevwin : firstwin;
+    return win_float_neighbor(tp);
   }
 
   while (count--) {
@@ -5156,7 +5164,7 @@ win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, int count)
   frame_T *foundfr = wp->w_frame;
 
   if (wp->w_floating) {
-    return win_valid(prevwin) && !prevwin->w_floating ? prevwin : firstwin;
+    return win_float_neighbor(tp);
   }
 
   while (count--) {

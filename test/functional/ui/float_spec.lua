@@ -1243,6 +1243,19 @@ describe('float window', function()
     eq(1, fn.tabpagewinnr(2))
   end)
 
+  it('tabpagewinnr([hjkl]) from float in another tabpage', function()
+    command('split | wincmd j')
+    api.nvim_open_win(0, true, { relative = 'editor', width = 2, height = 2, row = 2, col = 2 })
+    eq(2, fn.winnr('j'))
+    command('tabnew | split')
+    eq({ 2, 2, 2, 2 }, {
+      fn.tabpagewinnr(1, 'j'),
+      fn.tabpagewinnr(1, 'k'),
+      fn.tabpagewinnr(1, 'h'),
+      fn.tabpagewinnr(1, 'l'),
+    })
+  end)
+
   it('non-visible/focusable is not a valid previous window', function()
     local win = api.nvim_open_win(0, true, { relative = 'editor', width = 2, height = 2, row = 2, col = 2, focusable = false })
     command('wincmd p')
