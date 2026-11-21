@@ -2374,7 +2374,6 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
   buf_T *buf;
   bufref_T bufref;
   bufref_T old_curbuf;
-  char *free_fname = NULL;
   int retval = FAIL;
   linenr_T topline = 0;
   int newcol = -1;
@@ -2421,11 +2420,9 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
         ffname = curbuf->b_ffname;
         sfname = curbuf->b_fname;
       }
-      free_fname = fix_fname(ffname);       // may expand to full path name
-      if (free_fname != NULL) {
-        ffname = free_fname;
-      }
-      other_file = otherfile(ffname);
+      char *free_fname = fix_fname(ffname);       // may expand to full path name
+      other_file = otherfile(free_fname);
+      XFREE_CLEAR(free_fname);
     }
   }
 
@@ -2965,7 +2962,6 @@ theend:
   if (did_set_swapcommand) {
     set_vim_var_string(VV_SWAPCOMMAND, NULL, -1);
   }
-  xfree(free_fname);
   return retval;
 }
 

@@ -3278,6 +3278,8 @@ static bool otherfile_buf(buf_T *buf, char *ffname, FileID *file_id_p, bool file
   }
   if (path_equal(ffname, buf->b_ffname, kPathCmpLiteral)) {
     return false;
+  } else if (path_with_url(ffname)) {
+    return true;
   }
   {
     FileID file_id;
@@ -3287,8 +3289,17 @@ static bool otherfile_buf(buf_T *buf, char *ffname, FileID *file_id_p, bool file
       file_id_valid = os_fileid(ffname, file_id_p);
     }
     if (!file_id_valid) {
-      // file_id not valid, assume files are different.
-      return true;
+      const char *f_tail = gettail_dir(ffname);
+      const char *b_tail = gettail_dir(buf->b_ffname);
+      if (!path_equal(f_tail, b_tail, kPathCmpLiteral)) {
+        return true;
+      }
+      char *f_dir = xstrndup(ffname, (size_t)(f_tail - ffname));
+      char *b_dir = xstrndup(buf->b_ffname, (size_t)(b_tail - buf->b_ffname));
+      bool same = path_equal(f_dir, b_dir, kPathCmpFull);
+      XFREE_CLEAR(f_dir);
+      XFREE_CLEAR(b_dir);
+      return !same;
     }
     // Use dev/ino to check if the files are the same, even when the names
     // are different (possible with links).  Still need to compare the
@@ -3640,29 +3651,33 @@ void fname_expand(buf_T *buf, char **ffname, char **sfname)
   if (*sfname == NULL) {  // no short file name given, use ffname
     *sfname = *ffname;
   }
-  *ffname = fix_fname(*ffname);     // expand to full path
+
+  bool is_url = path_with_url(*sfname);
+  bool trailing_slash = after_pathsep(*sfname, *sfname + strlen(*sfname));
+  // expand to full path
+  if (is_url) {
+    *ffname = fix_fname(*sfname);
+  } else if (trailing_slash) {
+    // Preserve the last component for directory buffer by truncating the path
+    // at the separator following it. Otherwise, fix_fname() would resolve
+    // ".../link/" to ".../target"
+    char *s = xstrdup(*sfname);
+    *path_tail_with_sep(s) = NUL;
+    *ffname = fix_fname(s);
+    XFREE_CLEAR(s);
+  } else {
+    *ffname = fix_fname(*ffname);
+  }
   if (*ffname == NULL) {
     *sfname = NULL;
     return;
   }
-  // Preserve a symbolic link path for directory buffers. fix_fname("link/")
-  // resolves to the target, so re-expand without the trailing separator: if
-  // "link" is a symbolic link to directory "target", ":edit link/" produces
-  // ".../link/", not ".../target/".
-  if (os_isdir(*ffname)) {
-    char *name = xstrdup(*sfname);
-    size_t name_len = strlen(name);
-    if (name_len > 0 && after_pathsep(name, name + name_len)
-        && name + name_len > get_past_head(name)) {
-      *path_tail_with_sep(name) = NUL;
-    }
-    char *full = fix_fname(name);
-    xfree(name);
-    if (full != NULL) {
-      xfree(*ffname);
-      *ffname = full;
-    }
+  if (trailing_slash || os_isdir(*ffname)) {
+    // append a trailing slash for directory
     *ffname = concat_fnames_realloc(*ffname, "", true);
+  }
+  if (is_url) {  // also use the resolved filename for sfname
+    *sfname = *ffname;
   }
 
 #ifdef MSWIN

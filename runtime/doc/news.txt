@@ -47,9 +47,9 @@ LUA
     the structured view; the raw string value is unchanged.
 • Backslashes are not supported in URIs/URLs. E.g. "http:\\host" is treated as
   a filepath, not a URL, in buffer names, |gf|, etc.
-• |vim.uri.to_fname()| returns "/" separators (also on Windows), drops the URI
-  query, and converts a URI host to a UNC path ("file://server/share" =>
-  "//server/share").
+• |vim.uri.to_fname()| returns a normalized filepath with "/" separators (also
+  on Windows), drops the URI query, and converts a URI host to a UNC path
+  ("file://server/share" => "//server/share").
 
 DIAGNOSTICS
 
@@ -314,7 +314,8 @@ EDITOR
     "E11: Invalid in command-line window" while cmdwin was open, now work
     normally. Async plugins no longer need special |CmdwinLeave| workarounds.
   • The |cmdwin-char| is shown via 'statuscolumn'.
-• |gf| and |<cfile>| support `file://…` URIs.
+• |gf| and |<cfile>| support `file://…` URIs. Nvim now resolves these URIs
+  to local filenames when opening files, without relying on netrw.
 • |:help| files can contain tables, see |help-table|. Example:
   |supported-platforms| (https://neovim.io/doc/user/support/#supported-platforms).
 • |:help| documentation is available as PDF via:

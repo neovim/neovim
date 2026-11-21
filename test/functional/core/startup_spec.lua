@@ -54,6 +54,16 @@ describe('startup', function()
     end
   end)
 
+  it('opens file:// URI without netrw #39278', function()
+    local file = t.tmpname()
+    clear({ args = { '--cmd', 'let g:loaded_netrw=1', vim.uri.from_fname(file) } })
+    eq(file, api.nvim_buf_get_name(0))
+    local buf = api.nvim_get_current_buf()
+    command(('edit %s'):format(file))
+    eq(buf, api.nvim_get_current_buf())
+    eq(1, #api.nvim_list_bufs())
+  end)
+
   it('prevents remote UI infinite loop', function()
     clear()
     local screen = Screen.new(84, 3)
