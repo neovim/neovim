@@ -877,6 +877,59 @@ describe('vim.lsp.diagnostic', function()
       eq(2, refreshed_diags[1].severity)
     end)
 
+    for _, noautocmd in ipairs({ false, true }) do
+      it(
+        'refreshes workspace diagnostics after a buffer is wiped (noautocmd='
+          .. tostring(noautocmd)
+          .. ') #42629',
+        function()
+          exec_lua(create_server_definition)
+          local result = exec_lua(function()
+            local uris = { 'file:///fake/wiped', 'file:///fake/retained' }
+            local requests = {}
+            local server = _G._create_server({
+              capabilities = {
+                diagnosticProvider = {
+                  interFileDependencies = false,
+                  workspaceDiagnostics = true,
+                },
+              },
+              handlers = {
+                ['workspace/diagnostic'] = function(_, params, callback)
+                  requests[#requests + 1] = params.previousResultIds
+                  local items = {}
+                  if #requests == 1 then
+                    for i, uri in ipairs(uris) do
+                      items[#items + 1] = {
+                        kind = 'full',
+                        uri = uri,
+                        resultId = tostring(i),
+                        items = {},
+                      }
+                    end
+                  end
+                  callback(nil, { items = items })
+                end,
+              },
+            })
+            local id = assert(vim.lsp.start({ name = 'dummy', cmd = server.cmd }))
+            local function refresh()
+              vim.lsp.diagnostic.on_refresh(nil, nil, { client_id = id })
+            end
+            refresh()
+            local wiped = vim.uri_to_bufnr(uris[1])
+            assert(not vim.api.nvim_buf_is_loaded(wiped))
+            assert(not vim.lsp.get_client_by_id(id).attached_buffers[wiped])
+            vim.cmd.bwipeout({ wiped, mods = { noautocmd = noautocmd } })
+            assert(not vim.api.nvim_buf_is_valid(wiped))
+            refresh()
+            return requests
+          end)
+          eq({ {}, { { uri = 'file:///fake/retained', value = '2' } } }, result)
+        end
+      )
+    end
+
     it('refreshes workspace diagnostics', function()
       local fake_uri_3 = 'file:///fake/uri3'
       exec_lua(create_server_definition)
