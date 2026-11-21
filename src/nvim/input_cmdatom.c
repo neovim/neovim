@@ -241,13 +241,17 @@ static int atom_origin_undoseq(CmdOrigin origin)
   return bufref_valid(&origin.buf) ? origin.buf.br_buf->b_u_seq_cur : 0;
 }
 
-/// Cursor position from the pending atom's start, or else `w_cursor`.
+/// Cursor position from the pending atom's start, or else `w_cursor` (if `buf` is the current
+/// buffer), or else an empty position.
 pos_T atom_origin_pos(buf_T *buf)
 {
   CmdOrigin o = composite.origin;
   if (composite.open && o.buf.br_buf == buf && bufref_valid(&o.buf)
       && buf_get_changedtick(buf) == o.tick) {
     return o.pos;
+  }
+  if (buf != curwin->w_buffer) {
+    return (pos_T){ 0 };  // No meaningful cursor for `buf`
   }
   return curwin->w_cursor;
 }
