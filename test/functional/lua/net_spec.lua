@@ -435,11 +435,27 @@ describe('vim.net.request', function()
   end)
 
   it('accepts custom headers', function()
+    local url = http_server('hello')
+    exec_lua(function()
+      local system = vim.system
+      vim.system = function(cmd, opts, ...) -- Record what curl gets.
+        _G.curl = { cmd = cmd, stdin = opts.stdin }
+        for i, arg in ipairs(cmd) do
+          if cmd[i - 1] == '--data-binary' then
+            _G.curl.body_path = arg:sub(2)
+            _G.curl.body = vim.fn.readblob(arg:sub(2))
+          end
+        end
+        return system(cmd, opts, ...)
+      end
+    end)
     ---@type table
-    local result = request('GET', http_server('hello'), {
+    local result = request('POST', url, {
+      body = 'a\0b',
       headers = {
         Authorization = 'Bearer test-token',
         ['X-Custom-Header'] = 'custom-value',
+        ['X-Quote'] = 'a"b\\c',
         ['Empty'] = '',
         ['Blank'] = ' ',
         ['X-Multi'] = { 'a', 'b' },
@@ -451,8 +467,53 @@ describe('vim.net.request', function()
     local headers = exec_lua('return http_request.headers')
     t.eq('Bearer test-token', headers.authorization, 'Expected Authorization header')
     t.eq('custom-value', headers['x-custom-header'], 'Expected X-Custom-Header')
+    t.eq('a"b\\c', headers['x-quote'])
     t.eq('', headers.empty, 'Expected Empty header')
     t.eq('', headers.blank)
+    t.eq('a\0b', exec_lua('return http_request.body'))
+
+    -- Assert the full curl argv.
+    -- - Headers (secrets) are sent via stdin, not argv, for security.
+    -- - Body is sent via tempfile.
+    local curl = exec_lua('return _G.curl')
+    local stdin = vim.split(curl.stdin, '\n')
+    table.sort(stdin)
+    t.eq({
+      cmd = {
+        'curl',
+        '--disable',
+        '--fail',
+        '--globoff',
+        '--location',
+        '--retry',
+        '3',
+        '--silent',
+        '--show-error',
+        '--data-binary',
+        ('@%s'):format(curl.body_path),
+        '--write-out',
+        '%{header_json}\\n%{response_code} %{size_download}',
+        '--header',
+        '@-',
+        url,
+      },
+      stdin = {
+        'Authorization: Bearer test-token',
+        'Blank;',
+        'Empty;',
+        'X-Custom-Header: custom-value',
+        'X-Multi: a',
+        'X-Multi: b',
+        'X-Quote: a"b\\c',
+      },
+      body = 'a\0b',
+      body_removed = true,
+    }, {
+      cmd = curl.cmd,
+      stdin = stdin,
+      body = curl.body,
+      body_removed = vim.uv.fs_stat(curl.body_path) == nil,
+    })
   end)
 
   it('accepts multiple HTTP methods', function()
