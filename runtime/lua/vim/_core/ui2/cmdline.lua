@@ -145,9 +145,11 @@ function M.cmdline_hide(level, abort)
   if M.expand > 0 then
     -- Close expanded cmdline, keep last line.
     vim.schedule(function()
-      api.nvim_win_close(ui.wins.cmd, true)
-      api.nvim_buf_set_lines(ui.bufs.cmd, 0, M.erow, false, {})
-      ui.check_targets()
+      if not M.prompt and M.level == 0 then
+        api.nvim_win_close(ui.wins.cmd, true)
+        api.nvim_buf_set_lines(ui.bufs.cmd, 0, M.erow, false, {})
+        ui.check_targets()
+      end
       M.expand, M.srow = 0, 0
     end)
   elseif M.srow > 0 or level > (fn.getcmdwintype() == '' and 1 or 2) then
@@ -161,10 +163,11 @@ function M.cmdline_hide(level, abort)
     api.nvim_buf_set_lines(ui.bufs.cmd, 0, -1, false, {})
   end
 
+  local was_prompt = M.prompt
   vim.schedule(function()
     -- Avoid clearing prompt window when it is re-entered before the next event
     -- loop iteration. E.g. when a non-choice confirm button is pressed.
-    if M.dialog and M.level == 0 then
+    if M.dialog and (not was_prompt or M.level == 0) then
       api.nvim_buf_set_lines(ui.bufs.dialog, 0, -1, false, {})
       api.nvim_win_set_config(ui.wins.dialog, { hide = true })
       vim.on_key(nil, ui.msg.dialog_on_key)
