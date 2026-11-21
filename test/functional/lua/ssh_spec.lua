@@ -77,6 +77,43 @@ describe('parse_ssh_config()', function()
     )
   end)
 
+  it('parses Include directives', function()
+    local home = vim.fs.abspath(t.tmpname(false))
+    n.mkdir_p(home .. '/.ssh')
+    t.finally(function()
+      n.rmdir(home)
+    end)
+    t.write_file(home .. '/.ssh/test2.conf', 'Host test2\n  HostName test2.example.com\n')
+    t.write_file(home .. '/.ssh/nested.conf', 'Include test3.conf\n')
+    t.write_file(home .. '/.ssh/test3.conf', 'Host test3\n')
+    local config = [[
+      Include ~/.ssh/test2*.conf nested.conf missing*.conf
+
+      Host test1
+        User testuser
+
+      Host test2
+        User test2user
+    ]]
+
+    local orig_home = vim.env.HOME
+    vim.env.HOME = home
+    t.finally(function()
+      vim.env.HOME = orig_home
+    end)
+    local hosts = parser.parse_ssh_config(config)
+
+    eq(
+      { 'test2', 'test3', 'test1' },
+      vim.tbl_map(function(h)
+        return h.alias
+      end, hosts)
+    )
+    eq('test2.example.com', hosts[1].hostname)
+    eq('test2user', hosts[1].user)
+    eq('testuser', hosts[3].user)
+  end)
+
   it('fails when a quote is not closed', function()
     local config = [[
       Host prod dev "test prod my
