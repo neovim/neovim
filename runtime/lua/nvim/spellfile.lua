@@ -141,12 +141,18 @@ end
 --- @return boolean ok, integer|nil status, string|nil err
 local function fetch_file_sync(url, outpath)
   local done, err, res = false, nil, nil
-  vim.net.request(url, { outpath = outpath }, function(e, r)
+  local req = vim.net.request(url, { outpath = outpath }, function(e, r)
     err, res, done = e, r, true
   end)
   vim.wait(config.timeout_ms, function()
     return done
   end, 50, false)
+  if not done then -- Timed out: remove the partial file.
+    req:close(function()
+      os.remove(outpath)
+    end)
+    return false, nil, 'timeout'
+  end
 
   local status = res and res.status or 0
   local ok = (not err) and ((status >= 200 and status < 300) or (status == 0 and file_ok(outpath)))

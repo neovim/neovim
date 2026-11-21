@@ -52,6 +52,8 @@ vim.api.nvim_create_autocmd('BufReadCmd', {
         if err then
           vim.notify(('Failed to fetch %s: %s'):format(url, err), vim.log.levels.ERROR)
           return
+        elseif not vim.api.nvim_buf_is_valid(ev.buf) then -- Buffer disappeared.
+          return
         end
 
         if archive_kind == 'zip' then
@@ -75,6 +77,8 @@ vim.api.nvim_create_autocmd('BufReadCmd', {
       if err then
         vim.notify(('Failed to fetch %s: %s'):format(url, err), vim.log.levels.ERROR)
         return
+      elseif not vim.api.nvim_buf_is_valid(ev.buf) then -- Buffer disappeared.
+        return
       end
 
       vim.api.nvim_exec_autocmds('BufRead', { group = 'filetypedetect', buf = ev.buf })
@@ -96,19 +100,23 @@ vim.api.nvim_create_autocmd('FileReadCmd', {
     end
 
     local url = ev.file
+    local buf = vim.api.nvim_get_current_buf() -- :read target buffer (`ev.buf` is 0).
+    -- Start inserting the response at the line number given by read (e.g. :10read).
+    -- FIXME: Doesn't work for :0read as '[ is set to 1. See #7177 for possible solutions.
+    local start = vim.fn.line("'[")
     vim.notify(('Fetching %s …'):format(url), vim.log.levels.INFO)
 
     vim.net.request(url, {}, function(err, response)
       if err or not response then
         vim.notify(('Failed to fetch %s: %s'):format(url, err), vim.log.levels.ERROR)
         return
+      elseif not vim.api.nvim_buf_is_valid(buf) then -- Buffer disappeared.
+        return
       end
 
-      -- Start inserting the response at the line number given by read (e.g. :10read).
-      -- FIXME: Doesn't work for :0read as '[ is set to 1. See #7177 for possible solutions.
-      local start = vim.fn.line("'[")
-      local lines = vim.split(response.body or '', '\n', { plain = true })
-      vim.api.nvim_buf_set_lines(ev.buf, start, start, true, lines)
+      -- Final newline ends the last line, it doesn't start a new one.
+      local lines = vim.split((response.body:gsub('\n$', '')), '\n', { plain = true })
+      vim.api.nvim_buf_set_lines(buf, start, start, true, lines)
       vim.notify(('Loaded %s'):format(url), vim.log.levels.INFO)
     end)
   end,

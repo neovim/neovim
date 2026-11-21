@@ -4610,6 +4610,9 @@ vim.net.request({method}, {url}, {opts}, {on_response})    *vim.net.request()*
     Makes an HTTP request to the given URL, asynchronously passing the result
     to the specified `on_response`, `outpath` or `outbuf`.
 
+    Ignores user ".curlrc". Use environment variables to set a proxy or CA
+    bundle (`https_proxy`, `no_proxy`, `CURL_CA_BUNDLE`).
+
     Examples: >lua
         -- Write response body to file.
         vim.net.request('https://neovim.io/charter/', {
@@ -4678,7 +4681,9 @@ vim.net.request({method}, {url}, {opts}, {on_response})    *vim.net.request()*
       • {on_response}  (`fun(err?: string, response?: vim.net.request.Response)?`)
                        Invoked (|deferred|) on request completion. On HTTP
                        status >= 400, `err` is set and `response` has the
-                       status and headers (empty `body`).
+                       status and headers (empty `body`). `err` is also set
+                       after `close()`, or if writing `outbuf` fails
+                       (`response` is complete).
 
     Overloads: ~
       • `fun(url: string|vim.Uri, opts?: vim.net.request.Opts, on_response?: fun(err?: string, response?: vim.net.request.Response)): vim.async.Closable`

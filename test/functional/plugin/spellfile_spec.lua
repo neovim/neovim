@@ -112,7 +112,7 @@ describe('nvim.spellfile', function()
     eq(true, out.did_reload)
   end)
 
-  it('failure mode: 404 for all files => warn once, mark done, no reload', function()
+  it('failure mode: timeout/404 => warn once, mark done, no reload, no partial file', function()
     local out = exec_lua(
       [[
       local data_root = ...
@@ -139,19 +139,32 @@ describe('nvim.spellfile', function()
         return orig_cmd(c)
       end
 
-      vim.net.request = function(_, _, cb) cb('Request failed with status 404', { body = '', status = 404, headers = {} }) end
+      -- utf-8: times out after writing a partial file. ascii: 404.
+      s.config({ timeout_ms = 100 })
+      local closed = false
+      vim.net.request = function(url, opts, on_response)
+        if url:find('utf%-8') then
+          vim.fn.mkdir(vim.fs.dirname(opts.outpath), 'p')
+          vim.fn.writefile({ 'partial' }, opts.outpath)
+          return { close = function(_, on_close) closed = true; on_close() end }
+        end
+        on_response('Request failed with status 404', { body = '', status = 404, headers = {} })
+      end
 
       local info = s.get('zz')
       local done = s._done[info.key] == true
+      local partial = vim.fs.joinpath(data_root, 'site/spell/zz.utf-8.spl')
 
-      return { warns = warns, done = done, did_reload = did_reload }
+      return { warns = warns, done = done, did_reload = did_reload, closed = closed, partial = vim.uv.fs_stat(partial) ~= nil }
     ]],
       data_root
     )
 
+    eq(true, out.closed) -- Timed out (precondition).
     eq(1, out.warns)
     eq(true, out.done)
     eq(false, out.did_reload)
+    eq(false, out.partial)
   end)
 
   it('no confirmation when using confirm = false', function()
