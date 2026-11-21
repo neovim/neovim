@@ -327,6 +327,7 @@ EDITOR
 • |ZR| restarts Nvim (|:restart|).
 • |:connect| supports `ssh://` URIs. |remote-ssh|
 • |:connect| without arguments shows a menu of known servers and ssh hosts.
+• |:connect| menu includes ssh hosts defined by `Include` directives.
 • |:connect| stops the current server if no other UI is attached, or fails if
   :qall would fail (unsaved changes). ":connect!" (with bang "!") was removed.
 • |:detach| with range "%" detaches all UIs except the current one.
