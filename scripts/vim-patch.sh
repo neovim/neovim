@@ -950,9 +950,11 @@ is_na_patch() {
           '-I^\s+$' \
           '-I^\s*/?\*/?$' \
           '-I^\s*(//|/?\*).*\s\+?([vV]im9|E[0-9]{,4} (not used|unused)|E[0-9]{4} - |FEAT_|JSON-RPC|channel|job|popup|sound|tabpanel|terminal)' \
-          '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*(FEAT_[^_]|USE_GTK)' \
+          '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*((FEAT|GTK)_[^_]|USE_GTK)' \
+          '-I^#\s*(if|elif)\sGTK_' \
           '-I^#\s*(else|endif)' \
           '-I^#\s*define\s+(FEAT|POPUPWIN|XDG|t)_[^_]' \
+          '-I^#\s*define\s+USE_FILE_CHOOSER$' \
           '-I^\s+(&&|\|\|)\s.*defined\(.*FEAT_[^_]' \
           '-IEVENT_TERMINALWINOPEN' \
           '-I^#\s*define\s+(ASSIGN_VAR|IN_TABPANEL|POPF_CURSORLINE|USR_VIMRC_FILE)\s' \
