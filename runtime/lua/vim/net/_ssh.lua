@@ -1,5 +1,4 @@
 -- Converted into Lua from https://github.com/cyjake/ssh-config
--- TODO (siddhantdev): deal with include directives
 
 local nvim_on = require('vim._core.util').nvim_on
 local echo_err = require('vim._core.util').echo_err
@@ -22,6 +21,7 @@ local function is_multi_value_directive(param)
   local multi_value_directives = {
     'globalknownhostsfile',
     'host',
+    'include',
     'ipqos',
     'sendenv',
     'userknownhostsfile',
@@ -41,8 +41,10 @@ end
 ---@field identity_file? string IdentityFile directive.
 
 ---@param text string The ssh configuration which needs to be parsed.
+---@param state? table Hosts and seen aliases, shared across `Include` files.
 ---@return vim.net.SshHost[] The parsed host configurations.
-function M.parse_ssh_config(text)
+function M.parse_ssh_config(text, state)
+  state = state or { hosts = {}, seen = {} }
   local i = 1
   local line = 1
 
@@ -195,8 +197,8 @@ function M.parse_ssh_config(text)
   end
 
   ---@type vim.net.SshHost[]
-  local hosts = {}
-  local seen = {} ---@type table<string, boolean>
+  local hosts = state.hosts
+  local seen = state.seen ---@type table<string, boolean>
   ---@type vim.net.SshHost[]
   local current_hosts = {}
 
@@ -207,7 +209,9 @@ function M.parse_ssh_config(text)
 
   local function flush()
     for _, h in ipairs(current_hosts) do
-      table.insert(hosts, h)
+      if not vim.list_contains(hosts, h) then
+        table.insert(hosts, h)
+      end
     end
     current_hosts = {}
   end
@@ -219,6 +223,13 @@ function M.parse_ssh_config(text)
       if is_valid(alias) then
         seen[alias] = true
         table.insert(current_hosts, { alias = alias })
+      else
+        -- The first obtained value for each directive is used.
+        for _, h in ipairs(hosts) do
+          if h.alias == alias then
+            table.insert(current_hosts, h)
+          end
+        end
       end
     end
   end
@@ -237,15 +248,22 @@ function M.parse_ssh_config(text)
         end
         add_aliases(match_aliases)
       elseif lp == 'host' and node.value then
-        local valid = {} ---@type string[]
-        for _, value in
+        add_aliases(node.value --[[@as string[] ]])
+      elseif lp == 'include' then
+        local base = vim.fs.normalize('~/.ssh')
+        for _, val in
           ipairs(node.value --[[@as string[] ]])
         do
-          if is_valid(value) then
-            table.insert(valid, value)
+          local path = vim.fs.normalize(val)
+          if not (path:sub(1, 1) == '/' or path:match('^%a:')) then
+            path = vim.fs.joinpath(base, path)
+          end
+          for _, file in
+            ipairs(vim.fn.glob(path, true, true) --[[@as string[] ]])
+          do
+            M.parse_ssh_config(vim.fn.readblob(file), state)
           end
         end
-        add_aliases(valid)
       else
         local field = ({
           hostname = 'hostname',
@@ -276,8 +294,7 @@ function M.parse_config(filename)
 end
 
 ---@param filename? string Path to the SSH config file. Defaults to `~/.ssh/config`.
----@return string[] The hostnames configured in the SSH config file. Note: This does not process
----                 `Include` directives.
+---@return string[] The hostnames configured in the SSH config file.
 function M.get_hosts(filename)
   filename = filename or vim.fs.normalize('~/.ssh/config')
   local ok, hosts = pcall(M.parse_config, filename)
