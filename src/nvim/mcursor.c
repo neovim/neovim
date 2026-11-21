@@ -1627,6 +1627,7 @@ void mc_toggle(buf_T *buf, pos_T pos, bool end_follow, TriState on)
     // Replayed input ("Q" in a mapping's atom) must not manage cursors; see mc_add().
     return;
   }
+  atom_did_global_op();  // "Q" must not cascade, even via a mapping.
   if (end_follow) {
     mc_follow_set(kFalse);
   }
@@ -1668,13 +1669,14 @@ void mc_on_extmark_set(buf_T *buf, uint32_t ns_id, uint32_t id, pos_T pos)
     extmark_del_id(buf, ns_id, id);  // Can't add cursors while the cascade iterates them.
     return;
   }
+  // Discard the pending Visual atom, else it would cascade to the cursor created below.
+  atom_visual_reset();
+  atom_did_global_op();  // "Add cursor" must not cascade, even via a mapping.
   if (mc_mark_at(buf, pos, id) != 0) {
-    extmark_del_id(buf, ns_id, id);  // Duplicate cursor (e.g. repeated "1Q").
+    extmark_del_id(buf, ns_id, id);  // Duplicate cursor (e.g. nvim_buf_set_extmark() at a cursor).
     return;
   }
   mc_mark_upd(buf, &id, pos);  // Ensure our extmark flags.
-  // Discard the pending Visual atom, else it would cascade to the cursor created below.
-  atom_visual_reset();
   if (kv_size(mc_cursors) == 0) {
     // Session start: snapshot primary regs; delegate display to mcursor.lua.
     mc_start.time = (Timestamp)os_realtime();
