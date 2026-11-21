@@ -212,7 +212,7 @@ CmdSpec atom_cmd_spec(const cmdarg_T *cap)
 }
 
 /// Gets the current buffer/window/cursor state.
-static CmdOrigin atom_origin(void)
+CmdOrigin atom_origin(void)
 {
   CmdOrigin origin = { .win = curwin, .pos = curwin->w_cursor,
                        .tick = buf_get_changedtick(curbuf), .maptick = maptick,
@@ -222,7 +222,7 @@ static CmdOrigin atom_origin(void)
 }
 
 /// True if the buffer was edited. False if the buf disappeared.
-static bool atom_origin_changed(CmdOrigin origin)
+bool atom_origin_changed(CmdOrigin origin)
 {
   return bufref_valid(&origin.buf) && buf_get_changedtick(origin.buf.br_buf) != origin.tick;
 }
@@ -1331,6 +1331,16 @@ InsSession atom_ins_start(int cmd, long count, VisualIns vis, bool vblock)
                        session.origin, root_frame()->id, session.vsel);
 
   return session;
+}
+
+/// Detects an opaque change, i.e. an edit/cursor-move since `before` by an opaque action
+/// (kKeyOpaque: <Cmd>/Lua/RPC, or autocmd) during an insert-session, which capture (redo) misses.
+/// Multicursor keeps it in its previews.
+void atom_ins_opaque_end(CmdOrigin before)
+{
+  if (curbuf == before.buf.br_buf && (atom_origin_changed(before) || atom_origin_moved(before))) {
+    mc_ins_opaque_change();
+  }
 }
 
 /// Ends the insert-session delimited by atom_ins_start(), capturing it as one atom. Replaying the

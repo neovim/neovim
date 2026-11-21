@@ -88,6 +88,12 @@ typedef struct {
   varnumber_T last_changedtick_i;
 } McInsSaved;
 
+/// Per-cursor insert preview.
+typedef struct {
+  uint32_t region;  ///< Preview text (`mc_session_ns`), like the primary's `region`.
+  uint32_t cursor;  ///< Cursor-mark (`mc_ns`) of this preview.
+} McInsPreview;
+
 #include "mcursor.c.generated.h"
 
 /// Insert-cascade state.
@@ -107,9 +113,10 @@ typedef struct {
 /// - non-captured cursor-moves and edits keep the previews (see mc_ins_cascade_restart).
 static struct {
   CmdOrigin origin;  ///< State at session start: the session's atoms diff against it.
-  kvec_t(uint32_t) regions;  ///< Per-cursor preview regions (`mc_session_ns`).
+  kvec_t(McInsPreview) previews;  ///< Per-cursor previews.
   bool active;      ///< Current insert-session is cascading.
   bool first;       ///< Entry-command not yet cascaded (no span pushed yet).
+  bool restart;     ///< Restart the capture when completion ends.
   uint64_t frame;   ///< Root frame that started the insert-session.
   size_t done_len;  ///< Bytes of the capture already consumed by replayed spans; tail is pending.
   uint32_t region;  ///< Primary cursor's inserted text.
@@ -589,11 +596,12 @@ void mc_ins_cascade_start(bool cascade, CmdOrigin origin, uint64_t root_frame, c
   mc_ins_joined = false;
   mc_ins_span.active = cascade && mc_buf_has_cursors(curbuf);
   mc_ins_span.first = true;
+  mc_ins_span.restart = false;
   mc_ins_span.frame = root_frame;
   mc_ins_span.done_len = 0;
   mc_ins_span.origin = origin;
   mc_ins_span.region = 0;
-  mc_ins_regions_clear();
+  mc_ins_previews_clear();
 
   if (mc_ins_span.active) {
     // Cover the line-range of all cursors with one undo-entry. #41822
@@ -666,10 +674,10 @@ static void mc_ins_span_push(char *keys, char *text)
 }
 
 /// Deletes the per-cursor preview-region marks.
-static void mc_ins_regions_clear(void)
+static void mc_ins_previews_clear(void)
 {
-  while (kv_size(mc_ins_span.regions) > 0) {
-    extmark_del_id(curbuf, mc_session_ns(), kv_pop(mc_ins_span.regions));
+  while (kv_size(mc_ins_span.previews) > 0) {
+    extmark_del_id(curbuf, mc_session_ns(), kv_pop(mc_ins_span.previews).region);
   }
 }
 
@@ -692,43 +700,21 @@ static void mc_region_mark_set(uint32_t *mark, pos_T pos)
               false, true, true, false, NULL);
 }
 
-/// (Re)places the primary text-region mark at the cursor, and a per-cursor paired mark tracking
-/// each cursor's preview region. The preview text lands between the pair, exactly like the
-/// primary's `region` mark).
+/// (Re)places the primary text-region mark at the cursor, and a preview region at each cursor. The
+/// preview text lands in the region, exactly like the primary's `region` mark.
 static void mc_ins_preview_rebase(void)
 {
   mc_region_mark_set(&mc_ins_span.region, curwin->w_cursor);
-  mc_ins_regions_clear();
+  mc_ins_previews_clear();
   for (size_t i = 0; i < kv_size(mc_cursors); i++) {
     Context *ctx = &kv_A(mc_cursors, i);
     pos_T pos = { 0 };
     uint32_t mark = 0;
     if (mc_cur_resolve(ctx->buf, ctx->mark, &pos) && ctx->mark != mc_ins_span.origin.mcursor) {
       mc_region_mark_set(&mark, pos);
-      kv_push(mc_ins_span.regions, mark);
+      kv_push(mc_ins_span.previews, ((McInsPreview){ .region = mark, .cursor = ctx->mark }));
     }
   }
-}
-
-/// First live per-cursor preview region, or `start.id == 0` if none. A live region's buffer
-/// content is the applied preview text, and `start == end` means no preview is applied.
-/// All live regions hold the same preview, so any one represents the batch.
-static MTPair mc_ins_region_first(void)
-{
-  for (size_t i = 0; i < kv_size(mc_ins_span.regions); i++) {
-    MTPair p = extmark_from_id(curbuf, mc_session_ns(), kv_A(mc_ins_span.regions, i));
-    if (p.start.id != 0) {
-      return p;
-    }
-  }
-  return (MTPair){ 0 };
-}
-
-/// The buffer range (start/end positions) of region mark `p`.
-static void mc_region_range(MTPair p, pos_T *start, pos_T *end)
-{
-  *start = (pos_T){ .lnum = p.start.pos.row + 1, .col = p.start.pos.col };
-  *end = (pos_T){ .lnum = p.end_pos.row + 1, .col = p.end_pos.col };
 }
 
 /// Resolves a session extmark to its buffer range (start/end). Returns false if the mark is gone
@@ -739,8 +725,22 @@ static bool mc_region_mark_range(uint32_t mark, pos_T *start, pos_T *end)
   if (p.start.id == 0) {
     return false;
   }
-  mc_region_range(p, start, end);
+  *start = (pos_T){ .lnum = p.start.pos.row + 1, .col = p.start.pos.col };
+  *end = (pos_T){ .lnum = p.end_pos.row + 1, .col = p.end_pos.col };
   return true;
+}
+
+/// Range of the first live preview. All live previews have the same text and thus same dimensions.
+///
+/// @return  False if none.
+static bool mc_ins_preview_first(pos_T *start, pos_T *end)
+{
+  for (size_t i = 0; i < kv_size(mc_ins_span.previews); i++) {
+    if (mc_region_mark_range(kv_A(mc_ins_span.previews, i).region, start, end)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /// Replaces buffer text (end-exclusive) with `text` (multiline), preserving marks and undo.
@@ -759,9 +759,22 @@ static void mc_ins_preview_replace(pos_T start, pos_T end, const String *text)
   arena_mem_free(arena_finish(&arena));
 }
 
-/// Sets the preview at every cursor, replacing the previous one.
+/// Sets the preview at every cursor, replacing the previous one. No-op if unchanged.
 static void mc_ins_preview_set(const String *new)
 {
+  pos_T fs, fe;
+  if (!mc_ins_preview_first(&fs, &fe)) {
+    return;
+  }
+  String cur = ml_region_text(curbuf, fs, fe);
+  // Preview-text unchanged?
+  const bool same = cur.size == new->size
+                    && (cur.size == 0 || memcmp(cur.data, new->data, cur.size) == 0);
+  api_free_string(cur);
+  if (same) {
+    return;
+  }
+
   // The primary's own insert session must not notice the preview edits.
   McInsSaved saved = mc_ins_save_state();
   // Track the primary cursor across the preview edits.
@@ -770,10 +783,10 @@ static void mc_ins_preview_set(const String *new)
   const int save_cmod_flags = cmdmod.cmod_flags;
   cmdmod.cmod_flags |= CMOD_KEEPJUMPS;  // Not a change of the user: keeps '. and the changelist.
   set_vim_var_bool(VV_CASCADING, kBoolVarTrue);  // Listeners (on_bytes, …) see cascade edits.
-  for (size_t i = 0; i < kv_size(mc_ins_span.regions); i++) {
+  for (size_t i = 0; i < kv_size(mc_ins_span.previews); i++) {
     pos_T rs, re;
     // Re-resolve each region, previous loop iterations may have shifted it.
-    if (!mc_region_mark_range(kv_A(mc_ins_span.regions, i), &rs, &re)) {
+    if (!mc_region_mark_range(kv_A(mc_ins_span.previews, i).region, &rs, &re)) {
       continue;
     }
     // Cursor display mark (right-gravity) is pushed by the replacement to the new preview end.
@@ -806,8 +819,8 @@ static bool mc_ins_keys_nonliteral(const char *keys, size_t len)
 }
 
 /// Capture restarted mid insert-session, after a non-captured cursor-move (stop_arrow(): mouse,
-/// <PageUp>, …) or edit (<Cmd>, Lua mapping, RPC, …). The previews stay; rebase and continue the
-/// insert-cascade.
+/// <PageUp>, …) or opaque change. The previews take the primary's text and cursor-placement
+/// (a snippet placeholder, before an autopaired ")"); rebase and continue the insert-cascade.
 void mc_ins_cascade_restart(void)
 {
   if (!mc_ins_span.active || mc_replaying() || !(State & MODE_INSERT)
@@ -817,7 +830,54 @@ void mc_ins_cascade_restart(void)
   String ins = redo_keys(NULL);
   mc_ins_span.done_len = ins.size;
   api_free_string(ins);
+
+  pos_T rs, re;
+  if (mc_region_mark_range(mc_ins_span.region, &rs, &re)) {  // Previews take the primary's text.
+    String text = ml_region_text(curbuf, rs, re);
+    mc_ins_preview_set(&text);
+    api_free_string(text);
+  }
+  const pos_T c = curwin->w_cursor;
+  // If primary is inside its text: same offset per-preview, only first line column shifts.
+  if (mc_region_mark_range(mc_ins_span.region, &rs, &re) && !lt(c, rs) && lt(c, re)) {
+    for (size_t i = 0; i < kv_size(mc_ins_span.previews); i++) {
+      McInsPreview p = kv_A(mc_ins_span.previews, i);
+      pos_T ps, pe;
+      if (mc_region_mark_range(p.region, &ps, &pe)
+          && extmark_get_pos(curbuf, mc_ns(), p.cursor, NULL)) {
+        pos_T pos = { .lnum = ps.lnum + c.lnum - rs.lnum, .col = c.col };
+        if (c.lnum == rs.lnum) {
+          pos.col += ps.col - rs.col;  // First line: shift to the preview's column.
+        }
+        mc_mark_upd(curbuf, &p.cursor, pos);
+      }
+    }
+  }
   mc_ins_preview_rebase();
+}
+
+/// Keeps an opaque change (see atom_ins_opaque_end()) in the previews: restarts capture after it.
+/// Waits for completion to end (mc_ins_compl_done()): only then can redo capture the completion text
+/// (restarting earlier would keep that text AND replay it).
+void mc_ins_opaque_change(void)
+{
+  if (!mc_ins_span.active || mc_replaying()) {
+    return;
+  }
+  if (ins_compl_active()) {
+    mc_ins_span.restart = true;
+    return;
+  }
+  mc_ins_cascade_restart();
+}
+
+/// Called when completion has ended, after redo captured its text.
+void mc_ins_compl_done(void)
+{
+  if (mc_ins_span.restart) {
+    mc_ins_span.restart = false;
+    mc_ins_opaque_change();
+  }
 }
 
 /// True during a span replay. The replay's synthetic <Esc> does not end the primary insert-session,
@@ -885,30 +945,18 @@ void mc_ins_cascade(void)
     }
   } else if (mc_region_mark_range(mc_ins_span.region, &start, &end)) {
     // Live preview: mirror the primary's inserted text, without replay.
-    // Skip if unchanged, or if completion-preview could shift/overlap the primary's span.
-
-    String text = ml_region_text(curbuf, start, end);
+    // Skip if completion-preview could shift/overlap the primary's span.
     bool update = true;
-    MTPair fp = mc_ins_region_first();
-    if (fp.start.id != 0) {
-      pos_T frs, fre;
-      mc_region_range(fp, &frs, &fre);
-      String cur = ml_region_text(curbuf, frs, fre);
-      // Preview-text changed?
-      update = cur.size != text.size
-               || (text.size > 0 && memcmp(cur.data, text.data, text.size) != 0);
-      api_free_string(cur);
-    }
-    if (update && (ins_compl_active() || pum_visible())) {
+    if (ins_compl_active() || pum_visible()) {
       // Completion active. check all cursor-preview regions; if one would disturb completion, defer
-      // (skip) the entire preview update (all-or-none: mc_ins_region_first() assumes all previews
+      // (skip) the entire preview update (all-or-none: mc_ins_preview_first() assumes all previews
       // have the same text).
       //
       // TODO(justinmk): if completion positions (e.g. `compl_col`) followed extmarks, we wouldn't
       // have this problem, and live-preview could allow (non-conflicting) text-shifts. #41719
-      for (size_t i = 0; i < kv_size(mc_ins_span.regions); i++) {
+      for (size_t i = 0; i < kv_size(mc_ins_span.previews); i++) {
         pos_T rs, re;
-        if (!mc_region_mark_range(kv_A(mc_ins_span.regions, i), &rs, &re)) {
+        if (!mc_region_mark_range(kv_A(mc_ins_span.previews, i).region, &rs, &re)) {
           continue;
         }
         // A preview after `end` is safe. Otherwise, multiline old or new preview text could shift
@@ -921,9 +969,10 @@ void mc_ins_cascade(void)
       }
     }
     if (update) {
+      String text = ml_region_text(curbuf, start, end);
       mc_ins_preview_set(&text);
+      api_free_string(text);
     }
-    api_free_string(text);
   }
   api_free_string(ins);
 }
@@ -937,11 +986,7 @@ void mc_ins_cascade(void)
 static void mc_ins_span_flush(const String *ins, bool commit)
 {
   static const String empty = STRING_INIT;
-  MTPair fp = mc_ins_region_first();
-  if (fp.start.id != 0
-      && (fp.start.pos.row != fp.end_pos.row || fp.start.pos.col != fp.end_pos.col)) {
-    mc_ins_preview_set(&empty);  // Delete the preview at every cursor.
-  }
+  mc_ins_preview_set(&empty);  // Delete the preview at every cursor.
   size_t dlen = ins->size - mc_ins_span.done_len;
   StringBuilder keys = KV_INITIAL_VALUE;
   kv_push(keys, 'i');
@@ -1191,7 +1236,7 @@ bool mc_ins_commit(void)
     extmark_del_id(curbuf, mc_session_ns(), mc_ins_span.region);
     mc_ins_span.region = 0;
   }
-  mc_ins_regions_clear();
+  mc_ins_previews_clear();
 
   if (active && buf_get_changedtick(curbuf) == mc_ins_span.origin.tick) {
     // Nothing changed; drop the "umbrella" undo-entry added by mc_ins_cascade_start. #41883
@@ -1734,7 +1779,7 @@ void mc_free_all(void)
     ctx_free(&ctx);
   }
   kv_destroy(mc_cursors);
-  kv_destroy(mc_ins_span.regions);
+  kv_destroy(mc_ins_span.previews);
   ctx_free(&mc_start.ctx);
 }
 #endif

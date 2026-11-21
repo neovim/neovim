@@ -52,6 +52,7 @@
 #include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -2919,6 +2920,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   do_autocmd_completedone(c, prev_mode, &word);
   xfree(word.data);
 
+  mc_ins_compl_done();
   return retval;
 }
 

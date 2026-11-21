@@ -1981,7 +1981,7 @@ describe('multicursor', function()
       end
     end)
 
-    it('edit not captured by redo (Lua/RPC) stays as previewed #42205', function()
+    it('edits not captured by redo (Lua/RPC) stay as previewed #42205', function()
       n.exec_lua(function()
         vim.keymap.set('i', '<C-j>', function()
           vim.api.nvim_put({ 'X' }, 'c', false, true)
@@ -2005,19 +2005,76 @@ describe('multicursor', function()
 
       -- Typed text after the edit still replays ('textwidth' wraps per cursor), non-literal keys
       -- after it flush, and a session ended by the mapping (:stopinsert) or CTRL-C keeps it.
-      command('set textwidth=12')
+      command('set textwidth=12 ignorecase')
       command('imap <C-k> <C-j><Cmd>stopinsert<CR>')
+      n.exec_lua(function()
+        vim.keymap.set('i', '<C-l>', function()
+          vim.api.nvim_put({ 'X' }, 'c', false, true)
+          vim.cmd('silent noautocmd call complete(col("."), [])')
+        end)
+        vim.keymap.set('i', '<F2>', function()
+          vim.cmd('silent noautocmd call complete(col("."), [])')
+          vim.api.nvim_put({ 'X' }, 'c', false, true)
+        end)
+        vim.keymap.set('i', '<F3>', function()
+          vim.api.nvim_put({ 'X' }, 'c', false, true)
+          vim.cmd('silent noautocmd call complete(col("."), ["Y"])')
+        end)
+        vim.keymap.set('i', '<C-b>', function() -- Snippet: cursor at its placeholder.
+          vim.api.nvim_put({ 'f()' }, 'c', false, true)
+          local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+          vim.api.nvim_win_set_cursor(0, { row, col - 1 })
+        end)
+        vim.keymap.set('i', '<F7>', function() -- Cursor-only move into the inserted text.
+          local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+          vim.api.nvim_win_set_cursor(0, { row, col - 1 })
+        end)
+        vim.api.nvim_create_autocmd('TextChangedI', { -- Autopair.
+          callback = function()
+            local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+            if vim.api.nvim_get_current_line():sub(col, col + 1) == '(' then
+              vim.api.nvim_buf_set_text(0, row - 1, col, row - 1, col, { ')' })
+            end
+          end,
+        })
+        vim.bo.completefunc = 'v:lua.Compl'
+        _G.Compl = function(findstart)
+          return findstart == 1 and vim.fn.col('.') - 1 or { 'xx' }
+        end
+        vim.api.nvim_create_autocmd('CompleteDone', {
+          callback = function()
+            if vim.v.completed_item.word == 'xx' then
+              vim.api.nvim_put({ '()' }, 'c', false, true)
+            end
+          end,
+        })
+      end)
+
+      -- { keys, expected, keys2 }: `keys2` is fed after the mapping/autocommand ran.
       for _, case in ipairs({
         { 'Aab<C-j>cd ee ff<Esc>', { 'fooabXcd ee', 'ff', 'barabXcd ee', 'ff' } },
         { 'A<C-j><Left>Y<BS><Esc>', { 'fooX', 'barX' } },
         { 'A<C-k>', { 'fooX', 'barX' } },
         { 'A<C-j>', { 'fooX', 'barX' }, '<C-c>' },
+        -- Edit during completion (mini.snippets hides its popup with an empty one), either order,
+        -- also with a candidate. #42548
+        { 'A<C-l><Esc>', { 'fooX', 'barX' } },
+        { 'A<C-l>Y<Esc>', { 'fooXY', 'barXY' } },
+        { 'A<F2><Esc>', { 'fooX', 'barX' } },
+        { 'A<F3><C-y><Esc>', { 'fooXY', 'barXY' } },
+        -- Edit after completion ended with non-literal keys ('ignorecase' replaced the typed "F").
+        { 'A F<C-n><C-j><C-y><Esc>', { 'foo fooX', 'bar fooX' } },
+        -- Edit leaving the cursor inside its text; edits by autocommands.
+        { 'A<C-b>x<Esc>', { 'foof(x)', 'barf(x)' } },
+        { 'Aab<F7>X<Esc>', { 'fooaXb', 'baraXb' } },
+        { 'A(', { 'foo(x)', 'bar(x)' }, 'x<Esc>' },
+        { 'A<C-x><C-u><C-y><Esc>', { 'fooxx()', 'barxx()' } },
       }) do
         clear_cursors()
         cursors({ 'foo', 'bar' }, 'QjQ')
         feed(case[1])
         if case[3] then
-          n.poke_eventloop() -- Mapping runs before CTRL-C interrupts.
+          n.poke_eventloop() -- Mapping/TextChangedI runs before more input (CTRL-C interrupts).
           feed(case[3])
         end
         eq(case[2], get_lines(), case[1])
@@ -3209,6 +3266,22 @@ describe('multicursor', function()
       eq(1, api.nvim_get_var('il'))
       eq(2, api.nvim_get_var('tci')) -- Once per typed char, not per cursor.
       eq(1, api.nvim_get_var('tc')) -- Once for the whole session.
+      -- An edit by TextChangedI (autopair) is part of the change it reacted to.
+      n.exec_lua(function()
+        vim.api.nvim_create_autocmd('TextChangedI', {
+          callback = function()
+            if vim.api.nvim_get_current_line():sub(-1) == '(' then
+              vim.api.nvim_put({ ')' }, 'c', false, false)
+            end
+          end,
+        })
+      end)
+      command('let g:tci = 0')
+      feed('A(')
+      n.poke_eventloop()
+      n.poke_eventloop()
+      eq({ 'XYaaa()', 'XYbbb()' }, get_lines())
+      eq(1, api.nvim_get_var('tci'))
     end)
 
     it('InsertCharPre fires once per typed char, result applies everywhere', function()
@@ -3278,6 +3351,12 @@ describe('multicursor', function()
       end
       -- The primary's line actually wrapped.
       eq(true, #lines > 2)
+      -- Per cursor, also if InsertLeavePre moved the cursor (after capture ended).
+      command('autocmd InsertLeavePre * call cursor(line("."), 1)')
+      clear_cursors()
+      cursors({ 'bbbbbb', 'a' }, 'Qj')
+      feed('Axx yy<Esc>')
+      eq({ 'bbbbbbxx', 'yy', 'axx yy' }, get_lines())
     end)
   end)
 
