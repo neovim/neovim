@@ -116,24 +116,27 @@ describe('u CTRL-R g- g+', function()
     eq({ 1, 8 }, api.nvim_win_get_cursor(0))
     feed('u')
     eq({ 1, 5 }, api.nvim_win_get_cursor(0))
-  end)
 
-  it("u does not jump to other window's cursor position #42449", function()
-    local api = n.api
+    -- Change happened in another window. #42449
     local buf = api.nvim_get_current_buf()
-    local win = api.nvim_get_current_win()
-    local lines = {} --- @type string[]
-    for i = 1, 50 do
-      lines[i] = 'line ' .. i
+    for _, case in ipairs({ { 2, { 'x' } }, { 0, { 'a', 'b', 'x' } } }) do
+      api.nvim_buf_set_lines(buf, 0, -1, true, { 'a', 'b', 'c' })
+      command('let &undolevels = &undolevels')
+      command('new')
+      api.nvim_buf_set_lines(buf, case[1], -1, true, case[2])
+      command('close')
+      feed('u')
+      eq({ 3, 0 }, api.nvim_win_get_cursor(0), case[1])
     end
-    api.nvim_buf_set_lines(buf, 0, -1, true, lines)
+
+    -- Change happened while hidden (setbufline() edits in a temporary window).
+    api.nvim_buf_set_lines(buf, 0, -1, true, { 'a', 'b', 'c' })
     command('let &undolevels = &undolevels')
-    api.nvim_win_set_cursor(win, { 30, 3 })
-    command('new')
-    api.nvim_buf_set_lines(buf, 29, 30, true, { 'changed' })
-    command('close')
+    command('enew')
+    fn.setbufline(buf, 3, 'x')
+    command(('buffer %d'):format(buf))
     feed('u')
-    eq({ 30, 0 }, api.nvim_win_get_cursor(win))
+    eq({ 3, 0 }, api.nvim_win_get_cursor(0))
   end)
 
   describe('undo works correctly when writing in Insert mode', function()

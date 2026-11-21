@@ -476,7 +476,7 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, bool r
     uhp->uh_entry = NULL;
     uhp->uh_getbot_entry = NULL;
     uhp->uh_cursor = atom_origin_pos(buf);  // The pre-change position: undo restores it.
-    if (virtual_active(curwin) && curwin->w_cursor.coladd > 0
+    if (virtual_active(curwin) && curwin->w_cursor.coladd > 0 && buf == curwin->w_buffer
         && equalpos(uhp->uh_cursor, curwin->w_cursor)) {
       uhp->uh_cursor_vcol = getviscol();
     } else {
@@ -2345,7 +2345,7 @@ static void u_undoredo(bool undo, bool do_buf_event)
       // the remembered position.  Makes "gwap" put the cursor back
       // where it was.
       linenr_T lnum = curhead->uh_cursor.lnum;
-      if (lnum >= top && lnum <= top + newsize + 1) {
+      if (lnum >= 1 && lnum >= top && lnum <= top + newsize + 1) {  // lnum 0: no saved cursor.
         new_curpos = curhead->uh_cursor;
         // We don't want other entries to override saved cursor
         // position.
