@@ -354,8 +354,7 @@ EDITOR
   Example: >vim
     set langmap=õ]
 <    Typing õõ in |Normal-mode| now invokes a mapping bound to ]].
-• New |complete-items| field "commit_chars": characters that accept the
-  selected completion item when typed.
+• New |complete-items| fields "commit_chars", "startcol" and "filter_text".
 • Improved CTRL-C handling:
   • While Nvim is waiting for input, CTRL-C only does the current mode's
     action (e.g. exit Insert-mode); it doesn't discard typeahead, and isn't
