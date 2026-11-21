@@ -12029,7 +12029,7 @@ tabpagewinnr({tabarg} [, {arg}])                                *tabpagewinnr()*
 
                 Parameters: ~
                   • {tabarg} (`integer`)
-                  • {arg} (`'$'|'#'?`)
+                  • {arg} (`string?`)
 
                 Return: ~
                   (`integer`)
