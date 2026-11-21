@@ -620,7 +620,9 @@ local function check_external_tools()
         return
       end
       if vim.version.lt(curl_version, { 7, 83, 0 }) then
-        health.warn(('curl %s is too old: vim.net.request() requires 7.83+'):format(curl_version))
+        health.warn(
+          ('curl %s is too old: vim.net.request() requires 7.83+'):format(tostring(curl_version))
+        )
         return
       end
       local lines = { ('curl %s (%s)'):format(tostring(curl_version), curl_path) }

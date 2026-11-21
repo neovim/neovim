@@ -62,7 +62,7 @@ end
 ---The HTTP body of the request.
 ---@field body string
 ---
----HTTP status code of the last response (after redirects), or 0 if the URL is not HTTP (`file://`).
+---Status code of the last response (after redirects), or 0 if the protocol has none (`file://`).
 ---@field status integer
 ---
 ---Headers of the last response. Names are lowercase; a repeated header's values are a list:
@@ -117,7 +117,7 @@ end
 --- })
 --- ```
 ---
---- @param method vim.net.HttpMethod (default: GET) The HTTP method (GET, POST, PUT, PATCH, HEAD, DELETE).
+--- @param method? vim.net.HttpMethod (default: GET) The HTTP method (GET, POST, PUT, PATCH, HEAD, DELETE).
 --- @param url string|vim.Uri The URL for the request.
 --- @param opts? vim.net.request.Opts
 --- @param on_response? fun(err?: string, response?: vim.net.request.Response) Invoked (|deferred|)
@@ -126,22 +126,25 @@ end
 --- @overload fun(url: string|vim.Uri, opts?: vim.net.request.Opts, on_response?: fun(err?: string, response?: vim.net.request.Response)): vim.async.Closable
 --- @return vim.async.Closable # Cancels the request or checks its status.
 function M.request(method, url, opts, on_response)
-  -- If no `method`, assume overload signature `request(url, opts, on_response)`.
-  if type(method) ~= 'string' or vim.uri.parse(method) then
+  -- If `url` is `opts`, assume overload signature `request(url, opts, on_response)`.
+  if url == nil or (type(url) == 'table' and url.scheme == nil) then
     on_response = opts --[[@as function?]]
     opts = url --[[@as table?]]
-    url = method
-    method = 'GET'
+    url = method --[[@as string|vim.Uri]]
+    method = nil
   end
   ---@cast opts vim.net.request.Opts?
-  url = tostring(url)
+  method = method or 'GET'
+  if type(url) == 'table' then
+    url = tostring(vim.uri.new(url))
+  end
   opts = opts or {}
 
   vim.validate('method', method, function(m)
     return http_methods[m] == true
   end, 'method should be one of GET, POST, PUT, PATCH, HEAD, DELETE')
   vim.validate('url', url, function(u)
-    return vim.uri.parse(u) ~= nil
+    return type(u) == 'string' and vim.uri.parse(u) ~= nil
   end, 'URI')
   vim.validate('opts', opts, 'table', true)
   vim.validate('opts.headers', opts.headers, 'table', true)
@@ -162,12 +165,10 @@ function M.request(method, url, opts, on_response)
     vim.list_extend(args, { '--output', opts.outpath })
   end
 
-  -- curl -X HEAD does not work and advises to use --head instead. `--no-include`: the headers are
-  -- in `header_json`, not the output.
-  vim.list_extend(
-    args,
-    method == 'HEAD' and { '--head', '--no-include' } or { '--request', method }
-  )
+  -- curl -X HEAD does not work and advises to use --head instead.
+  vim.list_extend(args, method == 'HEAD' and { '--head' } or { '--request', method })
+  -- Output only the body, undecoded (counted by `size_download`), overriding `--head`, ".curlrc".
+  vim.list_extend(args, { '--no-include', '--no-compressed' })
 
   if vim.list_contains({ 'POST', 'PUT', 'PATCH' }, method) and opts.body then
     vim.list_extend(args, { '--data-binary', '@-' })
@@ -175,19 +176,24 @@ function M.request(method, url, opts, on_response)
 
   if opts.headers then
     for key, value in pairs(opts.headers) do
-      for _, v in ipairs(type(value) == 'table' and value or { value }) do
-        if type(key) ~= 'string' or type(v) ~= 'string' then
-          error('headers keys and values must be strings')
-        end
+      local values = type(value) == 'table' and value or { value }
+      if type(key) ~= 'string' or not vim.islist(values) then
+        error('headers keys/values must be strings')
+      end
 
-        if key:match(':$') or key:match(';$') or key:match('^@') then
-          error('header keys must not start with @ or end with : and ;')
+      if key:match(':$') or key:match(';$') or key:match('^@') then
+        error('header keys must not start with @ or end with : and ;')
+      end
+
+      for _, v in ipairs(values) do
+        if type(v) ~= 'string' then
+          error('headers keys/values must be strings')
         end
 
         if v == '' then
-          vim.list_extend(args, { '--header', key .. ';' })
+          vim.list_extend(args, { '--header', ('%s;'):format(key) })
         else
-          vim.list_extend(args, { '--header', key .. ': ' .. v })
+          vim.list_extend(args, { '--header', ('%s: %s'):format(key, v) })
         end
       end
     end
@@ -200,30 +206,37 @@ function M.request(method, url, opts, on_response)
 
   local system_opts = opts.body and { stdin = opts.body } or {}
   local closing = false -- close() was called.
-  local on_close --- @type fun()?
+  local on_close = {} --- @type fun()[]
   local job = vim.system(args, system_opts, function(res)
-    --- @cast res.stdout -?
-    local status, headers, body = parse_output(res.stdout, not opts.outpath)
-    local err ---@type string?
-    if res.signal ~= 0 then
-      err = ('Request killed with signal %d'):format(res.signal)
-    elseif status >= 400 then
-      err = ('Request failed with status %d'):format(status)
-    elseif res.code ~= 0 then
-      err = res.stderr ~= '' and res.stderr or ('Request failed with exit code %d'):format(res.code)
-    end
-    -- An HTTP error has a response; a failed transfer (e.g. DNS) does not.
-    local response = (not err or status >= 400)
-        and { body = body, status = status, headers = headers }
-      or nil
-
-    if on_close then
-      on_close()
+    for _, f in ipairs(on_close) do
+      f()
     end
     vim.schedule(function() -- Deferred so `outbuf` and `on_response` may call non-fast API.
-      if res.code == 0 and outbuf and vim.api.nvim_buf_is_loaded(outbuf) then
-        local lines = vim.split(body, '\n', { plain = true })
-        vim.api.nvim_buf_set_lines(outbuf, 0, -1, true, lines)
+      --- @cast res.stdout -?
+      local status, headers, body = parse_output(res.stdout, not opts.outpath)
+      local err ---@type string?
+      if closing then
+        err = 'Request closed'
+      elseif res.signal ~= 0 then
+        err = ('Request killed with signal %d'):format(res.signal)
+      elseif status >= 400 then
+        err = ('Request failed with status %d'):format(status)
+      elseif res.code ~= 0 then
+        err = res.stderr ~= '' and res.stderr
+          or ('Request failed with exit code %d'):format(res.code)
+      end
+      -- An HTTP error has a response; a failed transfer (e.g. DNS) does not.
+      local response = (not err or status >= 400)
+          and { body = body, status = status, headers = headers }
+        or nil
+
+      if not err and outbuf and vim.api.nvim_buf_is_loaded(outbuf) then
+        local ok, write_err = pcall(function()
+          local lines = opts.outpath and vim.fn.readfile(opts.outpath, 'b')
+            or vim.split(body, '\n', { plain = true })
+          vim.api.nvim_buf_set_lines(outbuf, 0, -1, true, lines)
+        end)
+        err = not ok and write_err or nil
       end
       if on_response then
         on_response(err, response)
@@ -242,7 +255,7 @@ function M.request(method, url, opts, on_response)
         end
         return
       end
-      on_close = callback
+      on_close[#on_close + 1] = callback
       job:kill('sigint')
     end,
     -- Returns true if close() was called, or the request stopped.

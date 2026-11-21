@@ -4602,8 +4602,8 @@ vim.net.request.Response                            *vim.net.request.Response*
                    response. Names are lowercase; a repeated header's values
                    are a list:
                    `{ ['content-type'] = 'text/html', ['set-cookie'] = { 'a=1', 'b=2' } }`
-      • {status}   (`integer`) HTTP status code of the last response (after
-                   redirects), or 0 if the URL is not HTTP (`file://`).
+      • {status}   (`integer`) Status code of the last response (after
+                   redirects), or 0 if the protocol has none (`file://`).
 
 
 vim.net.request({method}, {url}, {opts}, {on_response})    *vim.net.request()*
@@ -4655,7 +4655,7 @@ vim.net.request({method}, {url}, {opts}, {on_response})    *vim.net.request()*
 <
 
     Parameters: ~
-      • {method}       (`vim.net.HttpMethod`) (default: GET) The HTTP method
+      • {method}       (`vim.net.HttpMethod?`) (default: GET) The HTTP method
                        (GET, POST, PUT, PATCH, HEAD, DELETE).
       • {url}          (`string|vim.Uri`) The URL for the request.
       • {opts}         (`table?`) A table with the following fields:
