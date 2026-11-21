@@ -52,9 +52,9 @@ end
 ---Buffer to save the response body to.
 ---@field outbuf? integer
 ---
----Custom headers to send with the request. Supports basic key/value headers and empty headers as
----supported by curl. Does not support "@filename" style, internal header deletion ("Header:").
----A list value expands to one header per item: `{ Accept = { 'text/html', 'application/json' } }`.
+---Custom headers to send with the request (not visible to other processes, for security, unlike
+---curl args). Supports key/value, or empty value; does not support "@filename" style, nor internal
+---header deletion ("Header:"). List value expands to one header per item: `{ Accept = { 'text/html', 'application/json' } }`.
 ---@field headers? table<string, string|string[]>
 
 ---@class vim.net.request.Response
@@ -150,6 +150,7 @@ function M.request(method, url, opts, on_response)
   vim.validate('url', url, function(u)
     return type(u) == 'string' and vim.uri.parse(u) ~= nil
   end, 'URI')
+  ---@cast url string
   vim.validate('opts', opts, 'table', true)
   vim.validate('opts.headers', opts.headers, 'table', true)
   vim.validate('opts.outpath', opts.outpath, 'string', true)
@@ -175,21 +176,19 @@ function M.request(method, url, opts, on_response)
     vim.list_extend(args, { '--output', outpath, '--remove-on-error' })
   end
 
-  local send_body = opts.body and vim.list_contains({ 'POST', 'PUT', 'PATCH' }, method)
+  local req_body = vim.list_contains({ 'POST', 'PUT', 'PATCH' }, method) and opts.body or nil
   if method == 'HEAD' then
     -- curl -X HEAD does not work and advises to use --head instead.
     -- --no-include: headers are in `header_json`, not the output.
     vim.list_extend(args, { '--head', '--no-include' })
-  elseif method ~= 'GET' and not (method == 'POST' and send_body) then
+  elseif method ~= 'GET' and not (method == 'POST' and req_body) then
     -- Not for GET, or POST with body (--data-binary): --request also forces the method after a
     -- 301/302/303 redirect, which should switch to GET.
     vim.list_extend(args, { '--request', method })
   end
 
-  if send_body then
-    vim.list_extend(args, { '--data-binary', '@-' })
-  end
-
+  -- Headers (may contain secrets) go on stdin instead of argv, for security.
+  local header_stdin = {} ---@type string[]
   if opts.headers then
     for key, value in pairs(opts.headers) do
       local values = type(value) == 'table' and value or { value }
@@ -210,23 +209,38 @@ function M.request(method, url, opts, on_response)
           error('headers must not contain CR or LF')
         end
 
-        if v:match('^%s*$') then -- "Key: " would delete the header, "Key;" sends it empty.
-          vim.list_extend(args, { '--header', ('%s;'):format(key) })
-        else
-          vim.list_extend(args, { '--header', ('%s: %s'):format(key, v) })
-        end
+        -- "Key: " would delete the header, "Key;" sends it empty.
+        local header = v:match('^%s*$') and ('%s;'):format(key) or ('%s: %s'):format(key, v)
+        table.insert(header_stdin, header)
       end
     end
   end
 
-  vim.list_extend(
-    args,
-    { '--write-out', '%{header_json}\\n%{response_code} %{size_download}', url }
-  )
+  -- Body is sent via tempfile bc stdin has the headers. Written last, after validation.
+  local body_path ---@type string?
+  if req_body then
+    local tmpl = vim.fs.joinpath(assert(vim.uv.os_tmpdir()), 'nvim.net.XXXXXX')
+    local fd, path = assert(vim.uv.fs_mkstemp(tmpl)) -- Permissions: 0600.
+    assert(vim.uv.fs_write(fd, req_body))
+    vim.uv.fs_close(fd)
+    body_path = path
+    vim.list_extend(args, { '--data-binary', ('@%s'):format(path) })
+  end
 
-  local system_opts = opts.body and { stdin = opts.body } or {}
+  vim.list_extend(args, {
+    '--write-out',
+    '%{header_json}\\n%{response_code} %{size_download}',
+    '--header',
+    '@-',
+    url,
+  })
+
+  local system_opts = { stdin = table.concat(header_stdin, '\n') }
   local closing = false -- close() was called.
   local job = vim.system(args, system_opts, function(res)
+    if body_path then
+      os.remove(body_path)
+    end
     vim.schedule(function() -- Deferred so `outbuf` and `on_response` may call non-fast API.
       --- @cast res.stdout -?
       local killed = closing or res.signal ~= 0 -- If curl is killed: partial output, no trailer.

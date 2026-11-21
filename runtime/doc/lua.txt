@@ -4665,11 +4665,12 @@ vim.net.request({method}, {url}, {opts}, {on_response})    *vim.net.request()*
                        • {body}? (`string`) Request body for POST/PUT/PATCH
                          requests.
                        • {headers}? (`table<string, string|string[]>`) Custom
-                         headers to send with the request. Supports basic
-                         key/value headers and empty headers as supported by
-                         curl. Does not support "@filename" style, internal
-                         header deletion ("Header:"). A list value expands to
-                         one header per item:
+                         headers to send with the request (not visible to
+                         other processes, for security, unlike curl args).
+                         Supports key/value, or empty value; does not support
+                         "@filename" style, nor internal header deletion
+                         ("Header:"). List value expands to one header per
+                         item:
                          `{ Accept = { 'text/html', 'application/json' } }`.
                        • {outbuf}? (`integer`) Buffer to save the response
                          body to.
