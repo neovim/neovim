@@ -1500,6 +1500,21 @@ describe('multicursor', function()
       feed('Q')
       api.nvim_buf_clear_namespace(0, api.nvim_create_namespace('nvim.multicursor'), 0, 1)
       eq({ { 1, 0 } }, anchors())
+
+      -- Insert-mode: the preview text of a deleted cursor persists. #42502
+      local ns = api.nvim_create_namespace('nvim.multicursor')
+      for _, case in ipairs({
+        { -1, { 'xa', 'xb', 'xywc' } },
+        { 1, { 'xa', 'xywb', 'xywc' } }, -- Only the first.
+      }) do
+        command(
+          ('inoremap <F2> <Cmd>call nvim_buf_clear_namespace(0, %d, 0, %d)<CR>'):format(ns, case[1])
+        )
+        clear_cursors()
+        cursors({ 'a', 'b', 'c' })
+        feed('ix<F2>yz<BS>w<Esc>')
+        eq(case[2], get_lines(), case[1])
+      end
     end)
 
     it(':edit! (reload) clears the cursors and the gQ snapshot', function()
@@ -1626,13 +1641,13 @@ describe('multicursor', function()
       eq({ 'aa', 'bb' }, get_lines())
     end)
 
-    it('absolute jump (<C-Home>) splits: previews stay, the live cascade re-anchors', function()
+    it('absolute jump (<C-Home>) splits: replays the text so far, then re-anchors', function()
       fn.setline(1, { 'alpha', 'beta', 'gamma' })
       feed('j0Q')
       feed('j0Q')
       feed('gg$')
       feed('ix<C-Home>y')
-      -- Mid-session: "x" stays as text; "y" (after jump) continues at the re-anchored positions.
+      -- Mid-session: "x" replays at the jump; "y" continues at the re-anchored positions.
       eq({ 'yalphxa', 'xybeta', 'xygamma' }, get_lines())
       feed('<Esc>')
       eq({ 'yalphxa', 'xybeta', 'xygamma' }, get_lines())

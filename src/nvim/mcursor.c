@@ -103,6 +103,8 @@ typedef struct {
 /// at each cursor; at session-end the previews are deleted and typed keys (batch) replay at each
 /// cursor (the COMMIT: abbreviations, 'textwidth', … re-execute per cursor).
 ///
+/// RESIDUAL text: preview text that persists, i.e. no replay replaces it (opaque edit, deleted cursor).
+///
 /// XXX: Why text preview instead of LHS-replay? Two things cannot LHS-replay:
 /// 1. ins-completion
 /// 2. pending keys are not an append-only stream (compl/abbrevs rewrite them mid-session)
@@ -110,7 +112,8 @@ typedef struct {
 /// The boundary:
 /// - literal text is previewed
 /// - non-literal keys (mc_ins_keys_nonliteral) have per-cursor effects, so flush (early commit).
-/// - non-captured cursor-moves and edits keep the previews (see mc_ins_cascade_restart).
+/// - non-captured cursor-moves flush (start_arrow() appends <Esc>), then the cascade re-anchors.
+/// - opaque edits: the preview text persists (see mc_ins_cascade_restart).
 static struct {
   CmdOrigin origin;  ///< State at session start: the session's atoms diff against it.
   kvec_t(McInsPreview) previews;  ///< Per-cursor previews.
@@ -717,8 +720,8 @@ static void mc_ins_preview_rebase(void)
   }
 }
 
-/// Resolves a session extmark to its buffer range (start/end). Returns false if the mark is gone
-/// (deleted mid-session by a script?).
+/// Resolves a session extmark to its buffer range. Returns false if the mark disappeared (deleted
+/// mid-session by a script?).
 static bool mc_region_mark_range(uint32_t mark, pos_T *start, pos_T *end)
 {
   MTPair p = extmark_from_id(curbuf, mc_session_ns(), mark);
@@ -730,13 +733,19 @@ static bool mc_region_mark_range(uint32_t mark, pos_T *start, pos_T *end)
   return true;
 }
 
-/// Range of the first live preview. All live previews have the same text and thus same dimensions.
-///
-/// @return  False if none.
+/// Range of preview `p`. False if its cursor/region disappeared (deleted mid-session by a script?),
+/// its text persists (a half-baked edit, requested by #42502).
+static bool mc_ins_preview_range(McInsPreview p, pos_T *start, pos_T *end)
+{
+  return extmark_get_pos(curbuf, mc_ns(), p.cursor, NULL)
+         && mc_region_mark_range(p.region, start, end);
+}
+
+/// Range of the first preview (all have the same text/dimensions), or false if none.
 static bool mc_ins_preview_first(pos_T *start, pos_T *end)
 {
   for (size_t i = 0; i < kv_size(mc_ins_span.previews); i++) {
-    if (mc_region_mark_range(kv_A(mc_ins_span.previews, i).region, start, end)) {
+    if (mc_ins_preview_range(kv_A(mc_ins_span.previews, i), start, end)) {
       return true;
     }
   }
@@ -786,7 +795,7 @@ static void mc_ins_preview_set(const String *new)
   for (size_t i = 0; i < kv_size(mc_ins_span.previews); i++) {
     pos_T rs, re;
     // Re-resolve each region, previous loop iterations may have shifted it.
-    if (!mc_region_mark_range(kv_A(mc_ins_span.previews, i).region, &rs, &re)) {
+    if (!mc_ins_preview_range(kv_A(mc_ins_span.previews, i), &rs, &re)) {
       continue;
     }
     // Cursor display mark (right-gravity) is pushed by the replacement to the new preview end.
@@ -820,7 +829,8 @@ static bool mc_ins_keys_nonliteral(const char *keys, size_t len)
 
 /// Capture restarted mid insert-session, after a non-captured cursor-move (stop_arrow(): mouse,
 /// <PageUp>, …) or opaque change. The previews take the primary's text and cursor-placement
-/// (a snippet placeholder, before an autopaired ")"); rebase and continue the insert-cascade.
+/// (a snippet placeholder, before an autopaired ")"), and that text persists: only keys typed after
+/// the restart replay at commit. Rebase and continue the insert-cascade.
 void mc_ins_cascade_restart(void)
 {
   if (!mc_ins_span.active || mc_replaying() || !(State & MODE_INSERT)
@@ -843,8 +853,7 @@ void mc_ins_cascade_restart(void)
     for (size_t i = 0; i < kv_size(mc_ins_span.previews); i++) {
       McInsPreview p = kv_A(mc_ins_span.previews, i);
       pos_T ps, pe;
-      if (mc_region_mark_range(p.region, &ps, &pe)
-          && extmark_get_pos(curbuf, mc_ns(), p.cursor, NULL)) {
+      if (mc_ins_preview_range(p, &ps, &pe)) {
         pos_T pos = { .lnum = ps.lnum + c.lnum - rs.lnum, .col = c.col };
         if (c.lnum == rs.lnum) {
           pos.col += ps.col - rs.col;  // First line: shift to the preview's column.
@@ -856,9 +865,9 @@ void mc_ins_cascade_restart(void)
   mc_ins_preview_rebase();
 }
 
-/// Keeps an opaque change (see atom_ins_opaque_end()) in the previews: restarts capture after it.
-/// Waits for completion to end (mc_ins_compl_done()): only then can redo capture the completion text
-/// (restarting earlier would keep that text AND replay it).
+/// Copies an opaque change (see atom_ins_opaque_end()) to the previews, as residual text.
+/// Restarts capture thereafter. Waits for completion-end (mc_ins_compl_done()): only
+/// then can redo capture the compl text (restarting earlier would keep that text AND replay it).
 void mc_ins_opaque_change(void)
 {
   if (!mc_ins_span.active || mc_replaying()) {
@@ -956,7 +965,7 @@ void mc_ins_cascade(void)
       // have this problem, and live-preview could allow (non-conflicting) text-shifts. #41719
       for (size_t i = 0; i < kv_size(mc_ins_span.previews); i++) {
         pos_T rs, re;
-        if (!mc_region_mark_range(kv_A(mc_ins_span.previews, i).region, &rs, &re)) {
+        if (!mc_ins_preview_range(kv_A(mc_ins_span.previews, i), &rs, &re)) {
           continue;
         }
         // A preview after `end` is safe. Otherwise, multiline old or new preview text could shift
@@ -1223,7 +1232,7 @@ bool mc_ins_commit(void)
     // COMMIT: replace the previews with a real replay: abbrev, 'textwidth', … re-exec per cursor.
     String ins = redo_keys(NULL);
     if (ins.data != NULL && ins.size > mc_ins_span.done_len
-        // Not <Esc>-terminated, e.g. CTRL-C: the previews stay.
+        // Not <Esc>-terminated (unexpected): the preview text persists, no replay.
         && (uint8_t)ins.data[ins.size - 1] == ESC) {
       mc_ins_span_flush(&ins, true);
     }
