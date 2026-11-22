@@ -1046,7 +1046,7 @@ is_na_patch() {
           '-Icheck_typval_type\(.+\)' \
           '-Icrypt_get_method_nr\(.+\)' \
           '-Ie_failed_to_source_defaults' \
-          '-Imsg\(.*".*GTK.*"\)' \
+          '-Imsg(|_puts)\(.*".*GTK.*"\)' \
           '-I\s"default link TabPanel.+",' \
           '-I\sif\s\((in|redraw)_tabpanel[[:space:])]' \
           '-I\s(in|redraw)_tabpanel =' \
