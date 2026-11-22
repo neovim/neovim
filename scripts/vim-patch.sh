@@ -867,7 +867,7 @@ is_na_patch() {
   for file in $FILES_REMAINING; do
     case ${file} in
       runtime/doc/*.txt | runtime/pack/dist/opt/*/doc/*.txt)
-        HUNKS=$(git -c core.attributesfile="$NVIM_SOURCE_DIR"/.gitattributes -c 'diff.helphelp.xfuncname=^.*\*[^*[:space:]]+\*$' -C "${VIM_SOURCE_DIR}" \
+        HUNKS=$(git -c core.attributesfile="$NVIM_SOURCE_DIR"/.gitattributes -c 'diff.helphelp.xfuncname=^(\*[^*[:space:]]+\*.*)|(.+[[:space:]]\*[^*[:space:]]+\*.*)$' -C "${VIM_SOURCE_DIR}" \
           diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^[-=]+$' \
@@ -881,6 +881,7 @@ is_na_patch() {
           '-I compiled (with|without) .*\(\|.+\|\) feature\.$' \
           '-I\{.+ (available|compiled) (with|without) .+\}' \
           '-I\|(added|changed|patches|version)-[0-9]+\.[0-9]+\|' \
+          '-I\|'\''go-[a-zA-Z]'\''\|' \
           '-I\|:(cscope|export|hardcopy|import|import-cycle|redrawtabpanel)\|' \
           '-I\|52\.6\|' \
           '-I\|channel-open-[^|]+\|' \
@@ -950,9 +951,11 @@ is_na_patch() {
           '-I^\s+$' \
           '-I^\s*/?\*/?$' \
           '-I^\s*(//|/?\*).*\s\+?([vV]im9|E[0-9]{,4} (not used|unused)|E[0-9]{4} - |FEAT_|JSON-RPC|channel|job|popup|sound|tabpanel|terminal)' \
-          '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*(FEAT_[^_]|USE_GTK)' \
+          '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*((FEAT|GTK)_[^_]|USE_GTK)' \
+          '-I^#\s*(if|elif)\sGTK_' \
           '-I^#\s*(else|endif)' \
           '-I^#\s*define\s+(FEAT|POPUPWIN|XDG|t)_[^_]' \
+          '-I^#\s*define\s+USE_FILE_CHOOSER$' \
           '-I^\s+(&&|\|\|)\s.*defined\(.*FEAT_[^_]' \
           '-IEVENT_TERMINALWINOPEN' \
           '-I^#\s*define\s+(ASSIGN_VAR|IN_TABPANEL|POPF_CURSORLINE|USR_VIMRC_FILE)\s' \
@@ -967,9 +970,7 @@ is_na_patch() {
           '-I^EXTERN type_T t_.* INIT[2-9]\(' \
           '-I^EXTERN\swin_T\s+\*popup_dragwin' \
           '-I^EXTERN char e_(abstract|const|class|enum|final|interface|public|static|type)_' \
-          '-I^EXTERN char e_.*def_function' \
-          '-I^EXTERN char e_.*enddef' \
-          '-I^EXTERN char e_.*vim9' \
+          '-I^EXTERN char e_.*(def_function|enddef|imactivatekey|vim9)' \
           '-I^EXTERN char e_[_a-zA-Z]+_(channel|redrawtabpanel)' \
           '-I^EXTERN char e_cannot_add(_redraw|)_listener_in_listener_callback' \
           '-I^EXTERN char e_cannot_declare_.*variable_str' \
@@ -989,6 +990,7 @@ is_na_patch() {
           '-I\sINIT\(= .+"E[0-9]+: .*enddef"' \
           '-I\sINIT\(= .+"E[0-9]+: .*([vV]im9|interface)' \
           '-I\sINIT\(= .+"E[0-9]+: .* (ch|channel)_[_a-z]+\(\)' \
+          '-I\sINIT\(= .+"E599: Value of '\''imactivatekey'\'' is invalid' \
           '-I\sINIT\(= .+"E649: Invalid identifier name in defineAnnoType' \
           '-I\sINIT\(= .+"E1016: Cannot declare .* variable: ' \
           '-I\sINIT\(= .+"E1045: Import nesting too deep' \
@@ -1043,7 +1045,7 @@ is_na_patch() {
           '-Icheck_typval_type\(.+\)' \
           '-Icrypt_get_method_nr\(.+\)' \
           '-Ie_failed_to_source_defaults' \
-          '-Imsg\(.*".*GTK.*"\)' \
+          '-Imsg(|_puts)\(.*".*GTK.*"\)' \
           '-I\s"default link TabPanel.+",' \
           '-I\sif\s\((in|redraw)_tabpanel[[:space:])]' \
           '-I\s(in|redraw)_tabpanel =' \
