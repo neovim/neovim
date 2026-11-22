@@ -1340,7 +1340,7 @@ InsSession atom_ins_start(int cmd, long count, VisualIns vis, bool vblock)
 
 /// Detects an opaque change, i.e. an edit/cursor-move since `before` by an opaque action
 /// (kKeyOpaque: <Cmd>/Lua/RPC, or autocmd) during an insert-session, which capture (redo) misses.
-/// Multicursor keeps it in its previews.
+/// Multicursor copies it to its previews, as residual text (not replayed).
 void atom_ins_opaque_end(CmdOrigin before)
 {
   if (curbuf == before.buf.br_buf && (atom_origin_changed(before) || atom_origin_moved(before))) {
