@@ -43,7 +43,7 @@ end
 
 ---@param text string The ssh configuration which needs to be parsed.
 ---@param state? table Hosts and seen aliases, shared across `Include` files.
----@param depth? integer Max `Include` nesting depth, as OpenSSH's READCONF_MAX_DEPTH.
+---@param depth? integer Current `Include` nesting depth, capped at OpenSSH's READCONF_MAX_DEPTH.
 ---@return vim.net.SshHost[] The parsed host configurations.
 function M.parse_ssh_config(text, state, depth)
   state = state or { hosts = {}, seen = {} }
