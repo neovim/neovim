@@ -2260,8 +2260,7 @@ static const char *did_set_cmdheight(optset_T *args)
   // Only compute the new window layout when startup has been
   // completed. Otherwise the frame sizes may be wrong.
   if ((p_ch != old_value
-       || tabline_height() + global_stl_height() + topframe->fr_height != Rows - p_ch)
-      && full_screen) {
+       || tabline_height() + global_stl_height() + topframe->fr_height != Rows - p_ch)) {
     command_height();
   }
 
@@ -2442,20 +2441,8 @@ static const char *did_set_lines_or_columns(optset_T *args)
     if (updating_screen) {
       Object oldval = INTEGER_OBJ(args->os_oldval.data.integer);
       set_option_varp(args->os_idx, args->os_varp, oldval);
-    } else if (full_screen) {
-      screen_resize((int)p_columns, (int)p_lines);
     } else {
-      // TODO(bfredl): is this branch ever needed?
-      // Postpone the resizing; check the size and cmdline position for
-      // messages.
-      Rows = (int)p_lines;
-      Columns = (int)p_columns;
-      check_screensize();
-      int new_row = (int)(Rows - MAX(p_ch, 1));
-      if (cmdline_row > new_row && Rows > p_ch) {
-        assert(p_ch >= 0 && new_row <= INT_MAX);
-        cmdline_row = new_row;
-      }
+      screen_resize((int)p_columns, (int)p_lines);
     }
     if (p_window >= Rows || !option_was_set(kOptWindow)) {
       p_window = Rows - 1;
@@ -2463,7 +2450,7 @@ static const char *did_set_lines_or_columns(optset_T *args)
   }
 
   // Adjust 'scrolljump' if needed.
-  if (p_sj >= Rows && full_screen) {
+  if (p_sj >= Rows) {
     p_sj = Rows / 2;
   }
 
@@ -3060,7 +3047,7 @@ static const char *check_num_option_bounds(OptIndex opt_idx, OptInt *newval, win
 
   switch (opt_idx) {
   case kOptLines:
-    if (*newval < min_rows_for_all_tabpages() && full_screen) {
+    if (*newval < min_rows_for_all_tabpages()) {
       errmsg = opt_error(errbuf, N_("E593: Need at least %d lines"), min_rows_for_all_tabpages());
       *newval = min_rows_for_all_tabpages();
     }
@@ -3068,7 +3055,7 @@ static const char *check_num_option_bounds(OptIndex opt_idx, OptInt *newval, win
     *newval = MIN(*newval, INT_MAX);
     break;
   case kOptColumns:
-    if (*newval < MIN_COLUMNS && full_screen) {
+    if (*newval < MIN_COLUMNS) {
       errmsg = opt_error(errbuf, N_("E594: Need at least %d columns"), MIN_COLUMNS);
       *newval = MIN_COLUMNS;
     }
@@ -3079,14 +3066,13 @@ static const char *check_num_option_bounds(OptIndex opt_idx, OptInt *newval, win
     *newval = MAX(MIN(*newval, 100), 0);
     break;
   case kOptScrolljump:
-    if ((*newval < -100 || *newval >= Rows) && full_screen) {
+    if ((*newval < -100 || *newval >= Rows)) {
       errmsg = e_scroll;
       *newval = 1;
     }
     break;
   case kOptScroll:
-    if ((*newval <= 0 || (*newval > win->w_view_height && win->w_view_height > 0))
-        && full_screen) {
+    if ((*newval <= 0 || (*newval > win->w_view_height && win->w_view_height > 0))) {
       if (*newval != 0) {
         errmsg = e_scroll;
       }
@@ -3192,18 +3178,17 @@ static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, win_T *
     }
     break;
   case kOptScrolloff:
-    if (value < 0 && full_screen) {
+    if (value < 0) {
       return e_positive;
     }
     break;
   case kOptScrolloffpad:
-    // if (value < 0 && full_screen) {
     if (value < 0) {
       return e_invarg;
     }
     break;
   case kOptSidescrolloff:
-    if (value < 0 && full_screen) {
+    if (value < 0) {
       return e_positive;
     }
     break;

@@ -395,8 +395,6 @@ int main(int argc, char **argv)
 
   setbuf(stdout, NULL);  // NOLINT(bugprone-unsafe-functions)
 
-  full_screen = !silent_mode;
-
   // Set the default values for the options that use Rows and Columns.
   win_init_size();
   // Set the 'diff' option now, so that it can be checked for in a vimrc

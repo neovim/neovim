@@ -683,9 +683,6 @@ bool ui_mouse_has(int mode)
 /// May update the shape of the cursor.
 void ui_cursor_shape_no_check_conceal(void)
 {
-  if (!full_screen) {
-    return;
-  }
   int new_mode_idx = cursor_get_mode_idx();
 
   if (new_mode_idx != ui_mode_idx) {

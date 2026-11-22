@@ -3304,14 +3304,11 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
     arg.vval.v_string = xmemdupz(colored_ccline->cmdbuff, (size_t)colored_ccline->cmdlen);
   }
   // msg_start() called by e.g. :echo may shift command-line to the first column
-  // even though msg_silent is here. Two ways to workaround this problem without
-  // altering message.c: use full_screen or save and restore msg_col.
+  // even though msg_silent is here. One way to workaround this problem without
+  // altering message.c: save and restore msg_col.
   //
-  // Saving and restoring full_screen does not work well with :redraw!. Saving
-  // and restoring msg_col is neither ideal, but while with full_screen it
-  // appears shifted one character to the right and cursor position is no longer
-  // correct, with msg_col it just misses leading `:`. Since `redraw!` in
-  // callback lags this is least of the user problems.
+  // Saving and restoring msg_col is not ideal, with msg_col it just misses leading `:`.
+  // Since `redraw!` in callback lags this is least of the user problems.
   //
   // Also using TRY_WRAP because error messages may overwrite typed
   // command-line which is not expected.

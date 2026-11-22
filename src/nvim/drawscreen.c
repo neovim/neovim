@@ -337,9 +337,13 @@ void screen_resize(int width, int height)
 
   resizing_screen = true;
 
+  // Limit Rows and Columns to avoid an overflow in Rows * Columns.
+  // need room for one window and command line
+  height = MIN(MAX(height, min_rows_for_all_tabpages()), 1000);
+  width = MIN(MAX(MAX(width, MIN_COLUMNS), min_cols_for_all_tabpages()), 10000);
   Rows = height;
   Columns = width;
-  check_screensize();
+
   if (!ui_has(kUIMessages)) {
     // clamp 'cmdheight'
     int max_p_ch = Rows - min_rows(curtab) + 1;
@@ -358,8 +362,7 @@ void screen_resize(int width, int height)
       }
     }
   }
-  height = Rows;
-  width = Columns;
+
   p_lines = Rows;
   p_columns = Columns;
 
@@ -457,16 +460,6 @@ void screen_resize(int width, int height)
     }
   }
   resizing_screen = false;
-}
-
-/// Check if the new Nvim application "screen" dimensions are valid.
-/// Correct it if it's too small or way too big.
-void check_screensize(void)
-{
-  // Limit Rows and Columns to avoid an overflow in Rows * Columns.
-  // need room for one window and command line
-  Rows = MIN(MAX(Rows, min_rows_for_all_tabpages()), 1000);
-  Columns = MIN(MAX(MAX(Columns, MIN_COLUMNS), min_cols_for_all_tabpages()), 10000);
 }
 
 /// Return true if redrawing should currently be done.
