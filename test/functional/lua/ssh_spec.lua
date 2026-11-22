@@ -79,21 +79,42 @@ describe('parse_ssh_config()', function()
 
   it('parses Include directives', function()
     local home = vim.fs.abspath(t.tmpname(false))
-    n.mkdir_p(home .. '/.ssh')
-    t.write_file(home .. '/.ssh/test2.conf', 'Host test2\n  HostName test2.example.com\n')
-    local dir = home .. '/elsewhere'
-    n.mkdir_p(dir)
-    t.write_file(dir .. '/nested.conf', 'Include test3.conf\n')
-    vim.uv.fs_symlink(dir .. '/nested.conf', home .. '/.ssh/nested.conf')
-    t.write_file(home .. '/.ssh/test3.conf', 'Host test3\n')
+    n.mkdir_p(vim.fs.joinpath(home, '.ssh/conf.d/sub'))
+    n.mkdir_p(vim.fs.joinpath(home, 'elsewhere'))
+    for file, text in pairs({
+      ['.ssh/test2.conf'] = 'Host test2\n  HostName test2.example.com\n',
+      ['elsewhere/nested.conf'] = 'Include test3.conf\n', -- Relative to ~/.ssh, not to this dir.
+      ['.ssh/test3.conf'] = 'Host test3\n',
+      ['.ssh/loop.conf'] = 'Include loop.conf loop.conf\nHost loop\n',
+      ['.ssh/conf.d/a.conf'] = 'Host a\n',
+      ['.ssh/conf.d/bad.conf'] = 'Host "bad\n',
+      ['.ssh/conf.d/.hidden'] = 'Host hidden\n',
+      ['.ssh/env.conf'] = 'Host env\n',
+      ['.ssh/test4.conf'] = 'Host test4\n',
+      ['.ssh/star.conf'] = 'Host star\n',
+    }) do
+      t.write_file(vim.fs.joinpath(home, file), text)
+    end
+    vim.uv.fs_symlink(
+      vim.fs.joinpath(home, 'elsewhere/nested.conf'),
+      vim.fs.joinpath(home, '.ssh/nested.conf')
+    )
     local config = [[
-      Include ~/.ssh/test2*.conf nested.conf missing*.conf
+      Include ~/.ssh/test2*.conf nested.conf missing*.conf loop.conf conf.d/*
+      Include {env,x}.conf # Unsupported.
 
       Host test1
         User testuser
+        Include test4.conf # Only for "ssh test1".
 
       Host test2
         User test2user
+
+      Match host test1
+        HostName test1.example.com
+
+      Host *
+        Include star.conf
     ]]
 
     local orig_home = vim.env.HOME
@@ -107,37 +128,15 @@ describe('parse_ssh_config()', function()
     local hosts = parser.parse_ssh_config(config)
 
     eq(
-      { 'test2', 'test3', 'test1' },
+      { 'test2', 'test3', 'loop', 'a', 'test1', 'star' },
       vim.tbl_map(function(h)
         return h.alias
       end, hosts)
     )
     eq('test2.example.com', hosts[1].hostname)
     eq('test2user', hosts[1].user)
-    eq('testuser', hosts[3].user)
-  end)
-
-  it('stops recursive Include, at depth 16 as OpenSSH', function()
-    local home = vim.fs.abspath(t.tmpname(false))
-    n.mkdir_p(home .. '/.ssh')
-    t.write_file(home .. '/.ssh/loop.conf', 'Include loop.conf\n\nHost loop\n')
-
-    local orig_home = vim.env.HOME
-    local orig_profile = vim.env.USERPROFILE
-    vim.env.HOME = home
-    vim.env.USERPROFILE = home
-    t.finally(function()
-      vim.env.HOME = orig_home
-      vim.env.USERPROFILE = orig_profile
-    end)
-    local hosts = parser.parse_ssh_config('Include loop.conf\n')
-
-    eq(
-      { 'loop' },
-      vim.tbl_map(function(h)
-        return h.alias
-      end, hosts)
-    )
+    eq('testuser', hosts[5].user)
+    eq('test1.example.com', hosts[5].hostname)
   end)
 
   it('fails when a quote is not closed', function()
