@@ -867,7 +867,7 @@ is_na_patch() {
   for file in $FILES_REMAINING; do
     case ${file} in
       runtime/doc/*.txt | runtime/pack/dist/opt/*/doc/*.txt)
-        HUNKS=$(git -c core.attributesfile="$NVIM_SOURCE_DIR"/.gitattributes -c 'diff.helphelp.xfuncname=^.*\*[^*[:space:]]+\*$' -C "${VIM_SOURCE_DIR}" \
+        HUNKS=$(git -c core.attributesfile="$NVIM_SOURCE_DIR"/.gitattributes -c 'diff.helphelp.xfuncname=^(\*[^*[:space:]]+\*.*)|(.+[[:space:]]\*[^*[:space:]]+\*.*)$' -C "${VIM_SOURCE_DIR}" \
           diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^[-=]+$' \
@@ -881,6 +881,7 @@ is_na_patch() {
           '-I compiled (with|without) .*\(\|.+\|\) feature\.$' \
           '-I\{.+ (available|compiled) (with|without) .+\}' \
           '-I\|(added|changed|patches|version)-[0-9]+\.[0-9]+\|' \
+          '-I\|'\''go-[a-zA-Z]'\''\|' \
           '-I\|:(cscope|export|hardcopy|import|import-cycle|redrawtabpanel)\|' \
           '-I\|52\.6\|' \
           '-I\|channel-open-[^|]+\|' \
