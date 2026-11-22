@@ -43,9 +43,11 @@ end
 
 ---@param text string The ssh configuration which needs to be parsed.
 ---@param state? table Hosts and seen aliases, shared across `Include` files.
+---@param depth? integer Max `Include` nesting depth, as OpenSSH's READCONF_MAX_DEPTH.
 ---@return vim.net.SshHost[] The parsed host configurations.
-function M.parse_ssh_config(text, state)
+function M.parse_ssh_config(text, state, depth)
   state = state or { hosts = {}, seen = {} }
+  depth = depth or 0
   local i = 1
   local line = 1
 
@@ -250,7 +252,7 @@ function M.parse_ssh_config(text, state)
         add_aliases(match_aliases)
       elseif lp == 'host' and node.value then
         add_aliases(node.value --[[@as string[] ]])
-      elseif lp == 'include' then
+      elseif lp == 'include' and depth < 16 then
         local base = vim.fs.normalize(ssh_dir)
         for _, val in
           ipairs(node.value --[[@as string[] ]])
@@ -262,7 +264,7 @@ function M.parse_ssh_config(text, state)
           for _, file in
             ipairs(vim.fn.glob(path, true, true) --[[@as string[] ]])
           do
-            M.parse_ssh_config(vim.fn.readblob(file), state)
+            M.parse_ssh_config(vim.fn.readblob(file), state, depth + 1)
           end
         end
       else
