@@ -1146,6 +1146,13 @@ static int64_t getdecchrs(void)
   return nr;
 }
 
+/// Read a \@ byte limit, saturating at INT_MAX to fit both regexp engines.
+static int get_at_limit(void)
+{
+  int64_t nr = getdecchrs();
+  return nr > INT_MAX ? INT_MAX : (int)nr;
+}
+
 // get and return the value of the octal string immediately after the current
 // position. Return -1 for invalid, or 0-255 for valid. Smart enough to handle
 // numbers > 377 correctly (for example, 400 is treated as 40) and doesn't
@@ -5266,7 +5273,7 @@ static uint8_t *regpiece(int *flagp)
 
   case Magic('@'): {
     int lop = END;
-    int64_t nr = getdecchrs();
+    int nr = get_at_limit();
 
     switch (no_Magic(getchr())) {
     case '=':
@@ -10938,7 +10945,7 @@ static int nfa_regpiece(void)
   bool greedy = true;  // Braces are prefixed with '-' ?
   parse_state_T old_state;
   parse_state_T new_state;
-  int64_t c2;
+  int c2;
   int old_post_pos;
   int my_post_start;
   int quest;
@@ -10986,7 +10993,7 @@ static int nfa_regpiece(void)
     break;
 
   case Magic('@'):
-    c2 = getdecchrs();
+    c2 = get_at_limit();
     op = no_Magic(getchr());
     i = 0;
     switch (op) {

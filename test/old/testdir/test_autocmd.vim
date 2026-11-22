@@ -389,6 +389,37 @@ func Test_WinNewPre()
   unlet g:caught
 endfunc
 
+" After an interrupt() from a timer callback in a "WinNew" autocommand,
+" typing on the command line must be visible. #10631
+func Test_interrupt_after_WinNew()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    vim9script
+    def Interrupt()
+      writefile(['fired'], 'Xinterrupt_fired')
+      silent interrupt()
+    enddef
+    autocmd WinNew * timer_start(0, (_) => Interrupt())
+  END
+  call writefile(lines, 'Xtest_interrupt_winnew', 'D')
+  call delete('Xinterrupt_fired')
+  let buf = RunVimInTerminal('-S Xtest_interrupt_winnew', {'rows': 8})
+
+  call term_sendkeys(buf, "\<C-W>s")
+  call WaitFor({-> filereadable('Xinterrupt_fired')})
+  call TermWait(buf, 200)
+  call term_sendkeys(buf, ':echo')
+  call WaitForAssert({-> assert_match(':echo', join(map(range(1, 8),
+        \ {_, n -> term_getline(buf, n)}), "\n"))})
+  call term_sendkeys(buf, " 'typed'\<CR>")
+  call WaitForAssert({-> assert_match('typed', join(map(range(1, 8),
+        \ {_, n -> term_getline(buf, n)}), "\n"))})
+
+  call StopVimInTerminal(buf)
+  call delete('Xinterrupt_fired')
+endfunc
+
 func Test_WinResized()
   CheckRunVimInTerminal
 
