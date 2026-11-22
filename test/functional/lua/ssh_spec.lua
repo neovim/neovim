@@ -77,6 +77,69 @@ describe('parse_ssh_config()', function()
     )
   end)
 
+  it('parses Include directives', function()
+    local home = vim.fs.abspath(t.tmpname(false))
+    n.mkdir_p(home .. '/.ssh')
+    t.write_file(home .. '/.ssh/test2.conf', 'Host test2\n  HostName test2.example.com\n')
+    local dir = home .. '/elsewhere'
+    n.mkdir_p(dir)
+    t.write_file(dir .. '/nested.conf', 'Include test3.conf\n')
+    vim.uv.fs_symlink(dir .. '/nested.conf', home .. '/.ssh/nested.conf')
+    t.write_file(home .. '/.ssh/test3.conf', 'Host test3\n')
+    local config = [[
+      Include ~/.ssh/test2*.conf nested.conf missing*.conf
+
+      Host test1
+        User testuser
+
+      Host test2
+        User test2user
+    ]]
+
+    local orig_home = vim.env.HOME
+    local orig_profile = vim.env.USERPROFILE
+    vim.env.HOME = home
+    vim.env.USERPROFILE = home
+    t.finally(function()
+      vim.env.HOME = orig_home
+      vim.env.USERPROFILE = orig_profile
+    end)
+    local hosts = parser.parse_ssh_config(config)
+
+    eq(
+      { 'test2', 'test3', 'test1' },
+      vim.tbl_map(function(h)
+        return h.alias
+      end, hosts)
+    )
+    eq('test2.example.com', hosts[1].hostname)
+    eq('test2user', hosts[1].user)
+    eq('testuser', hosts[3].user)
+  end)
+
+  it('stops recursive Include, at depth 16 as OpenSSH', function()
+    local home = vim.fs.abspath(t.tmpname(false))
+    n.mkdir_p(home .. '/.ssh')
+    t.write_file(home .. '/.ssh/loop.conf', 'Include loop.conf\n\nHost loop\n')
+
+    local orig_home = vim.env.HOME
+    local orig_profile = vim.env.USERPROFILE
+    vim.env.HOME = home
+    vim.env.USERPROFILE = home
+    t.finally(function()
+      vim.env.HOME = orig_home
+      vim.env.USERPROFILE = orig_profile
+    end)
+    local hosts = parser.parse_ssh_config('Include loop.conf\n')
+
+    eq(
+      { 'loop' },
+      vim.tbl_map(function(h)
+        return h.alias
+      end, hosts)
+    )
+  end)
+
   it('fails when a quote is not closed', function()
     local config = [[
       Host prod dev "test prod my
