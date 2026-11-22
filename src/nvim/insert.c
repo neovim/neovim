@@ -4441,7 +4441,7 @@ static void ins_autocmd_done(event_T event, CmdOrigin origin)
   // a new line.  Call u_save() with no contents to fix that.
   // Except when leaving Insert mode.
   if (event != EVENT_INSERTLEAVE && origin.tick != buf_get_changedtick(curbuf)) {
-    u_save(curwin->w_cursor.lnum, (linenr_T)(curwin->w_cursor.lnum + 1));
+    (void)u_save(curwin->w_cursor.lnum, (linenr_T)(curwin->w_cursor.lnum + 1));
   }
   // Mid-session only: not before capture starts, nor after ESC ended it.
   if (event != EVENT_INSERTENTER && event != EVENT_INSERTLEAVEPRE && event != EVENT_INSERTLEAVE) {
