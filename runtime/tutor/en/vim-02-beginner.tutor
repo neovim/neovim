@@ -161,7 +161,7 @@ Try: "+yy then paste into another application with Ctrl-V or Cmd+V [[-1]]
      - `"_daw`{normal} - Delete word without saving to any register
      - Useful when you don't want to overwrite your default `"`{normal} register
      - Note this is using the "a Word" text object, introduced in a previous
-       lession
+       lesson
      - `"_dd`{normal}  - Delete line without saving
      - `"_dap`{normal} - Delete paragraph without saving
      - Combine with counts: `3"_dw`{normal}
