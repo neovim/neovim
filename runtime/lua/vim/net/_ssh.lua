@@ -41,13 +41,42 @@ end
 ---@field port? string Port directive.
 ---@field identity_file? string IdentityFile directive.
 
+--- Lists files matched by an `Include` pattern, sorted. Relative patterns resolve against ~/.ssh.
+---
+--- Not supported (match nothing):
+---   - `${VAR}`
+---   - `%` tokens
+---   - `{`, `~user`
+---   - wildcards in directories (e.g. "*/config").
+---@param pat string
+---@return string[]
+local function include_files(pat)
+  if pat:find('{') or pat:find('^~[^/\\]') then
+    return {}
+  end
+  local path = vim.fs.abspath(pat, { cwd = vim.fs.normalize(ssh_dir) })
+  local dir, name_pat = vim.fs.dirname(path), vim.fs.basename(path)
+  local ok, glob = pcall(vim.glob.to_lpeg, name_pat)
+  if not ok then
+    return {}
+  end
+  local files = {} ---@type string[]
+  for name in vim.fs.dir(dir, { plain = true }) do
+    -- As glob(7): don't wildcard-match a leading "." (.DS_Store, Vim swap files).
+    local hidden = name:sub(1, 1) == '.' and name_pat:sub(1, 1) ~= '.'
+    if not hidden and glob:match(name) then
+      table.insert(files, vim.fs.joinpath(dir, name))
+    end
+  end
+  table.sort(files)
+  return files
+end
+
 ---@param text string The ssh configuration which needs to be parsed.
----@param state? table Hosts and seen aliases, shared across `Include` files.
----@param depth? integer Current `Include` nesting depth, capped at OpenSSH's READCONF_MAX_DEPTH.
+---@param state? table Hosts, aliases and files seen so far, shared across `Include` files.
 ---@return vim.net.SshHost[] The parsed host configurations.
-function M.parse_ssh_config(text, state, depth)
-  state = state or { hosts = {}, seen = {} }
-  depth = depth or 0
+function M.parse_ssh_config(text, state)
+  state = state or { hosts = {}, seen = {}, files = {} }
   local i = 1
   local line = 1
 
@@ -199,40 +228,22 @@ function M.parse_ssh_config(text, state, depth)
     return node
   end
 
-  ---@type vim.net.SshHost[]
-  local hosts = state.hosts
-  local seen = state.seen ---@type table<string, boolean>
-  ---@type vim.net.SshHost[]
-  local current_hosts = {}
-
-  ---@param value string
-  local function is_valid(value)
-    return not (value:find('[?*!]') or seen[value])
-  end
-
-  local function flush()
-    for _, h in ipairs(current_hosts) do
-      if not vim.list_contains(hosts, h) then
-        table.insert(hosts, h)
-      end
-    end
-    current_hosts = {}
-  end
+  local hosts = state.hosts ---@type vim.net.SshHost[]
+  local seen = state.seen ---@type table<string, vim.net.SshHost> Alias => host.
+  local files = state.files ---@type table<string, true> Realpaths of parsed `Include` files.
+  local current_hosts = {} ---@type vim.net.SshHost[] Hosts of the current Host/Match block.
+  local global = true -- Outside of Host/Match blocks, or in "Host *" or "Match all".
 
   ---@param aliases string[]
   local function add_aliases(aliases)
-    flush()
+    current_hosts = {}
     for _, alias in ipairs(aliases) do
-      if is_valid(alias) then
-        seen[alias] = true
-        table.insert(current_hosts, { alias = alias })
-      else
-        -- The first obtained value for each directive is used.
-        for _, h in ipairs(hosts) do
-          if h.alias == alias then
-            table.insert(current_hosts, h)
-          end
-        end
+      if not seen[alias] and not alias:find('[?*!]') then
+        seen[alias] = { alias = alias }
+        table.insert(hosts, seen[alias])
+      end
+      if seen[alias] then
+        table.insert(current_hosts, seen[alias])
       end
     end
   end
@@ -245,26 +256,26 @@ function M.parse_ssh_config(text, state, depth)
         local values = node.value --[[@as string[] ]]
         local match_aliases = {} ---@type string[]
         for ind, val in ipairs(values) do
-          if val:lower() == 'host' and ind + 1 <= #values and is_valid(assert(values[ind + 1])) then
+          if val:lower() == 'host' and values[ind + 1] then
             table.insert(match_aliases, values[ind + 1])
           end
         end
         add_aliases(match_aliases)
+        global = #values == 1 and values[1]:lower() == 'all'
       elseif lp == 'host' and node.value then
-        add_aliases(node.value --[[@as string[] ]])
-      elseif lp == 'include' and depth < 16 then
-        local base = vim.fs.normalize(ssh_dir)
-        for _, val in
+        local values = node.value --[[@as string[] ]]
+        add_aliases(values)
+        global = #values == 1 and values[1] == '*'
+      elseif lp == 'include' and global then -- Else ssh reads it only for the block's hosts.
+        for _, pat in
           ipairs(node.value --[[@as string[] ]])
         do
-          local path = vim.fs.normalize(val)
-          if not (path:sub(1, 1) == '/' or path:match('^%a:')) then
-            path = vim.fs.joinpath(base, path)
-          end
-          for _, file in
-            ipairs(vim.fn.glob(path, true, true) --[[@as string[] ]])
-          do
-            M.parse_ssh_config(vim.fn.readblob(file), state, depth + 1)
+          for _, file in ipairs(include_files(pat)) do
+            local real = vim.uv.fs_realpath(file) or file
+            if not files[real] then -- Stops recursive includes.
+              files[real] = true
+              pcall(M.parse_config, file, state) -- pcall: a broken Include file/dir should not drop all results.
+            end
           end
         end
       else
@@ -284,22 +295,22 @@ function M.parse_ssh_config(text, state, depth)
       end
     end
   end
-  flush()
 
   return hosts
 end
 
 ---@param filename string
+---@param state? table See parse_ssh_config().
 ---@return vim.net.SshHost[] The host configurations in the file.
-function M.parse_config(filename)
+function M.parse_config(filename, state)
   local text = vim.fn.readblob(filename)
-  return M.parse_ssh_config(text)
+  return M.parse_ssh_config(text, state)
 end
 
----@param filename? string Path to the SSH config file. Defaults to `~/.ssh/config`.
+---@param filename? string  (default: "~/.ssh/config") Path to user (not system) SSH config file.
 ---@return string[] The hostnames configured in the SSH config file.
 function M.get_hosts(filename)
-  filename = filename or vim.fs.normalize(ssh_dir .. '/config')
+  filename = filename or vim.fs.normalize(vim.fs.joinpath(ssh_dir, 'config'))
   local ok, hosts = pcall(M.parse_config, filename)
   if not ok then
     return {}
