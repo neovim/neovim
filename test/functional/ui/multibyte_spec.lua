@@ -55,6 +55,7 @@ describe('multibyte rendering', function()
       { text = '🇦🇽', remaining = '🇦' },
       { text = '🧑' .. zwj .. '🌾', remaining = '🧑' .. zwj },
       { text = '🧑́' .. zwj .. '🌾', remaining = '🧑́' .. zwj },
+      { text = 'क्ष', remaining = 'क्' },
     }
     for _, enabled in ipairs({ false, true }) do
       api.nvim_set_option_value('delcombine', enabled, {})
