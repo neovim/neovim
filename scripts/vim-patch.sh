@@ -970,9 +970,7 @@ is_na_patch() {
           '-I^EXTERN type_T t_.* INIT[2-9]\(' \
           '-I^EXTERN\swin_T\s+\*popup_dragwin' \
           '-I^EXTERN char e_(abstract|const|class|enum|final|interface|public|static|type)_' \
-          '-I^EXTERN char e_.*def_function' \
-          '-I^EXTERN char e_.*enddef' \
-          '-I^EXTERN char e_.*vim9' \
+          '-I^EXTERN char e_.*(def_function|enddef|imactivatekey|vim9)' \
           '-I^EXTERN char e_[_a-zA-Z]+_(channel|redrawtabpanel)' \
           '-I^EXTERN char e_cannot_add(_redraw|)_listener_in_listener_callback' \
           '-I^EXTERN char e_cannot_declare_.*variable_str' \
@@ -992,6 +990,7 @@ is_na_patch() {
           '-I\sINIT\(= .+"E[0-9]+: .*enddef"' \
           '-I\sINIT\(= .+"E[0-9]+: .*([vV]im9|interface)' \
           '-I\sINIT\(= .+"E[0-9]+: .* (ch|channel)_[_a-z]+\(\)' \
+          '-I\sINIT\(= .+"E599: Value of '\''imactivatekey'\'' is invalid' \
           '-I\sINIT\(= .+"E649: Invalid identifier name in defineAnnoType' \
           '-I\sINIT\(= .+"E1016: Cannot declare .* variable: ' \
           '-I\sINIT\(= .+"E1045: Import nesting too deep' \

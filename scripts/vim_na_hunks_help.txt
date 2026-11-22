@@ -103,6 +103,7 @@
 \*2html\.vim\*
 \*DirChangedPre\*
 \*DirChanged\*
+\*E599\*
 \*E984\*
 \*E999\*
 \*E119[3-9]\*
