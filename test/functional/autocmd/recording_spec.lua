@@ -1,6 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
-local Screen = require('test.functional.ui.screen')
+local tt = require('test.functional.testterm')
 
 local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
@@ -28,19 +28,23 @@ describe('RecordingEnter', function()
     eq('q', eval('g:recording'))
   end)
 
-  it('runs before the recording message is displayed', function()
-    local screen = Screen.new(25, 4)
-    n.command(
-      'autocmd RecordingEnter * let g:recording_message = screenstring(&lines, 1)'
-        .. ' | highlight ModeMsg guifg=Red gui=NONE'
-    )
-    n.feed('qa')
-    eq(' ', eval('g:recording_message'))
-    screen:expect([[
-      ^                         |
-      {1:~                        }|*2
-      {19:recording @a}             |
-    ]])
+  it('uses the ModeMsg highlight set by the autocmd in the TUI', function()
+    local screen = tt.setup_child_nvim({
+      '--clean',
+      '--cmd',
+      [[
+        set notermguicolors
+        highlight ModeMsg ctermfg=2 cterm=NONE
+        autocmd RecordingEnter * highlight ModeMsg ctermfg=5
+      ]],
+    })
+    screen:expect({ any = '%[No Name%]' })
+
+    tt.feed_data('qa')
+    screen:expect({
+      any = '{magenta:recording @a}',
+      attr_ids = { magenta = { foreground = 5 } },
+    })
   end)
 end)
 
