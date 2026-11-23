@@ -15,6 +15,9 @@
 
 #define strneq(a, b, n) (strncmp(a, b, n) == 0)
 
+#define LBOUND(v, min) if ((v) < (min))(v) = (min)
+#define UBOUND(v, max) if ((v) > (max))(v) = (max)
+
 // Primary Device Attributes (DA1) response.
 // NOLINTNEXTLINE(misc-use-internal-linkage): used with FFI in unittests
 DLLEXPORT char vterm_primary_device_attr[] = "61;22;52";
@@ -568,6 +571,9 @@ static void savecursor(VTermState *state, int save)
     VTermPos oldpos = state->pos;
 
     state->pos = state->saved.pos;
+    // The terminal may have been resized since the cursor was saved.
+    UBOUND(state->pos.row, state->rows - 1);
+    UBOUND(state->pos.col, state->cols - 1);
 
     settermprop_bool(state, VTERM_PROP_CURSORVISIBLE, state->saved.mode.cursor_visible);
     settermprop_bool(state, VTERM_PROP_CURSORBLINK,   state->saved.mode.cursor_blink);
@@ -1103,9 +1109,6 @@ static int on_csi(const char *leader, const long args[], int argcount, const cha
   int row, col;
   VTermRect rect;
   int selective;
-
-#define LBOUND(v, min) if ((v) < (min))(v) = (min)
-#define UBOUND(v, max) if ((v) > (max))(v) = (max)
 
 #define LEADER(l, b) ((l << 8) | b)
 #define INTERMED(i, b) ((i << 16) | b)
