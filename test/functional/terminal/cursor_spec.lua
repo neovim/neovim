@@ -518,6 +518,30 @@ describe(':terminal cursor', function()
     -- Cursor movement in unfocused terminal shouldn't affect us
     check_pos({ 2, 13, 1 }, { 13, 13 }, term_unfocused, 'amogus')
   end)
+
+  it('restoring cursor after resizing terminal does not crash', function()
+    screen:try_resize(60, 15)
+    screen:expect({ any = 'rows: 14, cols: 60 +' })
+    tt.feed_data('\027[12;1H\0277')
+    screen:expect([[
+      tty ready                                                   |
+      rows: 14, cols: 60                                          |
+                                                                  |*9
+      ^                                                            |
+                                                                  |*2
+      {5:-- TERMINAL --}                                              |
+    ]])
+    screen:try_resize(60, 6)
+    screen:expect({ any = 'rows: 5, cols: 60 +' })
+    tt.feed_data('\0278\027#6AAAA')
+    screen:expect([[
+                                                                  |*3
+      rows: 5, cols: 60                                           |
+      AAAA^                                                        |
+      {5:-- TERMINAL --}                                              |
+    ]])
+    n.assert_alive()
+  end)
 end)
 
 describe('buffer cursor position is correct in terminal without number column', function()
