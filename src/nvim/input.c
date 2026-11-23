@@ -2387,9 +2387,8 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth, boo
           } else {
             if (c2 == K_SPECIAL) {
               nomap = 2;
-            } else if (merge_modifiers(c2, &modifiers) == c2) {
-              // Only apply 'langmap' if merging modifiers into
-              // the key will not result in another character,
+            } else if (modifiers == 0) {
+              // Only apply 'langmap' if there are no modifiers,
               // so that 'langmap' behaves consistently in
               // different terminals and GUIs.
               LANGMAP_ADJUST(c2, true);
