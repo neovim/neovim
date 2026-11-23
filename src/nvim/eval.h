@@ -75,10 +75,12 @@ typedef enum {
 } var_flavour_T;
 
 // Struct passed to get_v_event() and restore_v_event().
-typedef struct {
+typedef struct save_v_event_S save_v_event_T;
+struct save_v_event_S {
   bool sve_did_save;
   hashtab_T sve_hashtab;
-} save_v_event_T;
+  save_v_event_T *sve_next;  // next saved v:event, for GC
+};
 
 /// trans_function_name() flags
 typedef enum {
