@@ -96,7 +96,7 @@ end
 --- `lsp.Handler` for `textDocument/codeLens`.
 ---
 ---@package
----@param err? lsp.ResponseError
+---@param err? vim.json.rpc.Error
 ---@param result? lsp.CodeLens[]
 ---@param ctx lsp.HandlerContext
 function Provider:handler(err, result, ctx)
@@ -367,7 +367,7 @@ end
 
 ---@param lnum integer
 ---@param opts vim.lsp.codelens.run.Opts
----@param results table<integer, {err: lsp.ResponseError?, result: lsp.CodeLens[]?}>
+---@param results table<integer, {err: vim.json.rpc.Error?, result: lsp.CodeLens[]?}>
 ---@param context lsp.HandlerContext
 local function on_lenses_run(lnum, opts, results, context)
   local bufnr = context.bufnr or 0
@@ -501,7 +501,7 @@ function M.save(lenses, bufnr, client_id)
 end
 
 ---@deprecated
----@param err? lsp.ResponseError
+---@param err? vim.json.rpc.Error
 ---@param result lsp.CodeLens[]
 ---@param ctx lsp.HandlerContext
 function M.on_codelens(err, result, ctx)

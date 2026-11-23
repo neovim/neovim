@@ -348,7 +348,7 @@ local function cmd(disp)
 
   --- @param method vim.lsp.protocol.Method.ClientToServer.Request
   --- @param params table?
-  --- @param callback fun(err: lsp.ResponseError?, result: any)
+  --- @param callback fun(err: vim.json.rpc.Error?, result: any)
   function res.request(method, params, callback)
     local method_impl = methods[method]
     if method_impl ~= nil then

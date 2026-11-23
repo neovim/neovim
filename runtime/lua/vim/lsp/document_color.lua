@@ -169,7 +169,7 @@ end
 --- |lsp-handler| for the `textDocument/documentColor` method.
 ---
 --- @package
---- @param err? lsp.ResponseError
+--- @param err? vim.json.rpc.Error
 --- @param result? lsp.ColorInformation[]
 --- @param ctx lsp.HandlerContext
 function Provider:handler(err, result, ctx)

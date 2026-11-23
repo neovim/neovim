@@ -428,7 +428,7 @@ Each handler has the following signature: >
         fun(err, params, ctx)
 
     vim.lsp.RequestHandler:
-        fun(err, params, ctx): Result?, lsp.ResponseError?
+        fun(err, params, ctx): Result?, vim.json.rpc.Error?
 
 Each response handler has this signature: >
 
@@ -452,7 +452,7 @@ Each response handler has this signature: >
 
     Return (multiple): ~
         • (`Result?`) `result` on success, or `nil` on error.
-        • (`lsp.ResponseError?`) `error` on failure, or `nil` on success.
+        • (`vim.json.rpc.Error?`) `error` on failure, or `nil` on success.
           RPC error shape: >
             { code, message, data? }
 <          You can use |vim.lsp.rpc.rpc_response_error()| to create this object.
@@ -1058,7 +1058,7 @@ buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})  *vim.lsp.buf_reques
                       milliseconds to wait for a result.
 
     Return (multiple): ~
-        (`table<integer, {error: lsp.ResponseError?, result: any}>?`) result
+        (`table<integer, {error: vim.json.rpc.Error?, result: any}>?`) result
         Map of client_id:request_result.
         (`string?`) err On timeout, cancel, or error, `err` is a string
         describing the failure reason, and `result` is nil.
@@ -1832,7 +1832,7 @@ vim.lsp.Client                                                *vim.lsp.Client*
                                 sent by the server.
       • {request}               (`fun(self: vim.lsp.Client, method: string, params: table?, handler: lsp.Handler?, bufnr: integer?): boolean, integer?`)
                                 See |Client:request()|.
-      • {request_sync}          (`fun(self: vim.lsp.Client, method: string, params: table, timeout_ms: integer?, bufnr: integer?): {err: lsp.ResponseError?, result:any}?, string?`)
+      • {request_sync}          (`fun(self: vim.lsp.Client, method: string, params: table, timeout_ms: integer?, bufnr: integer?): {err: vim.json.rpc.Error?, result:any}?, string?`)
                                 See |Client:request_sync()|.
       • {requests}              (`table<integer,{ type: string, bufnr: integer, method: vim.lsp.protocol.Method}?>`)
                                 The current pending requests in flight to the
@@ -2115,8 +2115,8 @@ Client:request_sync({method}, {params}, {timeout_ms}, {bufnr})  *Client:request_
                       current.
 
     Return (multiple): ~
-        (`{err: lsp.ResponseError?, result:any}?`) `result` and `err` from the
-        |lsp-handler|. `nil` is the request was unsuccessful
+        (`{err: vim.json.rpc.Error?, result:any}?`) `result` and `err` from
+        the |lsp-handler|. `nil` is the request was unsuccessful
         (`string?`) err On timeout, cancel or error, where `err` is a string
         describing the failure reason.
 
@@ -2362,7 +2362,7 @@ on_diagnostic({error}, {result}, {ctx})   *vim.lsp.diagnostic.on_diagnostic()*
     See |vim.diagnostic.config()| for configuration options.
 
     Parameters: ~
-      • {error}   (`lsp.ResponseError?`)
+      • {error}   (`vim.json.rpc.Error?`)
       • {result}  (`lsp.DocumentDiagnosticReport`)
       • {ctx}     (`lsp.HandlerContext`)
 
@@ -2734,7 +2734,7 @@ vim.lsp.rpc.Client                                        *vim.lsp.rpc.Client*
       • {is_closing}  (`fun(): boolean`) Indicates if the RPC is closing.
       • {notify}      (`fun(method: string, params: any): boolean`) Sends a
                       notification to the LSP server.
-      • {request}     (`fun(method: string, params: table?, callback: fun(err?: lsp.ResponseError, result: any, request_id: integer), notify_reply_callback?: fun(message_id: integer)):boolean,integer?`)
+      • {request}     (`fun(method: string, params: table?, callback: fun(err?: vim.json.rpc.Error, result: any, request_id: integer), notify_reply_callback?: fun(message_id: integer)):boolean,integer?`)
                       Sends a request to the LSP server.
       • {terminate}   (`fun()`) Terminates the RPC client.
 
@@ -2776,7 +2776,7 @@ rpc_response_error({code}, {message}, {data})  *vim.lsp.rpc.rpc_response_error()
       • {data}     (`any?`) arbitrary data to send to server
 
     Return: ~
-        (`lsp.ResponseError`)
+        (`vim.json.rpc.Error`)
 
     See also: ~
       • lsp.ErrorCodes See `vim.lsp.protocol.ErrorCodes`

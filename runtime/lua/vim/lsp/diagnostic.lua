@@ -267,7 +267,7 @@ end
 ---
 --- See |vim.diagnostic.config()| for configuration options.
 ---
----@param _ lsp.ResponseError?
+---@param _ vim.json.rpc.Error?
 ---@param params lsp.PublishDiagnosticsParams
 ---@param ctx lsp.HandlerContext
 function M.on_publish_diagnostics(_, params, ctx)
@@ -280,7 +280,7 @@ end
 ---
 --- See |vim.diagnostic.config()| for configuration options.
 ---
----@param error lsp.ResponseError?
+---@param error vim.json.rpc.Error?
 ---@param result lsp.DocumentDiagnosticReport
 ---@param ctx lsp.HandlerContext
 function M.on_diagnostic(error, result, ctx)
@@ -383,7 +383,7 @@ end
 
 --- |lsp-handler| for the method `workspace/diagnostic/refresh`
 ---@internal
----@param err lsp.ResponseError?
+---@param err vim.json.rpc.Error?
 ---@param ctx lsp.HandlerContext
 function M.on_refresh(err, _, ctx)
   if err then
@@ -485,7 +485,7 @@ end
 function M._workspace_diagnostics(opts)
   local clients = lsp.get_clients({ method = 'workspace/diagnostic', id = opts.client_id })
 
-  --- @param error lsp.ResponseError?
+  --- @param error vim.json.rpc.Error?
   --- @param result lsp.WorkspaceDiagnosticReport
   --- @param ctx lsp.HandlerContext
   local function handler(error, result, ctx)

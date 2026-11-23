@@ -255,7 +255,7 @@ describe('LSP', function()
           vim.notify = function(msg)
             table.insert(warnings, msg)
           end
-          local respond --- @type fun(err?: lsp.ResponseError, result: any)
+          local respond --- @type fun(err?: vim.json.rpc.Error, result: any)
           local starting = _G._create_server({
             handlers = {
               initialize = function(_, _, callback)

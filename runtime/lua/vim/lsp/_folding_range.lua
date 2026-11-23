@@ -137,7 +137,7 @@ local function schedule_foldupdate(bufnr)
   end
 end
 
----@param results table<integer,{err: lsp.ResponseError?, result: lsp.FoldingRange[]?}>
+---@param results table<integer,{err: vim.json.rpc.Error?, result: lsp.FoldingRange[]?}>
 ---@param ctx lsp.HandlerContext
 function State:multi_handler(results, ctx)
   -- Handling responses from outdated buffer only causes performance overhead.
@@ -163,7 +163,7 @@ function State:multi_handler(results, ctx)
   end
 end
 
----@param err lsp.ResponseError?
+---@param err vim.json.rpc.Error?
 ---@param result lsp.FoldingRange[]?
 ---@param ctx lsp.HandlerContext, config?: table
 function State:handler(err, result, ctx)
@@ -296,7 +296,7 @@ end
 --- Refresh requests are sent by the server to indicate a project-wide change
 --- that requires all folding ranges to be re-requested by the client.
 ---@param ctx lsp.HandlerContext
----@param err lsp.ResponseError?
+---@param err vim.json.rpc.Error?
 ---@internal
 function M.on_refresh(err, _, ctx)
   if err then

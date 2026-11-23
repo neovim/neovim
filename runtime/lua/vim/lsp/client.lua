@@ -837,14 +837,14 @@ end
 --- @param timeout_ms integer? Maximum time in milliseconds to wait for
 ---                                a result. Defaults to 1000
 --- @param bufnr? integer (default: 0) Buffer handle, or 0 for current.
---- @return {err: lsp.ResponseError?, result:any}? `result` and `err` from the |lsp-handler|.
+--- @return {err: vim.json.rpc.Error?, result:any}? `result` and `err` from the |lsp-handler|.
 ---                 `nil` is the request was unsuccessful
 --- @return string? err On timeout, cancel or error, where `err` is a
 ---                 string describing the failure reason.
 --- @see |vim.lsp.buf_request_sync()|
 function Client:request_sync(method, params, timeout_ms, bufnr)
   local request_result = nil
-  --- @param err lsp.ResponseError?
+  --- @param err vim.json.rpc.Error?
   --- @param result any
   local function _sync_handler(err, result)
     request_result = { err = err, result = result }
@@ -1425,7 +1425,7 @@ end
 --- @param method string LSP method name
 --- @param params (table) The parameters for that method
 --- @return any result
---- @return lsp.ResponseError? error code and message set in case an exception happens during the request.
+--- @return vim.json.rpc.Error? error code and message set in case an exception happens during the request.
 function Client:_server_request(method, params)
   log.trace('server_request', method, params)
   local handler = self:_resolve_handler(method)

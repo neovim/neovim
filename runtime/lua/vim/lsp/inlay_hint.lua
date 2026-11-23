@@ -140,7 +140,7 @@ end
 
 --- |lsp-handler| for the method `textDocument/inlayHint`
 --- Store hints for a specific buffer and client
----@param err lsp.ResponseError?
+---@param err vim.json.rpc.Error?
 ---@param result lsp.InlayHint[]?
 ---@param ctx lsp.HandlerContext
 ---@internal
@@ -219,7 +219,7 @@ function InlayHint:cancel_active_request(client_id)
 end
 
 --- |lsp-handler| for the method `workspace/inlayHint/refresh`
----@param err lsp.ResponseError?
+---@param err vim.json.rpc.Error?
 ---@param ctx lsp.HandlerContext
 ---@internal
 function M.on_refresh(err, _, ctx)

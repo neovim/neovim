@@ -21,7 +21,7 @@ local buf_handles = {}
 
 --- |lsp-handler| for the `textDocument/onTypeFormatting` method.
 ---
---- @param err? lsp.ResponseError
+--- @param err? vim.json.rpc.Error
 --- @param result? lsp.TextEdit[]
 --- @param ctx lsp.HandlerContext
 local function on_type_formatting(err, result, ctx)

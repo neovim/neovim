@@ -67,7 +67,7 @@ end
 M.create_server_definition = function()
   ---@class test.functional.plugin.lsp.testutil._create_server.Opts
   ---@field capabilities lsp.ServerCapabilities?
-  ---@field handlers table<vim.lsp.protocol.Method.ClientToServer.Request, fun(method: vim.lsp.protocol.Method.ClientToServer.Request, params: table?, callback: fun(err?: lsp.ResponseError, result: any))>?
+  ---@field handlers table<vim.lsp.protocol.Method.ClientToServer.Request, fun(method: vim.lsp.protocol.Method.ClientToServer.Request, params: table?, callback: fun(err?: vim.json.rpc.Error, result: any))>?
 
   ---@class test.functional.plugin.lsp.testutil._create_server.Message
   ---@field method vim.lsp.protocol.Method.ClientToServer

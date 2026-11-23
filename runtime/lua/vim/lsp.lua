@@ -1289,7 +1289,7 @@ end
 --- a `client_id:result` map.
 ---@return function cancel Function that cancels all requests.
 function lsp.buf_request_all(bufnr, method, params, handler)
-  local results = {} --- @type table<integer,{err: lsp.ResponseError?, result: any, context: lsp.HandlerContext}>
+  local results = {} --- @type table<integer,{err: vim.json.rpc.Error?, result: any, context: lsp.HandlerContext}>
   local remaining --- @type integer?
 
   local _, cancel = lsp.buf_request(bufnr, method, params, function(err, result, ctx, config)
@@ -1325,7 +1325,7 @@ end
 ---               parameters are specific to the client.
 ---@param timeout_ms integer? Maximum time in milliseconds to wait for a result.
 ---                           (default: `1000`)
----@return table<integer, {error: lsp.ResponseError?, result: any}>? result Map of client_id:request_result.
+---@return table<integer, {error: vim.json.rpc.Error?, result: any}>? result Map of client_id:request_result.
 ---@return string? err On timeout, cancel, or error, `err` is a string describing the failure reason, and `result` is nil.
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   local request_results ---@type table
