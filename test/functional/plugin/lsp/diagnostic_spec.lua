@@ -825,14 +825,24 @@ describe('vim.lsp.diagnostic', function()
       local fake_uri_3 = 'file:///fake/uri3'
       exec_lua(create_server_definition)
       exec_lua(function()
-        _G.requests = 0
+        _G.workspace_requests = 0
+        _G.doc_requests = 0
         _G.server = _G._create_server({
           capabilities = {
             diagnosticProvider = { workspaceDiagnostics = true },
           },
           handlers = {
+            ['textDocument/diagnostic'] = function(_, _, callback)
+              _G.doc_requests = _G.doc_requests + 1
+              callback(nil, {
+                kind = 'full',
+                items = {
+                  _G.make_warning('Refreshed Diagnostic', 4, 4, 4, 4),
+                },
+              })
+            end,
             ['workspace/diagnostic'] = function(_, _, callback)
-              _G.requests = _G.requests + 1
+              _G.workspace_requests = _G.workspace_requests + 1
               callback(nil, {
                 items = {
                   {
@@ -850,8 +860,26 @@ describe('vim.lsp.diagnostic', function()
         client_id = assert(vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd }))
       end)
 
+      -- Seed the opened buffer with a document diagnostic so on_refresh must
+      -- re-request it even when workspace diagnostics are supported.
+      exec_lua(function()
+        vim.lsp.diagnostic.on_diagnostic(nil, {
+          kind = 'full',
+          items = {
+            _G.make_error('Initial Diagnostic', 4, 4, 4, 4),
+          },
+        }, {
+          params = {
+            textDocument = { uri = fake_uri },
+          },
+          uri = fake_uri,
+          client_id = client_id,
+          bufnr = diagnostic_bufnr,
+        }, {})
+      end)
+
       eq(
-        0,
+        1,
         exec_lua(function()
           return #vim.diagnostic.get()
         end)
@@ -870,17 +898,31 @@ describe('vim.lsp.diagnostic', function()
         end)
       )
 
-      local requests, diags = exec_lua(function()
-        vim.lsp.diagnostic.on_refresh(nil, nil, {
-          method = 'workspace/diagnostic/refresh',
-          client_id = client_id,
-        })
-
-        return _G.requests, vim.diagnostic.get()
+      exec_lua(function()
+        _G.doc_requests = 0
       end)
-      eq(1, requests)
-      eq(1, #diags)
-      eq(1, diags[1].severity)
+
+      local workspace_requests, doc_requests, diags, opened_diags, workspace_diags = exec_lua(
+        function()
+          vim.lsp.diagnostic.on_refresh(nil, nil, {
+            method = 'workspace/diagnostic/refresh',
+            client_id = client_id,
+          })
+
+          return _G.workspace_requests,
+            _G.doc_requests,
+            vim.diagnostic.get(),
+            vim.diagnostic.get(diagnostic_bufnr),
+            vim.diagnostic.get(vim.uri_to_bufnr(fake_uri_3))
+        end
+      )
+      eq(1, workspace_requests)
+      eq(1, doc_requests)
+      eq(2, #diags)
+      eq(1, #opened_diags)
+      eq(2, opened_diags[1].severity)
+      eq(1, #workspace_diags)
+      eq(1, workspace_diags[1].severity)
     end)
   end)
 end)
