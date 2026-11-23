@@ -608,6 +608,8 @@ UI
 • The |ui2| dialog window scrolls with the mouse wheel, by 'mousescroll'
   lines.
 • The |ui2| `[+x]` "spill" indicator is highlighted with |hl-MoreMsg|.
+• When the |ui2| cmdline is taller than 'cmdheight' (e.g. 'cmdheight'=0), it
+  overlays the windows instead of resizing them.
 
 VIMSCRIPT
 

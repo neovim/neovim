@@ -416,6 +416,8 @@ static void cmdline_pum_create(const CmdlineInfo *ccline, expand_T *xp, char **m
 
 void cmdline_pum_display(bool changed_array)
 {
+  // Show a pending ext_cmdline first (e.g. after typeahead): the pum is anchored to it.
+  cmdline_ui_flush();
   pum_display(compl_match_array, compl_match_arraysize, compl_selected,
               changed_array, compl_startcol);
 }
