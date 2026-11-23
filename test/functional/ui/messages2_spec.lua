@@ -1215,7 +1215,8 @@ describe('messages2', function()
       targets['nvim%.bufwrite'] = 'msg' -- Matches the message ID, not the kind.
       require('vim._core.ui2').enable({ msg = { targets = targets } })
       print('foo') -- "lua_print" kind goes to cmd
-      vim.cmd.echo('"bar"') -- "echo" kind goes to msg
+      -- "echo" kind goes to msg ("lua_print" does not match mid-ID #42910)
+      vim.api.nvim_echo({ { 'bar' } }, false, { id = 'Xlua_print' })
       vim.cmd.highlight('VisualNC') -- "list_cmd" kind goes to pager
     end)
     screen:expect([[
