@@ -464,12 +464,12 @@ local in_pager = false -- Whether the pager is or will be the current window.
 ---@param id integer|string
 ---@param trigger string
 function M.msg_show(kind, content, replace_last, _, append, id, trigger)
-  -- Match configured target mappings as Lua pattern to ID:
+  -- Match configured target mappings (Lua patterns) against the ID prefix:
   local id_target ---@type 'cmd'|'msg'|'pager'|nil
   if type(id) == 'string' then
     local k, v = next(ui.cfg.msg.targets)
     while k and not id_target do
-      id_target = id:match(k) and v
+      id_target = id:find(k) == 1 and v or nil
       k, v = next(ui.cfg.msg.targets, k)
     end
   end
