@@ -6891,7 +6891,9 @@ static void win_fix_cursor(bool normal)
   win_T *wp = curwin;
 
   if (!wp->w_do_win_fix_cursor
-      || wp->w_buffer->b_ml.ml_line_count < wp->w_view_height) {
+      || wp->w_buffer->b_ml.ml_line_count < wp->w_view_height
+      // In cmdline: defer until next resize, so temp 'cmdheight' (ui2) does not move cursor. #42386
+      || (get_real_state() & MODE_CMDLINE)) {
     return;
   }
 

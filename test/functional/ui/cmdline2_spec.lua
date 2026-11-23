@@ -343,6 +343,18 @@ describe('cmdline2', function()
     local nwins = vim.fn.winnr('$')
     assert(nwins == 1)
   end)
+
+  it("temporary 'cmdheight' does not move the cursor #42386", function()
+    exec('set ch=0 so=3 | call setline(1, range(1, 200)) | normal! G')
+    feed(':call confirm("Ok?")<CR><Esc>')
+    -- Long (wrapped) cmdline acts on the cursor line.
+    feed((':call setline(".", "y") | "%s<CR>'):format(('a'):rep(60)))
+    -- Same cursor line and view, no jump.
+    t.eq(
+      { 200, 187, 'y', 1 },
+      { n.fn.line('.'), n.fn.line('w0'), n.fn.getline('$'), #n.fn.getjumplist()[1] }
+    )
+  end)
 end)
 
 describe('cmdline2', function()
