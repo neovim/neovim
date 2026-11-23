@@ -2791,12 +2791,12 @@ start({cmd}, {dispatchers}, {extra_spawn_params})        *vim.lsp.rpc.start()*
       • {cmd}                 (`string[]`) Command to start the LSP server.
       • {dispatchers}         (`table?`) Dispatchers for LSP message types.
                               • {notification}
-                                (`fun(method: string, params: table)`)
+                                (`fun(method: string, params: table?)`)
                               • {on_error} (`fun(code: integer, err: any)`)
                               • {on_exit}
                                 (`fun(code: integer, signal: integer)`)
                               • {server_request}
-                                (`fun(method: string, params: table): any?, lsp.ResponseError?`)
+                                (`fun(method: string, params: table?): any?, vim.json.rpc.Error?`)
       • {extra_spawn_params}  (`table?`) Additional context for the LSP server
                               process.
                               • {cwd}? (`string`) Working directory for the

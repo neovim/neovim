@@ -7,7 +7,7 @@ local strbuffer = require('vim._core.stringbuffer')
 --- @field listen fun(self: vim.net.Transport, on_read: fun(err: string?, data: string?), on_exit: fun(code: integer, signal: integer))
 --- @field write fun(self: vim.net.Transport, msg: string)
 --- @field is_closing fun(self: vim.net.Transport): boolean
---- @field terminate fun(self: vim.net.Transport)
+--- @field close fun(self: vim.net.Transport)
 
 --- Transport backed by newly spawned process using `vim.system()`.
 ---
@@ -82,7 +82,7 @@ function TransportRun:is_closing()
   return self.sysobj == nil or self.sysobj:is_closing()
 end
 
-function TransportRun:terminate()
+function TransportRun:close()
   local sysobj = assert(self.sysobj)
   if sysobj:is_closing() then
     return
@@ -179,7 +179,7 @@ function TransportConnect:is_closing()
   return self.closing
 end
 
-function TransportConnect:terminate()
+function TransportConnect:close()
   if self.closing then
     return
   end

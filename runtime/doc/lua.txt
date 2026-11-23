@@ -3930,6 +3930,160 @@ vim.json.encode({obj}, {opts})                             *vim.json.encode()*
 
 
 ==============================================================================
+Lua module: vim.json.rpc                                            *json-rpc*
+
+vim.json.rpc.Connection                              *vim.json.rpc.Connection*
+    Represents one side of a JSON-RPC connection.
+
+    Unlike a strict client or server, it can both initiate and receive
+    requests.
+
+    Fields: ~
+      • {close}       (`fun(self: vim.json.rpc.Connection)`) See
+                      |Connection:close()|.
+      • {is_closing}  (`fun(self: vim.json.rpc.Connection): boolean`) See
+                      |Connection:is_closing()|.
+      • {notify}      (`fun(self: vim.json.rpc.Connection, method: string, params: table?): boolean`)
+                      See |Connection:notify()|.
+      • {request}     (`fun(self: vim.json.rpc.Connection, method: string, params: table?, callback: fun(err?: vim.json.rpc.Error, result: any, request_id: integer)): boolean, integer?`)
+                      See |Connection:request()|.
+
+vim.json.rpc.Dispatchers                            *vim.json.rpc.Dispatchers*
+    Dispatchers for incoming JSON-RPC messages.
+
+    Fields: ~
+      • {on_error}    (`fun(code: integer, err: any)`) Invoked when the
+                      connection errors.
+                      • Parameters:
+                        • {code}: (`integer`) Error code
+                        • {err}: (`any`) Details about the error
+      • {on_exit}     (`fun(code: integer, signal: integer)`) Invoked when the
+                      connection exits.
+                      • Parameters:
+                        • {code}: (`integer`) Exit code
+                        • {signal}: (`integer`) Number describing the signal
+                          used to terminate (if any)
+      • {on_notify}   (`fun(method: string, params?: table)`) Invoked on
+                      notifications received from the other endpoint.
+                      • Parameters:
+                        • {method}: (`string`) The invoked JSON-RPC method
+                        • {params}: (`table?`) Parameters for the invoked
+                          method
+      • {on_request}  (`fun(method: string, params?: table): any?, vim.json.rpc.Error?`)
+                      Invoked on requests received from the other endpoint.
+                      • Parameters:
+                        • {method}: (`string`) The invoked JSON-RPC method
+                        • {params}: (`table?`) Parameters for the invoked
+                          method
+                      • Return (multiple):
+                        • {result}: (`any?`) Always nil for the default
+                          dispatchers
+                        • {err}: (`vim.json.rpc.Error?`)
+
+                      Note that:
+                      • {result} is required on success and must not exist if
+                        there was an error invoking the method.
+                      • {err} is required on error and must not exist if there
+                        was no error triggered during invocation.
+
+
+Connection:close()                                        *Connection:close()*
+    Terminates this JSON-RPC connection.
+
+Connection:is_closing()                              *Connection:is_closing()*
+    Indicates if this JSON-RPC connection is closing.
+
+    Return: ~
+        (`boolean`)
+
+Connection:notify({method}, {params})                    *Connection:notify()*
+    Sends a notification to the other endpoint.
+
+    Parameters: ~
+      • {method}  (`string`) The invoked JSON-RPC method
+      • {params}  (`table?`) Parameters for the invoked method
+
+    Return: ~
+        (`boolean`) `true` if notification could be sent, `false` if not
+
+Connection:request({method}, {params}, {callback})      *Connection:request()*
+    Sends a request to the other endpoint and runs {callback} upon response.
+
+    Parameters: ~
+      • {method}    (`string`) The invoked JSON-RPC method
+      • {params}    (`table?`) Parameters for the invoked method
+      • {callback}  (`fun(err?: vim.json.rpc.Error, result: any, request_id: integer)`)
+                    Callback to invoke
+
+    Return (multiple): ~
+        (`boolean`) success `true` if request could be sent, `false` if not
+        (`integer?`) request_id if request could be sent, `nil` if not
+
+vim.json.rpc.connect({host_or_path}, {port}, {opts})  *vim.json.rpc.connect()*
+    Create a JSON-RPC connection that connects to either:
+    • a named pipe (windows)
+    • a domain socket (unix)
+    • a host and port via TCP
+
+    Parameters: ~
+      • {host_or_path}  (`string`) host to connect to or path to a pipe/domain
+                        socket
+      • {port}          (`integer?`) TCP port to connect to. If absent the
+                        first argument must be a pipe
+      • {opts}          (`table`) Options configuring a JSON-RPC connection.
+                        • {decode}
+                          (`fun(buf: vim._core.stringbuffer): string?`)
+                          Consumes one framed message from `buf`; returns
+                          `nil` if incomplete, or throws on an invalid frame.
+                        • {dispatchers} (`vim.json.rpc.Dispatchers`) Callbacks
+                          for incoming messages and lifecycle events. See
+                          |vim.json.rpc.Dispatchers|.
+                        • {encode} (`fun(msg: string): string`) Wraps a JSON
+                          string into a transport frame.
+                        • {log} (`vim.Log`) Logger for connection events and
+                          messages. See |vim.log.new()|.
+
+    Return: ~
+        (`vim.json.rpc.Connection`)
+
+vim.json.rpc.run({cmd}, {extra_spawn_params}, {opts})     *vim.json.rpc.run()*
+    Starts a process and creates a JSON-RPC connection to interact with it.
+    Communication with the spawned process happens via stdio. For
+    communication via TCP, create a process manually and use
+    |vim.json.rpc.connect()|.
+
+    Parameters: ~
+      • {cmd}                 (`string[]`) Command to start the process to
+                              connect to.
+      • {extra_spawn_params}  (`table?`) Additional context for the spawned
+                              process.
+                              • {cwd}? (`string`) Working directory for the
+                                spawned process
+                              • {detached}? (`boolean`) Detach the spawned
+                                process from the current process
+                              • {env}? (`table<string,string>`) Additional
+                                environment variables for spawned process. See
+                                |vim.system()|
+      • {opts}                (`table`) Options configuring a JSON-RPC
+                              connection.
+                              • {decode}
+                                (`fun(buf: vim._core.stringbuffer): string?`)
+                                Consumes one framed message from `buf`;
+                                returns `nil` if incomplete, or throws on an
+                                invalid frame.
+                              • {dispatchers} (`vim.json.rpc.Dispatchers`)
+                                Callbacks for incoming messages and lifecycle
+                                events. See |vim.json.rpc.Dispatchers|.
+                              • {encode} (`fun(msg: string): string`) Wraps a
+                                JSON string into a transport frame.
+                              • {log} (`vim.Log`) Logger for connection events
+                                and messages. See |vim.log.new()|.
+
+    Return: ~
+        (`vim.json.rpc.Connection`)
+
+
+==============================================================================
 Lua module: vim.keymap                                            *vim.keymap*
 
 vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*

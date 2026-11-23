@@ -97,20 +97,26 @@ error('Cannot require a meta file')
 --- (e.g. Parse error/Invalid Request), it MUST be Null.
 ---@field id vim.json.rpc.Request.Id
 
+--- The error codes from and including -32768 to -32000 are reserved for pre-defined errors.
+--- Any code within this range, but not defined explicitly below is reserved for future use.
+--- The error codes are nearly the same as those suggested for XML-RPC at the
+--- following url: http://xmlrpc-epi.sourceforge.net/specs/rfc.fault_codes.php
+---@alias vim.json.rpc.Error.Code integer|vim.json.rpc.Error.Code.Defined
+
 --- When a rpc call encounters an error,
 --- the Response Object MUST contain the error member with a value
 --- that is a Object with the following members:
 ---@class vim.json.rpc.Error
 ---
 --- A Number that indicates the error type that occurred.
----@field code integer
+---@field code vim.json.rpc.Error.Code
 ---
 --- A String providing a short description of the error.
 --- The message SHOULD be limited to a concise single sentence.
 ---@field message string
 ---
----A Primitive or Structured value that contains additional information about the error.
--- The value of this member is defined by the Server (e.g. detailed error information, nested errors etc.).
+--- A Primitive or Structured value that contains additional information about the error.
+--- The value of this member is defined by the Server (e.g. detailed error information, nested errors etc.).
 ---@field data? any
 
 ---@alias vim.json.rpc.Response vim.json.rpc.SuccessResponse|vim.json.rpc.ErrorResponse
