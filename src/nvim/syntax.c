@@ -228,9 +228,8 @@ static int running_syn_inc_tag = 0;
 // KE2HIKEY() converts a var pointer to a hashitem key pointer.
 // HIKEY2KE() converts a hashitem key pointer to a var pointer.
 // HI2KE() converts a hashitem pointer to a var pointer.
-static keyentry_T dumkey;
 #define KE2HIKEY(kp)  ((kp)->keyword)
-#define HIKEY2KE(p)   ((keyentry_T *)((p) - (dumkey.keyword - (char *)&dumkey)))
+#define HIKEY2KE(p)   ((keyentry_T *)((p) - offsetof(keyentry_T, keyword)))
 #define HI2KE(hi)      HIKEY2KE((hi)->hi_key)
 
 // To reduce the time spent in keepend(), remember at which level in the state

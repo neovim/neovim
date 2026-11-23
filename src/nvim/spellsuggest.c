@@ -2642,8 +2642,7 @@ typedef struct {
   uint8_t sft_word[];   ///< soundfolded word
 } sftword_T;
 
-static sftword_T dumsft;
-#define HIKEY2SFT(p)  ((sftword_T *)((p) - (dumsft.sft_word - (uint8_t *)&dumsft)))
+#define HIKEY2SFT(p)  ((sftword_T *)((p) - offsetof(sftword_T, sft_word)))
 #define HI2SFT(hi)     HIKEY2SFT((hi)->hi_key)
 
 /// Prepare for calling suggest_try_soundalike().
