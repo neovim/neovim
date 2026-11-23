@@ -349,7 +349,7 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
     elseif tgt == 'cmd' and dupe == 0 then
       fn.clearmatches(ui.wins.cmd) -- Clear matchparen highlights.
       if ui.cmd.srow > 0 then
-        -- In block mode the cmdheight is already dynamic, so just print the full message
+        -- In block mode the cmdline height is already dynamic, so just print the full message
         -- regardless of height. Put cmdline below message.
         ui.cmd.srow = row + 1
       else

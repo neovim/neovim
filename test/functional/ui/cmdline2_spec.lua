@@ -221,12 +221,23 @@ describe('cmdline2', function()
 
   it('dialog position is adjusted for toggled non-pum wildmenu', function()
     exec([[
-      set wildmode=list:full,full wildoptions-=pum
+      set cmdheight=0 wildoptions+=pum
       func Foo()
       endf
       func Fooo()
       endf
     ]])
+    -- Pum from typeahead is placed above the cmdline that was never shown before.
+    feed(':call Fo<C-Z>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*10
+      {1:~    }{12: Foo()          }{1:                                }|
+      {1:~    }{4: Fooo()         }{1:                                }|
+      {16::}{15:call} {25:Foo}{16:()}^                                          |
+    ]])
+    feed('<Esc>')
+    exec('set cmdheight=1 wildmode=list:full,full wildoptions-=pum')
     feed(':call Fo<C-Z>')
     screen:expect([[
                                                            |
@@ -344,9 +355,11 @@ describe('cmdline2', function()
     assert(nwins == 1)
   end)
 
-  it("temporary 'cmdheight' does not move the cursor #42386", function()
-    exec('set ch=0 so=3 | call setline(1, range(1, 200)) | normal! G')
-    feed(':call confirm("Ok?")<CR><Esc>')
+  it("cmdline with 'cmdheight' 0 keeps window layout and cursor #42386 #42115", function()
+    exec('set cmdheight=0 so=3 | call setline(1, range(1, 200)) | normal! G')
+    feed(':call confirm("Ok?")<CR>')
+    t.eq(14, n.fn.winheight(0)) -- Prompt overlays the window, not resized (:terminal job would be).
+    feed('<Esc>')
     -- Long (wrapped) cmdline acts on the cursor line.
     feed((':call setline(".", "y") | "%s<CR>'):format(('a'):rep(60)))
     -- Same cursor line and view, no jump.

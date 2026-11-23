@@ -941,10 +941,9 @@ void ui_ext_win_position(win_T *wp, bool validate)
 
     int comp_row = (int)row - (south ? wp->w_height_outer : 0);
     int comp_col = (int)col - (east ? wp->w_width_outer : 0);
-    int above_ch = wp->w_config.zindex < kZIndexMessages ? (int)p_ch : 0;
     comp_row += grid->comp_row;
     comp_col += grid->comp_col;
-    comp_row = MAX(MIN(comp_row, Rows - wp->w_height_outer - above_ch), 0);
+    comp_row = MAX(MIN(comp_row, Rows - wp->w_height_outer - win_float_above_ch(wp)), 0);
     if (!c.fixed || east) {
       comp_col = MAX(MIN(comp_col, Columns - wp->w_width_outer), 0);
     }
@@ -6892,7 +6891,7 @@ static void win_fix_cursor(bool normal)
 
   if (!wp->w_do_win_fix_cursor
       || wp->w_buffer->b_ml.ml_line_count < wp->w_view_height
-      // In cmdline: defer until next resize, so temp 'cmdheight' (ui2) does not move cursor. #42386
+      // In cmdline: defer until next resize, so temp 'cmdheight' does not move cursor. #42386
       || (get_real_state() & MODE_CMDLINE)) {
     return;
   }

@@ -13,23 +13,18 @@ local M = {
   expand = 0,
 }
 
---- Set the 'cmdheight' and cmdline window height. Reposition message windows.
+--- Sets the cmdline window visibility and height. Repositions message windows.
+--- If cmdline is taller than 'cmdheight', it overlays the windows above it.
 ---
 ---@param win integer Cmdline window in the current tabpage.
 ---@param hide boolean Whether to hide or show the window.
 ---@param height integer (Text)height of the cmdline window.
 local function win_config(win, hide, height)
-  if ui.cmdheight == 0 and api.nvim_win_get_config(win).hide ~= hide then
+  hide = hide and ui.cmdheight == 0
+  height = math.min(math.max(height, 1), vim.o.lines)
+  local cfg = api.nvim_win_get_config(win)
+  if cfg.hide ~= hide or (not hide and cfg.height ~= height) then
     api.nvim_win_set_config(win, { hide = hide, height = not hide and height or nil })
-  elseif api.nvim_win_get_height(win) ~= height then
-    api.nvim_win_resize(win, -1, height)
-  end
-  if vim.o.cmdheight ~= height then
-    -- Avoid moving the cursor with 'splitkeep' = "screen", and altering the user
-    -- configured value with noautocmd.
-    vim._with({ noautocmd = true, o = { splitkeep = 'screen' } }, function()
-      vim.o.cmdheight = height
-    end)
     ui.msg.set_pos()
   elseif M.wmnumode ~= (M.dialog and fn.pumvisible() == 0 and fn.wildmenumode() or 0) then
     M.wmnumode = (M.wmnumode == 1 and 0 or 1)
@@ -97,7 +92,8 @@ function M.cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
   -- Move expanded messages, or messages emitted before a prompt to dialog window.
   if M.level == 0 and (ui.msg.cmd_on_key or (hl_id >= 0 and next(ui.msg.cmd.ids) ~= nil)) then
     M.expand, M.dialog, ui.msg.cmd_on_key = 1, true, nil
-    api.nvim_win_set_config(ui.wins.cmd, { border = 'none' })
+    -- Shrink to the cmdline, the dialog is placed above it.
+    api.nvim_win_set_config(ui.wins.cmd, { border = 'none', height = 1 })
     ui.msg.expand_msg('cmd', 'dialog')
   elseif ui.msg.cmd.msg_row ~= -1 and M.expand == 0 then
     ui.msg.cmd:clear()
@@ -137,14 +133,17 @@ function M.cmdline_pos(pos)
   api.nvim_win_set_cursor(ui.wins.cmd, { M.erow + 1, promptlen + pos })
 end
 
---- Leaving the cmdline, restore 'cmdheight' and 'ruler'.
+--- Leaving the cmdline, restore the cmdline window and 'ruler'.
 ---
 ---@param level integer
 ---@param abort boolean
 function M.cmdline_hide(level, abort)
   if M.expand > 0 then
-    -- Close expanded cmdline, keep last line.
+    -- Close expanded cmdline after the entered command, keep last line.
     vim.schedule(function()
+      if M.level > 0 or M.expand == 0 then
+        return -- Cmd is waiting for input in another cmdline (e.g. a prompt), or closed already.
+      end
       api.nvim_win_close(ui.wins.cmd, true)
       api.nvim_buf_set_lines(ui.bufs.cmd, 0, M.erow, false, {})
       ui.check_targets()

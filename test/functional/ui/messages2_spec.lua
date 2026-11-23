@@ -453,6 +453,22 @@ describe('messages2', function()
       {1:~                                                    }|*12
       hello                                                |
     ]])
+    -- Prompt is visible from command entered below expanded message. #42116
+    feed(':call confirm("Ok?")')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*11
+      hello                                                |
+      {16::}{15:call} {25:confirm}{16:(}{26:"Ok?"}{16:)}^                                 |
+    ]])
+    feed('<CR>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*10
+      hello                                                |
+      {6:Ok?}                                                  |
+      {6:[O]k: }^                                               |
+    ]])
   end)
 
   it('no prompt and newlines with Visual filter command #38273', function()
