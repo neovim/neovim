@@ -1409,4 +1409,28 @@ func Test_spellfile_truncated_prefcondnr()
   set nospell spl& spelllang&
 endfunc
 
+" A crafted .sug file whose fold word tree has a BY_INDEX reference into the
+" middle of a node made tree_count_words() read beyond the end of the tree.
+func Test_spell_sug_tree_count_words_index_overflow()
+  call mkdir('Xrtp/spell', 'pR')
+  " VIMspell + v50, SN_SUGFILE(ts), SN_END, LWORDTREE word "a",
+  " empty KWORDTREE/PREFIXTREE
+  let spl = eval('0z56494D7370656C6C320B000000000800000000650000'
+        \ .. '01FF00000004016101000000000000000000')
+  " VIMsug + v1, matching ts, SUGWORDTREE{node:1,BY_INDEX->1,'A'}, empty
+  " SUGTABLE
+  let sug = 0z56494D7375670100000000650000010000000201010000014100000000
+  call writefile(spl, 'Xrtp/spell/xx.utf-8.spl', 'b')
+  call writefile(sug, 'Xrtp/spell/xx.utf-8.sug', 'b')
+
+  new
+  set runtimepath+=./Xrtp
+  set spelllang=xx
+  set spell
+  call assert_equal(v:t_list, type(spellsuggest('helllo')))
+
+  set spell& spelllang& runtimepath&
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
