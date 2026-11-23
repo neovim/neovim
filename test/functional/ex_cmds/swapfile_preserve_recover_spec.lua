@@ -812,4 +812,56 @@ describe('swapfile', function()
     api.nvim_buf_set_name(0, device_guid_path)
     eq(escaped_name, fn.swapname('%'))
   end)
+
+  it('owned by a zombie process is not "still running" #8463', function()
+    skip(not is_os('linux'), 'N/A: uses /proc')
+    local swapdir = uv.cwd() .. '/Xtest_swap_zombie_dir'
+    local testfile = 'Xtest_swap_zombie_file'
+    mkdir(swapdir)
+
+    -- `sh` starts Nvim in the background, then becomes `sleep` (exec), which never reaps it.
+    -- So after Nvim is killed it stays a zombie until `sleep` exits.
+    local sleeper = assert(uv.spawn('sh', {
+      args = {
+        '-c',
+        '"$@" & exec sleep 60',
+        'sh',
+        nvim_prog,
+        '-u',
+        'NONE',
+        '-i',
+        'NONE',
+        '--headless',
+        '--cmd',
+        ('set directory=%s//'):format(swapdir),
+        '-c',
+        "call setline(1, 'text') | preserve",
+        testfile,
+      },
+    }, function() end))
+    finally(function()
+      sleeper:kill('sigkill')
+      sleeper:close()
+      rmdir(swapdir)
+      os.remove(testfile)
+    end)
+
+    clear()
+    local swapfile --- @type string
+    local pid --- @type integer
+    retry(nil, 10000, function()
+      swapfile = fn.glob(swapdir .. '/*')
+      neq('', swapfile)
+      pid = fn.swapinfo(swapfile).pid
+      ok(pid > 0, 'pid of running Nvim', pid)
+    end)
+
+    uv.kill(pid, 'sigkill')
+    retry(nil, 10000, function()
+      local stat = assert(io.open(('/proc/%d/stat'):format(pid))):read('*a')
+      eq('Z', stat:match('%) (%a)'))
+    end)
+
+    eq(0, fn.swapinfo(swapfile).pid)
+  end)
 end)

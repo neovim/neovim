@@ -35,6 +35,7 @@
 // Group Hurd with Linux, as both use glibc and standard POSIX interfaces here
 #if defined(__linux__) || defined(__gnu_hurd__)
 # include <stdio.h>
+# include <string.h>
 #endif
 
 #include "nvim/log.h"
@@ -269,13 +270,42 @@ Dict os_proc_info(int pid, Arena *arena)
 }
 #endif
 
+#if defined(__linux__)
+/// Return true if process `pid` has exited but was not reaped by its parent yet
+/// (a "zombie"), so it still exists but is not running.
+static bool os_proc_is_zombie(int pid)
+{
+  char path[64];
+  snprintf(path, sizeof(path), "/proc/%d/stat", pid);
+  FILE *fp = fopen(path, "r");
+  if (fp == NULL) {
+    return false;
+  }
+  // Format: "pid (comm) state ...". "comm" may contain spaces and ")", so
+  // the state is the first character after the last ") ".
+  char buf[512];
+  size_t len = fread(buf, 1, sizeof(buf) - 1, fp);
+  fclose(fp);
+  buf[len] = '\0';
+  char *p = strrchr(buf, ')');
+  if (p == NULL || p[1] != ' ') {
+    return false;
+  }
+  return p[2] == 'Z' || p[2] == 'X';
+}
+#endif
+
 /// Return true if process `pid` is running.
 bool os_proc_running(int pid)
 {
   int err = uv_kill(pid, 0);
-  // If there is no error the process must be running.
+  // If there is no error the process must be running, unless it is a zombie.
   if (err == 0) {
+#if defined(__linux__)
+    return !os_proc_is_zombie(pid);
+#else
     return true;
+#endif
   }
   // If the error is ESRCH then the process is not running.
   if (err == UV_ESRCH) {
