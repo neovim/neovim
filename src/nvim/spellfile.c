@@ -884,6 +884,9 @@ static void tree_count_words(const uint8_t *byts, int byts_len, idx_T *idxs)
       // Do one more byte at this node.
       idx_T n = arridx[depth] + curi[depth];
       curi[depth]++;
+      if (n >= byts_len) {
+        break;
+      }
 
       int c = byts[n];
       if (c == 0) {

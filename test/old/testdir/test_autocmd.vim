@@ -4148,6 +4148,33 @@ func Test_v_event_nested()
   unlet g:Xouter g:Xinner
 endfunc
 
+" Garbage collection in a nested autocommand that uses v:event must not free
+" the values of v:event of the outer autocommand.  This used freed memory,
+" which is only reliably detected with valgrind or ASan.
+func s:YankThenChangeDir()
+  call add(g:Xregs, copy(v:event.regcontents))
+  let olddir = getcwd()
+  cd Xveventgcdir
+  exe 'cd ' .. fnameescape(olddir)
+  call add(g:Xregs, copy(v:event.regcontents))
+  call add(g:Xregs, v:event.operator)
+endfunc
+
+func Test_v_event_nested_garbagecollect()
+  call mkdir('Xveventgcdir', 'R')
+  let g:Xregs = []
+  autocmd TextYankPost * ++nested call s:YankThenChangeDir()
+  autocmd DirChangedPre * call test_garbagecollect_now()
+  new
+  call setline(1, 'line one')
+  normal! yy
+  au! TextYankPost
+  au! DirChangedPre
+  bwipe!
+  call assert_equal([['line one'], ['line one'], 'y'], g:Xregs)
+  unlet g:Xregs
+endfunc
+
 " Test for ModeChanged pattern
 func Test_mode_changes()
   let g:index = 0
