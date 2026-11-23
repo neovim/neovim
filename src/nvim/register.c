@@ -473,12 +473,12 @@ int do_record(int c)
       retval = FAIL;
     } else {
       reg_recording = c;
-      // TODO(bfredl): showmode based messaging is currently missing with cmdheight=0
-      showmode();
       regname = c;
       retval = OK;
 
       apply_autocmds(EVENT_RECORDINGENTER, NULL, NULL, false, curbuf);
+      // TODO(bfredl): showmode based messaging is currently missing with cmdheight=0
+      showmode();
     }
   } else {  // stop recording
     save_v_event_T save_v_event;
