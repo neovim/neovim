@@ -579,7 +579,7 @@ describe('vim.net.request', function()
     end
 
     -- request headers asserts
-    assert_wrong_request('opts.headers: expected table, got number', { headers = 123 })
+    assert_wrong_request('opts.headers: expected table|nil, got number', { headers = 123 })
     t.matches(
       'url: expected URI, got example.com',
       t.pcall_err(exec_lua, function()
@@ -606,7 +606,7 @@ describe('vim.net.request', function()
       end)
     )
 
-    assert_wrong_request('opts.outbuf: expected number, got string', { outbuf = 'x' })
+    assert_wrong_request('opts.outbuf: expected number|nil, got string', { outbuf = 'x' })
     assert_wrong_request('headers keys/values must be strings', { headers = { Header = 123 } })
     assert_wrong_request(
       'headers must not contain CR or LF',
@@ -634,9 +634,9 @@ describe('vim.net.request', function()
     )
 
     -- body asserts
-    assert_wrong_request('opts.body: expected string, got number', { body = 123 })
-    assert_wrong_request('opts.body: expected string, got table', { body = {} })
-    assert_wrong_request('opts.retry: expected number, got table', { retry = {} })
+    assert_wrong_request('opts.body: expected string|nil, got number', { body = 123 })
+    assert_wrong_request('opts.body: expected string|nil, got table', { body = {} })
+    assert_wrong_request('opts.retry: expected number|nil, got table', { retry = {} })
 
     -- OPTIONS is not accepted
     assert_wrong_request(

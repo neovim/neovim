@@ -728,7 +728,7 @@ describe('lua stdlib', function()
     eq(true, pcall(vim.split, 'string', 'string'))
     matches('s: expected string, got number', pcall_err(vim.split, 1, 'string'))
     matches('sep: expected string, got number', pcall_err(vim.split, 'string', 1))
-    matches('opts: expected table, got number', pcall_err(vim.split, 'string', 'string', 1))
+    matches('opts: expected table|nil, got number', pcall_err(vim.split, 'string', 'string', 1))
   end)
 
   it('vim.trim', function()
@@ -1556,6 +1556,45 @@ describe('lua stdlib', function()
       'arg1: expected TEST_MSG, got nil',
       pcall_err(exec_lua, "vim.validate('arg1', nil, 'table', 'TEST_MSG')")
     )
+
+    -- Optional parameters mention nil in the error message. #40037
+    matches(
+      'arg1: expected string|nil, got number',
+      pcall_err(exec_lua, "vim.validate('arg1', 123, 'string', true)")
+    )
+    matches(
+      'arg1: expected callable|nil, got number',
+      pcall_err(exec_lua, "vim.validate('arg1', 123, 'callable', true)")
+    )
+    matches(
+      'arg1: expected number|string|nil, got table',
+      pcall_err(exec_lua, "vim.validate('arg1', {}, {'number', 'string'}, true)")
+    )
+    -- nil is not repeated if it is already accepted.
+    matches(
+      'arg1: expected number|nil, got table',
+      pcall_err(exec_lua, "vim.validate('arg1', {}, {'number', 'nil'}, true)")
+    )
+    matches(
+      'arg1: expected %?|nil, got 3',
+      pcall_err(exec_lua, "vim.validate('arg1', 3, function(a) return a == 1 end, true)")
+    )
+    matches(
+      'arg1: expected even number or nil, got 3',
+      pcall_err(
+        exec_lua,
+        "vim.validate('arg1', 3, function(a) return a % 2 == 0 end, true, 'even number')"
+      )
+    )
+    eq(
+      'arg1: expected TEST_MSG or nil, got number',
+      pcall_err(exec_lua, "vim.validate('arg1', 1, 'table', true, 'TEST_MSG')")
+    )
+    -- Message passed in place of {optional} does not make the parameter optional.
+    eq(
+      'arg1: expected TEST_MSG, got number',
+      pcall_err(exec_lua, "vim.validate('arg1', 1, 'table', 'TEST_MSG')")
+    )
   end)
 
   it('vim.validate (spec form)', function()
@@ -1634,6 +1673,25 @@ describe('lua stdlib', function()
     matches(
       'arg1: expected %?, got 3. Info: TEST_MSG',
       pcall_err(exec_lua, "vim.validate{arg1={3, function(a) return a == 1, 'TEST_MSG' end}}")
+    )
+
+    -- Optional parameters mention nil in the error message. #40037
+    matches(
+      'arg1: expected string|nil, got number',
+      pcall_err(exec_lua, "vim.validate{ arg1={ 1, 's', true }}")
+    )
+    matches(
+      'arg1: expected number|string|nil, got table',
+      pcall_err(exec_lua, "vim.validate{ arg1={ {}, {'n', 's'}, true }}")
+    )
+    -- The validator list is not modified when normalizing aliases.
+    eq(
+      { 'n', 's' },
+      exec_lua(function()
+        local types = { 'n', 's' }
+        pcall(vim.validate, { arg1 = { {}, types } })
+        return types
+      end)
     )
   end)
 
@@ -2395,7 +2453,7 @@ describe('lua stdlib', function()
     it('callback must be a function', function()
       local result = exec_lua [[return {pcall(function() vim.wait(1000, 13) end)}]]
       eq(false, result[1])
-      matches('callback: expected callable, got number$', remove_trace(result[2]))
+      matches('callback: expected callable|nil, got number$', remove_trace(result[2]))
     end)
 
     it('waits if callback arg is nil', function()
@@ -2976,7 +3034,7 @@ describe('vim.keymap', function()
     )
 
     matches(
-      'opts: expected table, got function',
+      'opts: expected table|nil, got function',
       pcall_err(exec_lua, [[vim.keymap.set({}, 'x', 'x', function() end)]])
     )
 

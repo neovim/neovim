@@ -2223,6 +2223,12 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})  *vim.validate
         -- NOP (success)
         vim.validate('arg1', 1, {'string', 'table'})
         -- error('arg1: expected string|table, got number')
+
+        -- Optional parameters may be nil, which is mentioned in the error message:
+        vim.validate('arg1', nil, 'string', true)
+        -- NOP (success)
+        vim.validate('arg1', 1, 'string', true)
+        -- error('arg1: expected string|nil, got number')
 <
 
     Note: ~
