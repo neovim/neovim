@@ -827,9 +827,9 @@ function M.read_page(ref)
   vim.bo.readonly = false
   vim.bo.swapfile = false
 
-  api.nvim_buf_set_lines(0, 0, -1, false, vim.split(page, '\n'))
+  api.nvim_buf_set_lines(0, 0, -1, false, page)
 
-  while fn.getline(1):match('^%s*$') do
+  while fn.getline(1):match('^%s*$') and api.nvim_buf_line_count(0) > 1 do
     api.nvim_buf_set_lines(0, 0, 1, false, {})
   end
   -- XXX: nroff justifies text by filling it with whitespace.  That interacts

@@ -264,9 +264,7 @@ function M.request(method, url, opts, on_response)
       if not err and outbuf and vim.api.nvim_buf_is_loaded(outbuf) then
         local ok, write_err = pcall(function()
           local text = outpath and vim.fn.readblob(outpath) or body
-          -- The final newline ends the last line, it doesn't start a new one.
-          local lines = vim.split((text:gsub('\n$', '')), '\n', { plain = true })
-          vim.api.nvim_buf_set_lines(outbuf, 0, -1, true, lines)
+          vim.api.nvim_buf_set_lines(outbuf, 0, -1, true, text)
         end)
         if not ok then
           err = write_err

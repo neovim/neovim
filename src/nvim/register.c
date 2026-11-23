@@ -2826,7 +2826,7 @@ void write_reg_contents_ex(int name, const char *str, ssize_t len, bool must_app
 }
 
 /// @param[out] reg Expected to be empty
-bool prepare_yankreg_from_object(yankreg_T *reg, String regtype, size_t lines)
+bool prepare_yankreg_from_object(yankreg_T *reg, String regtype)
 {
   char type = regtype.data ? regtype.data[0] : NUL;
 

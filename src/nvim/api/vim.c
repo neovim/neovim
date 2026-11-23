@@ -1257,7 +1257,7 @@ static void term_close(void *data)
 /// To write data to the |TUI| host terminal, see |nvim_ui_send()|.
 ///
 /// @param chan Channel id
-/// @param data Data to write. 8-bit clean: may contain NUL bytes.
+/// @param data Data to write. |api-string|
 /// @param[out] err Error details, if any
 void nvim_chan_send(Integer chan, String data, Error *err)
   FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY FUNC_API_LUA_ONLY
@@ -1344,7 +1344,7 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
 /// end, { buf = 0 })
 /// ```
 ///
-/// @param data  Multiline input. Lines break at LF ("\n"). May be binary (containing NUL bytes).
+/// @param data  Input text. |api-string|
 /// @param crlf  Also break lines at CR and CRLF.
 /// @param phase  -1: paste in a single call (i.e. without streaming).
 ///               To "stream" a paste, call `nvim_paste` sequentially with
@@ -1409,7 +1409,8 @@ theend:
 ///
 /// Compare |:put| and |p| which are always linewise.
 ///
-/// @param lines  |readfile()|-style list of lines. |channel-lines|
+/// @param lines  Input text: List of lines (|api-lines| binary mode), or a multiline String |api-string|
+///               (split like |setreg()|).
 /// @param type  Edit behavior: any |getregtype()| result, or:
 ///              - "b" |blockwise-visual| mode (may include width, e.g. "b3")
 ///              - "c" |charwise| mode
@@ -1418,26 +1419,29 @@ theend:
 /// @param after  If true insert after cursor (like |p|), or before (like |P|).
 /// @param follow  If true place cursor at end of inserted text.
 /// @param[out] err Error details, if any
-void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow, Arena *arena,
-              Error *err)
+void nvim_put(Union(String, ArrayOf(String)) lines, String type, Boolean after, Boolean follow,
+              Arena *arena, Error *err)
   FUNC_API_SINCE(6)
   FUNC_API_TEXTLOCK
 {
   yankreg_T reg[1] = { 0 };
-  VALIDATE_S((prepare_yankreg_from_object(reg, type, lines.size)), "type", type.data, {
+  VALIDATE_S((prepare_yankreg_from_object(reg, type)), "type", type.data, {
     return;
   });
-  if (lines.size == 0) {
+  // Split a String like setreg(): a final NL ends the last line, unless charwise.
+  bool binary = reg->y_type == kMTCharWise || reg->y_type == kMTUnknown;
+  Array arr;
+  if (!api_object_to_lines(lines, "lines", false, binary, &arr, arena, err)) {
+    return;
+  }
+  if (arr.size == 0) {
     return;  // Nothing to do.
   }
 
-  reg->y_array = arena_alloc(arena, lines.size * sizeof(String), true);
-  reg->y_size = lines.size;
-  for (size_t i = 0; i < lines.size; i++) {
-    VALIDATE_T("line", kObjectTypeString, lines.items[i].type, {
-      return;
-    });
-    String line = lines.items[i].data.string;
+  reg->y_array = arena_alloc(arena, arr.size * sizeof(String), true);
+  reg->y_size = arr.size;
+  for (size_t i = 0; i < arr.size; i++) {
+    String line = arr.items[i].data.string;
     reg->y_array[i] = copy_string(line, arena);
     memchrsub(reg->y_array[i].data, NUL, NL, line.size);
   }

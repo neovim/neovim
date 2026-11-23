@@ -1128,7 +1128,7 @@ free_ret:
 /// write the received data to a connected TTY if one exists.
 ///
 /// @param channel_id
-/// @param content Content to write to the TTY
+/// @param content Content to write to the TTY. |api-string|
 /// @param[out] err Error details, if any
 void nvim_ui_send(uint64_t channel_id, String content, Error *err)
   FUNC_API_SINCE(14)

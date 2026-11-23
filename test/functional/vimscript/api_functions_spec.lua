@@ -45,11 +45,8 @@ describe('eval-API', function()
       err
     )
 
-    err = pcall_err(command, 'call nvim_buf_set_lines(0, 0, -1, v:true, "string")')
-    eq(
-      'Vim(call):E5555: API call: Wrong type for argument 5 when calling nvim_buf_set_lines, expecting ArrayOf(String)',
-      err
-    )
+    err = pcall_err(command, 'call nvim_buf_set_lines(0, 0, -1, v:true, 42)')
+    eq("Vim(call):E5555: API call: Invalid 'lines': expected String or Array, got Integer", err)
 
     err = pcall_err(command, 'call nvim_buf_get_number("0")')
     eq(

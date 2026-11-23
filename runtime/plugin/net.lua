@@ -114,9 +114,7 @@ vim.api.nvim_create_autocmd('FileReadCmd', {
         return
       end
 
-      -- Final newline ends the last line, it doesn't start a new one.
-      local lines = vim.split((response.body:gsub('\n$', '')), '\n', { plain = true })
-      vim.api.nvim_buf_set_lines(buf, start, start, true, lines)
+      vim.api.nvim_buf_set_lines(buf, start, start, true, response.body)
       vim.notify(('Loaded %s'):format(url), vim.log.levels.INFO)
     end)
   end,

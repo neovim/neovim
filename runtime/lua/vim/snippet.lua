@@ -178,7 +178,7 @@ end
 --- @param text string
 function Tabstop:set_text(text)
   local range = self:get_range()
-  vim.api.nvim_buf_set_text(self.bufnr, range[1], range[2], range[3], range[4], text_to_lines(text))
+  vim.api.nvim_buf_set_text(self.bufnr, range[1], range[2], range[3], range[4], text)
 end
 
 ---@alias (private) vim.snippet.TabStopGravity
