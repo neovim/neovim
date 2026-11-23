@@ -4658,7 +4658,7 @@ vim.net.request({method}, {url}, {opts}, {on_response})    *vim.net.request()*
 
     Parameters: ~
       • {method}       (`vim.net.HttpMethod?`) (default: GET) The HTTP method
-                       (GET, POST, PUT, PATCH, HEAD, DELETE).
+                       (GET, POST, PUT, PATCH, HEAD, DELETE, OPTIONS).
       • {url}          (`string|vim.Uri`) The URL for the request.
       • {opts}         (`table?`) A table with the following fields:
                        • {body}? (`string`) Request body for POST/PUT/PATCH

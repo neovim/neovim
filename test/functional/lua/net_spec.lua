@@ -8,7 +8,8 @@ local exec_lua = n.exec_lua
 -- Serve one request per status (default "200 OK") and record what curl sent.
 ---@param status? string|string[]
 ---@param length? integer Content-Length (default: `#body`).
-local function http_server(body, status, length)
+---@param extra_headers? string Additional response header lines, each ending in CRLF.
+local function http_server(body, status, length, extra_headers)
   t.skip(n.fn.executable('curl') == 0, 'curl not found')
   return exec_lua(function()
     vim.env.no_proxy = '127.0.0.1'
@@ -44,9 +45,10 @@ local function http_server(body, status, length)
         client:read_stop()
         local method = data:match('^(%S+)')
         _G.http_request = { method = method, headers = headers, body = request_body, raw = data }
-        local response_head = ('HTTP/1.1 %s\r\nContent-Length: %d\r\nSet-Cookie: a=1\r\nSet-Cookie: b=2\r\nConnection: close\r\n\r\n'):format(
+        local response_head = ('HTTP/1.1 %s\r\nContent-Length: %d\r\nSet-Cookie: a=1\r\nSet-Cookie: b=2\r\nConnection: close\r\n%s\r\n'):format(
           client_status,
-          length or #body
+          length or #body,
+          extra_headers or ''
         )
         -- Body is not format()ed: PUC Lua 5.1 "%s" truncates at NUL.
         client:write({ response_head, method == 'HEAD' and '' or body }, function(write_err)
@@ -516,6 +518,32 @@ describe('vim.net.request', function()
     })
   end)
 
+  it('accepts OPTIONS requests', function()
+    local url = http_server(
+      'capabilities',
+      nil,
+      nil,
+      'Allow: GET, HEAD, OPTIONS\r\nAccess-Control-Allow-Origin: https://example.com\r\n'
+    )
+    local result = request('OPTIONS', url, {
+      headers = {
+        Origin = 'https://example.com',
+        ['Access-Control-Request-Method'] = 'GET',
+      },
+    })
+
+    local sent = exec_lua('return http_request')
+    t.eq('OPTIONS', sent.method)
+    t.eq('', sent.body)
+    t.eq('https://example.com', sent.headers.origin)
+    t.eq('GET', sent.headers['access-control-request-method'])
+    t.eq(nil, result.error)
+    t.eq(200, result.response.status)
+    t.eq('capabilities', result.response.body)
+    t.eq('GET, HEAD, OPTIONS', result.response.headers.allow)
+    t.eq('https://example.com', result.response.headers['access-control-allow-origin'])
+  end)
+
   it('accepts multiple HTTP methods', function()
     local function assert_accept_method(method)
       local result = request(method, http_server('hello'))
@@ -638,18 +666,17 @@ describe('vim.net.request', function()
     assert_wrong_request('opts.body: expected string, got table', { body = {} })
     assert_wrong_request('opts.retry: expected number, got table', { retry = {} })
 
-    -- OPTIONS is not accepted
     assert_wrong_request(
-      'expected method should be one of GET, POST, PUT, PATCH, HEAD, DELETE, got OPTIONS',
-      'OPTIONS'
+      'expected method should be one of GET, POST, PUT, PATCH, HEAD, DELETE, OPTIONS, got TRACE',
+      'TRACE'
     )
-    -- lowercase methods are not accepted as well
+    -- Methods are case-sensitive.
     assert_wrong_request(
-      'expected method should be one of GET, POST, PUT, PATCH, HEAD, DELETE, got options',
+      'expected method should be one of GET, POST, PUT, PATCH, HEAD, DELETE, OPTIONS, got options',
       'options'
     )
     assert_wrong_request(
-      'expected method should be one of GET, POST, PUT, PATCH, HEAD, DELETE, got get',
+      'expected method should be one of GET, POST, PUT, PATCH, HEAD, DELETE, OPTIONS, got get',
       'get'
     )
   end)

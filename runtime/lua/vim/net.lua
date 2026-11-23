@@ -7,6 +7,7 @@ local http_methods = {
   PATCH = true,
   HEAD = true,
   DELETE = true,
+  OPTIONS = true,
 }
 
 --- Splits curl stdout `<body><header_json>\n<status> <body size>` (see `--write-out`) into the
@@ -32,7 +33,7 @@ local function parse_output(stdout, has_body)
   return status, headers, stdout:sub(1, body_end)
 end
 
----@alias vim.net.HttpMethod string "GET" | "POST" | "PUT" | "PATCH" | "HEAD" | "DELETE"
+---@alias vim.net.HttpMethod string "GET" | "POST" | "PUT" | "PATCH" | "HEAD" | "DELETE" | "OPTIONS"
 
 ---@class vim.net.request.Opts
 ---@inlinedoc
@@ -120,7 +121,7 @@ end
 --- })
 --- ```
 ---
---- @param method? vim.net.HttpMethod (default: GET) The HTTP method (GET, POST, PUT, PATCH, HEAD, DELETE).
+--- @param method? vim.net.HttpMethod (default: GET) The HTTP method (GET, POST, PUT, PATCH, HEAD, DELETE, OPTIONS).
 --- @param url string|vim.Uri The URL for the request.
 --- @param opts? vim.net.request.Opts
 --- @param on_response? fun(err?: string, response?: vim.net.request.Response) Invoked (|deferred|)
@@ -146,7 +147,7 @@ function M.request(method, url, opts, on_response)
 
   vim.validate('method', method, function(m)
     return http_methods[m] == true
-  end, 'method should be one of GET, POST, PUT, PATCH, HEAD, DELETE')
+  end, 'method should be one of GET, POST, PUT, PATCH, HEAD, DELETE, OPTIONS')
   vim.validate('url', url, function(u)
     return type(u) == 'string' and vim.uri.parse(u) ~= nil
   end, 'URI')
