@@ -1144,4 +1144,136 @@ func Test_undofile_zero_headers()
   bwipe!
 endfunc
 
+" Return the byte offsets of the undo headers in undo file "blob".  A header
+" starts with the magic bytes 0x5f 0xd0, followed by four 4-byte header
+" references (uh_next, uh_prev, uh_alt_next, uh_alt_prev) and then the 4-byte
+" uh_seq.  Require the references and uh_seq to be small numbers, so that a
+" timestamp that happens to contain the magic bytes is not mistaken for a
+" header.
+func s:UndoHeaders(blob)
+  let headers = []
+  for i in range(len(a:blob) - 22)
+    if a:blob[i] == 0x5f && a:blob[i + 1] == 0xd0
+      let ok = v:true
+      for field in range(5)
+        let off = i + 2 + field * 4
+        if a:blob[off] != 0 || a:blob[off + 1] != 0 || a:blob[off + 2] != 0
+              \ || a:blob[off + 3] > 8
+          let ok = v:false
+          break
+        endif
+      endfor
+      if ok
+        call add(headers, i)
+      endif
+    endif
+  endfor
+  return headers
+endfunc
+
+" Test that an undo file with the uh_next and uh_prev links of its headers
+" swapped is rejected.  Loading it used to result in a use-after-free when
+" the buffer was unloaded.
+func Test_undofile_reversed_header_chain()
+  CheckFeature persistent_undo
+  let save_ul = &undolevels
+  defer execute('let &undolevels = ' .. save_ul)
+  new Xurevchain.txt
+  setl noswapfile
+  set ul=100
+  call setline(1, 'one')
+  let &undolevels = &undolevels
+  call setline(1, 'two')
+  write
+  defer delete('Xurevchain.txt')
+  wundo! Xurevchain.undo
+  defer delete('Xurevchain.undo')
+
+  let blob = readfile('Xurevchain.undo', 'B')
+  let headers = s:UndoHeaders(blob)
+  call assert_equal(2, len(headers))
+  " The headers are written oldest first.  Check uh_next and uh_prev before
+  " swapping them.
+  call assert_equal(0z0000000000000002, blob[headers[0] + 2 : headers[0] + 9])
+  call assert_equal(0z0000000100000000, blob[headers[1] + 2 : headers[1] + 9])
+  for h in headers
+    let next = blob[h + 2 : h + 5]
+    let blob[h + 2 : h + 5] = blob[h + 6 : h + 9]
+    let blob[h + 6 : h + 9] = next
+  endfor
+  call writefile(blob, 'Xurevchain.undo')
+  call assert_fails('rundo Xurevchain.undo', 'E825:')
+
+  bwipe!
+endfunc
+
+" Test that an undo file with headers but without a valid oldest header is
+" rejected.  Loading it used to result in a use-after-free when the buffer
+" was unloaded after making a change.
+func Test_undofile_missing_oldhead()
+  CheckFeature persistent_undo
+  let save_ul = &undolevels
+  defer execute('let &undolevels = ' .. save_ul)
+  new Xunoold.txt
+  setl noswapfile
+  set ul=100
+  call setline(1, 'one')
+  write
+  defer delete('Xunoold.txt')
+  wundo! Xunoold.undo
+  defer delete('Xunoold.undo')
+
+  " The file starts with the magic (9 bytes), the version (2), the hash (32),
+  " the line count (4) and the "U" line (4-byte length, text, 4-byte lnum and
+  " 4-byte col).  Then follows the sequence number of the oldest header.
+  let blob = readfile('Xunoold.undo', 'B')
+  let off = 47
+  let off += 4 + blob[off : off + 3]->blob2list()->reduce({a, b -> a * 256 + b}) + 8
+  call assert_equal(0z00000001, blob[off : off + 3])
+  let blob[off : off + 3] = 0z00000063
+  call writefile(blob, 'Xunoold.undo')
+  call assert_fails('rundo Xunoold.undo', 'E825:')
+  call setline(1, 'two')
+
+  bwipe!
+endfunc
+
+" Test that an undo file where a header is reached twice, through uh_alt_next
+" of one header and uh_prev of another, is rejected.  Loading it used to
+" result in a use-after-free when the buffer was unloaded.
+func Test_undofile_header_cycle()
+  CheckFeature persistent_undo
+  let save_ul = &undolevels
+  defer execute('let &undolevels = ' .. save_ul)
+  new Xucycle.txt
+  setl noswapfile
+  set ul=100
+  call setline(1, 'one')
+  let &undolevels = &undolevels
+  call setline(1, 'two')
+  write
+  defer delete('Xucycle.txt')
+  wundo! Xucycle.undo
+  defer delete('Xucycle.undo')
+
+  let blob = readfile('Xucycle.undo', 'B')
+  " Make header 1 both the oldest and the newest header.
+  let off = 47
+  let off += 4 + blob[off : off + 3]->blob2list()->reduce({a, b -> a * 256 + b}) + 8
+  call assert_equal(0z0000000100000002, blob[off : off + 7])
+  let blob[off + 4 : off + 7] = 0z00000001
+  " Header 1: no uh_next and uh_prev, uh_alt_next is header 2.
+  " Header 2: uh_prev is header 1.
+  let headers = s:UndoHeaders(blob)
+  call assert_equal(2, len(headers))
+  let blob[headers[0] + 2 : headers[0] + 17] =
+        \ 0z00000000000000000000000200000000
+  let blob[headers[1] + 2 : headers[1] + 17] =
+        \ 0z00000000000000010000000000000000
+  call writefile(blob, 'Xucycle.undo')
+  call assert_fails('rundo Xucycle.undo', 'E825:')
+
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
