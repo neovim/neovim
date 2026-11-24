@@ -253,7 +253,9 @@ the editor.
 	User invoked the |:connect| command. Nvim detached the current UI.
 
 	UI is expected to:
-	1. Attach to the server at `server_addr`.
+	1. Connect to the server at `server_addr`.
+	2. Set the channel's `addr` to `server_addr` via |nvim_chan_set()|.
+	3. Attach to the server.
 
 							*ui-event-restart*
 ["restart", listen_addr, chan_config] ~
