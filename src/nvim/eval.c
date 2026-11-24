@@ -184,7 +184,7 @@ void restore_v_event(dict_T *v_event, save_v_event_T *sve)
 
 /// Mark the items of v:event that were saved for a nested autocommand.
 /// Returns true if setting references failed somehow.
-bool set_ref_in_saved_v_event(int copyID)
+bool set_ref_in_saved_v_event(int64_t copyID)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   save_v_event_T *sve;
