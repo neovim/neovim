@@ -21,6 +21,28 @@ local function clear_serverlist()
   end
 end
 
+local function start_peer_sessions(root, env)
+  -- Isolate Unix sockets under a shared parent and Windows pipes by app name.
+  local own_dir, peer_dir = root .. '/own', root .. '/peer'
+  assert(mkdir(own_dir))
+  assert(mkdir(peer_dir))
+  local appname = is_os('win') and ('test-nvim+peers/' .. vim.fs.basename(root)) or 'nvim'
+  local current = clear({
+    env = vim.tbl_extend('force', env or {}, { XDG_RUNTIME_DIR = own_dir, NVIM_APPNAME = appname }),
+  })
+  local peer = n.new_session(true, {
+    args = { '--clean', '--headless', '--embed' },
+    env = { XDG_RUNTIME_DIR = peer_dir, NVIM_APPNAME = appname },
+    merge = false,
+  })
+  finally(function()
+    peer:close()
+  end)
+  local ok, addr = peer:request('nvim_get_vvar', 'servername')
+  assert(ok, vim.inspect(addr))
+  return current, peer, addr
+end
+
 after_each(function()
   check_close()
   os.remove(testlog)
@@ -192,39 +214,20 @@ describe('server', function()
   end)
 
   it('serverlist({peer=true}) gets peer sessions (concurrently)', function()
-    t.skip(is_os('win'), 'peer discovery is not supported on Windows')
-    -- Set XDG_RUNTIME_DIR to a temp dir to properly test serverlist({peer=true}). #35492
-    local tmp_dir = assert(vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname(false)) .. '/XXXXXX'))
-    local current_server = clear({ env = { XDG_RUNTIME_DIR = tmp_dir } })
-
-    local old_servs_num = #fn.serverlist({ peer = true })
-    local peer_temp = n.new_pipename()
-    local peer_name = peer_temp:match('[^/]*$')
-
-    local tmp_dir2 = assert(vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname(false)) .. '/XXXXXX'))
-    local peer_addr = ('%s/%s'):format(tmp_dir2, peer_name)
-    -- Set XDG_RUNTIME_DIR to a temp dir in this session to properly test serverlist({peer = true}). See #35492
-    local client = n.new_session(true, {
-      args = { '--clean', '--listen', peer_addr, '--embed' },
-      env = { XDG_RUNTIME_DIR = tmp_dir2 },
-      merge = false,
-    })
-    n.set_session(client)
-    eq(peer_addr, fn.serverlist()[1])
-
-    n.set_session(current_server)
-
+    local root = assert(vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname(false)) .. '/XXXXXX'))
+    finally(function()
+      rmdir(root)
+    end)
+    local current_server, client, peer_addr = start_peer_sessions(root)
+    local own_addr = assert(fn.serverlist()[1])
+    eq({ own_addr }, fn.serverlist())
     local new_servs = fn.serverlist({ peer = true })
-    local servers_without_peer = fn.serverlist()
-    eq(true, vim.list_contains(new_servs, peer_addr))
-    eq(true, #servers_without_peer < #new_servs)
-    eq(true, old_servs_num < #new_servs)
+    eq({ own_addr, peer_addr }, new_servs)
 
     -- serverlist({info=true}) returns rich info dicts (implies peer=true)
     local info_servs = fn.serverlist({ info = true })
     eq(#new_servs, #info_servs)
 
-    local own_addr = fn.serverlist()[1]
     local self_pid = fn.getpid()
     ---@type table<string, table>
     local by_addr = {}
@@ -255,18 +258,37 @@ describe('server', function()
     eq(peer_pid, peer_entry.pid)
     eq(peer_active, peer_entry.active)
 
+    if is_os('win') then
+      local canonical_addr = n.new_pipename()
+      -- Keep the bootstrap pipe listening while the replacement waits for a UI.
+      local ok, err = client:request(
+        'nvim_exec_lua',
+        "require('vim._core.server').rebind_after_restart(...)",
+        { canonical_addr, 1 }
+      )
+      assert(ok, vim.inspect(err))
+      t.retry(nil, nil, function()
+        local _, addrs = client:request('nvim_call_function', 'serverlist', {})
+        eq({ peer_addr, canonical_addr }, addrs)
+      end)
+      eq({ own_addr, canonical_addr }, fn.serverlist({ peer = true }))
+      peer_addr = canonical_addr
+    end
+
     -- Queries peers concurrently, omits unresponsive ones (connection accepted, but no answer).
-    local hung_dir = assert(vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname(false)) .. '/XXXXXX'))
+    local hung_prefix = root .. '/nvim.hung'
+    if is_os('win') then
+      hung_prefix = peer_addr:gsub('%.%d+%.%d+$', '') .. '.' .. vim.uv.os_getpid()
+    end
     local hung = {} ---@type uv.uv_pipe_t[]
     finally(function()
       for _, pipe in ipairs(hung) do
         pipe:close()
       end
-      n.rmdir(hung_dir)
     end)
     for i = 1, 4 do
       local pipe = assert(vim.uv.new_pipe())
-      assert(pipe:bind(('%s/nvim.hung.%d'):format(hung_dir, i)))
+      assert(pipe:bind(('%s.%d'):format(hung_prefix, i)))
       assert(pipe:listen(8, function() end))
       table.insert(hung, pipe)
     end
@@ -277,34 +299,22 @@ describe('server', function()
     end))
     -- One timeout (1s) for all, not one per server.
     t.ok(ms < 3000, '< 3000 ms', ms)
-    t.not_matches('nvim%.hung', table.concat(servers, ' '))
-    eq(true, vim.list_contains(servers, peer_addr))
-
-    client:close()
+    eq({ own_addr, peer_addr }, servers)
   end)
 
   it(':connect (no args) shows peers + ssh hosts', function()
-    t.skip(is_os('win'), 'peer discovery is not supported on Windows')
-    local base = vim.fs.dirname(t.tmpname(false))
-    local run_dir = assert(vim.uv.fs_mkdtemp(base .. '/XXXXXX'))
-    local peer_dir = assert(vim.uv.fs_mkdtemp(base .. '/XXXXXX'))
-    local home = assert(vim.uv.fs_mkdtemp(base .. '/XXXXXX'))
+    local root = assert(vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname(false)) .. '/XXXXXX'))
     finally(function()
-      n.rmdir(peer_dir)
-      n.rmdir(run_dir)
-      n.rmdir(home)
+      rmdir(root)
     end)
-    t.mkdir(home .. '/.ssh')
+    local home = vim.fs.abspath(root .. '/home')
+    assert(mkdir(home))
+    assert(mkdir(home .. '/.ssh'))
     t.write_file(home .. '/.ssh/config', 'Host *\n  User me\nHost host1 host2\n  Port 22\n')
-    local current_server = clear({ env = { XDG_RUNTIME_DIR = run_dir, HOME = home } })
-    local own_name = vim.fs.basename(fn.serverlist()[1])
-    local peer_name = vim.fs.basename(n.new_pipename())
-    local client = n.new_session(true, {
-      args = { '--clean', '--listen', ('%s/%s'):format(peer_dir, peer_name), '--embed' },
-      env = { XDG_RUNTIME_DIR = peer_dir },
-      merge = false,
-    })
-    client:request('nvim_get_vvar', 'servername') -- Waits until it listens.
+    local current_server, client, peer_addr =
+      start_peer_sessions(root, { HOME = home, USERPROFILE = home })
+    local own_name = vim.fs.basename(fn.serverlist()[1] --[[@as string]])
+    local peer_name = vim.fs.basename(peer_addr)
     Screen.new() -- `:connect` needs a UI.
     n.exec_lua(function()
       vim.ui.select = function(addrs, opts)
@@ -328,8 +338,6 @@ describe('server', function()
     t.not_matches(vim.pesc(own_name), items)
 
     eq('Vim(connect):E477: No ! allowed', pcall_err(n.command, 'connect!'))
-
-    client:close()
   end)
 
   it('v:useractive advances on UI input', function()
