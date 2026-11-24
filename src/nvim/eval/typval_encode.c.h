@@ -658,7 +658,9 @@ static int TYPVAL_ENCODE_CONVERT_ALL(
                                      TYPVAL_ENCODE_FIRST_ARG_TYPE TYPVAL_ENCODE_FIRST_ARG_NAME, MPConvStack *const mpstack,
                                      char **const strbuf, typval_T *const top_tv, const char *const objname)
 {
-  const int copyID = get_copyID();
+  // Only containers are traversed. Scalars don't need a copyID. #42231
+  const int copyID = (top_tv->v_type == VAR_LIST || top_tv->v_type == VAR_DICT
+                      || top_tv->v_type == VAR_PARTIAL) ? get_copyID() : 0;
   if (TYPVAL_ENCODE_CONVERT_ONE_VALUE(TYPVAL_ENCODE_FIRST_ARG_NAME, mpstack, strbuf,
                                       NULL,
                                       top_tv, copyID, objname)

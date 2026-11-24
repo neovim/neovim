@@ -2728,7 +2728,11 @@ describe('typval.c', function()
           local tv = lua2typvalt(v[1])
           local alloc_rets = {}
           alloc_log:check(get_alloc_rets((v[2] or defalloc)(tv), alloc_rets))
+          local container = tv.v_type == lib.VAR_LIST or tv.v_type == lib.VAR_DICT
+          local copyID = lib.get_copyID()
           lib.tv_clear(tv)
+          -- Only containers consume a copyID (each get_copyID() probe consumes one). #42231
+          eq(copyID + (container and 4 or 2), lib.get_copyID())
           alloc_log:check((v[3] or deffrees)(alloc_rets))
         end
         eq(1, ll_l.lv_refcount)
