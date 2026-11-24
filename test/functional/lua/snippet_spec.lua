@@ -297,6 +297,16 @@ describe('vim.snippet', function()
     poke_eventloop()
     eq(false, exec_lua('return vim.snippet.active()'))
     eq(0, #api.nvim_buf_get_extmarks(0, ns, 0, -1, {}))
+
+    -- Esc also cancels the parent session after a nested snippet finishes.
+    feed('dal')
+    test_expand_success({ 'outer $1' }, { 'outer ' })
+    test_expand_success({ 'inner$0' }, { 'outer inner' })
+    eq(true, exec_lua('return vim.snippet.active()'))
+    feed('<Esc>')
+    poke_eventloop()
+    eq(false, exec_lua('return vim.snippet.active()'))
+    eq(0, #api.nvim_buf_get_extmarks(0, ns, 0, -1, {}))
   end)
 
   it('stop session when jumping to $0', function()

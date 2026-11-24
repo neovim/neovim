@@ -669,11 +669,12 @@ function M.jump(direction)
   -- The cursor is not on a tabstop so exit the session.
   if dest.index == 0 then
     M.stop()
-    return
   end
 
   -- Restore the autocommands.
-  setup_autocmds(M._session.bufnr)
+  if M._session then
+    setup_autocmds(M._session.bufnr)
+  end
 end
 
 --- @class vim.snippet.ActiveFilter
