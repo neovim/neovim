@@ -4110,7 +4110,7 @@ bool set_ref_in_previous_funccal(int64_t copyID)
 
 /// Set "copyID" in the arguments of the deferred functions of "fc".
 /// Returns true if setting references failed somehow.
-static bool set_ref_in_defer(funccall_T *fc, int copyID)
+static bool set_ref_in_defer(funccall_T *fc, int64_t copyID)
 {
   for (int idx = 0; idx < fc->fc_defer.ga_len; idx++) {
     defer_T *dr = ((defer_T *)fc->fc_defer.ga_data) + idx;

@@ -282,7 +282,8 @@ it('copyID does not overflow #42231', function()
       vim.v.testing = 1
       local gc_copyID = tonumber(ffi.C.get_copyID()) + 2
       vim.fn.test_garbagecollect_now()
-      -- Make a 32-bit copyID wrap around to the one GC stamped on w:variables.
+      -- Advance the counter until a 32-bit copyID would wrap back to the value
+      -- the GC stamped on w: variables.
       local n = ((gc_copyID - 2 - tonumber(ffi.C.get_copyID())) % 2 ^ 32) / 2
       for _ = 1, n do
         ffi.C.get_copyID()
@@ -290,6 +291,58 @@ it('copyID does not overflow #42231', function()
       return vim.fn.getwininfo(vim.api.nvim_get_current_win())[1].variables
     end)
   )
+end)
+
+it('copyID does not wrap to the copyID of new lists', function()
+  clear()
+  if not exec_lua("return pcall(require, 'ffi')") then
+    pending('N/A: missing LuaJIT FFI')
+  end
+  eq(
+    { 'a', 'b' },
+    exec_lua(function()
+      local ffi = require('ffi')
+      ffi.cdef('int64_t get_copyID(void);')
+      -- New lists and dicts start with copyID 0. Advance the counter until a
+      -- 32-bit copyID would wrap to 0 on the next conversion.
+      local n = ((-2 - tonumber(ffi.C.get_copyID())) % 2 ^ 32) / 2
+      for _ = 1, n do
+        ffi.C.get_copyID()
+      end
+      return vim.fn.split('a b')
+    end)
+  )
+end)
+
+it('GC keeps arguments of deferred calls when copyID passes 2^31', function()
+  clear()
+  if not exec_lua("return pcall(require, 'ffi')") then
+    pending('N/A: missing LuaJIT FFI')
+  end
+  exec([[
+    let v:testing = 1
+    func Show(d)
+      let g:shown = a:d
+    endfunc
+    func Run()
+      defer Show({'a': [1, 2, 3]})
+      call test_garbagecollect_now()
+      for i in range(2000)
+        let x = {'x': [i]}
+      endfor
+    endfunc
+  ]])
+  exec_lua(function()
+    local ffi = require('ffi')
+    ffi.cdef('int64_t get_copyID(void);')
+    -- An int copyID parameter truncates values above 2^31, so GC would not
+    -- mark the deferred call's argument and would free it.
+    for _ = 1, 2 ^ 30 + 1 do
+      ffi.C.get_copyID()
+    end
+  end)
+  command('call Run()')
+  eq({ a = { 1, 2, 3 } }, eval('g:shown'))
 end)
 
 it('no heap-use-after-free with EXITFREE and partial as prompt callback', function()
