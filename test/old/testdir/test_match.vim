@@ -314,6 +314,51 @@ func Test_matchaddpos_error()
   call assert_fails("call matchaddpos('Error', [1], [], 1)", 'E745:')
 endfunc
 
+" A position given as a range() List
+func Test_matchaddpos_range_position()
+  new
+  call setline(1, ['abcd', 'efgh'])
+  let id = matchaddpos('Search', [range(1, 2), range(2, 4)])
+  call assert_equal([1, 2, 1], getmatches()[0].pos1)
+  call assert_equal([2, 3, 4], getmatches()[0].pos2)
+  call matchdelete(id)
+  bwipe!
+endfunc
+
+" Test that matchaddpos() with a column or length that does not fit in the
+" line does not read past the end of the line and does not overflow.
+func Test_matchaddpos_out_of_range()
+  new
+  call setline(1, ['abc', 'abc', 'abc'])
+  redraw!
+  let normal = screenattr(1, 1)
+  call matchaddpos('Search', [[1, 2147483647, 0], [2, 5, 1],
+        \ [3, 2, 2147483647]])
+  redraw!
+  " A position after the end of the line does not match.
+  for lnum in [1, 2]
+    for col in range(1, 4)
+      call assert_equal(normal, screenattr(lnum, col), $'{lnum},{col}')
+    endfor
+  endfor
+  " A length that is too big highlights up to the end of the line.
+  call assert_equal(normal, screenattr(3, 1))
+  call assert_notequal(normal, screenattr(3, 2))
+  call assert_notequal(normal, screenattr(3, 3))
+
+  " The line length must come from the window's buffer, not curbuf.
+  call setline(1, 'abcdefghij')
+  call clearmatches()
+  call matchaddpos('Search', [[1, 8, 2]])
+  below new
+  redraw!
+  call assert_notequal(normal, screenattr(1, 8))
+  bwipe!
+
+  call clearmatches()
+  bwipe!
+endfunc
+
 " setmatches() with more than one "posN" entry used to keep a reference to
 " every position list, so they were not released until the next garbage
 " collection.  A "posN" value that is not a List made it bail out early
