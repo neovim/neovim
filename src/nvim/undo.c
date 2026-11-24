@@ -1407,12 +1407,10 @@ static int uhp_table_find(u_header_T **uhp_table, int num_head, int seq)
   return -1;
 }
 
-/// Return true if the "num_head" headers in "uhp_table" form a tree that
-/// u_blockfree() can free: from "oldhead" every header is reached exactly once
-/// through uh_prev or uh_alt_next, and the uh_alt_next and uh_alt_prev links
-/// match.
-static bool undo_tree_valid(u_header_T **uhp_table, int num_head, u_header_T *oldhead,
-                            u_header_T *newhead)
+/// Checks that `num_head` headers form the tree that u_blockfree() frees and undo/redo relinks
+/// (see u_check_tree()): from `oldhead` every header is reached exactly once through uh_prev or
+/// uh_alt_next, and its uh_next and uh_alt_prev link back.
+static bool undo_tree_valid(int num_head, u_header_T *oldhead, u_header_T *newhead)
 {
   if (oldhead == NULL || newhead == NULL
       || oldhead->uh_next.ptr != NULL
@@ -1422,41 +1420,35 @@ static bool undo_tree_valid(u_header_T **uhp_table, int num_head, u_header_T *ol
   }
 
   u_header_T **stack = xmalloc(sizeof(u_header_T *) * (size_t)num_head);
+  int mark = ++lastmark;
   int sp = 0;
   int count = 0;
   bool ok = true;
 
-  // uh_walk is zero for all headers, use it to mark visited headers.
-  oldhead->uh_walk = 1;
+  oldhead->uh_walk = mark;
   stack[sp++] = oldhead;
   while (ok && sp > 0) {
     u_header_T *uhp = stack[--sp];
     count++;
-    if ((uhp->uh_alt_next.ptr != NULL
-         && uhp->uh_alt_next.ptr->uh_alt_prev.ptr != uhp)
-        || (uhp->uh_alt_prev.ptr != NULL
-            && uhp->uh_alt_prev.ptr->uh_alt_next.ptr != uhp)) {
-      ok = false;
-    }
-
+    // Child and alternate, with their expected back-links.
     u_header_T *next[2] = { uhp->uh_prev.ptr, uhp->uh_alt_next.ptr };
+    u_header_T *exp_uh_next[2] = { uhp, uhp->uh_next.ptr };
+    u_header_T *exp_uh_alt_prev[2] = { NULL, uhp };
     for (int i = 0; ok && i < 2; i++) {
       if (next[i] == NULL) {
         continue;
       }
-      if (next[i]->uh_walk != 0) {
-        ok = false;  // reached twice
+      if (next[i]->uh_walk == mark  // Reached twice.
+          || next[i]->uh_next.ptr != exp_uh_next[i]
+          || next[i]->uh_alt_prev.ptr != exp_uh_alt_prev[i]) {
+        ok = false;
       } else {
-        next[i]->uh_walk = 1;
+        next[i]->uh_walk = mark;
         stack[sp++] = next[i];
       }
     }
   }
   xfree(stack);
-
-  for (int i = 0; i < num_head; i++) {
-    uhp_table[i]->uh_walk = 0;
-  }
 
   return ok && count == num_head;
 }
@@ -1643,15 +1635,6 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
     goto error;
   }
 
-#ifdef U_DEBUG
-  size_t amount = (size_t)num_head * sizeof(int) + 1;
-  int *uhp_table_used = xmalloc(amount);
-  memset(uhp_table_used, 0, amount);
-# define SET_FLAG(j) ++uhp_table_used[j]
-#else
-# define SET_FLAG(j)
-#endif
-
   // We have put all of the headers into a table.  Each header stores the
   // sequence numbers of the headers it links to; resolve those into
   // pointers.  Every entry is non-NULL: a header that failed to
@@ -1677,39 +1660,33 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
     int fidx = uhp_table_find(uhp_table, num_head, (link).seq); \
     if (fidx >= 0 && fidx != (hidx)) { \
       (link).ptr = uhp_table[fidx]; \
-      SET_FLAG(fidx); \
     } else { \
       (link).ptr = NULL; \
     } \
   } while (0)
 
-  int old_idx = -1;
-  int new_idx = -1;
-  int cur_idx = -1;
+  u_header_T *oldhead = NULL;
+  u_header_T *newhead = NULL;
+  u_header_T *curhead = NULL;
   for (int i = 0; i < num_head; i++) {
     u_header_T *uhp = uhp_table[i];
     SWIZZLE_SEQ(uhp->uh_next, i);
     SWIZZLE_SEQ(uhp->uh_prev, i);
     SWIZZLE_SEQ(uhp->uh_alt_next, i);
     SWIZZLE_SEQ(uhp->uh_alt_prev, i);
-    if (old_header_seq > 0 && old_idx < 0 && uhp->uh_seq == old_header_seq) {
-      old_idx = i;
-      SET_FLAG(i);
+    if (old_header_seq > 0 && oldhead == NULL && uhp->uh_seq == old_header_seq) {
+      oldhead = uhp;
     }
-    if (new_header_seq > 0 && new_idx < 0 && uhp->uh_seq == new_header_seq) {
-      new_idx = i;
-      SET_FLAG(i);
+    if (new_header_seq > 0 && newhead == NULL && uhp->uh_seq == new_header_seq) {
+      newhead = uhp;
     }
-    if (cur_header_seq > 0 && cur_idx < 0 && uhp->uh_seq == cur_header_seq) {
-      cur_idx = i;
-      SET_FLAG(i);
+    if (cur_header_seq > 0 && curhead == NULL && uhp->uh_seq == cur_header_seq) {
+      curhead = uhp;
     }
   }
 #undef SWIZZLE_SEQ
 
-  if (num_head > 0 && !undo_tree_valid(uhp_table, num_head,
-                                       old_idx < 0 ? NULL : uhp_table[old_idx],
-                                       new_idx < 0 ? NULL : uhp_table[new_idx])) {
+  if (num_head > 0 && !undo_tree_valid(num_head, oldhead, newhead)) {
     corruption_error("header links", file_name);
     goto error;
   }
@@ -1717,9 +1694,9 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
   // Now that we have read the undo info successfully, free the current undo
   // info and use the info from the file.
   u_blockfree(curbuf);
-  curbuf->b_u_oldhead = old_idx < 0 ? NULL : uhp_table[old_idx];
-  curbuf->b_u_newhead = new_idx < 0 ? NULL : uhp_table[new_idx];
-  curbuf->b_u_curhead = cur_idx < 0 ? NULL : uhp_table[cur_idx];
+  curbuf->b_u_oldhead = oldhead;
+  curbuf->b_u_newhead = newhead;
+  curbuf->b_u_curhead = curhead;
   curbuf->b_u_line_ptr = line_ptr;
   curbuf->b_u_line_lnum = line_lnum;
   curbuf->b_u_line_colnr = line_colnr;
@@ -1734,12 +1711,6 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
   xfree(uhp_table);
 
 #ifdef U_DEBUG
-  for (int i = 0; i < num_head; i++) {
-    if (uhp_table_used[i] == 0) {
-      semsg("uhp_table entry %" PRId64 " not used, leaking memory", (int64_t)i);
-    }
-  }
-  xfree(uhp_table_used);
   u_check(true);
 #endif
 
@@ -1758,9 +1729,6 @@ error:
     }
     xfree(uhp_table);
   }
-#ifdef U_DEBUG
-  xfree(uhp_table_used);
-#endif
 
 theend:
   if (fp != NULL) {

@@ -340,21 +340,49 @@ describe('undo file', function()
     end
   end
 
+  --- Offset of undo header `seq` in `blob`: magic bytes 0x5f 0xd0, followed by 4-byte uh_next,
+  --- uh_prev, uh_alt_next, uh_alt_prev, uh_seq.
+  local function find_header(blob, seq)
+    local seq_bytes = ('\0\0\0%c'):format(seq)
+    for i = 1, #blob - 22 do
+      if
+        blob:byte(i) == 0x5f
+        and blob:byte(i + 1) == 0xd0
+        and blob:sub(i + 18, i + 21) == seq_bytes
+      then
+        return i
+      end
+    end
+  end
+
   -- If a corrupted entry is not rejected on load, it would be linked into the undo tree, then
   -- u_undoredo() acts on its line numbers and u_freeentry() walks ue_array.
-  it('rejects corrupted entry (E825)', function()
+  it('rejects corrupted entry or header (E825)', function()
     local txt = t.tmpname()
     local undo = txt .. '.undo'
 
     t.write_file(txt, 'one\ntwo\n')
     command('edit ' .. txt)
-    command('set undolevels=100')
-    command("call setline(1, ['three', 'four'])")
-    command('write')
+    -- Undo tree: 1 -> {2 -> 4, 3}.
+    n.exec([[
+      set undolevels=100
+      call setline(1, ['three', 'four'])
+      let &ul = &ul
+      call setline(1, 'a')
+      let &ul = &ul
+      undo
+      call setline(1, 'b')
+      let &ul = &ul
+      undo 2
+      call setline(1, 'c')
+      write
+    ]])
     command('wundo! ' .. undo)
+    command('rundo ' .. undo)
 
     local blob = assert(t.read_file(undo))
     local entry = assert(find_entry(blob))
+    local header = assert(find_header(blob, 4))
 
     --- Writes `bytes` over `blob` at `pos` and reads it via :rundo.
     local function rundo(pos, bytes)
@@ -377,5 +405,13 @@ describe('undo file', function()
         rundo(entry + 2 + field * 4, '\255\255\255\251')
       )
     end
+
+    -- uh_next of header 4 is 3 instead of its parent 2: a change after undo would link 4 from 3
+    -- too, then u_blockfree() frees it twice.
+    eq('\0\0\0\2', blob:sub(header + 2, header + 5))
+    eq(
+      ('Vim(rundo):E825: Corrupted undo file (header links): %s'):format(undo),
+      rundo(header + 2, '\0\0\0\3')
+    )
   end)
 end)
