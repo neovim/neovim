@@ -319,6 +319,24 @@ describe('--embed UI', function()
         eq(t.paths.test_source_path, screen.pwd)
       end,
     }
+
+    -- ctx_switch may temporarily switch CWD numerous times. The "chdir" ui-event should NOT be sent
+    -- if CWD did not actually change outside of the temp context.
+    local chdirs = 0
+    function screen:_handle_chdir()
+      chdirs = chdirs + 1
+    end
+    n.exec_lua(function(dir)
+      local b = vim.fn.bufadd('Xtest-ui-chdir')
+      vim.fn.bufload(b)
+      vim.api.nvim_buf_call(b, function()
+        vim.cmd.bcd(dir)
+      end)
+      vim.api.nvim_buf_call(b, function() end)
+      vim.fn.setline(1, 'done')
+    end, ('%s/src'):format(t.paths.test_source_path))
+    screen:expect { any = 'done' }
+    eq(0, chdirs)
   end)
 
   it('closing stdio with another remote UI does not leak memory #36392', function()

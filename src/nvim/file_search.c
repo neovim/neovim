@@ -1834,7 +1834,7 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause, bool pre
 
   event_T event = pre ? EVENT_DIRCHANGEDPRE : EVENT_DIRCHANGED;
 
-  if (recursive || !has_event(event)) {
+  if (recursive || !has_event(event) || is_autocmd_blocked()) {
     // No autocommand was defined or we changed
     // the directory from this autocommand.
     return;

@@ -137,14 +137,16 @@ typedef struct {
   // State kept across the switch:
   bool cs_did_chdir;          ///< saved `ctx_did_chdir` of the enclosing context
   handle_T cs_dirs_tab;       ///< kCtxKeepDirs: tabpage that owns cs_tp_localdir.
-  // Saved dir state. Three users:
-  // 1. hidden-buffer target always saves b/tp/globaldir (so the temp context starts dir-neutral)
+  // Saved dir state. Four consumers:
+  // 1. hidden-buffer target always stashes tp/globaldir (so temp context starts dir-neutral).
   // 2. kCtxKeepCwd saves globaldir.
   // 3. kCtxKeepDirs also saves w/b/tp-localdir.
+  // 4. entering the :bcd of a buffer target saves globaldir.
   char *cs_w_localdir;        ///< Saved w_localdir of the target window
   char *cs_b_localdir;        ///< Saved b_localdir of the target buffer
   char *cs_tp_localdir;       ///< Saved tp_localdir
   char *cs_globaldir;         ///< Saved globaldir
-  char *cs_cwd;               ///< Saved CWD (kCtxKeepCwd/kCtxKeepDirs).
+  char *cs_cwd;               ///< Saved CWD (kCtxKeepCwd/kCtxKeepDirs, or cs_entered_dir).
+  char *cs_entered_dir;       ///< Dir entered by ctx_switch (:bcd), or NULL if CWD did not change.
   bool cs_apply_acd;          ///< Re-apply 'autochdir' on ctx_restore().
 } CtxSwitch;

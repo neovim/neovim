@@ -272,7 +272,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   pos_T orig_start;
   buf_T *old_curbuf;
   char *old_b_ffname;
-  char *old_b_fname;
+  char *old_b_fname = NULL;
   int using_b_ffname;
   int using_b_fname;
   static char *msg_is_a_directory = N_("is a directory");
@@ -301,9 +301,15 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   // point to one of these values.
   old_curbuf = curbuf;
   old_b_ffname = curbuf->b_ffname;
-  old_b_fname = curbuf->b_fname;
   using_b_ffname = (fname == curbuf->b_ffname) || (sfname == curbuf->b_ffname);
   using_b_fname = (fname == curbuf->b_fname) || (sfname == curbuf->b_fname);
+  // Continue with a copy of `b_fname`. Compare by content: a CWD round trip (e.g. ctx_switch enters
+  // a :bcd dir) may reallocate `b_fname`.
+  if (curbuf->b_fname != NULL) {
+    old_b_fname = xstrdup(curbuf->b_fname);
+    fname = fname == curbuf->b_fname ? old_b_fname : fname;
+    sfname = sfname == curbuf->b_fname ? old_b_fname : sfname;
+  }
 
   // don't display the file info for another buffer now
   need_fileinfo = false;
@@ -506,7 +512,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
             || (using_b_ffname
                 && (old_b_ffname != curbuf->b_ffname))
             || (using_b_fname
-                && (old_b_fname != curbuf->b_fname))) {
+                && !strequal(old_b_fname, curbuf->b_fname))) {
           emsg(_(e_auchangedbuf));
           goto theend;
         }
@@ -578,7 +584,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     if (!read_stdin
         && (curbuf != old_curbuf
             || (using_b_ffname && (old_b_ffname != curbuf->b_ffname))
-            || (using_b_fname && (old_b_fname != curbuf->b_fname)))) {
+            || (using_b_fname && !strequal(old_b_fname, curbuf->b_fname)))) {
       emsg(_(e_auchangedbuf));
       if (!read_buffer) {
         close(fd);
@@ -683,7 +689,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     // (cd for example) if it invalidates fname or sfname.
     if (!read_stdin && (curbuf != old_curbuf
                         || (using_b_ffname && (old_b_ffname != curbuf->b_ffname))
-                        || (using_b_fname && (old_b_fname != curbuf->b_fname))
+                        || (using_b_fname && !strequal(old_b_fname, curbuf->b_fname))
                         || (fd = os_open(fname, O_RDONLY, 0)) < 0)) {
       no_wait_return--;
       msg_scroll = msg_save;
@@ -1984,6 +1990,7 @@ failed:
       msg_scroll = m;
     }
     if (aborting()) {       // autocmds may abort script processing
+      xfree(old_b_fname);
       return FAIL;
     }
   }
@@ -1999,6 +2006,7 @@ theend:
     curbuf->b_ml.ml_mfp->mf_dirty = MF_DIRTY_YES;
   }
 
+  xfree(old_b_fname);
   return retval;
 }
 
@@ -2444,8 +2452,7 @@ bool shorten_buf_fname(buf_T *buf, char *dirname, int force)
   char *p = path_shorten_fname(buf->b_ffname, dirname);
   bool shorten = p != NULL && *p != NUL;
   if (shorten && buf->b_sfname != NULL && strcmp(p, buf->b_sfname) == 0) {
-    // Same name: keep the allocation. Callers (readfile()) alias `b_fname` across autocommands and
-    // check the pointer to detect a rename. Very cool... #41454
+    // Same name: keep the allocation. Callers alias `b_fname` across autocmds. Very cool... #41454
     return false;
   }
 
