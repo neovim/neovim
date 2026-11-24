@@ -384,6 +384,22 @@ describe('startup', function()
         script
       )
     end)
+
+    it('can use the internal screen', function()
+      assert_l_out(
+        'å\n',
+        nil,
+        nil,
+        '-',
+        [[
+          vim.o.lines = 45
+          vim.cmd('resize 99')
+          vim.cmd('normal iå')
+          vim.cmd('redraw')
+          print(vim.fn.screenstring(1,1))
+        ]]
+      )
+    end)
   end)
 
   it('--cmd/-c/+ do not truncate long Lua print() message with --headless', function()

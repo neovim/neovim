@@ -426,9 +426,6 @@ EXTERN bool stderr_isatty INIT( = true);
 /// Filedesc set by embedder for reading first buffer like `cmd | nvim -`.
 EXTERN int stdin_fd INIT( = -1);
 
-// true when doing full-screen output, otherwise only writing some messages.
-EXTERN bool full_screen INIT( = false);
-
 /// Non-zero when only "safe" commands are allowed
 EXTERN int secure INIT( = 0);
 

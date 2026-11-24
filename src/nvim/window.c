@@ -7186,7 +7186,7 @@ void command_height(void)
   redraw_cmdline = true;
 
   // Clear the cmdheight area.
-  if (msg_scrolled == 0 && full_screen) {
+  if (msg_scrolled == 0) {
     GridView *grid = &default_gridview;
     if (!ui_has(kUIMessages)) {
       msg_grid_validate();

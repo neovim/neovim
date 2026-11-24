@@ -1762,7 +1762,7 @@ void msg_start(void)
     cmdline_row = Rows - 1;
   }
 
-  if (!msg_scroll && full_screen) {     // overwrite last message
+  if (!msg_scroll) {     // overwrite last message
     msg_row = cmdline_row;
     msg_col = 0;
   } else if ((msg_didout || p_ch == 0) && !ui_has(kUIMessages)) {  // start message on next line
