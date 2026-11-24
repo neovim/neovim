@@ -1,33 +1,22 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
-local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
+local describe, it, before_each = t.describe, t.it, t.before_each
 local eq = t.eq
 local pcall_err = t.pcall_err
 local neq = t.neq
 local command = n.command
+local exec = n.exec
 local exec_capture = n.exec_capture
-local write_file = t.write_file
 local api = n.api
 local clear = n.clear
 local dedent = t.dedent
 local missing_provider = n.missing_provider
 
-local tmpfile = 'X_ex_cmds_script'
-
 before_each(clear)
-
-local function source(code)
-  write_file(tmpfile, code)
-  command('source ' .. tmpfile)
-end
 
 describe('script_get-based command', function()
   local garbage = ')}{+*({}]*[;(+}{&[]}{*])('
-
-  after_each(function()
-    os.remove(tmpfile)
-  end)
 
   local function test_garbage_exec(cmd, check_neq)
     describe(cmd, function()
@@ -35,7 +24,7 @@ describe('script_get-based command', function()
         eq(
           true,
           pcall(
-            source,
+            exec,
             (dedent([[
           if 0
             %s %s
@@ -60,7 +49,7 @@ describe('script_get-based command', function()
         eq(
           true,
           pcall(
-            source,
+            exec,
             (dedent([[
           if 0
           %s << EOF
@@ -75,7 +64,7 @@ describe('script_get-based command', function()
           eq(
             true,
             pcall(
-              source,
+              exec,
               (dedent([[
             let g:exc = 0
             try
