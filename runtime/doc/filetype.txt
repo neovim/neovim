@@ -919,8 +919,8 @@ K or CTRL-]               Jump to the manpage for the <cWORD> under the
                           cursor. Takes a count for the section.
 CTRL-T                    Jump back to the location that the manpage was
                           opened from.
-gO                        Show the manpage outline. |gO|
-q                         :quit if invoked as $MANPAGER, otherwise :close.
+gO                        Show the manpage outline in |location-list|. |gO|
+q                         Close the |location-list| if open and then |:quit|.
 
 Variables:
 *g:no_man_maps*             Do not create mappings in manpage buffers.
