@@ -11,6 +11,7 @@
 " 2026 Feb 13 by Vim Project (remove formatprg #19108)
 " 2026 Jun 27 by Vim Project (normalize recommended style guard)
 " 2026 Oct 12 by Vim Project (correctly use shellescape())
+" 2026 Nov 11 by Vim Project (fix iskeyword restoration)
 
 if exists('b:did_ftplugin')
   finish
@@ -39,6 +40,7 @@ endif
 
 if !exists('*' . expand('<SID>') . 'GoKeywordPrg')
   func! s:GoKeywordPrg()
+    let buf = bufnr()
     let temp_isk = &l:iskeyword
     setl iskeyword+=.
     try
@@ -51,7 +53,7 @@ if !exists('*' . expand('<SID>') . 'GoKeywordPrg')
         exe '!' . cmd
       endif
     finally
-      let &l:iskeyword = temp_isk
+      call setbufvar(buf, "&iskeyword", temp_isk)
     endtry
   endfunc
 endif
