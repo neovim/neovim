@@ -2,7 +2,7 @@
 " Language:             Zsh shell script
 " Maintainer:           Christian Brabandt <cb@256bit.org>
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2026 Sep 01
+" Latest Revision:      2026 Oct 12
 " License:              Vim (see :h license)
 " Repository:           https://github.com/chrisbra/vim-zsh
 
@@ -26,16 +26,17 @@ endif
 if executable('zsh') && &shell !~# '/\%(nologin\|false\)$'
   if exists('*term_start')
     command! -buffer -nargs=1 ZshKeywordPrg call term_start(['zsh', '-c', 'autoload -Uz run-help; run-help "$1"', '--', <q-args>])
-  elseif has("patch-9.2.0250")
+    setlocal keywordprg=:ZshKeywordPrg
+  elseif has("patch-9.2.0250") || has('nvim')
     command! -buffer -nargs=1 ZshKeywordPrg echo system(['zsh', '-c', 'autoload -Uz run-help; MANPAGER= run-help "$1" 2>/dev/null', '--', <q-args>])
+    setlocal keywordprg=:ZshKeywordPrg
   endif
-  setlocal keywordprg=:ZshKeywordPrg
   let b:undo_ftplugin .= '| setl keywordprg< | sil! delc -buffer ZshKeywordPrg'
 
   if !exists('current_compiler')
     compiler zsh
+    let b:undo_ftplugin .= ' | compiler make'
   endif
-  let b:undo_ftplugin .= ' | compiler make'
 endif
 
 let b:match_words = '\<if\>:\<elif\>:\<else\>:\<fi\>'
