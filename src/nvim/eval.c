@@ -4527,18 +4527,28 @@ static int eval_dict(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool
   char *key = NULL;
   char *curly_expr = skipwhite(*arg + 1);
   char buf[NUMBUFLEN];
+  static int curly_expr_check_depth = 0;
+  bool in_curly_expr_check = curly_expr_check_depth > 0;
 
   // First check if it's not a curly-braces expression: {expr}.
   // Must do this without evaluating, otherwise a function may be called
   // twice.  Unfortunately this means we need to call eval1() twice for the
   // first item.
+  // When this is already a recursive check, do not parse a failed check.
+  // The outer check will report the error.
   // "{}" is an empty Dictionary.
   // "#{abc}" is never a curly-braces expression.
-  if (*curly_expr != '}'
-      && !literal
-      && eval1(&curly_expr, &tv, NULL) == OK
-      && *skipwhite(curly_expr) == '}') {
-    return NOTDONE;
+  if (*curly_expr != '}' && !literal) {
+    curly_expr_check_depth++;
+    int curly_result = eval1(&curly_expr, &tv, NULL);
+    curly_expr_check_depth--;
+
+    if (curly_result == FAIL && in_curly_expr_check) {
+      return FAIL;
+    }
+    if (curly_result == OK && *skipwhite(curly_expr) == '}') {
+      return NOTDONE;
+    }
   }
 
   dict_T *d = NULL;
