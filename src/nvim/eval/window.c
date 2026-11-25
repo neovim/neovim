@@ -299,18 +299,8 @@ static int get_winnr(tabpage_T *tp, typval_T *argvar)
         // if count is not specified, default to 1
         count = 1;
       }
-      if (endp != NULL && *endp != NUL) {
-        if (strequal(endp, "j")) {
-          twin = win_vert_neighbor(tp, twin, false, count);
-        } else if (strequal(endp, "k")) {
-          twin = win_vert_neighbor(tp, twin, true, count);
-        } else if (strequal(endp, "h")) {
-          twin = win_horz_neighbor(tp, twin, true, count);
-        } else if (strequal(endp, "l")) {
-          twin = win_horz_neighbor(tp, twin, false, count);
-        } else {
-          invalid_arg = true;
-        }
+      if (endp != NULL && *endp != NUL && endp[1] == NUL && strchr("hjkl", *endp) != NULL) {
+        twin = win_neighbor(tp, twin, *endp, count);
       } else {
         invalid_arg = true;
       }
