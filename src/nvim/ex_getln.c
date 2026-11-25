@@ -1174,7 +1174,7 @@ static int command_line_wildchar_complete(CommandLineState *s)
     if (res == OK && s->xpc.xp_numfiles > ((wim_noselect || wim_noinsert) ? 0 : 1)) {
       if (wim_longest) {
         bool found_longest_prefix = (ccline.cmdpos != cmdpos_before);
-        bool show_menu = p_wmnu && wim_full;
+        bool show_menu = p_wmnu && (wim_full || wim_noselect || wim_noinsert);
         if (wim_list || show_menu) {
           showmatches(&s->xpc, show_menu, wim_list, kOptWimFlagNoselect);
         } else if (!found_longest_prefix) {

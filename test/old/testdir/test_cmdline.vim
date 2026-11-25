@@ -2367,10 +2367,24 @@ func Wildmode_tests()
   call feedkeys(":MyCmd o\t\t\t\<C-Y>\<C-B>\"\<CR>", 'xt')
   call assert_equal('"MyCmd oneB', @:)
 
-  " 'noselect' has no effect when 'longest' is present.
+  " 'longest:noselect' and 'longest:noinsert' show the menu like 'longest:full'
+  cnoremap <expr> <F2> wildmenumode()
   set wildmode=noselect:longest
-  call feedkeys(":MyCmd o\t\<C-B>\"\<CR>", 'xt')
-  call assert_equal('"MyCmd one', @:)
+  call feedkeys(":MyCmd o\t\<F2>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd one1', @:)
+  set wildmode=longest:noselect
+  call feedkeys(":MyCmd one\t\<F2>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd one1', @:)
+  call feedkeys(":MyCmd o\t\<C-N>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneA', @:)
+  call feedkeys(":h 'wil\t\<F2>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"h 'wild1", @:)
+  set wildmode=longest:noinsert
+  call feedkeys(":MyCmd o\t\<F2>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd one1', @:)
+  call feedkeys(":MyCmd o\t\<C-N>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneA', @:)
+  cunmap <F2>
 
   " Complete 'noselect' value in 'wildmode' option
   set wildmode&
