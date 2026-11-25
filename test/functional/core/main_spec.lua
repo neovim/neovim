@@ -194,10 +194,15 @@ describe('vim._core', function()
     t.matches("^module 'vim%.hl' not found:", t.pcall_err(n.exec_lua, [[require('vim.hl')]]))
 
     -- All `vim._core.*` modules are builtin.
-    t.eq(
-      { 'ex_session_restart', 'rebind_after_restart', 'select_connect', 'serverlist' },
-      n.exec_lua([[local k = vim.tbl_keys(require('vim._core.server')); table.sort(k); return k]])
-    )
+    t.eq({
+      'complete_connect',
+      'ex_session_restart',
+      'rebind_after_restart',
+      'select_connect',
+      'serverlist',
+    }, n.exec_lua(
+      [[local k = vim.tbl_keys(require('vim._core.server')); table.sort(k); return k]]
+    ))
     local expected = {
       'vim.F',
       'vim._core.cmdwin',

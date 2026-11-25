@@ -1359,6 +1359,7 @@ char *addstar(char *fname, size_t len, int context)
         || context == EXPAND_PACKDEL
         || context == EXPAND_PACKUPDATE
         || context == EXPAND_MARKS
+        || context == EXPAND_CONNECT
         || context == EXPAND_LUA) {
       retval = xstrnsave(fname, len);
     } else {
@@ -2395,6 +2396,10 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
     xp->xp_context = EXPAND_PACKUPDATE;
     break;
 
+  case CMD_connect:
+    xp->xp_context = EXPAND_CONNECT;
+    break;
+
   case CMD_retab:
     xp->xp_context = EXPAND_RETAB;
     xp->xp_pattern = (char *)arg;
@@ -2980,7 +2985,15 @@ static char *get_arg1_from_lua(char *lua, expand_T *xp, int idx)
 /// @param[in] idx  Index of the item.
 static char *get_marks_arg(expand_T *xp, int idx)
 {
-  return get_arg1_from_lua("return require'vim._core.marks'.complete(...)", xp, idx);
+  return get_arg1_from_lua("return require'vim._core.marks'.complete_marks(...)", xp, idx);
+}
+
+/// Completion for the |:connect| command. Given to ExpandGeneric().
+/// @param[in] xp  Expandy thing.
+/// @param[in] idx  Index of the item.
+static char *get_connect_arg(expand_T *xp, int idx)
+{
+  return get_arg1_from_lua("return require'vim._core.server'.complete_connect(...)", xp, idx);
 }
 
 /// Completion for |:log| command. Given to ExpandGeneric().
@@ -2988,7 +3001,7 @@ static char *get_marks_arg(expand_T *xp, int idx)
 /// @param[in] idx  Index of the item.
 static char *get_log_arg(expand_T *xp, int idx)
 {
-  return get_arg1_from_lua("return require'vim._core.ex_cmd'.log_complete(...)", xp, idx);
+  return get_arg1_from_lua("return require'vim._core.ex_cmd'.complete_log(...)", xp, idx);
 }
 
 /// Completion for |:lsp| command. Given to ExpandGeneric().
@@ -2996,7 +3009,7 @@ static char *get_log_arg(expand_T *xp, int idx)
 /// @param[in] idx  Index of the item.
 static char *get_lsp_arg(expand_T *xp, int idx)
 {
-  return get_arg1_from_lua("return require'vim._core.ex_cmd'.lsp_complete(...)", xp, idx);
+  return get_arg1_from_lua("return require'vim._core.ex_cmd'.complete_lsp(...)", xp, idx);
 }
 
 /// Completion for |:packdel| command. Given to ExpandGeneric().
@@ -3004,7 +3017,7 @@ static char *get_lsp_arg(expand_T *xp, int idx)
 /// @param[in] idx  Index of the item.
 static char *get_packdel_arg(expand_T *xp, int idx)
 {
-  return get_arg1_from_lua("return require'vim._core.ex_cmd'.packdel_complete(...)", xp, idx);
+  return get_arg1_from_lua("return require'vim._core.ex_cmd'.complete_packdel(...)", xp, idx);
 }
 
 /// Completion for |:packupdate| command. Given to ExpandGeneric().
@@ -3012,7 +3025,7 @@ static char *get_packdel_arg(expand_T *xp, int idx)
 /// @param[in] idx  Index of the item.
 static char *get_packupdate_arg(expand_T *xp, int idx)
 {
-  return get_arg1_from_lua("return require'vim._core.ex_cmd'.packupdate_complete(...)", xp, idx);
+  return get_arg1_from_lua("return require'vim._core.ex_cmd'.complete_packupdate(...)", xp, idx);
 }
 
 /// Do the expansion based on xp->xp_context and "rmp".
@@ -3058,6 +3071,7 @@ static int ExpandOther(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches
     { EXPAND_RETAB, get_retab_arg, true, true },
     { EXPAND_CHECKHEALTH, get_healthcheck_names, true, false },
     { EXPAND_MARKS, get_marks_arg, true, false },
+    { EXPAND_CONNECT, get_connect_arg, true, false },
     { EXPAND_LOG, get_log_arg, true, false },
     { EXPAND_LSP, get_lsp_arg, true, false },
     { EXPAND_PACKDEL, get_packdel_arg, true, false },

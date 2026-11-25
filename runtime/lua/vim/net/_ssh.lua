@@ -17,6 +17,10 @@ M.ssh_cmd = { 'ssh' }
 local sock_maxlen = 103 -- Max lenth of Unix socket path. sun_path=104 on macOS, 108 on Linux.
 local _log --- @type vim.Log?
 
+-- Exit the local "orphan" Nvim of a detached session if user doesn't reconnect after some time.
+local reap_idle_ms = 8 * 60 * 60 * 1000
+local reap_poll_ms = 60 * 1000
+
 ---@param param string
 local function is_multi_value_directive(param)
   local multi_value_directives = {
@@ -554,6 +558,21 @@ local function answers(addr)
   return answered
 end
 
+--- Calls API `method` on the server at `sock`. Returns its result, or nil if no answer.
+---@param sock string
+---@param method string
+---@return any
+local function request(sock, method, ...)
+  local ok, chan = pcall(vim.fn.sockconnect, 'pipe', sock, { rpc = true, trust = false })
+  if not ok or chan == 0 then
+    return nil
+  end
+  ---@cast chan integer
+  local res = { pcall(vim.rpcrequest, chan, { timeout = 5000 }, method, ...) }
+  pcall(vim.fn.chanclose, chan)
+  return res[1] and res[2] or nil
+end
+
 --- See `M.connect()`.
 ---@param chan? integer
 ---@param report fun(status: 'running'|'success'|'failed', msg: string)
@@ -593,6 +612,7 @@ local function connect(uri_str, chan, report, update, config)
   local forward = ('%s:%s'):format(local_sock, remote_sock)
   local cleaned_up = false
   local tunnel --- @type vim.SystemObj
+  local reaper --- @type uv.uv_timer_t?  Idle-reaps this server (see below).
 
   --- Stops this (local) server when the session ends (remote quit, crash, lost connection),
   --- unless it is still in use: a UI is attached or a buffer is modified.
@@ -621,12 +641,15 @@ local function connect(uri_str, chan, report, update, config)
 
   --- Stops the tunnel (see `serve()` for the remote server), and cancels its forward, which lives
   --- in the ssh master.
-  local function teardown()
+  local function teardown(reason)
     if cleaned_up then
       return
     end
     cleaned_up = true
-    log().info(('teardown: stopping tunnel for %s'):format(uri_str))
+    if reaper and not reaper:is_closing() then
+      reaper:close()
+    end
+    log().info(('teardown: %s: stopping tunnel for %s'):format(reason or 'exit', uri_str))
     if not tunnel:is_closing() then
       tunnel:kill('sigterm')
     end
@@ -659,7 +682,7 @@ local function connect(uri_str, chan, report, update, config)
   end)
 
   if not ok then -- CTRL-C.
-    teardown()
+    teardown('interrupted')
     error(res, 0)
   end
   log().debug('connect: tunnel stdout', res.stdout, 'stderr', res.stderr)
@@ -685,12 +708,36 @@ local function connect(uri_str, chan, report, update, config)
   end
   if err then
     log().error(err, 'code', res.code, 'stderr', res.stderr)
-    teardown()
+    teardown('connect failed')
     error(err, 0)
   end
 
   report('success', ('Connected to %s'):format(uri_str))
-  nvim_on('VimLeavePre', nil, teardown)
+  nvim_on('VimLeavePre', nil, function()
+    teardown('exit')
+  end)
+
+  -- Avoid local headless Nvim "orphan". If user closed the host terminal, the orphan sticks around
+  -- (intentionally, so user can reconnect in 1-step instead of 2-steps `:connect ssh://…` + remote
+  -- `:connect`). But for tidiness, we reap after `reap_idle_ms`.
+  --
+  -- Note: ssh hang also leads here, UNintentionally: on_exit never fires.
+  local idle_ms = 0
+  reaper = assert(vim.uv.new_timer())
+  reaper:start(reap_poll_ms, reap_poll_ms, function()
+    vim.schedule(function()
+      if cleaned_up then
+        return
+      end
+      -- Idle = remote Nvim has no UI.
+      local uis = request(local_sock, 'nvim_eval', 'len(nvim_list_uis())')
+      idle_ms = (type(uis) == 'number' and uis > 0) and 0 or idle_ms + reap_poll_ms
+      if idle_ms >= reap_idle_ms then
+        teardown(('no reconnect after %d hours, cleanup'):format(math.floor(reap_idle_ms / 3.6e6)))
+        pcall(vim.cmd.qall)
+      end
+    end)
+  end)
 
   return local_sock, teardown
 end
@@ -740,21 +787,6 @@ function M.connect(uri_str, chan)
     return nil
   end
   return local_sock, teardown
-end
-
---- Calls API `method` on the server at `sock`. Returns its result, or nil if no answer.
----@param sock string
----@param method string
----@return any
-local function request(sock, method, ...)
-  local ok, chan = pcall(vim.fn.sockconnect, 'pipe', sock, { rpc = true, trust = false })
-  if not ok or chan == 0 then
-    return nil
-  end
-  ---@cast chan integer
-  local res = { pcall(vim.rpcrequest, chan, { timeout = 5000 }, method, ...) }
-  pcall(vim.fn.chanclose, chan)
-  return res[1] and res[2] or nil
 end
 
 --- Gets server info, or nil if no answer.
