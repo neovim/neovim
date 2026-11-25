@@ -5197,7 +5197,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
 
   // sync undo before leaving the current buffer
   if ((flags & WEE_UNDO_SYNC) && curbuf != wp->w_buffer) {
-    u_sync(false);
+    u_sync(curbuf, false);
   }
 
   // Might need to scroll the old window before switching, e.g., when the

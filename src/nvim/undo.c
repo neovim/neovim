@@ -1300,7 +1300,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
   }
 
   // Undo must be synced.
-  u_sync(true);
+  u_sync(curbuf, true);
 
   // Write the header.
   bufinfo_T bi = {
@@ -1862,7 +1862,7 @@ void u_undo(int count)
   // original vi. If this happens twice in one macro the result will not
   // be compatible.
   if (!curbuf->b_u_synced) {
-    u_sync(true);
+    u_sync(curbuf, true);
     count = 1;
   }
 
@@ -1892,7 +1892,7 @@ void u_redo(int count)
 bool u_undo_and_forget(int count, bool do_buf_event)
 {
   if (curbuf->b_u_synced == false) {
-    u_sync(true);
+    u_sync(curbuf, true);
     count = 1;
   }
   undo_undoes = true;
@@ -1998,7 +1998,7 @@ void undo_time(int step, bool sec, bool file, bool absolute)
 
   // First make sure the current undoable change is synced.
   if (!curbuf->b_u_synced) {
-    u_sync(true);
+    u_sync(curbuf, true);
   }
 
   u_newcount = 0;
@@ -2730,21 +2730,21 @@ void undo_fmt_time(char *buf, size_t buflen, time_t tt)
   }
 }
 
-/// u_sync: stop adding to the current entry list
+/// Stop adding to the current entry list of `buf`.
 ///
-/// @param force  if true, also sync when no_u_sync is set.
-void u_sync(bool force)
+/// @param force  If true, also syncs even when `no_u_sync` is set.
+void u_sync(buf_T *buf, bool force)
 {
   // Skip it when already synced or syncing is disabled.
-  if (curbuf->b_u_synced || (!force && no_u_sync > 0)) {
+  if (buf->b_u_synced || (!force && no_u_sync > 0)) {
     return;
   }
 
-  if (get_undolevel(curbuf) < 0) {
-    curbuf->b_u_synced = true;  // no entries, nothing to do
+  if (get_undolevel(buf) < 0) {
+    buf->b_u_synced = true;  // no entries, nothing to do
   } else {
-    u_getbot(curbuf);  // compute ue_bot of previous u_save
-    curbuf->b_u_curhead = NULL;
+    u_getbot(buf);  // compute ue_bot of previous u_save
+    buf->b_u_curhead = NULL;
   }
 }
 
@@ -3443,7 +3443,7 @@ void u_rollback(UndoCheckpoint *uc, buf_T *buf)
     ctx_switch(&cs, NULL, NULL, buf, 0);
     // Ensure all the entries will be undone
     if (curbuf->b_u_synced == false) {
-      u_sync(true);
+      u_sync(curbuf, true);
     }
     // Undo invisibly. This also moves the cursor!
     int const save_ma = buf->b_p_ma;

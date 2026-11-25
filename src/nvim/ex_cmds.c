@@ -2602,7 +2602,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
 
         // Close the link to the current buffer. This may set
         // curwin->w_buffer to NULL.
-        u_sync(false);
+        u_sync(curbuf, false);
         close_buffer(curwin, curbuf,
                      (flags & ECMD_HIDE)
                      || (curbuf->terminal && terminal_running(curbuf->terminal))
@@ -2731,7 +2731,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     if (!(curbuf->b_flags & BF_NEVERLOADED)
         && (p_ur < 0 || curbuf->b_ml.ml_line_count <= p_ur)) {
       // Sync first so that this is a separate undo-able action.
-      u_sync(false);
+      u_sync(curbuf, false);
       if (u_savecommon(curbuf, 0, curbuf->b_ml.ml_line_count + 1, 0, true)
           == FAIL) {
         xfree(new_name);

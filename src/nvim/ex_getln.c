@@ -2557,7 +2557,7 @@ static void cmdpreview_prepare(CpInfo *cpinfo)
   cmdmod.cmod_tab = 0;           // Disable :tab modifier
   cmdmod.cmod_flags |= CMOD_NOSWAPFILE;  // Disable swap for preview buffer
 
-  u_sync(true);
+  u_sync(curbuf, true);
 }
 
 /// Restore the state of buffers and windows for command preview.

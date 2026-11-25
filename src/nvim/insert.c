@@ -3043,7 +3043,7 @@ static void ins_ctrl_g(void)
 
   // CTRL-G u: start new undoable edit
   case 'u':
-    u_sync(true);
+    u_sync(curbuf, true);
     Ins.need_undo = true;
 
     // Need to reset Ins.start, esp. because a BS that joins

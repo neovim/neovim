@@ -3252,7 +3252,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
   if (p_ur < 0 || curbuf->b_ml.ml_line_count <= p_ur) {
     // Save all the text, so that the reload can be undone.
     // Sync first so that this is a separate undo-able action.
-    u_sync(false);
+    u_sync(curbuf, false);
     saved = u_savecommon(curbuf, 0, curbuf->b_ml.ml_line_count + 1, 0, true);
     flags |= READ_KEEP_UNDO;
   }

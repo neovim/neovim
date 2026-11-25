@@ -3818,7 +3818,7 @@ void ex_diffgetput(exarg_T *eap)
     // another buffer.  Sync undo if the command was typed.  This isn't
     // 100% right when ":diffput" is used in a function or mapping.
     if (KeyTyped) {
-      u_sync(false);
+      u_sync(curbuf, false);
     }
     ctx_restore(&aco);
   }

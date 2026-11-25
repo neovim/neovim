@@ -193,7 +193,7 @@ static void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, typval_
     // undone separately from what was previously inserted.
     if (u_sync_once == 2) {
       u_sync_once = 1;  // notify that u_sync() was called
-      u_sync(true);
+      u_sync(curbuf, true);
     }
 
     if (!append && lnum <= curbuf->b_ml.ml_line_count) {
@@ -634,7 +634,7 @@ void f_deletebufline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   // undone separately from what was previously inserted.
   if (u_sync_once == 2) {
     u_sync_once = 1;  // notify that u_sync() was called
-    u_sync(true);
+    u_sync(curbuf, true);
   }
 
   if (u_save(first - 1, last + 1) == FAIL) {
