@@ -917,19 +917,28 @@ describe('typval.c', function()
       itp('returns different/same containers with(out) copyID', function()
         local l_inner_tv = lua2typvalt(empty_list)
         local l_tv = lua2typvalt({ l_inner_tv, l_inner_tv })
-        eq(3, l_inner_tv.vval.v_list.lv_refcount)
-        local l = l_tv.vval.v_list
+        eq(3, l_inner_tv.vval.v_list.lv_refcount) -- Ref'd by l_inner_tv and both items of l_tv.
+        local l = l_tv.vval.v_list -- Contains the same (empty) inner list twice.
         eq(l.lv_first.li_tv.vval.v_list, l.lv_last.li_tv.vval.v_list)
 
+        -- Deep-copy, copyID=0: no reuse, each item is copied.
         local l_copy1 = tv_list_copy(nil, l, true, 0)
         neq(l_copy1.lv_first.li_tv.vval.v_list, l_copy1.lv_last.li_tv.vval.v_list)
         eq({ empty_list, empty_list }, lst2tbl(l_copy1))
 
+        -- Deep-copy, copyID=2: first copy marks the inner list; second item reuses/refs that copy.
         local l_copy2 = tv_list_copy(nil, l, true, 2)
         eq(l_copy2.lv_first.li_tv.vval.v_list, l_copy2.lv_last.li_tv.vval.v_list)
         eq({ empty_list, empty_list }, lst2tbl(l_copy2))
 
-        eq(3, l_inner_tv.vval.v_list.lv_refcount)
+        -- Deep-copy, copyID=2+2^32: copyID is 64 bits so doesn't overflow/wrap. #42231
+        local l_copy3 = tv_list_copy(nil, l, true, 2 + 0x100000000LL)
+        -- Regression test: a 32-bit copyID would truncate `2 + 2^32` to 2 and reuse l_copy2's copy.
+        neq(l_copy2.lv_first.li_tv.vval.v_list, l_copy3.lv_first.li_tv.vval.v_list)
+        -- copyID `2 + 2^32` is stored correctly; the second item reuses the first item's copy.
+        eq(l_copy3.lv_first.li_tv.vval.v_list, l_copy3.lv_last.li_tv.vval.v_list)
+
+        eq(3, l_inner_tv.vval.v_list.lv_refcount) -- Deep copies don't reference the original.
       end)
       itp('works with self-referencing list with copyID', function()
         local l_tv = lua2typvalt(empty_list)

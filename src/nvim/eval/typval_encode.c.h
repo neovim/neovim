@@ -268,8 +268,8 @@ const dict_T *const TYPVAL_ENCODE_NODICT_VAR = NULL;
 
 static inline int TYPVAL_ENCODE_CHECK_SELF_REFERENCE(
                                                       TYPVAL_ENCODE_FIRST_ARG_TYPE TYPVAL_ENCODE_FIRST_ARG_NAME,
-                                                      void *const val, int *const val_copyID,
-                                                      const MPConvStack *const mpstack, const int copyID,
+                                                      void *const val, int64_t *const val_copyID,
+                                                      const MPConvStack *const mpstack, const int64_t copyID,
                                                       const MPConvStackValType conv_type,
                                                       const char *const objname)
   REAL_FATTR_NONNULL_ARG(2, 3, 4, 7) REAL_FATTR_WARN_UNUSED_RESULT
@@ -290,8 +290,8 @@ static inline int TYPVAL_ENCODE_CHECK_SELF_REFERENCE(
 ///
 /// @return NOTDONE in case of success, what to return in case of failure.
 static inline int TYPVAL_ENCODE_CHECK_SELF_REFERENCE(
-                                                     TYPVAL_ENCODE_FIRST_ARG_TYPE TYPVAL_ENCODE_FIRST_ARG_NAME, void *const val, int *const val_copyID,
-                                                     const MPConvStack *const mpstack, const int copyID, const MPConvStackValType conv_type,
+                                                     TYPVAL_ENCODE_FIRST_ARG_TYPE TYPVAL_ENCODE_FIRST_ARG_NAME, void *const val, int64_t *const val_copyID,
+                                                     const MPConvStack *const mpstack, const int64_t copyID, const MPConvStackValType conv_type,
                                                      const char *const objname)
 {
   if (*val_copyID == copyID) {
@@ -306,7 +306,7 @@ static int TYPVAL_ENCODE_CONVERT_ONE_VALUE(
                                             TYPVAL_ENCODE_FIRST_ARG_TYPE TYPVAL_ENCODE_FIRST_ARG_NAME,
                                             MPConvStack *const mpstack, char **const strbuf,
                                             MPConvStackVal *const cur_mpsv, typval_T *const tv,
-                                            const int copyID, const char *const objname)
+                                            const int64_t copyID, const char *const objname)
   REAL_FATTR_NONNULL_ARG(2, 3, 5, 7) REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Convert single value
@@ -329,7 +329,7 @@ static int TYPVAL_ENCODE_CONVERT_ONE_VALUE(
 /// @return OK in case of success, FAIL in case of failure.
 static int TYPVAL_ENCODE_CONVERT_ONE_VALUE(
                                            TYPVAL_ENCODE_FIRST_ARG_TYPE TYPVAL_ENCODE_FIRST_ARG_NAME, MPConvStack *const mpstack,
-                                           char **const strbuf, MPConvStackVal *const cur_mpsv, typval_T *const tv, const int copyID,
+                                           char **const strbuf, MPConvStackVal *const cur_mpsv, typval_T *const tv, const int64_t copyID,
                                            const char *const objname)
 {
   TYPVAL_ENCODE_CHECK_BEFORE;
@@ -379,7 +379,7 @@ static int TYPVAL_ENCODE_CONVERT_ONE_VALUE(
       TYPVAL_ENCODE_CONV_EMPTY_LIST(tv);
       break;
     }
-    const int saved_copyID = tv_list_copyid(tv->vval.v_list);
+    const int64_t saved_copyID = tv_list_copyid(tv->vval.v_list);
     TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(tv->vval.v_list, lv_copyID, copyID,
                                           kMPConvList);
     TYPVAL_ENCODE_CONV_LIST_START(tv, tv_list_len(tv->vval.v_list));
@@ -524,7 +524,7 @@ static int TYPVAL_ENCODE_CONVERT_ONE_VALUE(
         if (val_di->di_tv.v_type != VAR_LIST) {
           goto _convert_one_value_regular_dict;
         }
-        const int saved_copyID = tv_list_copyid(val_di->di_tv.vval.v_list);
+        const int64_t saved_copyID = tv_list_copyid(val_di->di_tv.vval.v_list);
         TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(val_di->di_tv.vval.v_list,
                                               lv_copyID, copyID,
                                               kMPConvList);
@@ -558,7 +558,7 @@ static int TYPVAL_ENCODE_CONVERT_ONE_VALUE(
                 goto _convert_one_value_regular_dict;
               }
             });
-        const int saved_copyID = tv_list_copyid(val_di->di_tv.vval.v_list);
+        const int64_t saved_copyID = tv_list_copyid(val_di->di_tv.vval.v_list);
         TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(val_list, lv_copyID, copyID,
                                               kMPConvPairs);
         TYPVAL_ENCODE_CONV_DICT_START(tv, TYPVAL_ENCODE_NODICT_VAR,
@@ -605,7 +605,7 @@ static int TYPVAL_ENCODE_CONVERT_ONE_VALUE(
       break;
     }
 _convert_one_value_regular_dict: {}
-    const int saved_copyID = tv->vval.v_dict->dv_copyID;
+    const int64_t saved_copyID = tv->vval.v_dict->dv_copyID;
     TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(tv->vval.v_dict, dv_copyID, copyID,
                                           kMPConvDict);
     TYPVAL_ENCODE_CONV_DICT_START(tv, tv->vval.v_dict,
@@ -659,8 +659,8 @@ static int TYPVAL_ENCODE_CONVERT_ALL(
                                      char **const strbuf, typval_T *const top_tv, const char *const objname)
 {
   // Only containers are traversed. Scalars don't need a copyID. #42231
-  const int copyID = (top_tv->v_type == VAR_LIST || top_tv->v_type == VAR_DICT
-                      || top_tv->v_type == VAR_PARTIAL) ? get_copyID() : 0;
+  const int64_t copyID = (top_tv->v_type == VAR_LIST || top_tv->v_type == VAR_DICT
+                          || top_tv->v_type == VAR_PARTIAL) ? get_copyID() : 0;
   if (TYPVAL_ENCODE_CONVERT_ONE_VALUE(TYPVAL_ENCODE_FIRST_ARG_NAME, mpstack, strbuf,
                                       NULL,
                                       top_tv, copyID, objname)
@@ -774,7 +774,7 @@ typval_encode_stop_converting_one_item:
             TYPVAL_ENCODE_CONV_EMPTY_DICT(NULL, pt->pt_dict);
             continue;
           }
-          const int saved_copyID = dict->dv_copyID;
+          const int64_t saved_copyID = dict->dv_copyID;
           const int te_csr_ret = TYPVAL_ENCODE_CHECK_SELF_REFERENCE(TYPVAL_ENCODE_FIRST_ARG_NAME,
                                                                     dict, &dict->dv_copyID,
                                                                     mpstack, copyID, kMPConvDict,
