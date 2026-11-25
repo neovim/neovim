@@ -719,6 +719,11 @@ local function win_row_height_border(tgt, min)
       min < o.lines - ui.cmdheight and ui.cmdheight > 0
   end
   local cmdwin_win = require('vim._core.cmdwin').win()
+  if
+    cmdwin_win ~= nil and api.nvim_win_get_tabpage(cmdwin_win) ~= api.nvim_get_current_tabpage()
+  then
+    cmdwin_win = nil
+  end
   local cmdwin = cmdwin_win and api.nvim_win_get_height(cmdwin_win) or 0
   local global_stl = (cmdwin > 0 or o.laststatus == 3) and 1 or 0
   local row = 1 - cmdwin - global_stl

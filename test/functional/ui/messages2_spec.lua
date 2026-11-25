@@ -301,6 +301,40 @@ describe('messages2', function()
     ]])
   end)
 
+  it("pager layout ignores cmdwin that's open on a different tabpage", function()
+    screen:add_extra_attr_ids({
+      [101] = {
+        foreground = Screen.colors.Magenta1,
+        background = Screen.colors.LightGrey,
+        bold = true,
+        underline = true,
+        nocombine = true,
+      },
+    })
+
+    feed('q:')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*3
+      {2:[No Name]                                            }|
+      {1::}^                                                    |
+      {1:~                                                    }|*6
+      {3:[Command Line]                                       }|
+                                                           |
+    ]])
+
+    command('tabnew')
+    command('echom "hello" | messages')
+    screen:expect([[
+      {24: }{101:2}{24: [Command Line] }{5: [Pager] }{2:                         }{24:X}|
+                                                           |
+      {1:~                                                    }|*9
+      {3:                                                     }|
+      ^hello                                                |
+      hello                                                |
+    ]])
+  end)
+
   it('new buffer, window and options after closing a buffer or switching tabpage', function()
     command('set nomodifiable | echom "foo" | messages')
     screen:expect([[
