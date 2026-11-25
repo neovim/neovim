@@ -7186,7 +7186,7 @@ void command_height(void)
   redraw_cmdline = true;
 
   // Clear the cmdheight area.
-  if (msg_scrolled == 0) {
+  if (msg_scrolled == 0 && starting != NO_SCREEN) {
     GridView *grid = &default_gridview;
     if (!ui_has(kUIMessages)) {
       msg_grid_validate();
