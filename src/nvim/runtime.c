@@ -2535,7 +2535,8 @@ void ex_scriptnames(exarg_T *eap)
 {
   if (eap->addr_count > 0 || *eap->arg != NUL) {
     // :script {scriptId}: edit the script
-    if (eap->addr_count > 0 && !SCRIPT_ID_VALID(eap->line2)) {
+    if (eap->addr_count > 0
+        && (!SCRIPT_ID_VALID(eap->line2) || SCRIPT_ITEM(eap->line2)->sn_name == NULL)) {
       emsg(_(e_invarg));
     } else {
       if (eap->addr_count > 0) {

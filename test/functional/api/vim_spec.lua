@@ -268,6 +268,18 @@ describe('API', function()
           { output = true }
         )
       )
+
+      -- nvim_exec2 script items have no name; shouldn't cause :scriptnames to crash
+      local anon_sid = api
+        .nvim_exec2(
+          [[
+          let s:x = 1
+          echo expand('<SID>')
+        ]],
+          { output = true }
+        ).output
+        :match('<SNR>(%d+)_')
+      eq('Vim(scriptnames):E474: Invalid argument', pcall_err(command, anon_sid .. 'scriptnames'))
     end)
 
     it('non-ASCII input', function()
