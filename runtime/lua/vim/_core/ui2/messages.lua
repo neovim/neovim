@@ -541,6 +541,9 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
     ui.cmd.expand = ui.cmd.expand + (ui.cmd.expand > 0 and 1 or 0)
 
     local open_pager = tgt == 'pager' and not pager_shown()
+    if open_pager then
+      api.nvim_buf_set_lines(ui.bufs.pager, 0, -1, false, {})
+    end
     M.show_msg(tgt, kind, content, replace_last or open_pager, append, id)
     if kind == 'search_cmd' then
       -- Don't remember search_cmd message as actual message.

@@ -1270,6 +1270,20 @@ describe('messages2', function()
     screen:expect({ any = '"Xfile" 0L, 0B', none = 'replacement string' })
   end)
 
+  it('clears stale multiline output when reopening the pager #42799', function()
+    exec_lua(function()
+      require('vim._core.ui2').enable({ msg = { targets = { lua_print = 'pager' } } })
+    end)
+
+    command([[lua print('hello\nworld')]])
+    screen:expect({ any = { 'hello', 'world' } })
+    feed('<Esc>')
+    screen:expect({ none = { 'hello', 'world' } })
+
+    command([[lua print('new\noutput')]])
+    screen:expect({ any = { 'new', 'output' }, none = { 'hello', 'world' } })
+  end)
+
   it('configured targets per kind', function()
     exec_lua(function()
       local targets = { echo = 'msg', list_cmd = 'pager', lua_print = 'cmd' }
