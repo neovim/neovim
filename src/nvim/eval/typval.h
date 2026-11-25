@@ -85,7 +85,7 @@ static inline void tv_list_set_lock(list_T *const l, const VarLockStatus lock)
 ///
 /// @param[out]  l  List to modify.
 /// @param[in]  copyid  New copyID.
-static inline void tv_list_set_copyid(list_T *const l, const int copyid)
+static inline void tv_list_set_copyid(list_T *const l, const int64_t copyid)
   FUNC_ATTR_NONNULL_ALL
 {
   l->lv_copyID = copyid;
@@ -108,7 +108,7 @@ static inline int tv_list_len(const list_T *const l)
 /// Does not expect NULL list, be careful.
 ///
 /// @param[in]  l  List to check.
-static inline int tv_list_copyid(const list_T *const l)
+static inline int64_t tv_list_copyid(const list_T *const l)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return l->lv_copyID;

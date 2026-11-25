@@ -238,7 +238,7 @@ void free_tagfunc_option(void)
 
 /// Mark the global 'tagfunc' callback with "copyID" so that it is not garbage
 /// collected.
-bool set_ref_in_tagfunc(int copyID)
+bool set_ref_in_tagfunc(int64_t copyID)
 {
   return set_ref_in_callback(&p_tfu, copyID, NULL, NULL);
 }
