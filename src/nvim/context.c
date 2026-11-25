@@ -380,8 +380,8 @@ CtxStateFlags ctx_from_dict(Dict dict, Context *ctx, Error *err)
   return types;
 }
 
-/// Stashes CWD state, so the temporary "autocmd window" starts clean. Except buffer-local :bcd dir
-/// is NOT stashed. Undone by ctx_localdirs_restore().
+/// Stashes CWD state, so the temporary "autocmd window" starts clean.
+/// Undone by ctx_localdirs_restore().
 static void ctx_win_dirs_save(CtxSwitch *cs, win_T *cw_win, buf_T *buf)
 {
   // A pooled tmp-window must not carry a stale w_localdir.

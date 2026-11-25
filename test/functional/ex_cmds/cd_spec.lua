@@ -641,6 +641,18 @@ describe('cd during temp context-switch', function()
     n.api.nvim_buf_set_name(wbuf, renamed)
     eq(t.fix_slashes(join(startdir, renamed)), t.fix_slashes(n.api.nvim_buf_get_name(wbuf)))
 
+    -- Reading a buffer option skips the context switch (no chdir round trip); setting does not.
+    local function chdirs(cmd)
+      command('set verbose=5')
+      local out = call('execute', cmd:format(wbuf))
+      command('set verbose=0')
+      return select(2, out:gsub('chdir%(', ''))
+    end
+    eq({ 0, 2 }, {
+      chdirs('call nvim_get_option_value("textwidth", #{buf: %d})'),
+      chdirs('call nvim_set_option_value("textwidth", 9, #{buf: %d})'),
+    })
+
     -- An explicit :bcd! in a write autocmd persists.
     command(('autocmd BufWritePost <buffer=%d> ++once bcd!'):format(wbuf))
     write_in_buf_call()

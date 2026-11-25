@@ -2472,7 +2472,7 @@ bool shorten_buf_fname(buf_T *buf, char *dirname, int force)
   return changed;
 }
 
-/// Shortens filenames for all buffers. Schedules a statusline redraw if any name changed.
+/// Shortens filenames for all(!) buffers. Schedules a statusline redraw if any name changed.
 void shorten_fnames(int force)
 {
   char dirname[MAXPATHL];

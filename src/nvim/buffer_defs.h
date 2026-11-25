@@ -772,8 +772,8 @@ struct file_buffer {
   // The number for times the current line has been flushed in the memline.
   int flush_count;
 
-  char *b_localdir;       ///< Absolute path of local cwd or NULL.
-  char *b_prevdir;        ///< Previous directory.
+  char *b_localdir;       ///< Buffer-local CWD (:bcd) as absolute path, or NULL.
+  char *b_prevdir;        ///< Previous buffer-local CWD (:bcd -).
 };
 
 // Stuff for diff mode.
