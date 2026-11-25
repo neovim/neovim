@@ -403,6 +403,14 @@ func Test_dict()
   call assert_equal(#{g: x}, #{g:x})
 endfunc
 
+" Does not take exponential time to process nested { expressions
+func Test_unclosed_nested_dict_parse_time()
+  CheckFunction reltimefloat
+  let start = reltime()
+  call assert_fails('echo ' .. repeat('{', 26), 'E723:')
+  call assert_inrange(0.0, 1.0, reltimefloat(reltime(start)))
+endfunc
+
 " This was allowed in legacy Vim script
 let s:dict_with_spaces = {'one' : 1 , 'two' : 2 , 'three' : 3}
 let s:dict_with_spaces_lit = #{one : 1 , two : 2 , three : 3}
