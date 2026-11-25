@@ -472,7 +472,7 @@ CTRL-W CTRL-P					*CTRL-W_CTRL-P*
 
 CTRL-W P						*CTRL-W_P* *E441*
 		Go to preview window.  When there is no preview window this is
-		an error.
+		an error.  Fails if it is not |focusable|.
 
 If Visual mode is active and the new window is not for the same buffer, the
 Visual mode is ended.  If the window is on the same buffer, the cursor
@@ -523,6 +523,7 @@ CTRL-W CTRL-X					*CTRL-W_CTRL-X*
 		there is no next window, exchange with previous window.
 		With count: Exchange current window with Nth window (first
 		window is 1).  The cursor is put in the other window.
+		Nothing happens if that window is not |focusable|.
 		When vertical and horizontal window splits are mixed, the
 		exchange is only done in the row or column of windows that the
 		current window is in.
