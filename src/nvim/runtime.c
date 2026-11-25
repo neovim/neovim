@@ -178,9 +178,8 @@ char *estack_sfile(estack_arg_T which)
         const sctx_T *const def_ctx = (entry->es_type == ETYPE_UFUNC
                                        ? &entry->es_info.ufunc->uf_script_ctx
                                        : &entry->es_info.aucmd->script_ctx);
-        return def_ctx->sc_sid > 0
-               ? xstrdup((SCRIPT_ITEM(def_ctx->sc_sid)->sn_name))
-               : NULL;
+        const char *const name = def_ctx->sc_sid > 0 ? SCRIPT_ITEM(def_ctx->sc_sid)->sn_name : NULL;
+        return name != NULL ? xstrdup(name) : NULL;
       } else if (entry->es_type == ETYPE_SCRIPT) {
         return xstrdup(entry->es_name);
       }
