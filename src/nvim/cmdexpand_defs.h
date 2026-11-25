@@ -134,6 +134,7 @@ enum {
   EXPAND_PACKDEL,
   EXPAND_PACKUPDATE,
   EXPAND_MARKS,
+  EXPAND_CONNECT,
 };
 
 /// Type used by ExpandGeneric()

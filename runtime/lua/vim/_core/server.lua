@@ -130,13 +130,15 @@ function M.serverlist(opts, addrs)
   return peers
 end
 
---- Implements `:connect` (no args) menu.
-function M.select_connect()
+--- Discovers `:connect` targets: peer servers and ssh:// hosts.
+--- @return string[] addrs  Connect targets.
+--- @return table<string,string> labels  Address => menu label.
+local function connect_targets()
   ---@type vim.ServerInfo[]
   local servers = vim.tbl_filter(function(s)
     return not s.own
   end, vim.fn.serverlist({ info = true }))
-  table.sort(servers, function(a, b)
+  table.sort(servers, function(a, b) -- Most-recently-active first.
     return a.active > b.active
   end)
   local width = 0
@@ -145,18 +147,32 @@ function M.select_connect()
   end
 
   local addrs = {} ---@type string[]
-  local texts = {} ---@type table<string, string> Address => menu item, e.g. "nvim.123.0  3 minutes ago".
+  local labels = {} ---@type table<string, string> Address => menu item, e.g. "nvim.123.0  3 minutes ago".
   for _, s in ipairs(servers) do
     table.insert(addrs, s.addr)
     local active = s.active == 0 and '?' or time.fmt_ago(s.active) -- 0: No user activity.
-    texts[s.addr] = ('%-' .. width .. 's  %s'):format(vim.fs.basename(s.addr), active)
+    -- Detached remote-ssh session looks like: "nvim-ssh.<host>.<token>"
+    local host = vim.fs.basename(s.addr):match('^nvim%-ssh%.(.+)%.%x+$')
+    local note = host and (' (detached, ssh://%s)'):format(host) or ''
+    labels[s.addr] = ('%-' .. width .. 's  %s%s'):format(vim.fs.basename(s.addr), active, note)
   end
   for _, host in ipairs(require('vim.net._ssh').get_hosts()) do
     local addr = ('ssh://%s'):format(host)
     table.insert(addrs, addr)
-    texts[addr] = addr
+    labels[addr] = addr
   end
+  return addrs, labels
+end
 
+--- Completion for `:connect`.
+--- @return string[]
+function M.complete_connect()
+  return (connect_targets())
+end
+
+--- Implements `:connect` (no args) menu.
+function M.select_connect()
+  local addrs, labels = connect_targets()
   if #addrs == 0 then
     vim.api.nvim_echo({ { 'No servers found' } }, false, {})
     return
@@ -164,7 +180,7 @@ function M.select_connect()
   vim.ui.select(addrs, {
     prompt = 'Connect to:',
     format_item = function(addr)
-      return texts[addr]
+      return labels[addr]
     end,
   }, function(addr)
     if not addr then

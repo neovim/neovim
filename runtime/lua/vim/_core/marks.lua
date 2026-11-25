@@ -24,7 +24,7 @@ end
 --- - set marks (buffer-local and global)
 --- - extmark namespaces (buffer-local)
 --- @return string[]
-function M.complete()
+function M.complete_marks()
   local names = {} ---@type string[]
   for _, list in ipairs({ vim.fn.getmarklist(api.nvim_get_current_buf()), vim.fn.getmarklist() }) do
     for _, m in ipairs(list) do

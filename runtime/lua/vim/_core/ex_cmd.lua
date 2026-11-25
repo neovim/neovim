@@ -182,7 +182,7 @@ end
 --- Completion logic for `:lsp` command
 --- @param line string content of the current command line
 --- @return string[] list of completions
-function M.lsp_complete(_, line)
+function M.complete_lsp(_, line)
   local split = vim.split(line, '%s+')
   if #split == 2 then
     return available_subcmds
@@ -227,7 +227,7 @@ end
 
 --- Completion logic for `:log` command
 --- @return string[] completions
-function M.log_complete()
+function M.complete_log()
   local names = { 'nvim' } --- @type string[]
   for file, type in fs.dir(log_dir, { depth = vim._maxint }) do
     local name, matches = file:gsub('%.log$', '')
@@ -356,7 +356,7 @@ end
 
 --- @param pattern string
 --- @return string[] completions
-function M.packupdate_complete(pattern)
+function M.complete_packupdate(pattern)
   if vim.startswith(pattern, '++') then
     return { '++lockfile', '++offline' }
   end
@@ -392,7 +392,7 @@ end
 --- @param pattern string
 --- @param line string content of the current command line
 --- @return string[] completions
-function M.packdel_complete(pattern, line)
+function M.complete_packdel(pattern, line)
   local cmd = api.nvim_parse_cmd(line)
   if #cmd.args == 1 and vim.startswith(pattern, '++') then
     return { '++all' }
