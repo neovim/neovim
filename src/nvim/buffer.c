@@ -1754,7 +1754,7 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
       // another window, might be a timer doing something in another
       // window.
       if (prevbuf == curbuf && ((State & MODE_INSERT) == 0 || curbuf->b_nwindows <= 1)) {
-        u_sync(false);
+        u_sync(curbuf, false);
       }
       close_buffer(curwin,
                    prevbuf,

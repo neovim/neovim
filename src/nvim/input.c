@@ -1329,7 +1329,7 @@ void may_sync_undo(void)
 {
   if ((!(State & (MODE_INSERT | MODE_CMDLINE)) || Ins.moved != kInsNone)
       && curscript < 0) {
-    u_sync(false);
+    u_sync(curbuf, false);
   }
 }
 

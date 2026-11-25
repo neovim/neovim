@@ -415,3 +415,24 @@ describe('undo file', function()
     )
   end)
 end)
+
+describe("'undolevels' option", function()
+  before_each(clear)
+
+  it('restored after -1, non-current buffer change #42447', function()
+    -- Changing a non-current buffer while 'undolevels' < 0 sets b_u_synced=false with no header.
+    local function repro(set)
+      return exec_lua(([[
+        local b = vim.api.nvim_create_buf(false, true)
+        %s = -1
+        vim.api.nvim_buf_set_lines(b, 0, -1, false, { 'a' })
+        %s = 1000
+        vim.api.nvim_buf_set_lines(b, 0, -1, false, { 'b' })
+        vim.api.nvim_buf_call(b, function() vim.cmd.undo() end)
+        return vim.api.nvim_buf_get_lines(b, 0, -1, false)
+      ]]):format(set, set))
+    end
+    eq({ 'a' }, repro('vim.o.undolevels')) -- Global.
+    eq({ 'a' }, repro('vim.bo[b].undolevels')) -- Buffer-local.
+  end)
+end)
