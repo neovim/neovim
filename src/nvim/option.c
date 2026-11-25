@@ -4704,7 +4704,7 @@ static void showoptions(bool all, int opt_flags)
           len = 1;                      // a toggle option fits always
         } else {
           optval_fmt(opt_idx, opt_flags);
-          len = (int)strlen(opt->fullname) + vim_strsize(NameBuff) + 1;
+          len = (int)strlen(opt->fullname) + mb_string2cells(NameBuff) + 1;
         }
         if ((len <= INC - GAP && run == 1)
             || (len > INC - GAP && run == 2)) {

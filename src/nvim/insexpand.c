@@ -5345,7 +5345,7 @@ static void ins_compl_show_filename(void)
   // configuration `showmode cmdheight=1`, a multi-line message is shown partially, and a message
   // that fits into one line is not shown at all. It's better to be consistent: it should not depend
   // on the exact length of the message whether it is displayed at all.
-  int space = (ui_has(kUIMessages) ? Columns : sc_col) - vim_strsize(lead) - 2;
+  int space = (ui_has(kUIMessages) ? Columns : sc_col) - mb_string2cells(lead) - 2;
   if (space <= 0) {
     return;
   }

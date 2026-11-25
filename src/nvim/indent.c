@@ -888,7 +888,7 @@ int get_breakindent_win(win_T *wp, char *line)
 
   // indent minus the length of the showbreak string
   if (wp->w_briopt_sbr) {
-    bri -= vim_strsize(get_showbreak_value(wp));
+    bri -= mb_string2cells(get_showbreak_value(wp));
   }
 
   // never indent past left window margin

@@ -3040,7 +3040,7 @@ void buflist_list(exarg_T *eap)
     len = MIN(len, IOSIZE - 20);
 
     // put "line 999" in column 40 or after the file name
-    int i = 40 - vim_strsize(IObuff);
+    int i = 40 - mb_string2cells(IObuff);
     do {
       IObuff[len++] = ' ';
     } while (--i > 0 && len < IOSIZE - 18);

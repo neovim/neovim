@@ -587,19 +587,26 @@ ret:
 
 /// Calculate the number of cells occupied by string `str`.
 ///
+/// Unprintable bytes have the same width as ptr2cells()
+/// would return i.e. 2 or 4 cells. Unprintable unicode might
+/// be up to 6 cells. "uhex" flag of 'display' applies, as well
+/// as 'ambiwidth' and setcellwidths() overrides.
+///
+/// The width of unprintable chars is expected to be same as the width of
+/// the result of strtrans() although this has not been verified in every edge case.
+///
 /// @param str The source string, may not be NULL, must be a NUL-terminated
 ///            string.
 /// @return The number of cells occupied by string `str`
-size_t mb_string2cells(const char *str)
+int mb_string2cells(const char *str)
   FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
-  size_t clen = 0;
+  int clen = 0;
 
   StrCharInfo ci = utf_ptr2StrCharInfo((char *)str);
   while (*ci.ptr != NUL) {
     ClusterInfo cli = utf_ClusterInfo(ci);
-    // TODO(bfredl): moar unification, allowing dy_escape_width should be fine
-    clen += ci.chr.value < 0x80 ? 1 : (size_t)cli.cells;
+    clen += cli.cells;
     ci = cli.next;
   }
 
@@ -612,17 +619,16 @@ size_t mb_string2cells(const char *str)
 ///            string.
 /// @param size exact length of string. It will NOT terminate on earlier NUL.
 /// @return The number of cells occupied by string `str`
-size_t mb_string2cells_len(const char *str, size_t size)
+int mb_string2cells_len(const char *str, size_t size)
   FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ARG(1)
 {
-  size_t clen = 0;
-
+  int clen = 0;
   int len = (int)size;
 
   StrCharInfo ci = utf_ptr2StrCharInfo_len((char *)str, len);
   while (len > 0) {
     ClusterInfo cli = utf_ClusterInfo_len(ci, &len);
-    clen += (size_t)cli.cells;
+    clen += cli.cells;
     ci = cli.next;
   }
 

@@ -158,6 +158,8 @@ information.
   vim_isNormalIDc                                      ascii_isident
   vim_islower vim_isupper                          mb_islower mb_isupper
   vim_tolower vim_toupper                          mb_tolower mb_toupper
+  vim_strsize                                           mb_string2cells
+  vim_strnsize                                          mb_string2cells_len
   mb_ptr2len                                           utfc_ptr2len
   mb_ptr2len_len                                     utfc_ptr2len_len
   mb_char2len                                          utf_char2len

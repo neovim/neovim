@@ -1027,7 +1027,7 @@ void parse_bordertext(Object bordertext, BorderTextType bordertext_type, WinConf
     char *text = transstr(bordertext.data.string.data, true);
     kv_init(*chunks);
     kv_push(*chunks, ((VirtTextChunk){ .text = text, .hl_id = -1 }));
-    *width = (int)mb_string2cells(text);
+    *width = mb_string2cells(text);
   } else {
     *chunks = parse_virt_text(bordertext.data.array, err, width, true);
     if (ERROR_SET(err)) {

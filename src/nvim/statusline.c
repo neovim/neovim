@@ -201,7 +201,7 @@ void stl_fill_click_defs(StlClickDefinition *click_defs, StlClickRecord *click_r
     .type = kStlClickDisabled,
   };
   for (int i = 0; click_recs[i].start != NULL; i++) {
-    len += vim_strnsize(buf, (int)(click_recs[i].start - buf));
+    len += mb_string2cells_len(buf, (size_t)(click_recs[i].start - buf));
     assert(len <= width);
     if (col < len) {
       while (col < len) {
@@ -682,7 +682,7 @@ void draw_tabline(void)
         // Get buffer name in NameBuff[]
         get_trans_bufname(cwp->w_buffer);
         shorten_dir(NameBuff);
-        int len = vim_strsize(NameBuff);
+        int len = mb_string2cells(NameBuff);
         char *p = NameBuff;
         while (len > room) {
           len -= ptr2cells(p);
@@ -823,7 +823,7 @@ static void stl_truncate(int *width, int minwid, int maxwid, schar_T fillchar,
 
   // If the truncation point we found is beyond the maximum
   // length of the string, truncate the end of the string.
-  if (*width - vim_strsize(trunc_p) >= maxwid) {
+  if (*width - mb_string2cells(trunc_p) >= maxwid) {
     // Walk from the beginning of the
     // string to find the last character that will fit.
     trunc_p = start_p;
@@ -1204,12 +1204,12 @@ int build_stl_str_hl(win_T *wp, CharBuf out, char *fmt, OptIndex opt_idx, int op
         continue;
       }
 
-      // Determine how long the group is.
+      // Determine how wide the group is.
       // Note: We set the current output position to null
-      //       so `vim_strsize` will work.
+      //       as the code depends on that in unverified ways
       char *t = stl_items[stl_groupitems[groupdepth]].start;
+      int group_len = mb_string2cells_len(t, (size_t)(out_p - t));
       *out_p = NUL;
-      int group_len = vim_strsize(t);
 
       // If the group contained internal items
       // and the group did not have a minimum width,
@@ -1900,7 +1900,7 @@ stcsign:
       }
       // }
 
-      int l = vim_strsize(t);
+      int l = mb_string2cells(t);
 
       // If this item is non-empty, record that the last thing
       // we put in the output buffer was an item
@@ -2083,7 +2083,7 @@ stcsign:
   // We have now processed the entire statusline format string.
   // What follows is post-processing to handle alignment and highlighting.
 
-  int width = vim_strsize(out.data);
+  int width = mb_string2cells(out.data);
   if (maxwidth > 0 && width > maxwidth && (!stcp || width > MAX_STCWIDTH)) {
     // Result is too long, must truncate somewhere.
     stl_truncate(&width, 0, maxwidth, fillchar, stl_items, evalstart, &curitem, out.data, &out_p);

@@ -3932,7 +3932,7 @@ void ex_version(exarg_T *eap)
 /// @param wrap
 static void version_msg_wrap(char *s, bool wrap)
 {
-  int len = vim_strsize(s) + (wrap ? 2 : 0);
+  int len = mb_string2cells(s) + (wrap ? 2 : 0);
 
   if (!got_int
       && (len < Columns)
@@ -3967,7 +3967,7 @@ void list_in_columns(char **items, int size, int current)
 
   // Find the length of the longest item, use that + 1 as the column width.
   for (int i = 0; size < 0 ? items[i] != NULL : i < size; i++) {
-    int l = vim_strsize(items[i]) + (i == current ? 2 : 0);
+    int l = mb_string2cells(items[i]) + (i == current ? 2 : 0);
 
     if (l > width) {
       width = l;
@@ -4188,7 +4188,7 @@ static void do_intro_line(int row, char *mesg, bool colon, bool is_logo)
 {
   int l;
   // Center the message horizontally.
-  int col = vim_strsize(mesg);
+  int col = mb_string2cells(mesg);
   col = (Columns - col) / 2;
   if (col < 0) {
     col = 0;
