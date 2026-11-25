@@ -8198,14 +8198,15 @@ vim.go.wmnu = vim.go.wildmenu
 --- 		line.  If both "noinsert" and "noselect" are present,
 --- 		"noselect" takes precedence.
 --- If only one match exists, it is completed fully, unless "noselect" or
---- "noinsert" is specified.
+--- "noinsert" is specified without "longest".
 ---
 --- Some useful combinations of colon-separated values:
 ---
 --- Value			Meaning ~
 --- "longest:full"		Start with the longest common string and show
 --- 			'wildmenu' (if enabled).  Does not cycle
---- 			through full matches.
+--- 			through full matches, "longest:noselect"
+--- 			and "longest:noinsert" work the same.
 --- "list:full"		List all matches and complete first match.
 --- "list:longest"		List all matches and complete till the longest
 --- 			common prefix.
