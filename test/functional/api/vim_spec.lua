@@ -3092,6 +3092,29 @@ describe('API', function()
       eq(api.nvim_list_wins()[2], api.nvim_get_current_win())
     end)
 
+    it('can omit hidden windows', function()
+      command('split')
+      local wins = api.nvim_list_wins()
+      local float = api.nvim_open_win(
+        0,
+        false,
+        { relative = 'editor', row = 1, col = 1, width = 5, height = 1, hide = true }
+      )
+      local shown = api.nvim_open_win(
+        0,
+        false,
+        { relative = 'editor', row = 3, col = 1, width = 5, height = 1 }
+      )
+      command('tabnew')
+      local tab2 = api.nvim_get_current_win()
+      local all = { wins[1], wins[2], shown, float, tab2 }
+      eq(all, api.nvim_list_wins())
+      eq(all, api.nvim_list_wins({}))
+      eq(all, api.nvim_list_wins({ hidden = true }))
+      eq({ wins[1], wins[2], shown, tab2 }, api.nvim_list_wins({ hidden = false }))
+      eq("Invalid key: 'foo'", pcall_err(api.nvim_list_wins, { foo = true }))
+    end)
+
     it('resets Visual mode when switching to different buffer #37072', function()
       command('new | wincmd w')
       api.nvim_buf_set_lines(0, 0, -1, true, { 'a', 'b' })

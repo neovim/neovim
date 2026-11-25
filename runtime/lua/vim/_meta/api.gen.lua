@@ -1700,8 +1700,10 @@ function vim.api.nvim_list_uis() end
 
 --- Gets the current list of all `window-ID`s in all tabpages.
 ---
+--- @param opts vim.api.keyset.list_wins? Optional parameters.
+--- - hidden: (boolean, default true) Include `window-hidden` windows.
 --- @return integer[] # List of |window-ID|s
-function vim.api.nvim_list_wins() end
+function vim.api.nvim_list_wins(opts) end
 
 --- Sets the current editor state from the given map.
 ---

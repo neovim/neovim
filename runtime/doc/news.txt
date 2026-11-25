@@ -256,6 +256,7 @@ API
 • |nvim_create_autocmd()| is now |api-fast|, so it can be called from a fast
   event context (e.g. |vim.uv| callbacks).
 • |nvim_create_autocmd()| callback |event-args| provide `win`.
+• |nvim_list_wins()| can omit |window-hidden| windows with `opts.hidden=false`.
 • |nvim_chan_set()| sets channel properties.
   • `detach=false` enables Nvim "self-exit on channel-close" behavior.
   • `trust=false` rejects API calls from an untrusted peer. Also supported by

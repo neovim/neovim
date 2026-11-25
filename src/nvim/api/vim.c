@@ -978,20 +978,27 @@ void nvim_set_current_buf(Buffer buf, Error *err)
 
 /// Gets the current list of all |window-ID|s in all tabpages.
 ///
+/// @param opts Optional parameters.
+///             - hidden: (boolean, default true) Include |window-hidden| windows.
 /// @return List of |window-ID|s
-ArrayOf(Window) nvim_list_wins(Arena *arena)
+ArrayOf(Window) nvim_list_wins(Dict(list_wins) *opts, Arena *arena)
   FUNC_API_SINCE(1)
 {
+  bool hidden = GET_BOOL_OR_TRUE(opts, list_wins, hidden);
   size_t n = 0;
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    n++;
+    if (hidden || !wp->w_config.hide) {
+      n++;
+    }
   }
 
   Array rv = arena_array(arena, n);
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    ADD_C(rv, WINDOW_OBJ(wp->handle));
+    if (hidden || !wp->w_config.hide) {
+      ADD_C(rv, WINDOW_OBJ(wp->handle));
+    }
   }
 
   return rv;

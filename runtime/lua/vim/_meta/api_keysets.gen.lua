@@ -382,6 +382,9 @@ error('Cannot require a meta file')
 --- @class vim.api.keyset.keymap_del
 --- @field lhs? boolean
 
+--- @class vim.api.keyset.list_wins
+--- @field hidden? boolean
+
 --- @class vim.api.keyset.ns_opts
 --- @field wins? any[]
 
