@@ -1408,6 +1408,14 @@ static void draw_sep_connectors_win(win_T *wp)
   }
 }
 
+/// Resets per-redraw decoration and search-highlight state of `wp`.
+static void win_redr_init(win_T *wp)
+{
+  decor_redraw_reset(wp, &decor_state);
+  decor_providers_invoke_win(wp);
+  init_search_hl(wp, &screen_search_hl);
+}
+
 /// Update a single window.
 ///
 /// This may cause the windows below it also to be redrawn (when clearing the
@@ -1505,9 +1513,7 @@ static void win_update(win_T *wp)
 
   win_extmark_arr.size = 0;
 
-  decor_redraw_reset(wp, &decor_state);
-
-  decor_providers_invoke_win(wp);
+  win_redr_init(wp);
 
   if (buf->terminal && terminal_suspended(buf->terminal)) {
     static VirtTextChunk chunk = { .text = "[Process suspended]", .hl_id = -1 };
@@ -1531,8 +1537,6 @@ static void win_update(win_T *wp)
   // Validate w_virtcol here as it can change the redraw type.
   validate_virtcol(wp);
   type = wp->w_redr_type;
-
-  init_search_hl(wp, &screen_search_hl);
 
   // Make sure skipcol is valid, it depends on various options, the window width and the topline's
   // displayed size (e.g. after a conceal mark or 'conceallevel' change).
@@ -2376,9 +2380,7 @@ redr_statuscol:
       lnum = wp->w_topline;
       wp->w_lines_valid = 0;
       wp->w_valid &= ~VALID_WCOL;
-      init_search_hl(wp, &screen_search_hl);
-      decor_redraw_reset(wp, &decor_state);
-      decor_providers_invoke_win(wp);
+      win_redr_init(wp);
       continue;
     }
 
