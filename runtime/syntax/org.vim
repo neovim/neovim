@@ -3,6 +3,7 @@
 " Previous Maintainer:  Luca Saccarola <github.e41mv@aleeas.com>
 " Maintainer:   This runtime file is looking for a new maintainer.
 " Last Change:  2025 Aug 05
+" 2026 Apr 09: Link to generic Bold/Italic groups
 "
 " Reference Specification: Org mode manual
 "   GNU Info: `$ info Org`
@@ -18,17 +19,17 @@ syn case ignore
 
 " Bold
 syn region orgBold matchgroup=orgBoldDelimiter start="\(^\|[- '"({\]]\)\@<=\*\ze[^ ]" end="^\@!\*\([^\k\*]\|$\)\@=" keepend
-hi def link orgBold markdownBold
+hi def link orgBold Bold
 hi def link orgBoldDelimiter orgBold
 
 " Italic
 syn region orgItalic matchgroup=orgItalicDelimiter start="\(^\|[- '"({\]]\)\@<=\/\ze[^ ]" end="^\@!\/\([^\k\/]\|$\)\@=" keepend
-hi def link orgItalic markdownItalic
+hi def link orgItalic Italic
 hi def link orgItalicDelimiter orgItalic
 
 " Strikethrogh
 syn region orgStrikethrough matchgroup=orgStrikethroughDelimiter start="\(^\|[ '"({\]]\)\@<=+\ze[^ ]" end="^\@!+\([^\k+]\|$\)\@=" keepend
-hi def link orgStrikethrough markdownStrike
+hi def orgStrikethrough term=strikethrough cterm=strikethrough gui=strikethrough
 hi def link orgStrikethroughDelimiter orgStrikethrough
 
 " Underline
