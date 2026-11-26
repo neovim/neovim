@@ -1911,7 +1911,7 @@ void del_lines(linenr_T nlines, bool undo)
   int n;
   linenr_T first = curwin->w_cursor.lnum;
 
-  if (nlines <= 0) {
+  if (nlines <= 0 || buf_is_empty(curbuf)) {
     return;
   }
 
