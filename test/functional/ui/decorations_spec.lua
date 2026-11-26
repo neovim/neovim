@@ -4005,6 +4005,30 @@ describe('extmark decorations', function()
     n.assert_alive()
   end)
 
+  it('perf: scroll_delta of a new window does not measure beyond viewport', function()
+    command('set conceallevel=2 showtabline=0')
+    exec_lua(function()
+      _G.rows = {}
+      vim.api.nvim_set_decoration_provider(ns, {
+        _on_conceal_line = function(_, _, _, row)
+          _G.rows[row] = true
+        end,
+      })
+    end)
+    command('tabnew | call setline(1, range(1, 1000)) | normal! G')
+    screen:expect({ any = '%^1000' })
+    eq(true, exec_lua('return _G.rows[999]'))
+    -- Exact for the first screen (rows 0-13), approximated beyond.
+    eq(
+      { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 },
+      exec_lua(function()
+        return vim.tbl_filter(function(row)
+          return _G.rows[row]
+        end, vim.fn.range(1, 900))
+      end)
+    )
+  end)
+
   it('redraws the line from which a left gravity mark has moved #27369', function()
     fn.setline(1, { 'aaa', 'bbb', 'ccc', 'ddd' })
     api.nvim_buf_set_extmark(0, ns, 1, 0, { virt_text = { { 'foo' } }, right_gravity = false })
