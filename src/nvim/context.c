@@ -52,6 +52,7 @@
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
+#include "nvim/path.h"
 #include "nvim/register.h"
 #include "nvim/shada.h"
 #include "nvim/state_defs.h"
@@ -379,14 +380,16 @@ CtxStateFlags ctx_from_dict(Dict dict, Context *ctx, Error *err)
   return types;
 }
 
-/// Moves CWD state aside, so that the temporary "autocmd window" starts clean.
-/// Undone by ctx_localdirs_restore().
+/// Stashes CWD state, so the temporary "autocmd window" starts clean. Except buffer-local :bcd dir
+/// is NOT stashed. Undone by ctx_localdirs_restore().
 static void ctx_win_dirs_save(CtxSwitch *cs, win_T *cw_win, buf_T *buf)
 {
   // A pooled tmp-window must not carry a stale w_localdir.
   XFREE_CLEAR(cw_win->w_localdir);
-  cs->cs_b_localdir = buf->b_localdir;
-  buf->b_localdir = NULL;
+  // Copy (don't stash) the :bcd, so kCtxKeepDirs can undo a :bcd made in the temp context.
+  if ((cs->cs_flags & kCtxKeepDirs) && buf->b_localdir != NULL) {
+    cs->cs_b_localdir = xstrdup(buf->b_localdir);
+  }
   cs->cs_tp_localdir = curtab->tp_localdir;
   curtab->tp_localdir = NULL;
   cs->cs_globaldir = globaldir;
@@ -426,14 +429,22 @@ static void ctx_localdirs_restore(CtxSwitch *cs, win_T *cwp, tabpage_T *tp, bool
     xfree(cs->cs_tp_localdir);
   }
 
-  // Correct the directory before restoring globaldir: the first chdir during the switch saved
-  // the pre-switch cwd in `globaldir` (see `post_chdir`), which update_cwd() uses as fallback.
-  if (cwp != NULL && (did_chdir || cwp->w_localdir != NULL)) {
-    update_cwd(kCdCauseWindow);
+  if (cwp != NULL) {
+    if (cs->cs_cwd != NULL && (!did_chdir || ctx_in_entered_dir(cs))) {
+      os_chdir(cs->cs_cwd);  // Leave the entered dir.
+      shorten_fnames(true);
+    }
+    XFREE_CLEAR(cs->cs_cwd);
+    XFREE_CLEAR(cs->cs_entered_dir);
+    // Correct the directory before restoring globaldir: the first chdir during the switch saved
+    // the pre-switch cwd in `globaldir` (see `post_chdir`), which update_cwd() uses as fallback.
+    if (did_chdir || cwp->w_localdir != NULL) {
+      update_cwd(kCdCauseWindow);
+    }
   }
 
   // Keep-case: the globaldir set during the switch (pre-switch cwd, see `post_chdir`).
-  if (!(persist && cs->cs_globaldir == NULL && globaldir != NULL)) {
+  if (!(persist && did_chdir && cs->cs_globaldir == NULL && globaldir != NULL)) {
     xfree(globaldir);
     globaldir = cs->cs_globaldir;
     cs->cs_globaldir = NULL;
@@ -510,12 +521,42 @@ static void ctx_dirs_restore(CtxSwitch *cs)
   // Restore the CWD itself. After an explicit chdir, ctx_restore() re-derives it instead.
   if (cs->cs_apply_acd) {
     do_autochdir();
-  } else if (cs->cs_cwd != NULL && ((cs->cs_flags & kCtxKeepDirs) || !_ctx_did_chdir)) {
+  } else if (cs->cs_cwd != NULL
+             && ((cs->cs_flags & kCtxKeepDirs) || !_ctx_did_chdir || ctx_in_entered_dir(cs))) {
     os_chdir(cs->cs_cwd);
     // Buffer names are relative to the CWD, so they must follow it back. #41424
     shorten_fnames(true);
   }
   XFREE_CLEAR(cs->cs_cwd);
+  XFREE_CLEAR(cs->cs_entered_dir);
+}
+
+/// Enters the buf-local CWD (:bcd) of curbuf temporarily, without triggering DirChanged.
+static void ctx_bufcwd_enter(CtxSwitch *cs)
+{
+  char cwd[MAXPATHL];
+  if (curbuf->b_localdir == NULL || os_dirname(cwd, MAXPATHL) != OK
+      || path_equal(curbuf->b_localdir, cwd, kPathCmpLiteral)) {
+    return;  // E.g. `:write` of the current buffer: already there.
+  }
+  if (cs->cs_ctxwin_idx < 0 && !(cs->cs_flags & (kCtxKeepCwd | kCtxKeepDirs))) {
+    cs->cs_globaldir = globaldir == NULL ? NULL : xstrdup(globaldir);  // Else already saved.
+  }
+  if (cs->cs_cwd == NULL) {
+    cs->cs_cwd = xstrdup(cwd);
+  }
+  cs->cs_entered_dir = xstrdup(curbuf->b_localdir);
+  block_autocmds();
+  update_cwd(kCdCauseBuffer);  // Apply :bcd to the temp context.
+  unblock_autocmds();
+}
+
+/// Whether CWD is the same dir initially entered by ctx_bufcwd_enter().
+static bool ctx_in_entered_dir(const CtxSwitch *cs)
+{
+  char cwd[MAXPATHL];
+  return cs->cs_entered_dir != NULL && os_dirname(cwd, MAXPATHL) == OK
+         && path_equal(cs->cs_entered_dir, cwd, kPathCmpLiteral);
 }
 
 void ctx_did_chdir(void)
@@ -636,6 +677,7 @@ win_T *ctx_saved_curwin(void)
 ///   - (Legacy: switch_win(), switch_win_noblock(), win_execute_before().)
 /// - Passing `buf`, stays in curwin if it shows `buf`, else enters a window showing `buf` in the
 ///   current tabpage, or prepares a temporary "autocmd window" (never switches tabpage).
+///   - Enters the buf-local :bcd dir, unless 'autochdir' is set.
 ///   - (Legacy: aucmd_prepbuf().)
 /// - Passing neither: only CWD state is saved; flags must include `kCtxKeepDirs`.
 ///
@@ -734,6 +776,9 @@ bool ctx_switch(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf, CtxSwitchFl
   curbuf = curwin->w_buffer;
   cs->cs_new_curwin = curwin->handle;
   set_bufref(&cs->cs_new_curbuf, curbuf);
+  if (buf != NULL && !p_acd) {  // 'autochdir' overrides :bcd (see enter_buffer()).
+    ctx_bufcwd_enter(cs);
+  }
 
   if (cs->cs_mode == kCtxSwitchBuf && cs->cs_new_curwin != cs->cs_curwin) {
     _ctx_saved_curwin = _ctx_switch_depth == 0 ? cs->cs_curwin : _ctx_saved_curwin;
@@ -847,7 +892,7 @@ void ctx_restore(CtxSwitch *cs)
   if (cs->cs_flags & kCtxNoEvents) {
     unblock_autocmds();
   }
-  ctx_dirs_restore(cs);  // No-op if ctx_dirs_save() saved nothing.
+  ctx_dirs_restore(cs);  // No-op if nothing was saved.
   // Re-apply the restored context's effective directory.
   if (cs->cs_ctxwin_idx < 0 && _ctx_did_chdir) {
     update_cwd(kCdCauseWindow);

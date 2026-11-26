@@ -33,6 +33,7 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
+#include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/state_defs.h"
@@ -70,6 +71,7 @@ static bool ui_cb_ext[kUIExtCount];  ///< Internalized UI capabilities.
 static bool has_mouse = false;
 static int pending_has_mouse = -1;
 static bool pending_default_colors = false;
+static char *ui_cwd = NULL;  ///< CWD last sent to UIs ("chdir" event).
 
 #ifdef NVIM_LOG_DEBUG
 static size_t uilog_seen = 0;
@@ -136,6 +138,7 @@ void ui_free_all_mem(void)
   map_destroy(uint32_t, &ui_event_cbs);
 
   multiqueue_free(resize_events);
+  xfree(ui_cwd);
 }
 #endif
 
@@ -391,11 +394,7 @@ void ui_attach_impl(RemoteUI *ui, uint64_t chanid)
   ui_refresh_options();
   resettitle();
 
-  char cwd[MAXPATHL];
-  size_t cwdlen = sizeof(cwd);
-  if (uv_cwd(cwd, &cwdlen) == 0) {
-    ui_call_chdir((String){ .data = cwd, .size = cwdlen });
-  }
+  XFREE_CLEAR(ui_cwd);  // The new UI needs the CWD.
 
   for (UIExtension i = kUIGlobalCount; (int)i < kUIExtCount; i++) {
     ui_set_ext_option(ui, i, ui->ui_ext[i]);
@@ -589,6 +588,14 @@ void ui_flush(void)
     ui_call_mode_info_set(enabled, style);
     arena_mem_free(arena_finish(&arena));
     pending_mode_info_update = false;
+  }
+  // Send CWD if it changed since last flush. Avoid noisy "chdir" ui-events during ctx_switch()
+  // where :bcd is applied-and-unapplied potentially 100s of times.
+  char cwd[MAXPATHL];
+  if (os_dirname(cwd, MAXPATHL) == OK && !strequal(cwd, ui_cwd)) {
+    xfree(ui_cwd);
+    ui_cwd = xstrdup(cwd);
+    ui_call_chdir(cstr_as_string(ui_cwd));
   }
 
   static bool cursor_was_obscured = false;

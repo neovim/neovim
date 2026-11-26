@@ -394,8 +394,6 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
   *sfnamep = xstrdup(*sfnamep);
   *ffnamep = xstrdup(*ffnamep);
 
-  char *sfname = *sfnamep;
-
   // Apply PRE autocommands.
   // Set curbuf to the buffer to be written.
   // Careful: The autocommands may call buf_write() recursively!
@@ -403,6 +401,8 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
   // Set curwin/curbuf to buf and save a few things.
   ctx_switch(&aco, NULL, NULL, buf, 0);
   set_bufref(&bufref, buf);
+  // If ctx_switch entered a :bcd dir, rebase its shortened/relative name.
+  char *sfname = aco.cs_entered_dir != NULL ? path_try_shorten_fname(*ffnamep) : *sfnamep;
 
   if (append) {
     did_cmd = apply_autocmds_exarg(EVENT_FILEAPPENDCMD, sfname, sfname, false, curbuf, eap);
@@ -534,8 +534,8 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
   return NOTDONE;
 }
 
-static void buf_write_do_post_autocmds(buf_T *buf, char *fname, exarg_T *eap, bool append,
-                                       bool filtering, bool reset_changed, bool whole)
+static void buf_write_do_post_autocmds(buf_T *buf, char *fname, char *ffname, exarg_T *eap,
+                                       bool append, bool filtering, bool reset_changed, bool whole)
 {
   CtxSwitch aco = { 0 };
 
@@ -544,6 +544,8 @@ static void buf_write_do_post_autocmds(buf_T *buf, char *fname, exarg_T *eap, bo
   // Apply POST autocommands.
   // Careful: The autocommands may call buf_write() recursively!
   ctx_switch(&aco, NULL, NULL, buf, 0);
+  // If ctx_switch entered a :bcd dir, rebase its shortened/relative name.
+  fname = aco.cs_entered_dir != NULL ? path_try_shorten_fname(ffname) : fname;
 
   if (append) {
     apply_autocmds_exarg(EVENT_FILEAPPENDPOST, fname, fname,
@@ -1911,7 +1913,7 @@ nofail:
   }
 
   if (!should_abort(retval)) {
-    buf_write_do_post_autocmds(buf, fname, eap, append, filtering, reset_changed, whole);
+    buf_write_do_post_autocmds(buf, fname, ffname, eap, append, filtering, reset_changed, whole);
     if (aborting()) {       // autocmds may abort script processing
       retval = false;
     }

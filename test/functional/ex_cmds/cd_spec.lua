@@ -575,6 +575,78 @@ describe('cd during temp context-switch', function()
     eq({ 1, tabdir, tabdir, startdir }, { tlwd(), tcwd(), cwd(), cwd(-1, -1) })
   end)
 
+  it(':bcd applies in buffer context (autocmds, nvim_buf_call) #42969', function()
+    local bufdir = join(startdir, directories.buffer)
+    local windir = join(startdir, directories.window)
+
+    -- Autocmds and nvim_buf_call() of a buffer (hidden or not) run in its :bcd dir, with file names
+    -- relative to it, without DirChanged.
+    local file = join(directories.global, 'Xtest-cd-write')
+    command(('edit %s | bcd %s'):format(file, bufdir))
+    local wbuf = call('bufnr')
+    command('enew')
+    n.exec(([[
+      let g:ctx = []
+      autocmd BufWritePre,BufWritePost <buffer=%d>
+            \ call add(g:ctx, [getcwd(), expand('<afile>:p'), haslocaldir(-1, -1, 0)])
+    ]]):format(wbuf))
+    local function write_in_buf_call()
+      exec_lua(function(b)
+        vim.api.nvim_buf_call(b, function()
+          vim.cmd.write()
+        end)
+      end, wbuf)
+    end
+    command(('sbuffer %d | wincmd p'):format(wbuf))
+    command('autocmd DirChanged * let g:dirchanged = 1')
+    write_in_buf_call()
+    command('only')
+    n.api.nvim_exec_autocmds('BufWritePre', { buffer = wbuf })
+    -- :lcd in the temp context is discarded, without DirChanged on the way back.
+    command(('autocmd BufWritePre <buffer=%d> ++once lcd %s'):format(wbuf, windir))
+    call('setbufline', wbuf, 1, 'x')
+    command('wall')
+    write_in_buf_call()
+    -- A CWD round trip during a read is not a rename (E201). The (nested) write fills freed memory,
+    -- so the re-shortened buffer name gets a new address.
+    local readfile = join(directories.global, 'Xtest-cd-read')
+    t.write_file(readfile, 'x')
+    n.exec(([[
+      autocmd BufReadPre * ++once ++nested silent wall
+      autocmd BufWritePre <buffer=%d> ++once let g:pad = map(range(99), {_, v -> repeat('x', v)})
+    ]]):format(wbuf))
+    call('setbufline', wbuf, 1, 'y')
+    command(('edit %s'):format(readfile))
+    eq({ { bufdir, join(startdir, file), 1 } }, n.eval('uniq(copy(g:ctx))'))
+    eq({ 9, startdir, 0 }, { n.eval('len(g:ctx)'), cwd(), call('exists', 'g:dirchanged') })
+
+    -- Writing to another name: it is relative to the caller's CWD (win_execute() keeps it).
+    local copy = join(directories.global, 'Xtest-cd-copy')
+    command(('sbuffer %d | wincmd p'):format(wbuf))
+    call('win_execute', call('bufwinid', wbuf), ('write! %s'):format(copy))
+    local copy_ctx = { bufdir, join(startdir, copy), 1 }
+    eq({ { copy_ctx, copy_ctx }, 1 }, { n.eval('g:ctx[-2:]'), call('filereadable', copy) })
+    command('only')
+
+    -- 'autochdir' overrides :bcd.
+    command('set autochdir')
+    local acd = cwd()
+    write_in_buf_call()
+    eq({ acd, acd }, { n.eval('g:ctx[-1][0]'), cwd() })
+    command('set noautochdir')
+    command(('cd %s'):format(startdir))
+
+    -- nvim_buf_set_name(): a relative name is relative to the caller's CWD.
+    local renamed = join(directories.global, 'Xtest-cd-renamed')
+    n.api.nvim_buf_set_name(wbuf, renamed)
+    eq(t.fix_slashes(join(startdir, renamed)), t.fix_slashes(n.api.nvim_buf_get_name(wbuf)))
+
+    -- An explicit :bcd! in a write autocmd persists.
+    command(('autocmd BufWritePost <buffer=%d> ++once bcd!'):format(wbuf))
+    write_in_buf_call()
+    eq({ 0, startdir }, { lwd(-1, -1, wbuf), cwd() })
+  end)
+
   it('buffer names/statusline updated after switch back #41424', function()
     local screen = Screen.new(40, 8)
     local bufdir = join(startdir, directories.buffer)

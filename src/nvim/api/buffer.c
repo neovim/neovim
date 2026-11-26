@@ -40,6 +40,7 @@
 #include "nvim/move.h"
 #include "nvim/ops.h"
 #include "nvim/option_vars.h"
+#include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/state_defs.h"
 #include "nvim/types_defs.h"
@@ -994,11 +995,15 @@ void nvim_buf_set_name(Buffer buf, String name, Error *err)
       p_acd = false;
     }
 
-    // Switch context to `b`: autocommands will be executed by rename_buffer
+    // Resolve relative name before ctx_switch() (which may apply :bcd).
+    char *ffname = *name.data != NUL ? fix_fname(name.data) : NULL;
+
+    // Switch context to `b`. Autocommands will be executed by rename_buffer.
     CtxSwitch aco = { 0 };
     ctx_switch(&aco, NULL, NULL, b, 0);
-    ren_ret = rename_buffer(name.data);
+    ren_ret = rename_buffer(aco.cs_entered_dir != NULL && ffname != NULL ? ffname : name.data);
     ctx_restore(&aco);
+    xfree(ffname);
 
     if (!is_curbuf) {
       RedrawingDisabled--;

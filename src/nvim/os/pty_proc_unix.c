@@ -313,7 +313,7 @@ static void init_child(PtyProc *ptyproc)
 
   Proc *proc = (Proc *)ptyproc;
   int err = 0;
-  // Don't use os_chdir() as that may buffer UI events unnecessarily.
+  // Don't use os_chdir() as that may give a message ('verbose').
   if (proc->cwd && (err = uv_chdir(proc->cwd)) != 0) {
     ELOG("chdir(%s) failed: %s", proc->cwd, uv_strerror(err));
     _exit(122);
