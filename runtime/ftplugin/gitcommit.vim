@@ -18,6 +18,10 @@ setlocal includeexpr=substitute(v:fname,'^[bi]/','','')
 
 let b:undo_ftplugin = 'setl modeline< tabstop< formatoptions< tw< com< cms< formatlistpat< inc< inex<'
 
+" Blank diff context lines contain a significant space.
+let b:editorconfig_ignore = ['trim_trailing_whitespace']
+let b:undo_ftplugin .= '|unlet! b:editorconfig_ignore'
+
 let s:l = search('\C\m^[#;@!$%^&|:] -\{24,\} >8 -\{24,\}$', 'cnW', '', 100)
 let &l:comments = ':' . (matchstr(getline(s:l ? s:l : '$'), '^[#;@!$%^&|:]\S\@!') . '#')[0]
 let &l:commentstring = &l:comments[1] . ' %s'

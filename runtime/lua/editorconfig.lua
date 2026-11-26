@@ -32,6 +32,14 @@
 ---
 --- Nvim stores the applied properties in [b:editorconfig] if it is not `false`.
 
+--- @brief [b:editorconfig_ignore]()
+---
+--- A list of EditorConfig property names to ignore for this buffer.
+--- For example in a filetype plugin:
+--- ```lua
+--- vim.b.editorconfig_ignore = { 'trim_trailing_whitespace' }
+--- ```
+
 --- @brief [editorconfig-custom-properties]()
 ---
 --- New properties can be added by adding a new entry to the "properties" table.
@@ -343,6 +351,10 @@ function M.config(buf)
     if is_root then
       break
     end
+  end
+
+  for _, opt in ipairs(vim.b[buf].editorconfig_ignore or {}) do
+    opts[opt] = nil
   end
 
   local applied = {} --- @type table<string,string>

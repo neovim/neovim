@@ -269,6 +269,13 @@ per-buffer by setting the |b:editorconfig| buffer-local variable to `false`.
 
 Nvim stores the applied properties in |b:editorconfig| if it is not `false`.
 
+                                                       *b:editorconfig_ignore*
+
+A list of EditorConfig property names to ignore for this buffer. For example
+in a filetype plugin: >lua
+    vim.b.editorconfig_ignore = { 'trim_trailing_whitespace' }
+<
+
                                               *editorconfig-custom-properties*
 
 New properties can be added by adding a new entry to the "properties" table.

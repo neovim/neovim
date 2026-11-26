@@ -127,6 +127,10 @@ setup(function()
     [custom_properties.txt]
     property1 = something1
     property2 = x[something2]x
+
+    [COMMIT_EDITMSG]
+    trim_trailing_whitespace = true
+    max_line_length = 42
     ]]
   )
 end)
@@ -307,6 +311,26 @@ But not this one
     api.nvim_buf_set_var(bufnr, 'editorconfig', false)
     test_case('3_space.txt', { shiftwidth = 42 })
     test_case('4_space.py', { shiftwidth = 4 })
+  end)
+
+  it('can exclude properties per-buffer', function()
+    local bufnr = fn.bufadd(vim.fs.joinpath(testdir, '4_space.py'))
+    api.nvim_buf_set_var(bufnr, 'editorconfig_ignore', { 'tab_width' })
+    test_case('4_space.py', { expandtab = true, shiftwidth = 4, tabstop = 4 })
+    eq({ indent_style = 'space', indent_size = '4' }, api.nvim_buf_get_var(bufnr, 'editorconfig'))
+    eq({ 'tab_width' }, api.nvim_buf_get_var(bufnr, 'editorconfig_ignore'))
+    test_case('4_tab_width_of_8.txt', { expandtab = false, shiftwidth = 4, tabstop = 8 })
+  end)
+
+  it('does not trim gitcommit buffers', function()
+    local filename = vim.fs.joinpath(testdir, 'COMMIT_EDITMSG')
+    local message = 'Subject\n\n \n'
+    t.write_file(filename, message)
+    test_case('COMMIT_EDITMSG', { filetype = 'gitcommit', textwidth = 42 })
+    command('write')
+    eq(message, t.read_file(filename))
+    command('setlocal filetype=text')
+    eq(0, fn.exists('b:editorconfig_ignore'))
   end)
 
   it('does not operate on invalid buffers', function()
