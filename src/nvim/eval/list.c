@@ -292,10 +292,10 @@ static void filter_map_list(list_T *l, filtermap_T filtermap, const char *func_n
   // set_vim_var_nr() doesn't set the type
   set_vim_var_type(VV_KEY, VAR_NUMBER);
 
+  // Disallow changing the List while "expr" is evaluated, it could free
+  // the current item.  VAR_FIXED, so that :unlockvar can't undo it.
   const VarLockStatus prev_lock = tv_list_locked(l);
-  if (tv_list_locked(l) == VAR_UNLOCKED) {
-    tv_list_set_lock(l, VAR_LOCKED);
-  }
+  tv_list_set_lock(l, VAR_FIXED);
 
   int idx = 0;
   for (listitem_T *li = tv_list_first(l); li != NULL;) {

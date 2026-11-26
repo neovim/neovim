@@ -196,7 +196,7 @@ endfunc
 func Test_map_and_modify()
   let l = ["abc"]
   " cannot change the list halfway a map()
-  call assert_fails('call map(l, "remove(l, 0)[0]")', 'E741:')
+  call assert_fails('call map(l, "remove(l, 0)[0]")', 'E742:')
 
   let d = #{a: 1, b: 2, c: 3}
   call assert_fails('call map(d, "remove(d, v:key)[0]")', 'E741:')
@@ -209,7 +209,7 @@ endfunc
 func Test_filter_and_modify()
   let l = [0]
   " cannot change the list halfway thru filter()
-  call assert_fails('call filter(l, "remove(l, 0)")', 'E741:')
+  call assert_fails('call filter(l, "remove(l, 0)")', 'E742:')
 
   let d = #{a: 0, b: 0, c: 0}
   call assert_fails('call filter(d, "remove(d, v:key)")', 'E741:')
@@ -221,13 +221,44 @@ endfunc
 func Test_foreach_and_modify()
   let l = [0]
   " cannot change the list halfway thru foreach()
-  call assert_fails('call foreach(l, "let a = remove(l, 0)")', 'E741:')
+  call assert_fails('call foreach(l, "let a = remove(l, 0)")', 'E742:')
 
   let d = #{a: 0, b: 0, c: 0}
   call assert_fails('call foreach(d, "let a = remove(d, v:key)")', 'E741:')
 
   let b = 0z1234
   call assert_fails('call foreach(b, "let a = remove(b, 0)")', 'E741:')
+endfunc
+
+func s:UnlockAndRemove(idx, val)
+  if a:idx == 0
+    unlockvar g:Xlist
+    call remove(g:Xlist, 1)
+  endif
+  return a:val
+endfunc
+
+" Using :unlockvar in the expression must not allow changing the list while
+" map(), filter() or foreach() is going over it.
+func Test_map_filter_unlock_and_modify()
+  for fname in ['map', 'filter', 'foreach']
+    let g:Xlist = [10, 20, 30]
+    call assert_fails('call ' .. fname
+          \ .. '(g:Xlist, function("s:UnlockAndRemove"))', 'E742:', fname)
+    call assert_equal([10, 20, 30], g:Xlist, fname)
+    call assert_equal(0, islocked('g:Xlist'), fname)
+
+    " also when the list was locked before, filter() does not accept that
+    if fname != 'filter'
+      let g:Xlist = [10, 20, 30]
+      lockvar 1 g:Xlist
+      call assert_fails('call ' .. fname
+            \ .. '(g:Xlist, function("s:UnlockAndRemove"))', 'E742:', fname)
+      call assert_equal([10, 20, 30], g:Xlist, fname)
+      unlockvar g:Xlist
+    endif
+  endfor
+  unlet g:Xlist
 endfunc
 
 func Test_mapnew_dict()
