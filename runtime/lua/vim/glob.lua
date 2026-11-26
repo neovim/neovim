@@ -255,11 +255,7 @@ local function to_codepoint(utf8_str)
 end
 
 --- Pattern for matching UTF-8 characters
-local cont = m.R('\128\191')
-local any_utf8 = m.R('\0\127')
-  + m.R('\194\223') * cont
-  + m.R('\224\239') * cont * cont
-  + m.R('\240\244') * cont * cont * cont
+local any_utf8 = m.utfR(0, 0x10FFFF)
 
 --- Creates a character class pattern for glob ranges
 --- @param inv string Inversion flag ('!' or '')
@@ -278,7 +274,7 @@ local function class(inv, ranges)
     patt = patt + (type(v) == 'table' and m.utfR(to_codepoint(v[1]), to_codepoint(v[2])) or m.P(v))
   end
   if inv == '!' then
-    patt = m.P(1) - patt --[[@as vim.lpeg.Pattern]]
+    patt = any_utf8 - patt --[[@as vim.lpeg.Pattern]]
   end
   return patt - m.P '/'
 end
@@ -318,7 +314,7 @@ g = {
   Boundary = #m.P'/' * m.Cc(#m.P'/') + eof,
   Token    = m.V'Ques' + m.V'Class' + m.V'Escape' + m.V'Literal',
   Star     = m.P'*',
-  Ques     = m.P'?' * m.Cc(notslash),
+  Ques     = m.P'?' * m.Cc(any_utf8 - m.P'/'),
   Escape   = escape / m.P,
   Literal  = m.C(letter^1) / m.P,
 
