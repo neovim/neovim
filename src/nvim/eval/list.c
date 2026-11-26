@@ -100,10 +100,10 @@ static void filter_map_dict(dict_T *d, filtermap_T filtermap, const char *func_n
     d_ret = rettv->vval.v_dict;
   }
 
+  // Disallow changing the Dict while "expr" is evaluated, it could free
+  // the current item.  VAR_FIXED, so that :unlockvar can't undo it.
   const VarLockStatus prev_lock = d->dv_lock;
-  if (d->dv_lock == VAR_UNLOCKED) {
-    d->dv_lock = VAR_LOCKED;
-  }
+  d->dv_lock = VAR_FIXED;
   hash_lock(&d->dv_hashtab);
   TV_DICT_ITER(d, di, {
     if (filtermap == FILTERMAP_MAP
@@ -292,10 +292,10 @@ static void filter_map_list(list_T *l, filtermap_T filtermap, const char *func_n
   // set_vim_var_nr() doesn't set the type
   set_vim_var_type(VV_KEY, VAR_NUMBER);
 
+  // Disallow changing the List while "expr" is evaluated, it could free
+  // the current item.  VAR_FIXED, so that :unlockvar can't undo it.
   const VarLockStatus prev_lock = tv_list_locked(l);
-  if (tv_list_locked(l) == VAR_UNLOCKED) {
-    tv_list_set_lock(l, VAR_LOCKED);
-  }
+  tv_list_set_lock(l, VAR_FIXED);
 
   int idx = 0;
   for (listitem_T *li = tv_list_first(l); li != NULL;) {
