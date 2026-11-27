@@ -405,6 +405,30 @@ describe('vim.iter', function()
     end
   end)
 
+  it('take(n) does not advance the source past its limit', function()
+    local calls = 0
+    local it = vim
+      .iter(function()
+        calls = calls + 1
+        if calls <= 3 then
+          return calls
+        end
+      end)
+      :take(2)
+
+    eq({ 1, 2 }, it:totable())
+    eq(2, calls)
+    eq(nil, it:next())
+    eq(2, calls)
+  end)
+
+  it('take(n) does not leave a stale peeked value after exhaustion', function()
+    local it = vim.iter(string.gmatch('abc', '.')):take(1)
+    eq('a', it:peek())
+    it:next()
+    eq(nil, it:peek())
+  end)
+
   it('any()', function()
     local function odd(v)
       return v % 2 ~= 0
