@@ -94,7 +94,7 @@ end
 ---(if present) and tracks which range the cursor is currently inside.
 ---
 ---@package
----@param err lsp.ResponseError?
+---@param err vim.json.rpc.Error?
 ---@param result lsp.LinkedEditingRanges?
 ---@param ctx lsp.HandlerContext
 function LinkedEditor:handler(err, result, ctx)

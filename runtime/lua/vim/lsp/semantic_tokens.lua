@@ -1003,7 +1003,7 @@ end
 --- invalidate the current results of all buffers and automatically kick off a
 --- new request for buffers that are displayed in a window. For those that aren't,
 --- the BufWinEnter event should take care of it next time it's displayed.
----@param err lsp.ResponseError?
+---@param err vim.json.rpc.Error?
 ---@param ctx lsp.HandlerContext
 function M._refresh(err, _, ctx)
   if err then

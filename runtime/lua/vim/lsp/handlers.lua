@@ -393,7 +393,7 @@ end
 --- )
 --- ```
 ---
----@param _ lsp.ResponseError?
+---@param _ vim.json.rpc.Error?
 ---@param result lsp.Hover
 ---@param ctx lsp.HandlerContext
 ---@param config table Configuration table.
@@ -452,7 +452,7 @@ local sig_help_ns = api.nvim_create_namespace('nvim.lsp.signature_help')
 --- )
 --- ```
 ---
----@param _ lsp.ResponseError?
+---@param _ vim.json.rpc.Error?
 ---@param result lsp.SignatureHelp? Response from the language server
 ---@param ctx lsp.HandlerContext Client context
 ---@param config table Configuration table.

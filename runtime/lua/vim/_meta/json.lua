@@ -4,6 +4,8 @@ error('Cannot require a meta file')
 
 ---@nodoc
 vim.json = {}
+---@nodoc
+vim.json.rpc = require('vim.json.rpc')
 
 -- luacheck: no unused args
 

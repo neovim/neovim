@@ -1437,23 +1437,47 @@ do
   end
 end
 
---- @generic T
+--- Attaches lazy submodule loading to an existing table {tbl} in-place.
+---
+--- @generic T: table
+--- @param tbl T
+--- @param root string
+--- @param mod table<string, any>
+--- @return T
+function vim._defer_require_into(tbl, root, mod)
+  tbl._submodules = type(rawget(tbl, '_submodules')) == 'table'
+      and vim.tbl_extend('force', tbl._submodules, mod)
+    or mod
+
+  local old_mt = getmetatable(tbl)
+  local old_index = old_mt and old_mt.__index
+  local mt = old_mt and vim.tbl_extend('force', {}, old_mt) or {}
+
+  --- @param t table<string, any>
+  --- @param k string
+  mt.__index = function(t, k)
+    if mod[k] then
+      t[k] = require(root .. '.' .. k)
+      return t[k]
+    end
+    if type(old_index) == 'table' then
+      return old_index[k]
+    elseif type(old_index) == 'function' then
+      return old_index(t, k)
+    end
+  end
+
+  return setmetatable(tbl, mt)
+end
+
+--- Creates a module table that lazily `require()`s submodules in {mod} under {root}.
+---
+--- @generic T: table
 --- @param root string
 --- @param mod T
 --- @return T
 function vim._defer_require(root, mod)
-  return setmetatable({ _submodules = mod }, {
-    ---@param t table<string, any>
-    ---@param k string
-    __index = function(t, k)
-      if not mod[k] then
-        return
-      end
-      local name = string.format('%s.%s', root, k)
-      t[k] = require(name)
-      return t[k]
-    end,
-  })
+  return vim._defer_require_into({}, root, mod)
 end
 
 --- Creates a module alias/shim that lazy-loads a target module.

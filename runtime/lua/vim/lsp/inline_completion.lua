@@ -112,7 +112,7 @@ end
 --- `lsp.Handler` for `textDocument/inlineCompletion`.
 ---
 ---@package
----@param err? lsp.ResponseError
+---@param err? vim.json.rpc.Error
 ---@param result? lsp.InlineCompletionItem[]|lsp.InlineCompletionList
 ---@param ctx lsp.HandlerContext
 function Completor:handler(err, result, ctx)

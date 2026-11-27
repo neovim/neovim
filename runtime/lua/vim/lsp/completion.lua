@@ -745,10 +745,10 @@ end
 --- @param bufnr integer
 --- @param win integer
 --- @param ctx? lsp.CompletionContext
---- @param callback fun(responses: table<integer, { err: lsp.ResponseError, result: vim.lsp.CompletionResult }>)
+--- @param callback fun(responses: table<integer, { err: vim.json.rpc.Error, result: vim.lsp.CompletionResult }>)
 --- @return function # Cancellation function
 local function request(clients, bufnr, win, ctx, callback)
-  local responses = {} --- @type table<integer, { err: lsp.ResponseError, result: any }>
+  local responses = {} --- @type table<integer, { err: vim.json.rpc.Error, result: any }>
   local request_ids = {} --- @type table<integer, integer>
   local remaining_requests = vim.tbl_count(clients)
 

@@ -32,7 +32,7 @@ describe('vim.lsp.on_type_formatting', function()
         },
         handlers = {
           ---@param params lsp.DocumentOnTypeFormattingParams
-          ---@param callback fun(err?: lsp.ResponseError, result?: lsp.TextEdit[])
+          ---@param callback fun(err?: vim.json.rpc.Error, result?: lsp.TextEdit[])
           ['textDocument/onTypeFormatting'] = function(_, params, callback)
             callback(nil, {
               {
@@ -114,7 +114,7 @@ describe('vim.lsp.on_type_formatting', function()
         },
         handlers = {
           ---@param params lsp.DocumentOnTypeFormattingParams
-          ---@param callback fun(err?: lsp.ResponseError, result?: lsp.TextEdit[])
+          ---@param callback fun(err?: vim.json.rpc.Error, result?: lsp.TextEdit[])
           ['textDocument/onTypeFormatting'] = function(_, params, callback)
             callback(nil, {
               {

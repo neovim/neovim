@@ -496,6 +496,7 @@ LUA
 • |vim.o| now accepts table style values for assignment.
 • |vim.keycode()| returns structured info as return value 2.
 • |Iter:count()| counts items in the iterator.
+• Generic JSON-RPC client/server implementation: |json-rpc|.
 
 OPTIONS
 

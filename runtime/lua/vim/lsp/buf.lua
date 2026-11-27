@@ -203,7 +203,7 @@ end
 local function request_with_opts(name, params, opts)
   local req_handler --- @type function?
   if opts then
-    --- @param err lsp.ResponseError?
+    --- @param err vim.json.rpc.Error?
     --- @param result lsp.DocumentSymbol[]|lsp.SymbolInformation[]|lsp.WorkspaceSymbol[]|nil
     --- @param ctx lsp.HandlerContext
     --- @param config? vim.lsp.ListOpts
@@ -404,7 +404,7 @@ function M.implementation(opts)
   get_locations('textDocument/implementation', nil, opts)
 end
 
---- @param results table<integer,{err: lsp.ResponseError?, result: lsp.SignatureHelp?}>
+--- @param results table<integer,{err: vim.json.rpc.Error?, result: lsp.SignatureHelp?}>
 local function process_signature_help_results(results)
   local signatures = {} --- @type [vim.lsp.Client,lsp.SignatureInformation][]
   local active_signature = 1
@@ -1170,7 +1170,7 @@ end
 
 ---@nodoc
 ---@class vim.lsp.CodeActionResultEntry
----@field err? lsp.ResponseError
+---@field err? vim.json.rpc.Error
 ---@field result? (lsp.Command|lsp.CodeAction)[]
 ---@field context lsp.HandlerContext
 
