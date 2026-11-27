@@ -2408,9 +2408,9 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth, boo
 
         // Check an entry whether it matches.
         // - Full match: mlen == keylen
-        // - Partly match: mlen == typebuf.tb_len
+        // - Partly match: tb_mlen == typebuf.tb_len
         keylen = mp->m_keylen;
-        if (mlen == keylen || (mlen == typebuf.tb_len && typebuf.tb_len < keylen)) {
+        if (mlen == keylen || (tb_mlen == typebuf.tb_len && mlen < keylen)) {
           int n;
 
           // If only script-local mappings are allowed, check if the
