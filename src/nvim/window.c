@@ -3779,11 +3779,13 @@ static bool frame_has_win(const frame_T *frp, const win_T *wp)
   return false;
 }
 
-/// Check if current window is at the bottom
-/// Returns true if there are no windows below current window
-static bool is_bottom_win(win_T *wp)
+/// Checks if no window is below `wp` in its tabpage. False for a float.
+bool win_is_bottom(win_T *wp)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
+  if (wp->w_floating) {
+    return false;  // Not in the frame tree (`w_frame` is NULL).
+  }
   for (frame_T *frp = wp->w_frame; frp->fr_parent != NULL; frp = frp->fr_parent) {
     if (frp->fr_parent->fr_layout == FR_COL && frp->fr_next != NULL) {
       return false;
@@ -3815,7 +3817,7 @@ void frame_new_height(frame_T *topfrp, int height, bool topfirst, bool wfh, bool
   if (topfrp->fr_win != NULL) {
     // Simple case: just one window.
     win_T *wp = topfrp->fr_win;
-    if (is_bottom_win(wp)) {
+    if (win_is_bottom(wp)) {
       wp->w_hsep_height = 0;
     }
     win_new_height(wp, height - wp->w_hsep_height - wp->w_status_height);
@@ -7248,7 +7250,7 @@ static void last_status_rec(frame_T *fr, bool statusline, bool is_stl_global)
 {
   if (fr->fr_layout == FR_LEAF) {
     win_T *wp = fr->fr_win;
-    bool is_last = is_bottom_win(wp);
+    bool is_last = win_is_bottom(wp);
 
     if (is_last) {
       if (wp->w_status_height != 0 && (!statusline || is_stl_global)) {

@@ -237,6 +237,14 @@ local function pager_shown()
   return api.nvim_win_is_valid(ui.wins.pager) and not api.nvim_win_get_config(ui.wins.pager).hide
 end
 
+--- Rows covered by a cmdwin below the pager, on the pager's tabpage (see cmdwin.bottom_rows()).
+--- @return integer?
+local function cmdwin_rows()
+  local valid = api.nvim_win_is_valid(ui.wins.pager)
+  return valid and require('vim._core.cmdwin').bottom_rows(api.nvim_win_get_tabpage(ui.wins.pager))
+    or nil
+end
+
 --- True if current mode is Insert/Replace/Terminal mode, or a CTRL-O cmd ("niI", "ntT").
 local function insert_mode()
   local mode = api.nvim_get_mode().mode
@@ -485,7 +493,7 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
     -- When the pager is open always route typed commands there. This better simulates
     -- the UI1 behavior after opening the cmdline below a previous multiline message,
     -- and seems useful enough even when the pager was entered manually.
-    or (trigger == 'typed_cmd' and pager_shown() and fn.getcmdwintype() == '') and 'pager'
+    or (trigger == 'typed_cmd' and pager_shown() and cmdwin_rows() == nil) and 'pager'
     -- Otherwise route to configured target:
     or (trigger ~= '' and ui.cfg.msg.targets[trigger])
     or id_target
@@ -718,8 +726,7 @@ local function win_row_height_border(tgt, min)
       math.max(1, min),
       min < o.lines - ui.cmdheight and ui.cmdheight > 0
   end
-  local cmdwin_win = require('vim._core.cmdwin').win()
-  local cmdwin = cmdwin_win and api.nvim_win_get_height(cmdwin_win) or 0
+  local cmdwin = cmdwin_rows() or 0
   local global_stl = (cmdwin > 0 or o.laststatus == 3) and 1 or 0
   local row = 1 - cmdwin - global_stl
   local top = min < o.lines - ui.cmdheight - global_stl - cmdwin
@@ -747,7 +754,7 @@ local function enter_pager()
       if fn.getcmdtype() ~= '' then
         -- WinEnter fires before we can detect cmdwin will be entered: keep open.
         return
-      elseif ev.event == 'WinResized' and fn.getcmdwintype() == '' then
+      elseif ev.event == 'WinResized' and (cmdwin_rows() or 0) == 0 then
         -- Remember height to be restored when cmdwin is closed.
         height = api.nvim_win_get_height(ui.wins.pager)
       elseif ev.event == 'WinEnter' then
@@ -787,7 +794,9 @@ function M.set_pos(tgt, focus)
       local cfg = { hide = false, relative = 'laststatus', col = 10000 }
       local has_border
       cfg.row, cfg.height, has_border = win_row_height_border(t, texth.all)
-      cfg.border = has_border and t ~= 'msg' and { '', top, '', '', '', '', '', '' } or nil
+      cfg.border = has_border and t ~= 'msg' and { '', top, '', '', '', '', '', '' }
+        or t == 'pager' and 'none' -- Like enter_pager(): nil would keep a stale border.
+        or nil
       cfg.mouse = tgt == 'cmd' or t == 'msg' or nil
       api.nvim_win_set_config(win, cfg)
       api.nvim_win_set_cursor(win, { 1, 0 })

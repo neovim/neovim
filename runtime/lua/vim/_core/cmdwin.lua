@@ -8,7 +8,6 @@ local M = {}
 
 --- @class vim._core.cmdwin.State
 --- @field type ':'|'/'|'?'
---- @field win integer   cmdwin window id
 --- @field buf integer   cmdwin buffer id
 --- @field caller_win integer  Window to return-to on close
 
@@ -104,7 +103,6 @@ function M.open(type, init_line, init_col)
 
   state = {
     type = type,
-    win = win,
     buf = buf,
     caller_win = caller,
   }
@@ -168,10 +166,25 @@ function M._cleanup(opts)
   end
 end
 
---- cmdwin window, or nil if not open.
+--- Windows showing the cmdwin buffer (also after `:split`), or empty if not open.
+--- @return integer[]
+function M.wins()
+  return state and vim.fn.win_findbuf(state.buf) or {}
+end
+
+--- Rows covered by cmdwin at bottom of `tab`. 0 if not at the bottom, nil if no cmdwin in `tab`.
+--- @param tab integer
 --- @return integer?
-function M.win()
-  return state and vim.api.nvim_win_is_valid(state.win) and state.win or nil
+function M.bottom_rows(tab)
+  local rows = nil ---@type integer?
+  for _, win in ipairs(M.wins()) do
+    if vim.api.nvim_win_get_tabpage(win) == tab then
+      local info = assert(vim.fn.getwininfo(win)[1])
+      local bottom = vim.api.nvim__win_is_bottom(win)
+      rows = bottom and info.winbar + info.height or rows or 0
+    end
+  end
+  return rows
 end
 
 --- Closes the cmdwin and returns its current line and type.

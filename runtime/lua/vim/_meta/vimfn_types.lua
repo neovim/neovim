@@ -122,6 +122,7 @@ error('Cannot require a meta file')
 --- @field leftcol integer
 --- @field loclist integer
 --- @field quickfix integer
+--- @field status_height integer
 --- @field tabnr integer
 --- @field terminal integer
 --- @field textoff integer

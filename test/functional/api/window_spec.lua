@@ -699,6 +699,17 @@ describe('API/win', function()
     end)
   end)
 
+  it('nvim__win_is_bottom', function()
+    command('split | vsplit')
+    api.nvim_open_win(0, false, { relative = 'editor', row = 0, col = 0, width = 1, height = 1 })
+    command('tabnew')
+    -- Top-left, top-right, bottom, float; window in tabpage 2.
+    eq(
+      { false, false, true, false, true },
+      vim.tbl_map(api.nvim__win_is_bottom, api.nvim_list_wins())
+    )
+  end)
+
   describe('close', function()
     it('can close current window', function()
       local oldwin = api.nvim_get_current_win()
