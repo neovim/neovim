@@ -2673,6 +2673,9 @@ int expand_set_popupoption(optexpand_T *args, int *numMatches, char ***matches)
       return expand_set_opt_string(args, opt_pvp_border_values,
                                    ARRAY_SIZE(opt_pvp_border_values) - 1, numMatches, matches);
     }
+    if (completing_value_for_subopt(args, "highlight")) {
+      return expand_set_opt_generic(args, get_highlight_name, numMatches, matches);
+    }
     return FAIL;  // "height:"/"width:" = number, nothing to complete.
   }
 
