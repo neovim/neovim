@@ -307,6 +307,15 @@ Boolean nvim_win_is_valid(Window win)
   return ret;
 }
 
+/// Gets `win_is_bottom()`.
+///
+/// @nodoc
+Boolean nvim__win_is_bottom(Window win, Error *err)
+{
+  win_T *wp = find_window_by_handle(win, err);
+  return wp != NULL && win_is_bottom(wp);
+}
+
 /// Closes the window and hides the buffer it contains (like |:hide| with a |window-ID|; unrelated
 /// to the `hide` flag of |nvim_open_win()|, |nvim_win_get_config()|).
 ///

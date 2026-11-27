@@ -301,6 +301,66 @@ describe('messages2', function()
     ]])
   end)
 
+  it('pager placement with cmdwin', function()
+    command('set showtabline=0 | for _ in range(20) | echom "foo" | endfor')
+    exec_lua([[require('vim._core.cmdwin').open(':')]])
+    -- cmdwin in another tabpage does not affect the pager (height, typed command routing).
+    command('tabnew | messages')
+    screen:expect([[
+      ^foo                                                  |
+      foo                                                  |*12
+      foo(19)                                              |
+    ]])
+    feed(':echo "bar"<CR>')
+    screen:expect([[
+      foo                                                  |*12
+      ^bar                                                  |
+      {16::}{15:echo} {26:"bar"}                                          |
+    ]])
+    -- pager height is updated after a resize.
+    screen:try_resize(53, 16)
+    screen:expect([[
+      ^foo                                                  |
+      foo                                                  |*14
+      {16::}{15:echo} {26:"bar"}                                          |
+    ]])
+    screen:try_resize(53, 14)
+    -- From the cmdwin tabpage, an (unfocused) pager is shown above the cmdwin again. Also when
+    -- OptionSet fires for a window on another tabpage.
+    feed('q')
+    command('lua require("vim._core.ui2").enable({ msg = { targets = "pager" } })')
+    command('echo "baz" | tabprev')
+    screen:expect([[
+      foo                                                  |*5
+      {1::}^                                                    |
+      {1:~                                                    }|*6
+      {3:[Command Line]                                       }|
+      {16::}{15:echo} {26:"bar"}                                          |
+    ]])
+    exec_lua(function()
+      vim.wo[vim.api.nvim_tabpage_get_win(vim.api.nvim_list_tabpages()[2])].fillchars = 'eob: '
+    end)
+    screen:expect_unchanged()
+    -- Not above a cmdwin that is not at the bottom.
+    command('wincmd K | messages')
+    screen:expect([[
+      ^foo                                                  |
+      foo                                                  |*12
+      {16::}{15:echo} {26:"bar"}                                          |
+    ]])
+    -- Above the remaining cmdwin window after closing the original one.
+    feed('q')
+    command('wincmd J | split | wincmd j | close | messages')
+    screen:expect([[
+      ^foo                                                  |
+      foo                                                  |*5
+      {1::}                                                    |
+      {1:~                                                    }|*5
+      {2:[Command Line]                                       }|
+      {16::}{15:echo} {26:"bar"}                                          |
+    ]])
+  end)
+
   it('new buffer, window and options after closing a buffer or switching tabpage', function()
     command('set nomodifiable | echom "foo" | messages')
     screen:expect([[

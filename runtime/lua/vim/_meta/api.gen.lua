@@ -207,6 +207,14 @@ function vim.api.nvim__stats() end
 --- @return any
 function vim.api.nvim__unpack(str) end
 
+--- WARNING: This feature is experimental/unstable.
+---
+--- Gets `win_is_bottom()`.
+---
+--- @param win integer
+--- @return boolean
+function vim.api.nvim__win_is_bottom(win) end
+
 --- @deprecated
 --- @param buffer integer
 --- @param ns_id integer
