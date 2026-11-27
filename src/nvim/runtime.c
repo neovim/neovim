@@ -2206,7 +2206,7 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
     do_source_str_init(&cookie, str);
     fname_exp = xstrdup(fname);
   } else {
-    char *p = expand_env_save(fname);
+    char *p = path_with_url(fname) ? nlua_uri_to_fname(fname) : expand_env_save(fname);
     if (p == NULL) {
       return retval;
     }

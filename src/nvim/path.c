@@ -19,6 +19,7 @@
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
 #include "nvim/globals.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
@@ -1746,7 +1747,8 @@ bool vim_isAbsName(const char *name)
 /// @param      fname filename to evaluate
 /// @param[out] buf   contains `fname` absolute path, or:
 ///                   - truncated `fname` if longer than `len`
-///                   - unmodified `fname` if absolute path fails or is a URL
+///                   - normalized `fname` if it's a file URL
+///                   - unmodified `fname` if resolving fails or it's another URL
 /// @param      len   length of `buf`
 /// @param      force flag to force expanding even if the path is absolute
 ///
@@ -1766,7 +1768,9 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
   }
 
   if (path_with_url(fname)) {
-    xstrlcpy(buf, fname, len);
+    char *ret = nlua_uri_to_fname(fname);
+    xstrlcpy(buf, ret, len);
+    XFREE_CLEAR(ret);
     return OK;
   }
 
@@ -1793,7 +1797,7 @@ char *fix_fname(const char *fname)
 #ifdef UNIX
   return FullName_save(fname, true);
 #else
-  if (!vim_isAbsName(fname)
+  if (!path_is_absolute(fname)
       || strstr(fname, "..") != NULL
       || strstr(fname, "//") != NULL
 # ifdef BACKSLASH_IN_FILENAME

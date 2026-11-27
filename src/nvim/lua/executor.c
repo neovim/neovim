@@ -1764,6 +1764,27 @@ void nlua_call_typval(const char *module, const char *func, typval_T *argvars, t
   nlua_exec_typval(buf, strlen(buf), module, argvars, argcount, false, rettv);
 }
 
+/// Resolves a filename via `vim.uri.to_fname()`, without propagating Lua errors.
+///
+/// @return [allocated] Resolved filename, or a copy of `uri` if failed
+char *nlua_uri_to_fname(const char *uri)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+{
+  if (global_lstate == NULL || check_secure()) {
+    return xstrdup(uri);
+  }
+
+  MAXSIZE_TEMP_ARRAY(args, 1);
+  ADD_C(args, CSTR_AS_OBJ(uri));
+  Error err = ERROR_INIT;
+  Object result = NLUA_EXEC_STATIC("return require('vim.uri').to_fname(...)", args,
+                                   kRetObject, NULL, &err);
+  char *fname = result.type == kObjectTypeString ? string_to_cstr(result.data.string) : NULL;
+  api_clear_error(&err);
+  api_free_object(result);
+  return fname != NULL ? fname : xstrdup(uri);
+}
+
 /// Calls Lua to implement an excmd. Passes `eap` + `cmdmod` to Lua as a dict arg, which is arranged
 /// to match the Lua type `vim.api.keyset.create_user_command.command_args`.
 ///

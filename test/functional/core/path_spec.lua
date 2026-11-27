@@ -223,15 +223,23 @@ describe('file search', function()
     )
   end)
 
-  it('gf/<cfile> handles local file: paths', function()
-    local path = fn.fnamemodify(vim.fs.joinpath(testdir, 'gf-target.txt'), ':p'):gsub('\\', '/')
-    local uri = 'file:' .. (is_os('win') and '/' or '') .. path
+  it('gf resolves file scheme URI #24032', function()
+    local path = vim.fs.abspath(vim.fs.joinpath(testdir, 'gf-target.txt'))
+    local uri = vim.uri.from_fname(path) -- file:///xx
     write_file(path, '')
     insert(uri)
     command('norm! 0')
-    eq(path, eval('expand("<cfile>")'))
+    eq(uri, eval('expand("<cfile>")'))
     feed('gf')
-    eq(path, fn.fnamemodify(eval('expand("%:p")'), ':p'):gsub('\\', '/'))
+    eq(path, api.nvim_buf_get_name(0))
+
+    command('bwipeout | normal! dd')
+    uri = uri:gsub('/+', '/') -- file:/xxx
+    insert(uri)
+    command('norm! 0')
+    eq(uri, eval('expand("<cfile>")'))
+    feed('gf')
+    eq(path, api.nvim_buf_get_name(0))
   end)
 
   ---@param funcname 'finddir' | 'findfile'
