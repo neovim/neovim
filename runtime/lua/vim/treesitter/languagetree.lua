@@ -1373,11 +1373,8 @@ end
 ---              Takes one argument, the number of the buffer.
 --- @param recursive? boolean Apply callbacks recursively for all children. Any new children will
 ---                           also inherit the callbacks.
+--- @return fun() # Unregisters the callbacks (from all children, if `recursive`).
 function LanguageTree:register_cbs(cbs, recursive)
-  if not cbs then
-    return
-  end
-
   local callbacks = recursive and self._callbacks_rec or self._callbacks
 
   for name, cbname in pairs(TSCallbackNames) do
@@ -1389,6 +1386,30 @@ function LanguageTree:register_cbs(cbs, recursive)
   if recursive then
     for _, child in pairs(self._children) do
       child:register_cbs(cbs, true)
+    end
+  end
+
+  return function()
+    self:_unregister_cbs(cbs, recursive)
+  end
+end
+
+---@param cbs table<TSCallbackNameOn,function>
+---@param recursive? boolean
+function LanguageTree:_unregister_cbs(cbs, recursive)
+  local callbacks = recursive and self._callbacks_rec or self._callbacks
+  for name, cbname in pairs(TSCallbackNames) do
+    if cbs[name] then
+      -- New list: `_do_callback()` may be iterating the old one.
+      callbacks[cbname] = vim.tbl_filter(function(cb)
+        return cb ~= cbs[name]
+      end, callbacks[cbname])
+    end
+  end
+
+  if recursive then
+    for _, child in pairs(self._children) do
+      child:_unregister_cbs(cbs, true)
     end
   end
 end

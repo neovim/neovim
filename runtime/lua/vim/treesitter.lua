@@ -118,8 +118,6 @@ function M.get_parser(buf, lang, opts)
     parsers[buf] = res
   end
 
-  parsers[buf]:register_cbs(opts.buf_attach_cbs)
-
   return parsers[buf]
 end
 
