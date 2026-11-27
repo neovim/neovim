@@ -267,6 +267,22 @@ describe('vim.uri', function()
   end)
 
   describe('to_buf()', function()
+    it('roundtrips unnamed buffers', function()
+      eq(
+        { 'untitled', true, true },
+        exec_lua(function()
+          local current = vim.api.nvim_get_current_buf()
+          local other = vim.api.nvim_create_buf(true, false)
+          local uri = assert(vim.uri.parse(vim.uri.from_buf(0)))
+          return {
+            uri.scheme,
+            vim.uri.to_buf(uri) == current,
+            vim.uri.to_buf(vim.uri.from_buf(other)) == other,
+          }
+        end)
+      )
+    end)
+
     it('to_buf & from_buf returns original uri for non-file uris', function()
       local uri =
         'jdt://contents/java.base/java.util/List.class?=sql/%5C/home%5C/user%5C/.jabba%5C/jdk%5C/openjdk%5C@1.14.0%5C/lib%5C/jrt-fs.jar%60java.base=/javadoc_location=/https:%5C/%5C/docs.oracle.com%5C/en%5C/java%5C/javase%5C/14%5C/docs%5C/api%5C/=/%3Cjava.util(List.class'

@@ -160,85 +160,62 @@ describe('vim.lsp.diagnostic', function()
       )
     end)
 
-    it('does not create buffer on empty diagnostics', function()
-      -- No buffer is created without diagnostics
+    it('does not create a buffer or match a partial name on empty diagnostics', function()
       eq(
-        -1,
+        { 0, 1, 0, 1 },
         exec_lua(function()
-          vim.lsp.diagnostic.on_publish_diagnostics(nil, {
-            uri = 'file:///fake/uri2',
-            diagnostics = {},
-          }, { client_id = client_id })
-          return vim.fn.bufnr(vim.uri.to_fname('file:///fake/uri2'))
-        end)
-      )
+          local uri = 'file:///fake/uri2'
+          local decoy_uri = uri .. '-backup'
+          local diagnostic = _G.make_error('Diagnostic', 0, 0, 0, 0)
+          local function publish(target, diagnostics)
+            vim.lsp.diagnostic.on_publish_diagnostics(nil, {
+              uri = target,
+              diagnostics = diagnostics,
+            }, { client_id = client_id })
+          end
 
-      -- Create buffer on diagnostics
-      neq(
-        -1,
-        exec_lua(function()
-          vim.lsp.diagnostic.on_publish_diagnostics(nil, {
-            uri = 'file:///fake/uri2',
-            diagnostics = {
-              _G.make_error('Diagnostic', 0, 0, 0, 0),
-            },
-          }, { client_id = client_id })
-          return vim.fn.bufnr(vim.uri.to_fname('file:///fake/uri2'))
-        end)
-      )
-      eq(
-        1,
-        exec_lua(function()
-          return #vim.diagnostic.get(_G.bufnr)
-        end)
-      )
-
-      -- Clear diagnostics after buffer was created
-      neq(
-        -1,
-        exec_lua(function()
-          vim.lsp.diagnostic.on_publish_diagnostics(nil, {
-            uri = 'file:///fake/uri2',
-            diagnostics = {},
-          }, { client_id = client_id })
-          return vim.fn.bufnr(vim.uri.to_fname('file:///fake/uri2'))
-        end)
-      )
-      eq(
-        0,
-        exec_lua(function()
-          return #vim.diagnostic.get(_G.bufnr)
+          publish(decoy_uri, { diagnostic })
+          publish(uri, {})
+          local existed = vim.fn.bufexists(vim.uri.to_fname(uri))
+          publish(uri, { diagnostic })
+          local buf = vim.uri.to_buf(uri)
+          local count = #vim.diagnostic.get(buf)
+          publish(uri, {})
+          return {
+            existed,
+            count,
+            #vim.diagnostic.get(buf),
+            #vim.diagnostic.get(vim.uri.to_buf(decoy_uri)),
+          }
         end)
       )
     end)
 
-    it('clears diagnostics for the client namespace on empty publish', function()
-      local before_clear, after_clear = exec_lua(function()
-        local ns = vim.lsp.diagnostic.get_namespace(client_id)
-
-        -- Publish diagnostics
-        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
-          uri = fake_uri,
-          diagnostics = {
-            _G.make_error('Diagnostic', 0, 0, 0, 0),
-          },
-        }, { client_id = client_id })
-
-        local before_clear = vim.diagnostic.get(diagnostic_bufnr, { namespace = ns })
-
-        -- Publish empty diagnostics
-        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
-          uri = fake_uri,
-          diagnostics = {},
-        }, { client_id = client_id })
-
-        local after_clear = vim.diagnostic.get(diagnostic_bufnr, { namespace = ns })
-
-        return before_clear, after_clear
-      end)
-
-      eq(1, #before_clear)
-      eq(0, #after_clear)
+    it('publishes and clears diagnostics separately for unnamed buffers', function()
+      eq(
+        { { 'first' }, { 'second' }, {}, { 'second' } },
+        exec_lua(function()
+          local first = vim.api.nvim_create_buf(true, false)
+          local second = vim.api.nvim_create_buf(true, false)
+          local ns = vim.lsp.diagnostic.get_namespace(client_id)
+          local function publish(buf, diagnostics)
+            vim.lsp.diagnostic.on_publish_diagnostics(nil, {
+              uri = vim.uri.from_buf(buf),
+              diagnostics = diagnostics,
+            }, { client_id = client_id })
+          end
+          local function messages(buf)
+            return vim.tbl_map(function(diagnostic)
+              return diagnostic.message
+            end, vim.diagnostic.get(buf, { namespace = ns }))
+          end
+          publish(first, { _G.make_error('first', 0, 0, 0, 0) })
+          publish(second, { _G.make_error('second', 0, 0, 0, 0) })
+          local before = { messages(first), messages(second) }
+          publish(first, {})
+          return { before[1], before[2], messages(first), messages(second) }
+        end)
+      )
     end)
 
     it('clears diagnostics when buffer is deleted', function()

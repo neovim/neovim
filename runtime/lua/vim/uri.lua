@@ -526,12 +526,19 @@ function M.from_fname(path)
   return tostring(_new({ scheme = 'file', host = host or '', path = M.encode(path) }))
 end
 
----Gets a URI from a buffer.
+---Gets a URI from a buffer. Unnamed buffers use a process-local `untitled:` URI.
 ---@since 15
 ---@param buf integer
 ---@return string URI
 function M.from_buf(buf)
-  return M.from_fname(vim.api.nvim_buf_get_name(buf))
+  if buf == 0 then
+    buf = vim.api.nvim_get_current_buf()
+  end
+  local name = vim.api.nvim_buf_get_name(buf)
+  if name == '' then
+    return ('untitled:nvim-%d-%d'):format(vim.uv.os_getpid(), buf)
+  end
+  return M.from_fname(name)
 end
 
 ---Gets a filename from a URI. Drops the query and fragment, so "?" and "#" in a filename must be
@@ -576,13 +583,43 @@ function M.to_fname(uri)
   return path:match('^/(%a:.*)$') or path
 end
 
----Gets the buffer for a uri.
+---Gets a buffer for a URI, optionally creating an unloaded buffer.
+---@param uri string|vim.Uri
+---@param create boolean
+---@return integer? buf
+function M._to_buf(uri, create)
+  local parts = type(uri) == 'table' and uri or M.parse(uri --[[@as string]])
+  if
+    parts
+    and parts.scheme == 'untitled'
+    and not (parts.host or parts.query or parts.querystr or parts.fragment)
+  then
+    local pid_text, buf_text = parts.path:match('^nvim%-(%d+)%-([1-9]%d*)$')
+    local buf = vim._tointeger(buf_text)
+    if
+      pid_text == tostring(vim.uv.os_getpid())
+      and buf
+      and buf <= 0x7fffffff -- Buffer handles are C ints.
+      and vim.api.nvim_buf_is_valid(buf)
+      and vim.api.nvim_buf_get_name(buf) == ''
+    then
+      return buf
+    end
+  end
+
+  local fname = parts and parts.scheme ~= 'file' and tostring(uri) or M.to_fname(parts or uri)
+  if create or vim.fn.bufexists(fname) == 1 then
+    return vim.fn.bufadd(fname)
+  end
+end
+
+---Gets the buffer for a URI.
 ---Creates a new unloaded buffer if no buffer for the uri already exists.
 ---@since 15
 ---@param uri string|vim.Uri
 ---@return integer buf
 function M.to_buf(uri)
-  return vim.fn.bufadd(M.to_fname(uri))
+  return assert(M._to_buf(uri, true))
 end
 
 return M

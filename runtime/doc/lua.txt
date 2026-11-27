@@ -6040,7 +6040,8 @@ vim.uri.encode_query({params})                        *vim.uri.encode_query()*
         (`string`)
 
 vim.uri.from_buf({buf})                                   *vim.uri.from_buf()*
-    Gets a URI from a buffer.
+    Gets a URI from a buffer. Unnamed buffers use a process-local `untitled:`
+    URI.
 
     Attributes: ~
         Since: 0.13.0
@@ -6165,7 +6166,7 @@ vim.uri.parse({uri})                                         *vim.uri.parse()*
         (`vim.Uri?`) URI components, or nil if invalid.
 
 vim.uri.to_buf({uri})                                       *vim.uri.to_buf()*
-    Gets the buffer for a uri. Creates a new unloaded buffer if no buffer for
+    Gets the buffer for a URI. Creates a new unloaded buffer if no buffer for
     the uri already exists.
 
     Attributes: ~
