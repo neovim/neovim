@@ -155,6 +155,8 @@ EDITOR
       return reg == '' and '' or ('@' .. reg)
     end, { expr = true })
 <
+• |--remote| waits until the files are closed, so it can be used as $EDITOR.
+  To not wait, use |--remote-send|.
 
 EVENTS
 

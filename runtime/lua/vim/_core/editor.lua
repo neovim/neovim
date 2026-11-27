@@ -1320,6 +1320,70 @@ function vim.keycode(keys, info)
   end
 end
 
+-- Server-side code is sent as strings, to work with any server version.
+
+--- Runs {cmd} (":drop …") and returns `{ bufnr, name }` of each file.
+local cs_remote_open = [[
+local cmd, files = ...
+vim.cmd(cmd)
+local bufs = {}
+for _, file in ipairs(files) do
+  local buf = vim.fn.bufadd(file)
+  bufs[#bufs + 1] = { buf, vim.api.nvim_buf_get_name(buf) }
+end
+return bufs
+]]
+
+--- Returns the state of each buffer: "gone" (deleted/renamed), "hidden" (not in a window, or
+--- unloaded) or "shown".
+local cs_remote_state = [[
+local states = {}
+for i, b in ipairs(...) do
+  local buf, name = b[1], b[2]
+  if
+    not vim.api.nvim_buf_is_valid(buf)
+    or not vim.bo[buf].buflisted
+    or vim.api.nvim_buf_get_name(buf) ~= name
+  then
+    states[i] = 'gone'
+  elseif vim.api.nvim_buf_is_loaded(buf) and #vim.fn.win_findbuf(buf) > 0 then
+    states[i] = 'shown'
+  else
+    states[i] = 'hidden'
+  end
+end
+return states
+]]
+
+--- Waits until each buffer was shown and then hidden, or is gone, or the server exits.
+--- Polls, because the client rejects API calls from the server.
+--- @param rcid integer
+--- @param bufs [integer, string][]
+--- @return string? errmsg
+local function cs_remote_wait(rcid, bufs)
+  local seen = {} --- @type table<integer, true>
+  while true do
+    local ok, states = pcall(function()
+      return vim.rpcrequest(rcid, 'nvim_exec_lua', cs_remote_state, { bufs })
+    end)
+    if not ok then
+      return
+    end
+    --- @cast states string[]
+    local pending = false
+    for i, state in ipairs(states) do
+      seen[i] = seen[i] or state == 'shown'
+      pending = pending or state == 'shown' or (state == 'hidden' and not seen[i])
+    end
+    if not pending then
+      return
+    end
+    if select(2, vim.wait(100)) == -2 then
+      return 'Interrupted'
+    end
+  end
+end
+
 --- @param rcid integer
 --- @param server_addr string
 --- @param connect_error string
@@ -1354,7 +1418,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
     or subcmd == 'tab-wait'
     or subcmd == 'tab-wait-silent'
   then
-    return { errmsg = 'E5600: Wait commands not yet implemented in Nvim' }
+    return { errmsg = 'E5600: Wait commands are not supported: --remote always waits' }
   elseif subcmd == 'tab-silent' then
     f_tab = true
     f_silent = true
@@ -1384,10 +1448,16 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
       table.insert(command, 'tab')
     end
     table.insert(command, 'drop')
-    for i = 2, #args do
-      table.insert(command, vim.fn.fnameescape(args[i]))
+    local files = vim.list_slice(args, 2)
+    for _, file in ipairs(files) do
+      table.insert(command, vim.fn.fnameescape(file))
     end
-    vim.rpcrequest(rcid, 'nvim_command', table.concat(command, ' '))
+    local bufs =
+      vim.rpcrequest(rcid, 'nvim_exec_lua', cs_remote_open, { table.concat(command, ' '), files })
+    local errmsg = cs_remote_wait(rcid, bufs)
+    if errmsg then
+      return { errmsg = errmsg }
+    end
   end
 
   return {
