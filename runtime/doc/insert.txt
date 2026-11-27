@@ -1275,11 +1275,20 @@ items:
 			usual.  Takes precedence over extending the leader.
 			Only while the popup menu is displayed.  Control
 			characters (below 0x20) are ignored.
+	startcol	byte column, starting at 1, where "word" starts, at
+			or before the completion column.  "word" must begin
+			with the text from there to the completion column,
+			which is left as it is, otherwise the item is
+			dropped.  Also dropped with 'completeopt' "longest".
+	filter_text	text compared with what was typed from the
+			completion column, and added from by CTRL-L,
+			instead of "word"; ignored when empty or while
+			'completeopt' "longest" or "preinsert" is in effect
 
-All of these except "icase", "equal", "dup" and "empty" must be a string.  If
-an item does not meet these requirements then an error message is given and
-further items in the list are not used.  You can mix string and Dictionary
-items in the returned list.
+All of these except "icase", "equal", "dup", "empty" and "startcol" must be a
+string.  If an item does not meet these requirements then an error message is
+given and further items in the list are not used.  You can mix string and
+Dictionary items in the returned list.
 
 The "menu" item is used in the popup menu and may be truncated, thus it should
 be relatively short.  The "info" item can be longer, it will  be displayed in

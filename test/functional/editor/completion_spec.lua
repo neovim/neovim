@@ -1,6 +1,5 @@
 local t = require('test.testutil')
 local describe, it, before_each, finally = t.describe, t.it, t.before_each, t.finally
-local pcall_err = t.pcall_err
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
@@ -1935,6 +1934,30 @@ describe('completion', function()
     eq({ 'A', 'B', 'C', 'sub1/', 'sub2/' }, fn.getcompletion('find ', 'cmdline'))
   end)
 
+  it('repeats a match of a completion function from where it starts', function()
+    exec_lua(function()
+      _G.F = function(findstart)
+        return findstart == 1 and 0 or { 'foo.bar' }
+      end
+    end)
+    command('set complete=Fv:lua.F completeopt=menu')
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'foo.ba', 'foo.ba' })
+    feed('A<C-n><Esc>j$.')
+    eq({ 'foo.bar', 'foo.bar' }, api.nvim_buf_get_lines(0, 0, -1, true))
+  end)
+
+  it("inserts the common part of a completion function's matches from where they start", function()
+    exec_lua(function()
+      _G.F = function(findstart)
+        return findstart == 1 and 3 or { '.nx', '.ny' }
+      end
+    end)
+    command('set complete=Fv:lua.F autocomplete completeopt=menu,menuone,longest')
+    feed('io.m.')
+    poke_eventloop()
+    eq('o.m.n', api.nvim_get_current_line())
+  end)
+
   it('complete-items commit_chars', function()
     exec_lua(function()
       _G.Omnifunc = function(findstart, _)
@@ -1961,6 +1984,92 @@ describe('completion', function()
     end)
     feed('<Esc>cc<F5><F5>')
     eq('discard', exec_lua('return _G.reason'))
+  end)
+
+  it('complete-items "startcol" and "filter_text"', function()
+    exec_lua(function()
+      vim.o.completeopt = 'menu,menuone,noinsert'
+      vim.keymap.set('i', '<F5>', function()
+        vim.fn.complete(vim.fn.col('.'), _G.items)
+      end)
+    end)
+    local function words(what)
+      return vim.tbl_map(function(item)
+        return item.word
+      end, fn.complete_info({ what })[what])
+    end
+    exec_lua(function()
+      _G.items = {
+        { word = '.nn', startcol = 4 },
+        { word = '->nn', startcol = 4 },
+        { word = 'zz', filter_text = 'nz' },
+        { word = 'z', startcol = 6 },
+      }
+    end)
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'o.m.', 'o.m.' })
+    feed('A<F5>')
+    eq({ '.nn', 'zz' }, words('items'))
+    eq(4, fn.complete_info({ 'items' }).items[1].startcol)
+    eq('nz', fn.complete_info({ 'items' }).items[2].filter_text)
+    feed('n')
+    eq({ '.nn', 'zz' }, words('matches'))
+    feed('n')
+    eq({ '.nn' }, words('matches'))
+    feed('<C-y><Esc>j$.')
+    eq({ 'o.m.nn', 'o.m.nn' }, api.nvim_buf_get_lines(0, 0, -1, true))
+
+    exec_lua(function()
+      _G.items = {
+        { word = 'p.x', startcol = 1, icase = 1 },
+        { word = 'p.y', startcol = 1 },
+      }
+    end)
+    feed('<Esc>ccP.<F5>')
+    eq({ 'p.x' }, words('items'))
+
+    exec_lua(function()
+      _G.items = { { word = '.nn', startcol = 4 } }
+    end)
+    command('set completeopt=menu,menuone,preinsert')
+    feed('<Esc>cco.m.<F5><C-y>')
+    eq('o.m.nn', api.nvim_get_current_line())
+    command('set completeopt=menu,menuone,longest')
+    feed('<Esc>cco.m.<F5>')
+    eq({}, words('items'))
+
+    exec_lua(function()
+      _G.F = function(findstart)
+        return findstart == 1 and 0 or { { word = 'barbaz', startcol = 5 }, { word = 'foo.bar' } }
+      end
+    end)
+    command('set complete=Fv:lua.F completeopt=menu,menuone,noinsert')
+    feed('<Esc>ccfoo.ba<C-n><C-y>')
+    eq('foo.barbaz', api.nvim_get_current_line())
+    feed('<Esc>ccfoo.<C-n><C-p><C-l>')
+    eq('foo.b', api.nvim_get_current_line())
+
+    exec_lua(function()
+      _G.items = { { word = 'zz', filter_text = 'nz' }, { word = 'zy', filter_text = '' } }
+    end)
+    feed('<Esc>cc<F5><C-l>')
+    eq('n', api.nvim_get_current_line())
+    command('set completeopt=menu,menuone,noinsert,fuzzy')
+    feed('<Esc>cc<F5>z')
+    eq({ 'zy', 'zz' }, words('matches'))
+    feed('<C-n><C-y>')
+    eq('zz', api.nvim_get_current_line())
+
+    exec_lua(function()
+      _G.Omni = function(findstart)
+        return findstart == 1 and 4 or { 'zz', { word = '.abc', startcol = 4 } }
+      end
+      vim.bo.omnifunc = 'v:lua.Omni'
+    end)
+    command('set completeopt=menu,menuone,noselect')
+    feed('<Esc>cco.m.<C-x><C-o>a')
+    poke_eventloop()
+    feed('<C-l>')
+    eq('o.m.ab', api.nvim_get_current_line())
   end)
 
   it('complete_info() reports completion item fields', function()

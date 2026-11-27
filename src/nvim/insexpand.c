@@ -182,6 +182,8 @@ struct compl_S {
   int cp_user_abbr_hl_id;        ///< highlight group ID for abbr
   int cp_user_kind_hl_id;        ///< highlight group ID for kind
   int cp_cpt_source_idx;         ///< index of this match's source in 'cpt' option
+  int cp_startcol;               ///< "startcol", or -1
+  char *cp_filter_text;          ///< "filter_text", or NULL
 };
 
 /// state information used for getting the next set of insert completion
@@ -1101,6 +1103,7 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
   match->cp_user_kind_hl_id = user_hl ? user_hl[1] : 0;
   match->cp_score = score;
   match->cp_cpt_source_idx = cpt_sources_index;
+  match->cp_startcol = -1;
 
   if (cptext != NULL) {
     for (int i = 0; i < CPT_COUNT; i++) {
@@ -1179,8 +1182,50 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
   return OK;
 }
 
-/// Check that "str[len]" matches with "match->cp_str", considering
-/// "match->cp_flags".
+/// Returns what "match" is filtered by.
+static char *ins_compl_filter_text(compl_T *match)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
+{
+  return match->cp_filter_text != NULL ? match->cp_filter_text : match->cp_str.data;
+}
+
+/// Returns the column "match" starts at: its "startcol" or that of its
+/// 'complete' source, -1 if neither.
+static int ins_compl_startcol(compl_T *match)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
+{
+  if (match->cp_startcol >= 0) {
+    return match->cp_startcol;
+  }
+  if (cpt_sources_array != NULL && match->cp_cpt_source_idx >= 0) {
+    return cpt_sources_array[match->cp_cpt_source_idx].cs_startcol;
+  }
+  return -1;
+}
+
+/// Returns how many bytes of "match" are already in front of compl_col.
+static size_t ins_compl_skip(compl_T *match)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
+{
+  int startcol = ins_compl_startcol(match);
+  if (startcol < 0 || startcol >= compl_col) {
+    return 0;
+  }
+  size_t skip = (size_t)(compl_col - startcol);
+  return skip <= match->cp_str.size ? skip : 0;
+}
+
+/// Returns the text of "match" that is compared with what was typed from
+/// compl_col.
+static char *ins_compl_typed_text(compl_T *match)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
+{
+  return match->cp_filter_text != NULL ? match->cp_filter_text
+                                       : match->cp_str.data + ins_compl_skip(match);
+}
+
+/// Check that "str[len]" matches with the "filter_text" of "match", or its
+/// "match->cp_str", considering "match->cp_flags".
 ///
 /// @param  match  completion match
 /// @param  str    character string to check
@@ -1191,10 +1236,11 @@ static bool ins_compl_equal(compl_T *match, char *str, size_t len)
   if (match->cp_flags & CP_EQUAL) {
     return true;
   }
+  char *text = ins_compl_filter_text(match);
   if (match->cp_flags & CP_ICASE) {
-    return STRNICMP(match->cp_str.data, str, len) == 0;
+    return STRNICMP(text, str, len) == 0;
   }
-  return strncmp(match->cp_str.data, str, len) == 0;
+  return strncmp(text, str, len) == 0;
 }
 
 /// Like ins_compl_equal(), but ignore case in the 'longest'-inserted part of
@@ -1400,7 +1446,8 @@ bool ins_compl_has_shown_match(void)
 bool ins_compl_long_shown_match(void)
 {
   return compl_shown_match != NULL && compl_shown_match->cp_str.data != NULL
-         && (colnr_T)compl_shown_match->cp_str.size > curwin->w_cursor.col - compl_col;
+         && (colnr_T)strlen(ins_compl_typed_text(compl_shown_match))
+         > curwin->w_cursor.col - compl_col;
 }
 
 /// Get the local or global value of 'completeopt' flags.
@@ -1559,15 +1606,12 @@ static String *get_leader_for_startcol(compl_T *match, bool cached)
     return NULL;
   }
 
-  if (cpt_sources_array == NULL) {
+  const bool is_cpt = cpt_sources_array != NULL && match->cp_cpt_source_idx >= 0;
+  int startcol = ins_compl_startcol(match);
+  // "filter_text" is matched against what was typed.
+  if (match->cp_filter_text != NULL || (!is_cpt && (startcol < 0 || startcol >= compl_col))) {
     goto theend;
   }
-
-  int cpt_idx = match->cp_cpt_source_idx;
-  if (cpt_idx < 0) {
-    goto theend;
-  }
-  int startcol = cpt_sources_array[cpt_idx].cs_startcol;
 
   if (compl_leader.data == NULL) {
     // When leader is not set (e.g. 'autocomplete' first fires before
@@ -1636,7 +1680,7 @@ static void set_fuzzy_score(void)
       pattern = get_leader_for_startcol(comp, true)->data;
     }
 
-    comp->cp_score = fuzzy_match_str(comp->cp_str.data, pattern);
+    comp->cp_score = fuzzy_match_str(ins_compl_filter_text(comp), pattern);
     comp = comp->cp_next;
   } while (comp != NULL && !is_first_match(comp));
 }
@@ -2234,6 +2278,7 @@ static void ins_compl_item_free(compl_T *match)
     }
   }
   API_CLEAR_STRING(match->cp_str);
+  XFREE_CLEAR(match->cp_filter_text);
   // several entries may use the same fname, free it just once.
   if (match->cp_flags & CP_FREE_FNAME) {
     xfree(match->cp_fname);
@@ -2618,8 +2663,8 @@ void ins_compl_addfrommatch(void)
 {
   int len = (int)curwin->w_cursor.col - (int)compl_col;
   assert(compl_shown_match != NULL);
-  char *p = compl_shown_match->cp_str.data;
-  if ((int)compl_shown_match->cp_str.size <= len) {   // the match is too short
+  char *p = ins_compl_typed_text(compl_shown_match);
+  if ((int)strlen(p) <= len) {   // the match is too short
     // When still at the original match use the first entry that matches
     // the leader.
     if (!match_at_original_text(compl_shown_match)) {
@@ -2628,12 +2673,13 @@ void ins_compl_addfrommatch(void)
 
     p = NULL;
     size_t plen = 0;
+    (void)get_leader_for_startcol(NULL, true);  // Clear the cache
     for (compl_T *cp = compl_shown_match->cp_next; cp != NULL
          && !is_first_match(cp); cp = cp->cp_next) {
-      if (compl_leader.data == NULL
-          || ins_compl_equal(cp, compl_leader.data, compl_leader.size)) {
-        p = cp->cp_str.data;
-        plen = cp->cp_str.size;
+      String *leader = get_leader_for_startcol(cp, true);
+      if (compl_leader.data == NULL || ins_compl_equal(cp, leader->data, leader->size)) {
+        p = ins_compl_typed_text(cp);
+        plen = strlen(p);
         break;
       }
     }
@@ -2795,7 +2841,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
     // CTRL-E then don't use the current match.
     char *ptr = NULL;
     if (compl_curr_match != NULL && compl_used_match && c != Ctrl_E) {
-      ptr = compl_curr_match->cp_str.data;
+      ptr = compl_curr_match->cp_str.data + ins_compl_skip(compl_curr_match);
     }
     ins_compl_fixRedoBufForLeader(ptr);
   }
@@ -3446,7 +3492,31 @@ static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
     word = tv_get_string_chk(tv);
     CLEAR_FIELD(cptext);
   }
-  if (word == NULL || (!empty && *word == NUL)) {
+  int startcol = -1;
+  char filter_buf[NUMBUFLEN];  // "word" may be in the static buffer of tv_dict_get_string()
+  const char *filter_text = NULL;
+  bool ok = word != NULL && (empty || *word != NUL);
+  if (ok && tv->v_type == VAR_DICT) {
+    dict_T *d = tv->vval.v_dict;
+    if (!compl_get_longest && !ins_compl_has_preinsert()) {
+      filter_text = tv_dict_get_string_buf(d, "filter_text", filter_buf);
+    }
+    varnumber_T col = tv_dict_get_number(d, "startcol");
+    if (col > 0) {
+      // "word" must start with the text from "startcol" to compl_col.
+      startcol = (int)MIN(col, MAXCOL) - 1;
+      ok = !compl_get_longest && startcol <= compl_col && compl_lnum > 0
+           && compl_lnum <= curbuf->b_ml.ml_line_count && compl_col <= ml_get_len(compl_lnum);
+      if (ok) {
+        const char *line = ml_get(compl_lnum);
+        size_t len = (size_t)(compl_col - startcol);
+        ok = utf_head_off(line, line + startcol) == 0
+             && ((flags & CP_ICASE) ? STRNICMP(word, line + startcol, len)
+                                    : strncmp(word, line + startcol, len)) == 0;
+      }
+    }
+  }
+  if (!ok) {
     free_cptext(cptext);
     tv_clear(&user_data);
     xfree(commit_chars);
@@ -3457,6 +3527,12 @@ static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
                              commit_chars);
   if (status != OK) {
     tv_clear(&user_data);
+    return status;
+  }
+  // ins_compl_add() made it compl_curr_match.
+  compl_curr_match->cp_startcol = startcol;
+  if (filter_text != NULL && *filter_text != NUL) {
+    compl_curr_match->cp_filter_text = xstrdup(filter_text);
   }
   return status;
 }
@@ -3717,6 +3793,12 @@ static void fill_complete_info_dict(dict_T *di, compl_T *match, bool add_match)
     tv_dict_add_str_len(di, S_LEN("user_data"), "", 0);
   } else {
     tv_dict_add_tv(di, S_LEN("user_data"), &match->cp_user_data);
+  }
+  if (match->cp_startcol >= 0) {
+    tv_dict_add_nr(di, S_LEN("startcol"), match->cp_startcol + 1);
+  }
+  if (match->cp_filter_text != NULL) {
+    tv_dict_add_str(di, S_LEN("filter_text"), match->cp_filter_text);
   }
 }
 
@@ -5219,14 +5301,14 @@ static char *find_common_prefix(size_t *prefix_len, bool curbuf_only)
       if (!match_limit_exceeded
           && (!curbuf_only || (cur_source != -1
                                && cpt_sources_array[cur_source].cs_flag == '.'))) {
-        if (first == NULL && strncmp(ins_compl_leader(), compl->cp_str.data,
-                                     ins_compl_leader_len()) == 0) {
-          first = compl->cp_str.data;
+        char *str = compl->cp_str.data + ins_compl_skip(compl);
+        if (first == NULL && strncmp(ins_compl_leader(), str, ins_compl_leader_len()) == 0) {
+          first = str;
           len = (int)strlen(first);
         } else if (first != NULL) {
           int j = 0;  // count in bytes
           char *s1 = first;
-          char *s2 = compl->cp_str.data;
+          char *s2 = str;
 
           while (j < len && *s1 != NUL && *s2 != NUL) {
             if (MB_BYTE2LEN((uint8_t)(*s1)) != MB_BYTE2LEN((uint8_t)(*s2))
@@ -5291,26 +5373,15 @@ void ins_compl_insert(bool move_cursor, bool insert_prefix)
     cp_str = find_common_prefix(&cp_str_len, false);
     if (cp_str == NULL) {
       cp_str = find_common_prefix(&cp_str_len, true);
-      if (cp_str == NULL) {
-        cp_str = compl_shown_match->cp_str.data;
-        cp_str_len = compl_shown_match->cp_str.size;
-      }
     }
-  } else if (cpt_sources_array != NULL) {
+  }
+  if (cp_str == NULL || !insert_prefix) {
     // Since completion sources may provide matches with varying start
     // positions, insert only the portion of the match that corresponds to the
     // intended replacement range.
-    int cpt_idx = compl_shown_match->cp_cpt_source_idx;
-    if (cpt_idx >= 0 && compl_col >= 0) {
-      int startcol = cpt_sources_array[cpt_idx].cs_startcol;
-      if (startcol >= 0 && startcol < (int)compl_col) {
-        int skip = (int)compl_col - startcol;
-        if ((size_t)skip <= cp_str_len) {
-          cp_str_len -= (size_t)skip;
-          cp_str += skip;
-        }
-      }
-    }
+    size_t skip = ins_compl_skip(compl_shown_match);
+    cp_str = compl_shown_match->cp_str.data + skip;
+    cp_str_len = compl_shown_match->cp_str.size - skip;
   }
 
   // Make sure we don't go over the end of the string, this can happen with
