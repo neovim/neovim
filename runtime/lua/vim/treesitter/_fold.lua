@@ -5,6 +5,13 @@ local Range = require('vim.treesitter._range')
 local api = vim.api
 local nvim_on = require('vim._core.util').nvim_on
 
+local M = {}
+
+---@type table<integer,TS.FoldInfo>
+local foldinfos = {}
+
+local group = api.nvim_create_augroup('nvim.treesitter.fold')
+
 ---Treesitter folding is done in two steps:
 ---(1) compute the fold levels with the syntax tree and cache the result (`compute_folds_levels`)
 ---(2) evaluate foldexpr for each window, which reads from the cache (`foldupdate`)
@@ -23,6 +30,9 @@ local nvim_on = require('vim._core.util').nvim_on
 ---
 ---The treesitter parser associated with this buffer.
 ---@field parser? vim.treesitter.LanguageTree
+---
+---Unregisters the callbacks on `parser`.
+---@field unregister_cbs? fun()
 local FoldInfo = {}
 FoldInfo.__index = FoldInfo
 
@@ -196,13 +206,6 @@ local function compute_folds_levels(bufnr, info, srow, erow, callback)
     end
   end)
 end
-
-local M = {}
-
----@type table<integer,TS.FoldInfo>
-local foldinfos = {}
-
-local group = api.nvim_create_augroup('nvim.treesitter.fold')
 
 --- Update the folds in the windows that contain the buffer and use expr foldmethod (assuming that
 --- the user doesn't use different foldexpr for the same buffer).
@@ -381,7 +384,33 @@ local function on_bytes(bufnr, start_row, start_col, old_row, old_col, new_row, 
   end
 end
 
-local registered_cbs = {} ---@type table<integer, boolean>
+--- Sets (or clears) the fold state of `bufnr`, and moves the parser callbacks to it.
+---@param bufnr integer
+---@param foldinfo? TS.FoldInfo
+local function set_foldinfo(bufnr, foldinfo)
+  local old = foldinfos[bufnr]
+  if old and old.unregister_cbs then
+    old.unregister_cbs()
+  end
+  foldinfos[bufnr] = foldinfo
+  if not (foldinfo and foldinfo.parser) then
+    return
+  end
+
+  foldinfo.unregister_cbs = foldinfo.parser:register_cbs({
+    on_changedtree = function(tree_changes)
+      on_changedtree(bufnr, tree_changes)
+    end,
+
+    on_bytes = function(_, _, start_row, start_col, _, old_row, old_col, _, new_row, new_col, _)
+      on_bytes(bufnr, start_row, start_col, old_row, old_col, new_row, new_col)
+    end,
+
+    on_detach = function()
+      set_foldinfo(bufnr, nil)
+    end,
+  })
+end
 
 ---@param lnum integer|nil
 ---@return string
@@ -390,52 +419,19 @@ function M.foldexpr(lnum)
   local bufnr = api.nvim_get_current_buf()
 
   if not foldinfos[bufnr] then
-    foldinfos[bufnr] = FoldInfo.new(bufnr)
-    nvim_on({ 'BufUnload', 'VimEnter', 'FileType' }, nil, { buf = bufnr, once = true }, function()
-      foldinfos[bufnr] = nil
-    end)
-
-    local parser = foldinfos[bufnr].parser
-    if not parser then
-      return '0'
-    end
-
-    compute_folds_levels(bufnr, foldinfos[bufnr])
-
-    if not registered_cbs[bufnr] then
-      parser:register_cbs({
-        on_changedtree = function(tree_changes)
-          on_changedtree(bufnr, tree_changes)
-        end,
-
-        on_bytes = function(
-          _,
-          _,
-          start_row,
-          start_col,
-          _,
-          old_row,
-          old_col,
-          _,
-          new_row,
-          new_col,
-          _
-        )
-          on_bytes(bufnr, start_row, start_col, old_row, old_col, new_row, new_col)
-        end,
-
-        on_detach = function()
-          foldinfos[bufnr] = nil
-          registered_cbs[bufnr] = nil
-        end,
-      })
-
-      registered_cbs[bufnr] = true
-    end
+    local foldinfo = FoldInfo.new(bufnr)
+    set_foldinfo(bufnr, foldinfo)
+    compute_folds_levels(bufnr, foldinfo)
   end
 
   return foldinfos[bufnr].levels[lnum] or '0'
 end
+
+nvim_on({ 'BufUnload', 'VimEnter', 'FileType' }, group, {
+  desc = 'Clear treesitter fold state',
+}, function(ev)
+  set_foldinfo(ev.buf, nil)
+end)
 
 nvim_on('OptionSet', group, {
   pattern = { 'foldminlines', 'foldnestmax' },
@@ -449,10 +445,10 @@ nvim_on('OptionSet', group, {
     if not api.nvim_buf_is_loaded(bufnr) then
       -- A buffer without a parser can be unloaded without BufUnload firing (inside another
       -- autocmd, or with :noautocmd), which leaves its entry behind.
-      foldinfos[bufnr] = nil
+      set_foldinfo(bufnr, nil)
     else
       local foldinfo = FoldInfo.new(bufnr)
-      foldinfos[bufnr] = foldinfo
+      set_foldinfo(bufnr, foldinfo)
       api.nvim_buf_call(bufnr, function()
         compute_folds_levels(bufnr, foldinfo, nil, nil, function()
           -- FileType/BufUnload can clear or replace the fold state while this

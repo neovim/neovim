@@ -206,12 +206,32 @@ describe('treesitter highlighting (C)', function()
     end)
     -- treesitter highlighting is used
     screen:expect(hl_grid_ts_c)
+    -- stop() unregisters the highlighter's callbacks, stop/start should not accumulate them. #42952
+    eq(
+      { 1, 1 },
+      exec_lua(function()
+        local parser = assert(vim.treesitter.get_parser())
+        return { #parser._callbacks_rec.detach, #parser._callbacks_rec.changedtree }
+      end)
+    )
 
     exec_lua(function()
       vim.treesitter.stop()
     end)
     -- legacy syntax highlighting is used
     screen:expect(hl_grid_legacy_c)
+
+    -- A failed start() unregisters its callbacks.
+    eq(
+      { false, 0, 0 },
+      exec_lua(function()
+        vim.treesitter.query.set('c', 'highlights', '(invalid')
+        local ok = pcall(vim.treesitter.start)
+        vim.treesitter.query.set('c', 'highlights', hl_query_c)
+        local parser = assert(vim.treesitter.get_parser())
+        return { ok, #parser._callbacks_rec.detach, #parser._callbacks_rec.changedtree }
+      end)
+    )
 
     exec_lua(function()
       vim.cmd 'new | wincmd p'

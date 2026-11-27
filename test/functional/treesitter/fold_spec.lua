@@ -775,7 +775,7 @@ t2]])
     )
   end)
 
-  it('can detect a new parser and refresh folds accordingly', function()
+  it('detects a new parser and refreshes folds', function()
     local name = t.tmpname()
     write_file(name, test_text)
     command('edit ' .. name)
@@ -828,6 +828,43 @@ t2]])
     command('set ft=c')
     wait_folds()
     eq(foldlevels, get_fold_levels())
+
+    -- Folds follow the new parser when a 'filetype' change replaces it.
+    exec_lua(function()
+      _G.old_parser = setmetatable({ vim.treesitter.get_parser(0) }, { __mode = 'v' })
+    end)
+    command('set ft=lua')
+    wait_folds()
+    command('set ft=c')
+    wait_folds()
+    eq(foldlevels, get_fold_levels())
+    eq(
+      true,
+      exec_lua(function()
+        collectgarbage('collect')
+        return _G.old_parser[1] == nil
+      end)
+    )
+    n.api.nvim_buf_set_lines(0, 4, 7, true, {})
+    wait_folds()
+    eq(
+      { '>1', '1', '1', '1', '1', '1', '>2', '2', '2', '2', '2', '>3', '3', '3', '2', '1' },
+      get_fold_levels()
+    )
+
+    -- FileType clears the fold state but keeps the parser: foldexpr doesn't accumulate callbacks
+    -- or autocmds.
+    n.api.nvim_exec_autocmds('FileType', { buffer = 0 })
+    get_fold_levels()
+    eq(
+      { 1, 0 },
+      exec_lua(function()
+        return {
+          #assert(vim.treesitter.get_parser(0))._callbacks.changedtree,
+          #vim.api.nvim_get_autocmds({ event = 'VimEnter', buffer = 0 }),
+        }
+      end)
+    )
   end)
 
   it('no error when deleting lines at end of buffer with fml=0', function()

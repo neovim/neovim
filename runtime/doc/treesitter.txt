@@ -1531,6 +1531,10 @@ LanguageTree:register_cbs({cbs}, {recursive})    *LanguageTree:register_cbs()*
                      children. Any new children will also inherit the
                      callbacks.
 
+    Return: ~
+        (`fun()`) Unregisters the callbacks (from all children, if
+        `recursive`).
+
 LanguageTree:source()                                  *LanguageTree:source()*
     Returns the source content of the language tree (bufnr or string).
 

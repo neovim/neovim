@@ -82,6 +82,8 @@ end
 --- intra-line conceal, `false` with only `conceal_lines`.
 ---@field  _conceal_checked table<integer, boolean>
 ---@field tree vim.treesitter.LanguageTree
+--- Unregisters the callbacks on `tree`.
+---@field private _unregister_cbs fun()
 ---@field private redraw_count integer
 --- A map from window ID to whether we are currently parsing that window asynchronously
 ---@field parsing boolean
@@ -118,11 +120,6 @@ function TSHighlighter.new(tree, opts)
 
   opts = opts or {} ---@type { queries: table<string,string> }
   self.tree = tree
-  tree:register_cbs({
-    on_detach = function()
-      self:on_detach()
-    end,
-  })
 
   --- Sets `_has_conceal` and `_has_conceal_line` from the queries of all trees.
   local function update_conceal_metadata()
@@ -148,7 +145,33 @@ function TSHighlighter.new(tree, opts)
     self._has_conceal = has_conceal
   end
 
-  tree:register_cbs({
+  self.bufnr = source
+  self.redraw_count = 0
+  self._has_conceal = false
+  self._has_conceal_line = false
+  self._conceal_checked = {}
+  self._queries = {}
+  self._highlight_states = {}
+  self.parsing = false
+
+  -- Queries for a specific language can be overridden by a custom
+  -- string query... if one is not provided it will be looked up by file.
+  if opts.queries then
+    for lang, query_string in pairs(opts.queries) do
+      self._queries[lang] = TSHighlighterQuery.new(lang, query_string)
+    end
+  end
+  update_conceal_metadata()
+  self.orig_spelloptions = vim.bo[self.bufnr].spelloptions
+
+  vim.bo[self.bufnr].syntax = ''
+  vim.b[self.bufnr].ts_highlight = true
+
+  -- Register right before activating: `destroy()` only unregisters an active highlighter.
+  self._unregister_cbs = tree:register_cbs({
+    on_detach = function() -- Only the root emits detach.
+      self:on_detach()
+    end,
     on_bytes = function(buf, _, start_row, _, _, old_row, _, _, new_row)
       if TSHighlighter.active[buf] ~= self then
         return
@@ -189,29 +212,6 @@ function TSHighlighter.new(tree, opts)
       update_conceal_metadata()
     end,
   }, true)
-
-  self.bufnr = source
-  self.redraw_count = 0
-  self._has_conceal = false
-  self._has_conceal_line = false
-  self._conceal_checked = {}
-  self._queries = {}
-  self._highlight_states = {}
-  self.parsing = false
-
-  -- Queries for a specific language can be overridden by a custom
-  -- string query... if one is not provided it will be looked up by file.
-  if opts.queries then
-    for lang, query_string in pairs(opts.queries) do
-      self._queries[lang] = TSHighlighterQuery.new(lang, query_string)
-    end
-  end
-  update_conceal_metadata()
-  self.orig_spelloptions = vim.bo[self.bufnr].spelloptions
-
-  vim.bo[self.bufnr].syntax = ''
-  vim.b[self.bufnr].ts_highlight = true
-
   TSHighlighter.active[self.bufnr] = self
 
   -- Tricky: if syntax hasn't been enabled, we need to reload color scheme
@@ -239,6 +239,7 @@ function TSHighlighter:destroy()
     return
   end
   TSHighlighter.active[self.bufnr] = nil
+  self._unregister_cbs()
 
   if self._has_conceal and api.nvim_buf_is_valid(self.bufnr) then
     api.nvim__buf_set_conceal_provider(self.bufnr, false)
