@@ -71,6 +71,9 @@ static handle_T _ctx_saved_curwin = 0;
 /// Whether an explicit :cd/:tcd/:lcd/:bcd/chdir() happened since the innermost ctx_switch().
 static bool _ctx_did_chdir = false;
 
+/// Whether ctx_load() is replacing the registers.
+static bool _ctx_loading_regs = false;
+
 /// Namespace for the extmarks tracking a Context's kCtxVisual/kCtxMarks positions.
 static uint32_t ctx_marks_ns(void)
 {
@@ -268,6 +271,9 @@ void ctx_load(Context *ctx, const CtxStateFlags flags, const CtxLoadFlags loadfl
   }
 
   if (flags & kCtxRegs) {
+    // A restore, not a register write: RegisterChanged ignores it.
+    bool save_loading_regs = _ctx_loading_regs;
+    _ctx_loading_regs = true;
     if (!(loadflags & kCtxMergeReg)) {
       // Avoid shada "merge" behavior for registers; restore "exact", don't merge.
       for (int i = 0; i < NUM_SAVED_REGISTERS; i++) {
@@ -275,6 +281,7 @@ void ctx_load(Context *ctx, const CtxStateFlags flags, const CtxLoadFlags loadfl
       }
     }
     shada_read_string(ctx->regs, kShaDaWantInfo | kShaDaForceit | kShaDaNanos | kShaDaNoHistory);
+    _ctx_loading_regs = save_loading_regs;
   }
 
   if (flags & kCtxJumps) {
@@ -562,6 +569,12 @@ static bool ctx_in_entered_dir(const CtxSwitch *cs)
 void ctx_did_chdir(void)
 {
   _ctx_did_chdir = true;
+}
+
+/// @return  true while ctx_load() is replacing the registers.
+bool ctx_loading_regs(void)
+{
+  return _ctx_loading_regs;
 }
 
 /// Return true if `win` is an active entry in ctx_win[] (the pool of temporary scratch windows).
