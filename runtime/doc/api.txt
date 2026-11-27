@@ -1292,11 +1292,16 @@ nvim_list_uis()                                              *nvim_list_uis()*
         • "ext_..." Requested UI extensions, see |ui-option|
         • "chan" |channel-id| of remote UI
 
-nvim_list_wins()                                            *nvim_list_wins()*
+nvim_list_wins({opts})                                      *nvim_list_wins()*
     Gets the current list of all |window-ID|s in all tabpages.
 
     Attributes: ~
         Since: 0.1.0
+
+    Parameters: ~
+      • {opts}  (`vim.api.keyset.list_wins?`) Optional parameters.
+                • hidden: (boolean, default true) Include |window-hidden|
+                  windows.
 
     Return: ~
         (`integer[]`) List of |window-ID|s

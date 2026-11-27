@@ -338,6 +338,11 @@ typedef struct {
 } Dict(keymap_del);
 
 typedef struct {
+  OptionalKeys is_set__list_wins_;
+  Boolean hidden;
+} Dict(list_wins);
+
+typedef struct {
   OptionalKeys is_set__ns_opts_;
   Array wins;
 } Dict(ns_opts);
