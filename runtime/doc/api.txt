@@ -1901,7 +1901,7 @@ nvim__invalidate_glyph_cache()                *nvim__invalidate_glyph_cache()*
 nvim__redraw({opts})                                          *nvim__redraw()*
     WARNING: This feature is experimental/unstable.
 
-    Instruct Nvim to redraw various components.
+    Redraw various components. Unlike |:redraw|, doesn't dismiss messages.
 
     Attributes: ~
         Since: 0.10.0

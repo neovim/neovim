@@ -2228,6 +2228,26 @@ describe('ui/builtin messages', function()
     ]])
   end)
 
+  it('pending hit-enter prompt is not cleared by a forced redraw', function()
+    command('normal! ix')
+    command('enew | au BufUnload <buffer> redrawstatus')
+    feed(':q<CR>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*2
+      {3:                                                            }|
+      {9:E37: No write since last change}                             |
+      {9:E162: No write since last change for buffer "[No Name]"}     |
+      {6:Press ENTER or type command to continue}^                     |
+    ]])
+    feed('<CR>')
+    screen:expect([[
+      ^x                                                           |
+      {1:~                                                           }|*5
+                                                                  |
+    ]])
+  end)
+
   it('using nvim_echo in VimResized does not cause hit-enter prompt #26139', function()
     command([[au VimResized * lua vim.api.nvim_echo({ { '123456' } }, true, {})]])
     screen:try_resize(60, 5)

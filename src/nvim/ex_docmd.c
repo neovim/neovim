@@ -7045,6 +7045,9 @@ static void ex_redraw(exarg_T *eap)
   } else if (Visual.active) {
     redraw_curbuf_later(UPD_INVERTED);
   }
+  if (State != MODE_HITRETURN) {
+    need_wait_return = false;  // No need to wait after an intentional redraw.
+  }
   const bool redrawn = update_screen() == OK;
   if (need_maketitle) {
     maketitle();
@@ -7056,9 +7059,6 @@ static void ex_redraw(exarg_T *eap)
     // Reset msg_didout, so that a message that's there is overwritten.
     msg_didout = false;
     msg_col = 0;
-
-    // No need to wait after an intentional redraw.
-    need_wait_return = false;
   }
 
   ui_flush();

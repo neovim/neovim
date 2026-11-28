@@ -2474,7 +2474,7 @@ static void redraw_status(win_T *wp, Dict(redraw) *opts, bool *flush)
   }
 }
 
-/// Instruct Nvim to redraw various components.
+/// Redraw various components. Unlike |:redraw|, doesn't dismiss messages.
 ///
 /// @see |:redraw|
 ///
