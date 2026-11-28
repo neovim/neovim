@@ -1308,6 +1308,36 @@ static void normal_check_cursor_moved(NormalState *s)
   }
 }
 
+static int last_visualchanged_mode;
+static pos_T last_visualchanged_cursor;
+static pos_T last_visualchanged_anchor;
+static bool last_visualchanged_block_eol;
+
+/// Trigger VisualChanged if visual selection has changed
+static void normal_check_visual_changed(NormalState *s)
+{
+  // Reset if not in Visual mode
+  if (!Visual.active) {
+    last_visualchanged_mode = -1;
+    return;
+  }
+
+  // For blockwise changes
+  const bool block_eol = Visual.mode == Ctrl_V && curwin->w_curswant == MAXCOL;
+
+  if (!finish_op && has_event(EVENT_VISUALCHANGED)
+      && (Visual.mode != last_visualchanged_mode
+          || !equalpos(curwin->w_cursor, last_visualchanged_cursor)
+          || !equalpos(Visual.start, last_visualchanged_anchor)
+          || block_eol != last_visualchanged_block_eol)) {
+    apply_autocmds(EVENT_VISUALCHANGED, NULL, NULL, false, curbuf);
+    last_visualchanged_cursor = curwin->w_cursor;
+    last_visualchanged_anchor = Visual.start;
+    last_visualchanged_mode = Visual.mode;
+    last_visualchanged_block_eol = block_eol;
+  }
+}
+
 static void normal_check_text_changed(NormalState *s)
 {
   // Trigger TextChanged if changedtick differs.
@@ -1449,6 +1479,7 @@ static int normal_check(VimState *state)
     }
 
     normal_check_folds(s);
+    normal_check_visual_changed(s);
     normal_redraw(s);
     do_redraw = false;
 
