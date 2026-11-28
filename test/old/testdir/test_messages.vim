@@ -102,13 +102,14 @@ func Test_mode_message_at_leaving_insert_by_ctrl_c()
 
   " Set custom statusline built by user-defined function.
   let testfile = 'Xtest.vim'
-  call writefile([
-        \ 'func StatusLine() abort',
-        \ '  return ""',
-        \ 'endfunc',
-        \ 'set statusline=%!StatusLine()',
-        \ 'set laststatus=2',
-        \ ], testfile)
+  let lines =<< trim END
+        func StatusLine() abort
+          return ""
+        endfunc
+        set statusline=%!StatusLine()
+        set laststatus=2
+  END
+  call writefile(lines, testfile, 'D')
 
   let rows = 10
   let buf = term_start([GetVimProg(), '--clean', '-S', testfile], {'term_rows': rows})
@@ -122,8 +123,8 @@ func Test_mode_message_at_leaving_insert_by_ctrl_c()
 
   call term_sendkeys(buf, ":qall!\<CR>")
   call WaitForAssert({-> assert_equal('dead', job_status(term_getjob(buf)))})
+
   exe buf . 'bwipe!'
-  call delete(testfile)
 endfunc
 
 func Test_mode_message_at_leaving_insert_with_esc_mapped()
@@ -133,10 +134,11 @@ func Test_mode_message_at_leaving_insert_with_esc_mapped()
 
   " Set custom statusline built by user-defined function.
   let testfile = 'Xtest.vim'
-  call writefile([
-        \ 'set laststatus=2',
-        \ 'inoremap <Esc> <Esc>00',
-        \ ], testfile)
+  let lines =<< trim END
+        set laststatus=2
+        inoremap <Esc> <Esc>00
+  END
+  call writefile(lines, testfile, 'D')
 
   let rows = 10
   let buf = term_start([GetVimProg(), '--clean', '-S', testfile], {'term_rows': rows})
@@ -150,8 +152,78 @@ func Test_mode_message_at_leaving_insert_with_esc_mapped()
 
   call term_sendkeys(buf, ":qall!\<CR>")
   call WaitForAssert({-> assert_equal('dead', job_status(term_getjob(buf)))})
+
   exe buf . 'bwipe!'
-  call delete(testfile)
+endfunc
+
+func Test_spacing_between_mode_and_recording_mode()
+  CheckRunVimInTerminal
+
+  " Ensure Visual mode does not show the character/line count.
+  " Ensure we have a dedicated line for cmdline.
+  let lines =<< trim END
+    set noshowcmd
+    set laststatus=2
+  END
+  call writefile(lines, 'XspacingBetweenModes', 'D')
+  let rows = 10
+  let buf = RunVimInTerminal('-S XspacingBetweenModes', {'rows': rows})
+
+  let reg = 'q'
+  let modes = [
+        \{ 'key': 'i', 'name': 'INSERT' },
+        \{ 'key': 'v', 'name': 'VISUAL' },
+        \{ 'key': 'V', 'name': 'VISUAL LINE' },
+        \{ 'key': "\<C-V>", 'name': 'VISUAL BLOCK' },
+        \{ 'key': 'R', 'name': 'REPLACE' }
+        \]
+
+  for mode in modes
+    let expected = '-- ' .. mode.name .. ' -- recording @' .. reg
+    "                                        ^ Here we have an additional space.
+    " Start recording into `reg` and enter `mode.name` mode.
+    call term_sendkeys(buf, 'q' .. reg .. mode.key)
+    call WaitForAssert({-> assert_match('^' .. expected .. '\s*$', term_getline(buf, rows))})
+
+    " Ensure no space-prefix is present after leaving `mode.name` mode.
+    let expected = 'recording @' .. reg
+    call term_sendkeys(buf, "\<Esc>")
+    call WaitForAssert({-> assert_match('^' .. expected .. '\s*$', term_getline(buf, rows))})
+
+    " Stop recording.
+    call term_sendkeys(buf, 'q')
+  endfor
+
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_mode_message_highlight()
+  CheckScreendump
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    highlight ModeMsg ctermfg=Black ctermbg=White
+  END
+  call writefile(lines, 'XmodeMessageHighlight', 'D')
+  let buf = RunVimInTerminal('-S XmodeMessageHighlight', {'rows': 10})
+
+  " Only the mode message is present.
+  call term_sendkeys(buf, 'i')
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_mode_message_highlight_1', {})
+
+  " Only the recording mode message is present.
+  call term_sendkeys(buf, "\<Esc>")
+  call term_sendkeys(buf, 'qq')
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_mode_message_highlight_2', {})
+
+  " Both the mode and recording mode messages are present.
+  call term_sendkeys(buf, 'i')
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_mode_message_highlight_3', {})
+
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_echospace()

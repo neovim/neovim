@@ -873,7 +873,7 @@ describe('ui/ext_messages', function()
         ^                         |
         {1:~                        }|*4
       ]],
-      showmode = { { '-- INSERT --recording @q', 5, 'ModeMsg' } },
+      showmode = { { '-- INSERT -- recording @q', 5, 'ModeMsg' } },
     }
 
     feed('<esc>')

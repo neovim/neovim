@@ -1071,6 +1071,9 @@ int showmode(void)
     if (reg_recording != 0
         && edit_submode == NULL             // otherwise it gets too long
         ) {
+      if (do_mode) {
+        msg_puts_hl(" ", hl_id, false);
+      }
       recording_mode(hl_id);
       need_clear = true;
     }
