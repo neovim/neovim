@@ -41,7 +41,12 @@ filter-true = $(strip $(filter-out 1 on ON true TRUE,$1))
 
 all: nvim
 
+# Keep the cached build type when a reconfigure omits CMAKE_BUILD_TYPE.
+ifneq ($(origin CMAKE_BUILD_TYPE),undefined)
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
+else
+CMAKE_FLAGS :=
+endif
 # Extra CMake flags which extend the default set
 CMAKE_EXTRA_FLAGS ?=
 NVIM_PRG := $(MAKEFILE_DIR)/build/bin/nvim
