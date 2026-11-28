@@ -841,6 +841,9 @@ t2]])
     eq(
       true,
       exec_lua(function()
+        if jit then
+          jit.flush() -- LuaJIT traces can retain the old parser.
+        end
         collectgarbage('collect')
         return _G.old_parser[1] == nil
       end)
