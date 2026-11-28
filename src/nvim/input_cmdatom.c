@@ -121,6 +121,11 @@ static struct {
   size_t map_start;  ///< This composite's slice: keys[map_start..kv_size(keys)), its lhs suffix.
 } typed;
 
+/// Keys typed since the last emitted atom (`CmdAtom.typed`).
+static kvec_t(uint8_t) atom_typed_keys;
+/// Where a peeked mapping's keys start in `atom_typed_keys`. SIZE_MAX: none.
+static size_t atom_typed_split = SIZE_MAX;
+
 static const char *const type_names[] = {
   [kAComp] = "mapping",
   [kAExcmd] = "excmd",
@@ -193,6 +198,7 @@ void atom_free_all(void)
   atom_composite_abort();
   kv_destroy(composite.atoms);
   kv_destroy(typed.keys);
+  kv_destroy(atom_typed_keys);
   atoms_free(&vatom.atoms);
   kv_destroy(vatom.atoms);
 }
@@ -437,10 +443,21 @@ static Dict atom_dict(const CmdAtom *atom)
 /// Schedules a CmdAtom event.
 static void atom_emit(const CmdAtom *atom)
 {
+  size_t n = kv_size(atom_typed_keys);
+  if (atom_typed_split != SIZE_MAX && cur_frame != NULL && cur_frame->id == composite.frame) {
+    n = MIN(atom_typed_split, n);  // The peeked mapping's keys stay for its own atom.
+  }
+  atom_typed_split = SIZE_MAX;
   if (!has_event(EVENT_CMDATOM)) {
+    kv_size(atom_typed_keys) = 0;
     return;
   }
   Dict data = atom_dict(atom);
+  PUT(data, "typed", STRING_OBJ(cbuf_to_string(n > 0 ? (char *)atom_typed_keys.items : "", n)));
+  if (n > 0) {
+    memmove(atom_typed_keys.items, atom_typed_keys.items + n, kv_size(atom_typed_keys) - n);
+    kv_size(atom_typed_keys) -= n;
+  }
   if (kv_size(atom->atoms) > 0) {
     Array atoms = ARRAY_DICT_INIT;
     for (size_t i = 0; i < kv_size(atom->atoms); i++) {
@@ -855,7 +872,7 @@ static void atom_payload_append(CmdAtom *atom, CmdFrame *frame)
 /// Collects a typed key (gotchars()) into the stream.
 void atom_typed_add(const uint8_t *chars, size_t len)
 {
-  if (mc_replaying() || !atom_typed_collecting()
+  if (mc_replaying()
       // Skip inputsecret(), to avoid leaking a password e.g. if a plugin logs `CmdAtom.keys`.
       || cmdline_star > 0) {
     return;
@@ -863,6 +880,13 @@ void atom_typed_add(const uint8_t *chars, size_t len)
   if (len == 3 && chars[0] == K_SPECIAL
       && (atom_key_class(TERMCAP2KEY(chars[1], chars[2]), NUL, NUL) & kKeySynthetic)) {
     return;  // Not user input: K_IGNORE from a mapping resolved during peek/K_EVENT/…
+  }
+  // Terminal-mode keys mostly go to the job, and may be passwords.
+  if (has_event(EVENT_CMDATOM) && !(State & MODE_TERMINAL)) {
+    kv_concat_len(atom_typed_keys, chars, len);
+  }
+  if (!atom_typed_collecting()) {
+    return;
   }
   for (size_t i = 0; i < len; i++) {
     kv_push(typed.keys, chars[i]);
@@ -873,7 +897,13 @@ void atom_typed_add(const uint8_t *chars, size_t len)
 /// into typeahead and will be collected again (ungetchars()).
 void atom_typed_del(size_t len)
 {
-  if (mc_replaying() || !atom_typed_collecting()) {
+  if (mc_replaying()) {
+    return;
+  }
+  if (!(State & MODE_TERMINAL)) {
+    kv_size(atom_typed_keys) -= MIN(len, kv_size(atom_typed_keys));
+  }
+  if (!atom_typed_collecting()) {
     return;
   }
   kv_size(typed.keys) -= MIN(len, kv_size(typed.keys));
@@ -945,7 +975,8 @@ void atom_stuff_start(const cmdarg_T *cap)
 /// Starts a composite for a mapping resolved from typed keys.
 ///
 /// @param peeked  The executing command did not consume the mapping's keys.
-void atom_map_start(const char *lhs, size_t len, bool peeked)
+/// @param typed_len  Length of the mapping's keys, just passed to gotchars().
+void atom_map_start(const char *lhs, size_t len, bool peeked, size_t typed_len)
 {
   if (mc_replaying() || reg_executing != 0 || ex_normal_busy != 0) {
     return;
@@ -978,6 +1009,7 @@ void atom_map_start(const char *lhs, size_t len, bool peeked)
   atom_composite_start(lhs, len);
   if (peeked && cur_frame != NULL) {
     composite.frame = cur_frame->id;
+    atom_typed_split = kv_size(atom_typed_keys) - MIN(typed_len, kv_size(atom_typed_keys));
   }
   typed.map_start = kv_size(typed.keys);
 }

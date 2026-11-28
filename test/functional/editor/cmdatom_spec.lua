@@ -300,9 +300,9 @@ describe('CmdAtom', function()
       feed([[<C-\><C-N>]])
       feed('gg')
       eq({
-        { type = 'mapping', lhs = ',f' },
-        { type = 'jump', lhs = 'gg', keys = 'gg' },
-      }, atoms_tail(2, 'type', 'lhs', 'keys'))
+        { type = 'mapping', lhs = ',f', typed = ',f' },
+        { type = 'jump', lhs = 'gg', keys = 'gg', typed = 'gg' },
+      }, atoms_tail(2, 'type', 'lhs', 'keys', 'typed'))
     end)
 
     it('simple mapping (single command) "unwraps" to the underlying type', function()
@@ -318,6 +318,7 @@ describe('CmdAtom', function()
       eq({
         type = 'operator', -- Unwrapped.
         keys = 'dw',
+        typed = ',d',
         operator = 'd',
         cmd = 'w',
         changed = true,
@@ -390,7 +391,10 @@ describe('CmdAtom', function()
       feed('q')
       local evs = atoms()
       eq(1, #evs)
-      eq_partial({ type = 'mapping', lhs = 'q', keys = k('vl<Esc>0l1ix<Esc>l') }, evs[1])
+      eq_partial(
+        { type = 'mapping', lhs = 'q', typed = 'vlq', keys = k('vl<Esc>0l1ix<Esc>l') },
+        evs[1]
+      )
       eq_partial({
         { type = 'visual', keys = k('vl<Esc>') },
         { type = 'motion', keys = '0' },
@@ -563,9 +567,9 @@ describe('CmdAtom', function()
       feed('f(ds)')
       eq({ 'a one' }, get_lines())
       eq({
-        { type = 'motion', keys = 'f(', lhs = 'f(' },
-        { type = 'excmd', keys = ':call DelSurround()\n)', lhs = 'ds)' },
-      }, atoms_tail(2, 'type', 'keys', 'lhs'))
+        { type = 'motion', keys = 'f(', lhs = 'f(', typed = 'f(' },
+        { type = 'excmd', keys = ':call DelSurround()\n)', lhs = 'ds)', typed = 'ds)' },
+      }, atoms_tail(2, 'type', 'keys', 'lhs', 'typed'))
 
       -- Same, mid-op ("t(" + "ds" in one batch): the next mapping is not the pending op's operand.
       command('nnoremap ,D d')
@@ -575,9 +579,9 @@ describe('CmdAtom', function()
       feed(',Dt(ds)')
       eq({ 'one' }, get_lines())
       eq({
-        { type = 'operator', keys = 'dt(', lhs = ',Dt(' },
-        { type = 'excmd', keys = ':call DelSurround()\n)', lhs = 'ds)' },
-      }, atoms_tail(2, 'type', 'keys', 'lhs'))
+        { type = 'operator', keys = 'dt(', lhs = ',Dt(', typed = ',Dt(' },
+        { type = 'excmd', keys = ':call DelSurround()\n)', lhs = 'ds)', typed = 'ds)' },
+      }, atoms_tail(2, 'type', 'keys', 'lhs', 'typed'))
     end)
 
     it('replay of deleted/redefined Lua mapping fails (E5117)', function()
@@ -1906,7 +1910,7 @@ describe('CmdAtom', function()
     feed('ysiw"')
     -- One atom: the mapping captures the operation finished by "iw". `keys` is the redobuff plus
     -- the getchar() payload: a replayed opfunc reads the same wrap char.
-    eq_partial({ type = 'operator', keys = 'g@iw"', lhs = 'ysiw"' }, atom_last())
+    eq_partial({ type = 'operator', keys = 'g@iw"', lhs = 'ysiw"', typed = 'ysiw"' }, atom_last())
     eq({ '"alpha" beta' }, get_lines())
   end)
 
@@ -1999,7 +2003,11 @@ describe('CmdAtom', function()
     feed('hunter2<CR>')
     feed('<Esc>') -- The composite resolves at the next clock edge.
     eq('hunter2', n.exec_lua('return _G.pw')) -- The function gets the input.
-    eq({ type = 'mapping', lhs = 'sp' }, pick(atoms()[1], 'type', 'lhs', 'keys')) -- Not CmdAtom.
+    -- Not in CmdAtom.
+    eq(
+      { type = 'mapping', lhs = 'sp', typed = 'sp' },
+      pick(atoms()[1], 'type', 'lhs', 'keys', 'typed')
+    )
   end)
 
   it('reports the original buffer', function()

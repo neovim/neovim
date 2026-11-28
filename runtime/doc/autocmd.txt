@@ -506,6 +506,10 @@ CmdAtom							*CmdAtom*
 				    - "operator"
 				    - "scroll": Viewport scroll.
 				    - "visual": Visual composite.
+				- typed: Keys typed for the action, as
+				  |recording| stores them, except
+				  |inputsecret()| and |Terminal-mode| input.
+				  Raw bytes. Not set on `atoms`.
 				- undoseq: Undo state after the action
 				  (|undotree()| `seq_cur`). Decreases on undo.
 
