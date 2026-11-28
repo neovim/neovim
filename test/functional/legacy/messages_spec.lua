@@ -17,6 +17,44 @@ before_each(clear)
 describe('messages', function()
   local screen
 
+  -- oldtest: Test_spacing_between_mode_and_recording_mode()
+  it('spacing between mode and recording mode', function()
+    screen = Screen.new(55, 10)
+    command('set noshowcmd laststatus=2')
+
+    local reg = 'q'
+    local modes = {
+      { key = 'i', name = 'INSERT' },
+      { key = 'v', name = 'VISUAL' },
+      { key = 'V', name = 'VISUAL LINE' },
+      { key = '\022', name = 'VISUAL BLOCK' },
+      { key = 'R', name = 'REPLACE' },
+    }
+
+    for _, mode in ipairs(modes) do
+      -- Start recording into `reg` and enter `mode.name` mode.
+      feed('q' .. reg .. mode.key)
+      screen:expect(([[
+        {MATCH:.*}|
+        {1:~                                                      }|*7
+        {3:[No Name]                                              }|
+        {5:-- %s -- recording @%s}{MATCH:%%s*}|
+      ]]):format(mode.name, reg))
+
+      -- Ensure no space-prefix is present after leaving `mode.name` mode.
+      feed('<Esc>')
+      screen:expect(([[
+        {MATCH:.*}|
+        {1:~                                                      }|*7
+        {3:[No Name]                                              }|
+        {5:recording @%s}{MATCH:%%s*}|
+      ]]):format(reg))
+
+      -- Stop recording.
+      feed('q')
+    end
+  end)
+
   -- oldtest: Test_warning_scroll()
   it('a warning causes scrolling if and only if it has a stacktrace', function()
     t.skip(t.is_arch('s390x'), 'timing-sensitive test unreliable on s390x')
