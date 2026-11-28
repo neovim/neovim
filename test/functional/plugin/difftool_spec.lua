@@ -20,7 +20,7 @@ setup(function()
   t.write_file(vim.fs.joinpath(testdir_left, 'file4 with space.txt'), 'hello')
   t.write_file(vim.fs.joinpath(testdir_right, 'file1.txt'), 'hello world') -- modified
   t.write_file(vim.fs.joinpath(testdir_right, 'file3.txt'), 'bar') -- added
-  t.write_file(vim.fs.joinpath(testdir_right, 'file4 with space.txt'), 'hello world') -- modified
+  t.write_file(vim.fs.joinpath(testdir_right, 'file4 with space.txt'), 'world') -- modified, same size
 end)
 
 teardown(function()
@@ -43,10 +43,10 @@ describe('nvim.difftool', function()
     -- file3.txt as added (A)
     -- file4 with space.txt as modified (M)
     eq_partial({
-      { text = 'M', user_data = { rel = 'file1.txt' } },
-      { text = 'D', user_data = { rel = 'file2.txt' } },
-      { text = 'A', user_data = { rel = 'file3.txt' } },
-      { text = 'M', user_data = { rel = 'file4 with space.txt' } },
+      { text = 'M', user_data = { rel = 'file1.txt', added = 1, deleted = 1 } },
+      { text = 'D', user_data = { rel = 'file2.txt', added = 0, deleted = 1 } },
+      { text = 'A', user_data = { rel = 'file3.txt', added = 1, deleted = 0 } },
+      { text = 'M', user_data = { rel = 'file4 with space.txt', added = 1, deleted = 1 } },
     }, fn.getqflist())
   end)
 
@@ -132,6 +132,26 @@ describe('nvim.difftool', function()
     eq(3, #fn.getwininfo())
 
     -- Verify quickfix list has the expected entries
+    eq_partial({
+      { text = 'M', user_data = { rel = 'file1.txt' } },
+      { text = 'D', user_data = { rel = 'file2.txt' } },
+      { text = 'A', user_data = { rel = 'file3.txt' } },
+      { text = 'M', user_data = { rel = 'file4 with space.txt' } },
+    }, fn.getqflist())
+  end)
+
+  it('skips ignored directories with builtin method', function()
+    local ignored = vim.fs.joinpath(testdir_left, 'ignored')
+    n.mkdir_p(ignored)
+    t.write_file(vim.fs.joinpath(ignored, 'a.txt'), 'a')
+    finally(function()
+      vim.fn.delete(ignored, 'rf')
+    end)
+
+    n.exec_lua(function(l, r)
+      require('difftool').open(l, r, { method = 'builtin', ignore = { '^ignored$' } })
+    end, testdir_left, testdir_right)
+
     eq_partial({
       { text = 'M', user_data = { rel = 'file1.txt' } },
       { text = 'D', user_data = { rel = 'file2.txt' } },
