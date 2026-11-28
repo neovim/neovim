@@ -257,6 +257,21 @@ the editor.
 	2. Set the channel's `addr` to `server_addr` via |nvim_chan_set()|.
 	3. Attach to the server.
 
+							*ui-event-error-exit*
+["error_exit", status, addr] ~
+	Nvim is exiting with an explicit status (e.g. |:cquit| or an error),
+	or the current UI is being detached (|:detach|).
+
+	- If `status` is positive, Nvim is exiting intentionally. The UI
+	  should exit normally with `status`. `addr` is empty.
+	- If `status` is zero, the UI was detached. The UI should not wait
+	  for the server to exit, and may reattach to `addr`.
+
+	This event is not sent if Nvim crashed or if there is an error
+	message on stderr; in that case the UI should make the server's
+	stderr visible. If |nvim__set_restart_on_crash()| was called, the
+	UI may start a new Nvim process and attach to it.
+
 							*ui-event-restart*
 ["restart", listen_addr, chan_config] ~
 	User invoked the |:restart| command. Nvim started a new server. The
