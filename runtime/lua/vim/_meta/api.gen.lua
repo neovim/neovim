@@ -153,7 +153,7 @@ function vim.api.nvim__option_to_object(name, value) end
 
 --- WARNING: This feature is experimental/unstable.
 ---
---- Instruct Nvim to redraw various components.
+--- Redraw various components. Unlike `:redraw`, doesn't dismiss messages.
 ---
 ---
 --- @see `:help :redraw`
