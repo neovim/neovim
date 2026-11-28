@@ -2520,7 +2520,8 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth, boo
                (size_t)(keylen - typebuf.tb_maplen));
       // A typed key sequence resolved this mapping (not a nested expansion:
       // those keys come from another mapping): open its composite.
-      atom_map_start(mp->m_keys, (size_t)mp->m_keylen, !advance);
+      atom_map_start(mp->m_keys, (size_t)mp->m_keylen, !advance,
+                     (size_t)(keylen - typebuf.tb_maplen));
     }
 
     cmd_silent = (typebuf.tb_silent > 0);

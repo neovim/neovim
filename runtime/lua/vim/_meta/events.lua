@@ -20,6 +20,7 @@ error('Cannot require a meta file')
 --- @field reg? string Register name.
 --- @field text? string Inserted text, or the Ex/search cmdline.
 --- @field type 'excmd'|'insert'|'jump'|'mapping'|'motion'|'mouse'|'normal'|'operator'|'scroll'|'visual'
+--- @field typed? string Keys typed for the action, as a recording stores them. Raw bytes. Not set on subatoms.
 --- @field undoseq? integer Undo state after the action (`undotree().seq_cur`). Decreases on undo.
 
 --- @class vim.event.lspattach.data
