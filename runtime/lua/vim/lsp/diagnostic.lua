@@ -466,7 +466,7 @@ local function previous_result_ids(client_id, identifier)
 
   for bufnr, provider in pairs(Diagnostics.active) do
     local state = provider.client_state[client_id]
-    if state then
+    if state and api.nvim_buf_is_valid(bufnr) then
       local result_id = state.result_id[key]
       if result_id then
         results[#results + 1] = {
