@@ -1177,7 +1177,7 @@ char *get_env_name(expand_T *xp, int idx)
   return NULL;
 }
 
-/// Appends the head of `fname` to $PATH and sets it in the environment.
+/// Appends the head of `fname` to $PATH (if not already there) and sets it in the environment.
 ///
 /// @param fname  Full path whose parent directory will be appended to $PATH.
 ///
@@ -1203,8 +1203,29 @@ bool os_setenv_append_path(const char *fname)
   char *path = os_getenv("PATH");
   const size_t pathlen = path ? strlen(path) : 0;
   const size_t newlen = pathlen + dirlen + 2;
+
+  // Already in $PATH? E.g. inherited from TUI client, or from the Nvim that ran `:restart`. #22572
+#ifdef CASE_INSENSITIVE_FILENAME
+  const bool ic = true;  // Can't check 'fileignorecase', options are not initialized yet.
+#else
+  const bool ic = false;
+#endif
+  bool found = false;
+  for (const void *iter = NULL; path != NULL && !found;) {
+    const char *dir;
+    size_t dir_len;
+    iter = vim_env_iter(ENV_SEPCHAR, path, iter, &dir, &dir_len);
+    if (dir_len < sizeof(NameBuff)) {
+      xmemcpyz(NameBuff, dir, dir_len);
+      found = path_cmp(ic, NameBuff, os_buf, MAXPATHL) == 0;
+    }
+    if (iter == NULL) {
+      break;
+    }
+  }
+
   bool retval = false;
-  if (newlen < MAX_ENVPATHLEN) {
+  if (!found && newlen < MAX_ENVPATHLEN) {
     char *temp = xmalloc(newlen);
     if (pathlen == 0) {
       temp[0] = NUL;
