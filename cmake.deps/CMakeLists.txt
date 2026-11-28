@@ -86,6 +86,13 @@ if(CMAKE_TOOLCHAIN_FILE)
   )
 endif()
 
+# Extra compiler flags for the bundled dependencies (e.g. for PGO, see the PGO
+# section in BUILD.md).  Empty by default, and passed on even when empty, like
+# CMAKE_BUILD_TYPE above, so that a stale value left in a dependency's
+# CMakeCache by an earlier build is cleared instead of being silently reused.
+set(DEPS_EXTRA_CFLAGS "" CACHE STRING "Extra C compiler flags for bundled dependencies")
+list(APPEND DEPS_CMAKE_ARGS -D "CMAKE_C_FLAGS=${DEPS_EXTRA_CFLAGS}")
+
 set(DEPS_INCLUDE_FLAGS "-I\"${DEPS_INSTALL_DIR}/include\" -I\"${DEPS_INSTALL_DIR}/include/luajit-2.1\"")
 
 # If the macOS deployment target is not set manually (via $MACOSX_DEPLOYMENT_TARGET),
