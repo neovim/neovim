@@ -127,6 +127,12 @@ describe('env.c', function()
       eq('/a/b/c:/foo/bar', os.getenv('PATH'))
     end)
 
+    itp('does not append redundant directory in $PATH #22572', function()
+      os_setenv('PATH', '/foo/bar/:/a/b/c', true)
+      eq(false, cimp.os_setenv_append_path(to_cstr('/foo/bar/baz.exe')))
+      eq('/foo/bar/:/a/b/c', os.getenv('PATH'))
+    end)
+
     itp('returns false if `fname` is not absolute', function()
       local original_path = os.getenv('PATH')
       eq(false, cimp.os_setenv_append_path(to_cstr('foo/bar/baz.exe')))
