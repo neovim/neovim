@@ -435,9 +435,10 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buf, Integer start, Integer 
 
     // Adjust marks. Invalidate any which lie in the
     // changed range, and move any in the remainder of the buffer.
+    // Fold ranges only need adjustment when the line count changes.
     linenr_T adjust = end > start ? MAXLNUM : 0;
     mark_adjust_buf(b, (linenr_T)start, (linenr_T)(end - 1), adjust, (linenr_T)extra,
-                    true, kMarkAdjustApi, kExtmarkNOOP);
+                    extra != 0, kMarkAdjustApi, kExtmarkNOOP);
 
     if (Visual.active && b == curbuf && Visual.start.lnum >= (linenr_T)start) {
       if (Visual.start.lnum >= (linenr_T)end) {
@@ -672,7 +673,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
     // Do not adjust any cursors. need to use column-aware logic (below)
     linenr_T adjust = end_row >= start_row ? MAXLNUM : 0;
     mark_adjust_buf(b, (linenr_T)start_row, (linenr_T)end_row - 1, adjust, (linenr_T)extra,
-                    true, kMarkAdjustApi, kExtmarkNOOP);
+                    extra != 0, kMarkAdjustApi, kExtmarkNOOP);
 
     if (Visual.active && b == curbuf && Visual.mode != Ctrl_V) {
       fix_pos_col(b, &Visual.start, (linenr_T)start_row, (colnr_T)start_col, (linenr_T)end_row,

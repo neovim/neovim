@@ -91,6 +91,8 @@ typedef struct {
   linenr_T lnum;                // current line number
   linenr_T off;                 // offset between lnum and real line number
   linenr_T lnum_save;           // line nr used by foldUpdateIEMSRecurse()
+  linenr_T split_end;           // last line of a top-level fold before truncation
+  char split_flags;             // state to reuse if more of that fold survives
   int lvl;                      // current level (-1 for undefined)
   int lvl_next;                 // level used for next line
   int start;                    // number of folds that are forced to start at
@@ -1868,6 +1870,8 @@ static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
   fline.wp = wp;
   fline.tp = NULL;
   fline.off = 0;
+  fline.split_end = 0;
+  fline.split_flags = FD_LEVEL;
   fline.lvl = 0;
   fline.lvl_next = -1;
   fline.start = 0;
@@ -2100,6 +2104,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
   linenr_T startlnum2 = startlnum;
   const linenr_T firstlnum = flp->lnum;     // first lnum we got
   bool finish = false;
+  bool inserted = false;
   const linenr_T linecount = flp->wp->w_buffer->b_ml.ml_line_count - flp->off;
 
   // Loop over all lines in this fold, or until "bot" is hit.
@@ -2287,18 +2292,20 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
             i = (int)(fp - (fold_T *)gap->ga_data);
           }
           foldInsert(gap, i);
+          inserted = true;
           fp = (fold_T *)gap->ga_data + i;
           // The new fold continues until bot, unless we find the
           // end earlier.
           fp->fd_top = firstlnum;
           fp->fd_len = bot - firstlnum + 1;
-          // When the containing fold is open, the new fold is open.
-          // The new fold is closed if the fold above it is closed.
-          // The first fold depends on the containing fold.
-          if (topflags == FD_OPEN) {
+          // Preserve the state of a split-off part of an old top-level fold.
+          // Otherwise new top-level folds follow 'foldlevel'.
+          if (level == 1) {
+            fp->fd_flags = firstlnum <= flp->split_end ? flp->split_flags : FD_LEVEL;
+          } else if (topflags == FD_OPEN) {
             flp->wp->w_fold_manual = true;
             fp->fd_flags = FD_OPEN;
-          } else if (i <= 0) {
+          } else if (i == 0) {
             fp->fd_flags = topflags;
             if (topflags != FD_LEVEL) {
               flp->wp->w_fold_manual = true;
@@ -2408,14 +2415,20 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
   if (lvl < level) {
     // End of fold found, update the length when it got shorter.
     if (fp->fd_len != flp->lnum - fp->fd_top) {
-      if (fp->fd_top + fp->fd_len - 1 > bot) {
+      const linenr_T old_end = fp->fd_top + fp->fd_len - 1;
+      // An inserted fold's provisional length does not describe an old fold.
+      if (level == 1 && !inserted && old_end > flp->split_end) {
+        flp->split_end = old_end;
+        flp->split_flags = fp->fd_flags;
+      }
+      if (old_end > bot) {
         // fold continued below bot
         if (getlevel == foldlevelMarker
             || getlevel == foldlevelExpr
             || getlevel == foldlevelSyntax) {
           // marker method: truncate the fold and make sure the
           // previously included lines are processed again
-          bot = fp->fd_top + fp->fd_len - 1;
+          bot = old_end;
           fp->fd_len = flp->lnum - fp->fd_top;
         } else {
           // indent or expr method: split fold to create a new one
