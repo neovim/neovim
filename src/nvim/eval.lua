@@ -10069,7 +10069,8 @@ M.funcs = {
 
         peer  : If |TRUE|, servers not started by |serverstart()|
                 will also be returned. (default: |FALSE|)
-                Not supported on Windows yet.
+                On Windows, matches the generated pipe name format for the
+                current |$NVIM_APPNAME| (default: "nvim").
 
         info  : If |TRUE|, return a list of Dicts with detailed info
                 instead of addresses. Implies `peer=true`. Each Dict
