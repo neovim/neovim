@@ -198,7 +198,7 @@ other features such as |zip|).
 Builtin plugin: difftool                                            *difftool*
 
 :DiffTool {left} {right}                                           *:DiffTool*
-Compares two directories or files side-by-side.
+Compares two directories or files.
 Supports directory diffing, rename detection, and highlights changes
 in quickfix list. Replaces the built-in `nvim -d` diff mode with this interface.
 
@@ -229,6 +229,9 @@ open({left}, {right}, {opt})                                 *difftool.open()*
                    chunk size to read from files for similarity calculation
                  • {ignore} (`string[]`, default: `{}`) List of file patterns
                    to ignore (for example: `'.git', '*.log'`)
+                 • {layout} (`'split'|'unified'`, default: `'split'`) Window
+                   layout: `split` shows both files, `unified` shows a
+                   read-only unified diff
                  • {method} (`'auto'|'builtin'|'diffr'`, default: `auto`) Diff
                    method to use
                  • {rename} (`table`) Controls rename detection

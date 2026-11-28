@@ -139,4 +139,75 @@ describe('nvim.difftool', function()
       { text = 'M', user_data = { rel = 'file4 with space.txt' } },
     }, fn.getqflist())
   end)
+
+  it('shows a read-only unified diff', function()
+    local left = vim.fs.joinpath(testdir_left, 'file1.txt')
+    local right = vim.fs.joinpath(testdir_right, 'file1.txt')
+    n.exec_lua(function(l, r)
+      require('difftool').open(l, r, { layout = 'unified' })
+    end, left, right)
+
+    eq(1, #fn.getwininfo())
+    eq('diff', fn.getbufvar(fn.bufnr(), '&filetype'))
+    eq({
+      '--- ' .. left,
+      '+++ ' .. right,
+      '@@ -1 +1 @@',
+      '-hello',
+      '\\ No newline at end of file',
+      '+hello world',
+      '\\ No newline at end of file',
+    }, n.api.nvim_buf_get_lines(0, 0, -1, false))
+  end)
+
+  it('shows a unified diff for each quickfix entry', function()
+    n.exec_lua(function(l, r)
+      require('difftool').open(l, r, { layout = 'unified', method = 'builtin' })
+    end, testdir_left, testdir_right)
+
+    --- Hunk lines, below the `---`/`+++` headers
+    local function hunk()
+      return n.api.nvim_buf_get_lines(0, 2, -1, false)
+    end
+
+    -- Diff window plus quickfix window, and the files themselves are never opened
+    eq(2, #fn.getwininfo())
+    eq(0, fn.bufexists(vim.fs.joinpath(testdir_right, 'file1.txt')))
+
+    -- file4 with space.txt is modified
+    eq_partial({ text = 'M', user_data = { rel = 'file4 with space.txt' } }, fn.getqflist()[4])
+    eq({
+      '@@ -1 +1 @@',
+      '-hello',
+      '\\ No newline at end of file',
+      '+hello world',
+      '\\ No newline at end of file',
+    }, hunk())
+
+    -- file2.txt only exists on the left, so all of it is deleted
+    command('cnext')
+    eq({ '@@ -1 +0,0 @@', '-foo', '\\ No newline at end of file' }, hunk())
+
+    -- Jumping from the quickfix window reuses the diff window
+    fn.win_gotoid(fn.getqflist({ winid = 1 }).winid)
+    command('cc 1')
+    eq(2, #fn.getwininfo())
+    eq('difftool://file1.txt', fn.bufname())
+
+    -- Reopening while the diff is displayed shows the current diff, not the stale buffer
+    t.write_file(vim.fs.joinpath(testdir_right, 'file1.txt'), 'changed')
+    finally(function()
+      t.write_file(vim.fs.joinpath(testdir_right, 'file1.txt'), 'hello world')
+    end)
+    n.exec_lua(function(l, r)
+      require('difftool').open(l, r, { layout = 'unified', method = 'builtin' })
+    end, testdir_left, testdir_right)
+    eq(true, vim.list_contains(hunk(), '+changed'))
+
+    -- Writing is rejected, so no file is created for the URI
+    t.matches('E45', t.pcall_err(command, 'write'))
+
+    -- `:q` closes the quickfix window too and exits
+    n.expect_exit(1000, command, 'q')
+  end)
 end)
