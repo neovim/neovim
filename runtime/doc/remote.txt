@@ -20,8 +20,11 @@ clientserver option.
 The following command line arguments are available:
 
    --remote [+{cmd}] {file} ...					*--remote*
-				Open the file list in a remote Vim.  When
-				there is no Vim server, execute locally.
+				Open the file list in a remote Vim and wait
+				until each file is closed (not shown in any
+				window, or deleted), or the server exits.
+				To not wait, use |--remote-send|.
+				When there is no Vim server, execute locally.
 				Vim allows one init command: +{cmd}.
 				This must be an Ex command that can be
 				followed by "|". It's not yet supported by
@@ -88,24 +91,27 @@ You can not put options there!
 ==============================================================================
 2. Missing functionality			*E5600* *clientserver-missing*
 
-Vim supports additional functionality in clientserver that's not yet
-implemented in Nvim. In particular, none of the "wait" variants are supported
-yet. The following command line arguments are not yet available:
+Vim supports additional functionality in clientserver that's not
+implemented in Nvim. The "wait" variants are not supported: |--remote| and
+|--remote-tab| always wait. The following command line arguments are not
+available:
 
    --remote-wait [+{cmd}] {file} ...				*--remote-wait*
-				Not yet supported by Nvim.
+				Not supported by Nvim, use |--remote|.
 				As --remote, but wait for files to complete
 				(unload) in remote Vim.
    --remote-wait-silent [+{cmd}] {file} ...		*--remote-wait-silent*
-				Not yet supported by Nvim.
+				Not supported by Nvim, use
+				|--remote-silent|.
 				As --remote-wait, but don't complain if there
 				is no server.
 							*--remote-tab-wait*
-   --remote-tab-wait		Not yet supported by Nvim.
+   --remote-tab-wait		Not supported by Nvim, use |--remote-tab|.
 				Like --remote-wait but open each file in a new
 				tabpage.
 						*--remote-tab-wait-silent*
-   --remote-tab-wait-silent	Not yet supported by Nvim.
+   --remote-tab-wait-silent	Not supported by Nvim, use
+				|--remote-tab-silent|.
 				Like --remote-wait-silent but open each file
 				in a new tabpage.
 

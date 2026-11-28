@@ -38,70 +38,139 @@ describe('--remote', function()
       server:close()
     end)
 
-    -- Run a `nvim --remote*` command and return { stdout, stderr } of the process
-    local function run_remote(...)
+    -- Start `nvim --remote*` from another Nvim, so the server event loop is not blocked.
+    local client_starter
+    local function start_remote(...)
       set_session(server)
       local addr = fn.serverlist()[1]
-
-      -- Create an nvim instance just to run the remote-invoking nvim. We want
-      -- to wait for the remote instance to exit and calling jobwait blocks
-      -- the event loop. If the server event loop is blocked, it can't process
-      -- our incoming --remote calls.
-      local client_starter = n.new_session(true)
+      client_starter = n.new_session(true)
       set_session(client_starter)
-      -- Call jobstart() and jobwait() in the same RPC request to reduce flakiness.
-      eq(
-        { 0 },
-        exec_lua(
-          [[return vim.fn.jobwait({ vim.fn.jobstart({...}, {
-        stdout_buffered = true,
-        stderr_buffered = true,
-        on_stdout = function(_, data, _)
-          _G.Remote_stdout = table.concat(data, '\n')
-        end,
-        on_stderr = function(_, data, _)
-          _G.Remote_stderr = table.concat(data, '\n')
-        end,
-      }) })]],
-          nvim_prog,
-          '--clean',
-          '--headless',
-          '--server',
-          addr,
-          ...
-        )
+      exec_lua(
+        [[_G.Remote_job = vim.fn.jobstart({...}, {
+          stdout_buffered = true,
+          stderr_buffered = true,
+          on_stdout = function(_, data, _)
+            _G.Remote_stdout = table.concat(data, '\n')
+          end,
+          on_stderr = function(_, data, _)
+            _G.Remote_stderr = table.concat(data, '\n')
+          end,
+        })]],
+        nvim_prog,
+        '--clean',
+        '--headless',
+        '--server',
+        addr,
+        ...
       )
-      local res = exec_lua([[return { _G.Remote_stdout, _G.Remote_stderr }]])
-      client_starter:close()
+      set_session(server)
+    end
+
+    --- @return [integer, string, string] # exit code (-1 if still running), stdout, stderr
+    local function finish_remote(timeout)
+      set_session(client_starter)
+      local res = exec_lua(function(ms)
+        local code = vim.fn.jobwait({ _G.Remote_job }, ms)[1]
+        return { code, _G.Remote_stdout, _G.Remote_stderr }
+      end, timeout or 10000)
+      if res[1] ~= -1 then
+        client_starter:close()
+      end
       set_session(server)
       return res
     end
 
+    after_each(function()
+      if client_starter then
+        client_starter:close()
+        client_starter = nil
+      end
+    end)
+
+    -- Run a `nvim --remote*` command that does not wait and return { stdout, stderr }
+    local function run_remote(...)
+      start_remote(...)
+      local res = finish_remote()
+      eq(0, res[1])
+      return { res[2], res[3] }
+    end
+
+    local function wait_for_text(text)
+      t.retry(nil, 10000, function()
+        eq(text, n.api.nvim_get_current_line())
+      end)
+    end
+
+    local function assert_waiting()
+      eq(-1, finish_remote(200)[1])
+    end
+
     it('edit a single file', function()
-      eq({ '', '' }, run_remote('--remote', fname))
+      start_remote('--remote', fname)
+      wait_for_text(contents)
       expect(contents)
       eq(1, #fn.getbufinfo())
+      assert_waiting()
+      command('enew')
+      eq({ 0, '', '' }, finish_remote())
     end)
 
     it('tab edit a single file with a non-changed buffer', function()
-      eq({ '', '' }, run_remote('--remote-tab', fname))
+      start_remote('--remote-tab', fname)
+      wait_for_text(contents)
       expect(contents)
       eq(1, #fn.gettabinfo())
+      command('enew')
+      eq({ 0, '', '' }, finish_remote())
     end)
 
     it('tab edit a single file with a changed buffer', function()
       insert('hello')
-      eq({ '', '' }, run_remote('--remote-tab', fname))
+      start_remote('--remote-tab', fname)
+      wait_for_text(contents)
       expect(contents)
       eq(2, #fn.gettabinfo())
+      assert_waiting()
+      command('tabclose')
+      eq({ 0, '', '' }, finish_remote())
     end)
 
     it('edit multiple files', function()
-      eq({ '', '' }, run_remote('--remote', fname, other_fname))
+      start_remote('--remote', fname, other_fname)
+      wait_for_text(contents)
       expect(contents)
       command('next')
       expect(other_contents)
       eq(2, #fn.getbufinfo())
+      assert_waiting()
+      command('enew')
+      eq({ 0, '', '' }, finish_remote())
+    end)
+
+    it('waits for files that were not displayed yet', function()
+      start_remote('--remote', fname, other_fname)
+      wait_for_text(contents)
+      command('enew')
+      assert_waiting()
+      command('bwipeout ' .. fn.fnameescape(other_fname))
+      eq({ 0, '', '' }, finish_remote())
+    end)
+
+    it('done when the buffer is deleted', function()
+      start_remote('--remote', fname)
+      wait_for_text(contents)
+      assert_waiting()
+      command('bdelete')
+      eq({ 0, '', '' }, finish_remote())
+    end)
+
+    it('done when the server exits', function()
+      start_remote('--remote', fname)
+      wait_for_text(contents)
+      assert_waiting()
+      server:close()
+      eq(0, finish_remote()[1])
+      server = n.clear()
     end)
 
     it('send keys', function()
