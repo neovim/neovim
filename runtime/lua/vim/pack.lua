@@ -401,7 +401,15 @@ end
 --- @return string[]
 local function git_get_branches(cwd)
   local def_branch = git_get_default_branch(cwd)
-  local cmd = { 'branch', '--remote', '--list', '--format=%(refname:short)', '--', 'origin/**' }
+  local cmd = {
+    'branch',
+    '--no-column',
+    '--remote',
+    '--list',
+    '--format=%(refname:short)',
+    '--',
+    'origin/**',
+  }
   local stdout = git_cmd(cmd, cwd)
   local res = {} --- @type string[]
   for l in vim.gsplit(stdout, '\n') do

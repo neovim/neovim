@@ -2315,6 +2315,13 @@ describe('vim.pack', function()
     it('returns list with necessary data', function()
       local basic_data, defbranch_data, plugindirs_data
 
+      -- `git branch` must list branches one per line regardless of `column.ui`.
+      exec_lua([[
+        vim.env.GIT_CONFIG_COUNT = '1'
+        vim.env.GIT_CONFIG_KEY_0 = 'column.ui'
+        vim.env.GIT_CONFIG_VALUE_0 = 'always,dense'
+      ]])
+
       -- Should work just after installation
       exec_lua(function()
         vim.pack.add({
