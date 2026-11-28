@@ -228,7 +228,7 @@ function M.has(outer, inner)
   if getmetatable(inner) == vim.pos then
     ---@cast inner -vim.Range
     return util.cmp_pos.le(outer[1], outer[2], inner.row, inner.col)
-      and util.cmp_pos.ge(outer[3], outer[4], inner.row, inner.col)
+      and util.cmp_pos.gt(outer[3], outer[4], inner.row, inner.col)
   end
   ---@cast inner -vim.Pos
 

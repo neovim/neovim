@@ -167,6 +167,18 @@ describe('vim.range', function()
         return vim.range(buf, 0, 0, 1, 5):has(vim.pos(buf, 0, 1))
       end)
     )
+    eq(
+      false,
+      exec_lua(function()
+        return vim.range(0, 0, 0, 1, 5):has(vim.pos(0, 1, 5))
+      end)
+    )
+    eq(
+      false,
+      exec_lua(function()
+        return vim.range(0, 0, 0, 0, 0):has(vim.pos(0, 0, 0))
+      end)
+    )
   end)
 
   it('a range does not contain an empty range just outside it', function()
