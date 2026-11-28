@@ -463,6 +463,31 @@ a]],
     eq(0, fn.foldlevel(12))
   end)
 
+  it('preserves a manually opened fold when foldexpr splits it', function()
+    fn.setline(1, { 'outside', '  a', '  b', '  c', '  d', '  e', 'outside', 'f', 'g' })
+    command(
+      'setlocal shiftwidth=2 foldmethod=expr foldexpr=indent(v:lnum)/2 foldlevel=0 foldminlines=0'
+    )
+    command('2foldopen')
+    eq(-1, fn.foldclosed(5))
+    eq(0, fn.foldlevel(8))
+
+    n.api.nvim_buf_set_lines(
+      0,
+      1,
+      9,
+      true,
+      { '  a', '  b', '  c', 'outside', '  e', 'outside', '  f', '  g' }
+    )
+
+    eq(1, fn.foldlevel(2))
+    eq(0, fn.foldlevel(5))
+    eq(1, fn.foldlevel(6))
+    eq(-1, fn.foldclosed(2))
+    eq(-1, fn.foldclosed(6))
+    eq(8, fn.foldclosed(8))
+  end)
+
   it('no folds remain if :delete makes buffer empty #19671', function()
     command('setlocal foldmethod=manual')
     fn.setline(1, { 'foo', 'bar', 'baz' })

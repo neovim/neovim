@@ -702,6 +702,34 @@ t3]])
     })
   end)
 
+  it('keeps a recreated function fold open #32759', function()
+    insert([[
+    int hello() {
+      return 1;
+    }
+
+    int goodbye() {
+      return 2;
+    }]])
+    command('setfiletype c')
+    exec_lua('vim.treesitter.start()')
+    command('setlocal foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr()')
+    wait_folds()
+    command('1foldclose')
+    eq(1, n.fn.foldlevel(5))
+    eq(-1, n.fn.foldclosed(5))
+
+    feed('5G$r<Space>')
+    wait_folds()
+    eq(0, n.fn.foldlevel(5))
+
+    feed('r{')
+    wait_folds()
+    eq(1, n.fn.foldlevel(5))
+    eq(1, n.fn.foldclosed(1))
+    eq(-1, n.fn.foldclosed(5))
+  end)
+
   it("doesn't open folds that are not touched", function()
     local screen = Screen.new(40, 8)
     screen:set_default_attr_ids({
@@ -732,13 +760,18 @@ t2]])
       {4:-- INSERT --}                            |
     ]])
 
-    -- TODO(tomtomjhj): `u` spuriously opens the fold (#26499).
-    feed('<Esc>uzMggzodd')
+    feed('<Esc>u')
+    wait_folds()
+    -- Reset the fold state after undo, which can spuriously open folds (#26499).
+    feed('zMggzo')
+    eq(-1, n.fn.foldclosed(1))
+    eq(3, n.fn.foldclosed(3))
+    feed('dd')
+    wait_folds()
     screen:expect([[
-      {1:-}^t1                                     |
-      {1:-}# h2                                   |
-      {1:│}t2                                     |
-      {3:~                                       }|*4
+      {1: }^t1                                     |
+      {1:+}{2:+--  2 lines: # h2·····················}|
+      {3:~                                       }|*5
       1 line less; before #2  {MATCH:.*}|
     ]])
   end)
