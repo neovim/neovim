@@ -2350,6 +2350,31 @@ bool nlua_exec_on_key(int c, char *typed_buf)
   return discard;
 }
 
+/// Gets the runtime file of a builtin module from its chunk name, e.g. "vim/_core/defaults".
+///
+/// @return [allocated] file path, or NULL if "name" is not a builtin module.
+static char *nlua_builtin_module_path(const char *name)
+{
+  if (strchr(name, '.') != NULL) {
+    return NULL;
+  }
+  char *modname = xstrdup(name);
+  strchrsub(modname, '/', '.');
+  char *path = NULL;
+  for (size_t i = 0; i < ARRAY_SIZE(builtin_modules); i++) {
+    if (strequal(builtin_modules[i].name, modname)) {
+      char *vimruntime = vim_getenv("VIMRUNTIME");
+      if (vimruntime != NULL) {
+        path = arena_printf(NULL, "%s/lua/%s.lua", vimruntime, name).data;
+        xfree(vimruntime);
+      }
+      break;
+    }
+  }
+  xfree(modname);
+  return path;
+}
+
 /// Sets the editor "script context" during Lua execution. Used by :verbose.
 /// @param[out] current
 void nlua_set_sctx(sctx_T *current)
@@ -2381,7 +2406,9 @@ void nlua_set_sctx(sctx_T *current)
     }
     break;
   }
-  char *source_path = fix_fname(info->source + 1);
+  char *builtin_path = nlua_builtin_module_path(info->source + 1);
+  char *source_path = fix_fname(builtin_path ? builtin_path : info->source + 1);
+  xfree(builtin_path);
   int sid = find_script_by_name(source_path);
   if (sid > 0) {
     xfree(source_path);
